@@ -36,8 +36,8 @@ const WIZARD_TYPES = [
 
 const TOTAL_STEPS = 3;
 
-const _AI_URL = "https://suufnrwurjizzgrcxowp.supabase.co/functions/v1/rapid-processor";
-const _AI_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1dWZucnd1cmppenpncmN4b3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTcxMTYsImV4cCI6MjA5MzkzMzExNn0.UQ4VyBXZtFCwS1Yekq_jOGBq5lpQcVsTeUdz68IRuW0";
+const _AI_URL = "https://ofnkazimemuiwovhxepq.supabase.co/functions/v1/rapid-processor";
+const _AI_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbmthemltZW11aXdvdmh4ZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU5OTcsImV4cCI6MjA5NDUzMTk5N30.NVRoZb_Ie2ZgPELFkS7CxNWrLGZcgdOdWGEEkT_CNqo";
 
 const _NORA_FIRST = "Cuéntame sobre este proyecto. ¿Qué quieres conseguir y qué tipo de trabajo implica?";
 

@@ -1,8 +1,8 @@
 // 141'STUDIO — data layer v10 (Supabase)
 
 // ── Supabase client ─────────────────────────────────────────────────
-const _SB_URL = "https://suufnrwurjizzgrcxowp.supabase.co";
-const _SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1dWZucnd1cmppenpncmN4b3dwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzNTcxMTYsImV4cCI6MjA5MzkzMzExNn0.UQ4VyBXZtFCwS1Yekq_jOGBq5lpQcVsTeUdz68IRuW0";
+const _SB_URL = "https://ofnkazimemuiwovhxepq.supabase.co";
+const _SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbmthemltZW11aXdvdmh4ZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU5OTcsImV4cCI6MjA5NDUzMTk5N30.NVRoZb_Ie2ZgPELFkS7CxNWrLGZcgdOdWGEEkT_CNqo";
 const _sb = window.supabase.createClient(_SB_URL, _SB_KEY, {
   auth: { persistSession: true, autoRefreshToken: true },
 });
