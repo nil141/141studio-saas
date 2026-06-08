@@ -48,7 +48,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   const agencyName     = D.SETTINGS.name || "141'STUDIO";
   const adminEmail     = D.SETTINGS.email || "nil@141agency.com";
-  const adminName      = adminEmail.split("@")[0];
+  const adminName      = (() => { const n = adminEmail.split("@")[0]; return n.charAt(0).toUpperCase() + n.slice(1); })();
   const activeProjects = D.PROJECTS.length;
   const pendingTasks   = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length;
   const overdueTasks   = Object.values(D.TASKS).flat().filter(t => {
