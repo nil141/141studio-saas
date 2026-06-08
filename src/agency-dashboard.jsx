@@ -12,6 +12,19 @@ const parseSpanishDate = (str) => {
   return new Date(new Date().getFullYear(), mon, day);
 };
 
+// ── Icon badge ────────────────────────────────────────────────
+const IconBadge = ({ icon, color, bg }) => (
+  <div style={{
+    width: 38, height: 38, borderRadius: 10,
+    background: bg,
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+    color: color,
+  }}>
+    <Icon name={icon} size={18} strokeWidth={1.8}/>
+  </div>
+);
+
 // ── Dashboard ────────────────────────────────────────────────
 const AgencyDashboard = ({ openModal, navigate, session }) => {
   const D = window.Data;
@@ -32,8 +45,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
   })();
 
-  const agencyName   = D.SETTINGS.name || "141'STUDIO";
-  const adminName    = (D.SETTINGS.email || "nil@141agency.com").split("@")[0];
+  const agencyName     = D.SETTINGS.name || "141'STUDIO";
+  const adminEmail     = D.SETTINGS.email || "nil@141agency.com";
+  const adminName      = adminEmail.split("@")[0];
   const activeProjects = D.PROJECTS.length;
   const pendingTasks   = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length;
   const overdueTasks   = Object.values(D.TASKS).flat().filter(t => {
@@ -42,27 +56,22 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   }).length;
   const pendingInvoices = D.INVOICES.filter(i => i.status !== "paid").length;
   const atRisk = D.PROJECTS.filter(p => p.light === "red").length;
-
-  // Capacity
   const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
-  const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad cómoda" : activeProjects <= 4 ? "Capacidad media" : "Capacidad al límite";
+  const capacityLabel = activeProjects === 0 ? "Sin proyectos"
+    : activeProjects <= 3 ? "Capacidad cómoda"
+    : activeProjects <= 4 ? "Capacidad media" : "Al límite";
 
-  // ── Facturado este mes ──
+  // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
   useEffect(() => {
     const now = new Date();
     const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
-    fetch("/api/stripe/invoices", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ limit: 100 }),
-    })
+    fetch("/api/stripe/invoices", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({limit:100}) })
       .then(r => r.json())
       .then(res => {
         if (!res.ok) { setStripeMonth(false); return; }
-        const total = (res.invoices || [])
-          .filter(i => i.status === "paid" && i.created >= monthStart)
-          .reduce((a, b) => a + (b.amount_paid ?? b.amount ?? 0), 0);
+        const total = (res.invoices || []).filter(i => i.status==="paid" && i.created>=monthStart)
+          .reduce((a,b) => a+(b.amount_paid??b.amount??0), 0);
         setStripeMonth(total);
       })
       .catch(() => setStripeMonth(false));
@@ -75,177 +84,165 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     D.PROJECTS.forEach(p => {
       const d = parseSpanishDate(p.deadline);
       if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "entrega",
-        dot: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--green)" });
+        color: p.light==="red"?"var(--red)":p.light==="amber"?"var(--amber)":"var(--green)",
+        icon: "folder" });
     });
     D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
       const d = parseSpanishDate(i.due);
       if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "factura",
-        dot: i.status === "overdue" ? "var(--red)" : "var(--amber)" });
+        color: i.status==="overdue"?"var(--red)":"var(--amber)", icon: "receipt" });
     });
     Object.entries(D.TASKS).forEach(([pid, taskList]) => {
       const project = pid !== "__none__" ? D.PROJECTS.find(p => p.id === pid) : null;
-      (taskList || []).forEach(t => {
+      (taskList||[]).forEach(t => {
         if (!t.deadline || t.column === "done") return;
         const d = new Date(t.deadline + "T00:00:00");
         if (isNaN(d)) return;
-        ev.push({ date: d, label: t.title, sub: project ? project.name : "—", type: "tarea",
-          dot: "var(--blue)" });
+        ev.push({ date: d, label: t.title, sub: project?project.name:"—", type: "tarea",
+          color: "var(--blue)", icon: "list-todo" });
       });
     });
     return ev
-      .filter(e => {
-        const diff = e.date - today;
-        return diff >= -86400000 && diff <= 60 * 86400000;
-      })
-      .sort((a, b) => a.date - b.date)
-      .slice(0, 8);
+      .filter(e => { const diff = e.date-today; return diff>=-86400000 && diff<=60*86400000; })
+      .sort((a,b) => a.date-b.date).slice(0,7);
   }, [D.PROJECTS, D.INVOICES, D.TASKS]);
 
   const formatEventDate = (d) => {
     const today = new Date();
-    const diff  = Math.round((d - today) / 86400000);
-    if (diff < 0)  return `hace ${Math.abs(diff)}d`;
-    if (diff === 0) return "Hoy";
-    if (diff === 1) return "Mañana";
+    const diff = Math.round((d-today)/86400000);
+    if (diff<0)  return `hace ${Math.abs(diff)}d`;
+    if (diff===0) return "Hoy";
+    if (diff===1) return "Mañana";
     const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
     const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
     return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
   };
 
-  // ── KPI cards config ──
+  // ── KPI config ──
   const kpis = [
     {
-      label: "Proyectos activos",
-      value: activeProjects,
-      sub: activeProjects === 0 ? "Crea el primero" : capacityLabel,
-      color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
-      icon: "folder",
+      label:  "Proyectos activos",
+      value:  activeProjects,
+      sub:    activeProjects===0 ? "Crea el primero" : capacityLabel,
+      barColor: capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
+      icon:   "folder",
+      iconColor: "#3b82f6",
+      iconBg:  "rgba(59,130,246,0.12)",
     },
     {
-      label: "Tareas pendientes",
-      value: pendingTasks,
-      sub: pendingTasks === 0 ? "Todo al día ✓" : "en todos los proyectos",
-      color: pendingTasks === 0 ? "var(--green)" : "var(--blue)",
-      icon: "check",
+      label:  "Tareas pendientes",
+      value:  pendingTasks,
+      sub:    pendingTasks===0 ? "Todo al día" : "en todos los proyectos",
+      barColor: "rgba(139,92,246,0.8)",
+      icon:   "list-todo",
+      iconColor: "#8b5cf6",
+      iconBg:  "rgba(139,92,246,0.12)",
     },
     {
-      label: "Tareas vencidas",
-      value: overdueTasks,
-      sub: overdueTasks === 0 ? "Ninguna vencida ✓" : "requieren atención",
-      color: overdueTasks > 0 ? "var(--red)" : "var(--green)",
-      icon: "warning",
+      label:  "Tareas vencidas",
+      value:  overdueTasks,
+      sub:    overdueTasks===0 ? "Ninguna vencida" : "requieren atención",
+      barColor: overdueTasks>0?"var(--red)":"var(--green)",
+      icon:   "alert-triangle",
+      iconColor: overdueTasks>0?"#ef4444":"#22c55e",
+      iconBg:  overdueTasks>0?"rgba(239,68,68,0.12)":"rgba(34,197,94,0.12)",
     },
     {
-      label: "Proyectos en riesgo",
-      value: atRisk,
-      sub: atRisk === 0 ? "Todo en orden ✓" : "semáforo rojo",
-      color: atRisk > 0 ? "var(--red)" : "var(--green)",
-      icon: "bolt",
+      label:  "Proyectos en riesgo",
+      value:  atRisk,
+      sub:    atRisk===0 ? "Todo en orden" : "semáforo rojo",
+      barColor: atRisk>0?"var(--red)":"var(--green)",
+      icon:   "flag",
+      iconColor: "#14b8a6",
+      iconBg:  "rgba(20,184,166,0.12)",
     },
     {
-      label: "Facturado este mes",
-      value: stripeMonth === null ? "…"
-           : stripeMonth === false ? "—"
-           : `€${(stripeMonth / 100).toLocaleString("es-ES", {minimumFractionDigits:0, maximumFractionDigits:0})}`,
-      sub: stripeMonth === null ? "Conectando…"
-         : stripeMonth === false ? "Sin conexión Stripe"
-         : new Date().toLocaleString("es-ES", {month:"long"}),
-      color: "var(--accent)",
-      icon: "euro",
-      big: true,
+      label:  "Facturado este mes",
+      value:  stripeMonth===null?"…":stripeMonth===false?"—":`€${(stripeMonth/100).toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})}`,
+      sub:    stripeMonth===null?"Conectando…":stripeMonth===false?"Sin conexión Stripe":new Date().toLocaleString("es-ES",{month:"long"}),
+      barColor: "#f59e0b",
+      icon:   "receipt",
+      iconColor: "#f59e0b",
+      iconBg:  "rgba(245,158,11,0.12)",
     },
   ];
 
-  // ── Work queues ──
+  // ── Queues ──
   const queues = [
-    {
-      label: "Tareas sin completar",
-      count: pendingTasks,
-      color: "var(--blue)",
-      action: () => navigate("projects"),
-    },
-    {
-      label: "Tareas vencidas",
-      count: overdueTasks,
-      color: overdueTasks > 0 ? "var(--red)" : "var(--text-subtle)",
-      action: () => navigate("projects"),
-    },
-    {
-      label: "Proyectos en riesgo",
-      count: atRisk,
-      color: atRisk > 0 ? "var(--red)" : "var(--text-subtle)",
-      action: () => navigate("projects"),
-    },
-    {
-      label: "Facturas pendientes",
-      count: pendingInvoices,
-      color: pendingInvoices > 0 ? "var(--amber)" : "var(--text-subtle)",
-      action: () => navigate("invoices"),
-    },
+    { icon:"list-todo", label:"Tareas sin completar",  count:pendingTasks,    color:"var(--blue)",   action:()=>navigate("projects") },
+    { icon:"clock",     label:"Tareas vencidas",        count:overdueTasks,    color:overdueTasks>0?"var(--red)":"var(--text-subtle)", action:()=>navigate("projects") },
+    { icon:"flag",      label:"Proyectos en riesgo",    count:atRisk,          color:atRisk>0?"var(--red)":"var(--text-subtle)", action:()=>navigate("projects") },
+    { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, color:pendingInvoices>0?"var(--amber)":"var(--text-subtle)", action:()=>navigate("invoices") },
   ];
 
   return (
-    <div className="page" style={{display:"flex", flexDirection:"column", gap:18, paddingBottom:32}}>
+    <div className="page" style={{display:"flex", flexDirection:"column", gap:16, paddingBottom:32}}>
 
       {/* ── Welcome banner ── */}
       <div className="card" style={{padding:0, overflow:"hidden"}}>
-        <div style={{display:"flex", alignItems:"stretch", gap:0}}>
-          {/* Left: greeting + actions */}
-          <div style={{flex:1, padding:"24px 28px 22px"}}>
-            <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
-              color:"var(--text-subtle)", marginBottom:8, textTransform:"uppercase"}}>
+        <div style={{display:"flex", alignItems:"stretch"}}>
+
+          {/* Left */}
+          <div style={{flex:1, padding:"28px 32px 26px"}}>
+            <div style={{
+              fontSize:10, fontWeight:700, letterSpacing:"0.12em",
+              color:"var(--text-subtle)", marginBottom:10, textTransform:"uppercase",
+            }}>
               Resumen del espacio de trabajo
             </div>
-            <div style={{fontSize:26, fontWeight:700, lineHeight:1.15, marginBottom:4}}>
+            <div style={{fontSize:28, fontWeight:700, lineHeight:1.2, marginBottom:4}}>
               {greeting}, {adminName}.
             </div>
-            <div style={{fontSize:13, color:"var(--text-muted)", marginBottom:18}}>
+            <div style={{fontSize:13, color:"var(--text-muted)", marginBottom:22}}>
               {agencyName} · {todayStr}
             </div>
             <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-              <button className="btn sm" onClick={() => openModal("newTask")}>
-                <Icon name="plus" size={13}/> Nueva tarea
-              </button>
-              <button className="btn sm" onClick={() => openModal("newProject")}>
-                <Icon name="plus" size={13}/> Nuevo proyecto
-              </button>
-              <button className="btn sm" onClick={() => openModal("invite")}>
-                <Icon name="external-link" size={13}/> Invitar cliente
-              </button>
-              <button className="btn sm" onClick={() => navigate("invoices")}>
-                <Icon name="euro" size={13}/> Nueva factura
-              </button>
+              {[
+                { label:"Nueva tarea",     icon:"plus",          fn:()=>openModal("newTask")    },
+                { label:"Nuevo proyecto",  icon:"plus",          fn:()=>openModal("newProject") },
+                { label:"Invitar cliente", icon:"external-link", fn:()=>openModal("invite")     },
+                { label:"Nueva factura",   icon:"receipt",       fn:()=>navigate("invoices")    },
+              ].map(b => (
+                <button key={b.label} className="btn sm" onClick={b.fn}
+                  style={{display:"flex", alignItems:"center", gap:6}}>
+                  <Icon name={b.icon} size={13}/> {b.label}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Right: capacity */}
           <div style={{
-            width:220, padding:"22px 24px",
+            width:230, padding:"26px 26px",
             borderLeft:"0.5px solid var(--border)",
             background:"var(--bg-elev-2)",
-            display:"flex", flexDirection:"column", justifyContent:"center", gap:10,
+            display:"flex", flexDirection:"column", justifyContent:"center", gap:12,
           }}>
-            <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.1em",
-              color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:2}}>
-              Capacidad
+            <div style={{
+              fontSize:10, fontWeight:700, letterSpacing:"0.1em",
+              color:"var(--text-subtle)", textTransform:"uppercase",
+            }}>
+              Capacidad actual
             </div>
             <div style={{display:"flex", gap:5}}>
               {[1,2,3,4,5].map(n => (
                 <div key={n} style={{
-                  flex:1, height:6, borderRadius:99,
-                  background: n <= activeProjects
-                    ? (capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)")
+                  flex:1, height:7, borderRadius:99,
+                  background: n<=activeProjects
+                    ? (capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)")
                     : "var(--border)",
                   transition:"background .3s",
                 }}/>
               ))}
             </div>
-            <div style={{fontSize:12, fontWeight:500,
-              color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)"}}>
+            <div style={{
+              fontSize:13, fontWeight:600,
+              color:capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
+            }}>
               {capacityLabel}
             </div>
-            <div style={{fontSize:11, color:"var(--text-subtle)"}}>
-              {activeProjects} proyecto{activeProjects !== 1 ? "s" : ""} activo{activeProjects !== 1 ? "s" : ""}
+            <div style={{fontSize:12, color:"var(--text-subtle)"}}>
+              {activeProjects} proyecto{activeProjects!==1?"s":""} activo{activeProjects!==1?"s":""}
             </div>
           </div>
         </div>
@@ -253,17 +250,18 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
       {/* ── KPI row ── */}
       <div style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
-        {kpis.map((k, i) => (
-          <div key={i} className="card" style={{padding:0, overflow:"hidden"}}>
-            <div style={{padding:"16px 18px 12px"}}>
-              <div style={{fontSize:11, color:"var(--text-subtle)", fontWeight:500, marginBottom:8}}>
+        {kpis.map((k,i) => (
+          <div key={i} className="card" style={{padding:0, overflow:"hidden", cursor:"default"}}>
+            <div style={{padding:"18px 20px 14px"}}>
+              <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14}}>
+                <IconBadge icon={k.icon} color={k.iconColor} bg={k.iconBg}/>
+              </div>
+              <div style={{fontSize:11, color:"var(--text-subtle)", fontWeight:500, marginBottom:6, lineHeight:1.3}}>
                 {k.label}
               </div>
               <div style={{
-                fontSize: k.big ? 20 : 28,
-                fontWeight:700, lineHeight:1,
-                fontVariantNumeric:"tabular-nums",
-                marginBottom:6,
+                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 20 : 28,
+                fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums", marginBottom:6,
               }}>
                 {k.value}
               </div>
@@ -271,7 +269,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                 {k.sub}
               </div>
             </div>
-            <div style={{height:3, background: k.color}}/>
+            <div style={{height:3, background:k.barColor}}/>
           </div>
         ))}
       </div>
@@ -282,25 +280,37 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {/* Agenda próxima */}
         <div className="card" style={{display:"flex", flexDirection:"column"}}>
           <div className="card-header">
-            <div>
-              <div className="card-title">Agenda próxima</div>
-              <div className="card-sub">Próximos vencimientos y entregas</div>
+            <div style={{display:"flex", alignItems:"center", gap:10}}>
+              <IconBadge icon="calendar" color="#8b5cf6" bg="rgba(139,92,246,0.12)"/>
+              <div>
+                <div className="card-title">Agenda próxima</div>
+                <div className="card-sub">Los próximos vencimientos y entregas</div>
+              </div>
             </div>
             <button className="btn ghost sm" onClick={() => navigate("projects")}>
               Ver todo <Icon name="arrow" size={12}/>
             </button>
           </div>
           <div className="card-body flush" style={{flex:1}}>
-            {upcomingEvents.length === 0 ? (
+            {upcomingEvents.length===0 ? (
               <div style={{padding:32, textAlign:"center"}}>
                 <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
               </div>
-            ) : upcomingEvents.map((ev, i) => (
+            ) : upcomingEvents.map((ev,i) => (
               <div key={i} style={{
-                display:"flex", alignItems:"center", gap:12, padding:"11px 18px",
-                borderBottom: i < upcomingEvents.length - 1 ? "0.5px solid var(--border)" : "none",
+                display:"flex", alignItems:"center", gap:12, padding:"12px 20px",
+                borderBottom: i<upcomingEvents.length-1 ? "0.5px solid var(--border)" : "none",
               }}>
-                <div style={{width:6, height:6, borderRadius:"50%", background:ev.dot, flexShrink:0}}/>
+                <div style={{
+                  width:32, height:32, borderRadius:8, flexShrink:0,
+                  background: ev.type==="entrega" ? "rgba(59,130,246,0.1)"
+                             : ev.type==="factura" ? "rgba(245,158,11,0.1)"
+                             : "rgba(139,92,246,0.1)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  color: ev.color,
+                }}>
+                  <Icon name={ev.icon} size={14} strokeWidth={1.8}/>
+                </div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{fontSize:13, fontWeight:500, overflow:"hidden",
                     textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.label}</div>
@@ -311,8 +321,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                     {formatEventDate(ev.date)}
                   </span>
                   <span style={{
-                    fontSize:10, padding:"1px 7px", borderRadius:99,
-                    border:"0.5px solid var(--border)", color:"var(--text-subtle)",
+                    fontSize:10, padding:"2px 8px", borderRadius:99,
+                    background:"var(--bg-elev-2)", color:"var(--text-subtle)",
+                    border:"0.5px solid var(--border)",
                   }}>{ev.type}</span>
                 </div>
               </div>
@@ -323,79 +334,91 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {/* Colas de trabajo */}
         <div className="card" style={{display:"flex", flexDirection:"column"}}>
           <div className="card-header">
-            <div>
-              <div className="card-title">Colas de trabajo</div>
-              <div className="card-sub">Seguimiento inmediato · requieren acción</div>
+            <div style={{display:"flex", alignItems:"center", gap:10}}>
+              <IconBadge icon="inbox" color="#14b8a6" bg="rgba(20,184,166,0.12)"/>
+              <div>
+                <div className="card-title">Colas de trabajo</div>
+                <div className="card-sub">Seguimiento inmediato en tareas y proyectos</div>
+              </div>
             </div>
+            <button className="btn ghost sm" onClick={() => navigate("projects")}>
+              Ver todo <Icon name="arrow" size={12}/>
+            </button>
           </div>
           <div className="card-body flush" style={{flex:1}}>
-            {queues.map((q, i) => (
+            {queues.map((q,i) => (
               <div key={i}
                 onClick={q.action}
-                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                onMouseEnter={e => e.currentTarget.style.background="var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background="transparent"}
                 style={{
                   display:"flex", alignItems:"center", justifyContent:"space-between",
-                  padding:"14px 18px", cursor:"pointer", transition:"background .08s",
-                  borderBottom: i < queues.length - 1 ? "0.5px solid var(--border)" : "none",
+                  padding:"13px 20px", cursor:"pointer", transition:"background .08s",
+                  borderBottom: i<queues.length-1 ? "0.5px solid var(--border)" : "0.5px solid var(--border)",
                 }}>
                 <div style={{display:"flex", alignItems:"center", gap:10}}>
-                  <div style={{width:8, height:8, borderRadius:2, background:q.color, flexShrink:0}}/>
+                  <div style={{
+                    width:28, height:28, borderRadius:7, flexShrink:0,
+                    background:"var(--bg-elev-2)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    color:"var(--text-subtle)",
+                  }}>
+                    <Icon name={q.icon} size={13} strokeWidth={1.8}/>
+                  </div>
                   <span style={{fontSize:13}}>{q.label}</span>
                 </div>
                 <span style={{
-                  fontSize:15, fontWeight:700, color:q.color,
+                  fontSize:18, fontWeight:700, color:q.color,
                   fontVariantNumeric:"tabular-nums",
-                }}>
-                  {q.count}
-                </span>
+                }}>{q.count}</span>
               </div>
             ))}
 
-            {/* Active projects list */}
-            <div style={{padding:"14px 18px 6px", borderTop:"0.5px solid var(--border)"}}>
-              <div style={{fontSize:11, fontWeight:600, color:"var(--text-subtle)",
-                textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
+            {/* Active projects mini list */}
+            <div style={{padding:"14px 20px 10px"}}>
+              <div style={{
+                fontSize:10, fontWeight:700, color:"var(--text-subtle)",
+                textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10,
+              }}>
                 Proyectos activos
               </div>
-              {D.PROJECTS.length === 0 ? (
-                <div style={{fontSize:12, color:"var(--text-subtle)", padding:"8px 0"}}>
-                  Sin proyectos activos
+              {D.PROJECTS.length===0 ? (
+                <div style={{fontSize:12, color:"var(--text-subtle)", padding:"6px 0"}}>
+                  Sin proyectos — <button className="btn ghost sm" onClick={()=>openModal("newProject")}
+                    style={{display:"inline",padding:"0 4px"}}>Crear uno</button>
                 </div>
-              ) : D.PROJECTS.slice(0, 4).map((p, i) => {
-                const pTasks = D.TASKS[p.id] || [];
-                const liveProgress = pTasks.length
-                  ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100)
-                  : 0;
+              ) : D.PROJECTS.slice(0,5).map((p) => {
+                const pTasks = D.TASKS[p.id]||[];
+                const live = pTasks.length ? Math.round(pTasks.filter(t=>t.column==="done").length/pTasks.length*100) : 0;
                 return (
                   <div key={p.id}
-                    onClick={() => navigate("project", { projectId: p.id })}
-                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    onClick={() => navigate("project",{projectId:p.id})}
+                    onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"}
+                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}
                     style={{
-                      display:"flex", alignItems:"center", gap:10, padding:"7px 0",
+                      display:"flex", alignItems:"center", gap:10, padding:"6px 4px",
                       cursor:"pointer", borderRadius:6, transition:"background .08s",
                     }}>
-                    <span className={"dot " + p.light}/>
+                    <span className={"dot "+p.light}/>
                     <span style={{flex:1, fontSize:12.5, fontWeight:500, minWidth:0,
                       overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
                       {p.name}
                     </span>
-                    <div style={{width:70, display:"flex", alignItems:"center", gap:6}}>
+                    <div style={{width:72, display:"flex", alignItems:"center", gap:6}}>
                       <div className="progress" style={{flex:1}}>
-                        <i style={{width: liveProgress + "%"}}/>
+                        <i style={{width:live+"%"}}/>
                       </div>
-                      <span style={{fontSize:11, color:"var(--text-muted)",
-                        fontVariantNumeric:"tabular-nums", width:26, textAlign:"right"}}>
-                        {liveProgress}%
-                      </span>
+                      <span style={{
+                        fontSize:11, color:"var(--text-muted)",
+                        fontVariantNumeric:"tabular-nums", width:28, textAlign:"right",
+                      }}>{live}%</span>
                     </div>
                   </div>
                 );
               })}
-              {D.PROJECTS.length > 4 && (
-                <button className="btn ghost sm" style={{marginTop:6, width:"100%"}}
-                  onClick={() => navigate("projects")}>
+              {D.PROJECTS.length>5 && (
+                <button className="btn ghost sm" style={{marginTop:8,width:"100%"}}
+                  onClick={()=>navigate("projects")}>
                   Ver todos ({D.PROJECTS.length}) <Icon name="arrow" size={11}/>
                 </button>
               )}
