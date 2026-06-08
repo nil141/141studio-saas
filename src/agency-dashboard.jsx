@@ -13,15 +13,16 @@ const parseSpanishDate = (str) => {
 };
 
 // ── Icon badge ────────────────────────────────────────────────
-const IconBadge = ({ icon, color, bg }) => (
+const IconBadge = ({ icon }) => (
   <div style={{
     width: 38, height: 38, borderRadius: 10,
-    background: bg,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
     display: "flex", alignItems: "center", justifyContent: "center",
     flexShrink: 0,
-    color: color,
+    color: "var(--text-muted)",
   }}>
-    <Icon name={icon} size={18} strokeWidth={1.8}/>
+    <Icon name={icon} size={18} strokeWidth={1.6}/>
   </div>
 );
 
@@ -124,55 +125,40 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       label:  "Proyectos activos",
       value:  activeProjects,
       sub:    activeProjects===0 ? "Crea el primero" : capacityLabel,
-      barColor: capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
       icon:   "folder",
-      iconColor: "#3b82f6",
-      iconBg:  "rgba(59,130,246,0.12)",
     },
     {
       label:  "Tareas pendientes",
       value:  pendingTasks,
       sub:    pendingTasks===0 ? "Todo al día" : "en todos los proyectos",
-      barColor: "rgba(139,92,246,0.8)",
       icon:   "list-todo",
-      iconColor: "#8b5cf6",
-      iconBg:  "rgba(139,92,246,0.12)",
     },
     {
       label:  "Tareas vencidas",
       value:  overdueTasks,
       sub:    overdueTasks===0 ? "Ninguna vencida" : "requieren atención",
-      barColor: overdueTasks>0?"var(--red)":"var(--green)",
       icon:   "alert-triangle",
-      iconColor: overdueTasks>0?"#ef4444":"#22c55e",
-      iconBg:  overdueTasks>0?"rgba(239,68,68,0.12)":"rgba(34,197,94,0.12)",
     },
     {
       label:  "Proyectos en riesgo",
       value:  atRisk,
       sub:    atRisk===0 ? "Todo en orden" : "semáforo rojo",
-      barColor: atRisk>0?"var(--red)":"var(--green)",
       icon:   "flag",
-      iconColor: "#14b8a6",
-      iconBg:  "rgba(20,184,166,0.12)",
     },
     {
       label:  "Facturado este mes",
       value:  stripeMonth===null?"…":stripeMonth===false?"—":`€${(stripeMonth/100).toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})}`,
       sub:    stripeMonth===null?"Conectando…":stripeMonth===false?"Sin conexión Stripe":new Date().toLocaleString("es-ES",{month:"long"}),
-      barColor: "#f59e0b",
       icon:   "receipt",
-      iconColor: "#f59e0b",
-      iconBg:  "rgba(245,158,11,0.12)",
     },
   ];
 
   // ── Queues ──
   const queues = [
-    { icon:"list-todo", label:"Tareas sin completar",  count:pendingTasks,    color:"var(--blue)",   action:()=>navigate("projects") },
-    { icon:"clock",     label:"Tareas vencidas",        count:overdueTasks,    color:overdueTasks>0?"var(--red)":"var(--text-subtle)", action:()=>navigate("projects") },
-    { icon:"flag",      label:"Proyectos en riesgo",    count:atRisk,          color:atRisk>0?"var(--red)":"var(--text-subtle)", action:()=>navigate("projects") },
-    { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, color:pendingInvoices>0?"var(--amber)":"var(--text-subtle)", action:()=>navigate("invoices") },
+    { icon:"list-todo", label:"Tareas sin completar",  count:pendingTasks,    action:()=>navigate("projects") },
+    { icon:"clock",     label:"Tareas vencidas",        count:overdueTasks,    action:()=>navigate("projects") },
+    { icon:"flag",      label:"Proyectos en riesgo",    count:atRisk,          action:()=>navigate("projects") },
+    { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, action:()=>navigate("invoices") },
   ];
 
   return (
@@ -252,9 +238,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       <div style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
         {kpis.map((k,i) => (
           <div key={i} className="card" style={{padding:0, overflow:"hidden", cursor:"default"}}>
-            <div style={{padding:"18px 20px 14px"}}>
-              <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:14}}>
-                <IconBadge icon={k.icon} color={k.iconColor} bg={k.iconBg}/>
+            <div style={{padding:"18px 20px 16px"}}>
+              <div style={{marginBottom:14}}>
+                <IconBadge icon={k.icon}/>
               </div>
               <div style={{fontSize:11, color:"var(--text-subtle)", fontWeight:500, marginBottom:6, lineHeight:1.3}}>
                 {k.label}
@@ -269,7 +255,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                 {k.sub}
               </div>
             </div>
-            <div style={{height:3, background:k.barColor}}/>
+            <div style={{height:2, background:"var(--border)"}}/>
           </div>
         ))}
       </div>
@@ -281,7 +267,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <div className="card" style={{display:"flex", flexDirection:"column"}}>
           <div className="card-header">
             <div style={{display:"flex", alignItems:"center", gap:10}}>
-              <IconBadge icon="calendar" color="#8b5cf6" bg="rgba(139,92,246,0.12)"/>
+              <IconBadge icon="calendar"/>
               <div>
                 <div className="card-title">Agenda próxima</div>
                 <div className="card-sub">Los próximos vencimientos y entregas</div>
@@ -303,11 +289,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
               }}>
                 <div style={{
                   width:32, height:32, borderRadius:8, flexShrink:0,
-                  background: ev.type==="entrega" ? "rgba(59,130,246,0.1)"
-                             : ev.type==="factura" ? "rgba(245,158,11,0.1)"
-                             : "rgba(139,92,246,0.1)",
+                  background:"var(--bg-elev-2)",
+                  border:"0.5px solid var(--border)",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  color: ev.color,
+                  color:"var(--text-muted)",
                 }}>
                   <Icon name={ev.icon} size={14} strokeWidth={1.8}/>
                 </div>
@@ -335,7 +320,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <div className="card" style={{display:"flex", flexDirection:"column"}}>
           <div className="card-header">
             <div style={{display:"flex", alignItems:"center", gap:10}}>
-              <IconBadge icon="inbox" color="#14b8a6" bg="rgba(20,184,166,0.12)"/>
+              <IconBadge icon="inbox"/>
               <div>
                 <div className="card-title">Colas de trabajo</div>
                 <div className="card-sub">Seguimiento inmediato en tareas y proyectos</div>
@@ -368,7 +353,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                   <span style={{fontSize:13}}>{q.label}</span>
                 </div>
                 <span style={{
-                  fontSize:18, fontWeight:700, color:q.color,
+                  fontSize:18, fontWeight:700, color:"var(--text)",
                   fontVariantNumeric:"tabular-nums",
                 }}>{q.count}</span>
               </div>
