@@ -79,13 +79,14 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
 
   const navItemStyle = (isActive) => ({
     display: "flex", alignItems: "center", gap: 12,
-    padding: "10px 12px", borderRadius: 10, cursor: "pointer",
+    height: 48, padding: "0 12px", borderRadius: 16, cursor: "pointer",
     background: isActive ? "rgba(158,154,229,0.13)" : "transparent",
     color: isActive ? "#c8c5f2" : "var(--text-muted)",
     transition: "background .1s, color .1s",
-    fontSize: 15, fontWeight: 400,
+    fontSize: 16, fontWeight: 400,
     letterSpacing: "-0.96px",
     userSelect: "none",
+    flexShrink: 0,
   });
 
   const NavItem = ({ id, icon, label, badge }) => {
@@ -97,7 +98,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
         onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#cccccc"; }}}
         onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}}
       >
-        <Icon name={icon} size={17} strokeWidth={1.6}/>
+        <Icon name={icon} size={18} strokeWidth={1.5}/>
         <span style={{flex:1}}>{label}</span>
         {badge ? (
           <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
@@ -112,7 +113,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
   const FooterItem = ({ icon, label, onClick, kbd }) => (
     <div
       onClick={onClick}
-      style={{...navItemStyle(false), fontSize:14}}
+      style={{...navItemStyle(false), fontSize:15, height:42}}
       onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "#cccccc"; }}
       onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
     >
@@ -155,17 +156,19 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
       {/* Nav con secciones */}
       <div style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none"}}>
         {sections.map((section, si) => (
-          <div key={si} style={{marginBottom: 18}}>
+          <div key={si} style={{marginBottom: 20}}>
             <div style={{
               fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
               letterSpacing: "0.06em", textTransform: "uppercase",
-              padding: "0 12px", marginBottom: 4,
+              padding: "0 12px", marginBottom: 2,
             }}>
               {section.title}
             </div>
-            {section.items.map(it => (
-              <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
-            ))}
+            <div style={{display:"flex", flexDirection:"column", gap:8}}>
+              {section.items.map(it => (
+                <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+              ))}
+            </div>
           </div>
         ))}
       </div>
