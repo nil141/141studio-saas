@@ -75,8 +75,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
   const navItemStyle = (isActive) => ({
     display: "flex", alignItems: "center", gap: 10,
     padding: "8px 10px", borderRadius: 10, cursor: "pointer",
-    background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
-    color: isActive ? "var(--text)" : "var(--text-muted)",
+    background: isActive ? "rgba(158,154,229,0.14)" : "transparent",
+    color: isActive ? "#c4c1f0" : "var(--text-muted)",
     transition: "all .1s", marginBottom: 1,
     fontSize: 13, fontWeight: isActive ? 500 : 400,
   });
@@ -87,7 +87,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
       <div
         onClick={() => onNavigate(id)}
         style={navItemStyle(isActive)}
-        onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text)"; }}}
+        onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "#e0e0e0"; }}}
         onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}}
       >
         <Icon name={icon} size={16} strokeWidth={1.7}/>
