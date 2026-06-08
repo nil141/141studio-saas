@@ -66,10 +66,15 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
 
   const sections = kind === "client" ? clientSections : agencySections;
 
+  const cleanName = (raw, fallback) => {
+    if (!raw) return fallback;
+    const n = raw.includes("@") ? raw.split("@")[0] : raw;
+    return n.charAt(0).toUpperCase() + n.slice(1);
+  };
   const me = session
     ? (kind === "agency"
-        ? { name: session.name || "Nil", initials: (session.name || "N")[0].toUpperCase(), email: session.email || "" }
-        : { name: session.name || "Cliente", initials: (session.name || "C")[0].toUpperCase(), email: session.email || "" })
+        ? { name: cleanName(session.name || session.email, "Nil"), initials: (cleanName(session.name || session.email, "N"))[0].toUpperCase(), email: session.email || "" }
+        : { name: cleanName(session.name || session.email, "Cliente"), initials: (cleanName(session.name || session.email, "C"))[0].toUpperCase(), email: session.email || "" })
     : { name: "Nil", initials: "N", email: "nil@141agency.com" };
 
   const navItemStyle = (isActive) => ({
@@ -147,17 +152,21 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
         </div>
       </div>
 
-      {/* Nav — flat list, sin secciones */}
-      <div style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none", display:"flex", flexDirection:"column", gap:2}}>
+      {/* Nav con secciones */}
+      <div style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none"}}>
         {sections.map((section, si) => (
-          <React.Fragment key={si}>
-            {si > 0 && (
-              <div style={{height:"0.5px", background:"rgba(255,255,255,0.06)", margin:"8px 10px"}}/>
-            )}
+          <div key={si} style={{marginBottom: 18}}>
+            <div style={{
+              fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
+              letterSpacing: "0.06em", textTransform: "uppercase",
+              padding: "0 12px", marginBottom: 4,
+            }}>
+              {section.title}
+            </div>
             {section.items.map(it => (
               <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
             ))}
-          </React.Fragment>
+          </div>
         ))}
       </div>
 
