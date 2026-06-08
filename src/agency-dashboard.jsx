@@ -1,6 +1,6 @@
 // Agency Dashboard — 141'STUDIO MVP
 
-// ── Mini calendar helper ─────────────────────────────────────
+// ── Date helpers ─────────────────────────────────────────────
 const parseSpanishDate = (str) => {
   if (!str || str === "—") return null;
   const M = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
@@ -10,173 +10,6 @@ const parseSpanishDate = (str) => {
   const mon = M[parts[1].slice(0,3)];
   if (isNaN(day) || mon === undefined) return null;
   return new Date(new Date().getFullYear(), mon, day);
-};
-
-const DashboardCalendar = ({ navigate }) => {
-  const D = window.Data;
-  const [viewDate, setViewDate] = React.useState(() => new Date());
-  const [selected, setSelected] = React.useState(null);
-
-  const year  = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const MONTH_NAMES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  const DAY_NAMES   = ["L","M","X","J","V","S","D"];
-
-  const today    = new Date();
-  const todayKey = `${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`;
-
-  // Gather events from projects + invoices + tasks
-  const events = React.useMemo(() => {
-    const ev = [];
-    D.PROJECTS.forEach(p => {
-      const d = parseSpanishDate(p.deadline);
-      if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "project",
-        dot: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--green)" });
-    });
-    D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
-      const d = parseSpanishDate(i.due);
-      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "invoice",
-        dot: i.status === "overdue" ? "var(--red)" : "var(--amber)" });
-    });
-    Object.entries(D.TASKS).forEach(([pid, taskList]) => {
-      const project = pid !== "__none__" ? D.PROJECTS.find(p => p.id === pid) : null;
-      (taskList || []).forEach(t => {
-        if (!t.deadline) return;
-        const d = new Date(t.deadline + "T00:00:00");
-        if (isNaN(d)) return;
-        ev.push({ date: d, label: t.title, sub: t.clientName || "", type: "task",
-          dot: "var(--blue)", projectName: project ? project.name : null });
-      });
-    });
-    return ev.sort((a, b) => a.date - b.date);
-  }, [D.PROJECTS, D.INVOICES, D.TASKS]);
-
-  const eventsOnDay = (d) => events.filter(e =>
-    e.date.getFullYear() === year && e.date.getMonth() === month && e.date.getDate() === d
-  );
-
-  const startOffset = (new Date(year, month, 1).getDay() + 6) % 7; // Mon-based
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  const upcomingEvents = selected
-    ? eventsOnDay(selected)
-    : events.filter(e => {
-        const diff = e.date - today;
-        return diff >= -86400000 && diff <= 45 * 86400000;
-      }).slice(0, 7);
-
-  return (
-    <div className="card" style={{display:"flex", flexDirection:"column"}}>
-      {/* Header */}
-      <div className="card-header">
-        <div className="card-title">Calendario</div>
-        <div className="row tight" style={{alignItems:"center"}}>
-          <button className="btn ghost icon-only sm"
-            onClick={() => { setViewDate(new Date(year, month - 1, 1)); setSelected(null); }}>
-            <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/>
-          </button>
-          <span style={{fontSize:12, fontWeight:500, minWidth:110, textAlign:"center"}}>
-            {MONTH_NAMES[month]} {year}
-          </span>
-          <button className="btn ghost icon-only sm"
-            onClick={() => { setViewDate(new Date(year, month + 1, 1)); setSelected(null); }}>
-            <Icon name="chevron" size={12}/>
-          </button>
-          <button className="btn ghost sm" style={{fontSize:11, marginLeft:4}}
-            onClick={() => { setViewDate(new Date()); setSelected(null); }}>Hoy</button>
-        </div>
-      </div>
-
-      <div style={{padding:"12px 16px 0"}}>
-        {/* Day headers */}
-        <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2, marginBottom:4}}>
-          {DAY_NAMES.map(d => (
-            <div key={d} style={{textAlign:"center", fontSize:10, fontWeight:600,
-              color:"var(--text-subtle)", padding:"2px 0"}}>{d}</div>
-          ))}
-        </div>
-        {/* Day cells */}
-        <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:2}}>
-          {Array.from({length: startOffset}).map((_,i) => <div key={"e"+i}/>)}
-          {Array.from({length: daysInMonth}).map((_,i) => {
-            const day  = i + 1;
-            const key  = `${year}-${month}-${day}`;
-            const isToday    = key === todayKey;
-            const isSelected = selected === day;
-            const dayEvs     = eventsOnDay(day);
-            return (
-              <div key={day}
-                onClick={() => setSelected(isSelected ? null : day)}
-                onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = "var(--bg-hover)"; }}
-                onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = isToday ? "var(--accent-soft)" : "transparent"; }}
-                style={{
-                  textAlign:"center", padding:"5px 2px", borderRadius:7, cursor:"pointer",
-                  background: isSelected ? "var(--accent)" : isToday ? "var(--accent-soft)" : "transparent",
-                  color: isSelected ? "var(--accent-fg)" : "var(--text-muted)",
-                  transition:"background .1s",
-                }}>
-                <div style={{fontSize:12, fontWeight: isToday || isSelected ? 600 : 400}}>{day}</div>
-                {dayEvs.length > 0 && (
-                  <div style={{display:"flex", justifyContent:"center", gap:2, marginTop:2}}>
-                    {dayEvs.slice(0,3).map((ev,idx) => (
-                      <div key={idx} style={{width:4, height:4, borderRadius:"50%",
-                        background: isSelected ? "var(--accent-fg)" : ev.dot}}/>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Events list */}
-      <div style={{padding:"10px 16px 14px", marginTop:8, borderTop:"0.5px solid var(--border)"}}>
-        <div style={{fontSize:11, fontWeight:600, color:"var(--text-subtle)", marginBottom:8}}>
-          {selected
-            ? `${selected} de ${MONTH_NAMES[month].toLowerCase()}`
-            : "Próximos eventos"}
-        </div>
-        {upcomingEvents.length === 0 ? (
-          <div style={{textAlign:"center", color:"var(--text-subtle)", fontSize:12, padding:"12px 0"}}>
-            Sin eventos {selected ? "este día" : "próximos"}
-          </div>
-        ) : (
-          <div style={{display:"flex", flexDirection:"column", gap:5}}>
-            {upcomingEvents.map((ev, i) => (
-              <div key={i} style={{display:"flex", alignItems:"center", gap:8,
-                padding:"6px 8px", borderRadius:7, background:"var(--bg-elev-2)"}}>
-                <div style={{width:6, height:6, borderRadius:"50%", background:ev.dot, flexShrink:0}}/>
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:12, fontWeight:500, overflow:"hidden",
-                    textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.label}</div>
-                  <div style={{fontSize:11, color:"var(--text-subtle)"}}>{ev.sub}</div>
-                </div>
-                {ev.type === "project" && (
-                  <span style={{fontSize:10, color:"var(--text-subtle)", flexShrink:0,
-                    padding:"1px 6px", border:"0.5px solid var(--border)", borderRadius:99}}>
-                    entrega
-                  </span>
-                )}
-                {ev.type === "invoice" && (
-                  <span style={{fontSize:10, color:"var(--text-subtle)", flexShrink:0,
-                    padding:"1px 6px", border:"0.5px solid var(--border)", borderRadius:99}}>
-                    factura
-                  </span>
-                )}
-                {ev.type === "task" && ev.projectName && (
-                  <span style={{fontSize:10, color:"var(--text-subtle)", flexShrink:0,
-                    padding:"1px 6px", border:"0.5px solid var(--border)", borderRadius:99}}>
-                    {ev.projectName}
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
-  );
 };
 
 // ── Dashboard ────────────────────────────────────────────────
@@ -199,15 +32,23 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
   })();
 
-  const agencyName  = D.SETTINGS.name || "141'STUDIO";
+  const agencyName   = D.SETTINGS.name || "141'STUDIO";
+  const adminName    = (D.SETTINGS.email || "nil@141agency.com").split("@")[0];
   const activeProjects = D.PROJECTS.length;
-  const capacity    = activeProjects <= 3 ? "green" : activeProjects === 4 ? "amber" : "red";
-  const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Zona cómoda" : activeProjects === 4 ? "Zona de atención" : "Zona de riesgo";
-  const pendingTasks  = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length;
-  const toApprove     = 2;
+  const pendingTasks   = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length;
+  const overdueTasks   = Object.values(D.TASKS).flat().filter(t => {
+    if (!t.deadline || t.column === "done") return false;
+    return new Date(t.deadline + "T00:00:00") < new Date();
+  }).length;
+  const pendingInvoices = D.INVOICES.filter(i => i.status !== "paid").length;
+  const atRisk = D.PROJECTS.filter(p => p.light === "red").length;
 
-  // ── Facturado este mes desde Stripe ──
-  const [stripeMonth, setStripeMonth] = useState(null); // null = cargando
+  // Capacity
+  const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
+  const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad cómoda" : activeProjects <= 4 ? "Capacidad media" : "Capacidad al límite";
+
+  // ── Facturado este mes ──
+  const [stripeMonth, setStripeMonth] = useState(null);
   useEffect(() => {
     const now = new Date();
     const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
@@ -227,124 +68,341 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       .catch(() => setStripeMonth(false));
   }, []);
 
+  // ── Upcoming events ──
+  const upcomingEvents = React.useMemo(() => {
+    const ev = [];
+    const today = new Date();
+    D.PROJECTS.forEach(p => {
+      const d = parseSpanishDate(p.deadline);
+      if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "entrega",
+        dot: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--green)" });
+    });
+    D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
+      const d = parseSpanishDate(i.due);
+      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "factura",
+        dot: i.status === "overdue" ? "var(--red)" : "var(--amber)" });
+    });
+    Object.entries(D.TASKS).forEach(([pid, taskList]) => {
+      const project = pid !== "__none__" ? D.PROJECTS.find(p => p.id === pid) : null;
+      (taskList || []).forEach(t => {
+        if (!t.deadline || t.column === "done") return;
+        const d = new Date(t.deadline + "T00:00:00");
+        if (isNaN(d)) return;
+        ev.push({ date: d, label: t.title, sub: project ? project.name : "—", type: "tarea",
+          dot: "var(--blue)" });
+      });
+    });
+    return ev
+      .filter(e => {
+        const diff = e.date - today;
+        return diff >= -86400000 && diff <= 60 * 86400000;
+      })
+      .sort((a, b) => a.date - b.date)
+      .slice(0, 8);
+  }, [D.PROJECTS, D.INVOICES, D.TASKS]);
+
+  const formatEventDate = (d) => {
+    const today = new Date();
+    const diff  = Math.round((d - today) / 86400000);
+    if (diff < 0)  return `hace ${Math.abs(diff)}d`;
+    if (diff === 0) return "Hoy";
+    if (diff === 1) return "Mañana";
+    const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+    const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
+  };
+
+  // ── KPI cards config ──
+  const kpis = [
+    {
+      label: "Proyectos activos",
+      value: activeProjects,
+      sub: activeProjects === 0 ? "Crea el primero" : capacityLabel,
+      color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
+      icon: "folder",
+    },
+    {
+      label: "Tareas pendientes",
+      value: pendingTasks,
+      sub: pendingTasks === 0 ? "Todo al día ✓" : "en todos los proyectos",
+      color: pendingTasks === 0 ? "var(--green)" : "var(--blue)",
+      icon: "check",
+    },
+    {
+      label: "Tareas vencidas",
+      value: overdueTasks,
+      sub: overdueTasks === 0 ? "Ninguna vencida ✓" : "requieren atención",
+      color: overdueTasks > 0 ? "var(--red)" : "var(--green)",
+      icon: "warning",
+    },
+    {
+      label: "Proyectos en riesgo",
+      value: atRisk,
+      sub: atRisk === 0 ? "Todo en orden ✓" : "semáforo rojo",
+      color: atRisk > 0 ? "var(--red)" : "var(--green)",
+      icon: "bolt",
+    },
+    {
+      label: "Facturado este mes",
+      value: stripeMonth === null ? "…"
+           : stripeMonth === false ? "—"
+           : `€${(stripeMonth / 100).toLocaleString("es-ES", {minimumFractionDigits:0, maximumFractionDigits:0})}`,
+      sub: stripeMonth === null ? "Conectando…"
+         : stripeMonth === false ? "Sin conexión Stripe"
+         : new Date().toLocaleString("es-ES", {month:"long"}),
+      color: "var(--accent)",
+      icon: "euro",
+      big: true,
+    },
+  ];
+
+  // ── Work queues ──
+  const queues = [
+    {
+      label: "Tareas sin completar",
+      count: pendingTasks,
+      color: "var(--blue)",
+      action: () => navigate("projects"),
+    },
+    {
+      label: "Tareas vencidas",
+      count: overdueTasks,
+      color: overdueTasks > 0 ? "var(--red)" : "var(--text-subtle)",
+      action: () => navigate("projects"),
+    },
+    {
+      label: "Proyectos en riesgo",
+      count: atRisk,
+      color: atRisk > 0 ? "var(--red)" : "var(--text-subtle)",
+      action: () => navigate("projects"),
+    },
+    {
+      label: "Facturas pendientes",
+      count: pendingInvoices,
+      color: pendingInvoices > 0 ? "var(--amber)" : "var(--text-subtle)",
+      action: () => navigate("invoices"),
+    },
+  ];
+
   return (
-    <div className="page" style={{display:"flex", flexDirection:"column", minHeight:"calc(100vh - 56px)", paddingBottom:28}}>
-      <div className="page-head">
-        <div>
-          <h1>{greeting}, {agencyName.split(" ")[0]}.</h1>
-          <div className="sub">{todayStr} · esto tienes encima de la mesa.</div>
-        </div>
-        <div className="row tight">
-          <button className="btn" onClick={() => openModal("newTask")}><Icon name="plus" size={14}/> Nueva tarea</button>
-          <button className="btn" onClick={() => openModal("invite")}><Icon name="external-link" size={14}/> Invitar cliente</button>
-          <button className="btn primary" onClick={() => openModal("newProject")}><Icon name="plus" size={14}/> Nuevo proyecto</button>
+    <div className="page" style={{display:"flex", flexDirection:"column", gap:18, paddingBottom:32}}>
+
+      {/* ── Welcome banner ── */}
+      <div className="card" style={{padding:0, overflow:"hidden"}}>
+        <div style={{display:"flex", alignItems:"stretch", gap:0}}>
+          {/* Left: greeting + actions */}
+          <div style={{flex:1, padding:"24px 28px 22px"}}>
+            <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.12em",
+              color:"var(--text-subtle)", marginBottom:8, textTransform:"uppercase"}}>
+              Resumen del espacio de trabajo
+            </div>
+            <div style={{fontSize:26, fontWeight:700, lineHeight:1.15, marginBottom:4}}>
+              {greeting}, {adminName}.
+            </div>
+            <div style={{fontSize:13, color:"var(--text-muted)", marginBottom:18}}>
+              {agencyName} · {todayStr}
+            </div>
+            <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+              <button className="btn sm" onClick={() => openModal("newTask")}>
+                <Icon name="plus" size={13}/> Nueva tarea
+              </button>
+              <button className="btn sm" onClick={() => openModal("newProject")}>
+                <Icon name="plus" size={13}/> Nuevo proyecto
+              </button>
+              <button className="btn sm" onClick={() => openModal("invite")}>
+                <Icon name="external-link" size={13}/> Invitar cliente
+              </button>
+              <button className="btn sm" onClick={() => navigate("invoices")}>
+                <Icon name="euro" size={13}/> Nueva factura
+              </button>
+            </div>
+          </div>
+
+          {/* Right: capacity */}
+          <div style={{
+            width:220, padding:"22px 24px",
+            borderLeft:"0.5px solid var(--border)",
+            background:"var(--bg-elev-2)",
+            display:"flex", flexDirection:"column", justifyContent:"center", gap:10,
+          }}>
+            <div style={{fontSize:10, fontWeight:700, letterSpacing:"0.1em",
+              color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:2}}>
+              Capacidad
+            </div>
+            <div style={{display:"flex", gap:5}}>
+              {[1,2,3,4,5].map(n => (
+                <div key={n} style={{
+                  flex:1, height:6, borderRadius:99,
+                  background: n <= activeProjects
+                    ? (capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)")
+                    : "var(--border)",
+                  transition:"background .3s",
+                }}/>
+              ))}
+            </div>
+            <div style={{fontSize:12, fontWeight:500,
+              color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)"}}>
+              {capacityLabel}
+            </div>
+            <div style={{fontSize:11, color:"var(--text-subtle)"}}>
+              {activeProjects} proyecto{activeProjects !== 1 ? "s" : ""} activo{activeProjects !== 1 ? "s" : ""}
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* KPIs */}
-      <div className="rg-4" style={{marginBottom:18}}>
-        <div className="card"><div className="card-body">
-          <div className="metric">
-            <div className="row between">
-              <div className="metric-label">Proyectos activos</div>
-              <span className={"chip " + capacity}>{capacityLabel}</span>
+      {/* ── KPI row ── */}
+      <div style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
+        {kpis.map((k, i) => (
+          <div key={i} className="card" style={{padding:0, overflow:"hidden"}}>
+            <div style={{padding:"16px 18px 12px"}}>
+              <div style={{fontSize:11, color:"var(--text-subtle)", fontWeight:500, marginBottom:8}}>
+                {k.label}
+              </div>
+              <div style={{
+                fontSize: k.big ? 20 : 28,
+                fontWeight:700, lineHeight:1,
+                fontVariantNumeric:"tabular-nums",
+                marginBottom:6,
+              }}>
+                {k.value}
+              </div>
+              <div style={{fontSize:11, color:"var(--text-muted)"}}>
+                {k.sub}
+              </div>
             </div>
-            <div className="metric-value">{activeProjects}</div>
-            <div className="metric-delta">{activeProjects === 0 ? "Crea el primero" : `${activeProjects} en marcha`}</div>
+            <div style={{height:3, background: k.color}}/>
           </div>
-        </div></div>
-
-        <div className="card"><div className="card-body">
-          <div className="metric">
-            <div className="metric-label">Tareas pendientes</div>
-            <div className="metric-value">{pendingTasks}</div>
-            <div className="metric-delta">{pendingTasks === 0 ? "Todo al día" : "en todos los proyectos"}</div>
-          </div>
-        </div></div>
-
-        <div className="card"><div className="card-body">
-          <div className="metric">
-            <div className="metric-label">Por aprobar (cliente)</div>
-            <div className="metric-value" style={toApprove > 0 ? {color:"var(--amber)"} : {}}>{toApprove}</div>
-            <div className="metric-delta warn">Acción del cliente</div>
-          </div>
-        </div></div>
-
-        <div className="card"><div className="card-body">
-          <div className="metric">
-            <div className="metric-label">Facturado este mes</div>
-            <div className="metric-value">
-              {stripeMonth === null
-                ? <span style={{fontSize:18, color:"var(--text-subtle)"}}>…</span>
-                : stripeMonth === false
-                  ? <span style={{fontSize:16, color:"var(--text-subtle)"}}>—</span>
-                  : `€${(stripeMonth / 100).toLocaleString("es-ES", {minimumFractionDigits:2, maximumFractionDigits:2})}`
-              }
-            </div>
-            <div className="metric-delta">
-              {stripeMonth === null ? "Conectando con Stripe…"
-               : stripeMonth === false ? "Sin conexión a Stripe"
-               : "Cobrado en " + new Date().toLocaleString("es-ES", {month:"long"})}
-            </div>
-          </div>
-        </div></div>
+        ))}
       </div>
 
-      <div className="rg-dash">
-        {/* Active projects */}
+      {/* ── Bottom two columns ── */}
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:14}}>
+
+        {/* Agenda próxima */}
         <div className="card" style={{display:"flex", flexDirection:"column"}}>
           <div className="card-header">
             <div>
-              <div className="card-title">Proyectos activos</div>
-              <div className="card-sub">{D.PROJECTS.length} en marcha · semáforo de estado y próxima acción</div>
+              <div className="card-title">Agenda próxima</div>
+              <div className="card-sub">Próximos vencimientos y entregas</div>
             </div>
-            <button className="btn ghost sm" onClick={() => navigate("projects")}>Ver todos <Icon name="arrow" size={12}/></button>
+            <button className="btn ghost sm" onClick={() => navigate("projects")}>
+              Ver todo <Icon name="arrow" size={12}/>
+            </button>
           </div>
-          <div className="card-body flush" style={{flex:1, overflowY:"auto"}}>
-            {D.PROJECTS.length === 0 ? (
-              <div style={{padding:40}}>
-                <Empty icon="folder" title="Sin proyectos activos" sub="Crea uno para empezar a trabajar."/>
-                <div className="row" style={{justifyContent:"center", marginTop:8}}>
-                  <button className="btn primary sm" onClick={() => openModal("newProject")}><Icon name="plus" size={12}/> Nuevo proyecto</button>
+          <div className="card-body flush" style={{flex:1}}>
+            {upcomingEvents.length === 0 ? (
+              <div style={{padding:32, textAlign:"center"}}>
+                <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
+              </div>
+            ) : upcomingEvents.map((ev, i) => (
+              <div key={i} style={{
+                display:"flex", alignItems:"center", gap:12, padding:"11px 18px",
+                borderBottom: i < upcomingEvents.length - 1 ? "0.5px solid var(--border)" : "none",
+              }}>
+                <div style={{width:6, height:6, borderRadius:"50%", background:ev.dot, flexShrink:0}}/>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:13, fontWeight:500, overflow:"hidden",
+                    textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.label}</div>
+                  <div style={{fontSize:11, color:"var(--text-subtle)"}}>{ev.sub}</div>
+                </div>
+                <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
+                  <span style={{fontSize:11, color:"var(--text-muted)", whiteSpace:"nowrap"}}>
+                    {formatEventDate(ev.date)}
+                  </span>
+                  <span style={{
+                    fontSize:10, padding:"1px 7px", borderRadius:99,
+                    border:"0.5px solid var(--border)", color:"var(--text-subtle)",
+                  }}>{ev.type}</span>
                 </div>
               </div>
-            ) : D.PROJECTS.map((p, i) => {
-              const phase = D.PHASES[p.phase];
-              const pTasks = D.TASKS[p.id] || [];
-              const liveProgress = pTasks.length ? Math.round(pTasks.filter(t=>t.column==="done").length/pTasks.length*100) : 0;
-              return (
-                <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
-                  style={{display:"flex", alignItems:"center", gap:14, padding:"14px 18px",
-                    borderBottom: i === D.PROJECTS.length - 1 ? "0" : "0.5px solid var(--border)",
-                    cursor:"pointer", transition:"background .08s"}}
-                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                  <span className={"dot " + p.light}/>
-                  <div className="grow" style={{minWidth:0}}>
-                    <div className="row tight">
-                      <span style={{fontWeight:500, fontSize:13.5}}>{p.name}</span>
-                      <span className="muted xsmall">·</span>
-                      <span className="muted small">{p.clientName}</span>
-                    </div>
-                    <div className="row tight" style={{marginTop:4, color:"var(--text-muted)", fontSize:12}}>
-                      <span className="chip" style={{padding:"1px 7px", fontSize:10.5}}>{phase.label} · {phase.weeks}</span>
-                      <span style={{color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--text-muted)"}}>
-                        → {p.nextMilestone}
-                      </span>
-                    </div>
-                  </div>
-                  <div style={{width:120, display:"flex", alignItems:"center", gap:10}}>
-                    <div className="progress grow"><i style={{width: liveProgress + "%"}}/></div>
-                    <span style={{fontSize:12, color:"var(--text-muted)", fontVariantNumeric:"tabular-nums", width:32, textAlign:"right"}}>{liveProgress}%</span>
-                  </div>
-                </div>
-              );
-            })}
+            ))}
           </div>
         </div>
 
-        {/* Calendar */}
-        <DashboardCalendar navigate={navigate}/>
+        {/* Colas de trabajo */}
+        <div className="card" style={{display:"flex", flexDirection:"column"}}>
+          <div className="card-header">
+            <div>
+              <div className="card-title">Colas de trabajo</div>
+              <div className="card-sub">Seguimiento inmediato · requieren acción</div>
+            </div>
+          </div>
+          <div className="card-body flush" style={{flex:1}}>
+            {queues.map((q, i) => (
+              <div key={i}
+                onClick={q.action}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{
+                  display:"flex", alignItems:"center", justifyContent:"space-between",
+                  padding:"14px 18px", cursor:"pointer", transition:"background .08s",
+                  borderBottom: i < queues.length - 1 ? "0.5px solid var(--border)" : "none",
+                }}>
+                <div style={{display:"flex", alignItems:"center", gap:10}}>
+                  <div style={{width:8, height:8, borderRadius:2, background:q.color, flexShrink:0}}/>
+                  <span style={{fontSize:13}}>{q.label}</span>
+                </div>
+                <span style={{
+                  fontSize:15, fontWeight:700, color:q.color,
+                  fontVariantNumeric:"tabular-nums",
+                }}>
+                  {q.count}
+                </span>
+              </div>
+            ))}
+
+            {/* Active projects list */}
+            <div style={{padding:"14px 18px 6px", borderTop:"0.5px solid var(--border)"}}>
+              <div style={{fontSize:11, fontWeight:600, color:"var(--text-subtle)",
+                textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:10}}>
+                Proyectos activos
+              </div>
+              {D.PROJECTS.length === 0 ? (
+                <div style={{fontSize:12, color:"var(--text-subtle)", padding:"8px 0"}}>
+                  Sin proyectos activos
+                </div>
+              ) : D.PROJECTS.slice(0, 4).map((p, i) => {
+                const pTasks = D.TASKS[p.id] || [];
+                const liveProgress = pTasks.length
+                  ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100)
+                  : 0;
+                return (
+                  <div key={p.id}
+                    onClick={() => navigate("project", { projectId: p.id })}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                    style={{
+                      display:"flex", alignItems:"center", gap:10, padding:"7px 0",
+                      cursor:"pointer", borderRadius:6, transition:"background .08s",
+                    }}>
+                    <span className={"dot " + p.light}/>
+                    <span style={{flex:1, fontSize:12.5, fontWeight:500, minWidth:0,
+                      overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                      {p.name}
+                    </span>
+                    <div style={{width:70, display:"flex", alignItems:"center", gap:6}}>
+                      <div className="progress" style={{flex:1}}>
+                        <i style={{width: liveProgress + "%"}}/>
+                      </div>
+                      <span style={{fontSize:11, color:"var(--text-muted)",
+                        fontVariantNumeric:"tabular-nums", width:26, textAlign:"right"}}>
+                        {liveProgress}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {D.PROJECTS.length > 4 && (
+                <button className="btn ghost sm" style={{marginTop:6, width:"100%"}}
+                  onClick={() => navigate("projects")}>
+                  Ver todos ({D.PROJECTS.length}) <Icon name="arrow" size={11}/>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
