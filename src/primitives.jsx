@@ -74,11 +74,12 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
 
   const navItemStyle = (isActive) => ({
     display: "flex", alignItems: "center", gap: 10,
-    padding: "8px 10px", borderRadius: 10, cursor: "pointer",
+    padding: "9px 10px", borderRadius: 10, cursor: "pointer",
     background: isActive ? "rgba(158,154,229,0.14)" : "transparent",
     color: isActive ? "#c4c1f0" : "var(--text-muted)",
-    transition: "all .1s", marginBottom: 1,
-    fontSize: 13, fontWeight: isActive ? 500 : 400,
+    transition: "all .1s", marginBottom: 2,
+    fontSize: 15, fontWeight: isActive ? 500 : 400,
+    letterSpacing: "-0.96px",
   });
 
   const NavItem = ({ id, icon, label, badge }) => {

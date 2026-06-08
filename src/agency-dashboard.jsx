@@ -171,15 +171,15 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           {/* Left */}
           <div style={{flex:1, padding:"28px 32px 26px"}}>
             <div style={{
-              fontSize:10, fontWeight:700, letterSpacing:"0.12em",
+              fontSize:11, fontWeight:400, letterSpacing:"0.04em",
               color:"var(--text-subtle)", marginBottom:10, textTransform:"uppercase",
             }}>
               Resumen del espacio de trabajo
             </div>
-            <div style={{fontSize:28, fontWeight:700, lineHeight:1.2, marginBottom:4}}>
+            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:4}}>
               {greeting}, {adminName}.
             </div>
-            <div style={{fontSize:13, color:"var(--text-muted)", marginBottom:22}}>
+            <div style={{fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.96px", marginBottom:22}}>
               {agencyName} · {todayStr}
             </div>
             <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
@@ -205,7 +205,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             display:"flex", flexDirection:"column", justifyContent:"center", gap:12,
           }}>
             <div style={{
-              fontSize:10, fontWeight:700, letterSpacing:"0.1em",
+              fontSize:11, fontWeight:400, letterSpacing:"0.04em",
               color:"var(--text-subtle)", textTransform:"uppercase",
             }}>
               Capacidad actual
@@ -242,16 +242,16 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
               <div style={{marginBottom:14}}>
                 <IconBadge icon={k.icon}/>
               </div>
-              <div style={{fontSize:11, color:"var(--text-subtle)", fontWeight:500, marginBottom:6, lineHeight:1.3}}>
+              <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:400, marginBottom:8, letterSpacing:"-0.96px"}}>
                 {k.label}
               </div>
               <div style={{
-                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 20 : 28,
-                fontWeight:700, lineHeight:1, fontVariantNumeric:"tabular-nums", marginBottom:6,
+                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 22 : 32,
+                fontWeight:400, lineHeight:1, letterSpacing:"-1.44px", fontVariantNumeric:"tabular-nums", marginBottom:6,
               }}>
                 {k.value}
               </div>
-              <div style={{fontSize:11, color:"var(--text-muted)"}}>
+              <div style={{fontSize:12, color:"var(--text-subtle)", letterSpacing:"-0.96px"}}>
                 {k.sub}
               </div>
             </div>
