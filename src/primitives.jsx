@@ -20,22 +20,21 @@ const Switch = ({ on, onChange }) => (
   />
 );
 
-const Sidebar = ({ current, onNavigate, kind = "agency", session }) => {
+const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant }) => {
   const D = window.Data;
-  D.useStore(); // re-render on store changes (badge counts)
+  D.useStore();
 
   const pendingTasks = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length || null;
-  const activeClients = D.CLIENTS.filter(c => c.status === "active").length;
 
   const agencySections = [
     {
       title: "Trabajo",
       items: [
-        { id: "dashboard",  label: "Inicio",     icon: "home" },
-        { id: "projects",   label: "Proyectos",  icon: "folder" },
-        { id: "tasks",      label: "Tareas",     icon: "list-todo", badge: pendingTasks },
-        { id: "clients",    label: "Clientes",   icon: "users" },
-        { id: "campaigns",  label: "Campañas",   icon: "megaphone" },
+        { id: "dashboard",  label: "Inicio",      icon: "home" },
+        { id: "projects",   label: "Proyectos",   icon: "folder" },
+        { id: "tasks",      label: "Tareas",      icon: "list-todo", badge: pendingTasks },
+        { id: "clients",    label: "Clientes",    icon: "users" },
+        { id: "campaigns",  label: "Campañas",    icon: "megaphone" },
       ],
     },
     {
@@ -69,105 +68,111 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session }) => {
 
   const me = session
     ? (kind === "agency"
-        ? { name: session.name || "Andrés", role: "Founder", initials: session.initials || "AN", color: "#a78bfa" }
-        : { name: session.name || "Cliente", role: session.email || "", initials: session.initials || "CL", color: "#fb7185" })
-    : D.ME;
+        ? { name: session.name || "Nil", initials: (session.name || "N")[0].toUpperCase(), email: session.email || "" }
+        : { name: session.name || "Cliente", initials: (session.name || "C")[0].toUpperCase(), email: session.email || "" })
+    : { name: "Nil", initials: "N", email: "nil@141agency.com" };
 
-  const NavIcon = ({ id, icon, label, badge }) => {
+  const navItemStyle = (isActive) => ({
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "8px 10px", borderRadius: 10, cursor: "pointer",
+    background: isActive ? "rgba(255,255,255,0.06)" : "transparent",
+    color: isActive ? "var(--text)" : "var(--text-muted)",
+    transition: "all .1s", marginBottom: 1,
+    fontSize: 13, fontWeight: isActive ? 500 : 400,
+  });
+
+  const NavItem = ({ id, icon, label, badge }) => {
     const isActive = current === id || (id === "campaigns" && current === "campaign");
     return (
       <div
-        data-tooltip={label}
-        data-tooltip-side="right"
         onClick={() => onNavigate(id)}
-        style={{
-          position: "relative",
-          width: 40, height: 40,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          borderRadius: 10,
-          cursor: "pointer",
-          background: isActive ? "var(--bg-elev-2)" : "transparent",
-          border: isActive ? "0.5px solid var(--border-strong)" : "0.5px solid transparent",
-          color: isActive ? "var(--text)" : "var(--text-subtle)",
-          transition: "all .12s",
-          flexShrink: 0,
-        }}
+        style={navItemStyle(isActive)}
+        onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text)"; }}}
+        onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}}
       >
-        <Icon name={icon} size={17}/>
+        <Icon name={icon} size={16} strokeWidth={1.7}/>
+        <span style={{flex:1}}>{label}</span>
         {badge ? (
-          <span style={{
-            position:"absolute", top:4, right:4,
-            minWidth:14, height:14, borderRadius:7,
-            background:"var(--accent)", color:"#fff",
-            fontSize:9, fontWeight:700,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            padding:"0 3px",
-          }}>{badge > 99 ? "99+" : badge}</span>
+          <span style={{fontSize:10, background:"rgba(255,255,255,0.08)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99, fontWeight:600}}>
+            {badge}
+          </span>
         ) : null}
+        {isActive ? <Icon name="chevron" size={12} style={{color:"var(--text-subtle)", flexShrink:0}}/> : null}
       </div>
     );
   };
 
+  const FooterItem = ({ icon, label, onClick, kbd }) => (
+    <div
+      onClick={onClick}
+      style={navItemStyle(false)}
+      onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text)"; }}
+      onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "var(--text-muted)"; }}
+    >
+      <Icon name={icon} size={16} strokeWidth={1.7}/>
+      <span style={{flex:1}}>{label}</span>
+      {kbd ? <span style={{fontSize:10, color:"var(--text-subtle)", fontFamily:"var(--font-mono)"}}>{kbd}</span> : null}
+    </div>
+  );
+
   return (
-    <aside className="sidebar" style={{
-      width: 64,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      padding: "12px 0",
-      gap: 0,
+    <aside style={{
+      width: 220,
+      background: "var(--bg)",
+      display: "flex", flexDirection: "column",
+      height: "100vh", position: "sticky", top: 0,
+      padding: "16px 10px 12px",
+      overflow: "hidden",
+      flexShrink: 0,
     }}>
-      {/* Logo mark */}
-      <div style={{
-        width: 36, height: 36, borderRadius: 10, marginBottom: 16,
-        background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: 11, fontWeight: 700, color: "var(--text)", letterSpacing: "-0.02em",
-        fontFamily: "var(--font-display)",
-      }}>141</div>
+      {/* User profile */}
+      <div style={{display:"flex", alignItems:"center", gap:10, padding:"4px 8px 20px 8px"}}>
+        <div style={{
+          width: 34, height: 34, borderRadius: "50%", flexShrink: 0,
+          background: "rgba(124,112,232,0.2)", color: "#a5b4fc",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 14, fontWeight: 700,
+        }}>
+          {me.initials}
+        </div>
+        <div style={{minWidth:0}}>
+          <div style={{fontSize:13, fontWeight:600, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+            {me.name}
+          </div>
+          <div style={{fontSize:11, color:"var(--text-subtle)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+            {me.email ? "@" + me.email.split("@")[0] : ""}
+          </div>
+        </div>
+      </div>
 
       {/* Nav sections */}
-      <div style={{flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2, width:"100%", padding:"0 12px", overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none"}}>
+      <div style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none"}}>
         {sections.map((section, si) => (
-          <React.Fragment key={si}>
-            {si > 0 && (
-              <div style={{
-                width: 20, height: 1,
-                background: "var(--border)",
-                margin: "6px 0",
-                flexShrink: 0,
-              }}/>
-            )}
+          <div key={si} style={{marginBottom: 20}}>
+            <div style={{
+              fontSize: 10, fontWeight: 600, color: "var(--text-subtle)",
+              letterSpacing: "0.08em", textTransform: "uppercase",
+              padding: "0 10px", marginBottom: 4,
+            }}>
+              {section.title}
+            </div>
             {section.items.map(it => (
-              <NavIcon key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+              <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
             ))}
-          </React.Fragment>
+          </div>
         ))}
       </div>
 
-      {/* Footer: avatar + logout */}
-      <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:6, borderTop:"0.5px solid var(--border)", width:"100%", padding:"8px 12px 0"}}>
-        <div
-          data-tooltip="Cerrar sesión"
-          data-tooltip-side="right"
-          onClick={() => onNavigate("__logout")}
-          style={{
-            width:40, height:40, borderRadius:10, cursor:"pointer",
-            display:"flex", alignItems:"center", justifyContent:"center",
-            color:"var(--text-subtle)", border:"0.5px solid transparent",
-            transition:"all .12s",
-          }}
-        >
-          <Icon name="log-out" size={17}/>
-        </div>
-        <NavIcon id="settings" icon="settings" label="Ajustes"/>
-        <Avatar
-          name={me.name}
-          initials={me.initials}
-          color={me.color}
-          data-tooltip={me.name}
-          data-tooltip-side="right"
-        />
+      {/* Footer */}
+      <div style={{borderTop:"0.5px solid var(--border)", paddingTop:10, display:"flex", flexDirection:"column", gap:0}}>
+        {kind === "agency" && session?.role === "admin" && (
+          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} kbd="⌘J"/>
+        )}
+        {kind === "agency" && session?.role === "admin" && (
+          <FooterItem icon="eye" label="Ver como cliente" onClick={() => onNavigate("__switch")}/>
+        )}
+        <FooterItem icon="settings" label="Ajustes" onClick={() => onNavigate("settings")}/>
+        <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => onNavigate("__logout")}/>
       </div>
     </aside>
   );

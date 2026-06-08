@@ -149,26 +149,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
 
   const isClient = view.side === "client";
   const isAdminPreview = isClient && session.role === "admin";
-  const sideIndicator = (
-    <>
-      {!isClient && session.role === "admin" && (
-        <button className="btn sm" onClick={() => setAssistantOpen(true)}
-          style={{background:"linear-gradient(135deg,rgba(167,139,250,0.12) 0%,rgba(96,165,250,0.12) 100%)", borderColor:"var(--border-strong)"}}>
-          <Icon name="sparkles" size={12}/> Nora <span className="kbd" style={{marginLeft: 2}}>⌘J</span>
-        </button>
-      )}
-      {session.role === "admin" && !isClient && (
-        <button className="btn sm" onClick={() => navigate("__switch")}>
-          <Icon name="eye" size={12}/> Ver como cliente
-        </button>
-      )}
-      {isAdminPreview && (
-        <button className="btn sm" onClick={() => navigate("dashboard")}>
-          <Icon name="external-link" size={12}/> Volver a vista agencia
-        </button>
-      )}
-    </>
-  );
+  const sideIndicator = null;
 
   return (
     <>
@@ -178,14 +159,9 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </div>
       )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
-        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session}/>
+        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => setAssistantOpen(o => !o)}/>
         <div className="main">
-          <Topbar
-            theme={theme}
-            setTheme={setTheme}
-            kind={isClient ? "client" : "agency"}
-            right={sideIndicator}
-          />
+          <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           {isClient ? renderClient() : renderAgency()}
           {/* GmailView y AgencyBilling siempre montados para cargar en background */}
           {!isClient && (

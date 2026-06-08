@@ -19,26 +19,26 @@
     --font-display: "Inter Tight", "Inter", sans-serif;
     --font-mono: "JetBrains Mono", ui-monospace, monospace;
     --radius-sm: 6px;
-    --radius: 10px;
-    --radius-lg: 14px;
+    --radius: 14px;
+    --radius-lg: 20px;
     --hairline: 0.5px;
   }
 
   /* DARK (default) */
   html[data-theme="dark"] {
-    --bg: #080809;
-    --bg-elev: #111113;
-    --bg-elev-2: #18181c;
-    --bg-hover: #1e1e23;
-    --surface: #111113;
-    --border: rgba(255,255,255,0.07);
-    --border-strong: rgba(255,255,255,0.13);
+    --bg: #0c0c0e;
+    --bg-elev: #131316;
+    --bg-elev-2: #1a1a1f;
+    --bg-hover: #1e1e24;
+    --surface: #131316;
+    --border: rgba(255,255,255,0.06);
+    --border-strong: rgba(255,255,255,0.1);
     --text: #f4f4f5;
     --text-muted: #a1a1a8;
     --text-subtle: #6b6b73;
-    --accent: #f4f4f5;        /* near-white inverts dark theme primary */
-    --accent-fg: #0a0a0b;
-    --accent-soft: rgba(244,244,245,0.08);
+    --accent: #7c70e8;
+    --accent-fg: #ffffff;
+    --accent-soft: rgba(124,112,232,0.12);
     --green: #4ade80;
     --green-soft: rgba(74,222,128,0.14);
     --amber: #fbbf24;
@@ -47,7 +47,7 @@
     --red-soft: rgba(248,113,113,0.14);
     --blue: #60a5fa;
     --blue-soft: rgba(96,165,250,0.14);
-    --shadow: 0 1px 3px rgba(0,0,0,0.55), 0 0 0 0.5px rgba(255,255,255,0.045);
+    --shadow: none;
   }
   /* LIGHT */
   html[data-theme="light"] {
@@ -97,10 +97,11 @@
   ::-webkit-scrollbar-track { background: transparent; }
 
   /* App layout */
-  .app { display: grid; grid-template-columns: 64px 1fr; min-height: 100vh; }
-  .app.client { grid-template-columns: 64px 1fr; }
+  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
+  .app.client { grid-template-columns: 220px 1fr; }
   .main { min-width: 0; }
-  .topbar {
+  .topbar { display: none; }
+  .topbar-hidden {
     height: 56px;
     border-bottom: var(--hairline) solid var(--border);
     display: flex; align-items: center; justify-content: space-between;
@@ -120,7 +121,7 @@
     display: inline-flex; align-items: center; gap: 6px;
     border: var(--hairline) solid var(--border-strong);
     background: transparent; color: var(--text);
-    height: 32px; padding: 0 12px; border-radius: 8px;
+    height: 32px; padding: 0 12px; border-radius: 10px;
     font-size: 13px; font-weight: 500;
     cursor: pointer; transition: background .12s, border-color .12s, transform .06s;
     white-space: nowrap;
@@ -133,7 +134,7 @@
   .btn.primary:hover { filter: brightness(0.92); background: var(--accent); }
   .btn.ghost { border-color: transparent; }
   .btn.ghost:hover { background: var(--bg-hover); }
-  .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
+  .btn.sm { height: 28px; padding: 0 10px; font-size: 12px; border-radius: 8px; }
   .btn.icon-only { width: 32px; padding: 0; justify-content: center; }
   .btn.icon-only.sm { width: 28px; }
   .btn.danger { color: var(--red); }
@@ -162,13 +163,13 @@
   /* Card */
   .card {
     background: var(--bg-elev);
-    border: var(--hairline) solid var(--border);
+    border: none;
     border-radius: var(--radius);
-    box-shadow: var(--shadow);
+    box-shadow: none;
   }
   .card-header {
     padding: 14px 18px;
-    border-bottom: var(--hairline) solid var(--border);
+    border-bottom: 0.5px solid rgba(255,255,255,0.05);
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
   }
   .card-title { font-size: 13px; font-weight: 500; color: var(--text); letter-spacing: -0.005em; }
@@ -228,14 +229,12 @@
 
   /* Sidebar */
   .sidebar {
-    border-right: var(--hairline) solid var(--border);
+    border-right: none;
     background: var(--bg);
     display: flex; flex-direction: column;
-    align-items: center;
     height: 100vh; position: sticky; top: 0;
-    padding: 12px 0;
-    gap: 0;
-    width: 64px;
+    padding: 0;
+    width: 220px;
     overflow: hidden;
   }
   .brand {
@@ -414,7 +413,7 @@
   .modal {
     background: var(--bg-elev);
     border: var(--hairline) solid var(--border);
-    border-radius: 14px;
+    border-radius: 20px;
     width: 100%; max-width: 520px;
     overflow: hidden;
     animation: pop .2s cubic-bezier(.2,.8,.2,1);
@@ -678,7 +677,7 @@
 
 <script type="text/babel" src="src/icons.jsx"></script>
 <script type="text/babel" src="src/data.jsx?v=10"></script>
-<script type="text/babel" src="src/primitives.jsx"></script>
+<script type="text/babel" src="src/primitives.jsx?v=2"></script>
 <script type="text/babel" src="src/agency-dashboard.jsx?v=12"></script>
 <script type="text/babel" src="src/agency-clients.jsx?v=2"></script>
 <script type="text/babel" src="src/agency-project.jsx?v=2"></script>
@@ -693,6 +692,6 @@
 <script type="text/babel" src="src/z-modals.jsx?v=10"></script>
 <script type="text/babel" src="src/z-modals2.jsx?v=4"></script>
 <script type="text/babel" src="tweaks-panel.jsx"></script>
-<script type="text/babel" src="src/z-app.jsx?v=9"></script>
+<script type="text/babel" src="src/z-app.jsx?v=10"></script>
 </body>
 </html>
