@@ -205,10 +205,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     }}>
 
       {/* ── Welcome header ── */}
-      <div style={{paddingBottom:20, borderBottom:"0.5px solid var(--border)"}}>
+      <div style={{paddingTop:12, paddingBottom:24, borderBottom:"0.5px solid var(--border)"}}>
         <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between", marginBottom:14}}>
           <div>
-            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:4}}>
+            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:6}}>
               {greeting}, {adminName}.
             </div>
             <div style={{fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.5px", display:"flex", alignItems:"center", gap:8}}>
@@ -224,7 +224,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             </div>
           </div>
         </div>
-        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+        <div style={{display:"flex", gap:8, flexWrap:"wrap", marginTop:16}}>
           {[
             { label:"Nueva tarea",     icon:"plus",          fn:()=>openModal("newTask")    },
             { label:"Nuevo proyecto",  icon:"plus",          fn:()=>openModal("newProject") },
