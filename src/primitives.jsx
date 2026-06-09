@@ -319,80 +319,129 @@ const ConfirmProvider = ({ children }) => {
 const useConfirm = () => useContext(ConfirmContext);
 
 // ── TimePicker drum-roll ──────────────────────────────────────────────────────
-const TimeColumn = ({ items, selected, onSelect, fmt }) => {
-  const ITEM_H = 44;
-  const ref = useRef(null);
-  const timerRef = useRef(null);
+const _TPC_H = 54; // height per item
 
+const TimeColumn = ({ items, selected, onSelect, fmt }) => {
+  const ref       = useRef(null);
+  const timerRef  = useRef(null);
+  const dragging  = useRef(false);
+  const startY    = useRef(0);
+  const startScroll = useRef(0);
+  // Use refs so event-listener closures always see latest values
+  const itemsRef    = useRef(items);
+  const onSelectRef = useRef(onSelect);
+  useEffect(() => { itemsRef.current    = items;    });
+  useEffect(() => { onSelectRef.current = onSelect; });
+
+  // Scroll to selected item on mount
   useEffect(() => {
     if (!ref.current) return;
     const idx = items.indexOf(selected);
-    if (idx >= 0) ref.current.scrollTop = idx * ITEM_H;
+    if (idx >= 0) ref.current.scrollTop = idx * _TPC_H;
   }, []);
 
-  const handleScroll = () => {
-    const el = ref.current;
-    // live highlight update
-    const liveIdx = Math.round(el.scrollTop / ITEM_H);
-    onSelect(items[Math.max(0, Math.min(items.length-1, liveIdx))]);
-    // snap on settle
-    clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      const snapIdx = Math.round(el.scrollTop / ITEM_H);
-      const clamped = Math.max(0, Math.min(items.length-1, snapIdx));
-      el.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
-      onSelect(items[clamped]);
-    }, 140);
+  const doSnap = () => {
+    if (!ref.current) return;
+    const idx = Math.round(ref.current.scrollTop / _TPC_H);
+    const c = Math.max(0, Math.min(itemsRef.current.length - 1, idx));
+    ref.current.scrollTo({ top: c * _TPC_H, behavior: 'smooth' });
+    onSelectRef.current(itemsRef.current[c]);
   };
 
+  // Wheel / touch scroll: update live + snap on settle
+  const handleScroll = () => {
+    if (dragging.current) return;
+    const idx = Math.round(ref.current.scrollTop / _TPC_H);
+    const c = Math.max(0, Math.min(itemsRef.current.length - 1, idx));
+    onSelectRef.current(itemsRef.current[c]);
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(doSnap, 160);
+  };
+
+  // Mouse drag: grab → move → release
+  const handleMouseDown = (e) => {
+    e.preventDefault();
+    dragging.current  = true;
+    startY.current    = e.clientY;
+    startScroll.current = ref.current.scrollTop;
+  };
+
+  useEffect(() => {
+    const onMove = (e) => {
+      if (!dragging.current) return;
+      ref.current.scrollTop = startScroll.current + (startY.current - e.clientY);
+      const idx = Math.round(ref.current.scrollTop / _TPC_H);
+      const c = Math.max(0, Math.min(itemsRef.current.length - 1, idx));
+      onSelectRef.current(itemsRef.current[c]);
+    };
+    const onUp = () => {
+      if (!dragging.current) return;
+      dragging.current = false;
+      doSnap();
+    };
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup',   onUp);
+    return () => {
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup',   onUp);
+    };
+  }, []);
+
   return (
-    <div style={{ position:'relative', flex:1, height: ITEM_H * 5, overflow:'hidden' }}>
+    <div style={{ position:'relative', flex:1, height: _TPC_H * 5, overflow:'hidden', cursor:'ns-resize' }}>
       {/* Selection highlight */}
       <div style={{
-        position:'absolute', top: ITEM_H*2, left:4, right:4, height: ITEM_H,
-        background:'rgba(255,255,255,0.07)', borderRadius:10,
+        position:'absolute', top: _TPC_H * 2, left:2, right:2, height: _TPC_H,
+        background:'rgba(255,255,255,0.055)', borderRadius:14,
         pointerEvents:'none', zIndex:1,
       }}/>
-      {/* Fade top */}
+      {/* Gradient fade top */}
       <div style={{
-        position:'absolute', top:0, left:0, right:0, height: ITEM_H*2,
-        background:'linear-gradient(to bottom, #1a1a1f 20%, transparent 100%)',
+        position:'absolute', top:0, left:0, right:0, height: _TPC_H * 2.3,
+        background:'linear-gradient(to bottom, #0f0f13 0%, rgba(15,15,19,0) 100%)',
         pointerEvents:'none', zIndex:2,
       }}/>
-      {/* Fade bottom */}
+      {/* Gradient fade bottom */}
       <div style={{
-        position:'absolute', bottom:0, left:0, right:0, height: ITEM_H*2,
-        background:'linear-gradient(to top, #1a1a1f 20%, transparent 100%)',
+        position:'absolute', bottom:0, left:0, right:0, height: _TPC_H * 2.3,
+        background:'linear-gradient(to top, #0f0f13 0%, rgba(15,15,19,0) 100%)',
         pointerEvents:'none', zIndex:2,
       }}/>
       <div
         ref={ref}
         onScroll={handleScroll}
+        onMouseDown={handleMouseDown}
         style={{
           height:'100%', overflowY:'scroll', scrollbarWidth:'none', msOverflowStyle:'none',
-          paddingTop: ITEM_H*2, paddingBottom: ITEM_H*2,
+          paddingTop: _TPC_H * 2, paddingBottom: _TPC_H * 2,
+          userSelect:'none',
         }}
       >
-        {items.map((item, i) => (
-          <div
-            key={i}
-            onClick={() => {
-              onSelect(item);
-              ref.current.scrollTo({ top: i * ITEM_H, behavior:'smooth' });
-            }}
-            style={{
-              height: ITEM_H, display:'flex', alignItems:'center', justifyContent:'center',
-              fontSize: item === selected ? 30 : 20,
-              color: item === selected ? '#f2f2f2' : 'rgba(255,255,255,0.22)',
-              cursor:'pointer', userSelect:'none',
-              fontFamily:'var(--font-display)', fontWeight:400,
-              letterSpacing:'-0.5px',
-              transition:'font-size 0.08s, color 0.08s',
-            }}
-          >
-            {fmt ? fmt(item) : item}
-          </div>
-        ))}
+        {items.map((item, i) => {
+          const isSel = item === selected;
+          return (
+            <div
+              key={i}
+              onClick={() => {
+                onSelect(item);
+                ref.current.scrollTo({ top: i * _TPC_H, behavior:'smooth' });
+              }}
+              style={{
+                height: _TPC_H,
+                display:'flex', alignItems:'center', justifyContent:'center',
+                fontSize:   isSel ? 44 : 22,
+                fontWeight: 300,
+                color:      isSel ? '#f0f0f0' : 'rgba(255,255,255,0.18)',
+                cursor:'pointer', userSelect:'none',
+                fontFamily:'var(--font-display)',
+                letterSpacing: isSel ? '-2px' : '-0.5px',
+                transition:'font-size 0.1s, color 0.1s',
+              }}
+            >
+              {fmt ? fmt(item) : item}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -400,7 +449,8 @@ const TimeColumn = ({ items, selected, onSelect, fmt }) => {
 
 const TimePicker = ({ value, onChange, onClose }) => {
   const pad = n => String(n).padStart(2, '0');
-  const [h, setH] = useState(value ? parseInt(value.split(':')[0]) : 9);
+  const now = new Date();
+  const [h, setH] = useState(value ? parseInt(value.split(':')[0]) : now.getHours());
   const [m, setM] = useState(value ? parseInt(value.split(':')[1]) : 0);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const mins  = Array.from({ length: 60 }, (_, i) => i);
@@ -409,7 +459,7 @@ const TimePicker = ({ value, onChange, onClose }) => {
     <div
       style={{
         position:'fixed', inset:0, zIndex:400,
-        background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)',
+        background:'rgba(0,0,0,0.65)', backdropFilter:'blur(12px)',
         display:'flex', alignItems:'center', justifyContent:'center',
         animation:'fade .15s ease-out',
       }}
@@ -418,40 +468,41 @@ const TimePicker = ({ value, onChange, onClose }) => {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width:300, background:'#1a1a1f',
+          width:320, background:'#0f0f13',
           border:'0.5px solid rgba(255,255,255,0.1)',
-          borderRadius:24, overflow:'hidden',
+          borderRadius:28, overflow:'hidden',
           animation:'pop .2s cubic-bezier(.2,.8,.2,1)',
+          boxShadow:'0 32px 80px rgba(0,0,0,0.7)',
         }}
       >
         {/* Title */}
         <div style={{
-          padding:'22px 24px 12px', textAlign:'center',
+          padding:'24px 24px 4px', textAlign:'center',
           fontSize:17, fontWeight:400, letterSpacing:'-0.96px', color:'var(--text)',
         }}>
           Seleccionar hora
         </div>
 
-        {/* Drum roll */}
-        <div style={{ display:'flex', alignItems:'center', padding:'0 20px', gap:4 }}>
+        {/* Drum roll columns */}
+        <div style={{ display:'flex', alignItems:'center', padding:'0 20px 4px', gap:0 }}>
           <TimeColumn items={hours} selected={h} onSelect={setH} fmt={pad}/>
           <div style={{
-            display:'flex', alignItems:'center', justifyContent:'center',
-            fontSize:28, color:'rgba(255,255,255,0.25)', fontWeight:300,
-            paddingBottom:2, letterSpacing:0, flexShrink:0,
+            width:28, flexShrink:0, textAlign:'center',
+            fontSize:34, fontWeight:200, color:'rgba(255,255,255,0.18)',
+            userSelect:'none', paddingBottom:2,
           }}>:</div>
           <TimeColumn items={mins} selected={m} onSelect={setM} fmt={pad}/>
         </div>
 
-        {/* Buttons */}
-        <div style={{ height:'0.5px', background:'rgba(255,255,255,0.07)', margin:'12px 0 0' }}/>
+        {/* Divider + Buttons */}
+        <div style={{ height:'0.5px', background:'rgba(255,255,255,0.07)' }}/>
         <button
           onClick={() => { onChange(pad(h) + ':' + pad(m)); onClose(); }}
           style={{
-            width:'100%', padding:'16px', background:'transparent',
+            width:'100%', padding:'18px 24px', background:'transparent',
             border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.07)',
-            color:'var(--text)', fontSize:15, letterSpacing:'-0.96px',
-            cursor:'pointer', fontFamily:'var(--font-sans)',
+            color:'#f0f0f0', fontSize:16, letterSpacing:'-0.96px',
+            cursor:'pointer', fontFamily:'var(--font-sans)', fontWeight:400,
           }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
           onMouseLeave={e => e.currentTarget.style.background='transparent'}
@@ -461,9 +512,9 @@ const TimePicker = ({ value, onChange, onClose }) => {
         <button
           onClick={onClose}
           style={{
-            width:'100%', padding:'16px', background:'transparent',
-            border:'none', color:'var(--text-muted)',
-            fontSize:15, letterSpacing:'-0.96px',
+            width:'100%', padding:'18px 24px', background:'transparent',
+            border:'none', color:'rgba(255,255,255,0.3)',
+            fontSize:16, letterSpacing:'-0.96px',
             cursor:'pointer', fontFamily:'var(--font-sans)',
           }}
           onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.03)'}
