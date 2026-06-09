@@ -100,22 +100,21 @@ const useStore = () => {
 };
 
 // ── Row mappers (DB snake_case → UI camelCase) ──────────────────────
+const _fmtSince = (s) => {
+  if (!s) return "—";
+  if (!/^\d{4}-\d{2}/.test(s)) return s; // ya es texto legible ("jun 2026")
+  try {
+    const d = new Date((s.length === 7 ? s + "-01" : s) + "T12:00:00");
+    const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    return M[d.getMonth()] + " " + d.getFullYear();
+  } catch(e) { return s; }
+};
 const _mc = r => r && ({
   id: r.id, name: r.name, company: r.company, email: r.email,
   whatsapp: r.whatsapp, initials: r.initials, color: r.color,
   projects: r.projects_count || 0, mrr: r.mrr || 0,
   lastContact: r.last_contact || "ahora", status: r.status,
-  service: r.service,
-  since: (() => {
-    if (!r.since) return "—";
-    // Si ya es texto legible (ej: "jun 2026"), lo devuelve tal cual
-    if (!/^\d{4}-\d{2}/.test(r.since)) return r.since;
-    try {
-      const d = new Date(r.since.length === 7 ? r.since + "-01T12:00:00" : r.since + "T12:00:00");
-      const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-      return M[d.getMonth()] + " " + d.getFullYear();
-    } catch { return r.since; }
-  })(),
+  service: r.service, since: _fmtSince(r.since),
 });
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
