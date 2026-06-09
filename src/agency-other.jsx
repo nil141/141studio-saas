@@ -280,7 +280,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           {weekLabel}
         </div>
 
-        {/* Day rows — current week + next week dimmed */}
+        {/* Day rows — current week + next week dimmed, fills available height */}
         {(() => {
           // Build 14 days: current week (normal) + next 7 (dimmed)
           const nextWeekDays = Array.from({ length: 7 }, (_, i) => {
@@ -290,7 +290,7 @@ const TasksBoard = ({ navigate, openModal }) => {
             .concat(nextWeekDays.map(d => ({ d, dimmed: true })));
 
           return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:3 }}>
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, justifyContent:"space-between" }}>
               {/* Sliding pill — sits behind the day boxes */}
               {dayPill && (
                 <div style={{
@@ -354,9 +354,8 @@ const TasksBoard = ({ navigate, openModal }) => {
           );
         })()}
 
-        {/* Spacer + progress at bottom of left panel */}
-        <div style={{ flex:1 }}/>
-        <div style={{ borderTop:"0.5px solid var(--border)", paddingTop:16, marginTop:16 }}>
+        {/* Progress at bottom of left panel */}
+        <div style={{ borderTop:"0.5px solid var(--border)", paddingTop:12, marginTop:12 }}>
           <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8 }}>
             <span style={{ letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>Progreso</span>
             <span style={{ fontWeight:600, color: donePct === 100 ? "var(--green)" : "var(--text-muted)" }}>{donePct}%</span>
