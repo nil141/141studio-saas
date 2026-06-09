@@ -290,7 +290,7 @@ const TasksBoard = ({ navigate, openModal }) => {
             .concat(nextWeekDays.map(d => ({ d, dimmed: true })));
 
           return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, justifyContent:"space-between" }}>
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:6 }}>
               {/* Sliding pill — sits behind the day boxes */}
               {dayPill && (
                 <div style={{
