@@ -429,13 +429,13 @@ const TimeColumn = ({ items, selected, onSelect, fmt }) => {
               style={{
                 height: _TPC_H,
                 display:'flex', alignItems:'center', justifyContent:'center',
-                fontSize:   isSel ? 44 : 22,
-                fontWeight: 300,
-                color:      isSel ? '#f0f0f0' : 'rgba(255,255,255,0.18)',
+                fontSize:   28,
+                fontWeight: 400,
+                color:      isSel ? '#f0f0f0' : 'rgba(255,255,255,0.2)',
                 cursor:'pointer', userSelect:'none',
                 fontFamily:'var(--font-display)',
-                letterSpacing: isSel ? '-2px' : '-0.5px',
-                transition:'font-size 0.1s, color 0.1s',
+                letterSpacing: '-1px',
+                transition:'color 0.1s',
               }}
             >
               {fmt ? fmt(item) : item}
