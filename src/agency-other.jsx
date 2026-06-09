@@ -222,35 +222,39 @@ const TasksBoard = ({ navigate, openModal }) => {
 
       {/* ── Left: week selector ───────────────────── */}
       <div style={{
-        width:216, flexShrink:0,
+        width:300, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
-        padding:"28px 14px",
+        padding:"28px 20px", gap:8,
+        overflowY:"auto",
       }}>
         {/* Month nav */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
           <button onClick={() => setWeekOffset(o => o-1)}
             style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
             <Icon name="chevron-left" size={16}/>
           </button>
-          <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-1px" }}>{midMonth}</span>
+          <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px" }}>{midMonth}</span>
           <button onClick={() => setWeekOffset(o => o+1)}
             style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
             <Icon name="chevron-right" size={16}/>
           </button>
         </div>
 
-        {/* Progress */}
-        <div style={{ padding:"0 4px", marginBottom:18 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, fontWeight:500, letterSpacing:"0.07em", color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:6 }}>
-            <span>Progreso</span><span>{donePct}%</span>
+        {/* Progress card */}
+        <div style={{
+          background:"var(--bg-elev)", border:"0.5px solid var(--border)",
+          borderRadius:14, padding:"14px 16px", marginBottom:8,
+        }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, fontWeight:500, letterSpacing:"0.07em", color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:10 }}>
+            <span>Progreso diario</span><span>{donePct}%</span>
           </div>
-          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
+          <div style={{ height:4, background:"var(--border)", borderRadius:99 }}>
             <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .3s" }}/>
           </div>
         </div>
 
-        {/* Days */}
+        {/* Day cards */}
         {weekDays.map(d => {
           const dMid = new Date(d); dMid.setHours(0,0,0,0);
           const isToday = dMid.getTime() === todayMid.getTime();
@@ -258,20 +262,21 @@ const TasksBoard = ({ navigate, openModal }) => {
           return (
             <div key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))}
               style={{
-                display:"flex", alignItems:"center", gap:12,
-                padding:"9px 12px", borderRadius:12, cursor:"pointer",
-                background: isSel ? "rgba(158,154,229,0.14)" : "transparent",
-                transition:"background .12s", marginBottom:2,
+                display:"flex", alignItems:"center", gap:16,
+                padding:"14px 18px", borderRadius:14, cursor:"pointer",
+                background: isSel ? "rgba(158,154,229,0.18)" : "var(--bg-elev)",
+                border: isSel ? "0.5px solid rgba(158,154,229,0.35)" : "0.5px solid var(--border)",
+                transition:"background .15s, border-color .15s",
               }}>
-              <span style={{ fontSize:12, width:26, letterSpacing:"-0.3px",
-                color: isSel ? "var(--accent)" : "var(--text-subtle)" }}>
+              <span style={{ fontSize:14, width:30, letterSpacing:"-0.3px",
+                color: isSel ? "var(--accent)" : "var(--text-muted)", fontWeight: isSel ? 500 : 400 }}>
                 {DAY_ES[d.getDay()]}
               </span>
-              <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px",
-                color: isSel ? "var(--text)" : "var(--text-muted)" }}>
+              <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px",
+                color: isSel ? "#c8c5f2" : "var(--text-muted)" }}>
                 {d.getDate()}
               </span>
-              {isToday && <span style={{ fontSize:10, color:"var(--accent)", letterSpacing:"-0.2px" }}>(Hoy)</span>}
+              {isToday && <span style={{ fontSize:11, color:"var(--accent)", letterSpacing:"-0.2px", marginLeft:2 }}>(Hoy)</span>}
             </div>
           );
         })}
