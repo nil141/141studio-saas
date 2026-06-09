@@ -259,6 +259,20 @@ const TasksBoard = ({ navigate, openModal }) => {
         padding:"20px 16px 16px 20px",
         overflow:"hidden",
       }}>
+        {/* Progress — top of left panel */}
+        <div style={{ marginBottom:16, paddingBottom:16, borderBottom:"0.5px solid var(--border)" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8 }}>
+            <span style={{ letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>Progreso</span>
+            <span style={{ fontWeight:600, color:"var(--text-muted)" }}>{donePct}%</span>
+          </div>
+          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
+            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
+          </div>
+          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:5 }}>
+            {allTasks.filter(t => t.column === "done").length} de {allTasks.length} completadas
+          </div>
+        </div>
+
         {/* Week nav header */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
           <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.8px", color:"var(--text)" }}>
@@ -354,19 +368,6 @@ const TasksBoard = ({ navigate, openModal }) => {
           );
         })()}
 
-        {/* Progress at bottom of left panel */}
-        <div style={{ borderTop:"0.5px solid var(--border)", paddingTop:12, marginTop:12 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8 }}>
-            <span style={{ letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>Progreso</span>
-            <span style={{ fontWeight:600, color: donePct === 100 ? "var(--green)" : "var(--text-muted)" }}>{donePct}%</span>
-          </div>
-          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
-            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
-          </div>
-          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:6 }}>
-            {allTasks.filter(t => t.column === "done").length} de {allTasks.length} completadas
-          </div>
-        </div>
       </div>
 
       {/* ── Right: tasks grouped by client ───────── */}
