@@ -22,9 +22,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
   const [sub,   setSub]   = useState("");   // project / client / notes
   const [date,  setDate]  = useState(today());
   const [time,  setTime]  = useState("");
+  const [timeEnd, setTimeEnd] = useState("");
   const [eventType, setEventType] = useState("custom");
 
-  useEffect(() => { if (open) { setTitle(""); setSub(""); setDate(today()); setTime(""); setType(defaultType); } }, [open, defaultType]);
+  useEffect(() => { if (open) { setTitle(""); setSub(""); setDate(today()); setTime(""); setTimeEnd(""); setType(defaultType); } }, [open, defaultType]);
   useEffect(() => { if (!open) return; const fn = e => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [open]);
 
   if (!open) return null;
@@ -45,7 +46,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
     } else if (type === "event") {
       const CUSTOM_KEY = "agenda_custom_events";
       const prev = (() => { try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch { return []; }})();
-      const evt = { id:"custom-"+Date.now(), date, title:t, sub: time ? time + (sub ? " · "+sub : "") : sub, type: eventType };
+      const evt = { id:"custom-"+Date.now(), date, title:t, sub: sub || "", time: time || null, timeEnd: timeEnd || null, type: eventType };
       localStorage.setItem(CUSTOM_KEY, JSON.stringify([...prev, evt]));
     } else if (type === "invoice") {
       openModal && openModal("newInvoice"); onClose(); return;
@@ -234,17 +235,33 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
                 }}
               />
               {type === "event" && (
-                <input
-                  type="time" value={time}
-                  onChange={e => setTime(e.target.value)}
-                  style={{
-                    background: time ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.06)",
-                    border: time ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
-                    borderRadius:99, color: time ? "#7db8f7" : "var(--text-muted)",
-                    fontSize:12, padding:"5px 14px",
-                    fontFamily:"var(--font-sans)",
-                  }}
-                />
+                <>
+                  <input
+                    type="time" value={time}
+                    placeholder="Inicio"
+                    onChange={e => setTime(e.target.value)}
+                    style={{
+                      background: time ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.06)",
+                      border: time ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
+                      borderRadius:99, color: time ? "#7db8f7" : "var(--text-muted)",
+                      fontSize:12, padding:"5px 14px",
+                      fontFamily:"var(--font-sans)",
+                    }}
+                  />
+                  <span style={{fontSize:11, color:"var(--text-subtle)"}}>–</span>
+                  <input
+                    type="time" value={timeEnd}
+                    placeholder="Fin"
+                    onChange={e => setTimeEnd(e.target.value)}
+                    style={{
+                      background: timeEnd ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.06)",
+                      border: timeEnd ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
+                      borderRadius:99, color: timeEnd ? "#7db8f7" : "var(--text-muted)",
+                      fontSize:12, padding:"5px 14px",
+                      fontFamily:"var(--font-sans)",
+                    }}
+                  />
+                </>
               )}
             </div>
           )}

@@ -119,11 +119,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         if (isNaN(d)) return;
         const iconMap = { meeting:"users", task:"list-todo", custom:"calendar" };
         const colorMap = { meeting:"var(--red)", task:"var(--accent)", custom:"var(--blue)" };
+        const typeLabel = { meeting:"Reunión", task:"Tarea", custom:"Evento" };
         ev.push({
           date: d,
           label: e.title,
-          sub: e.sub || "",
-          type: e.type === "meeting" ? "reunión" : e.type === "task" ? "tarea" : "evento",
+          time: e.time || null,
+          timeEnd: e.timeEnd || null,
+          type: typeLabel[e.type] || "Evento",
           color: colorMap[e.type] || "var(--blue)",
           icon: iconMap[e.type] || "calendar",
         });
@@ -326,17 +328,17 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                 </div>
                 <div style={{flex:1, minWidth:0}}>
                   <div style={{fontSize:13, fontWeight:500, overflow:"hidden",
-                    textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.label}</div>
-                  <div style={{fontSize:11, color:"var(--text-subtle)"}}>{ev.sub}</div>
+                    textOverflow:"ellipsis", whiteSpace:"nowrap", letterSpacing:"-0.5px"}}>{ev.label}</div>
+                  <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.3px"}}>
+                    {formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}
+                  </div>
                 </div>
-                <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
-                  <span style={{fontSize:11, color:"var(--text-muted)", whiteSpace:"nowrap"}}>
-                    {formatEventDate(ev.date)}
-                  </span>
+                <div style={{display:"flex", alignItems:"center", flexShrink:0}}>
                   <span style={{
                     fontSize:10, padding:"2px 8px", borderRadius:99,
-                    background:"var(--bg-elev-2)", color:"var(--text-subtle)",
-                    border:"0.5px solid var(--border)",
+                    background:"var(--bg-elev-2)", color:"var(--text-muted)",
+                    border:"0.5px solid var(--border)", letterSpacing:"-0.3px",
+                    whiteSpace:"nowrap",
                   }}>{ev.type}</span>
                 </div>
               </div>

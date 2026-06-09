@@ -44,7 +44,7 @@ const AgendaPage = ({ navigate }) => {
   const [selected, setSelected] = useState(today);
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", notes:"" });
+  const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
 
   // ── build event list from all sources ──────────────────────────────────────
   const allEvents = useMemo(() => {
@@ -150,14 +150,16 @@ const AgendaPage = ({ navigate }) => {
       id: "custom-" + Date.now(),
       date: form.date,
       title: form.title.trim(),
-      sub: form.time ? form.time + (form.notes ? " · " + form.notes : "") : form.notes,
+      sub: form.notes || "",
+      time: form.time || null,
+      timeEnd: form.timeEnd || null,
       type: form.type,
     };
     const updated = [...customEvents, evt];
     setCustomEvents(updated);
     saveCustom(updated);
     setShowForm(false);
-    setForm({ title:"", date: today, type:"custom", time:"", notes:"" });
+    setForm({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
     setSelected(evt.date);
   };
 
@@ -328,9 +330,9 @@ const AgendaPage = ({ navigate }) => {
                           <div style={{fontSize:13, fontWeight:500, letterSpacing:"-0.96px", color:"var(--text)"}}>
                             {ev.title}
                           </div>
-                          {ev.sub && (
+                          {(ev.time || ev.sub) && (
                             <div style={{fontSize:12, color:"var(--text-muted)", marginTop:2, letterSpacing:"-0.5px"}}>
-                              {ev.sub}
+                              {ev.time ? `${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}${ev.sub ? " · " + ev.sub : ""}` : ev.sub}
                             </div>
                           )}
                           <div style={{
@@ -528,9 +530,9 @@ const AgendaPage = ({ navigate }) => {
                   ? new Date(form.date + "T12:00:00").toLocaleDateString("es-ES", {day:"numeric", month:"short"})
                   : "—"}
               </div>
-              {form.time && (
+              {(form.time || form.timeEnd) && (
                 <div style={{fontSize:20, color:"var(--text-muted)", letterSpacing:"-0.96px"}}>
-                  {form.time}
+                  {form.time || "?"}{form.timeEnd ? ` – ${form.timeEnd}` : ""}
                 </div>
               )}
               <input
@@ -582,23 +584,41 @@ const AgendaPage = ({ navigate }) => {
               {/* Separador */}
               <div style={{ width:"0.5px", height:20, background:"rgba(255,255,255,0.08)", flexShrink:0 }}/>
 
-              {/* Hora */}
-              <label style={{
-                display:"flex", alignItems:"center", gap:6,
-                padding:"6px 14px", borderRadius:99,
-                background: form.time ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
-                border: form.time ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
-                color: form.time ? "#7db8f7" : "var(--text-subtle)",
-                fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
-                fontFamily:"var(--font-sans)",
-              }}>
-                <Icon name="clock" size={12} strokeWidth={1.6}/>
-                {form.time || "Añadir hora"}
-                <input type="time" value={form.time}
-                  onChange={e => setForm(f=>({...f, time:e.target.value}))}
-                  style={{ position:"absolute", opacity:0, width:0, height:0 }}
-                />
-              </label>
+              {/* Hora inicio – fin */}
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <label style={{
+                  display:"flex", alignItems:"center", gap:6,
+                  padding:"6px 14px", borderRadius:99,
+                  background: form.time ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
+                  border: form.time ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
+                  color: form.time ? "#7db8f7" : "var(--text-subtle)",
+                  fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
+                  fontFamily:"var(--font-sans)", position:"relative",
+                }}>
+                  <Icon name="clock" size={12} strokeWidth={1.6}/>
+                  {form.time || "Inicio"}
+                  <input type="time" value={form.time}
+                    onChange={e => setForm(f=>({...f, time:e.target.value}))}
+                    style={{ position:"absolute", opacity:0, width:0, height:0 }}
+                  />
+                </label>
+                <span style={{ fontSize:11, color:"var(--text-subtle)" }}>–</span>
+                <label style={{
+                  display:"flex", alignItems:"center", gap:6,
+                  padding:"6px 14px", borderRadius:99,
+                  background: form.timeEnd ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
+                  border: form.timeEnd ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
+                  color: form.timeEnd ? "#7db8f7" : "var(--text-subtle)",
+                  fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
+                  fontFamily:"var(--font-sans)", position:"relative",
+                }}>
+                  {form.timeEnd || "Fin"}
+                  <input type="time" value={form.timeEnd}
+                    onChange={e => setForm(f=>({...f, timeEnd:e.target.value}))}
+                    style={{ position:"absolute", opacity:0, width:0, height:0 }}
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
