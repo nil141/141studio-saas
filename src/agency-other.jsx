@@ -280,65 +280,79 @@ const TasksBoard = ({ navigate, openModal }) => {
           {weekLabel}
         </div>
 
-        {/* Day rows — no borders, pill slides underneath */}
-        <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column" }}>
-          {/* Sliding pill */}
-          {dayPill && (
-            <div style={{
-              position:"absolute", left:0, right:0,
-              top: dayPill.top, height: dayPill.height,
-              background:"rgba(158,154,229,0.15)",
-              borderRadius:10, pointerEvents:"none", zIndex:0,
-              transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
-            }}/>
-          )}
-          {weekDays.map(d => {
-            const dMid = new Date(d); dMid.setHours(0,0,0,0);
-            const isToday = dMid.getTime() === todayMid.getTime();
-            const isSel   = dMid.getTime() === selMid.getTime();
-            // Count tasks due on this day (tasks with deadline matching)
-            const dayTasks = allTasks.filter(t => {
-              if (!t.deadline) return false;
-              const td = new Date(t.deadline + "T00:00:00"); td.setHours(0,0,0,0);
-              return td.getTime() === dMid.getTime();
-            });
-            return (
-              <div
-                key={d.toISOString()}
-                ref={el => { dayItemRefs.current[d.toDateString()] = el; }}
-                onClick={() => setSelectedDay(new Date(d))}
-                style={{
-                  position:"relative", zIndex:1,
-                  display:"flex", alignItems:"center", gap:12,
-                  padding:"10px 12px", borderRadius:10, cursor:"pointer",
-                  background:"transparent",
-                }}>
-                {/* Day name */}
-                <span style={{ fontSize:13, width:28, letterSpacing:"-0.2px", flexShrink:0,
-                  color: isSel ? "var(--accent)" : "var(--text-subtle)", fontWeight: isSel ? 500 : 400 }}>
-                  {DAY_ES[d.getDay()]}
-                </span>
-                {/* Day number */}
-                <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
-                  color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
-                  {d.getDate()}
-                </span>
-                {/* Today dot */}
-                {isToday && (
-                  <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
-                )}
-                {/* Task count badge */}
-                {dayTasks.length > 0 && (
-                  <span style={{
-                    fontSize:10, fontWeight:600, color:"var(--text-subtle)",
-                    background:"var(--bg-elev)", border:"0.5px solid var(--border)",
-                    borderRadius:99, padding:"1px 6px", flexShrink:0,
-                  }}>{dayTasks.length}</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        {/* Day rows — current week + next week dimmed */}
+        {(() => {
+          // Build 14 days: current week (normal) + next 7 (dimmed)
+          const nextWeekDays = Array.from({ length: 7 }, (_, i) => {
+            const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
+          });
+          const allDays = weekDays.map(d => ({ d, dimmed: false }))
+            .concat(nextWeekDays.map(d => ({ d, dimmed: true })));
+
+          return (
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:4 }}>
+              {/* Sliding pill — sits behind the day boxes */}
+              {dayPill && (
+                <div style={{
+                  position:"absolute", left:0, right:0,
+                  top: dayPill.top, height: dayPill.height,
+                  background:"rgba(158,154,229,0.18)",
+                  borderRadius:10, pointerEvents:"none", zIndex:0,
+                  transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
+                }}/>
+              )}
+              {allDays.map(({ d, dimmed }) => {
+                const dMid = new Date(d); dMid.setHours(0,0,0,0);
+                const isToday = dMid.getTime() === todayMid.getTime();
+                const isSel   = dMid.getTime() === selMid.getTime();
+                const dayTasks = allTasks.filter(t => {
+                  if (!t.deadline) return false;
+                  const td = new Date(t.deadline + "T00:00:00"); td.setHours(0,0,0,0);
+                  return td.getTime() === dMid.getTime();
+                });
+                return (
+                  <div
+                    key={d.toISOString()}
+                    ref={el => { dayItemRefs.current[d.toDateString()] = el; }}
+                    onClick={() => setSelectedDay(new Date(d))}
+                    style={{
+                      position:"relative", zIndex:1,
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"10px 12px", borderRadius:10, cursor:"pointer",
+                      // Selected: transparent so pill shows through; others: subtle box
+                      background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
+                      border: isSel ? "none" : "0.5px solid var(--border)",
+                      opacity: dimmed ? 0.38 : 1,
+                      transition: "opacity .15s",
+                    }}>
+                    {/* Day name */}
+                    <span style={{ fontSize:13, width:28, letterSpacing:"-0.2px", flexShrink:0,
+                      color: isSel ? "var(--accent)" : "var(--text-subtle)", fontWeight: isSel ? 500 : 400 }}>
+                      {DAY_ES[d.getDay()]}
+                    </span>
+                    {/* Day number */}
+                    <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
+                      color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
+                      {d.getDate()}
+                    </span>
+                    {/* Today dot */}
+                    {isToday && (
+                      <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
+                    )}
+                    {/* Task count badge */}
+                    {dayTasks.length > 0 && (
+                      <span style={{
+                        fontSize:10, fontWeight:600, color:"var(--text-subtle)",
+                        background:"var(--bg-elev)", border:"0.5px solid var(--border)",
+                        borderRadius:99, padding:"1px 6px", flexShrink:0,
+                      }}>{dayTasks.length}</span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Spacer + progress at bottom of left panel */}
         <div style={{ flex:1 }}/>
