@@ -45,6 +45,7 @@ const AgendaPage = ({ navigate }) => {
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
+  const [pickerFor, setPickerFor] = useState(null); // null | "start" | "end"
 
   // ── build event list from all sources ──────────────────────────────────────
   const allEvents = useMemo(() => {
@@ -159,6 +160,7 @@ const AgendaPage = ({ navigate }) => {
     setCustomEvents(updated);
     saveCustom(updated);
     setShowForm(false);
+    setPickerFor(null);
     setForm({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
     setSelected(evt.date);
   };
@@ -418,6 +420,7 @@ const AgendaPage = ({ navigate }) => {
 
       {/* ── Add event modal — Outdomode style ── */}
       {showForm && (
+        <>
         <div
           style={{
             position:"fixed", inset:0,
@@ -428,7 +431,7 @@ const AgendaPage = ({ navigate }) => {
             padding:24,
             animation:"fade .15s ease-out",
           }}
-          onClick={() => setShowForm(false)}
+          onClick={() => { setShowForm(false); setPickerFor(null); }}
         >
           <div
             onClick={e => e.stopPropagation()}
@@ -586,42 +589,47 @@ const AgendaPage = ({ navigate }) => {
 
               {/* Hora inicio – fin */}
               <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                <label style={{
-                  display:"flex", alignItems:"center", gap:6,
-                  padding:"6px 14px", borderRadius:99,
-                  background: form.time ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
-                  border: form.time ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
-                  color: form.time ? "#7db8f7" : "var(--text-subtle)",
-                  fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
-                  fontFamily:"var(--font-sans)", position:"relative",
-                }}>
+                <button
+                  onClick={() => setPickerFor("start")}
+                  style={{
+                    display:"flex", alignItems:"center", gap:6,
+                    padding:"6px 14px", borderRadius:99, cursor:"pointer",
+                    background: form.time ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
+                    border: form.time ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
+                    color: form.time ? "#7db8f7" : "var(--text-subtle)",
+                    fontSize:12, letterSpacing:"-0.5px",
+                    fontFamily:"var(--font-sans)",
+                  }}
+                >
                   <Icon name="clock" size={12} strokeWidth={1.6}/>
                   {form.time || "Inicio"}
-                  <input type="time" value={form.time}
-                    onChange={e => setForm(f=>({...f, time:e.target.value}))}
-                    style={{ position:"absolute", opacity:0, width:0, height:0 }}
-                  />
-                </label>
+                </button>
                 <span style={{ fontSize:11, color:"var(--text-subtle)" }}>–</span>
-                <label style={{
-                  display:"flex", alignItems:"center", gap:6,
-                  padding:"6px 14px", borderRadius:99,
-                  background: form.timeEnd ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
-                  border: form.timeEnd ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
-                  color: form.timeEnd ? "#7db8f7" : "var(--text-subtle)",
-                  fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
-                  fontFamily:"var(--font-sans)", position:"relative",
-                }}>
+                <button
+                  onClick={() => setPickerFor("end")}
+                  style={{
+                    padding:"6px 14px", borderRadius:99, cursor:"pointer",
+                    background: form.timeEnd ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
+                    border: form.timeEnd ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
+                    color: form.timeEnd ? "#7db8f7" : "var(--text-subtle)",
+                    fontSize:12, letterSpacing:"-0.5px",
+                    fontFamily:"var(--font-sans)",
+                  }}
+                >
                   {form.timeEnd || "Fin"}
-                  <input type="time" value={form.timeEnd}
-                    onChange={e => setForm(f=>({...f, timeEnd:e.target.value}))}
-                    style={{ position:"absolute", opacity:0, width:0, height:0 }}
-                  />
-                </label>
+                </button>
               </div>
             </div>
-          </div>
+            </div>
         </div>
+        {pickerFor && (
+          <TimePicker
+            value={pickerFor === "start" ? form.time : form.timeEnd}
+            onChange={v => setForm(f => pickerFor === "start" ? {...f, time:v} : {...f, timeEnd:v})}
+            onClose={() => setPickerFor(null)}
+          />
+        )}
+        </>
       )}
     </div>
   );

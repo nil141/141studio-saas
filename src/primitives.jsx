@@ -318,4 +318,162 @@ const ConfirmProvider = ({ children }) => {
 };
 const useConfirm = () => useContext(ConfirmContext);
 
-Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm });
+// ── TimePicker drum-roll ──────────────────────────────────────────────────────
+const TimeColumn = ({ items, selected, onSelect, fmt }) => {
+  const ITEM_H = 44;
+  const ref = useRef(null);
+  const timerRef = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+    const idx = items.indexOf(selected);
+    if (idx >= 0) ref.current.scrollTop = idx * ITEM_H;
+  }, []);
+
+  const handleScroll = () => {
+    const el = ref.current;
+    // live highlight update
+    const liveIdx = Math.round(el.scrollTop / ITEM_H);
+    onSelect(items[Math.max(0, Math.min(items.length-1, liveIdx))]);
+    // snap on settle
+    clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      const snapIdx = Math.round(el.scrollTop / ITEM_H);
+      const clamped = Math.max(0, Math.min(items.length-1, snapIdx));
+      el.scrollTo({ top: clamped * ITEM_H, behavior: 'smooth' });
+      onSelect(items[clamped]);
+    }, 140);
+  };
+
+  return (
+    <div style={{ position:'relative', flex:1, height: ITEM_H * 5, overflow:'hidden' }}>
+      {/* Selection highlight */}
+      <div style={{
+        position:'absolute', top: ITEM_H*2, left:4, right:4, height: ITEM_H,
+        background:'rgba(255,255,255,0.07)', borderRadius:10,
+        pointerEvents:'none', zIndex:1,
+      }}/>
+      {/* Fade top */}
+      <div style={{
+        position:'absolute', top:0, left:0, right:0, height: ITEM_H*2,
+        background:'linear-gradient(to bottom, #1a1a1f 20%, transparent 100%)',
+        pointerEvents:'none', zIndex:2,
+      }}/>
+      {/* Fade bottom */}
+      <div style={{
+        position:'absolute', bottom:0, left:0, right:0, height: ITEM_H*2,
+        background:'linear-gradient(to top, #1a1a1f 20%, transparent 100%)',
+        pointerEvents:'none', zIndex:2,
+      }}/>
+      <div
+        ref={ref}
+        onScroll={handleScroll}
+        style={{
+          height:'100%', overflowY:'scroll', scrollbarWidth:'none', msOverflowStyle:'none',
+          paddingTop: ITEM_H*2, paddingBottom: ITEM_H*2,
+        }}
+      >
+        {items.map((item, i) => (
+          <div
+            key={i}
+            onClick={() => {
+              onSelect(item);
+              ref.current.scrollTo({ top: i * ITEM_H, behavior:'smooth' });
+            }}
+            style={{
+              height: ITEM_H, display:'flex', alignItems:'center', justifyContent:'center',
+              fontSize: item === selected ? 30 : 20,
+              color: item === selected ? '#f2f2f2' : 'rgba(255,255,255,0.22)',
+              cursor:'pointer', userSelect:'none',
+              fontFamily:'var(--font-display)', fontWeight:400,
+              letterSpacing:'-0.5px',
+              transition:'font-size 0.08s, color 0.08s',
+            }}
+          >
+            {fmt ? fmt(item) : item}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const TimePicker = ({ value, onChange, onClose }) => {
+  const pad = n => String(n).padStart(2, '0');
+  const [h, setH] = useState(value ? parseInt(value.split(':')[0]) : 9);
+  const [m, setM] = useState(value ? parseInt(value.split(':')[1]) : 0);
+  const hours = Array.from({ length: 24 }, (_, i) => i);
+  const mins  = Array.from({ length: 60 }, (_, i) => i);
+
+  return (
+    <div
+      style={{
+        position:'fixed', inset:0, zIndex:400,
+        background:'rgba(0,0,0,0.55)', backdropFilter:'blur(8px)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        animation:'fade .15s ease-out',
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:300, background:'#1a1a1f',
+          border:'0.5px solid rgba(255,255,255,0.1)',
+          borderRadius:24, overflow:'hidden',
+          animation:'pop .2s cubic-bezier(.2,.8,.2,1)',
+        }}
+      >
+        {/* Title */}
+        <div style={{
+          padding:'22px 24px 12px', textAlign:'center',
+          fontSize:17, fontWeight:400, letterSpacing:'-0.96px', color:'var(--text)',
+        }}>
+          Seleccionar hora
+        </div>
+
+        {/* Drum roll */}
+        <div style={{ display:'flex', alignItems:'center', padding:'0 20px', gap:4 }}>
+          <TimeColumn items={hours} selected={h} onSelect={setH} fmt={pad}/>
+          <div style={{
+            display:'flex', alignItems:'center', justifyContent:'center',
+            fontSize:28, color:'rgba(255,255,255,0.25)', fontWeight:300,
+            paddingBottom:2, letterSpacing:0, flexShrink:0,
+          }}>:</div>
+          <TimeColumn items={mins} selected={m} onSelect={setM} fmt={pad}/>
+        </div>
+
+        {/* Buttons */}
+        <div style={{ height:'0.5px', background:'rgba(255,255,255,0.07)', margin:'12px 0 0' }}/>
+        <button
+          onClick={() => { onChange(pad(h) + ':' + pad(m)); onClose(); }}
+          style={{
+            width:'100%', padding:'16px', background:'transparent',
+            border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.07)',
+            color:'var(--text)', fontSize:15, letterSpacing:'-0.96px',
+            cursor:'pointer', fontFamily:'var(--font-sans)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+          onMouseLeave={e => e.currentTarget.style.background='transparent'}
+        >
+          Confirmar
+        </button>
+        <button
+          onClick={onClose}
+          style={{
+            width:'100%', padding:'16px', background:'transparent',
+            border:'none', color:'var(--text-muted)',
+            fontSize:15, letterSpacing:'-0.96px',
+            cursor:'pointer', fontFamily:'var(--font-sans)',
+          }}
+          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.03)'}
+          onMouseLeave={e => e.currentTarget.style.background='transparent'}
+        >
+          Cancelar
+        </button>
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker });

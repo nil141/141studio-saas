@@ -24,8 +24,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
   const [time,  setTime]  = useState("");
   const [timeEnd, setTimeEnd] = useState("");
   const [eventType, setEventType] = useState("custom");
+  const [pickerFor, setPickerFor] = useState(null); // null | "start" | "end"
 
-  useEffect(() => { if (open) { setTitle(""); setSub(""); setDate(today()); setTime(""); setTimeEnd(""); setType(defaultType); } }, [open, defaultType]);
+  useEffect(() => { if (open) { setTitle(""); setSub(""); setDate(today()); setTime(""); setTimeEnd(""); setType(defaultType); setPickerFor(null); } }, [open, defaultType]);
   useEffect(() => { if (!open) return; const fn = e => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", fn); return () => window.removeEventListener("keydown", fn); }, [open]);
 
   if (!open) return null;
@@ -76,6 +77,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
   }[type];
 
   return (
+    <>
     <div
       style={{
         position:"fixed", inset:0,
@@ -236,31 +238,33 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
               />
               {type === "event" && (
                 <>
-                  <input
-                    type="time" value={time}
-                    placeholder="Inicio"
-                    onChange={e => setTime(e.target.value)}
+                  <button
+                    onClick={() => setPickerFor("start")}
                     style={{
+                      display:"flex", alignItems:"center", gap:5,
+                      padding:"5px 14px", borderRadius:99, cursor:"pointer",
                       background: time ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.06)",
                       border: time ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
-                      borderRadius:99, color: time ? "#7db8f7" : "var(--text-muted)",
-                      fontSize:12, padding:"5px 14px",
-                      fontFamily:"var(--font-sans)",
+                      color: time ? "#7db8f7" : "var(--text-muted)",
+                      fontSize:12, fontFamily:"var(--font-sans)", letterSpacing:"-0.3px",
                     }}
-                  />
+                  >
+                    <Icon name="clock" size={12} strokeWidth={1.6}/>
+                    {time || "Inicio"}
+                  </button>
                   <span style={{fontSize:11, color:"var(--text-subtle)"}}>–</span>
-                  <input
-                    type="time" value={timeEnd}
-                    placeholder="Fin"
-                    onChange={e => setTimeEnd(e.target.value)}
+                  <button
+                    onClick={() => setPickerFor("end")}
                     style={{
+                      padding:"5px 14px", borderRadius:99, cursor:"pointer",
                       background: timeEnd ? "rgba(96,165,250,0.1)" : "rgba(255,255,255,0.06)",
                       border: timeEnd ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
-                      borderRadius:99, color: timeEnd ? "#7db8f7" : "var(--text-muted)",
-                      fontSize:12, padding:"5px 14px",
-                      fontFamily:"var(--font-sans)",
+                      color: timeEnd ? "#7db8f7" : "var(--text-muted)",
+                      fontSize:12, fontFamily:"var(--font-sans)", letterSpacing:"-0.3px",
                     }}
-                  />
+                  >
+                    {timeEnd || "Fin"}
+                  </button>
                 </>
               )}
             </div>
@@ -293,6 +297,15 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
         </div>
       </div>
     </div>
+
+    {pickerFor && (
+      <TimePicker
+        value={pickerFor === "start" ? time : timeEnd}
+        onChange={v => pickerFor === "start" ? setTime(v) : setTimeEnd(v)}
+        onClose={() => setPickerFor(null)}
+      />
+    )}
+  </>
   );
 };
 
