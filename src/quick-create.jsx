@@ -25,6 +25,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
   const [type,      setType]      = useState(defaultType);
   const [title,     setTitle]     = useState("");
+  const [desc,      setDesc]      = useState("");
   const [clientId,  setClientId]  = useState("");
   const [date,      setDate]      = useState(today());
   const [time,      setTime]      = useState("");
@@ -35,7 +36,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
   useEffect(() => {
     if (open) {
-      setTitle(""); setClientId(""); setDate(defaultDate || today());
+      setTitle(""); setDesc(""); setClientId(""); setDate(defaultDate || today());
       setTime(""); setTimeEnd(""); setFreq("once");
       setType(defaultType); setActiveTab(null); setPickerFor(null);
     }
@@ -61,12 +62,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         const client = D.CLIENTS.find(c => c.id === clientId);
         const proj   = D.PROJECTS.find(p => p.clientId === clientId);
         if (proj) {
-          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq });
+          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
         } else {
-          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time||null, frequency: freq });
+          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time||null, frequency: freq, notes: desc||null });
         }
       } else {
-        D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq });
+        D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
       }
     } else if (type === "event" || type === "meeting") {
       const CUSTOM_KEY = "agenda_custom_events";
@@ -164,7 +165,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           </button>
         </div>
 
-        {/* Title input */}
+        {/* Title + description inputs */}
         <div style={{ padding:"28px 28px 8px" }}>
           <input
             autoFocus
@@ -177,6 +178,17 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               fontSize:28, fontWeight:400, letterSpacing:"-1.4px",
               color: title ? "var(--text)" : "rgba(255,255,255,0.15)",
               fontFamily:"var(--font-display)", caretColor: accentColor,
+            }}
+          />
+          <input
+            placeholder="Descripción (opcional)"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            style={{
+              width:"100%", background:"transparent", border:"none", outline:"none",
+              fontSize:14, letterSpacing:"-0.5px", marginTop:8,
+              color: desc ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+              fontFamily:"var(--font-sans)", caretColor: accentColor,
             }}
           />
         </div>
