@@ -259,50 +259,34 @@ const TasksBoard = ({ navigate, openModal }) => {
         padding:"20px 16px 16px 20px",
         overflow:"hidden",
       }}>
-        {/* Progress — top of left panel */}
-        <div style={{ marginBottom:16, paddingBottom:16, borderBottom:"0.5px solid var(--border)" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8 }}>
-            <span style={{ letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>Progreso</span>
+        {/* Month nav — FIRST, large centered */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
+          <button onClick={() => setWeekOffset(o => o-1)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"6px 8px", borderRadius:8, display:"flex", alignItems:"center" }}>
+            <Icon name="chevron-left" size={16}/>
+          </button>
+          <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px", color:"var(--text)" }}>
+            {MON_ES[weekDays[3].getMonth()]}
+          </span>
+          <button onClick={() => setWeekOffset(o => o+1)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"6px 8px", borderRadius:8, display:"flex", alignItems:"center" }}>
+            <Icon name="chevron-right" size={16}/>
+          </button>
+        </div>
+
+        {/* Progress — below month nav, in a card */}
+        <div style={{ background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:14 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase", fontWeight:500 }}>
+            <span>Daily Progress</span>
             <span style={{ fontWeight:600, color:"var(--text-muted)" }}>{donePct}%</span>
           </div>
           <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
             <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
           </div>
-          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:5 }}>
-            {allTasks.filter(t => t.column === "done").length} de {allTasks.length} completadas
-          </div>
         </div>
 
-        {/* Week nav header */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
-          <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.8px", color:"var(--text)" }}>
-            {MON_ES[weekDays[3].getMonth()]}
-          </span>
-          <div style={{ display:"flex", gap:2 }}>
-            <button onClick={() => setWeekOffset(o => o-1)}
-              style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", borderRadius:6, display:"flex", alignItems:"center" }}>
-              <Icon name="chevron-left" size={14}/>
-            </button>
-            <button onClick={() => setWeekOffset(o => o+1)}
-              style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", borderRadius:6, display:"flex", alignItems:"center" }}>
-              <Icon name="chevron-right" size={14}/>
-            </button>
-          </div>
-        </div>
-        {/* Week range label */}
-        <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.01em", marginBottom:12 }}>
-          {weekLabel}
-        </div>
-
-        {/* Day rows — current week + next week dimmed, fills available height */}
+        {/* Day rows — only current week (7 days), each fills space equally */}
         {(() => {
-          // Build 21 days: current week (normal) + next 14 (dimmed) — enough to fill any screen
-          const nextDays = Array.from({ length: 14 }, (_, i) => {
-            const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
-          });
-          const allDays = weekDays.map(d => ({ d, dimmed: false }))
-            .concat(nextDays.map(d => ({ d, dimmed: true })));
-
           return (
             <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, gap:6, overflow:"hidden" }}>
               {/* Sliding pill — sits behind the day boxes */}
@@ -311,11 +295,11 @@ const TasksBoard = ({ navigate, openModal }) => {
                   position:"absolute", left:0, right:0,
                   top: dayPill.top, height: dayPill.height,
                   background:"rgba(158,154,229,0.18)",
-                  borderRadius:10, pointerEvents:"none", zIndex:0,
+                  borderRadius:12, pointerEvents:"none", zIndex:0,
                   transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
                 }}/>
               )}
-              {allDays.map(({ d, dimmed }) => {
+              {weekDays.map(d => {
                 const dMid = new Date(d); dMid.setHours(0,0,0,0);
                 const isToday = dMid.getTime() === todayMid.getTime();
                 const isSel   = dMid.getTime() === selMid.getTime();
@@ -331,12 +315,12 @@ const TasksBoard = ({ navigate, openModal }) => {
                     onClick={() => setSelectedDay(new Date(d))}
                     style={{
                       position:"relative", zIndex:1,
+                      flex:1,
                       display:"flex", alignItems:"center", gap:12,
-                      padding:"7px 12px", borderRadius:10, cursor:"pointer",
+                      padding:"0 14px", borderRadius:12, cursor:"pointer",
                       // Selected: transparent so pill shows through; others: subtle box
                       background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
                       border: isSel ? "none" : "0.5px solid var(--border)",
-                      opacity: dimmed ? 0.38 : 1,
                       transition: "opacity .15s",
                     }}>
                     {/* Day name */}
@@ -345,7 +329,7 @@ const TasksBoard = ({ navigate, openModal }) => {
                       {DAY_ES[d.getDay()]}
                     </span>
                     {/* Day number */}
-                    <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
+                    <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px", flex:1,
                       color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
                       {d.getDate()}
                     </span>
