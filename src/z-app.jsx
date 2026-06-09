@@ -55,6 +55,7 @@ const App = () => {
   const [modalParams, setModalParams] = useState({});
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [quickCreate, setQuickCreate] = useState(false);
+  const [quickCreateType, setQuickCreateType] = useState("task");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -111,7 +112,10 @@ const App = () => {
     window.scrollTo({ top: 0 });
   };
 
-  const openModal = (name, params = {}) => { setModal(name); setModalParams(params); };
+  const openModal = (name, params = {}) => {
+    if (name === "newTask") { setQuickCreateType("task"); setQuickCreate(true); return; }
+    setModal(name); setModalParams(params);
+  };
   const closeModal = () => setModal(null);
 
   // ── Not logged in: show auth gate
@@ -206,7 +210,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
       <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
-      <QuickCreateModal open={quickCreate} onClose={() => setQuickCreate(false)} openModal={openModal}/>
+      <QuickCreateModal open={quickCreate} onClose={() => setQuickCreate(false)} defaultType={quickCreateType} openModal={openModal}/>
     </>
   );
 };
