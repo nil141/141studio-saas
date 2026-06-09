@@ -77,6 +77,17 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         : { name: cleanName(session.name || session.email, "Cliente"), initials: (cleanName(session.name || session.email, "C"))[0].toUpperCase(), email: session.email || "" })
     : { name: "Nil", initials: "N", email: "nil@141agency.com" };
 
+  const navItemStyle = (isActive) => ({
+    display: "flex", alignItems: "center", gap: 10,
+    padding: "9px 10px", borderRadius: 10, cursor: "pointer",
+    background: isActive ? "rgba(158,154,229,0.13)" : "transparent",
+    color: isActive ? "#c8c5f2" : "var(--text-muted)",
+    transition: "color .12s",
+    fontSize: 15, fontWeight: 400,
+    letterSpacing: "-0.96px",
+    userSelect: "none",
+  });
+
   const NavItem = ({ id, icon, label, badge }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = current === id || (id === "campaigns" && current === "campaign");
@@ -86,21 +97,18 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          display:"flex", alignItems:"center", gap:10,
-          padding:"8px 10px", borderRadius:10, cursor:"pointer",
-          userSelect:"none", fontSize:14, fontWeight:400, letterSpacing:"-0.5px",
-          transition:"background .12s, color .12s",
-          background: isActive ? "rgba(255,255,255,0.08)" : hov ? "rgba(255,255,255,0.05)" : "transparent",
-          color: isActive ? "var(--text)" : hov ? "rgba(255,255,255,0.75)" : "var(--text-muted)",
+          ...navItemStyle(isActive),
+          color: isActive ? "#c8c5f2" : hov ? "#cccccc" : "var(--text-muted)",
         }}
       >
-        <Icon name={icon} size={15} strokeWidth={isActive ? 2 : 1.6}/>
+        <Icon name={icon} size={16} strokeWidth={1.7}/>
         <span style={{flex:1}}>{label}</span>
         {badge ? (
           <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
             {badge}
           </span>
         ) : null}
+        {isActive ? <Icon name="chevron" size={13} style={{color:"rgba(158,154,229,0.6)", flexShrink:0}}/> : null}
       </div>
     );
   };
@@ -113,15 +121,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          display:"flex", alignItems:"center", gap:10,
-          padding:"8px 10px", borderRadius:10, cursor:"pointer",
-          userSelect:"none", fontSize:14, fontWeight:400, letterSpacing:"-0.5px",
-          transition:"background .12s, color .12s",
-          background: hov ? "rgba(255,255,255,0.05)" : "transparent",
-          color: hov ? "rgba(255,255,255,0.75)" : "var(--text-muted)",
+          ...navItemStyle(false),
+          color: hov ? "#cccccc" : "var(--text-muted)",
         }}
       >
-        <Icon name={icon} size={15} strokeWidth={1.6}/>
+        <Icon name={icon} size={16} strokeWidth={1.6}/>
         <span style={{flex:1}}>{label}</span>
         {kbd ? <span style={{fontSize:10, color:"var(--text-subtle)", fontFamily:"var(--font-mono)"}}>{kbd}</span> : null}
       </div>
