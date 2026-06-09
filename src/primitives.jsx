@@ -77,28 +77,45 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         : { name: cleanName(session.name || session.email, "Cliente"), initials: (cleanName(session.name || session.email, "C"))[0].toUpperCase(), email: session.email || "" })
     : { name: "Nil", initials: "N", email: "nil@141agency.com" };
 
-  const navItemStyle = (isActive) => ({
-    display: "flex", alignItems: "center", gap: 10,
-    padding: "9px 10px", borderRadius: 10, cursor: "pointer",
-    background: isActive ? "rgba(158,154,229,0.13)" : "transparent",
-    color: isActive ? "#c8c5f2" : "var(--text-muted)",
-    transition: "color .12s",
-    fontSize: 15, fontWeight: 400,
-    letterSpacing: "-0.96px",
-    userSelect: "none",
-  });
+  // ── Sliding pill refs ──────────────────────────────────────────────
+  const navContainerRef = useRef(null);
+  const itemRefs = useRef({});
+  const [pill, setPill] = React.useState(null); // { top, height, animated }
+  const firstPill = useRef(true);
+
+  useEffect(() => {
+    const activeId = current === "campaign" ? "campaigns" : current;
+    const el = itemRefs.current[activeId];
+    const container = navContainerRef.current;
+    if (!el || !container) return;
+    const eR = el.getBoundingClientRect();
+    const cR = container.getBoundingClientRect();
+    const top = eR.top - cR.top + container.scrollTop;
+    if (firstPill.current) {
+      firstPill.current = false;
+      setPill({ top, height: eR.height, animated: false });
+    } else {
+      setPill({ top, height: eR.height, animated: true });
+    }
+  }, [current]);
 
   const NavItem = ({ id, icon, label, badge }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = current === id || (id === "campaigns" && current === "campaign");
     return (
       <div
+        ref={el => { itemRefs.current[id] = el; }}
         onClick={() => onNavigate(id)}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          ...navItemStyle(isActive),
+          position:"relative", zIndex:1,
+          display:"flex", alignItems:"center", gap:10,
+          padding:"9px 10px", borderRadius:10, cursor:"pointer",
+          background:"transparent",
           color: isActive ? "#c8c5f2" : hov ? "#cccccc" : "var(--text-muted)",
+          transition:"color .12s",
+          fontSize:15, fontWeight:400, letterSpacing:"-0.96px", userSelect:"none",
         }}
       >
         <Icon name={icon} size={16} strokeWidth={1.7}/>
@@ -121,8 +138,12 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          ...navItemStyle(false),
+          display:"flex", alignItems:"center", gap:10,
+          padding:"9px 10px", borderRadius:10, cursor:"pointer",
+          background:"transparent",
           color: hov ? "#cccccc" : "var(--text-muted)",
+          transition:"color .12s",
+          fontSize:15, fontWeight:400, letterSpacing:"-0.96px", userSelect:"none",
         }}
       >
         <Icon name={icon} size={16} strokeWidth={1.6}/>
@@ -163,7 +184,17 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       </div>
 
       {/* Nav con secciones */}
-      <div style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none"}}>
+      <div ref={navContainerRef} style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none", position:"relative"}}>
+        {/* Sliding pill */}
+        {pill && (
+          <div style={{
+            position:"absolute", left:0, right:0,
+            top: pill.top, height: pill.height,
+            background:"rgba(158,154,229,0.13)",
+            borderRadius:10, pointerEvents:"none", zIndex:0,
+            transition: pill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
+          }}/>
+        )}
         {sections.map((section, si) => (
           <div key={si} style={{marginBottom: 20}}>
             <div style={{
