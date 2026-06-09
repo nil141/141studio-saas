@@ -81,18 +81,24 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ── Upcoming events ──
   const upcomingEvents = React.useMemo(() => {
     const ev = [];
-    const today = new Date();
+    const now = new Date();
+
+    // Proyectos con deadline
     D.PROJECTS.forEach(p => {
       const d = parseSpanishDate(p.deadline);
       if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "entrega",
         color: p.light==="red"?"var(--red)":p.light==="amber"?"var(--amber)":"var(--green)",
         icon: "folder" });
     });
+
+    // Facturas pendientes
     D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
       const d = parseSpanishDate(i.due);
       if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "factura",
         color: i.status==="overdue"?"var(--red)":"var(--amber)", icon: "receipt" });
     });
+
+    // Tareas con deadline
     Object.entries(D.TASKS).forEach(([pid, taskList]) => {
       const project = pid !== "__none__" ? D.PROJECTS.find(p => p.id === pid) : null;
       (taskList||[]).forEach(t => {
@@ -103,9 +109,31 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           color: "var(--blue)", icon: "list-todo" });
       });
     });
+
+    // Eventos personalizados de Agenda (localStorage)
+    try {
+      const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
+      custom.forEach(e => {
+        if (!e.date) return;
+        const d = new Date(e.date + "T00:00:00");
+        if (isNaN(d)) return;
+        const iconMap = { meeting:"users", task:"list-todo", custom:"calendar" };
+        const colorMap = { meeting:"var(--red)", task:"var(--accent)", custom:"var(--blue)" };
+        ev.push({
+          date: d,
+          label: e.title,
+          sub: e.sub || "",
+          type: e.type === "meeting" ? "reunión" : e.type === "task" ? "tarea" : "evento",
+          color: colorMap[e.type] || "var(--blue)",
+          icon: iconMap[e.type] || "calendar",
+        });
+      });
+    } catch(err) {}
+
     return ev
-      .filter(e => { const diff = e.date-today; return diff>=-86400000 && diff<=60*86400000; })
-      .sort((a,b) => a.date-b.date).slice(0,7);
+      .filter(e => { const diff = e.date - now; return diff >= -86400000 && diff <= 60*86400000; })
+      .sort((a,b) => a.date - b.date)
+      .slice(0, 8);
   }, [D.PROJECTS, D.INVOICES, D.TASKS]);
 
   const formatEventDate = (d) => {
