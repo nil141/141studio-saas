@@ -302,7 +302,7 @@ const TasksBoard = ({ navigate, openModal }) => {
                   position:"relative", zIndex:1,
                   display:"flex", alignItems:"center", gap:16,
                   padding:"14px 18px", borderRadius:14, cursor:"pointer",
-                  background:"var(--bg-elev)",
+                  background:"transparent",
                   border:"0.5px solid var(--border)",
                 }}>
                 <span style={{ fontSize:14, width:30, letterSpacing:"-0.3px",
