@@ -852,19 +852,6 @@ const NewTaskModal = ({ open, onClose }) => {
           </select>
         </div>
 
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:14}}>
-          <div>
-            <div className="label">Estado inicial</div>
-            <select className="select" value={column} onChange={e => setColumn(e.target.value)}>
-              {COLUMNS.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <div className="label">Asignado a</div>
-            <input className="input" placeholder="Tú" value={assignee}
-              onChange={e => setAssignee(e.target.value)}/>
-          </div>
-        </div>
 
       </div>
     </Modal>
