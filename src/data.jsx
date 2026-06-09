@@ -305,7 +305,14 @@ const addClient = (input) => {
     email: c.email, whatsapp: c.whatsapp, initials: c.initials,
     color: c.color, projects_count: 0, mrr: 0, last_contact: "ahora",
     status: c.status, service: c.service, since: c.since,
-  }).then();
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addClient] Supabase error:", error.message, "| code:", error.code, "| details:", error.details, "| hint:", error.hint);
+      // Revert optimistic update so UI reflects reality
+      _store.CLIENTS = _store.CLIENTS.filter(x => x.id !== c.id);
+      _emit();
+    }
+  });
   return c;
 };
 
@@ -387,7 +394,13 @@ const addProject = (input) => {
     name: p.name, service: p.service, light: p.light, phase: p.phase, week: p.week,
     progress: p.progress, budget: p.budget, deadline: p.deadline,
     next_milestone: p.nextMilestone, revisions_used: 0, description: p.description,
-  }).then();
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addProject] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+      _store.PROJECTS = _store.PROJECTS.filter(x => x.id !== p.id);
+      _emit();
+    }
+  });
   if (client) {
     _sb.from("clients").update({ projects_count: client.projects + 1 }).eq("id", client.id).then();
   }
@@ -422,7 +435,13 @@ const addInvoice = (input) => {
     client_name: inv.client, project_name: inv.project,
     amount: inv.amount, type: inv.type,
     issued: inv.issued, due: inv.due, status: inv.status,
-  }).then();
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addInvoice] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+      _store.INVOICES = _store.INVOICES.filter(x => x.id !== inv.id);
+      _emit();
+    }
+  });
   return inv;
 };
 
@@ -494,7 +513,13 @@ const addTask = (input) => {
     title: t.title, col: t.column, assignee: t.assignee,
     client_id: t.clientId || null, client_name: t.clientName || null,
     done: false,
-  }).then();
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addTask] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+      _store.TASKS[pid] = (_store.TASKS[pid] || []).filter(x => x.id !== t.id);
+      _emit();
+    }
+  });
   return t;
 };
 
