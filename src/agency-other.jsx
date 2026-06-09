@@ -155,37 +155,201 @@ const GeneralTaskColumn = ({ tasks, toast, openModal }) => {
   );
 };
 
-// ── TasksBoard ───────────────────────────────────────────────
+// ── TasksBoard v2 — week view + grouped by client ────────────
 const TasksBoard = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
-  const toast = useToast();
-  const noProjectTasks = D.TASKS["__none__"] || [];
+
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDay, setSelectedDay] = useState(new Date());
+
+  const DAY_ES  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+  const MON_ES  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const C_DOTS  = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6","#22d3ee","#f59e0b"];
+
+  // Week days
+  const weekDays = (() => {
+    const now = new Date();
+    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dow = base.getDay();
+    const mon = new Date(base);
+    mon.setDate(base.getDate() - (dow === 0 ? 6 : dow - 1) + weekOffset * 7);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(mon); d.setDate(mon.getDate() + i); return d;
+    });
+  })();
+
+  const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+  const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
+  const midMonth = MON_ES[weekDays[3].getMonth()];
+
+  const allTasks = Object.values(D.TASKS).flat();
+  const donePct  = allTasks.length
+    ? Math.round(allTasks.filter(t => t.column === "done").length / allTasks.length * 100) : 0;
+
+  // Build groups: client → [projects + tasks]
+  const clientColorMap = {};
+  D.CLIENTS.forEach((c, i) => { clientColorMap[c.id] = C_DOTS[i % C_DOTS.length]; });
+
+  const groupMap = {};
+  D.PROJECTS.forEach(p => {
+    const tasks = D.TASKS[p.id] || [];
+    const key   = p.clientId || "__nc";
+    if (!groupMap[key]) {
+      const cl = D.CLIENTS.find(c => c.id === p.clientId);
+      groupMap[key] = {
+        clientId: key,
+        clientName: (cl?.company || p.clientName || "Sin cliente").toUpperCase(),
+        color: clientColorMap[p.clientId] || "#a78bfa",
+        projects: [],
+      };
+    }
+    groupMap[key].projects.push({ project: p, tasks });
+  });
+
+  const groups = Object.values(groupMap);
+  const noProj = D.TASKS["__none__"] || [];
+  if (noProj.length > 0) groups.push({
+    clientId:"__general", clientName:"GENERAL",
+    color:"var(--text-subtle)", projects:[{ project:null, tasks:noProj }],
+  });
+
+  const toggleDone = (pid, t) =>
+    D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
 
   return (
-    <div style={{display:"flex", flexDirection:"column", minHeight:"100vh"}}>
-      {/* Topbar row */}
-      <div style={{padding:"24px 28px 16px", display:"flex", alignItems:"center", justifyContent:"space-between", gap:16}}>
-        <div>
-          <h1 style={{fontFamily:"var(--font-display)", fontSize:22, fontWeight:500, letterSpacing:"-0.02em", margin:0}}>Tareas</h1>
-          <div className="sub" style={{marginTop:4, fontSize:13, color:"var(--text-muted)"}}>
-            {D.PROJECTS.length} proyectos activos · {Object.values(D.TASKS).flat().filter(t => t.column !== "done").length} tareas pendientes
+    <div style={{ display:"flex", height:"100vh", overflow:"hidden" }}>
+
+      {/* ── Left: week selector ───────────────────── */}
+      <div style={{
+        width:216, flexShrink:0,
+        borderRight:"0.5px solid var(--border)",
+        display:"flex", flexDirection:"column",
+        padding:"28px 14px",
+      }}>
+        {/* Month nav */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
+          <button onClick={() => setWeekOffset(o => o-1)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
+            <Icon name="chevron-left" size={16}/>
+          </button>
+          <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-1px" }}>{midMonth}</span>
+          <button onClick={() => setWeekOffset(o => o+1)}
+            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
+            <Icon name="chevron-right" size={16}/>
+          </button>
+        </div>
+
+        {/* Progress */}
+        <div style={{ padding:"0 4px", marginBottom:18 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:10, fontWeight:500, letterSpacing:"0.07em", color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:6 }}>
+            <span>Progreso</span><span>{donePct}%</span>
+          </div>
+          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
+            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .3s" }}/>
           </div>
         </div>
-        <button className="btn primary" onClick={() => openModal("newTask")}>
-          <Icon name="plus" size={13}/> Nueva tarea
-        </button>
+
+        {/* Days */}
+        {weekDays.map(d => {
+          const dMid = new Date(d); dMid.setHours(0,0,0,0);
+          const isToday = dMid.getTime() === todayMid.getTime();
+          const isSel   = dMid.getTime() === selMid.getTime();
+          return (
+            <div key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))}
+              style={{
+                display:"flex", alignItems:"center", gap:12,
+                padding:"9px 12px", borderRadius:12, cursor:"pointer",
+                background: isSel ? "rgba(158,154,229,0.14)" : "transparent",
+                transition:"background .12s", marginBottom:2,
+              }}>
+              <span style={{ fontSize:12, width:26, letterSpacing:"-0.3px",
+                color: isSel ? "var(--accent)" : "var(--text-subtle)" }}>
+                {DAY_ES[d.getDay()]}
+              </span>
+              <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px",
+                color: isSel ? "var(--text)" : "var(--text-muted)" }}>
+                {d.getDate()}
+              </span>
+              {isToday && <span style={{ fontSize:10, color:"var(--accent)", letterSpacing:"-0.2px" }}>(Hoy)</span>}
+            </div>
+          );
+        })}
       </div>
 
-      {/* Columns scroll area — Sin proyecto always visible */}
-      <div style={{
-        display:"flex", gap:14, overflowX:"auto", padding:"0 28px 80px",
-        flex:1, alignItems:"flex-start",
-        scrollbarWidth:"thin", scrollbarColor:"var(--border-strong) transparent"
-      }}>
-        <GeneralTaskColumn tasks={noProjectTasks} toast={toast} openModal={openModal}/>
-        {D.PROJECTS.map(p => (
-          <ProjectTaskColumn key={p.id} project={p} navigate={navigate} toast={toast}/>
+      {/* ── Right: tasks grouped by client ───────── */}
+      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
+          <div>
+            <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
+            <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:4, letterSpacing:"-0.5px" }}>
+              {allTasks.filter(t => t.column !== "done").length} pendientes · {donePct}% completado
+            </div>
+          </div>
+          <button className="btn primary sm" onClick={() => openModal("newTask")}>
+            <Icon name="plus" size={13}/> Nueva tarea
+          </button>
+        </div>
+
+        {groups.length === 0 && (
+          <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+            Sin tareas — <button className="btn ghost sm" onClick={() => openModal("newTask")}>crear una</button>
+          </div>
+        )}
+
+        {groups.map(group => (
+          <div key={group.clientId} style={{ marginBottom:28 }}>
+            {/* Client header */}
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+              <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
+              <span style={{ fontSize:11, fontWeight:500, letterSpacing:"0.07em", textTransform:"uppercase", color:"var(--text-muted)" }}>
+                {group.clientName}
+              </span>
+            </div>
+
+            {group.projects.map(({ project, tasks }) => (
+              <div key={project?.id || "__none"} style={{ marginBottom:8 }}>
+                {project && (
+                  <div onClick={() => navigate("project", { projectId: project.id })}
+                    style={{ fontSize:12, color:"var(--text-subtle)", marginBottom:4, paddingLeft:14, cursor:"pointer", letterSpacing:"-0.3px" }}>
+                    {project.name}
+                  </div>
+                )}
+                {tasks.map(t => {
+                  const pid = project?.id || "__none__";
+                  const isDone = t.column === "done";
+                  return (
+                    <div key={t.id} style={{
+                      display:"flex", alignItems:"center", gap:12,
+                      padding:"10px 14px", borderRadius:10,
+                      background:"var(--bg-elev)", border:"0.5px solid var(--border)",
+                      marginBottom:4,
+                    }}>
+                      <button onClick={() => toggleDone(pid, t)} style={{
+                        width:18, height:18, borderRadius:"50%", flexShrink:0,
+                        border: isDone ? "none" : "1.5px solid rgba(255,255,255,0.2)",
+                        background: isDone ? "var(--green)" : "transparent",
+                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                        padding:0,
+                      }}>
+                        {isDone && <Icon name="check" size={10} strokeWidth={2.5} style={{ color:"#000" }}/>}
+                      </button>
+                      <span style={{
+                        flex:1, fontSize:14, letterSpacing:"-0.5px",
+                        color: isDone ? "var(--text-subtle)" : "var(--text)",
+                        textDecoration: isDone ? "line-through" : "none",
+                      }}>
+                        {t.title}
+                      </span>
+                      <Icon name="chevron-right" size={14} style={{ color:"var(--text-subtle)", flexShrink:0 }}/>
+                    </div>
+                  );
+                })}
+              </div>
+            ))}
+
+            <div style={{ height:"0.5px", background:"var(--border)", marginTop:8 }}/>
+          </div>
         ))}
       </div>
     </div>
