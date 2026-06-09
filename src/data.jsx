@@ -148,8 +148,9 @@ const _loadAll = async () => {
   if (!uid) return;
 
   // Ensure agency row exists (FK required by clients/projects/etc.)
+  const agencyEmail = _store._user?.email || "";
   const { error: agErr } = await _sb.from("agencies")
-    .upsert({ id: uid, name: "141'STUDIO" }, { onConflict: "id" });
+    .upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
 
   // Get profile to determine role and agency context
