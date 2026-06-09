@@ -104,8 +104,18 @@ const _mc = r => r && ({
   id: r.id, name: r.name, company: r.company, email: r.email,
   whatsapp: r.whatsapp, initials: r.initials, color: r.color,
   projects: r.projects_count || 0, mrr: r.mrr || 0,
-  lastContact: r.last_contact, status: r.status,
-  service: r.service, since: r.since,
+  lastContact: r.last_contact || "ahora", status: r.status,
+  service: r.service,
+  since: (() => {
+    if (!r.since) return "—";
+    // Si ya es texto legible (ej: "jun 2026"), lo devuelve tal cual
+    if (!/^\d{4}-\d{2}/.test(r.since)) return r.since;
+    try {
+      const d = new Date(r.since.length === 7 ? r.since + "-01T12:00:00" : r.since + "T12:00:00");
+      const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+      return M[d.getMonth()] + " " + d.getFullYear();
+    } catch { return r.since; }
+  })(),
 });
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
@@ -297,13 +307,13 @@ const addClient = (input) => {
     projects:    0, mrr: 0, lastContact: "ahora",
     status:      "active",
     service:     input.sector || input.type || "—",
-    since:       new Date().toLocaleDateString("es-ES", { month:"short", year:"numeric" }),
+    since:       new Date().toISOString().split("T")[0],   // "2026-06-09" — válido para DATE o TEXT
   };
   _store.CLIENTS = [c, ..._store.CLIENTS]; _emit();
   _sb.from("clients").insert({
     id: c.id, agency_id: uid, name: c.name, company: c.company,
     email: c.email, whatsapp: c.whatsapp, initials: c.initials,
-    color: c.color, projects_count: 0, mrr: 0, last_contact: "ahora",
+    color: c.color, projects_count: 0, mrr: 0, last_contact: null,
     status: c.status, service: c.service, since: c.since,
   }).then(({ error }) => {
     if (error) {
