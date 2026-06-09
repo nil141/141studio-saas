@@ -390,69 +390,56 @@ const TasksBoard = ({ navigate, openModal }) => {
         )}
 
         {groups.map(group => (
-          <div key={group.clientId} style={{ marginBottom:28 }}>
+          <div key={group.clientId} style={{ marginBottom:32 }}>
             {/* Client header */}
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:10 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
               <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
-              <span style={{ fontSize:11, fontWeight:500, letterSpacing:"0.07em", textTransform:"uppercase", color:"var(--text-muted)" }}>
+              <span style={{ fontSize:11, fontWeight:600, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-muted)" }}>
                 {group.clientName}
               </span>
             </div>
 
-            {group.projects.map(({ project, tasks }) => (
-              <div key={project?.id || "__none"} style={{ marginBottom:6 }}>
-                {project && (
-                  <div onClick={() => navigate("project", { projectId: project.id })}
-                    style={{ fontSize:11, color:"var(--text-subtle)", marginBottom:6, paddingLeft:2,
-                      cursor:"pointer", letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>
-                    {project.name}
-                  </div>
-                )}
-                {tasks.map(t => {
-                  const pid = project?.id || "__none__";
-                  const isDone = t.column === "done";
-                  const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
-                  return (
-                    <div key={t.id} style={{
-                      display:"flex", alignItems:"center", gap:14,
-                      padding:"12px 16px", borderRadius:14,
-                      background:"var(--bg-elev)", border:"0.5px solid var(--border)",
-                      marginBottom:6,
-                    }}>
-                      {/* Large circle toggle — X when pending, check when done */}
-                      <button onClick={() => toggleDone(pid, t)} style={{
-                        width:40, height:40, borderRadius:"50%", flexShrink:0,
-                        border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.12)",
-                        background: isDone ? "rgba(158,154,229,0.15)" : "rgba(255,255,255,0.04)",
-                        cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                        padding:0, transition:"all .18s",
-                      }}>
-                        {isDone
-                          ? <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
-                          : <Icon name="x" size={13} style={{ color:"rgba(255,255,255,0.25)" }}/>
-                        }
-                      </button>
-                      {/* Title + subtitle */}
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{
-                          fontSize:14, letterSpacing:"-0.5px",
-                          color: isDone ? "var(--text-subtle)" : "var(--text)",
-                        }}>
-                          {t.title}
-                        </div>
-                        <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
-                          {isDone ? "Completada" : colLabel || "Por hacer"}
-                          {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
-                        </div>
-                      </div>
-                      <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
+            {/* Task rows — no individual cards, flat rows with divider */}
+            {group.projects.map(({ project, tasks }) => tasks.map((t, idx) => {
+              const pid = project?.id || "__none__";
+              const isDone = t.column === "done";
+              const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
+              const isLast = idx === tasks.length - 1;
+              return (
+                <div key={t.id} style={{
+                  display:"flex", alignItems:"center", gap:14,
+                  padding:"12px 4px",
+                  borderBottom: isLast ? "none" : "0.5px solid var(--border)",
+                }}>
+                  {/* Large circle toggle */}
+                  <button onClick={() => toggleDone(pid, t)} style={{
+                    width:40, height:40, borderRadius:"50%", flexShrink:0,
+                    border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.12)",
+                    background: isDone ? "rgba(158,154,229,0.15)" : "rgba(255,255,255,0.04)",
+                    cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                    padding:0, transition:"all .18s",
+                  }}>
+                    {isDone
+                      ? <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
+                      : <Icon name="x" size={13} style={{ color:"rgba(255,255,255,0.22)" }}/>
+                    }
+                  </button>
+                  {/* Title + subtitle */}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, letterSpacing:"-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" }}>
+                      {t.title}
                     </div>
-                  );
-                })}
-              </div>
-            ))}
+                    <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                      {project ? project.name : (isDone ? "Completada" : colLabel || "Por hacer")}
+                      {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
+                    </div>
+                  </div>
+                  <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
+                </div>
+              );
+            }))}
 
-            <div style={{ height:"0.5px", background:"var(--border)", marginTop:8 }}/>
+            <div style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
           </div>
         ))}
       </div>
