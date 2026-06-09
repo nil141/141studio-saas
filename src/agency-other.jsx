@@ -163,6 +163,28 @@ const TasksBoard = ({ navigate, openModal }) => {
   const [weekOffset, setWeekOffset] = useState(0);
   const [selectedDay, setSelectedDay] = useState(new Date());
 
+  // Sliding pill for day selector
+  const daysContainerRef = useRef(null);
+  const dayItemRefs      = useRef({});
+  const [dayPill, setDayPill] = useState(null);
+  const firstDayPill     = useRef(true);
+
+  useEffect(() => {
+    const key = new Date(selectedDay).toDateString();
+    const el  = dayItemRefs.current[key];
+    const container = daysContainerRef.current;
+    if (!el || !container) return;
+    const eR = el.getBoundingClientRect();
+    const cR = container.getBoundingClientRect();
+    const top = eR.top - cR.top + container.scrollTop;
+    if (firstDayPill.current) {
+      firstDayPill.current = false;
+      setDayPill({ top, height: eR.height, animated: false });
+    } else {
+      setDayPill({ top, height: eR.height, animated: true });
+    }
+  }, [selectedDay]);
+
   const DAY_ES  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
   const MON_ES  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const C_DOTS  = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6","#22d3ee","#f59e0b"];
@@ -254,32 +276,48 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
         </div>
 
-        {/* Day cards */}
-        {weekDays.map(d => {
-          const dMid = new Date(d); dMid.setHours(0,0,0,0);
-          const isToday = dMid.getTime() === todayMid.getTime();
-          const isSel   = dMid.getTime() === selMid.getTime();
-          return (
-            <div key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))}
-              style={{
-                display:"flex", alignItems:"center", gap:16,
-                padding:"14px 18px", borderRadius:14, cursor:"pointer",
-                background: isSel ? "rgba(158,154,229,0.18)" : "var(--bg-elev)",
-                border: isSel ? "0.5px solid rgba(158,154,229,0.35)" : "0.5px solid var(--border)",
-                transition:"background .15s, border-color .15s",
-              }}>
-              <span style={{ fontSize:14, width:30, letterSpacing:"-0.3px",
-                color: isSel ? "var(--accent)" : "var(--text-muted)", fontWeight: isSel ? 500 : 400 }}>
-                {DAY_ES[d.getDay()]}
-              </span>
-              <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px",
-                color: isSel ? "#c8c5f2" : "var(--text-muted)" }}>
-                {d.getDate()}
-              </span>
-              {isToday && <span style={{ fontSize:11, color:"var(--accent)", letterSpacing:"-0.2px", marginLeft:2 }}>(Hoy)</span>}
-            </div>
-          );
-        })}
+        {/* Day cards with sliding pill */}
+        <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:8 }}>
+          {/* Sliding pill */}
+          {dayPill && (
+            <div style={{
+              position:"absolute", left:0, right:0,
+              top: dayPill.top, height: dayPill.height,
+              background:"rgba(158,154,229,0.18)",
+              border:"0.5px solid rgba(158,154,229,0.35)",
+              borderRadius:14, pointerEvents:"none", zIndex:0,
+              transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
+            }}/>
+          )}
+          {weekDays.map(d => {
+            const dMid = new Date(d); dMid.setHours(0,0,0,0);
+            const isToday = dMid.getTime() === todayMid.getTime();
+            const isSel   = dMid.getTime() === selMid.getTime();
+            return (
+              <div
+                key={d.toISOString()}
+                ref={el => { dayItemRefs.current[d.toDateString()] = el; }}
+                onClick={() => setSelectedDay(new Date(d))}
+                style={{
+                  position:"relative", zIndex:1,
+                  display:"flex", alignItems:"center", gap:16,
+                  padding:"14px 18px", borderRadius:14, cursor:"pointer",
+                  background:"var(--bg-elev)",
+                  border:"0.5px solid var(--border)",
+                }}>
+                <span style={{ fontSize:14, width:30, letterSpacing:"-0.3px",
+                  color: isSel ? "var(--accent)" : "var(--text-muted)", fontWeight: isSel ? 500 : 400 }}>
+                  {DAY_ES[d.getDay()]}
+                </span>
+                <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px",
+                  color: isSel ? "#c8c5f2" : "var(--text-muted)" }}>
+                  {d.getDate()}
+                </span>
+                {isToday && <span style={{ fontSize:11, color:"var(--accent)", letterSpacing:"-0.2px", marginLeft:2 }}>(Hoy)</span>}
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       {/* ── Right: tasks grouped by client ───────── */}
