@@ -128,7 +128,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "tasks": return <TasksBoard navigate={navigate} openModal={openModal}/>;
       case "campaigns": return <CampaignsPage navigate={navigate}/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate}/>;
-      case "agenda": return <SimplePage title="Agenda" icon="calendar" sub="Próximamente · integración con Cal.com"/>;
+      case "agenda": return <AgendaPage navigate={navigate}/>;
       case "billing": return null; // rendered always below
       case "mail": return null; // rendered always below
       case "settings": return <SettingsPage/>;
