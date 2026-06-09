@@ -56,6 +56,7 @@ const App = () => {
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [quickCreate, setQuickCreate] = useState(false);
   const [quickCreateType, setQuickCreateType] = useState("task");
+  const [quickCreateDate, setQuickCreateDate] = useState("");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -113,7 +114,12 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
-    if (name === "newTask") { setQuickCreateType("task"); setQuickCreate(true); return; }
+    if (name === "newTask") {
+      setQuickCreateType("task");
+      setQuickCreateDate(params.date || "");
+      setQuickCreate(true);
+      return;
+    }
     setModal(name); setModalParams(params);
   };
   const closeModal = () => setModal(null);
@@ -210,7 +216,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
       <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
-      <QuickCreateModal open={quickCreate} onClose={() => setQuickCreate(false)} defaultType={quickCreateType} openModal={openModal}/>
+      <QuickCreateModal open={quickCreate} onClose={() => setQuickCreate(false)} defaultType={quickCreateType} defaultDate={quickCreateDate} openModal={openModal}/>
     </>
   );
 };

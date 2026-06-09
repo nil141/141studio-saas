@@ -13,7 +13,7 @@ const today = () => {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 };
 
-const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) => {
+const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", openModal }) => {
   const D = window.Data;
   D.useStore();
 
@@ -49,16 +49,17 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
     const t = title.trim();
 
     if (type === "task") {
+      const deadline = defaultDate || null;
       if (clientId) {
         const client = D.CLIENTS.find(c => c.id === clientId);
         const proj   = D.PROJECTS.find(p => p.clientId === clientId);
         if (proj) {
-          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "" });
+          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "", deadline });
         } else {
-          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "" });
+          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline });
         }
       } else {
-        D.addTask({ title: t, column: "todo", assignee: "" });
+        D.addTask({ title: t, column: "todo", assignee: "", deadline });
       }
     } else if (type === "event" || type === "meeting") {
       const CUSTOM_KEY = "agenda_custom_events";

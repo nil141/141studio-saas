@@ -209,13 +209,22 @@ const TasksBoard = ({ navigate, openModal }) => {
   const donePct  = allTasks.length
     ? Math.round(allTasks.filter(t => t.column === "done").length / allTasks.length * 100) : 0;
 
-  // Build groups: client → [projects + tasks]
+  // Selected day as YYYY-MM-DD string
+  const selDateStr = (() => {
+    const d = new Date(selectedDay);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
+
+  // Filter tasks to only those matching the selected day
+  const dayTasks = allTasks.filter(t => t.deadline === selDateStr);
+
+  // Build groups: client → [projects + tasks]  — only with tasks for selected day
   const clientColorMap = {};
   D.CLIENTS.forEach((c, i) => { clientColorMap[c.id] = C_DOTS[i % C_DOTS.length]; });
 
   const groupMap = {};
   D.PROJECTS.forEach(p => {
-    const tasks = D.TASKS[p.id] || [];
+    const tasks = (D.TASKS[p.id] || []).filter(t => t.deadline === selDateStr);
     const key   = p.clientId || "__nc";
     if (!groupMap[key]) {
       const cl = D.CLIENTS.find(c => c.id === p.clientId);
@@ -231,8 +240,8 @@ const TasksBoard = ({ navigate, openModal }) => {
 
   const groups = Object.values(groupMap);
 
-  // __none__ tasks: those with a clientId go under their client group; the rest → GENERAL
-  const noProj = D.TASKS["__none__"] || [];
+  // __none__ tasks: only for selected day
+  const noProj = (D.TASKS["__none__"] || []).filter(t => t.deadline === selDateStr);
   const generalTasks = [];
   noProj.forEach(t => {
     if (t.clientId) {
@@ -390,17 +399,17 @@ const TasksBoard = ({ navigate, openModal }) => {
           <div>
             <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
             <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:4, letterSpacing:"-0.5px" }}>
-              {allTasks.filter(t => t.column !== "done").length} pendientes · semana del {weekLabel}
+              {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
             </div>
           </div>
-          <button className="btn primary sm" onClick={() => openModal("newTask")}>
+          <button className="btn primary sm" onClick={() => openModal("newTask", { date: selDateStr })}>
             <Icon name="plus" size={13}/> Nueva tarea
           </button>
         </div>
 
         {groups.length === 0 && (
           <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-            Sin tareas — <button className="btn ghost sm" onClick={() => openModal("newTask")}>crear una</button>
+            Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
           </div>
         )}
 
