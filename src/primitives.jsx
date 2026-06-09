@@ -454,6 +454,8 @@ const TimePicker = ({ value, onChange, onClose }) => {
   const [m, setM] = useState(value ? parseInt(value.split(':')[1]) : 0);
   const hours = Array.from({ length: 24 }, (_, i) => i);
   const mins  = Array.from({ length: 60 }, (_, i) => i);
+  // Solo cerrar si mousedown Y mouseup ocurrieron en el overlay (no al arrastrar desde columna)
+  const overlayMouseDown = useRef(false);
 
   return (
     <div
@@ -463,7 +465,8 @@ const TimePicker = ({ value, onChange, onClose }) => {
         display:'flex', alignItems:'center', justifyContent:'center',
         animation:'fade .15s ease-out',
       }}
-      onClick={onClose}
+      onMouseDown={e => { overlayMouseDown.current = e.target === e.currentTarget; }}
+      onClick={e => { if (overlayMouseDown.current && e.target === e.currentTarget) onClose(); }}
     >
       <div
         onClick={e => e.stopPropagation()}
