@@ -414,8 +414,8 @@ const TasksBoard = ({ navigate, openModal }) => {
                   {/* Large circle toggle */}
                   <button onClick={() => toggleDone(pid, t)} style={{
                     width:40, height:40, borderRadius:"50%", flexShrink:0,
-                    border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.12)",
-                    background: isDone ? "rgba(158,154,229,0.15)" : "rgba(255,255,255,0.04)",
+                    border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.18)",
+                    background: "transparent",
                     cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
                     padding:0, transition:"all .18s",
                   }}>
