@@ -282,15 +282,15 @@ const TasksBoard = ({ navigate, openModal }) => {
 
         {/* Day rows — current week + next week dimmed, fills available height */}
         {(() => {
-          // Build 14 days: current week (normal) + next 7 (dimmed)
-          const nextWeekDays = Array.from({ length: 7 }, (_, i) => {
+          // Build 21 days: current week (normal) + next 14 (dimmed) — enough to fill any screen
+          const nextDays = Array.from({ length: 14 }, (_, i) => {
             const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
           });
           const allDays = weekDays.map(d => ({ d, dimmed: false }))
-            .concat(nextWeekDays.map(d => ({ d, dimmed: true })));
+            .concat(nextDays.map(d => ({ d, dimmed: true })));
 
           return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:6 }}>
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, gap:6, overflow:"hidden" }}>
               {/* Sliding pill — sits behind the day boxes */}
               {dayPill && (
                 <div style={{
