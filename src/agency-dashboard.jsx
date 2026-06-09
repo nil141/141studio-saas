@@ -204,73 +204,38 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       height:"100vh", overflow:"hidden", boxSizing:"border-box",
     }}>
 
-      {/* ── Welcome banner ── */}
-      <div className="card" style={{padding:0, overflow:"hidden"}}>
-        <div style={{display:"flex", alignItems:"stretch"}}>
-
-          {/* Left */}
-          <div style={{flex:1, padding:"20px 28px 18px"}}>
-            <div style={{
-              fontSize:11, fontWeight:400, letterSpacing:"0.04em",
-              color:"var(--text-subtle)", marginBottom:10, textTransform:"uppercase",
-            }}>
-              Resumen del espacio de trabajo
-            </div>
-            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:2}}>
+      {/* ── Welcome header ── */}
+      <div style={{paddingBottom:20, borderBottom:"0.5px solid var(--border)"}}>
+        <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between", marginBottom:14}}>
+          <div>
+            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:4}}>
               {greeting}, {adminName}.
             </div>
-            <div style={{fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.96px", marginBottom:16}}>
+            <div style={{fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.5px", display:"flex", alignItems:"center", gap:8}}>
               {agencyName} · {todayStr}
-            </div>
-            <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-              {[
-                { label:"Nueva tarea",     icon:"plus",          fn:()=>openModal("newTask")    },
-                { label:"Nuevo proyecto",  icon:"plus",          fn:()=>openModal("newProject") },
-                { label:"Invitar cliente", icon:"external-link", fn:()=>openModal("invite")     },
-                { label:"Nueva factura",   icon:"receipt",       fn:()=>navigate("invoices")    },
-              ].map(b => (
-                <button key={b.label} className="btn sm" onClick={b.fn}
-                  style={{display:"flex", alignItems:"center", gap:6}}>
-                  <Icon name={b.icon} size={13}/> {b.label}
-                </button>
-              ))}
+              <span style={{
+                fontSize:11, padding:"2px 8px", borderRadius:99,
+                background: capacity==="green"?"var(--green-soft)":capacity==="amber"?"var(--amber-soft)":"var(--red-soft)",
+                color: capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
+                letterSpacing:0,
+              }}>
+                {capacityLabel}
+              </span>
             </div>
           </div>
-
-          {/* Right: capacity */}
-          <div style={{
-            width:230, padding:"26px 26px",
-            borderLeft:"0.5px solid var(--border)",
-            background:"var(--bg-elev-2)",
-            display:"flex", flexDirection:"column", justifyContent:"center", gap:12,
-          }}>
-            <div style={{
-              fontSize:11, fontWeight:400, letterSpacing:"0.04em",
-              color:"var(--text-subtle)", textTransform:"uppercase",
-            }}>
-              Capacidad actual
-            </div>
-            <div style={{display:"flex", gap:5}}>
-              {[1,2,3,4,5].map(n => (
-                <div key={n} style={{
-                  flex:1, height:7, borderRadius:99,
-                  background: n<=activeProjects
-                    ? (capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)")
-                    : "var(--border)",
-                  transition:"background .3s",
-                }}/>
-              ))}
-            </div>
-            <div style={{
-              fontSize:13, fontWeight:600,
-              color:capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
-            }}>
-              {capacityLabel}
-            </div>
-            <div style={{fontSize:12, color:"var(--text-subtle)"}}>
-              {activeProjects} proyecto{activeProjects!==1?"s":""} activo{activeProjects!==1?"s":""}
-            </div>
-          </div>
+        </div>
+        <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+          {[
+            { label:"Nueva tarea",     icon:"plus",          fn:()=>openModal("newTask")    },
+            { label:"Nuevo proyecto",  icon:"plus",          fn:()=>openModal("newProject") },
+            { label:"Invitar cliente", icon:"external-link", fn:()=>openModal("invite")     },
+            { label:"Nueva factura",   icon:"receipt",       fn:()=>navigate("invoices")    },
+          ].map(b => (
+            <button key={b.label} className="btn sm" onClick={b.fn}
+              style={{display:"flex", alignItems:"center", gap:6}}>
+              <Icon name={b.icon} size={13}/> {b.label}
+            </button>
+          ))}
         </div>
       </div>
 
