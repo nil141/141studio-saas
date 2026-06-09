@@ -315,10 +315,8 @@ const TasksBoard = ({ navigate, openModal }) => {
                     onClick={() => setSelectedDay(new Date(d))}
                     style={{
                       position:"relative", zIndex:1,
-                      flex:1,
                       display:"flex", alignItems:"center", gap:12,
-                      padding:"0 14px", borderRadius:12, cursor:"pointer",
-                      // Selected: transparent so pill shows through; others: subtle box
+                      padding:"7px 12px", borderRadius:10, cursor:"pointer",
                       background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
                       border: isSel ? "none" : "0.5px solid var(--border)",
                       transition: "opacity .15s",
@@ -329,7 +327,7 @@ const TasksBoard = ({ navigate, openModal }) => {
                       {DAY_ES[d.getDay()]}
                     </span>
                     {/* Day number */}
-                    <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px", flex:1,
+                    <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
                       color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
                       {d.getDate()}
                     </span>
