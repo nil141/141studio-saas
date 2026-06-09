@@ -414,77 +414,192 @@ const AgendaPage = ({ navigate }) => {
         </div>
       </div>
 
-      {/* ── Add event modal ── */}
+      {/* ── Add event modal — Outdomode style ── */}
       {showForm && (
-        <div className="modal-overlay" onClick={() => setShowForm(false)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-head">
-              <div>
-                <div className="modal-title">Nuevo evento</div>
-                <div className="modal-sub">Se guardará en tu agenda local</div>
-              </div>
-              <button className="btn ghost icon-only sm" onClick={() => setShowForm(false)}>
-                <Icon name="x" size={14}/>
+        <div
+          style={{
+            position:"fixed", inset:0,
+            background:"rgba(0,0,0,0.7)",
+            backdropFilter:"blur(12px)",
+            zIndex:100,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            padding:24,
+            animation:"fade .15s ease-out",
+          }}
+          onClick={() => setShowForm(false)}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width:"100%", maxWidth:480,
+              background:"#141418",
+              border:"0.5px solid rgba(255,255,255,0.1)",
+              borderRadius:28,
+              overflow:"hidden",
+              animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+              display:"flex", flexDirection:"column",
+            }}
+          >
+            {/* Top row: close + submit */}
+            <div style={{
+              display:"flex", alignItems:"center", justifyContent:"space-between",
+              padding:"20px 20px 16px",
+            }}>
+              <button
+                onClick={() => setShowForm(false)}
+                style={{
+                  width:40, height:40, borderRadius:"50%",
+                  background:"rgba(255,255,255,0.07)",
+                  border:"0.5px solid rgba(255,255,255,0.1)",
+                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                  color:"var(--text-muted)", transition:"background .1s",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.12)"}
+                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.07)"}
+              >
+                <Icon name="x" size={16}/>
+              </button>
+              <button
+                onClick={addEvent}
+                disabled={!form.title.trim()}
+                style={{
+                  width:40, height:40, borderRadius:"50%",
+                  background: form.title.trim() ? "var(--accent)" : "rgba(158,154,229,0.2)",
+                  border:"none",
+                  cursor: form.title.trim() ? "pointer" : "default",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  color:"#fff", transition:"all .1s",
+                }}
+                onMouseEnter={e => { if (form.title.trim()) e.currentTarget.style.filter="brightness(1.1)"; }}
+                onMouseLeave={e => e.currentTarget.style.filter="none"}
+              >
+                <Icon name="arrow-up" size={16}/>
               </button>
             </div>
-            <div className="modal-body" style={{display:"flex", flexDirection:"column", gap:14}}>
-              <div>
-                <label className="label">Nombre del evento *</label>
-                <input
-                  className="input"
-                  placeholder="Ej: Reunión con cliente"
-                  value={form.title}
-                  onChange={e => setForm(f=>({...f, title:e.target.value}))}
-                  autoFocus
-                />
+
+            {/* Title input */}
+            <div style={{padding:"0 24px 4px"}}>
+              <input
+                autoFocus
+                placeholder="Nombre del evento..."
+                value={form.title}
+                onChange={e => setForm(f=>({...f, title:e.target.value}))}
+                onKeyDown={e => { if (e.key === "Enter" && form.title.trim()) addEvent(); }}
+                style={{
+                  width:"100%", background:"transparent", border:"none", outline:"none",
+                  fontSize:26, fontWeight:400, letterSpacing:"-1.2px",
+                  color: form.title ? "var(--text)" : "rgba(255,255,255,0.2)",
+                  fontFamily:"var(--font-display)",
+                  caretColor:"var(--accent)",
+                }}
+              />
+            </div>
+
+            {/* Description */}
+            <div style={{padding:"0 24px 20px"}}>
+              <input
+                placeholder="Añadir descripción o ubicación..."
+                value={form.notes}
+                onChange={e => setForm(f=>({...f, notes:e.target.value}))}
+                style={{
+                  width:"100%", background:"transparent", border:"none", outline:"none",
+                  fontSize:15, fontWeight:400, letterSpacing:"-0.96px",
+                  color: form.notes ? "var(--text-muted)" : "rgba(255,255,255,0.15)",
+                  fontFamily:"var(--font-sans)",
+                  caretColor:"var(--accent)",
+                }}
+              />
+            </div>
+
+            {/* Divider */}
+            <div style={{height:"0.5px", background:"rgba(255,255,255,0.07)", margin:"0 0"}}/>
+
+            {/* Date + time display */}
+            <div style={{
+              display:"flex", alignItems:"center", justifyContent:"center",
+              flexDirection:"column", padding:"32px 24px 24px", gap:12,
+            }}>
+              <div style={{
+                fontSize:64, fontWeight:300, letterSpacing:"-3px",
+                color: form.date ? "var(--text)" : "rgba(255,255,255,0.15)",
+                lineHeight:1, fontFamily:"var(--font-display)",
+              }}>
+                {form.date
+                  ? new Date(form.date + "T12:00:00").toLocaleDateString("es-ES", {day:"numeric", month:"short"})
+                  : "—"}
               </div>
-              <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12}}>
-                <div>
-                  <label className="label">Fecha *</label>
-                  <input
-                    className="input"
-                    type="date"
-                    value={form.date}
-                    onChange={e => setForm(f=>({...f, date:e.target.value}))}
-                  />
+              {form.time && (
+                <div style={{fontSize:20, color:"var(--text-muted)", letterSpacing:"-0.96px"}}>
+                  {form.time}
                 </div>
-                <div>
-                  <label className="label">Hora (opcional)</label>
-                  <input
-                    className="input"
-                    type="time"
-                    value={form.time}
-                    onChange={e => setForm(f=>({...f, time:e.target.value}))}
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="label">Tipo</label>
-                <select
-                  className="select"
-                  value={form.type}
-                  onChange={e => setForm(f=>({...f, type:e.target.value}))}
+              )}
+              <input
+                type="date"
+                value={form.date}
+                onChange={e => setForm(f=>({...f, date:e.target.value}))}
+                style={{
+                  background:"rgba(255,255,255,0.06)",
+                  border:"0.5px solid rgba(255,255,255,0.1)",
+                  borderRadius:99, color:"var(--text-muted)",
+                  fontSize:13, padding:"6px 16px",
+                  fontFamily:"var(--font-sans)", letterSpacing:"-0.5px",
+                  cursor:"pointer",
+                }}
+              />
+            </div>
+
+            {/* Divider */}
+            <div style={{height:"0.5px", background:"rgba(255,255,255,0.07)"}}/>
+
+            {/* Bottom chips: type + time */}
+            <div style={{
+              display:"flex", gap:8, padding:"16px 20px",
+              overflowX:"auto", scrollbarWidth:"none",
+              flexWrap:"wrap",
+            }}>
+              {[
+                { value:"custom",  label:"Evento",  icon:"calendar" },
+                { value:"meeting", label:"Reunión", icon:"users" },
+                { value:"task",    label:"Tarea",   icon:"list-todo" },
+              ].map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => setForm(f=>({...f, type:t.value}))}
+                  style={{
+                    display:"flex", alignItems:"center", gap:6,
+                    padding:"7px 14px", borderRadius:99,
+                    background: form.type === t.value ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.06)",
+                    border: form.type === t.value ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid rgba(255,255,255,0.1)",
+                    color: form.type === t.value ? "#c8c5f2" : "var(--text-muted)",
+                    fontSize:13, letterSpacing:"-0.5px",
+                    cursor:"pointer", transition:"all .1s",
+                    fontFamily:"var(--font-sans)",
+                  }}
                 >
-                  <option value="custom">Evento</option>
-                  <option value="meeting">Reunión</option>
-                  <option value="task">Tarea</option>
-                </select>
-              </div>
-              <div>
-                <label className="label">Notas (opcional)</label>
+                  <Icon name={t.icon} size={13} strokeWidth={1.6}/>
+                  {t.label}
+                </button>
+              ))}
+
+              {/* Time chip */}
+              <label style={{
+                display:"flex", alignItems:"center", gap:6,
+                padding:"7px 14px", borderRadius:99,
+                background: form.time ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
+                border: form.time ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
+                color: form.time ? "#7db8f7" : "var(--text-muted)",
+                fontSize:13, letterSpacing:"-0.5px",
+                cursor:"pointer", transition:"all .1s",
+              }}>
+                <Icon name="clock" size={13} strokeWidth={1.6}/>
+                {form.time || "Hora"}
                 <input
-                  className="input"
-                  placeholder="Descripción o ubicación"
-                  value={form.notes}
-                  onChange={e => setForm(f=>({...f, notes:e.target.value}))}
+                  type="time"
+                  value={form.time}
+                  onChange={e => setForm(f=>({...f, time:e.target.value}))}
+                  style={{position:"absolute", opacity:0, width:0, height:0}}
                 />
-              </div>
-            </div>
-            <div className="modal-foot">
-              <button className="btn" onClick={() => setShowForm(false)}>Cancelar</button>
-              <button className="btn primary" onClick={addEvent} disabled={!form.title.trim()}>
-                Guardar evento
-              </button>
+              </label>
             </div>
           </div>
         </div>
