@@ -100,21 +100,15 @@ const useStore = () => {
 };
 
 // ── Row mappers (DB snake_case → UI camelCase) ──────────────────────
-const _fmtSince = (s) => {
-  if (!s) return "—";
-  if (!/^\d{4}-\d{2}/.test(s)) return s; // ya es texto legible ("jun 2026")
-  try {
-    const d = new Date((s.length === 7 ? s + "-01" : s) + "T12:00:00");
-    const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-    return M[d.getMonth()] + " " + d.getFullYear();
-  } catch(e) { return s; }
-};
 const _mc = r => r && ({
   id: r.id, name: r.name, company: r.company, email: r.email,
-  whatsapp: r.whatsapp, initials: r.initials, color: r.color,
-  projects: r.projects_count || 0, mrr: r.mrr || 0,
-  lastContact: r.last_contact || "ahora", status: r.status,
-  service: r.service, since: _fmtSince(r.since),
+  whatsapp: r.phone || "",          // DB usa "phone"
+  initials: r.initials, color: r.color,
+  projects: 0, mrr: 0,             // no existen en DB, valor por defecto
+  lastContact: "—",                // no existe en DB
+  status: "active",                // no existe en DB
+  service: r.sector || "—",        // DB usa "sector"
+  since: "—",                      // no existe en DB
 });
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
@@ -311,9 +305,8 @@ const addClient = (input) => {
   _store.CLIENTS = [c, ..._store.CLIENTS]; _emit();
   _sb.from("clients").insert({
     id: c.id, agency_id: uid, name: c.name, company: c.company,
-    email: c.email, whatsapp: c.whatsapp, initials: c.initials,
-    color: c.color, projects_count: 0, mrr: 0, last_contact: null,
-    status: c.status, service: c.service, since: c.since,
+    email: c.email, phone: c.whatsapp, initials: c.initials,
+    color: c.color, sector: c.service,
   }).then(({ error }) => {
     if (error) {
       console.error("[addClient] Supabase error:", error.message, "| code:", error.code, "| details:", error.details, "| hint:", error.hint);
@@ -329,14 +322,11 @@ const updateClient = (id, changes) => {
   const uid = _uid(); if (!uid) return;
   _store.CLIENTS = _store.CLIENTS.map(c => c.id === id ? { ...c, ...changes } : c); _emit();
   const dbChanges = {};
-  if (changes.name        !== undefined) dbChanges.name         = changes.name;
-  if (changes.company     !== undefined) dbChanges.company      = changes.company;
-  if (changes.email       !== undefined) dbChanges.email        = changes.email;
-  if (changes.whatsapp    !== undefined) dbChanges.whatsapp     = changes.whatsapp;
-  if (changes.status      !== undefined) dbChanges.status       = changes.status;
-  if (changes.mrr         !== undefined) dbChanges.mrr          = changes.mrr;
-  if (changes.lastContact !== undefined) dbChanges.last_contact = changes.lastContact;
-  if (changes.projects    !== undefined) dbChanges.projects_count = changes.projects;
+  if (changes.name    !== undefined) dbChanges.name    = changes.name;
+  if (changes.company !== undefined) dbChanges.company = changes.company;
+  if (changes.email   !== undefined) dbChanges.email   = changes.email;
+  if (changes.whatsapp !== undefined) dbChanges.phone  = changes.whatsapp; // DB usa "phone"
+  if (changes.service !== undefined) dbChanges.sector  = changes.service;  // DB usa "sector"
   _sb.from("clients").update(dbChanges).eq("id", id).then();
 };
 
