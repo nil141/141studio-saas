@@ -287,7 +287,7 @@ const TasksBoard = ({ navigate, openModal }) => {
 
         {/* Day rows — current week + next weeks dimmed to fill space */}
         {(() => {
-          const nextDays = Array.from({ length: 14 }, (_, i) => {
+          const nextDays = Array.from({ length: 7 }, (_, i) => {
             const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
           });
           const allDays = weekDays.map(d => ({ d, dimmed: false }))
