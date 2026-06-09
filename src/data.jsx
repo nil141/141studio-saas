@@ -154,15 +154,23 @@ const _loadAll = async () => {
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
 
   // Get profile to determine role and agency context
-  let { data: prof } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
-  if (!prof) {
-    // Profile missing (admin created via dashboard before trigger) — auto-create
-    const { data: created } = await _sb.from("profiles")
-      .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
-      .select().single();
-    prof = created;
-  }
-  if (!prof) return;
+  // If the profiles table doesn't exist, fall back to treating user as admin
+  let prof = null;
+  try {
+    const { data: profData, error: profErr } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (profData) {
+      prof = profData;
+    } else if (!profErr || profErr.code === "PGRST116") {
+      // Table exists but no row — try to create one
+      const { data: created } = await _sb.from("profiles")
+        .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
+        .select().single();
+      prof = created;
+    }
+    // If profErr (e.g. table not found), prof stays null → fallback below
+  } catch(e) { /* ignore */ }
+  // Fallback: no profiles table or upsert failed → treat as single-admin
+  if (!prof) prof = { role: "admin", agency_id: uid };
 
   const agencyId   = prof.agency_id || uid;
   const isClient   = prof.role === "client";
@@ -235,14 +243,20 @@ const _setupRealtime = () => {
 const authLogin = async (email, password) => {
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
-  let { data: prof } = await _sb.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
-  if (!prof) {
-    const uid = data.user.id;
-    const { data: created } = await _sb.from("profiles")
-      .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
-      .select().single();
-    prof = created;
-  }
+  let prof = null;
+  try {
+    const { data: profData } = await _sb.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
+    if (profData) {
+      prof = profData;
+    } else {
+      const uid = data.user.id;
+      const { data: created } = await _sb.from("profiles")
+        .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
+        .select().single();
+      prof = created;
+    }
+  } catch(e) { /* profiles table may not exist */ }
+  if (!prof) prof = { role: "admin", agency_id: data.user.id };
   return {
     ok: true,
     session: {
