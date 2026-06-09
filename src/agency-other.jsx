@@ -285,8 +285,13 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
         </div>
 
-        {/* Day rows — only current week (7 days), each fills space equally */}
+        {/* Day rows — current week + next weeks dimmed to fill space */}
         {(() => {
+          const nextDays = Array.from({ length: 14 }, (_, i) => {
+            const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
+          });
+          const allDays = weekDays.map(d => ({ d, dimmed: false }))
+            .concat(nextDays.map(d => ({ d, dimmed: true })));
           return (
             <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, gap:6, overflow:"hidden" }}>
               {/* Sliding pill — sits behind the day boxes */}
@@ -295,11 +300,11 @@ const TasksBoard = ({ navigate, openModal }) => {
                   position:"absolute", left:0, right:0,
                   top: dayPill.top, height: dayPill.height,
                   background:"rgba(158,154,229,0.18)",
-                  borderRadius:12, pointerEvents:"none", zIndex:0,
+                  borderRadius:10, pointerEvents:"none", zIndex:0,
                   transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
                 }}/>
               )}
-              {weekDays.map(d => {
+              {allDays.map(({ d, dimmed }) => {
                 const dMid = new Date(d); dMid.setHours(0,0,0,0);
                 const isToday = dMid.getTime() === todayMid.getTime();
                 const isSel   = dMid.getTime() === selMid.getTime();
@@ -319,6 +324,7 @@ const TasksBoard = ({ navigate, openModal }) => {
                       padding:"7px 12px", borderRadius:10, cursor:"pointer",
                       background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
                       border: isSel ? "none" : "0.5px solid var(--border)",
+                      opacity: dimmed ? 0.38 : 1,
                       transition: "opacity .15s",
                     }}>
                     {/* Day name */}
