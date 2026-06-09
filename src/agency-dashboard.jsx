@@ -198,24 +198,28 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   ];
 
   return (
-    <div className="page" style={{display:"flex", flexDirection:"column", gap:16, paddingBottom:32}}>
+    <div style={{
+      display:"flex", flexDirection:"column", gap:12,
+      padding:"20px 28px 20px",
+      height:"100vh", overflow:"hidden", boxSizing:"border-box",
+    }}>
 
       {/* ── Welcome banner ── */}
       <div className="card" style={{padding:0, overflow:"hidden"}}>
         <div style={{display:"flex", alignItems:"stretch"}}>
 
           {/* Left */}
-          <div style={{flex:1, padding:"28px 32px 26px"}}>
+          <div style={{flex:1, padding:"20px 28px 18px"}}>
             <div style={{
               fontSize:11, fontWeight:400, letterSpacing:"0.04em",
               color:"var(--text-subtle)", marginBottom:10, textTransform:"uppercase",
             }}>
               Resumen del espacio de trabajo
             </div>
-            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:4}}>
+            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:2}}>
               {greeting}, {adminName}.
             </div>
-            <div style={{fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.96px", marginBottom:22}}>
+            <div style={{fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.96px", marginBottom:16}}>
               {agencyName} · {todayStr}
             </div>
             <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
@@ -274,20 +278,20 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       <div style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
         {kpis.map((k,i) => (
           <div key={i} className="card" style={{padding:0, overflow:"hidden", cursor:"default"}}>
-            <div style={{padding:"18px 20px 16px"}}>
-              <div style={{marginBottom:14}}>
+            <div style={{padding:"14px 18px 12px"}}>
+              <div style={{marginBottom:10}}>
                 <IconBadge icon={k.icon}/>
               </div>
-              <div style={{fontSize:12, color:"var(--text-muted)", fontWeight:400, marginBottom:8, letterSpacing:"-0.96px"}}>
+              <div style={{fontSize:11, color:"var(--text-muted)", fontWeight:400, marginBottom:6, letterSpacing:"-0.96px"}}>
                 {k.label}
               </div>
               <div style={{
-                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 22 : 32,
-                fontWeight:400, lineHeight:1, letterSpacing:"-1.44px", fontVariantNumeric:"tabular-nums", marginBottom:6,
+                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 20 : 28,
+                fontWeight:400, lineHeight:1, letterSpacing:"-1.44px", fontVariantNumeric:"tabular-nums", marginBottom:4,
               }}>
                 {k.value}
               </div>
-              <div style={{fontSize:12, color:"var(--text-subtle)", letterSpacing:"-0.96px"}}>
+              <div style={{fontSize:11, color:"var(--text-subtle)", letterSpacing:"-0.96px"}}>
                 {k.sub}
               </div>
             </div>
@@ -297,10 +301,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       </div>
 
       {/* ── Bottom two columns ── */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:14}}>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, flex:1, minHeight:0, overflow:"hidden"}}>
 
         {/* Agenda próxima */}
-        <div className="card" style={{display:"flex", flexDirection:"column"}}>
+        <div className="card" style={{display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0}}>
           <div className="card-header">
             <div style={{display:"flex", alignItems:"center", gap:10}}>
               <IconBadge icon="calendar"/>
@@ -313,7 +317,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
               Ver todo <Icon name="arrow" size={12}/>
             </button>
           </div>
-          <div className="card-body flush" style={{flex:1}}>
+          <div className="card-body flush" style={{flex:1, overflowY:"auto"}}>
             {upcomingEvents.length===0 ? (
               <div style={{padding:32, textAlign:"center"}}>
                 <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
@@ -353,7 +357,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         </div>
 
         {/* Colas de trabajo */}
-        <div className="card" style={{display:"flex", flexDirection:"column"}}>
+        <div className="card" style={{display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0}}>
           <div className="card-header">
             <div style={{display:"flex", alignItems:"center", gap:10}}>
               <IconBadge icon="inbox"/>
@@ -366,7 +370,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
               Ver todo <Icon name="arrow" size={12}/>
             </button>
           </div>
-          <div className="card-body flush" style={{flex:1}}>
+          <div className="card-body flush" style={{flex:1, overflowY:"auto"}}>
             {queues.map((q,i) => (
               <div key={i}
                 onClick={q.action}
