@@ -256,7 +256,8 @@ const TasksBoard = ({ navigate, openModal }) => {
         width:260, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
-        padding:"20px 16px 16px 20px",
+        justifyContent:"center",
+        padding:"20px 16px 20px 20px",
         overflow:"hidden",
       }}>
         {/* Month nav — FIRST, large centered */}
@@ -293,7 +294,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           const allDays = weekDays.map(d => ({ d, dimmed: false }))
             .concat(nextDays.map(d => ({ d, dimmed: true })));
           return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", flex:1, gap:6, overflow:"hidden" }}>
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:6 }}>
               {/* Sliding pill — sits behind the day boxes */}
               {dayPill && (
                 <div style={{
