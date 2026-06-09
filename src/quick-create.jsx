@@ -19,7 +19,7 @@ const today = () => {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 };
 
-const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", openModal }) => {
+const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", lockType = false, openModal }) => {
   const D = window.Data;
   D.useStore();
 
@@ -132,23 +132,26 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
             <Icon name="x" size={15}/>
           </button>
 
-          {/* Type pills — centered */}
-          <div style={{ display:"flex", gap:6 }}>
-            {TYPES.map(tp => (
-              <button key={tp.id} onClick={() => setType(tp.id)} style={{
-                display:"flex", alignItems:"center", gap:5,
-                padding:"6px 13px", borderRadius:99,
-                background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
-                border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
-                color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
-                fontSize:12, letterSpacing:"-0.4px", cursor:"pointer",
-                fontFamily:"var(--font-sans)", transition:"all .1s",
-              }}>
-                <Icon name={tp.icon} size={12} strokeWidth={1.6}/>
-                {tp.label}
-              </button>
-            ))}
-          </div>
+          {/* Type pills — hidden when lockType */}
+          {lockType
+            ? <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>Crear nuevo</div>
+            : <div style={{ display:"flex", gap:6 }}>
+                {TYPES.map(tp => (
+                  <button key={tp.id} onClick={() => setType(tp.id)} style={{
+                    display:"flex", alignItems:"center", gap:5,
+                    padding:"6px 13px", borderRadius:99,
+                    background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
+                    border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
+                    color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
+                    fontSize:12, letterSpacing:"-0.4px", cursor:"pointer",
+                    fontFamily:"var(--font-sans)", transition:"all .1s",
+                  }}>
+                    <Icon name={tp.icon} size={12} strokeWidth={1.6}/>
+                    {tp.label}
+                  </button>
+                ))}
+              </div>
+          }
 
           <button onClick={handleSubmit} style={{
             width:40, height:40, borderRadius:"50%",
