@@ -256,8 +256,8 @@ const TasksBoard = ({ navigate, openModal }) => {
         width:260, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
-        padding:"28px 16px 28px 20px",
-        overflowY:"auto",
+        padding:"20px 16px 16px 20px",
+        overflow:"hidden",
       }}>
         {/* Week nav header */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
@@ -276,7 +276,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
         </div>
         {/* Week range label */}
-        <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.01em", marginBottom:20 }}>
+        <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.01em", marginBottom:12 }}>
           {weekLabel}
         </div>
 
@@ -290,7 +290,7 @@ const TasksBoard = ({ navigate, openModal }) => {
             .concat(nextWeekDays.map(d => ({ d, dimmed: true })));
 
           return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:4 }}>
+            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:3 }}>
               {/* Sliding pill — sits behind the day boxes */}
               {dayPill && (
                 <div style={{
@@ -318,7 +318,7 @@ const TasksBoard = ({ navigate, openModal }) => {
                     style={{
                       position:"relative", zIndex:1,
                       display:"flex", alignItems:"center", gap:12,
-                      padding:"10px 12px", borderRadius:10, cursor:"pointer",
+                      padding:"7px 12px", borderRadius:10, cursor:"pointer",
                       // Selected: transparent so pill shows through; others: subtle box
                       background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
                       border: isSel ? "none" : "0.5px solid var(--border)",
