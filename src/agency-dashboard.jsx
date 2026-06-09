@@ -132,18 +132,24 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       });
     } catch(err) {}
 
+    const todayMid = new Date(now); todayMid.setHours(0,0,0,0);
     return ev
-      .filter(e => { const diff = e.date - now; return diff >= -86400000 && diff <= 60*86400000; })
+      .filter(e => {
+        const dMid = new Date(e.date); dMid.setHours(0,0,0,0);
+        const diff = Math.round((dMid - todayMid) / 86400000);
+        return diff >= 0 && diff <= 60;
+      })
       .sort((a,b) => a.date - b.date)
       .slice(0, 8);
   }, [D.PROJECTS, D.INVOICES, D.TASKS]);
 
   const formatEventDate = (d) => {
-    const today = new Date();
-    const diff = Math.round((d-today)/86400000);
-    if (diff<0)  return `hace ${Math.abs(diff)}d`;
-    if (diff===0) return "Hoy";
-    if (diff===1) return "Mañana";
+    const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+    const dMid = new Date(d);   dMid.setHours(0,0,0,0);
+    const diff = Math.round((dMid - todayMid) / 86400000);
+    if (diff < 0)  return `hace ${Math.abs(diff)}d`;
+    if (diff === 0) return "Hoy";
+    if (diff === 1) return "Mañana";
     const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
     const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
     return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
