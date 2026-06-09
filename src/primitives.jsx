@@ -32,7 +32,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       items: [
         { id: "dashboard",  label: "Inicio",      icon: "home" },
         { id: "projects",   label: "Proyectos",   icon: "folder" },
-        { id: "tasks",      label: "Tareas",      icon: "list-todo", badge: pendingTasks },
+        { id: "tasks",      label: "Tareas",      icon: "list-todo" },
         { id: "clients",    label: "Clientes",    icon: "users" },
         { id: "campaigns",  label: "Campañas",    icon: "megaphone" },
       ],
