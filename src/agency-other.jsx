@@ -376,14 +376,6 @@ const TasksBoard = ({ navigate, openModal }) => {
                     {isToday && (
                       <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
                     )}
-                    {/* Task count badge */}
-                    {dayTasks.length > 0 && (
-                      <span style={{
-                        fontSize:10, fontWeight:600, color:"var(--text-subtle)",
-                        background:"var(--bg-elev)", border:"0.5px solid var(--border)",
-                        borderRadius:99, padding:"1px 6px", flexShrink:0,
-                      }}>{dayTasks.length}</span>
-                    )}
                   </div>
                 );
               })}
