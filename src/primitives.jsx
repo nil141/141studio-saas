@@ -20,7 +20,7 @@ const Switch = ({ on, onChange }) => (
   />
 );
 
-const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant }) => {
+const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
   const D = window.Data;
   D.useStore();
 
@@ -132,6 +132,27 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant })
       overflow: "hidden",
       flexShrink: 0,
     }}>
+      {/* Quick create button */}
+      {onQuickCreate && (
+        <button
+          onClick={onQuickCreate}
+          style={{
+            display:"flex", alignItems:"center", justifyContent:"center", gap:8,
+            width:"100%", height:36, borderRadius:10, marginBottom:16,
+            background:"rgba(158,154,229,0.12)",
+            border:"0.5px solid rgba(158,154,229,0.25)",
+            color:"#c8c5f2", fontSize:13, letterSpacing:"-0.5px",
+            cursor:"pointer", transition:"all .1s",
+            fontFamily:"var(--font-sans)",
+          }}
+          onMouseEnter={e => e.currentTarget.style.background="rgba(158,154,229,0.2)"}
+          onMouseLeave={e => e.currentTarget.style.background="rgba(158,154,229,0.12)"}
+        >
+          <Icon name="plus" size={14} strokeWidth={2}/>
+          Crear nuevo
+        </button>
+      )}
+
       {/* User profile */}
       <div style={{display:"flex", alignItems:"center", gap:10, padding:"4px 10px 24px 10px"}}>
         <div style={{

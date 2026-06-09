@@ -551,53 +551,52 @@ const AgendaPage = ({ navigate }) => {
             {/* Divider */}
             <div style={{height:"0.5px", background:"rgba(255,255,255,0.07)"}}/>
 
-            {/* Bottom chips: type + time */}
-            <div style={{
-              display:"flex", gap:8, padding:"16px 20px",
-              overflowX:"auto", scrollbarWidth:"none",
-              flexWrap:"wrap",
-            }}>
-              {[
-                { value:"custom",  label:"Evento",  icon:"calendar" },
-                { value:"meeting", label:"Reunión", icon:"users" },
-                { value:"task",    label:"Tarea",   icon:"list-todo" },
-              ].map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => setForm(f=>({...f, type:t.value}))}
-                  style={{
-                    display:"flex", alignItems:"center", gap:6,
-                    padding:"7px 14px", borderRadius:99,
-                    background: form.type === t.value ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.06)",
-                    border: form.type === t.value ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid rgba(255,255,255,0.1)",
-                    color: form.type === t.value ? "#c8c5f2" : "var(--text-muted)",
-                    fontSize:13, letterSpacing:"-0.5px",
-                    cursor:"pointer", transition:"all .1s",
-                    fontFamily:"var(--font-sans)",
-                  }}
-                >
-                  <Icon name={t.icon} size={13} strokeWidth={1.6}/>
-                  {t.label}
-                </button>
-              ))}
+            {/* Bottom: tipo (izq) | separador | hora (der) */}
+            <div style={{ display:"flex", alignItems:"center", gap:6, padding:"14px 20px 18px", justifyContent:"space-between" }}>
+              {/* Tipo */}
+              <div style={{ display:"flex", gap:6 }}>
+                {[
+                  { value:"custom",  label:"Evento",  icon:"calendar" },
+                  { value:"meeting", label:"Reunión", icon:"users" },
+                  { value:"task",    label:"Tarea",   icon:"list-todo" },
+                ].map(t => (
+                  <button
+                    key={t.value}
+                    onClick={() => setForm(f=>({...f, type:t.value}))}
+                    style={{
+                      display:"flex", alignItems:"center", gap:5,
+                      padding:"6px 12px", borderRadius:99,
+                      background: form.type === t.value ? "rgba(158,154,229,0.16)" : "rgba(255,255,255,0.06)",
+                      border: form.type === t.value ? "0.5px solid rgba(158,154,229,0.35)" : "0.5px solid rgba(255,255,255,0.09)",
+                      color: form.type === t.value ? "#c8c5f2" : "var(--text-subtle)",
+                      fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
+                      fontFamily:"var(--font-sans)", transition:"all .1s",
+                    }}
+                  >
+                    <Icon name={t.icon} size={12} strokeWidth={1.6}/>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
 
-              {/* Time chip */}
+              {/* Separador */}
+              <div style={{ width:"0.5px", height:20, background:"rgba(255,255,255,0.08)", flexShrink:0 }}/>
+
+              {/* Hora */}
               <label style={{
                 display:"flex", alignItems:"center", gap:6,
-                padding:"7px 14px", borderRadius:99,
-                background: form.time ? "rgba(96,165,250,0.12)" : "rgba(255,255,255,0.06)",
-                border: form.time ? "0.5px solid rgba(96,165,250,0.3)" : "0.5px solid rgba(255,255,255,0.1)",
-                color: form.time ? "#7db8f7" : "var(--text-muted)",
-                fontSize:13, letterSpacing:"-0.5px",
-                cursor:"pointer", transition:"all .1s",
+                padding:"6px 14px", borderRadius:99,
+                background: form.time ? "rgba(96,165,250,0.10)" : "rgba(255,255,255,0.05)",
+                border: form.time ? "0.5px solid rgba(96,165,250,0.25)" : "0.5px solid rgba(255,255,255,0.09)",
+                color: form.time ? "#7db8f7" : "var(--text-subtle)",
+                fontSize:12, letterSpacing:"-0.5px", cursor:"pointer",
+                fontFamily:"var(--font-sans)",
               }}>
-                <Icon name="clock" size={13} strokeWidth={1.6}/>
-                {form.time || "Hora"}
-                <input
-                  type="time"
-                  value={form.time}
+                <Icon name="clock" size={12} strokeWidth={1.6}/>
+                {form.time || "Añadir hora"}
+                <input type="time" value={form.time}
                   onChange={e => setForm(f=>({...f, time:e.target.value}))}
-                  style={{position:"absolute", opacity:0, width:0, height:0}}
+                  style={{ position:"absolute", opacity:0, width:0, height:0 }}
                 />
               </label>
             </div>

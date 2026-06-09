@@ -54,6 +54,7 @@ const App = () => {
   const [modal, setModal] = useState(null);
   const [modalParams, setModalParams] = useState({});
   const [assistantOpen, setAssistantOpen] = useState(false);
+  const [quickCreate, setQuickCreate] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -159,7 +160,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </div>
       )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
-        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => setAssistantOpen(o => !o)}/>
+        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => setAssistantOpen(o => !o)} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           {isClient ? renderClient() : renderAgency()}
@@ -205,6 +206,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
       <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
+      <QuickCreateModal open={quickCreate} onClose={() => setQuickCreate(false)} openModal={openModal}/>
     </>
   );
 };
