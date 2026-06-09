@@ -94,7 +94,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
         onClick={e => e.stopPropagation()}
         style={{
           width:"100%", maxWidth:460,
-          background:"#131317",
+          background:"#0f0f0f",
           border:"0.5px solid rgba(255,255,255,0.1)",
           borderRadius:28,
           overflow:"hidden",

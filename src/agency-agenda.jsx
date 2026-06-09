@@ -437,7 +437,7 @@ const AgendaPage = ({ navigate }) => {
             onClick={e => e.stopPropagation()}
             style={{
               width:"100%", maxWidth:480,
-              background:"#141418",
+              background:"#0f0f0f",
               border:"0.5px solid rgba(255,255,255,0.1)",
               borderRadius:28,
               overflow:"hidden",
