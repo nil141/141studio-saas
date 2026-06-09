@@ -230,10 +230,35 @@ const TasksBoard = ({ navigate, openModal }) => {
   });
 
   const groups = Object.values(groupMap);
+
+  // __none__ tasks: those with a clientId go under their client group; the rest → GENERAL
   const noProj = D.TASKS["__none__"] || [];
-  if (noProj.length > 0) groups.push({
+  const generalTasks = [];
+  noProj.forEach(t => {
+    if (t.clientId) {
+      // Find or create the client group
+      let grp = groups.find(g => g.clientId === t.clientId);
+      if (!grp) {
+        const cl = D.CLIENTS.find(c => c.id === t.clientId);
+        grp = {
+          clientId: t.clientId,
+          clientName: (cl?.company || cl?.name || t.clientName || "Sin cliente").toUpperCase(),
+          color: clientColorMap[t.clientId] || "#a78bfa",
+          projects: [],
+        };
+        groups.push(grp);
+      }
+      // Add to a "no project" bucket within this client group
+      let bucket = grp.projects.find(p => p.project === null && p._clientBucket);
+      if (!bucket) { bucket = { project: null, tasks: [], _clientBucket: true }; grp.projects.push(bucket); }
+      bucket.tasks.push(t);
+    } else {
+      generalTasks.push(t);
+    }
+  });
+  if (generalTasks.length > 0) groups.push({
     clientId:"__general", clientName:"GENERAL",
-    color:"var(--text-subtle)", projects:[{ project:null, tasks:noProj }],
+    color:"var(--text-subtle)", projects:[{ project:null, tasks:generalTasks }],
   });
 
   const toggleDone = (pid, t) =>

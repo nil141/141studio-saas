@@ -38,8 +38,18 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
     const t = title.trim();
 
     if (type === "task") {
-      const projectId = sub || (D.PROJECTS[0]?.id);
-      if (projectId) { D.addTask(projectId, { title: t, column: "todo", assignee: "" }); }
+      if (sub) {
+        // Client selected: find their first project, or store as __none__ with clientId
+        const client = D.CLIENTS.find(c => c.id === sub);
+        const proj = D.PROJECTS.find(p => p.clientId === sub);
+        if (proj) {
+          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "" });
+        } else {
+          D.addTask({ title: t, column: "todo", assignee: "", clientId: sub, clientName: client?.company || client?.name || "" });
+        }
+      } else {
+        D.addTask({ title: t, column: "todo", assignee: "" });
+      }
     } else if (type === "project") {
       const clientId = sub || (D.CLIENTS[0]?.id);
       if (clientId) { D.addProject({ clientId, name: t, deadline: date, budget: 0 }); }
@@ -201,19 +211,19 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", openModal }) =>
         {/* Bottom options — contextual by type */}
         <div style={{ padding:"14px 20px 18px", display:"flex", flexDirection:"column", gap:12 }}>
 
-          {/* Tarea: selector de proyecto */}
-          {type === "task" && D.PROJECTS.length > 0 && (
+          {/* Tarea: selector de cliente */}
+          {type === "task" && D.CLIENTS.length > 0 && (
             <div style={{ display:"flex", gap:6, flexWrap:"wrap" }}>
-              <span style={{ fontSize:12, color:"var(--text-subtle)", alignSelf:"center", marginRight:4 }}>Proyecto:</span>
-              {D.PROJECTS.slice(0,5).map(p => (
-                <button key={p.id} onClick={() => setSub(p.id)} style={{
+              <span style={{ fontSize:12, color:"var(--text-subtle)", alignSelf:"center", marginRight:4 }}>Cliente:</span>
+              {D.CLIENTS.slice(0,5).map(c => (
+                <button key={c.id} onClick={() => setSub(sub === c.id ? "" : c.id)} style={{
                   padding:"5px 12px", borderRadius:99, fontSize:12, letterSpacing:"-0.5px",
-                  background: sub === p.id ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.06)",
-                  border: sub === p.id ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid rgba(255,255,255,0.1)",
-                  color: sub === p.id ? "#c8c5f2" : "var(--text-muted)",
+                  background: sub === c.id ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.06)",
+                  border: sub === c.id ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid rgba(255,255,255,0.1)",
+                  color: sub === c.id ? "#c8c5f2" : "var(--text-muted)",
                   cursor:"pointer", fontFamily:"var(--font-sans)",
                 }}>
-                  {p.name}
+                  {c.company || c.name}
                 </button>
               ))}
             </div>
