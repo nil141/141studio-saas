@@ -400,40 +400,52 @@ const TasksBoard = ({ navigate, openModal }) => {
             </div>
 
             {group.projects.map(({ project, tasks }) => (
-              <div key={project?.id || "__none"} style={{ marginBottom:8 }}>
+              <div key={project?.id || "__none"} style={{ marginBottom:6 }}>
                 {project && (
                   <div onClick={() => navigate("project", { projectId: project.id })}
-                    style={{ fontSize:12, color:"var(--text-subtle)", marginBottom:4, paddingLeft:14, cursor:"pointer", letterSpacing:"-0.3px" }}>
+                    style={{ fontSize:11, color:"var(--text-subtle)", marginBottom:6, paddingLeft:2,
+                      cursor:"pointer", letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>
                     {project.name}
                   </div>
                 )}
                 {tasks.map(t => {
                   const pid = project?.id || "__none__";
                   const isDone = t.column === "done";
+                  const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
                   return (
                     <div key={t.id} style={{
-                      display:"flex", alignItems:"center", gap:12,
-                      padding:"10px 14px", borderRadius:10,
+                      display:"flex", alignItems:"center", gap:14,
+                      padding:"12px 16px", borderRadius:14,
                       background:"var(--bg-elev)", border:"0.5px solid var(--border)",
-                      marginBottom:4,
+                      marginBottom:6,
                     }}>
+                      {/* Large circle toggle — X when pending, check when done */}
                       <button onClick={() => toggleDone(pid, t)} style={{
-                        width:18, height:18, borderRadius:"50%", flexShrink:0,
-                        border: isDone ? "none" : "1.5px solid rgba(255,255,255,0.2)",
-                        background: isDone ? "var(--green)" : "transparent",
+                        width:40, height:40, borderRadius:"50%", flexShrink:0,
+                        border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.12)",
+                        background: isDone ? "rgba(158,154,229,0.15)" : "rgba(255,255,255,0.04)",
                         cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                        padding:0,
+                        padding:0, transition:"all .18s",
                       }}>
-                        {isDone && <Icon name="check" size={10} strokeWidth={2.5} style={{ color:"#000" }}/>}
+                        {isDone
+                          ? <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
+                          : <Icon name="x" size={13} style={{ color:"rgba(255,255,255,0.25)" }}/>
+                        }
                       </button>
-                      <span style={{
-                        flex:1, fontSize:14, letterSpacing:"-0.5px",
-                        color: isDone ? "var(--text-subtle)" : "var(--text)",
-                        textDecoration: isDone ? "line-through" : "none",
-                      }}>
-                        {t.title}
-                      </span>
-                      <Icon name="chevron-right" size={14} style={{ color:"var(--text-subtle)", flexShrink:0 }}/>
+                      {/* Title + subtitle */}
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{
+                          fontSize:14, letterSpacing:"-0.5px",
+                          color: isDone ? "var(--text-subtle)" : "var(--text)",
+                        }}>
+                          {t.title}
+                        </div>
+                        <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                          {isDone ? "Completada" : colLabel || "Por hacer"}
+                          {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
+                        </div>
+                      </div>
+                      <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
                     </div>
                   );
                 })}
