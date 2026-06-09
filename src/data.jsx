@@ -523,7 +523,7 @@ const addTask = (input) => {
     assignee: input.assignee || "Tú",
     clientId: input.clientId || null, clientName: input.clientName || null,
     phase: input.phase || null,
-    done: false, deadline: null,
+    done: false, deadline: input.deadline || null,
   };
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]]; _emit();
   _sb.from("tasks").insert({
@@ -531,6 +531,7 @@ const addTask = (input) => {
     project_id: pid === "__none__" ? null : pid,
     title: t.title, col: t.column, assignee: t.assignee,
     client_id: t.clientId || null, client_name: t.clientName || null,
+    deadline: t.deadline || null,
     done: false,
   }).then(({ error }) => {
     if (error) {
