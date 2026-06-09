@@ -189,22 +189,6 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           />
         </div>
 
-        {/* Subtitle — only for event/meeting */}
-        {(type === "event" || type === "meeting") && (
-          <div style={{ padding:"0 24px 16px" }}>
-            <input
-              placeholder="Descripción o ubicación (opcional)"
-              value={desc}
-              onChange={e => setDesc(e.target.value)}
-              style={{
-                width:"100%", background:"transparent", border:"none", outline:"none",
-                fontSize:14, letterSpacing:"-0.96px",
-                color: desc ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
-                fontFamily:"var(--font-sans)", caretColor: accentColor,
-              }}
-            />
-          </div>
-        )}
 
         {/* Divider */}
         <div style={{ height:"0.5px", background:"rgba(255,255,255,0.07)" }}/>
