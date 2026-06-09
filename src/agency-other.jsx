@@ -239,53 +239,56 @@ const TasksBoard = ({ navigate, openModal }) => {
   const toggleDone = (pid, t) =>
     D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
 
+  // Label for the week range shown in left panel
+  const weekStart = weekDays[0];
+  const weekEnd   = weekDays[6];
+  const weekLabel = (() => {
+    const s = `${weekStart.getDate()} ${MON_ES[weekStart.getMonth()]}`;
+    const e = `${weekEnd.getDate()} ${MON_ES[weekEnd.getMonth()]}`;
+    return `${s} — ${e}`;
+  })();
+
   return (
     <div style={{ display:"flex", height:"100vh", overflow:"hidden" }}>
 
       {/* ── Left: week selector ───────────────────── */}
       <div style={{
-        width:300, flexShrink:0,
+        width:260, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
-        padding:"28px 20px", gap:8,
+        padding:"28px 16px 28px 20px",
         overflowY:"auto",
       }}>
-        {/* Month nav */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-          <button onClick={() => setWeekOffset(o => o-1)}
-            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
-            <Icon name="chevron-left" size={16}/>
-          </button>
-          <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px" }}>{midMonth}</span>
-          <button onClick={() => setWeekOffset(o => o+1)}
-            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", borderRadius:8 }}>
-            <Icon name="chevron-right" size={16}/>
-          </button>
-        </div>
-
-        {/* Progress card */}
-        <div style={{
-          background:"var(--bg-elev)", border:"0.5px solid var(--border)",
-          borderRadius:14, padding:"14px 16px", marginBottom:8,
-        }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, fontWeight:500, letterSpacing:"0.07em", color:"var(--text-subtle)", textTransform:"uppercase", marginBottom:10 }}>
-            <span>Progreso diario</span><span>{donePct}%</span>
-          </div>
-          <div style={{ height:4, background:"var(--border)", borderRadius:99 }}>
-            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .3s" }}/>
+        {/* Week nav header */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:4 }}>
+          <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.8px", color:"var(--text)" }}>
+            {MON_ES[weekDays[3].getMonth()]}
+          </span>
+          <div style={{ display:"flex", gap:2 }}>
+            <button onClick={() => setWeekOffset(o => o-1)}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", borderRadius:6, display:"flex", alignItems:"center" }}>
+              <Icon name="chevron-left" size={14}/>
+            </button>
+            <button onClick={() => setWeekOffset(o => o+1)}
+              style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", borderRadius:6, display:"flex", alignItems:"center" }}>
+              <Icon name="chevron-right" size={14}/>
+            </button>
           </div>
         </div>
+        {/* Week range label */}
+        <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.01em", marginBottom:20 }}>
+          {weekLabel}
+        </div>
 
-        {/* Day cards with sliding pill */}
-        <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:8 }}>
+        {/* Day rows — no borders, pill slides underneath */}
+        <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column" }}>
           {/* Sliding pill */}
           {dayPill && (
             <div style={{
               position:"absolute", left:0, right:0,
               top: dayPill.top, height: dayPill.height,
-              background:"rgba(158,154,229,0.18)",
-              border:"0.5px solid rgba(158,154,229,0.35)",
-              borderRadius:14, pointerEvents:"none", zIndex:0,
+              background:"rgba(158,154,229,0.15)",
+              borderRadius:10, pointerEvents:"none", zIndex:0,
               transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
             }}/>
           )}
@@ -293,6 +296,12 @@ const TasksBoard = ({ navigate, openModal }) => {
             const dMid = new Date(d); dMid.setHours(0,0,0,0);
             const isToday = dMid.getTime() === todayMid.getTime();
             const isSel   = dMid.getTime() === selMid.getTime();
+            // Count tasks due on this day (tasks with deadline matching)
+            const dayTasks = allTasks.filter(t => {
+              if (!t.deadline) return false;
+              const td = new Date(t.deadline + "T00:00:00"); td.setHours(0,0,0,0);
+              return td.getTime() === dMid.getTime();
+            });
             return (
               <div
                 key={d.toISOString()}
@@ -300,33 +309,60 @@ const TasksBoard = ({ navigate, openModal }) => {
                 onClick={() => setSelectedDay(new Date(d))}
                 style={{
                   position:"relative", zIndex:1,
-                  display:"flex", alignItems:"center", gap:16,
-                  padding:"14px 18px", borderRadius:14, cursor:"pointer",
+                  display:"flex", alignItems:"center", gap:12,
+                  padding:"10px 12px", borderRadius:10, cursor:"pointer",
                   background:"transparent",
-                  border:"0.5px solid var(--border)",
                 }}>
-                <span style={{ fontSize:14, width:30, letterSpacing:"-0.3px",
-                  color: isSel ? "var(--accent)" : "var(--text-muted)", fontWeight: isSel ? 500 : 400 }}>
+                {/* Day name */}
+                <span style={{ fontSize:13, width:28, letterSpacing:"-0.2px", flexShrink:0,
+                  color: isSel ? "var(--accent)" : "var(--text-subtle)", fontWeight: isSel ? 500 : 400 }}>
                   {DAY_ES[d.getDay()]}
                 </span>
-                <span style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.5px",
-                  color: isSel ? "#c8c5f2" : "var(--text-muted)" }}>
+                {/* Day number */}
+                <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
+                  color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
                   {d.getDate()}
                 </span>
-                {isToday && <span style={{ fontSize:11, color:"var(--accent)", letterSpacing:"-0.2px", marginLeft:2 }}>(Hoy)</span>}
+                {/* Today dot */}
+                {isToday && (
+                  <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
+                )}
+                {/* Task count badge */}
+                {dayTasks.length > 0 && (
+                  <span style={{
+                    fontSize:10, fontWeight:600, color:"var(--text-subtle)",
+                    background:"var(--bg-elev)", border:"0.5px solid var(--border)",
+                    borderRadius:99, padding:"1px 6px", flexShrink:0,
+                  }}>{dayTasks.length}</span>
+                )}
               </div>
             );
           })}
+        </div>
+
+        {/* Spacer + progress at bottom of left panel */}
+        <div style={{ flex:1 }}/>
+        <div style={{ borderTop:"0.5px solid var(--border)", paddingTop:16, marginTop:16 }}>
+          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8 }}>
+            <span style={{ letterSpacing:"0.04em", textTransform:"uppercase", fontWeight:500 }}>Progreso</span>
+            <span style={{ fontWeight:600, color: donePct === 100 ? "var(--green)" : "var(--text-muted)" }}>{donePct}%</span>
+          </div>
+          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
+            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
+          </div>
+          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:6 }}>
+            {allTasks.filter(t => t.column === "done").length} de {allTasks.length} completadas
+          </div>
         </div>
       </div>
 
       {/* ── Right: tasks grouped by client ───────── */}
       <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28 }}>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, paddingBottom:20, borderBottom:"0.5px solid var(--border)" }}>
           <div>
             <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
             <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:4, letterSpacing:"-0.5px" }}>
-              {allTasks.filter(t => t.column !== "done").length} pendientes · {donePct}% completado
+              {allTasks.filter(t => t.column !== "done").length} pendientes · semana del {weekLabel}
             </div>
           </div>
           <button className="btn primary sm" onClick={() => openModal("newTask")}>
