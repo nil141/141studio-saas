@@ -494,34 +494,39 @@ const TimePicker = ({ value, onChange, onClose }) => {
           <TimeColumn items={mins} selected={m} onSelect={setM} fmt={pad}/>
         </div>
 
-        {/* Divider + Buttons */}
-        <div style={{ height:'0.5px', background:'rgba(255,255,255,0.07)' }}/>
-        <button
-          onClick={() => { onChange(pad(h) + ':' + pad(m)); onClose(); }}
-          style={{
-            width:'100%', padding:'18px 24px', background:'transparent',
-            border:'none', borderBottom:'0.5px solid rgba(255,255,255,0.07)',
-            color:'#f0f0f0', fontSize:16, letterSpacing:'-0.96px',
-            cursor:'pointer', fontFamily:'var(--font-sans)', fontWeight:400,
-          }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
-          onMouseLeave={e => e.currentTarget.style.background='transparent'}
-        >
-          Confirmar
-        </button>
-        <button
-          onClick={onClose}
-          style={{
-            width:'100%', padding:'18px 24px', background:'transparent',
-            border:'none', color:'rgba(255,255,255,0.3)',
-            fontSize:16, letterSpacing:'-0.96px',
-            cursor:'pointer', fontFamily:'var(--font-sans)',
-          }}
-          onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.03)'}
-          onMouseLeave={e => e.currentTarget.style.background='transparent'}
-        >
-          Cancelar
-        </button>
+        {/* Buttons */}
+        <div style={{ padding:'12px 16px 16px', display:'flex', flexDirection:'column', gap:8 }}>
+          <button
+            onClick={() => { onChange(pad(h) + ':' + pad(m)); onClose(); }}
+            style={{
+              width:'100%', padding:'14px 24px',
+              background:'rgba(255,255,255,0.09)',
+              border:'0.5px solid rgba(255,255,255,0.12)',
+              borderRadius:14,
+              color:'#f0f0f0', fontSize:16, letterSpacing:'-0.96px',
+              cursor:'pointer', fontFamily:'var(--font-sans)', fontWeight:400,
+              transition:'background .1s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.13)'}
+            onMouseLeave={e => e.currentTarget.style.background='rgba(255,255,255,0.09)'}
+          >
+            Confirmar
+          </button>
+          <button
+            onClick={onClose}
+            style={{
+              width:'100%', padding:'12px 24px',
+              background:'transparent', border:'none', borderRadius:14,
+              color:'rgba(255,255,255,0.32)', fontSize:15, letterSpacing:'-0.96px',
+              cursor:'pointer', fontFamily:'var(--font-sans)',
+              transition:'color .1s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.color='rgba(255,255,255,0.55)'}
+            onMouseLeave={e => e.currentTarget.style.color='rgba(255,255,255,0.32)'}
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
     </div>
   );
