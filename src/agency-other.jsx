@@ -1817,7 +1817,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
         {mode === "progress" ? (<>
           {/* Percentage + status */}
-          <div style={{ textAlign:"center", padding:"28px 0 90px" }}>
+          <div style={{ textAlign:"center", padding:"28px 0 60px" }}>
             <div style={{ fontSize:86, fontWeight:300, letterSpacing:"-4px", color:"var(--text)", lineHeight:1 }}>
               {progress}%
             </div>
@@ -1829,7 +1829,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
           {/* Arc SVG — drum-selector: ▼ fixed at apex, labels rotate */}
           <svg
             ref={svgRef}
-            viewBox="0 0 640 170"
+            viewBox="0 -32 640 202"
             style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab", overflow:"visible" }}
             onMouseDown={e => { e.preventDefault(); startDrag(e.clientX, e.clientY); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; startDrag(t.clientX, t.clientY); }}
@@ -1851,9 +1851,9 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               if (dist > 52) return null;
               const fade = dist > 36 ? Math.max(0, (52 - dist) / 16) : 1;
 
-              const t1x = ax + cosR * 5,  t1y = ay - sinR * 5;   // outward
-              const t2x = ax - cosR * 16, t2y = ay + sinR * 16;  // inward
-              const lx  = ax - cosR * 68, ly  = ay + sinR * 68;
+              const t1x = ax + cosR * 9,  t1y = ay - sinR * 9;   // outward (above arc)
+              const t2x = ax - cosR * 5,  t2y = ay + sinR * 5;   // inward (below arc)
+              const lx  = ax - cosR * 55, ly  = ay + sinR * 55;
 
               return (
                 <g key={pct} opacity={fade}>
@@ -1865,16 +1865,16 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               );
             })}
 
-            {/* Fixed ▼ indicator — always at apex (top-center), never moves */}
-            <line x1={CX} y1="2" x2={CX} y2="22"
-              stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-            <polygon points={`${CX-5},2 ${CX+5},2 ${CX},14`} fill="white"/>
+            {/* Fixed ▼ indicator — triangle above arc + stem line down to apex */}
+            <line x1={CX} y1="0" x2={CX} y2="-13"
+              stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <polygon points={`${CX-6},-27 ${CX+6},-27 ${CX},-13`} fill="white"/>
           </svg>
 
           {/* Confirm button */}
-          <div style={{ padding:"0 20px 24px" }}>
+          <div style={{ padding:"0 20px 28px", display:"flex", justifyContent:"center" }}>
             <button onClick={confirmProgress}
-              style={{ width:"100%", padding:"14px", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:16, color:"var(--text)", fontSize:14, letterSpacing:"-0.5px", cursor:"pointer", fontFamily:"var(--font-sans)", transition:"background .15s" }}
+              style={{ padding:"13px 52px", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.12)", borderRadius:99, color:"var(--text)", fontSize:14, letterSpacing:"-0.5px", cursor:"pointer", fontFamily:"var(--font-sans)", transition:"background .15s" }}
               onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
               onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
             >Confirmar</button>
