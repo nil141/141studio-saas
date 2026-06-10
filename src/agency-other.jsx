@@ -168,6 +168,7 @@ const TasksBoard = ({ navigate, openModal }) => {
   const dayItemRefs      = useRef({});
   const [dayPill, setDayPill] = useState(null);
   const firstDayPill     = useRef(true);
+  const [taskModal, setTaskModal] = useState(null); // { task, pid }
 
   useEffect(() => {
     const key = new Date(selectedDay).toDateString();
@@ -421,14 +422,17 @@ const TasksBoard = ({ navigate, openModal }) => {
               const isDone = t.column === "done";
               const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
               const isLast = idx === tasks.length - 1;
+              const prog = t.progress || 0;
               return (
-                <div key={t.id} style={{
-                  display:"flex", alignItems:"center", gap:14,
-                  padding:"12px 4px",
-                  borderBottom: isLast ? "none" : "0.5px solid var(--border)",
-                }}>
+                <div key={t.id}
+                  onClick={() => setTaskModal({ task: t, pid })}
+                  style={{
+                    display:"flex", alignItems:"center", gap:14,
+                    padding:"12px 4px", cursor:"pointer",
+                    borderBottom: isLast ? "none" : "0.5px solid var(--border)",
+                  }}>
                   {/* Large circle toggle */}
-                  <button onClick={() => toggleDone(pid, t)} style={{
+                  <button onClick={e => { e.stopPropagation(); toggleDone(pid, t); }} style={{
                     width:40, height:40, borderRadius:"50%", flexShrink:0,
                     border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.18)",
                     background: "transparent",
@@ -450,6 +454,12 @@ const TasksBoard = ({ navigate, openModal }) => {
                       {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
                     </div>
                   </div>
+                  {/* Progress pill — only when > 0 */}
+                  {prog > 0 && !isDone && (
+                    <span style={{ fontSize:11, color:"var(--accent)", background:"var(--accent-soft)", border:"0.5px solid rgba(158,154,229,0.3)", borderRadius:99, padding:"2px 8px", flexShrink:0 }}>
+                      {prog}%
+                    </span>
+                  )}
                   <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
                 </div>
               );
@@ -459,6 +469,22 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
         ))}
       </div>
+
+      {taskModal && (
+        <TaskProgressModal
+          task={taskModal.task}
+          projectId={taskModal.pid}
+          open={true}
+          onClose={() => setTaskModal(null)}
+          onDelete={() => {
+            window.Data.deleteTask(taskModal.pid, taskModal.task.id);
+            setTaskModal(null);
+          }}
+          onUpdate={changes => {
+            window.Data.updateTask(taskModal.pid, taskModal.task.id, changes);
+          }}
+        />
+      )}
     </div>
   );
 };
@@ -1624,6 +1650,253 @@ const SettingsPage = () => {
         <SessionCard/>
       </div>
     </div>
+  );
+};
+
+// ── TaskProgressModal — arc progress picker ──────────────────
+const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate }) => {
+  const [progress,     setProgress]     = useState(0);
+  const [dotsOpen,     setDotsOpen]     = useState(false);
+  const [dragging,     setDragging]     = useState(false);
+  const [mode,         setMode]         = useState("progress"); // "progress" | "edit"
+  const [editTitle,    setEditTitle]    = useState("");
+  const [editDeadline, setEditDeadline] = useState("");
+  const svgRef = useRef(null);
+
+  const taskId = task ? task.id : null;
+  useEffect(() => {
+    if (open && task) {
+      setProgress(task.progress || 0);
+      setMode("progress"); setDotsOpen(false);
+      setEditTitle(task.title || ""); setEditDeadline(task.deadline || "");
+    }
+  }, [open, taskId]);
+
+  useEffect(() => {
+    if (!open) return;
+    const fn = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [open]);
+
+  if (!open || !task) return null;
+
+  const CX = 160, CY = 172, R = 128;
+  const START_DEG = 210, SWEEP_DEG = 240;
+
+  const toPt = (deg) => {
+    const rad = deg * Math.PI / 180;
+    return [CX + R * Math.cos(rad), CY - R * Math.sin(rad)];
+  };
+
+  const [sx, sy] = toPt(START_DEG);
+  const [ex, ey] = toPt(START_DEG - SWEEP_DEG);
+  const bgArcPath = `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${R} ${R} 0 1 0 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+
+  const progressDeg = START_DEG - (progress / 100) * SWEEP_DEG;
+  const [px, py] = toPt(progressDeg);
+  const progSweepDeg = (progress / 100) * SWEEP_DEG;
+  const largeArc = progSweepDeg > 180 ? 1 : 0;
+  const progressArcPath = progress > 0
+    ? `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${R} ${R} 0 ${largeArc} 0 ${px.toFixed(2)} ${py.toFixed(2)}`
+    : null;
+
+  const getProgress = (clientX, clientY) => {
+    if (!svgRef.current) return progress;
+    const rect = svgRef.current.getBoundingClientRect();
+    const mx = (clientX - rect.left) / rect.width * 320;
+    const my = (clientY - rect.top) / rect.height * 252;
+    const dx = mx - CX, dy = CY - my;
+    let a = Math.atan2(dy, dx) * 180 / Math.PI;
+    if (a < 0) a += 360;
+    let diff = START_DEG - a;
+    if (diff < 0) diff += 360;
+    if (diff > SWEEP_DEG) diff = diff > 360 - (360 - SWEEP_DEG) / 2 ? SWEEP_DEG : 0;
+    return Math.round(Math.min(100, Math.max(0, (diff / SWEEP_DEG) * 100)));
+  };
+
+  const TICKS = [0, 25, 50, 75, 100];
+  const statusLabel = progress === 100 ? "COMPLETADA" : progress === 0 ? "PENDIENTE" : "EN CURSO";
+
+  const confirmProgress = () => { onUpdate({ progress }); onClose(); };
+
+  const saveEdit = () => {
+    const ch = {};
+    if (editTitle.trim() && editTitle.trim() !== task.title) ch.title = editTitle.trim();
+    if (editDeadline !== task.deadline) ch.deadline = editDeadline || null;
+    if (Object.keys(ch).length) onUpdate(ch);
+    setMode("progress");
+  };
+
+  const btnCircle = (onClick, children) => (
+    <button onClick={onClick} style={{
+      width:36, height:36, borderRadius:"50%",
+      background:"rgba(255,255,255,0.08)",
+      border:"0.5px solid rgba(255,255,255,0.1)",
+      cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+      color:"var(--text-muted)", flexShrink:0,
+    }}>{children}</button>
+  );
+
+  return ReactDOM.createPortal(
+    <div
+      style={{
+        position:"fixed", inset:0, zIndex:500,
+        background:"rgba(0,0,0,0.82)", backdropFilter:"blur(18px)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        animation:"fade .15s ease-out",
+      }}
+      onClick={onClose}
+      onMouseMove={e => { if (dragging) { e.preventDefault(); setProgress(getProgress(e.clientX, e.clientY)); }}}
+      onMouseUp={() => setDragging(false)}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:360, maxWidth:"90vw",
+          background:"#111111",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:32, overflow:"hidden",
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+          display:"flex", flexDirection:"column",
+          userSelect:"none",
+        }}
+      >
+        {/* Top bar */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 20px 0" }}>
+          {btnCircle(onClose, <Icon name="x" size={14}/>)}
+
+          <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.4px", maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            {task.title}
+          </div>
+
+          {/* Three-dots menu */}
+          <div style={{ position:"relative" }}>
+            {btnCircle(e => { e.stopPropagation(); setDotsOpen(o => !o); },
+              <span style={{ fontSize:16, letterSpacing:"0.04em", fontWeight:700, lineHeight:1 }}>···</span>
+            )}
+            {dotsOpen && (
+              <div
+                onClick={e => e.stopPropagation()}
+                style={{
+                  position:"absolute", right:0, top:44, zIndex:600,
+                  background:"#1c1c1e", border:"0.5px solid rgba(255,255,255,0.1)",
+                  borderRadius:14, overflow:"hidden", minWidth:170,
+                  boxShadow:"0 12px 32px rgba(0,0,0,0.5)",
+                }}
+              >
+                <button
+                  onClick={() => { setDotsOpen(false); setMode("edit"); }}
+                  style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 16px", border:0, background:"transparent", color:"var(--text)", fontSize:13, cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
+                  <Icon name="edit-2" size={13}/> Editar tarea
+                </button>
+                <div style={{ height:"0.5px", background:"rgba(255,255,255,0.08)" }}/>
+                <button
+                  onClick={() => { setDotsOpen(false); onClose(); onDelete(); }}
+                  style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 16px", border:0, background:"transparent", color:"var(--red)", fontSize:13, cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(220,91,93,0.08)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
+                  <Icon name="trash" size={13}/> Eliminar tarea
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {mode === "progress" ? (<>
+          {/* Percentage + status */}
+          <div style={{ textAlign:"center", padding:"22px 0 0" }}>
+            <div style={{ fontSize:76, fontWeight:300, letterSpacing:"-3px", color:"var(--text)", lineHeight:1 }}>
+              {progress}%
+            </div>
+            <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.12em", marginTop:8, fontWeight:500 }}>
+              {statusLabel}
+            </div>
+          </div>
+
+          {/* Arc SVG */}
+          <svg
+            ref={svgRef}
+            viewBox="0 0 320 252"
+            style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab" }}
+            onMouseDown={e => { e.preventDefault(); setDragging(true); setProgress(getProgress(e.clientX, e.clientY)); }}
+            onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; setDragging(true); setProgress(getProgress(t.clientX, t.clientY)); }}
+            onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; setProgress(getProgress(t.clientX, t.clientY)); }}
+            onTouchEnd={() => setDragging(false)}
+          >
+            {/* Background arc */}
+            <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="16" strokeLinecap="round"/>
+            {/* Progress arc */}
+            {progressArcPath && (
+              <path d={progressArcPath} fill="none" stroke="var(--accent)" strokeWidth="16" strokeLinecap="round"/>
+            )}
+            {/* Ticks + labels */}
+            {TICKS.map(pct => {
+              const deg = START_DEG - (pct / 100) * SWEEP_DEG;
+              const rad = deg * Math.PI / 180;
+              const rIn = R - 22, rOut = R + 8;
+              const x1 = CX + rIn * Math.cos(rad),  y1 = CY - rIn * Math.sin(rad);
+              const x2 = CX + rOut * Math.cos(rad), y2 = CY - rOut * Math.sin(rad);
+              const lx = CX + (rOut + 22) * Math.cos(rad), ly = CY - (rOut + 22) * Math.sin(rad);
+              const active = pct <= progress;
+              return (
+                <g key={pct}>
+                  <line x1={x1} y1={y1} x2={x2} y2={y2}
+                    stroke={active ? "var(--accent)" : "rgba(255,255,255,0.18)"}
+                    strokeWidth="2" strokeLinecap="round"/>
+                  <text x={lx} y={ly + 4} textAnchor="middle" fontSize="10.5"
+                    fill={active ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.2)"}
+                    fontFamily="var(--font-sans)">{pct}%</text>
+                </g>
+              );
+            })}
+            {/* Thumb */}
+            <circle cx={px} cy={py} r="14" fill="#111111" stroke="var(--accent)" strokeWidth="2.5"/>
+            <circle cx={px} cy={py} r="5"  fill="var(--accent)"/>
+          </svg>
+
+          {/* Confirm button */}
+          <div style={{ padding:"0 20px 24px" }}>
+            <button onClick={confirmProgress}
+              style={{ width:"100%", padding:"14px", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:16, color:"var(--text)", fontSize:14, letterSpacing:"-0.5px", cursor:"pointer", fontFamily:"var(--font-sans)", transition:"background .15s" }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+            >Confirmar</button>
+          </div>
+        </>) : (
+          /* Edit mode */
+          <div style={{ padding:"24px 20px" }}>
+            <div style={{ fontSize:11, color:"var(--text-subtle)", marginBottom:16, letterSpacing:"0.08em", textTransform:"uppercase", fontWeight:500 }}>Editar tarea</div>
+            <div style={{ marginBottom:12 }}>
+              <label style={{ display:"block", fontSize:11, color:"var(--text-subtle)", marginBottom:6 }}>Nombre</label>
+              <input autoFocus value={editTitle} onChange={e => setEditTitle(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") saveEdit(); if (e.key === "Escape") setMode("progress"); }}
+                style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:10, color:"var(--text)", fontSize:14, padding:"10px 14px", fontFamily:"var(--font-sans)", outline:"none", boxSizing:"border-box" }}
+              />
+            </div>
+            <div style={{ marginBottom:20 }}>
+              <label style={{ display:"block", fontSize:11, color:"var(--text-subtle)", marginBottom:6 }}>Fecha límite</label>
+              <input type="date" value={editDeadline} onChange={e => setEditDeadline(e.target.value)}
+                style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:10, color:"var(--text)", fontSize:14, padding:"10px 14px", fontFamily:"var(--font-sans)", outline:"none", boxSizing:"border-box" }}
+              />
+            </div>
+            <div style={{ display:"flex", gap:8 }}>
+              <button onClick={saveEdit} style={{ flex:1, padding:"11px", background:"var(--accent-soft)", border:"0.5px solid var(--accent)", borderRadius:12, color:"var(--accent)", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>
+                Guardar
+              </button>
+              <button onClick={() => setMode("progress")} style={{ padding:"11px 16px", background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.08)", borderRadius:12, color:"var(--text-muted)", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>,
+    document.body
   );
 };
 
