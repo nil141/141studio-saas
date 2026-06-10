@@ -137,7 +137,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       .filter(e => {
         const dMid = new Date(e.date); dMid.setHours(0,0,0,0);
         const diff = Math.round((dMid - todayMid) / 86400000);
-        return diff >= 0 && diff <= 60;
+        return diff >= -30 && diff <= 60;
       })
       .sort((a,b) => a.date - b.date)
       .slice(0, 8);
