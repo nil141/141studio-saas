@@ -411,9 +411,19 @@ const TasksBoard = ({ navigate, openModal }) => {
               {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
             </div>
           </div>
-          <button className="btn primary sm" onClick={() => openModal("newTask", { date: selDateStr })}>
-            <Icon name="plus" size={13}/> Nueva tarea
-          </button>
+          <div style={{ display:"flex", gap:8 }}>
+            <button onClick={() => openModal("newTask", { date: selDateStr })} style={{
+              width:36, height:36, borderRadius:"50%",
+              background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
+              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+              color:"var(--text-muted)", transition:"background .12s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.12)"}
+              onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.07)"}
+            >
+              <Icon name="plus" size={15}/>
+            </button>
+          </div>
         </div>
 
         {groups.length === 0 && (
