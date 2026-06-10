@@ -448,26 +448,25 @@ const TasksBoard = ({ navigate, openModal }) => {
                     padding:"12px 4px", cursor:"pointer",
                     borderBottom: isLast ? "none" : "0.5px solid var(--border)",
                   }}>
-                  {/* Progress ring */}
+                  {/* Progress ring — same SVG weight for done and partial */}
                   {(() => {
                     const sz = 40, r = 17, circ = 2 * Math.PI * r;
-                    if (isDone) return (
-                      <div style={{ width:sz, height:sz, borderRadius:"50%", border:"2px solid var(--accent)", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
-                        <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
-                      </div>
-                    );
                     return (
                       <div style={{ width:sz, height:sz, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
                         <svg width={sz} height={sz} style={{ position:"absolute", top:0, left:0 }}>
-                          <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5"/>
-                          {prog > 0 && (
+                          <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                            stroke={isDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+                          {!isDone && prog > 0 && (
                             <circle cx={sz/2} cy={sz/2} r={r} fill="none"
-                              stroke="rgba(158,154,229,0.55)" strokeWidth="1.5" strokeLinecap="round"
+                              stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
                               strokeDasharray={`${(prog/100)*circ} ${circ}`}
                               transform={`rotate(-90,${sz/2},${sz/2})`}/>
                           )}
                         </svg>
-                        <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>
+                        {isDone
+                          ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
+                          : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>
+                        }
                       </div>
                     );
                   })()}
