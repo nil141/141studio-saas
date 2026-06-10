@@ -1681,37 +1681,43 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
   if (!open || !task) return null;
 
-  const CX = 160, CY = 172, R = 128;
-  const START_DEG = 210, SWEEP_DEG = 240;
+  // Arc geometry: huge circle, center BELOW the SVG viewBox → "horizon" look
+  const CX = 260, CY = 300, R = 290;
+  const START_DEG = 180, SWEEP_DEG = 180;
+  // viewBox 520×260 — arc center at (260,300) is 40px below the bottom edge
+  // Top of arc: y=10 (just visible), endpoints: (~−30,300) and (~550,300) = off-screen
 
   const toPt = (deg) => {
     const rad = deg * Math.PI / 180;
     return [CX + R * Math.cos(rad), CY - R * Math.sin(rad)];
   };
 
-  const [sx, sy] = toPt(START_DEG);
-  const [ex, ey] = toPt(START_DEG - SWEEP_DEG);
-  const bgArcPath = `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${R} ${R} 0 1 0 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+  const [sx, sy] = toPt(START_DEG);   // ≈ (−30, 300) — off-screen left
+  const [ex, ey] = toPt(0);            // ≈ (550, 300) — off-screen right
+  // Counterclockwise over the top (large-arc=1, sweep=0)
+  const bgArcPath = `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 1 0 ${ex.toFixed(1)} ${ey.toFixed(1)}`;
 
-  const progressDeg = START_DEG - (progress / 100) * SWEEP_DEG;
+  const progressDeg = START_DEG - (progress / 100) * SWEEP_DEG; // 180 → 0
   const [px, py] = toPt(progressDeg);
-  const progSweepDeg = (progress / 100) * SWEEP_DEG;
-  const largeArc = progSweepDeg > 180 ? 1 : 0;
+  // Progress arc is always ≤ 180°, so large-arc=0
   const progressArcPath = progress > 0
-    ? `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${R} ${R} 0 ${largeArc} 0 ${px.toFixed(2)} ${py.toFixed(2)}`
+    ? `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 0 0 ${px.toFixed(1)} ${py.toFixed(1)}`
     : null;
 
   const getProgress = (clientX, clientY) => {
     if (!svgRef.current) return progress;
     const rect = svgRef.current.getBoundingClientRect();
-    const mx = (clientX - rect.left) / rect.width * 320;
-    const my = (clientY - rect.top) / rect.height * 252;
+    const mx = (clientX - rect.left) / rect.width * 520;
+    const my = (clientY - rect.top) / rect.height * 260;
     const dx = mx - CX, dy = CY - my;
     let a = Math.atan2(dy, dx) * 180 / Math.PI;
     if (a < 0) a += 360;
     let diff = START_DEG - a;
     if (diff < 0) diff += 360;
-    if (diff > SWEEP_DEG) diff = diff > 360 - (360 - SWEEP_DEG) / 2 ? SWEEP_DEG : 0;
+    if (diff > SWEEP_DEG) {
+      // Dead zone: snap to 0% (lower-left) or 100% (lower-right)
+      return diff < SWEEP_DEG + (360 - SWEEP_DEG) / 2 ? 100 : 0;
+    }
     return Math.round(Math.min(100, Math.max(0, (diff / SWEEP_DEG) * 100)));
   };
 
@@ -1753,7 +1759,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width:360, maxWidth:"90vw",
+          width:"100%", maxWidth:540,
           background:"#111111",
           border:"0.5px solid rgba(255,255,255,0.08)",
           borderRadius:32, overflow:"hidden",
@@ -1809,54 +1815,77 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
         {mode === "progress" ? (<>
           {/* Percentage + status */}
-          <div style={{ textAlign:"center", padding:"22px 0 0" }}>
-            <div style={{ fontSize:76, fontWeight:300, letterSpacing:"-3px", color:"var(--text)", lineHeight:1 }}>
+          <div style={{ textAlign:"center", padding:"28px 0 32px" }}>
+            <div style={{ fontSize:86, fontWeight:300, letterSpacing:"-4px", color:"var(--text)", lineHeight:1 }}>
               {progress}%
             </div>
-            <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.12em", marginTop:8, fontWeight:500 }}>
+            <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.12em", marginTop:10, fontWeight:500 }}>
               {statusLabel}
             </div>
           </div>
 
-          {/* Arc SVG */}
+          {/* Arc SVG — large circle, center below viewBox → horizon look */}
           <svg
             ref={svgRef}
-            viewBox="0 0 320 252"
-            style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab" }}
+            viewBox="0 0 520 260"
+            style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab", overflow:"visible" }}
             onMouseDown={e => { e.preventDefault(); setDragging(true); setProgress(getProgress(e.clientX, e.clientY)); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; setDragging(true); setProgress(getProgress(t.clientX, t.clientY)); }}
             onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; setProgress(getProgress(t.clientX, t.clientY)); }}
             onTouchEnd={() => setDragging(false)}
           >
             {/* Background arc */}
-            <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="16" strokeLinecap="round"/>
+            <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="18" strokeLinecap="round"/>
             {/* Progress arc */}
             {progressArcPath && (
-              <path d={progressArcPath} fill="none" stroke="var(--accent)" strokeWidth="16" strokeLinecap="round"/>
+              <path d={progressArcPath} fill="none" stroke="var(--accent)" strokeWidth="18" strokeLinecap="round"/>
             )}
-            {/* Ticks + labels */}
+            {/* Tick marks — 25%, 50%, 75% are on-screen; 0%/100% corners */}
             {TICKS.map(pct => {
               const deg = START_DEG - (pct / 100) * SWEEP_DEG;
               const rad = deg * Math.PI / 180;
-              const rIn = R - 22, rOut = R + 8;
+              const rIn = R - 24, rOut = R + 10;
               const x1 = CX + rIn * Math.cos(rad),  y1 = CY - rIn * Math.sin(rad);
               const x2 = CX + rOut * Math.cos(rad), y2 = CY - rOut * Math.sin(rad);
-              const lx = CX + (rOut + 22) * Math.cos(rad), ly = CY - (rOut + 22) * Math.sin(rad);
+              // Labels: 0% and 100% pinned to bottom corners; others follow the arc
+              let lx, ly;
+              if (pct === 0)   { lx = 16;  ly = 250; }
+              else if (pct === 100) { lx = 504; ly = 250; }
+              else { lx = CX + (rOut + 24) * Math.cos(rad); ly = CY - (rOut + 24) * Math.sin(rad); }
               const active = pct <= progress;
               return (
                 <g key={pct}>
-                  <line x1={x1} y1={y1} x2={x2} y2={y2}
-                    stroke={active ? "var(--accent)" : "rgba(255,255,255,0.18)"}
-                    strokeWidth="2" strokeLinecap="round"/>
-                  <text x={lx} y={ly + 4} textAnchor="middle" fontSize="10.5"
-                    fill={active ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.2)"}
+                  {/* Only draw tick line for 25/50/75 (others are off-screen) */}
+                  {pct !== 0 && pct !== 100 && (
+                    <line x1={x1} y1={y1} x2={x2} y2={y2}
+                      stroke={active ? "var(--accent)" : "rgba(255,255,255,0.2)"}
+                      strokeWidth="2" strokeLinecap="round"/>
+                  )}
+                  <text x={lx} y={ly} textAnchor="middle" fontSize="11"
+                    fill={active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.22)"}
                     fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
             })}
-            {/* Thumb */}
-            <circle cx={px} cy={py} r="14" fill="#111111" stroke="var(--accent)" strokeWidth="2.5"/>
-            <circle cx={px} cy={py} r="5"  fill="var(--accent)"/>
+            {/* ▼ marker at 50% (top of arc) */}
+            {(() => {
+              const [mx50, my50] = toPt(90);
+              return (
+                <polygon
+                  points={`${mx50},${my50 + 22} ${mx50 - 6},${my50 + 12} ${mx50 + 6},${my50 + 12}`}
+                  fill="rgba(255,255,255,0.3)"
+                />
+              );
+            })()}
+            {/* Thumb — clamped to visible area */}
+            {(() => {
+              const tx = Math.max(14, Math.min(506, px));
+              const ty = Math.max(14, Math.min(246, py));
+              return (<>
+                <circle cx={tx} cy={ty} r="15" fill="#111111" stroke="var(--accent)" strokeWidth="2.5"/>
+                <circle cx={tx} cy={ty} r="5"  fill="var(--accent)"/>
+              </>);
+            })()}
           </svg>
 
           {/* Confirm button */}
