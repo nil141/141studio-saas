@@ -1880,7 +1880,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
                   <line x1={t1x.toFixed(1)} y1={t1y.toFixed(1)} x2={t2x.toFixed(1)} y2={t2y.toFixed(1)}
                     stroke={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)"} strokeWidth={isActive ? "2" : "1.5"} strokeLinecap="round"/>
                   <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
-                    fontSize={isActive ? "15" : "11"} fontWeight={isActive ? "500" : "400"}
+                    fontSize={isActive ? "18" : "13"} fontWeight={isActive ? "500" : "400"}
                     fill={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)"} fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
