@@ -168,7 +168,9 @@ const TasksBoard = ({ navigate, openModal }) => {
   const dayItemRefs      = useRef({});
   const [dayPill, setDayPill] = useState(null);
   const firstDayPill     = useRef(true);
-  const [taskModal, setTaskModal] = useState(null); // { task, pid }
+  const [taskModal,      setTaskModal]      = useState(null); // { task, pid }
+  const [hideCompleted,  setHideCompleted]  = useState(false);
+  const [optionsOpen,    setOptionsOpen]    = useState(false);
 
   useEffect(() => {
     const key = new Date(selectedDay).toDateString();
@@ -403,7 +405,7 @@ const TasksBoard = ({ navigate, openModal }) => {
       </div>
 
       {/* ── Right: tasks grouped by client ───────── */}
-      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }}>
+      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }} onClick={() => setOptionsOpen(false)}>
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, paddingBottom:20, borderBottom:"0.5px solid var(--border)" }}>
           <div>
             <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
@@ -411,18 +413,48 @@ const TasksBoard = ({ navigate, openModal }) => {
               {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
             </div>
           </div>
-          <div style={{ display:"flex", gap:8 }}>
+          <div style={{ display:"flex", gap:8, position:"relative" }}>
             <button onClick={() => openModal("newTask", { date: selDateStr })} style={{
               width:36, height:36, borderRadius:"50%",
               background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
               cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
               color:"var(--text-muted)", transition:"background .12s",
-            }}
-              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.12)"}
-              onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.07)"}
-            >
+            }}>
               <Icon name="plus" size={15}/>
             </button>
+            <button onClick={() => setOptionsOpen(o => !o)} style={{
+              width:36, height:36, borderRadius:"50%",
+              background: optionsOpen ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.07)",
+              border:"0.5px solid rgba(255,255,255,0.1)",
+              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+              color:"var(--text-muted)", transition:"background .12s",
+            }}>
+              <Icon name="more-horizontal" size={15}/>
+            </button>
+            {optionsOpen && (
+              <div style={{
+                position:"absolute", top:44, right:0, zIndex:50,
+                background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.1)",
+                borderRadius:14, padding:"8px 0", minWidth:210,
+                boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
+              }} onClick={e => e.stopPropagation()}>
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", cursor:"pointer" }}
+                  onClick={() => setHideCompleted(h => !h)}>
+                  <span style={{ fontSize:13, color:"var(--text)", letterSpacing:"-0.5px" }}>Ocultar completadas</span>
+                  <div style={{
+                    width:36, height:20, borderRadius:99, position:"relative",
+                    background: hideCompleted ? "var(--accent)" : "rgba(255,255,255,0.12)",
+                    transition:"background .2s", flexShrink:0,
+                  }}>
+                    <div style={{
+                      position:"absolute", top:2, left: hideCompleted ? 18 : 2,
+                      width:16, height:16, borderRadius:"50%", background:"white",
+                      transition:"left .2s",
+                    }}/>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -443,11 +475,11 @@ const TasksBoard = ({ navigate, openModal }) => {
             </div>
 
             {/* Task rows — no individual cards, flat rows with divider */}
-            {group.projects.map(({ project, tasks }) => tasks.map((t, idx) => {
+            {group.projects.map(({ project, tasks }) => tasks.filter(t => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
               const pid = project?.id || "__none__";
               const isDone = t.column === "done";
               const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
-              const isLast = idx === tasks.length - 1;
+              const isLast = idx === arr.length - 1;
               const prog = t.progress || 0;
               const isOverdue = isToday && t.deadline && t.deadline < selDateStr && !isDone;
               return (
