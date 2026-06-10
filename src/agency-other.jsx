@@ -1757,7 +1757,13 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const TICKS = [0, 25, 50, 75, 100];
   const statusLabel = progress === 100 ? "COMPLETADA" : progress === 0 ? "PENDIENTE" : "EN CURSO";
 
-  const confirmProgress = () => { onUpdate({ progress }); onClose(); };
+  const confirmProgress = () => {
+    const updates = { progress };
+    if (progress === 100) updates.column = "done";
+    else if (task.column === "done") updates.column = "todo";
+    onUpdate(updates);
+    onClose();
+  };
 
   const saveEdit = () => {
     const ch = {};
