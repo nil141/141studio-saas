@@ -413,23 +413,30 @@ const TasksBoard = ({ navigate, openModal }) => {
               {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
             </div>
           </div>
-          <div style={{ display:"flex", gap:4, position:"relative" }}>
-            {[
-              { icon:"plus",             onClick: () => openModal("newTask", { date: selDateStr }) },
-              { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-            ].map(btn => (
-              <button key={btn.icon} onClick={btn.onClick} style={{
-                width:36, height:36, borderRadius:"50%",
-                background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.12)",
-                cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                color:"var(--text-muted)", transition:"background .12s", flexShrink:0,
-              }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.13)"}
-                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.08)"}
-              >
-                <Icon name={btn.icon} size={15}/>
-              </button>
-            ))}
+          <div style={{ position:"relative" }}>
+            <div style={{
+              display:"flex", alignItems:"center",
+              background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
+              borderRadius:99, overflow:"hidden",
+            }}>
+              {[
+                { icon:"plus",    onClick: () => openModal("newTask", { date: selDateStr }) },
+                { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+              ].map((btn, i, arr) => (
+                <button key={btn.icon} onClick={btn.onClick} style={{
+                  width:40, height:36,
+                  borderRight: i < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.1)" : "none",
+                  background:"transparent", border:"none",
+                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                  color:"var(--text-muted)", transition:"background .12s", flexShrink:0,
+                }}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.08)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
+                  <Icon name={btn.icon} size={15}/>
+                </button>
+              ))}
+            </div>
             {optionsOpen && (
               <div style={{
                 position:"absolute", top:44, right:0, zIndex:50,
