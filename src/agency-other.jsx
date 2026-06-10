@@ -216,8 +216,17 @@ const TasksBoard = ({ navigate, openModal }) => {
     return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   })();
 
+  const todayStr = `${todayMid.getFullYear()}-${String(todayMid.getMonth()+1).padStart(2,'0')}-${String(todayMid.getDate()).padStart(2,'0')}`;
+  const isToday  = selDateStr === todayStr;
+
+  // A task belongs to the selected day if it's due that day,
+  // OR (viewing today) it's overdue (past deadline, not done)
+  const matchesDay = t =>
+    t.deadline === selDateStr ||
+    (isToday && t.deadline && t.deadline < selDateStr && t.column !== "done");
+
   // Filter tasks to only those matching the selected day
-  const dayTasks = allTasks.filter(t => t.deadline === selDateStr);
+  const dayTasks = allTasks.filter(matchesDay);
 
   // Build groups: client → [projects + tasks]  — only with tasks for selected day
   const clientColorMap = {};
@@ -225,7 +234,7 @@ const TasksBoard = ({ navigate, openModal }) => {
 
   const groupMap = {};
   D.PROJECTS.forEach(p => {
-    const tasks = (D.TASKS[p.id] || []).filter(t => t.deadline === selDateStr);
+    const tasks = (D.TASKS[p.id] || []).filter(matchesDay);
     const key   = p.clientId || "__nc";
     if (!groupMap[key]) {
       const cl = D.CLIENTS.find(c => c.id === p.clientId);
@@ -241,8 +250,8 @@ const TasksBoard = ({ navigate, openModal }) => {
 
   const groups = Object.values(groupMap);
 
-  // __none__ tasks: only for selected day
-  const noProj = (D.TASKS["__none__"] || []).filter(t => t.deadline === selDateStr);
+  // __none__ tasks: only for selected day (or overdue when viewing today)
+  const noProj = (D.TASKS["__none__"] || []).filter(matchesDay);
   const generalTasks = [];
   noProj.forEach(t => {
     if (t.clientId) {
@@ -423,6 +432,7 @@ const TasksBoard = ({ navigate, openModal }) => {
               const colLabel = { todo:"Por hacer", doing:"En curso", review:"Revisión" }[t.column];
               const isLast = idx === tasks.length - 1;
               const prog = t.progress || 0;
+              const isOverdue = isToday && t.deadline && t.deadline < selDateStr && !isDone;
               return (
                 <div key={t.id}
                   onClick={() => setTaskModal({ task: t, pid })}
@@ -449,9 +459,10 @@ const TasksBoard = ({ navigate, openModal }) => {
                     <div style={{ fontSize:14, letterSpacing:"-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" }}>
                       {t.title}
                     </div>
-                    <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                    <div style={{ fontSize:11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
                       {project ? project.name : (isDone ? "Completada" : colLabel || "Por hacer")}
                       {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
+                      {isOverdue ? " · Vencida" : ""}
                     </div>
                   </div>
                   {/* Progress pill — only when > 0 */}
