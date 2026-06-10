@@ -413,7 +413,7 @@ const TasksBoard = ({ navigate, openModal }) => {
               {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
             </div>
           </div>
-          <div style={{ display:"flex", gap:8, position:"relative" }}>
+          <div style={{ display:"flex", gap:4, position:"relative" }}>
             {[
               { icon:"plus",             onClick: () => openModal("newTask", { date: selDateStr }) },
               { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
