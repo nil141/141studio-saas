@@ -1719,8 +1719,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const moveDrag = (clientX, clientY) => {
     const angle  = getMouseAngle(clientX, clientY);
     const delta  = (angle - dragRef.current.angle) * 100 / ARC_SWEEP;
-    const raw    = Math.max(0, Math.min(100, dragRef.current.progress + delta));
-    const newP   = Math.round(raw / 25) * 25;
+    const newP = Math.round(Math.max(0, Math.min(100, dragRef.current.progress + delta)));
     setProgress(newP);
   };
 
@@ -1757,7 +1756,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
       }}
       onClick={onClose}
       onMouseMove={e => { if (dragging) { e.preventDefault(); moveDrag(e.clientX, e.clientY); }}}
-      onMouseUp={() => setDragging(false)}
+      onMouseUp={() => { setDragging(false); setProgress(p => Math.round(p / 25) * 25); }}
     >
       <div
         onClick={e => e.stopPropagation()}
@@ -1835,7 +1834,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
             onMouseDown={e => { e.preventDefault(); startDrag(e.clientX, e.clientY); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; startDrag(t.clientX, t.clientY); }}
             onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; moveDrag(t.clientX, t.clientY); }}
-            onTouchEnd={() => setDragging(false)}
+            onTouchEnd={() => { setDragging(false); setProgress(p => Math.round(p / 25) * 25); }}
           >
             {/* Static background arc */}
             <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5"/>
