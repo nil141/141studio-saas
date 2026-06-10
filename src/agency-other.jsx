@@ -415,22 +415,21 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
           <div style={{ position:"relative" }}>
             <div style={{
-              display:"flex", alignItems:"center",
+              display:"flex", alignItems:"center", gap:2, padding:"3px 4px",
               background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
-              borderRadius:99, overflow:"hidden",
+              borderRadius:99,
             }}>
               {[
                 { icon:"plus",    onClick: () => openModal("newTask", { date: selDateStr }) },
                 { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-              ].map((btn, i, arr) => (
+              ].map((btn) => (
                 <button key={btn.icon} onClick={btn.onClick} style={{
-                  width:40, height:36,
-                  borderRight: i < arr.length - 1 ? "0.5px solid rgba(255,255,255,0.1)" : "none",
+                  width:34, height:34, borderRadius:"50%",
                   background:"transparent", border:"none",
                   cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
                   color:"var(--text-muted)", transition:"background .12s", flexShrink:0,
                 }}
-                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.08)"}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
                   onMouseLeave={e => e.currentTarget.style.background="transparent"}
                 >
                   <Icon name={btn.icon} size={15}/>
