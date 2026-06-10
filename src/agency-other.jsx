@@ -1662,9 +1662,10 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const [editTitle,    setEditTitle]    = useState("");
   const [editDeadline, setEditDeadline] = useState("");
   const [displayProgress, setDisplayProgress] = useState(0);
-  const svgRef       = useRef(null);
-  const dragRef      = useRef({ angle: 0, progress: 0 });
-  const animFrameRef = useRef(null);
+  const svgRef         = useRef(null);
+  const dragRef        = useRef({ angle: 0, progress: 0 });
+  const animFrameRef   = useRef(null);
+  const justDraggedRef = useRef(false);
 
   const taskId = task ? task.id : null;
   useEffect(() => {
@@ -1733,6 +1734,17 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const startDrag = (clientX, clientY) => {
     dragRef.current = { angle: getMouseAngle(clientX, clientY), progress };
     setDragging(true);
+    const onMove = (e) => moveDrag(e.clientX, e.clientY);
+    const onUp   = () => {
+      setDragging(false);
+      setProgress(p => Math.round(p / 25) * 25);
+      justDraggedRef.current = true;
+      setTimeout(() => { justDraggedRef.current = false; }, 0);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup",   onUp);
+    };
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup",   onUp);
   };
 
   const moveDrag = (clientX, clientY) => {
@@ -1773,9 +1785,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
         display:"flex", alignItems:"center", justifyContent:"center",
         animation:"fade .15s ease-out",
       }}
-      onClick={onClose}
-      onMouseMove={e => { if (dragging) { e.preventDefault(); moveDrag(e.clientX, e.clientY); }}}
-      onMouseUp={() => { setDragging(false); setProgress(p => Math.round(p / 25) * 25); }}
+      onClick={() => { if (justDraggedRef.current) return; onClose(); }}
     >
       <div
         onClick={e => e.stopPropagation()}
