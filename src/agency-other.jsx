@@ -1851,9 +1851,9 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               if (dist > 52) return null;
               const fade = dist > 36 ? Math.max(0, (52 - dist) / 16) : 1;
 
-              const t1x = ax + cosR * 9,  t1y = ay - sinR * 9;   // outward (above arc)
-              const t2x = ax - cosR * 5,  t2y = ay + sinR * 5;   // inward (below arc)
-              const lx  = ax - cosR * 55, ly  = ay + sinR * 55;
+              const t1x = ax - cosR * 8,  t1y = ay + sinR * 8;   // inward start (gap from arc)
+              const t2x = ax - cosR * 20, t2y = ay + sinR * 20;  // inward end
+              const lx  = ax - cosR * 40, ly  = ay + sinR * 40;
 
               return (
                 <g key={pct} opacity={fade}>
@@ -1865,10 +1865,8 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               );
             })}
 
-            {/* Fixed ▼ indicator — triangle above arc + stem line down to apex */}
-            <line x1={CX} y1="0" x2={CX} y2="-13"
-              stroke="white" strokeWidth="2" strokeLinecap="round"/>
-            <polygon points={`${CX-6},-27 ${CX+6},-27 ${CX},-13`} fill="white"/>
+            {/* Fixed ▼ — floats above arc, no stem */}
+            <polygon points={`${CX-5},-22 ${CX+5},-22 ${CX},-10`} fill="white"/>
           </svg>
 
           {/* Confirm button */}
