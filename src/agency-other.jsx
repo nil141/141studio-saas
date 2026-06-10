@@ -416,7 +416,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           <div style={{ display:"flex", gap:8, position:"relative" }}>
             {[
               { icon:"plus",             onClick: () => openModal("newTask", { date: selDateStr }) },
-              { icon:"more-horizontal",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+              { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
             ].map(btn => (
               <button key={btn.icon} onClick={btn.onClick} style={{
                 width:36, height:36, borderRadius:"50%",
