@@ -457,15 +457,18 @@ const TasksBoard = ({ navigate, openModal }) => {
                       </div>
                     );
                     return (
-                      <svg width={sz} height={sz} style={{ flexShrink:0 }}>
-                        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5"/>
-                        {prog > 0 && (
-                          <circle cx={sz/2} cy={sz/2} r={r} fill="none"
-                            stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"
-                            strokeDasharray={`${(prog/100)*circ} ${circ}`}
-                            transform={`rotate(-90,${sz/2},${sz/2})`}/>
-                        )}
-                      </svg>
+                      <div style={{ width:sz, height:sz, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <svg width={sz} height={sz} style={{ position:"absolute", top:0, left:0 }}>
+                          <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5"/>
+                          {prog > 0 && (
+                            <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                              stroke="rgba(158,154,229,0.55)" strokeWidth="1.5" strokeLinecap="round"
+                              strokeDasharray={`${(prog/100)*circ} ${circ}`}
+                              transform={`rotate(-90,${sz/2},${sz/2})`}/>
+                          )}
+                        </svg>
+                        <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>
+                      </div>
                     );
                   })()}
                   {/* Title + subtitle */}
