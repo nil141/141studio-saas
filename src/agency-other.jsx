@@ -1681,44 +1681,37 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
   if (!open || !task) return null;
 
-  // Arc geometry: huge circle, center BELOW the SVG viewBox → "horizon" look
-  const CX = 260, CY = 300, R = 290;
-  const START_DEG = 180, SWEEP_DEG = 180;
-  // viewBox 520×260 — arc center at (260,300) is 40px below the bottom edge
-  // Top of arc: y=10 (just visible), endpoints: (~−30,300) and (~550,300) = off-screen
+  // Arc geometry matching Outdomode exactly:
+  // Huge circle (R=456) with center at (270, 456) — apex exactly at SVG top-left (270,0)
+  // 0% = θ=90° (straight up / 12 o'clock), 100% = θ=58° (32° clockwise sweep)
+  const CX = 270, CY = 456, R = 456;
+  const ARC_0 = 90, ARC_100 = 58, ARC_SWEEP = 32;
 
-  const toPt = (deg) => {
-    const rad = deg * Math.PI / 180;
-    return [CX + R * Math.cos(rad), CY - R * Math.sin(rad)];
+  const toPt = (stdDeg, r = R) => {
+    const rad = stdDeg * Math.PI / 180;
+    return [CX + r * Math.cos(rad), CY - r * Math.sin(rad)];
   };
 
-  const [sx, sy] = toPt(START_DEG);   // ≈ (−30, 300) — off-screen left
-  const [ex, ey] = toPt(0);            // ≈ (550, 300) — off-screen right
-  // Counterclockwise over the top (large-arc=1, sweep=0)
-  const bgArcPath = `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 1 0 ${ex.toFixed(1)} ${ey.toFixed(1)}`;
+  // Background arc: left edge (x=0) → apex (270,0) → right edge (x=540), sweep=1 (CW in SVG)
+  const bgY = CY - Math.sqrt(R * R - CX * CX); // ≈ 88.4 — y where arc hits side edges
+  const bgArcPath = `M 0 ${bgY.toFixed(1)} A ${R} ${R} 0 0 1 540 ${bgY.toFixed(1)}`;
 
-  const progressDeg = START_DEG - (progress / 100) * SWEEP_DEG; // 180 → 0
-  const [px, py] = toPt(progressDeg);
-  // Progress arc is always ≤ 180°, so large-arc=0
+  // Progress arc: apex → current progress point
+  const progressAngleDeg = ARC_0 - (progress / 100) * ARC_SWEEP;
+  const [px, py] = toPt(progressAngleDeg);
   const progressArcPath = progress > 0
-    ? `M ${sx.toFixed(1)} ${sy.toFixed(1)} A ${R} ${R} 0 0 0 ${px.toFixed(1)} ${py.toFixed(1)}`
+    ? `M 270 0 A ${R} ${R} 0 0 1 ${px.toFixed(1)} ${py.toFixed(1)}`
     : null;
 
   const getProgress = (clientX, clientY) => {
     if (!svgRef.current) return progress;
     const rect = svgRef.current.getBoundingClientRect();
-    const mx = (clientX - rect.left) / rect.width * 520;
-    const my = (clientY - rect.top) / rect.height * 260;
-    const dx = mx - CX, dy = CY - my;
-    let a = Math.atan2(dy, dx) * 180 / Math.PI;
-    if (a < 0) a += 360;
-    let diff = START_DEG - a;
-    if (diff < 0) diff += 360;
-    if (diff > SWEEP_DEG) {
-      // Dead zone: snap to 0% (lower-left) or 100% (lower-right)
-      return diff < SWEEP_DEG + (360 - SWEEP_DEG) / 2 ? 100 : 0;
-    }
-    return Math.round(Math.min(100, Math.max(0, (diff / SWEEP_DEG) * 100)));
+    const mx = (clientX - rect.left) / rect.width * 540;
+    const my = (clientY - rect.top) / rect.height * 200;
+    const dx = mx - CX, dy = CY - my;  // standard math coords (y flipped)
+    const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+    const p = (ARC_0 - angle) / ARC_SWEEP * 100;
+    return Math.round(Math.max(0, Math.min(100, p)));
   };
 
   const TICKS = [0, 25, 50, 75, 100];
@@ -1824,67 +1817,65 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
             </div>
           </div>
 
-          {/* Arc SVG — large circle, center below viewBox → horizon look */}
+          {/* Arc SVG — Outdomode geometry: huge circle, apex at top center */}
           <svg
             ref={svgRef}
-            viewBox="0 0 520 260"
+            viewBox="0 0 540 200"
             style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab", overflow:"visible" }}
             onMouseDown={e => { e.preventDefault(); setDragging(true); setProgress(getProgress(e.clientX, e.clientY)); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; setDragging(true); setProgress(getProgress(t.clientX, t.clientY)); }}
             onTouchMove={e => { e.preventDefault(); const t = e.touches[0]; setProgress(getProgress(t.clientX, t.clientY)); }}
             onTouchEnd={() => setDragging(false)}
           >
-            {/* Background arc */}
-            <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="18" strokeLinecap="round"/>
-            {/* Progress arc */}
+            {/* Background arc: full visible arc from left edge through apex to right edge */}
+            <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5"/>
+            {/* Progress arc: apex → current progress point */}
             {progressArcPath && (
-              <path d={progressArcPath} fill="none" stroke="var(--accent)" strokeWidth="18" strokeLinecap="round"/>
+              <path d={progressArcPath} fill="none" stroke="rgba(255,255,255,0.55)" strokeWidth="1.5"/>
             )}
-            {/* Tick marks — 25%, 50%, 75% are on-screen; 0%/100% corners */}
+            {/* Tick marks + labels at 0%, 25%, 50%, 75%, 100% */}
             {TICKS.map(pct => {
-              const deg = START_DEG - (pct / 100) * SWEEP_DEG;
+              const deg = ARC_0 - (pct / 100) * ARC_SWEEP;
               const rad = deg * Math.PI / 180;
-              const rIn = R - 24, rOut = R + 10;
-              const x1 = CX + rIn * Math.cos(rad),  y1 = CY - rIn * Math.sin(rad);
-              const x2 = CX + rOut * Math.cos(rad), y2 = CY - rOut * Math.sin(rad);
-              // Labels: 0% and 100% pinned to bottom corners; others follow the arc
-              let lx, ly;
-              if (pct === 0)   { lx = 16;  ly = 250; }
-              else if (pct === 100) { lx = 504; ly = 250; }
-              else { lx = CX + (rOut + 24) * Math.cos(rad); ly = CY - (rOut + 24) * Math.sin(rad); }
-              const active = pct <= progress;
+              const cosR = Math.cos(rad), sinR = Math.sin(rad);
+              const [ax, ay] = toPt(deg);
+              // Radial outward direction in SVG: (cosR, -sinR); inward: (-cosR, sinR)
+              const t1x = ax + cosR * 5,  t1y = ay - sinR * 5;   // 5px outward
+              const t2x = ax - cosR * 14, t2y = ay + sinR * 14;  // 14px inward
+              const lx  = ax - cosR * 32, ly  = ay + sinR * 32;  // label 32px inward
+              const isActive = pct <= progress;
               return (
                 <g key={pct}>
-                  {/* Only draw tick line for 25/50/75 (others are off-screen) */}
-                  {pct !== 0 && pct !== 100 && (
-                    <line x1={x1} y1={y1} x2={x2} y2={y2}
-                      stroke={active ? "var(--accent)" : "rgba(255,255,255,0.2)"}
-                      strokeWidth="2" strokeLinecap="round"/>
-                  )}
-                  <text x={lx} y={ly} textAnchor="middle" fontSize="11"
-                    fill={active ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.22)"}
+                  <line x1={t1x.toFixed(1)} y1={t1y.toFixed(1)} x2={t2x.toFixed(1)} y2={t2y.toFixed(1)}
+                    stroke={isActive ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.22)"}
+                    strokeWidth="1.5" strokeLinecap="round"/>
+                  <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
+                    fontSize="10" fill={isActive ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.2)"}
                     fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
             })}
-            {/* ▼ marker at 50% (top of arc) */}
+            {/* ▼ handle indicator at current progress position */}
             {(() => {
-              const [mx50, my50] = toPt(90);
+              const rad = progressAngleDeg * Math.PI / 180;
+              const cosR = Math.cos(rad), sinR = Math.sin(rad);
+              const [hx, hy] = toPt(progressAngleDeg);
+              // Indicator line: from slightly outside arc, 20px inward
+              const lx1 = hx + cosR * 3,  ly1 = hy - sinR * 3;
+              const lx2 = hx - cosR * 20, ly2 = hy + sinR * 20;
+              // Triangle: base at arc, tip pointing 12px inward; base width ±5px tangentially
+              const bx1 = hx + sinR * 5,  by1 = hy + cosR * 5;
+              const bx2 = hx - sinR * 5,  by2 = hy - cosR * 5;
+              const tipX = hx - cosR * 12, tipY = hy + sinR * 12;
               return (
-                <polygon
-                  points={`${mx50},${my50 + 22} ${mx50 - 6},${my50 + 12} ${mx50 + 6},${my50 + 12}`}
-                  fill="rgba(255,255,255,0.3)"
-                />
+                <g>
+                  <line x1={lx1.toFixed(1)} y1={ly1.toFixed(1)} x2={lx2.toFixed(1)} y2={ly2.toFixed(1)}
+                    stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                  <polygon
+                    points={`${bx1.toFixed(1)},${by1.toFixed(1)} ${bx2.toFixed(1)},${by2.toFixed(1)} ${tipX.toFixed(1)},${tipY.toFixed(1)}`}
+                    fill="white"/>
+                </g>
               );
-            })()}
-            {/* Thumb — clamped to visible area */}
-            {(() => {
-              const tx = Math.max(14, Math.min(506, px));
-              const ty = Math.max(14, Math.min(246, py));
-              return (<>
-                <circle cx={tx} cy={ty} r="15" fill="#111111" stroke="var(--accent)" strokeWidth="2.5"/>
-                <circle cx={tx} cy={ty} r="5"  fill="var(--accent)"/>
-              </>);
             })()}
           </svg>
 
