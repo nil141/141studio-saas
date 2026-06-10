@@ -1681,33 +1681,34 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
   if (!open || !task) return null;
 
-  // Arc geometry matching Outdomode exactly:
-  // Huge circle (R=456) with center at (270, 456) — apex exactly at SVG top-left (270,0)
-  // 0% = θ=90° (straight up / 12 o'clock), 100% = θ=58° (32° clockwise sweep)
-  const CX = 270, CY = 456, R = 456;
-  const ARC_0 = 90, ARC_100 = 58, ARC_SWEEP = 32;
+  // Arc geometry matching Outdomode exactly.
+  // viewBox 640×220 scaled to 540px-wide modal (scale 0.844).
+  // Circle center at (320, 456) — apex at (320, 0) = top of SVG.
+  // 0% = θ=90° (12 o'clock), 100% = θ=45° → 45° clockwise sweep.
+  const CX = 320, CY = 456, R = 456;
+  const ARC_0 = 90, ARC_SWEEP = 45;
 
   const toPt = (stdDeg, r = R) => {
     const rad = stdDeg * Math.PI / 180;
     return [CX + r * Math.cos(rad), CY - r * Math.sin(rad)];
   };
 
-  // Background arc: left edge (x=0) → apex (270,0) → right edge (x=540), sweep=1 (CW in SVG)
-  const bgY = CY - Math.sqrt(R * R - CX * CX); // ≈ 88.4 — y where arc hits side edges
-  const bgArcPath = `M 0 ${bgY.toFixed(1)} A ${R} ${R} 0 0 1 540 ${bgY.toFixed(1)}`;
+  // Background arc: left edge → apex → right edge, CW in SVG (sweep=1)
+  const bgY = CY - Math.sqrt(R * R - CX * CX); // ≈ 131 — y where arc hits x=0 and x=640
+  const bgArcPath = `M 0 ${bgY.toFixed(1)} A ${R} ${R} 0 0 1 640 ${bgY.toFixed(1)}`;
 
-  // Progress arc: apex → current progress point
+  // Progress arc: apex → current progress point (CW sweep=1, always <180° so large-arc=0)
   const progressAngleDeg = ARC_0 - (progress / 100) * ARC_SWEEP;
   const [px, py] = toPt(progressAngleDeg);
   const progressArcPath = progress > 0
-    ? `M 270 0 A ${R} ${R} 0 0 1 ${px.toFixed(1)} ${py.toFixed(1)}`
+    ? `M ${CX} 0 A ${R} ${R} 0 0 1 ${px.toFixed(1)} ${py.toFixed(1)}`
     : null;
 
   const getProgress = (clientX, clientY) => {
     if (!svgRef.current) return progress;
     const rect = svgRef.current.getBoundingClientRect();
-    const mx = (clientX - rect.left) / rect.width * 540;
-    const my = (clientY - rect.top) / rect.height * 200;
+    const mx = (clientX - rect.left) / rect.width * 640;
+    const my = (clientY - rect.top) / rect.height * 220;
     const dx = mx - CX, dy = CY - my;  // standard math coords (y flipped)
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
     const p = (ARC_0 - angle) / ARC_SWEEP * 100;
@@ -1820,7 +1821,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
           {/* Arc SVG — Outdomode geometry: huge circle, apex at top center */}
           <svg
             ref={svgRef}
-            viewBox="0 0 540 200"
+            viewBox="0 0 640 220"
             style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab", overflow:"visible" }}
             onMouseDown={e => { e.preventDefault(); setDragging(true); setProgress(getProgress(e.clientX, e.clientY)); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; setDragging(true); setProgress(getProgress(t.clientX, t.clientY)); }}
@@ -1839,10 +1840,10 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               const rad = deg * Math.PI / 180;
               const cosR = Math.cos(rad), sinR = Math.sin(rad);
               const [ax, ay] = toPt(deg);
-              // Radial outward direction in SVG: (cosR, -sinR); inward: (-cosR, sinR)
-              const t1x = ax + cosR * 5,  t1y = ay - sinR * 5;   // 5px outward
-              const t2x = ax - cosR * 14, t2y = ay + sinR * 14;  // 14px inward
-              const lx  = ax - cosR * 32, ly  = ay + sinR * 32;  // label 32px inward
+              // Radial inward unit vector in SVG: (-cosR, sinR)
+              const t1x = ax + cosR * 5,   t1y = ay - sinR * 5;    // 5px outward
+              const t2x = ax - cosR * 16,  t2y = ay + sinR * 16;   // 16px inward
+              const lx  = ax - cosR * 68,  ly  = ay + sinR * 68;   // label 68px inward
               const isActive = pct <= progress;
               return (
                 <g key={pct}>
@@ -1850,30 +1851,30 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
                     stroke={isActive ? "rgba(255,255,255,0.7)" : "rgba(255,255,255,0.22)"}
                     strokeWidth="1.5" strokeLinecap="round"/>
                   <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
-                    fontSize="10" fill={isActive ? "rgba(255,255,255,0.6)" : "rgba(255,255,255,0.2)"}
+                    fontSize="12" fill={isActive ? "rgba(255,255,255,0.55)" : "rgba(255,255,255,0.18)"}
                     fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
             })}
-            {/* ▼ handle indicator at current progress position */}
+            {/* ▼ indicator at current progress position */}
             {(() => {
               const rad = progressAngleDeg * Math.PI / 180;
               const cosR = Math.cos(rad), sinR = Math.sin(rad);
               const [hx, hy] = toPt(progressAngleDeg);
-              // Indicator line: from slightly outside arc, 20px inward
-              const lx1 = hx + cosR * 3,  ly1 = hy - sinR * 3;
-              const lx2 = hx - cosR * 20, ly2 = hy + sinR * 20;
-              // Triangle: base at arc, tip pointing 12px inward; base width ±5px tangentially
-              const bx1 = hx + sinR * 5,  by1 = hy + cosR * 5;
-              const bx2 = hx - sinR * 5,  by2 = hy - cosR * 5;
-              const tipX = hx - cosR * 12, tipY = hy + sinR * 12;
+              // Indicator line: 4px outward to 24px inward
+              const lx1 = hx + cosR * 4,  ly1 = hy - sinR * 4;
+              const lx2 = hx - cosR * 24, ly2 = hy + sinR * 24;
+              // Triangle base at arc (±6px tangent), tip 14px inward
+              const bx1 = hx + sinR * 6,  by1 = hy + cosR * 6;
+              const bx2 = hx - sinR * 6,  by2 = hy - cosR * 6;
+              const tipX = hx - cosR * 14, tipY = hy + sinR * 14;
               return (
                 <g>
                   <line x1={lx1.toFixed(1)} y1={ly1.toFixed(1)} x2={lx2.toFixed(1)} y2={ly2.toFixed(1)}
-                    stroke="white" strokeWidth="2" strokeLinecap="round"/>
+                    stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
                   <polygon
                     points={`${bx1.toFixed(1)},${by1.toFixed(1)} ${bx2.toFixed(1)},${by2.toFixed(1)} ${tipX.toFixed(1)},${tipY.toFixed(1)}`}
-                    fill="white"/>
+                    fill="white" opacity="0.9"/>
                 </g>
               );
             })()}
