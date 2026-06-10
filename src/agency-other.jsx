@@ -1707,7 +1707,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   // The labels ROTATE: value p appears at angle  90 + (progress − p) * ARC_SWEEP/100
   // so the current progress is always directly under the fixed ▼.
   const CX = 320, CY = 456, R = 456;
-  const ARC_SWEEP = 44;   // total degrees for the 0-100% range
+  const ARC_SWEEP = 64;   // total degrees for the 0-100% range
 
   const toPt = (stdDeg, r = R) => {
     const rad = stdDeg * Math.PI / 180;
