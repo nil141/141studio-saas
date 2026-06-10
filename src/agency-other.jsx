@@ -1682,11 +1682,11 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   if (!open || !task) return null;
 
   // Arc geometry matching Outdomode exactly.
-  // viewBox 640×220 scaled to 540px-wide modal (scale 0.844).
-  // Circle center at (320, 456) — apex at (320, 0) = top of SVG.
-  // 0% = θ=90° (12 o'clock), 100% = θ=45° → 45° clockwise sweep.
+  // viewBox 640×170. Circle center at (320, 456) — apex at (320, 0) = top of SVG.
+  // SYMMETRIC: 0% at θ=112° (left), 50% at θ=90° (apex/top-center), 100% at θ=68° (right).
+  // Total sweep = 44° through the apex.
   const CX = 320, CY = 456, R = 456;
-  const ARC_0 = 90, ARC_SWEEP = 45;
+  const ARC_0 = 112, ARC_SWEEP = 44;
 
   const toPt = (stdDeg, r = R) => {
     const rad = stdDeg * Math.PI / 180;
@@ -1697,18 +1697,19 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const bgY = CY - Math.sqrt(R * R - CX * CX); // ≈ 131 — y where arc hits x=0 and x=640
   const bgArcPath = `M 0 ${bgY.toFixed(1)} A ${R} ${R} 0 0 1 640 ${bgY.toFixed(1)}`;
 
-  // Progress arc: apex → current progress point (CW sweep=1, always <180° so large-arc=0)
+  // Progress arc: from 0%'s position (left) CW to current progress angle
   const progressAngleDeg = ARC_0 - (progress / 100) * ARC_SWEEP;
   const [px, py] = toPt(progressAngleDeg);
+  const [x0, y0] = toPt(ARC_0);  // 0% start point
   const progressArcPath = progress > 0
-    ? `M ${CX} 0 A ${R} ${R} 0 0 1 ${px.toFixed(1)} ${py.toFixed(1)}`
+    ? `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${R} ${R} 0 0 1 ${px.toFixed(1)} ${py.toFixed(1)}`
     : null;
 
   const getProgress = (clientX, clientY) => {
     if (!svgRef.current) return progress;
     const rect = svgRef.current.getBoundingClientRect();
     const mx = (clientX - rect.left) / rect.width * 640;
-    const my = (clientY - rect.top) / rect.height * 220;
+    const my = (clientY - rect.top) / rect.height * 170;
     const dx = mx - CX, dy = CY - my;  // standard math coords (y flipped)
     const angle = Math.atan2(dy, dx) * 180 / Math.PI;
     const p = (ARC_0 - angle) / ARC_SWEEP * 100;
@@ -1809,7 +1810,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
         {mode === "progress" ? (<>
           {/* Percentage + status */}
-          <div style={{ textAlign:"center", padding:"28px 0 32px" }}>
+          <div style={{ textAlign:"center", padding:"28px 0 90px" }}>
             <div style={{ fontSize:86, fontWeight:300, letterSpacing:"-4px", color:"var(--text)", lineHeight:1 }}>
               {progress}%
             </div>
@@ -1821,7 +1822,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
           {/* Arc SVG — Outdomode geometry: huge circle, apex at top center */}
           <svg
             ref={svgRef}
-            viewBox="0 0 640 220"
+            viewBox="0 0 640 170"
             style={{ width:"100%", display:"block", cursor: dragging ? "grabbing" : "grab", overflow:"visible" }}
             onMouseDown={e => { e.preventDefault(); setDragging(true); setProgress(getProgress(e.clientX, e.clientY)); }}
             onTouchStart={e => { e.preventDefault(); const t = e.touches[0]; setDragging(true); setProgress(getProgress(t.clientX, t.clientY)); }}
