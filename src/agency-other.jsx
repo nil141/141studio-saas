@@ -448,19 +448,26 @@ const TasksBoard = ({ navigate, openModal }) => {
                     padding:"12px 4px", cursor:"pointer",
                     borderBottom: isLast ? "none" : "0.5px solid var(--border)",
                   }}>
-                  {/* Large circle toggle */}
-                  <button style={{
-                    width:40, height:40, borderRadius:"50%", flexShrink:0,
-                    border: isDone ? "2px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.18)",
-                    background: "transparent",
-                    cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                    padding:0, transition:"all .18s",
-                  }}>
-                    {isDone
-                      ? <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
-                      : <Icon name="x" size={13} style={{ color:"rgba(255,255,255,0.22)" }}/>
-                    }
-                  </button>
+                  {/* Progress ring */}
+                  {(() => {
+                    const sz = 40, r = 17, circ = 2 * Math.PI * r;
+                    if (isDone) return (
+                      <div style={{ width:sz, height:sz, borderRadius:"50%", border:"2px solid var(--accent)", flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                        <Icon name="check" size={15} style={{ color:"var(--accent)" }}/>
+                      </div>
+                    );
+                    return (
+                      <svg width={sz} height={sz} style={{ flexShrink:0 }}>
+                        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1.5"/>
+                        {prog > 0 && (
+                          <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                            stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"
+                            strokeDasharray={`${(prog/100)*circ} ${circ}`}
+                            transform={`rotate(-90,${sz/2},${sz/2})`}/>
+                        )}
+                      </svg>
+                    );
+                  })()}
                   {/* Title + subtitle */}
                   <div style={{ flex:1, minWidth:0 }}>
                     <div style={{ fontSize:14, letterSpacing:"-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" }}>
@@ -472,12 +479,6 @@ const TasksBoard = ({ navigate, openModal }) => {
                       {isOverdue ? " · Vencida" : ""}
                     </div>
                   </div>
-                  {/* Progress pill — only when > 0 */}
-                  {prog > 0 && !isDone && (
-                    <span style={{ fontSize:11, color:"var(--accent)", background:"var(--accent-soft)", border:"0.5px solid rgba(158,154,229,0.3)", borderRadius:99, padding:"2px 8px", flexShrink:0 }}>
-                      {prog}%
-                    </span>
-                  )}
                   <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
                 </div>
               );
