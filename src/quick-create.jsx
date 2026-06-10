@@ -205,16 +205,17 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
           {/* Cliente */}
           {activeTab === "client" && (
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+            <div style={{ width:"100%", maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
               {D.CLIENTS.length === 0
-                ? <span style={{ fontSize:13, color:"var(--text-subtle)" }}>Sin clientes</span>
-                : D.CLIENTS.slice(0,6).map(c => (
+                ? <span style={{ fontSize:13, color:"var(--text-subtle)", textAlign:"center" }}>Sin clientes</span>
+                : [...D.CLIENTS].sort((a,b) => (a.company||a.name||"").localeCompare(b.company||b.name||"")).map(c => (
                   <button key={c.id} onClick={() => setClientId(clientId === c.id ? "" : c.id)} style={{
-                    padding:"8px 18px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
-                    background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
-                    border: clientId === c.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+                    padding:"10px 16px", borderRadius:12, fontSize:13, letterSpacing:"-0.5px",
+                    background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.04)",
+                    border: clientId === c.id ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
                     color: clientId === c.id ? accentHex : "var(--text-muted)",
                     cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+                    textAlign:"left", width:"100%",
                   }}>
                     {c.company || c.name}
                   </button>
