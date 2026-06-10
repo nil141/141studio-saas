@@ -414,23 +414,22 @@ const TasksBoard = ({ navigate, openModal }) => {
             </div>
           </div>
           <div style={{ display:"flex", gap:8, position:"relative" }}>
-            <button onClick={() => openModal("newTask", { date: selDateStr })} style={{
-              width:36, height:36, borderRadius:"50%",
-              background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
-              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-              color:"var(--text-muted)", transition:"background .12s",
-            }}>
-              <Icon name="plus" size={15}/>
-            </button>
-            <button onClick={() => setOptionsOpen(o => !o)} style={{
-              width:36, height:36, borderRadius:"50%",
-              background: optionsOpen ? "rgba(255,255,255,0.12)" : "rgba(255,255,255,0.07)",
-              border:"0.5px solid rgba(255,255,255,0.1)",
-              cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-              color:"var(--text-muted)", transition:"background .12s",
-            }}>
-              <Icon name="more-horizontal" size={15}/>
-            </button>
+            {[
+              { icon:"plus",             onClick: () => openModal("newTask", { date: selDateStr }) },
+              { icon:"more-horizontal",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+            ].map(btn => (
+              <button key={btn.icon} onClick={btn.onClick} style={{
+                width:36, height:36, borderRadius:"50%",
+                background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.12)",
+                cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                color:"var(--text-muted)", transition:"background .12s", flexShrink:0,
+              }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.13)"}
+                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.08)"}
+              >
+                <Icon name={btn.icon} size={15}/>
+              </button>
+            ))}
             {optionsOpen && (
               <div style={{
                 position:"absolute", top:44, right:0, zIndex:50,
