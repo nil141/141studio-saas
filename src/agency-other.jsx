@@ -1719,7 +1719,8 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const moveDrag = (clientX, clientY) => {
     const angle  = getMouseAngle(clientX, clientY);
     const delta  = (angle - dragRef.current.angle) * 100 / ARC_SWEEP;
-    const newP   = Math.round(Math.max(0, Math.min(100, dragRef.current.progress + delta)));
+    const raw    = Math.max(0, Math.min(100, dragRef.current.progress + delta));
+    const newP   = Math.round(raw / 25) * 25;
     setProgress(newP);
   };
 
@@ -1855,12 +1856,14 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
               const t2x = ax - cosR * 20, t2y = ay + sinR * 20;  // inward end
               const lx  = ax - cosR * 40, ly  = ay + sinR * 40;
 
+              const isActive = pct === progress;
               return (
                 <g key={pct} opacity={fade}>
                   <line x1={t1x.toFixed(1)} y1={t1y.toFixed(1)} x2={t2x.toFixed(1)} y2={t2y.toFixed(1)}
-                    stroke="rgba(255,255,255,0.35)" strokeWidth="1.5" strokeLinecap="round"/>
+                    stroke={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)"} strokeWidth={isActive ? "2" : "1.5"} strokeLinecap="round"/>
                   <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
-                    fontSize="12" fill="rgba(255,255,255,0.3)" fontFamily="var(--font-sans)">{pct}%</text>
+                    fontSize={isActive ? "15" : "11"} fontWeight={isActive ? "500" : "400"}
+                    fill={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)"} fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
             })}
