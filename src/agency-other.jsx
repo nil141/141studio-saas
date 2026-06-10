@@ -1661,13 +1661,16 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const [mode,         setMode]         = useState("progress"); // "progress" | "edit"
   const [editTitle,    setEditTitle]    = useState("");
   const [editDeadline, setEditDeadline] = useState("");
-  const svgRef  = useRef(null);
-  const dragRef = useRef({ angle: 0, progress: 0 });
+  const [displayProgress, setDisplayProgress] = useState(0);
+  const svgRef       = useRef(null);
+  const dragRef      = useRef({ angle: 0, progress: 0 });
+  const animFrameRef = useRef(null);
 
   const taskId = task ? task.id : null;
   useEffect(() => {
     if (open && task) {
-      setProgress(task.progress || 0);
+      const init = Math.round((task.progress || 0) / 25) * 25;
+      setProgress(init); setDisplayProgress(init);
       setMode("progress"); setDotsOpen(false);
       setEditTitle(task.title || ""); setEditDeadline(task.deadline || "");
     }
@@ -1679,6 +1682,22 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
   }, [open]);
+
+  useEffect(() => {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    if (dragging) { setDisplayProgress(progress); return; }
+    const target = progress;
+    const step = () => {
+      setDisplayProgress(prev => {
+        const diff = target - prev;
+        if (Math.abs(diff) < 0.15) return target;
+        animFrameRef.current = requestAnimationFrame(step);
+        return prev + diff * 0.22;
+      });
+    };
+    animFrameRef.current = requestAnimationFrame(step);
+    return () => { if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current); };
+  }, [progress, dragging]);
 
   if (!open || !task) return null;
 
@@ -1700,7 +1719,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const bgArcPath = `M 0 ${bgY.toFixed(1)} A ${R} ${R} 0 0 1 640 ${bgY.toFixed(1)}`;
 
   // Where label for value p sits on the arc given current progress
-  const tickAngle = (p) => 90 + (progress - p) * ARC_SWEEP / 100;
+  const tickAngle = (p) => 90 + (displayProgress - p) * ARC_SWEEP / 100;
 
   // Angle of mouse relative to circle centre (standard math degrees)
   const getMouseAngle = (clientX, clientY) => {
