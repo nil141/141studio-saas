@@ -219,14 +219,8 @@ const TasksBoard = ({ navigate, openModal }) => {
   const todayStr = `${todayMid.getFullYear()}-${String(todayMid.getMonth()+1).padStart(2,'0')}-${String(todayMid.getDate()).padStart(2,'0')}`;
   const isToday  = selDateStr === todayStr;
 
-  // Daily Progress — today's tasks + overdue pending, weighted by progress %
-  const todayTasksForPct = allTasks.filter(t =>
-    t.deadline === todayStr ||
-    (t.deadline && t.deadline < todayStr && (t.column !== "done" || t.doneAt === todayStr))
-  );
-  const donePct = todayTasksForPct.length
-    ? Math.round(todayTasksForPct.reduce((s, t) => s + (t.column === "done" ? 100 : (t.progress || 0)), 0) / todayTasksForPct.length)
-    : 0;
+  // Daily Progress — based on selected day's tasks (calculated after matchesDay/dayTasks below)
+  // donePct is computed after dayTasks is defined
 
   // A task belongs to the selected day if it's due that day,
   // OR (viewing today) it's overdue and either still pending or completed today
@@ -236,6 +230,10 @@ const TasksBoard = ({ navigate, openModal }) => {
 
   // Filter tasks to only those matching the selected day
   const dayTasks = allTasks.filter(matchesDay);
+
+  const donePct = dayTasks.length
+    ? Math.round(dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : (t.progress || 0)), 0) / dayTasks.length)
+    : 0;
 
   // Build groups: client → [projects + tasks]  — only with tasks for selected day
   const clientColorMap = {};
