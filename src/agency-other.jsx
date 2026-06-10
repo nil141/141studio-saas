@@ -207,8 +207,6 @@ const TasksBoard = ({ navigate, openModal }) => {
   const midMonth = MON_ES[weekDays[3].getMonth()];
 
   const allTasks = Object.values(D.TASKS).flat();
-  const donePct  = allTasks.length
-    ? Math.round(allTasks.filter(t => t.column === "done").length / allTasks.length * 100) : 0;
 
   // Selected day as YYYY-MM-DD string
   const selDateStr = (() => {
@@ -219,11 +217,17 @@ const TasksBoard = ({ navigate, openModal }) => {
   const todayStr = `${todayMid.getFullYear()}-${String(todayMid.getMonth()+1).padStart(2,'0')}-${String(todayMid.getDate()).padStart(2,'0')}`;
   const isToday  = selDateStr === todayStr;
 
+  // Daily Progress — only today's tasks, weighted by progress %
+  const todayTasksForPct = allTasks.filter(t => t.deadline === todayStr);
+  const donePct = todayTasksForPct.length
+    ? Math.round(todayTasksForPct.reduce((s, t) => s + (t.column === "done" ? 100 : (t.progress || 0)), 0) / todayTasksForPct.length)
+    : 0;
+
   // A task belongs to the selected day if it's due that day,
-  // OR (viewing today) it's overdue (past deadline, not done)
+  // OR (viewing today) it's overdue and either still pending or completed today
   const matchesDay = t =>
     t.deadline === selDateStr ||
-    (isToday && t.deadline && t.deadline < selDateStr && t.column !== "done");
+    (isToday && t.deadline && t.deadline < selDateStr && (t.column !== "done" || t.doneAt === todayStr));
 
   // Filter tasks to only those matching the selected day
   const dayTasks = allTasks.filter(matchesDay);
@@ -1770,8 +1774,14 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
   const confirmProgress = () => {
     const updates = { progress };
-    if (progress === 100) updates.column = "done";
-    else if (task.column === "done") updates.column = "todo";
+    if (progress === 100) {
+      updates.column = "done";
+      const n = new Date();
+      updates.doneAt = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+    } else if (task.column === "done") {
+      updates.column = "todo";
+      updates.doneAt = null;
+    }
     onUpdate(updates);
     onClose();
   };
