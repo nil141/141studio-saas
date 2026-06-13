@@ -3252,23 +3252,21 @@
         padding: 0.7rem 1.4rem;
         gap: 0.45rem;
       }
-      /* sección solución: carrusel horizontal (deslizar) como iUROP */
+      /* sección solución: carrusel horizontal a sangre completa, scroll libre */
       .solutions-grid {
         display: flex;
         grid-template-columns: none;
         overflow-x: auto;
-        scroll-snap-type: x mandatory;
         gap: 1rem;
         -webkit-overflow-scrolling: touch;
-        scroll-padding-left: 0;
-        padding-bottom: 0.5rem;
+        /* romper el padding del container para llegar a los bordes de pantalla */
+        margin-left: calc(50% - 50vw);
+        margin-right: calc(50% - 50vw);
+        padding: 0 0 0.5rem 2rem; /* izq alineado al contenido, dcha al borde */
         scrollbar-width: none;
       }
       .solutions-grid::-webkit-scrollbar { display: none; }
-      .sol-card {
-        flex: 0 0 85%;
-        scroll-snap-align: start;
-      }
+      .sol-card { flex: 0 0 88%; }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
