@@ -3269,6 +3269,8 @@
       }
       .solutions-grid::-webkit-scrollbar { display: none; }
       .sol-card { flex: 0 0 88%; }
+      /* visibles desde el principio (sin esperar a la animación de scroll) */
+      .sol-card.fade-up { opacity: 1; transform: none; }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
