@@ -113,6 +113,7 @@
     nav.scrolled {
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
+    .nav-fade { display: none; } /* solo se muestra en móvil */
     .nav-logo {
       display: flex;
       align-items: center;
@@ -3274,6 +3275,16 @@
       /* header fijo y botón más pequeño en móvil */
       nav { position: fixed; top: 0.75rem; }
       .nav-cta { font-size: 0.82rem; padding: 0.5rem 0.85rem; }
+      /* degradado negro tras el header que difumina el contenido al pasar por debajo */
+      .nav-fade {
+        display: block;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 130px;
+        background: linear-gradient(to bottom, #000 0%, #000 38%, rgba(0,0,0,0) 100%);
+        z-index: 99;
+        pointer-events: none;
+      }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
@@ -3354,6 +3365,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 </head>
 <body>
+
+  <!-- degradado tras el header fijo (solo móvil) -->
+  <div class="nav-fade" aria-hidden="true"></div>
 
   <!-- ─── Nav ─────────────────────────────────────────────────── -->
   <nav id="nav">
