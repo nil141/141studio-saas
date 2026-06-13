@@ -3286,26 +3286,33 @@
         z-index: 99;
         pointer-events: none;
       }
-      /* metodología en móvil: título/subtítulo sticky arriba, fases apiladas */
+      /* metodología en móvil: título/subtítulo sticky arriba, fases en cajas grises */
       .meto-body { flex-direction: column; gap: 1.25rem; }
       .meto-left {
         width: auto; min-width: 0; max-width: none;
         position: sticky;
-        top: 66px;
+        top: 84px;
         z-index: 100;
-        background: var(--black);
+        /* fondo negro que se difumina por abajo (no corte sólido) */
+        background: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0,0,0,0) 100%);
         align-items: center;
         text-align: center;
         gap: 0.7rem;
-        padding: 0.6rem 0 1rem;
+        padding: 0.4rem 0 2.5rem;
       }
       .meto-left h2 { font-size: 1.75rem; }
       .meto-left > p { margin-top: 0; }
       .meto-menu { display: none; }
       .meto-right { background: transparent; border: none; border-radius: 0; }
       .meto-panel { opacity: 1 !important; }
-      .meto-panel + .meto-panel { margin-top: 2rem; }
-      .meto-card { padding: 0; }
+      .meto-panel + .meto-panel { margin-top: 1.25rem; }
+      /* cada fase dentro de su caja gris */
+      .meto-card {
+        background: #141414;
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px;
+        padding: 1.5rem 1.25rem;
+      }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
