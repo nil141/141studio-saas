@@ -3286,33 +3286,35 @@
         z-index: 99;
         pointer-events: none;
       }
-      /* metodología en móvil: título/subtítulo sticky arriba, fases en cajas grises */
+      /* metodología en móvil: título/subtítulo sticky arriba, fases en UNA caja gris */
       .meto-body { flex-direction: column; gap: 1.25rem; }
       .meto-left {
         width: auto; min-width: 0; max-width: none;
         position: sticky;
-        top: 84px;
+        top: 60px;
         z-index: 100;
-        /* fondo negro que se difumina por abajo (no corte sólido) */
-        background: linear-gradient(to bottom, #000 0%, #000 68%, rgba(0,0,0,0) 100%);
+        /* negro sólido arriba (tapa el contenido) y degradado concentrado al final */
+        background: linear-gradient(to bottom, #000 0%, #000 84%, rgba(0,0,0,0) 100%);
         align-items: center;
         text-align: center;
         gap: 0.7rem;
-        padding: 0.4rem 0 2.5rem;
+        padding: 1.6rem 0 1.7rem;
       }
       .meto-left h2 { font-size: 1.75rem; }
       .meto-left > p { margin-top: 0; }
       .meto-menu { display: none; }
-      .meto-right { background: transparent; border: none; border-radius: 0; }
       .meto-panel { opacity: 1 !important; }
-      .meto-panel + .meto-panel { margin-top: 1.25rem; }
-      /* cada fase dentro de su caja gris */
-      .meto-card {
+      .meto-panel + .meto-panel { margin-top: 0; }
+      /* una sola caja gris con las 4 fases dentro, separadas por líneas */
+      .meto-right {
         background: #141414;
         border: 1px solid rgba(255,255,255,0.06);
         border-radius: 18px;
-        padding: 1.5rem 1.25rem;
+        padding: 0 1.1rem;
+        overflow: hidden;
       }
+      .meto-card { background: transparent; border: none; border-radius: 0; padding: 1.7rem 0; }
+      .meto-panel + .meto-panel .meto-card { border-top: 1px solid rgba(255,255,255,0.07); }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
