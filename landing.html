@@ -3287,7 +3287,9 @@
         pointer-events: none;
       }
       /* metodología en móvil: título/subtítulo sticky arriba, fases en UNA caja gris */
-      .meto-body { flex-direction: column; gap: 1.25rem; }
+      #metodologia { padding-left: 0.9rem; padding-right: 0.9rem; } /* sección más ancha */
+      nav.scrolled { box-shadow: none; } /* sin sombra del header sobre el título */
+      .meto-body { flex-direction: column; gap: 1.25rem; padding-bottom: 38vh; } /* el título sigue fijo hasta que la caja sale de pantalla */
       .meto-left {
         width: auto; min-width: 0; max-width: none;
         position: sticky;
