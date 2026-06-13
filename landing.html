@@ -3307,13 +3307,22 @@
       .meto-menu { display: none; }
       .meto-panel { opacity: 1 !important; }
       .meto-panel + .meto-panel { margin-top: 0; }
-      /* una sola caja gris con las 4 fases dentro, separadas por líneas */
+      /* una sola caja gris con las 4 fases dentro; el borde inferior se funde en negro */
       .meto-right {
         background: #141414;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: none;
         border-radius: 18px;
         padding: 0 1.1rem;
         overflow: hidden;
+        position: relative;
+      }
+      .meto-right::after {
+        content: '';
+        position: absolute; left: 0; right: 0; bottom: 0;
+        height: 70px;
+        background: linear-gradient(to bottom, rgba(20,20,20,0), #000);
+        pointer-events: none;
+        z-index: 4;
       }
       .meto-card { background: transparent; border: none; border-radius: 0; padding: 1.7rem 0; }
     }
