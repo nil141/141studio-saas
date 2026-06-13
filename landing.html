@@ -41,7 +41,7 @@
       color: var(--white);
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
-      overflow-x: hidden;
+      overflow-x: clip;
     }
 
     ::selection { background: var(--white-15); }
@@ -3219,7 +3219,7 @@
       .hero-h1 { font-size: clamp(2.1rem, 9vw, 3rem); line-height: 1.08; }
       .hero-sub { font-size: 0.95rem; }
       /* hero anim: mantener el diseño 801px y escalarlo para que quepa y converja bien */
-      html { overflow-x: hidden; }
+      html { overflow-x: clip; }
       #heroFlow {
         width: 801px;
         max-width: none;
@@ -3273,6 +3273,7 @@
       /* visibles desde el principio (sin esperar a la animación de scroll) */
       .sol-card.fade-up { opacity: 1; transform: none; }
       /* header fijo y botón más pequeño en móvil */
+      html { overflow-x: clip; }
       nav { position: fixed; top: 0.75rem; }
       .nav-cta { font-size: 0.82rem; padding: 0.5rem 0.85rem; }
       /* degradado negro tras el header que difumina el contenido al pasar por debajo */
