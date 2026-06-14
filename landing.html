@@ -2900,9 +2900,10 @@
       gap: 5px;
       pointer-events: none;
       animation: cursorFloat 3s ease-in-out infinite;
-      align-self: flex-end;
-      margin-bottom: -52px;
-      margin-left: -8px;
+      /* fuera del flujo para que el botón quede centrado de verdad */
+      position: absolute;
+      left: calc(50% + 70px);
+      top: calc(50% + 6px);
     }
     @keyframes cursorFloat {
       0%   { transform: translate(0px, 0px); }
@@ -2945,6 +2946,7 @@
       line-height: 1.6;
     }
     .cta-actions {
+      position: relative;
       display: flex;
       align-items: center;
       justify-content: center;
