@@ -198,7 +198,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   ];
 
   return (
-    <div style={{
+    <div className="dash-wrap" style={{
       display:"flex", flexDirection:"column", gap:12,
       padding:"20px 28px 20px",
       height:"100vh", overflow:"hidden", boxSizing:"border-box",
@@ -240,7 +240,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       </div>
 
       {/* ── KPI row ── */}
-      <div style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
+      <div className="dash-kpis" style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
         {kpis.map((k,i) => (
           <div key={i} className="card" style={{padding:0, overflow:"hidden", cursor:"default"}}>
             <div style={{padding:"14px 18px 12px"}}>
@@ -266,7 +266,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       </div>
 
       {/* ── Bottom two columns ── */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, flex:1, minHeight:0, overflow:"hidden"}}>
+      <div className="dash-bottom" style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, flex:1, minHeight:0, overflow:"hidden"}}>
 
         {/* Agenda próxima */}
         <div className="card" style={{display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0}}>
