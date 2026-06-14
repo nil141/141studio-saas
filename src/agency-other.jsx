@@ -407,7 +407,7 @@ const TasksBoard = ({ navigate, openModal }) => {
 
         {/* Mobile-only: month nav + day strip + progress */}
         <div className="tasks-mobile-header">
-          {/* Month nav + action buttons */}
+          {/* Month nav */}
           <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
             <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
               <Icon name="chevron-left" size={18}/>
@@ -416,17 +416,6 @@ const TasksBoard = ({ navigate, openModal }) => {
             <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
               <Icon name="chevron-right" size={18}/>
             </button>
-            {/* + and ... pill */}
-            <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99, marginLeft:8 }}>
-              {[
-                { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
-                { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-              ].map(btn => (
-                <button key={btn.icon} onClick={btn.onClick} style={{ width:32, height:30, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
-                  <Icon name={btn.icon} size={14}/>
-                </button>
-              ))}
-            </div>
           </div>
           {/* Day strip — flex:1 so all 7 fit without scroll */}
           <div style={{ display:"flex", gap:4 }}>
@@ -462,6 +451,19 @@ const TasksBoard = ({ navigate, openModal }) => {
               <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
             </div>
             <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
+          </div>
+          {/* + and ... pill — below progress, aligned right */}
+          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
+            <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
+              {[
+                { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
+                { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+              ].map(btn => (
+                <button key={btn.icon} onClick={btn.onClick} style={{ width:34, height:30, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
+                  <Icon name={btn.icon} size={14}/>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
