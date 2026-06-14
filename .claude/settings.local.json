@@ -40,7 +40,12 @@
       "Bash(cp /tmp/framer_instance_3.html /Users/nilcortesgomez/Desktop/Host/.claude/worktrees/sharp-murdock-9b7e4b/framer_instance_3.html)",
       "Bash(cp /tmp/all_styles.html /Users/nilcortesgomez/Desktop/Host/.claude/worktrees/sharp-murdock-9b7e4b/framer_all_styles.html)",
       "Bash(cp /tmp/svg_templates.html /Users/nilcortesgomez/Desktop/Host/.claude/worktrees/sharp-murdock-9b7e4b/framer_svg_templates.html)",
-      "Bash(awk -F: '$2>1450 && $2<1470')"
+      "Bash(awk -F: '$2>1450 && $2<1470')",
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'landing: FAQ más ancha en móvil anulando el padding del container *)",
+      "Bash(git fetch *)",
+      "Bash(GIT_EDITOR=true git merge origin/main -q)",
+      "Bash(git push *)"
     ]
   }
 }
