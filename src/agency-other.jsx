@@ -472,7 +472,7 @@ const TasksBoard = ({ navigate, openModal }) => {
             {/* Client header */}
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
               <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
-              <span style={{ fontSize:11, fontWeight:500, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-subtle)" }}>
+              <span style={{ fontSize:16, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"var(--text)" }}>
                 {group.clientName}
               </span>
             </div>
