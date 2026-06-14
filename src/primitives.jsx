@@ -154,7 +154,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   };
 
   return (
-    <aside style={{
+    <aside className="sidebar" style={{
       width: 220,
       background: "var(--bg)",
       display: "flex", flexDirection: "column",
