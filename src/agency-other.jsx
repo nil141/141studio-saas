@@ -1930,22 +1930,25 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
   return ReactDOM.createPortal(
     <div
+      className="progress-modal-overlay"
       style={{
         position:"fixed", inset:0, zIndex:500,
         background:"rgba(0,0,0,0.78)", backdropFilter:"blur(18px)",
-        display:"flex", alignItems:"flex-end", justifyContent:"center",
+        display:"flex", alignItems:"center", justifyContent:"center",
         animation:"fade .15s ease-out",
       }}
       onClick={() => { if (justDraggedRef.current) return; onClose(); }}
     >
       <div
+        className="progress-modal-sheet"
         onClick={e => e.stopPropagation()}
         style={{
-          width:"100%", maxWidth:600,
+          width:"100%", maxWidth:540,
           background:"#111111",
-          borderRadius:"28px 28px 0 0",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:32,
           overflow:"hidden",
-          animation:"slideUp .32s cubic-bezier(.2,.8,.2,1)",
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           userSelect:"none",
         }}
