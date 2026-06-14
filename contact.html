@@ -165,17 +165,20 @@
 
     Cal("init", { origin: "https://cal.com" });
 
+    /* en móvil usamos un layout más compacto (column_view) en vez del mes completo */
+    var calLayout = window.matchMedia("(max-width: 640px)").matches ? "column_view" : "month_view";
+
     Cal("inline", {
       elementOrSelector: "#cal-embed",
       calLink: "nil141agency/15min",
-      layout: "month_view"
+      layout: calLayout
     });
 
     Cal("ui", {
       theme: "dark",
       styles: { branding: { brandColor: "#ffffff" } },
       hideEventTypeDetails: false,
-      layout: "month_view"
+      layout: calLayout
     });
   </script>
 
