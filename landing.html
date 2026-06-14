@@ -3331,6 +3331,18 @@
       .faq-box { padding: 1.4rem 0.8rem; gap: 1.1rem; }
       .faq-question { gap: 0.7rem; }
       .faq-question-text { flex: 1; min-width: 0; text-align: right; font-size: 0.95rem; }
+      /* footer móvil: apilado y centrado (logo, redes, copyright) como iUROP */
+      footer { padding: 3rem 1.5rem 2.5rem; }
+      .footer-main {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1.5rem;
+      }
+      .footer-logo { order: 1; justify-self: center; }
+      .footer-social { order: 2; justify-self: center; }
+      .footer-copy { order: 3; justify-self: center; }
     }
 
     /* ── Card "invertir": dashboard mockup ── */
