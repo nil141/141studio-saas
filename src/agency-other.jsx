@@ -303,7 +303,7 @@ const TasksBoard = ({ navigate, openModal }) => {
     <div style={{ display:"flex", height:"100vh", overflow:"hidden" }}>
 
       {/* ── Left: week selector ───────────────────── */}
-      <div style={{
+      <div className="tasks-left" style={{
         width:260, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
@@ -403,8 +403,55 @@ const TasksBoard = ({ navigate, openModal }) => {
       </div>
 
       {/* ── Right: tasks grouped by client ───────── */}
-      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }} onClick={() => setOptionsOpen(false)}>
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, paddingBottom:20, borderBottom:"0.5px solid var(--border)" }}>
+      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }} className="tasks-right" onClick={() => setOptionsOpen(false)}>
+
+        {/* Mobile-only: month nav + day strip + progress */}
+        <div className="tasks-mobile-header">
+          {/* Month nav */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:24, marginBottom:16 }}>
+            <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", display:"flex" }}>
+              <Icon name="chevron-left" size={18}/>
+            </button>
+            <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
+            <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", display:"flex" }}>
+              <Icon name="chevron-right" size={18}/>
+            </button>
+          </div>
+          {/* Day strip */}
+          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, scrollbarWidth:"none" }}>
+            {weekDays.map(d => {
+              const dMid = new Date(d); dMid.setHours(0,0,0,0);
+              const isSel = dMid.getTime() === selMid.getTime();
+              const isToday = dMid.getTime() === todayMid.getTime();
+              return (
+                <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
+                  flexShrink:0, width:52, height:68,
+                  borderRadius:99, border: isSel ? "1.5px solid var(--accent)" : "0.5px solid rgba(255,255,255,0.1)",
+                  background: isSel ? "rgba(158,154,229,0.12)" : "rgba(255,255,255,0.04)",
+                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4,
+                  cursor:"pointer",
+                }}>
+                  <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.02em" }}>
+                    {["D","L","M","X","J","V","S"][d.getDay()]}
+                  </span>
+                  <span style={{ fontSize:18, fontWeight: isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.5px" }}>
+                    {d.getDate()}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {/* Progress */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:10, margin:"14px 0 0", paddingBottom:14, borderBottom:"0.5px solid var(--border)" }}>
+            <div style={{ flex:1, height:2, background:"var(--border)", borderRadius:99 }}>
+              <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
+            </div>
+            <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
+          </div>
+        </div>
+
+        {/* Desktop header */}
+        <div className="tasks-desktop-header" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, paddingBottom:20, borderBottom:"0.5px solid var(--border)" }}>
           <div>
             <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
             <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:4, letterSpacing:"-0.5px" }}>
