@@ -1923,8 +1923,8 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
     <div
       style={{
         position:"fixed", inset:0, zIndex:500,
-        background:"rgba(0,0,0,0.82)", backdropFilter:"blur(18px)",
-        display:"flex", alignItems:"center", justifyContent:"center",
+        background:"rgba(0,0,0,0.78)", backdropFilter:"blur(18px)",
+        display:"flex", alignItems:"flex-end", justifyContent:"center",
         animation:"fade .15s ease-out",
       }}
       onClick={() => { if (justDraggedRef.current) return; onClose(); }}
@@ -1932,33 +1932,50 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          width:"100%", maxWidth:540,
+          width:"100%", maxWidth:600,
           background:"#111111",
-          border:"0.5px solid rgba(255,255,255,0.08)",
-          borderRadius:32, overflow:"hidden",
+          borderRadius:"28px 28px 0 0",
+          overflow:"hidden",
           animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           userSelect:"none",
         }}
       >
+        {/* Drag handle */}
+        <div style={{ display:"flex", justifyContent:"center", paddingTop:12 }}>
+          <div style={{ width:36, height:4, borderRadius:99, background:"rgba(255,255,255,0.18)" }}/>
+        </div>
+
         {/* Top bar */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"20px 20px 0" }}>
-          {btnCircle(onClose, <Icon name="x" size={14}/>)}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px 0" }}>
+          {/* X */}
+          <button onClick={onClose} style={{
+            width:40, height:40, borderRadius:"50%",
+            background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.1)",
+            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+            color:"var(--text-muted)", flexShrink:0,
+          }}><Icon name="x" size={15}/></button>
 
-          <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.4px", maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            {task.title}
-          </div>
-
-          {/* Three-dots menu */}
+          {/* Right pill: ↗ + ··· */}
           <div style={{ position:"relative" }}>
-            {btnCircle(e => { e.stopPropagation(); setDotsOpen(o => !o); },
-              <span style={{ fontSize:16, letterSpacing:"0.04em", fontWeight:700, lineHeight:1 }}>···</span>
-            )}
+            <div style={{ display:"flex", alignItems:"center", background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
+              <button onClick={() => setMode("edit")} style={{
+                width:46, height:40, background:"transparent", border:"none",
+                borderRight:"0.5px solid rgba(255,255,255,0.1)",
+                cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                color:"var(--text-muted)",
+              }}><Icon name="arrow-up-right" size={15}/></button>
+              <button onClick={e => { e.stopPropagation(); setDotsOpen(o => !o); }} style={{
+                width:46, height:40, background:"transparent", border:"none",
+                cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+                color:"var(--text-muted)",
+              }}><Icon name="more-h" size={15}/></button>
+            </div>
             {dotsOpen && (
               <div
                 onClick={e => e.stopPropagation()}
                 style={{
-                  position:"absolute", right:0, top:44, zIndex:600,
+                  position:"absolute", right:0, top:48, zIndex:600,
                   background:"#1c1c1e", border:"0.5px solid rgba(255,255,255,0.1)",
                   borderRadius:14, overflow:"hidden", minWidth:170,
                   boxShadow:"0 12px 32px rgba(0,0,0,0.5)",
