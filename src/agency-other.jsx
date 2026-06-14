@@ -452,22 +452,6 @@ const TasksBoard = ({ navigate, openModal }) => {
             </div>
             <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
           </div>
-          {/* Date label + pill row */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-            <span style={{ fontSize:17, color:"var(--text)", fontWeight:400, letterSpacing:"-0.7px" }}>
-              {DAY_ES[new Date(selectedDay).getDay()]}, {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]}
-            </span>
-            <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
-              {[
-                { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
-                { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-              ].map(btn => (
-                <button key={btn.icon} onClick={btn.onClick} style={{ width:34, height:30, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
-                  <Icon name={btn.icon} size={14}/>
-                </button>
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Desktop header */}
@@ -534,7 +518,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
         )}
 
-        {groups.map(group => (
+        {groups.map((group, gIdx) => (
           <div key={group.clientId} style={{ marginBottom:32 }}>
             {/* Client header */}
             <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
@@ -542,6 +526,18 @@ const TasksBoard = ({ navigate, openModal }) => {
               <span style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e" }}>
                 {group.clientName}
               </span>
+              {gIdx === 0 && (
+                <div className="mobile-pill-inline" style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
+                  {[
+                    { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
+                    { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+                  ].map(btn => (
+                    <button key={btn.icon} onClick={btn.onClick} style={{ width:30, height:26, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
+                      <Icon name={btn.icon} size={13}/>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Task rows — no individual cards, flat rows with divider */}
