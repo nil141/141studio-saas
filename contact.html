@@ -58,6 +58,7 @@
       transition: box-shadow 0.3s;
     }
     nav.scrolled { box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+    .nav-fade { display: none; } /* solo se muestra en móvil */
 
     .nav-logo { display: flex; align-items: center; }
     .nav-logo img { height: 26px; width: auto; display: block; }
@@ -118,10 +119,26 @@
       html, body { height: auto; overflow-x: hidden; overflow-y: auto; }
       .page-wrap { padding: 6.5rem 1rem 3rem; }
       #cal-embed { height: auto; min-height: 78vh; }
+      /* header idéntico al de la página principal */
+      nav { top: 1.4rem; }
+      .nav-cta { font-size: 0.82rem; padding: 0.5rem 0.85rem; }
+      nav.scrolled { box-shadow: none; }
+      .nav-fade {
+        display: block;
+        position: fixed;
+        top: 0; left: 0; right: 0;
+        height: 130px;
+        background: linear-gradient(to bottom, #000 0%, #000 38%, rgba(0,0,0,0) 100%);
+        z-index: 99;
+        pointer-events: none;
+      }
     }
   </style>
 </head>
 <body>
+
+  <!-- degradado tras el header fijo (solo móvil) -->
+  <div class="nav-fade" aria-hidden="true"></div>
 
   <!-- ─── Nav ─────────────────────────────────────────────────── -->
   <nav id="nav">
