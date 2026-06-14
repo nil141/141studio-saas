@@ -454,7 +454,7 @@ const TasksBoard = ({ navigate, openModal }) => {
           </div>
           {/* Date label + pill row */}
           <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
-            <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:400, letterSpacing:"-0.4px" }}>
+            <span style={{ fontSize:17, color:"var(--text)", fontWeight:400, letterSpacing:"-0.7px" }}>
               {DAY_ES[new Date(selectedDay).getDay()]}, {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]}
             </span>
             <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
