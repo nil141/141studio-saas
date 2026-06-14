@@ -112,6 +112,13 @@
       max-width: 900px;
       height: 100%;
     }
+
+    /* ─── Móvil: permitir scroll (el calendario es más alto que la pantalla) ── */
+    @media (max-width: 640px) {
+      html, body { height: auto; overflow-x: hidden; overflow-y: auto; }
+      .page-wrap { padding: 6.5rem 1rem 3rem; }
+      #cal-embed { height: auto; min-height: 78vh; }
+    }
   </style>
 </head>
 <body>
