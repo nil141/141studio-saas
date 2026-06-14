@@ -1815,6 +1815,15 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   }, [open]);
 
   useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
+  useEffect(() => {
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     if (dragging) { setDisplayProgress(progress); return; }
     const target = progress;
@@ -1936,7 +1945,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
           background:"#111111",
           borderRadius:"28px 28px 0 0",
           overflow:"hidden",
-          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+          animation:"slideUp .32s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           userSelect:"none",
         }}
