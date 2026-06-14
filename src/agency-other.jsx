@@ -407,42 +407,57 @@ const TasksBoard = ({ navigate, openModal }) => {
 
         {/* Mobile-only: month nav + day strip + progress */}
         <div className="tasks-mobile-header">
-          {/* Month nav */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:24, marginBottom:16 }}>
-            <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", display:"flex" }}>
+          {/* Month nav + action buttons */}
+          <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
+            <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
               <Icon name="chevron-left" size={18}/>
             </button>
-            <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
-            <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 8px", display:"flex" }}>
+            <span style={{ flex:1, textAlign:"center", fontSize:24, fontWeight:400, letterSpacing:"-1px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
+            <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
               <Icon name="chevron-right" size={18}/>
             </button>
+            {/* + and ... pill */}
+            <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99, marginLeft:8 }}>
+              {[
+                { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
+                { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
+              ].map(btn => (
+                <button key={btn.icon} onClick={btn.onClick} style={{ width:32, height:30, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
+                  <Icon name={btn.icon} size={14}/>
+                </button>
+              ))}
+            </div>
           </div>
-          {/* Day strip */}
-          <div style={{ display:"flex", gap:6, overflowX:"auto", paddingBottom:4, scrollbarWidth:"none" }}>
+          {/* Day strip — flex:1 so all 7 fit without scroll */}
+          <div style={{ display:"flex", gap:4 }}>
             {weekDays.map(d => {
               const dMid = new Date(d); dMid.setHours(0,0,0,0);
               const isSel = dMid.getTime() === selMid.getTime();
               const isToday = dMid.getTime() === todayMid.getTime();
               return (
                 <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                  flexShrink:0, width:52, height:68,
-                  borderRadius:99, border: isSel ? "1.5px solid var(--accent)" : "0.5px solid rgba(255,255,255,0.1)",
-                  background: isSel ? "rgba(158,154,229,0.12)" : "rgba(255,255,255,0.04)",
-                  display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:4,
-                  cursor:"pointer",
+                  flex:1, background:"transparent", border:"none", cursor:"pointer",
+                  display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"4px 0",
                 }}>
                   <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.02em" }}>
                     {["D","L","M","X","J","V","S"][d.getDay()]}
                   </span>
-                  <span style={{ fontSize:18, fontWeight: isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.5px" }}>
-                    {d.getDate()}
-                  </span>
+                  <div style={{
+                    width:34, height:34, borderRadius:"50%",
+                    border: isSel ? "1.5px solid var(--accent)" : isToday ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
+                    background: isSel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                  }}>
+                    <span style={{ fontSize:15, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.4px" }}>
+                      {d.getDate()}
+                    </span>
+                  </div>
                 </button>
               );
             })}
           </div>
           {/* Progress */}
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"flex-end", gap:10, margin:"14px 0 0", paddingBottom:14, borderBottom:"0.5px solid var(--border)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 0", paddingBottom:14, borderBottom:"0.5px solid var(--border)" }}>
             <div style={{ flex:1, height:2, background:"var(--border)", borderRadius:99 }}>
               <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
             </div>
@@ -535,6 +550,7 @@ const TasksBoard = ({ navigate, openModal }) => {
               return (
                 <div key={t.id}
                   onClick={() => setTaskModal({ task: t, pid })}
+                  className="task-row"
                   style={{
                     display:"flex", alignItems:"center", gap:14,
                     padding:"12px 4px", cursor:"pointer",
@@ -578,7 +594,7 @@ const TasksBoard = ({ navigate, openModal }) => {
               );
             }))}
 
-            <div style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
+            <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
           </div>
         ))}
       </div>
