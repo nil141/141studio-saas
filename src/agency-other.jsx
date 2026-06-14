@@ -457,7 +457,7 @@ const TasksBoard = ({ navigate, openModal }) => {
             })}
           </div>
           {/* Progress */}
-          <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 0", paddingBottom:14, borderBottom:"0.5px solid var(--border)" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 0", paddingBottom:14 }}>
             <div style={{ flex:1, height:2, background:"var(--border)", borderRadius:99 }}>
               <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
             </div>
