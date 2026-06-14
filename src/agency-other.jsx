@@ -452,8 +452,11 @@ const TasksBoard = ({ navigate, openModal }) => {
             </div>
             <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
           </div>
-          {/* + and ... pill — below progress, aligned right */}
-          <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
+          {/* Date label + pill row */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:8 }}>
+            <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:400, letterSpacing:"-0.4px" }}>
+              {DAY_ES[new Date(selectedDay).getDay()]}, {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]}
+            </span>
             <div style={{ display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
               {[
                 { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
