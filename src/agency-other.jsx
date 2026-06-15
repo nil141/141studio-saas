@@ -307,7 +307,7 @@ const TasksBoard = ({ navigate, openModal }) => {
         width:260, flexShrink:0,
         borderRight:"0.5px solid var(--border)",
         display:"flex", flexDirection:"column",
-        justifyContent:"center",
+        justifyContent:"flex-start",
         padding:"20px 16px 20px 20px",
         overflow:"hidden",
       }}>
