@@ -78,6 +78,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     : { name: "Nil", initials: "N", email: "nil@141agency.com" };
 
   // ── Sliding pill refs ──────────────────────────────────────────────
+  const [logoutOpen, setLogoutOpen] = React.useState(false);
+
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null); // { top, height, animated, visible }
@@ -222,9 +224,55 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} active={current === "nora"}/>
         )}
         <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
-        <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => onNavigate("__logout")}/>
+        <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => setLogoutOpen(true)}/>
       </div>
     </aside>
+
+    {logoutOpen && ReactDOM.createPortal(
+      <div onClick={() => setLogoutOpen(false)} style={{
+        position:"fixed", inset:0, zIndex:900,
+        background:"rgba(0,0,0,0.72)", backdropFilter:"blur(20px)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        animation:"fade .15s ease-out",
+      }}>
+        <div onClick={e => e.stopPropagation()} style={{
+          width:340, background:"#161616",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:24, padding:"28px 24px 20px",
+          boxShadow:"0 32px 80px rgba(0,0,0,0.7)",
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+        }}>
+          <div style={{fontSize:22, fontWeight:500, letterSpacing:"-0.8px", marginBottom:10}}>¿Seguro?</div>
+          <div style={{fontSize:14, color:"var(--text-muted)", lineHeight:1.5, marginBottom:28, letterSpacing:"-0.3px"}}>
+            Si cierras sesión tendrás que volver a identificarte para acceder.
+          </div>
+          <div style={{display:"flex", gap:10}}>
+            <button onClick={() => setLogoutOpen(false)} style={{
+              flex:1, padding:"13px 0", borderRadius:99,
+              background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
+              color:"var(--text)", fontSize:15, letterSpacing:"-0.4px",
+              cursor:"pointer", fontFamily:"inherit", fontWeight:400,
+              transition:"background .12s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.12)"}
+              onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.07)"}
+            >Cancelar</button>
+            <button onClick={() => { setLogoutOpen(false); onNavigate("__logout"); }} style={{
+              flex:1, padding:"13px 0", borderRadius:99,
+              background:"rgba(220,38,38,0.18)", border:"1.5px solid rgba(220,38,38,0.7)",
+              color:"#f87171", fontSize:15, letterSpacing:"-0.4px",
+              cursor:"pointer", fontFamily:"inherit", fontWeight:400,
+              boxShadow:"0 0 18px rgba(220,38,38,0.25)",
+              transition:"background .12s",
+            }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(220,38,38,0.28)"}
+              onMouseLeave={e => e.currentTarget.style.background="rgba(220,38,38,0.18)"}
+            >Cerrar sesión</button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
   );
 };
 
