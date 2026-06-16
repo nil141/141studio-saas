@@ -1,3 +1,4 @@
+(function() {
 const _loadCampaigns = () => {
   try {
     return JSON.parse(localStorage.getItem("141_campaigns") || "null") || [];
@@ -278,3 +279,5 @@ const CampaignsPage = ({ navigate }) => {
 };
 window.CampaignsPage = CampaignsPage;
 window.CampaignDetail = CampaignDetail;
+
+})();

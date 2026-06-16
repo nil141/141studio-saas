@@ -1,3 +1,4 @@
+(function() {
 const _SB_URL = "https://ofnkazimemuiwovhxepq.supabase.co";
 const _SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbmthemltZW11aXdvdmh4ZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU5OTcsImV4cCI6MjA5NDUzMTk5N30.NVRoZb_Ie2ZgPELFkS7CxNWrLGZcgdOdWGEEkT_CNqo";
 const _sb = window.supabase.createClient(_SB_URL, _SB_KEY, {
@@ -750,3 +751,5 @@ window.Data = {
   createInvite,
   useStore
 };
+
+})();

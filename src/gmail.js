@@ -1,3 +1,4 @@
+(function() {
 const MAIL_API = "/api/mail";
 const CREDS_KEY = "141_mail_creds";
 const PRESETS = {
@@ -838,3 +839,5 @@ const GmailView = () => {
   ));
 };
 window.GmailView = GmailView;
+
+})();

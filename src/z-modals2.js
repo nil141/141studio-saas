@@ -1,3 +1,4 @@
+(function() {
 const NewLeadModal = ({ open, onClose }) => {
   const D = window.Data;
   const toast = useToast();
@@ -110,3 +111,5 @@ const InviteClientModal = ({ open, onClose, session }) => {
   } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), /* @__PURE__ */ React.createElement("span", null, "Comparte este enlace con tu cliente por WhatsApp, email o como prefieras.")))));
 };
 Object.assign(window, { NewLeadModal, NewInvoiceModal, InviteClientModal });
+
+})();

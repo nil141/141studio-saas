@@ -1,3 +1,4 @@
+(function() {
 const ChoiceCard = ({ label, sub, icon, selected, onClick, half }) => /* @__PURE__ */ React.createElement("div", { onClick, style: {
   padding: "13px 14px",
   borderRadius: 10,
@@ -641,3 +642,5 @@ const NewTaskModal = ({ open, onClose }) => {
   );
 };
 Object.assign(window, { NewProjectModal, NewClientModal, ApproveDeliverableModal, NewTaskModal });
+
+})();

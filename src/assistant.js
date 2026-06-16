@@ -1,3 +1,4 @@
+(function() {
 const ASSISTANT_SYSTEM = `Eres "Nora", la asistente operativa de 141'STUDIO, una agencia digital. El usuario es Andr\xE9s, fundador. Hablas en espa\xF1ol, tono cercano, directo, sin formalidades. Sin emojis salvo que \xE9l los use.
 
 Tu trabajo: ayudar a Andr\xE9s a gestionar la agencia. Puedes:
@@ -342,3 +343,5 @@ const NoraPage = () => {
   ))));
 };
 Object.assign(window, { AssistantPanel, NoraPage });
+
+})();

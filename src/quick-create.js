@@ -1,3 +1,4 @@
+(function() {
 const { useState, useEffect } = React;
 const TYPES = [
   { id: "task", label: "Tarea", icon: "list-todo" },
@@ -309,3 +310,5 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   ));
 };
 window.QuickCreateModal = QuickCreateModal;
+
+})();

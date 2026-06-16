@@ -1,3 +1,4 @@
+(function() {
 const GeneralTaskCard = ({ t, onDelete, onUpdate, onToggle }) => {
   const [hover, setHover] = useState(false);
   const isDone = t.column === "done";
@@ -1846,3 +1847,5 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   );
 };
 Object.assign(window, { AgencyBilling, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow });
+
+})();
