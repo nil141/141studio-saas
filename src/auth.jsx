@@ -72,9 +72,9 @@ const AuthGate = ({ onAuth }) => {
   );
 
   return (
-    <div style={{
-      height:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
-      background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
+    <div className="auth-page" style={{
+      minHeight:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
+      background:"var(--bg)", padding:"24px 0", overflowY:"auto",
     }}>
       <style>{`
       .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
@@ -96,8 +96,12 @@ const AuthGate = ({ onAuth }) => {
         caret-color: #ffffff;
         transition: background-color 9999s ease-in-out 0s;
       }
+      @media (max-width: 640px) {
+        .auth-page { align-items: flex-start; padding-top: 64px; overflow-y: auto; height: auto; min-height: 100dvh; }
+        .auth-container { padding: 0 16px; max-width: 100%; }
+      }
     `}</style>
-      <div style={{width:"100%", maxWidth:384}}>
+      <div className="auth-container" style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
           <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
           <div style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
