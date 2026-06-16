@@ -80,7 +80,7 @@ const AuthGate = ({ onAuth }) => {
       .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
       .auth-input {
         border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        box-shadow: 0 0 0 0px rgba(130,119,219,0), inset 0 2px 4px rgba(0,0,0,0.05);
         transition: border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
         outline: none;
       }
