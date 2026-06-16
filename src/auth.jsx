@@ -77,37 +77,48 @@ const AuthGate = ({ onAuth }) => {
       height:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
       background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
     }}>
-      <style>{`.auth-input::placeholder { color: #373737; opacity: 1; }`}</style>
-      <div style={{width:"100%", maxWidth:384, display:"flex", flexDirection:"column", gap:40}}>
+      <style>{`.auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }`}</style>
+      <div style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
-          <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px"}}>Inicia sesión.</h1>
+          <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
           <div style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
 
           <input className="input auth-input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
-            style={{height:50, marginBottom:12, fontSize:16, borderRadius:16, padding:"12px 20px", background:"#171718", color:"#373737",
-              border: focusedInput === "email" ? "1px solid rgba(130,119,219,0.5)" : "1px solid #2E2E2F",
-              boxShadow: focusedInput === "email" ? "0 0 0 4px rgba(130,119,219,0.2)" : "none",
-              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+            style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
+              background:"rgba(255,255,255,0.05)", color:"#ffffff",
+              border: focusedInput === "email" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
+              boxShadow: focusedInput === "email"
+                ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
+                : "inset 0 2px 4px rgba(0,0,0,0.05)",
+              outline:"none", transition:"all 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
           <input className="input auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
-            style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px", background:"#171718", color:"#373737",
-              border: focusedInput === "pw" ? "1px solid rgba(130,119,219,0.5)" : "1px solid #2E2E2F",
-              boxShadow: focusedInput === "pw" ? "0 0 0 4px rgba(130,119,219,0.2)" : "none",
-              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+            style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
+              background:"rgba(255,255,255,0.05)", color:"#ffffff",
+              border: focusedInput === "pw" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
+              boxShadow: focusedInput === "pw"
+                ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
+                : "inset 0 2px 4px rgba(0,0,0,0.05)",
+              outline:"none", transition:"all 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
           </div>}
 
-          <button type="submit" className="btn full" style={{height:49, fontSize:15, borderRadius:16, background:"#191826", border:"1px solid #464174", color:"#464174", letterSpacing:"-0.3px"}} disabled={busy}>
+          <button type="submit" className="btn full"
+            style={{height:49, fontSize:15, fontWeight:400, borderRadius:16,
+              background:"rgba(130,119,219,0.25)", border:"1px solid rgb(130,119,219)",
+              color:"rgb(130,119,219)", letterSpacing:"-0.96px",
+              transition:"box-shadow 0.5s cubic-bezier(0.4,0,0.2,1)"}}
+            disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
-        <div className="subtle xsmall" style={{textAlign:"center"}}>© 141'STUDIO · nil@141agency.com</div>
+        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>© 141'STUDIO · nil@141agency.com</div>
       </div>
     </div>
   );
