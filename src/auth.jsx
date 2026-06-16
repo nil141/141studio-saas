@@ -88,6 +88,14 @@ const AuthGate = ({ onAuth }) => {
         border-color: rgba(130,119,219,0.5);
         box-shadow: 0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05);
       }
+      .auth-input:-webkit-autofill,
+      .auth-input:-webkit-autofill:hover,
+      .auth-input:-webkit-autofill:focus {
+        -webkit-box-shadow: 0 0 0 0px rgba(130,119,219,0), 0 0 0 999px rgba(18,18,20,1) inset !important;
+        -webkit-text-fill-color: #ffffff !important;
+        caret-color: #ffffff;
+        transition: background-color 9999s ease-in-out 0s;
+      }
     `}</style>
       <div style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
