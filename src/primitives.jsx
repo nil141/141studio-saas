@@ -80,25 +80,33 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   // ── Sliding pill refs ──────────────────────────────────────────────
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
-  const [pill, setPill] = React.useState(null); // { top, height, animated }
+  const [pill, setPill] = React.useState(null); // { top, height, animated, visible }
   const firstPill = useRef(true);
+  const pillWasHidden = useRef(false);
 
   useEffect(() => {
     const activeId = current === "campaign" ? "campaigns" : current;
     const el = itemRefs.current[activeId];
     const container = navContainerRef.current;
     if (!el || !container) {
-      setPill(null);
+      // Footer page: fade out but keep position so transition is smooth
+      setPill(prev => prev ? { ...prev, visible: false } : null);
+      pillWasHidden.current = true;
       return;
     }
     const eR = el.getBoundingClientRect();
     const cR = container.getBoundingClientRect();
     const top = eR.top - cR.top + container.scrollTop;
+    // Coming back from a footer page: snap position first (no slide), then fade in
+    const comingFromHidden = pillWasHidden.current;
+    pillWasHidden.current = false;
     if (firstPill.current) {
       firstPill.current = false;
-      setPill({ top, height: eR.height, animated: false });
+      setPill({ top, height: eR.height, animated: false, visible: true });
+    } else if (comingFromHidden) {
+      setPill({ top, height: eR.height, animated: false, visible: true });
     } else {
-      setPill({ top, height: eR.height, animated: true });
+      setPill({ top, height: eR.height, animated: true, visible: true });
     }
   }, [current]);
 
@@ -195,7 +203,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             top: pill.top, height: pill.height,
             background:"rgba(158,154,229,0.13)",
             borderRadius:10, pointerEvents:"none", zIndex:0,
-            transition: pill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
+            opacity: pill.visible !== false ? 1 : 0,
+            transition: [
+              pill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : null,
+              "opacity 0.18s ease",
+            ].filter(Boolean).join(", "),
           }}/>
         )}
         {sections.map((section, si) => (
