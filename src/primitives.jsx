@@ -87,7 +87,10 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     const activeId = current === "campaign" ? "campaigns" : current;
     const el = itemRefs.current[activeId];
     const container = navContainerRef.current;
-    if (!el || !container) return;
+    if (!el || !container) {
+      setPill(null);
+      return;
+    }
     const eR = el.getBoundingClientRect();
     const cR = container.getBoundingClientRect();
     const top = eR.top - cR.top + container.scrollTop;
@@ -219,7 +222,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         {kind === "agency" && session?.role === "admin" && (
           <FooterItem icon="eye" label="Ver como cliente" onClick={() => onNavigate("__switch")}/>
         )}
-        <FooterItem icon="settings" label="Ajustes" onClick={() => onNavigate("settings")}/>
+        <FooterItem icon="settings" label="Ajustes" onClick={() => onNavigate("settings")} active={current === "settings"}/>
         <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => onNavigate("__logout")}/>
       </div>
     </aside>
