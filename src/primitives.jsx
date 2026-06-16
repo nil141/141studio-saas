@@ -160,6 +160,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   };
 
   return (
+    <>
     <aside className="sidebar" style={{
       width: 220,
       background: "var(--bg)",
@@ -273,6 +274,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       </div>,
       document.body
     )}
+    </>
   );
 };
 
