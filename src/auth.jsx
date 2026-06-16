@@ -78,15 +78,15 @@ const AuthGate = ({ onAuth }) => {
       background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
     }}>
       <style>{`.auth-input::placeholder { color: #373737; opacity: 1; }`}</style>
-      <div style={{width:"100%", maxWidth:400, display:"flex", flexDirection:"column", gap:32}}>
+      <div style={{width:"100%", maxWidth:380, display:"flex", flexDirection:"column", gap:40}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
-          <h1 style={{fontSize:28, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)", textAlign:"center"}}>Inicia sesión.</h1>
-          <div className="muted" style={{fontSize:14, marginBottom:28, textAlign:"center"}}>Accede con tus credenciales.</div>
+          <h1 style={{fontSize:34, fontWeight:400, lineHeight:1.15, marginBottom:10, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-1px"}}>Inicia sesión.</h1>
+          <div className="muted" style={{fontSize:14, marginBottom:36, textAlign:"center", color:"var(--text-muted)"}}>Accede con tus credenciales.</div>
 
           <input className="input auth-input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
-            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718", color:"#373737",
+            style={{height:54, marginBottom:12, fontSize:15, borderRadius:12, background:"#171718", color:"#373737",
               border: focusedInput === "email" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
               boxShadow: focusedInput === "email" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
               outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
@@ -94,7 +94,7 @@ const AuthGate = ({ onAuth }) => {
           <input className="input auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
-            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718", color:"#373737",
+            style={{height:54, marginBottom:16, fontSize:15, borderRadius:12, background:"#171718", color:"#373737",
               border: focusedInput === "pw" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
               boxShadow: focusedInput === "pw" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
               outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
@@ -103,7 +103,7 @@ const AuthGate = ({ onAuth }) => {
             <Icon name="alert-triangle" size={12}/> {err}
           </div>}
 
-          <button type="submit" className="btn full" style={{height:48, fontSize:14, borderRadius:14, background:"#191826", border:"1px solid #464174", color:"#464174"}} disabled={busy}>
+          <button type="submit" className="btn full" style={{height:54, fontSize:15, borderRadius:12, background:"#191826", border:"1px solid #464174", color:"#464174", letterSpacing:"-0.3px"}} disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
