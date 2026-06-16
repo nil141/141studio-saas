@@ -76,33 +76,7 @@ const AuthGate = ({ onAuth }) => {
       minHeight:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
       background:"var(--bg)", padding:"24px 16px", overflowY:"auto",
     }}>
-      <style>{`
-      .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
-      .auth-input {
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 0 0 0px rgba(130,119,219,0), inset 0 2px 4px rgba(0,0,0,0.05);
-        transition: border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
-        outline: none;
-      }
-      .auth-input:focus {
-        border-color: rgba(130,119,219,0.5);
-        box-shadow: 0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05);
-      }
-      .auth-btn:disabled { opacity: 0.5; pointer-events: none; }
-      .auth-input:-webkit-autofill,
-      .auth-input:-webkit-autofill:hover,
-      .auth-input:-webkit-autofill:focus {
-        -webkit-box-shadow: 0 0 0 0px rgba(130,119,219,0), 0 0 0 999px #161616 inset !important;
-        -webkit-text-fill-color: #ffffff !important;
-        caret-color: #ffffff;
-        transition: background-color 9999s ease-in-out 0s;
-      }
-      @media (max-width: 640px) {
-        .auth-page { align-items: flex-start; padding-top: 64px; overflow-y: auto; height: auto; min-height: 100dvh; }
-        .auth-container { padding: 0 16px; max-width: 100%; }
-      }
-    `}</style>
-      <div className="auth-container" style={{width:"100%", maxWidth:384}}>
+<div className="auth-container" style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
           <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
           <div style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
