@@ -13,6 +13,7 @@ const AuthGate = ({ onAuth }) => {
   const [step, setStep]   = useState("login"); // "login" | "remember"
   const [pendingAcc, setPendingAcc] = useState(null);
   const [days, setDays]   = useState(7);
+  const [focusedInput, setFocusedInput] = useState(null);
 
   const submit = async (e) => {
     e?.preventDefault();
@@ -83,11 +84,19 @@ const AuthGate = ({ onAuth }) => {
 
           <input className="input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
-            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718", border:"0.5px solid #2E2E2F"}}/>
+            onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
+            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718",
+              border: focusedInput === "email" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
+              boxShadow: focusedInput === "email" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
+              outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
 
           <input className="input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
-            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718", border:"0.5px solid #2E2E2F"}}/>
+            onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
+            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718",
+              border: focusedInput === "pw" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
+              boxShadow: focusedInput === "pw" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
+              outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
