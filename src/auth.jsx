@@ -88,6 +88,7 @@ const AuthGate = ({ onAuth }) => {
         border-color: rgba(130,119,219,0.5);
         box-shadow: 0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05);
       }
+      .auth-btn:disabled { opacity: 0.5; pointer-events: none; }
       .auth-input:-webkit-autofill,
       .auth-input:-webkit-autofill:hover,
       .auth-input:-webkit-autofill:focus {
@@ -120,13 +121,13 @@ const AuthGate = ({ onAuth }) => {
             <Icon name="alert-triangle" size={12}/> {err}
           </div>}
 
-          <button type="submit" className="btn full"
+          <button type="submit" className="btn full auth-btn"
             style={{height:49, fontSize:15, fontWeight:400, borderRadius:16,
               background:"rgba(130,119,219,0.25)", border:"1px solid rgb(130,119,219)",
               color:"rgb(130,119,219)", letterSpacing:"-0.96px",
               boxShadow:"rgba(130,119,219,0.267) 0px 0px 20px 0px",
-              transition:"box-shadow 0.5s cubic-bezier(0.4,0,0.2,1)"}}
-            disabled={busy}>
+              transition:"opacity 0.3s ease, box-shadow 0.5s cubic-bezier(0.4,0,0.2,1)"}}
+            disabled={!email || !pw || busy}>
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
