@@ -83,27 +83,27 @@ const AuthGate = ({ onAuth }) => {
           <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
           <div style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
 
-          <input className="input auth-input" type="email" autoComplete="email" value={email}
+          <input className="auth-input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
-            style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
+            style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
               background:"rgba(255,255,255,0.05)", color:"#ffffff",
               border: focusedInput === "email" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
               boxShadow: focusedInput === "email"
                 ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
                 : "inset 0 2px 4px rgba(0,0,0,0.05)",
-              outline:"none", transition:"all 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
-          <input className="input auth-input" type="password" autoComplete="current-password" value={pw}
+          <input className="auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
-            style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
+            style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
               background:"rgba(255,255,255,0.05)", color:"#ffffff",
               border: focusedInput === "pw" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
               boxShadow: focusedInput === "pw"
                 ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
                 : "inset 0 2px 4px rgba(0,0,0,0.05)",
-              outline:"none", transition:"all 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
