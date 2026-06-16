@@ -74,7 +74,7 @@ const AuthGate = ({ onAuth }) => {
   return (
     <div className="auth-page" style={{
       minHeight:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
-      background:"var(--bg)", padding:"24px 0", overflowY:"auto",
+      background:"var(--bg)", padding:"24px 16px", overflowY:"auto",
     }}>
       <style>{`
       .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
