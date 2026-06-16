@@ -1,4 +1,3 @@
-(function() {
 const OnboardingField = ({ label, id, type, ph, autoC, value, onChange, err }) => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, label), /* @__PURE__ */ React.createElement(
   "input",
   {
@@ -204,5 +203,3 @@ const OnboardingPage = ({ token }) => {
   );
 };
 window.OnboardingPage = OnboardingPage;
-
-})();

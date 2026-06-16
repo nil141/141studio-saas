@@ -1,4 +1,3 @@
-(function() {
 const AgencyProject = ({ projectId, navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
@@ -351,5 +350,3 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   })());
 };
 window.AgencyProject = AgencyProject;
-
-})();

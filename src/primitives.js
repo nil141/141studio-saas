@@ -1,4 +1,3 @@
-(function() {
 const { useState, useEffect, useRef, useMemo, createContext, useContext } = React;
 const Avatar = ({ name, initials, color, size, src }) => {
   const cls = "avatar" + (size ? " " + size : "");
@@ -577,5 +576,3 @@ const TimePicker = ({ value, onChange, onClose }) => {
   );
 };
 Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker });
-
-})();

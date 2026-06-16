@@ -1,4 +1,3 @@
-(function() {
 const DURATION_OPTIONS = [
   { days: 0, label: "Solo esta sesi\xF3n", sub: "Se cerrar\xE1 al cerrar el navegador" },
   { days: 7, label: "7 d\xEDas", sub: "Una semana sin volver a entrar" },
@@ -143,5 +142,3 @@ const AuthGate = ({ onAuth }) => {
   )), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { textAlign: "center", marginTop: 32 } }, /* @__PURE__ */ React.createElement("a", { href: "https://141agency.com/", target: "_blank", rel: "noopener noreferrer", style: { color: "inherit", textDecoration: "none" } }, "\xA9 141'DIGITAL"), " \xB7 nil@141agency.com")));
 };
 window.AuthGate = AuthGate;
-
-})();

@@ -1,4 +1,3 @@
-(function() {
 const Icon = ({ name, size = 16, strokeWidth = 1.5, ...rest }) => {
   const props = {
     width: size,
@@ -86,5 +85,3 @@ const Icon = ({ name, size = 16, strokeWidth = 1.5, ...rest }) => {
   return /* @__PURE__ */ React.createElement("svg", { ...props }, p);
 };
 window.Icon = Icon;
-
-})();

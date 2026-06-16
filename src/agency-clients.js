@@ -1,4 +1,3 @@
-(function() {
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
@@ -204,5 +203,3 @@ Prioridad: redise\xF1o antes del Q3.
 Pedido: factura siempre con CIF en cabecera.` }), /* @__PURE__ */ React.createElement("div", { className: "row", style: { marginTop: 12, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm" }, "Guardar nota")))));
 };
 Object.assign(window, { AgencyClientsList, AgencyClientDetail });
-
-})();

@@ -1,4 +1,3 @@
-(function() {
 const { useState: useStateA, useEffect: useEffectA } = React;
 const _SK = "141_session";
 const _SEK = "141_session_exp";
@@ -205,5 +204,3 @@ window.__initApp = () => {
     _inviteToken ? /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(OnboardingPage, { token: _inviteToken })) : /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(ConfirmProvider, null, /* @__PURE__ */ React.createElement(App, null)))
   );
 };
-
-})();
