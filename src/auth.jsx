@@ -83,11 +83,11 @@ const AuthGate = ({ onAuth }) => {
 
           <input className="input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
-            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#0f0f0f", border:"0.5px solid rgba(255,255,255,0.1)"}}/>
+            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718", border:"0.5px solid #2E2E2F"}}/>
 
           <input className="input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
-            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#0f0f0f", border:"0.5px solid rgba(255,255,255,0.1)"}}/>
+            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718", border:"0.5px solid #2E2E2F"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
