@@ -95,7 +95,7 @@ const AuthGate = ({ onAuth }) => {
             <Icon name="alert-triangle" size={12}/> {err}
           </div>}
 
-          <button type="submit" className="btn primary full" style={{height:44, fontSize:14}} disabled={busy}>
+          <button type="submit" className="btn full" style={{height:48, fontSize:14, borderRadius:14, background:"#191826", border:"1px solid #464174", color:"#c8c5f2"}} disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
