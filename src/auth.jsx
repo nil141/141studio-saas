@@ -131,7 +131,9 @@ const AuthGate = ({ onAuth }) => {
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
-        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>© 141'DIGITAL · nil@141agency.com</div>
+        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>
+          <a href="https://141agency.com/" target="_blank" rel="noopener noreferrer" style={{color:"inherit", textDecoration:"none"}}>© 141'DIGITAL</a> · nil@141agency.com
+        </div>
       </div>
     </div>
   );
