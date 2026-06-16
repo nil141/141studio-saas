@@ -31,7 +31,7 @@ const AuthGate = ({ onAuth }) => {
       <div style={{width:"100%", maxWidth:400, display:"flex", flexDirection:"column", gap:24}}>
         <div className="row tight">
           <div className="brand-mark">141</div>
-          <div className="brand-name">141<span className="tick">'</span>STUDIO</div>
+          <div className="brand-name">141<span className="tick">'</span>DIGITAL</div>
         </div>
         <div>
           <h1 style={{fontSize:24, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)"}}>
@@ -66,7 +66,7 @@ const AuthGate = ({ onAuth }) => {
           onClick={() => onAuth(pendingAcc, days)}>
           Entrar
         </button>
-        <div className="subtle xsmall" style={{textAlign:"center"}}>© 141'STUDIO · nil@141agency.com</div>
+        <div className="subtle xsmall" style={{textAlign:"center"}}>© 141'DIGITAL · nil@141agency.com</div>
       </div>
     </div>
   );
@@ -117,7 +117,7 @@ const AuthGate = ({ onAuth }) => {
             {busy ? "Entrando…" : "Entrar"}
           </button>
         </form>
-        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>© 141'STUDIO · nil@141agency.com</div>
+        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>© 141'DIGITAL · nil@141agency.com</div>
       </div>
     </div>
   );
