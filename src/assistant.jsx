@@ -421,7 +421,7 @@ const NoraPage = () => {
       </div>
 
       {/* Bottom: quick chips + input */}
-      <div style={{ flexShrink:0, padding:"12px 32px calc(12px + env(safe-area-inset-bottom))", borderTop:"0.5px solid var(--border)", width:"100%", boxSizing:"border-box" }}>
+      <div style={{ flexShrink:0, padding:"12px 32px calc(28px + env(safe-area-inset-bottom))", width:"100%", boxSizing:"border-box" }}>
         {isEmpty && (
           <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:12, scrollbarWidth:"none" }}>
             {quickPrompts.map(q => (
@@ -432,7 +432,7 @@ const NoraPage = () => {
             ))}
           </div>
         )}
-        <div style={{ display:"flex", alignItems:"flex-end", gap:10, background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border-strong)", borderRadius:16, padding:"10px 10px 10px 16px" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:10, background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border-strong)", borderRadius:16, padding:"10px 10px 10px 16px" }}>
           <textarea
             ref={inputRef}
             value={input}
