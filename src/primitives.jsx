@@ -221,10 +221,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         {kind === "agency" && session?.role === "admin" && (
           <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} kbd="⌘J" active={current === "nora"}/>
         )}
-        {kind === "agency" && session?.role === "admin" && (
-          <FooterItem icon="eye" label="Ver como cliente" onClick={() => onNavigate("__switch")}/>
-        )}
-        <FooterItem icon="settings" label="Ajustes" onClick={() => onNavigate("settings")} active={current === "settings"}/>
+        <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
         <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => onNavigate("__logout")}/>
       </div>
     </aside>
