@@ -425,9 +425,9 @@ const NoraPage = () => {
         {isEmpty && (
           <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:12, scrollbarWidth:"none" }}>
             {quickPrompts.map(q => (
-              <button key={q} onClick={() => send(q)} style={{ flexShrink:0, padding:"8px 16px", borderRadius:99, background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", color:"var(--text-muted)", fontSize:13, letterSpacing:"-0.4px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap", transition:"background .12s" }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
-                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+              <button key={q} onClick={() => send(q)} style={{ flexShrink:0, padding:"8px 16px", borderRadius:99, background:"#0d0d0d", border:"0.5px solid rgba(255,255,255,0.1)", color:"var(--text-muted)", fontSize:13, letterSpacing:"-0.4px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap", transition:"background .12s" }}
+                onMouseEnter={e => e.currentTarget.style.background="#1a1a1a"}
+                onMouseLeave={e => e.currentTarget.style.background="#0d0d0d"}
               >{q}</button>
             ))}
           </div>
