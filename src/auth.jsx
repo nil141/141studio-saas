@@ -13,8 +13,7 @@ const AuthGate = ({ onAuth }) => {
   const [step, setStep]   = useState("login"); // "login" | "remember"
   const [pendingAcc, setPendingAcc] = useState(null);
   const [days, setDays]   = useState(7);
-  const [focusedInput, setFocusedInput] = useState(null);
-
+  
   const submit = async (e) => {
     e?.preventDefault();
     setErr(""); setBusy(true);
@@ -77,7 +76,19 @@ const AuthGate = ({ onAuth }) => {
       height:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
       background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
     }}>
-      <style>{`.auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }`}</style>
+      <style>{`
+      .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
+      .auth-input {
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        transition: border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1);
+        outline: none;
+      }
+      .auth-input:focus {
+        border-color: rgba(130,119,219,0.5);
+        box-shadow: 0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05);
+      }
+    `}</style>
       <div style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
           <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
@@ -85,25 +96,13 @@ const AuthGate = ({ onAuth }) => {
 
           <input className="auth-input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
-            onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
             style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
-              background:"rgba(255,255,255,0.05)", color:"#ffffff",
-              border: focusedInput === "email" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              boxShadow: focusedInput === "email"
-                ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
-                : "inset 0 2px 4px rgba(0,0,0,0.05)",
-              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+              background:"rgba(255,255,255,0.05)", color:"#ffffff"}}/>
 
           <input className="auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
-            onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
             style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
-              background:"rgba(255,255,255,0.05)", color:"#ffffff",
-              border: focusedInput === "pw" ? "1px solid rgba(130,119,219,0.5)" : "1px solid rgba(255,255,255,0.1)",
-              boxShadow: focusedInput === "pw"
-                ? "0 0 0 4px rgba(130,119,219,0.2), inset 0 2px 4px rgba(0,0,0,0.05)"
-                : "inset 0 2px 4px rgba(0,0,0,0.05)",
-              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
+              background:"rgba(255,255,255,0.05)", color:"#ffffff"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
