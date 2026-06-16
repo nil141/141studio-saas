@@ -219,7 +219,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {/* Footer */}
       <div style={{borderTop:"0.5px solid rgba(255,255,255,0.06)", paddingTop:8, display:"flex", flexDirection:"column", gap:0}}>
         {kind === "agency" && session?.role === "admin" && (
-          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} kbd="⌘J" active={current === "nora"}/>
+          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} active={current === "nora"}/>
         )}
         <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
         <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => onNavigate("__logout")}/>
