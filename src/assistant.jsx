@@ -385,7 +385,7 @@ const NoraPage = () => {
       `}</style>
 
       {/* Header */}
-      <div style={{ height:56, display:"flex", alignItems:"center", justifyContent:"center", position:"relative", borderBottom:"0.5px solid var(--border)", flexShrink:0 }}>
+      <div style={{ height:56, display:"flex", alignItems:"center", justifyContent:"center", position:"relative", flexShrink:0 }}>
         <span style={{ fontSize:15, fontWeight:500, letterSpacing:"-0.5px" }}>Nora IA</span>
         <button onClick={() => setMessages([])} style={{ position:"absolute", right:16, width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
           <Icon name="rotate-ccw" size={14}/>
@@ -405,7 +405,7 @@ const NoraPage = () => {
             </div>
           </div>
         ) : (
-          <div style={{ flex:1, display:"flex", flexDirection:"column", gap:16, padding:"24px 24px 8px", maxWidth:720, width:"100%", margin:"0 auto", boxSizing:"border-box" }}>
+          <div style={{ flex:1, display:"flex", flexDirection:"column", gap:16, padding:"24px 32px 8px", width:"100%", boxSizing:"border-box" }}>
             {messages.map((m, i) => (
               m.thinking ? null : <NoraMessage key={i} m={m}/>
             ))}
@@ -421,7 +421,7 @@ const NoraPage = () => {
       </div>
 
       {/* Bottom: quick chips + input */}
-      <div style={{ flexShrink:0, padding:"12px 16px calc(12px + env(safe-area-inset-bottom))", borderTop:"0.5px solid var(--border)", maxWidth:720, width:"100%", margin:"0 auto", boxSizing:"border-box" }}>
+      <div style={{ flexShrink:0, padding:"12px 32px calc(12px + env(safe-area-inset-bottom))", borderTop:"0.5px solid var(--border)", width:"100%", boxSizing:"border-box" }}>
         {isEmpty && (
           <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:12, scrollbarWidth:"none" }}>
             {quickPrompts.map(q => (
