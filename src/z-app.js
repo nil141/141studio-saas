@@ -1,4 +1,3 @@
-var _a;
 const { useState: useStateA, useEffect: useEffectA } = React;
 const _SK = "141_session";
 const _SEK = "141_session_exp";
@@ -198,7 +197,10 @@ const App = () => {
     setQuickCreateLock(false);
   }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal }));
 };
-const _inviteToken = (_a = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)) == null ? void 0 : _a[1];
-ReactDOM.createRoot(document.getElementById("root")).render(
-  _inviteToken ? /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(OnboardingPage, { token: _inviteToken })) : /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(ConfirmProvider, null, /* @__PURE__ */ React.createElement(App, null)))
-);
+window.__initApp = () => {
+  var _a;
+  const _inviteToken = (_a = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)) == null ? void 0 : _a[1];
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    _inviteToken ? /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(OnboardingPage, { token: _inviteToken })) : /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(ConfirmProvider, null, /* @__PURE__ */ React.createElement(App, null)))
+  );
+};

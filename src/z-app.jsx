@@ -225,10 +225,11 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
 };
 
 
-const _inviteToken = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)?.[1];
-
-ReactDOM.createRoot(document.getElementById("root")).render(
-  _inviteToken
-    ? <ToastProvider><OnboardingPage token={_inviteToken}/></ToastProvider>
-    : <ToastProvider><ConfirmProvider><App/></ConfirmProvider></ToastProvider>
-);
+window.__initApp = () => {
+  const _inviteToken = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)?.[1];
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    _inviteToken
+      ? <ToastProvider><OnboardingPage token={_inviteToken}/></ToastProvider>
+      : <ToastProvider><ConfirmProvider><App/></ConfirmProvider></ToastProvider>
+  );
+};
