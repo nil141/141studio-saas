@@ -81,12 +81,10 @@ const AuthGate = ({ onAuth }) => {
           <h1 style={{fontSize:28, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)", textAlign:"center"}}>Inicia sesión.</h1>
           <div className="muted" style={{fontSize:14, marginBottom:28, textAlign:"center"}}>Accede con tus credenciales.</div>
 
-          <div className="label">Email</div>
           <input className="input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#0f0f0f", border:"0.5px solid rgba(255,255,255,0.1)"}}/>
 
-          <div className="label">Contraseña</div>
           <input className="input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#0f0f0f", border:"0.5px solid rgba(255,255,255,0.1)"}}/>
