@@ -198,8 +198,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             borderRadius:10, pointerEvents:"none", zIndex:0,
             opacity: pill.visible ? 1 : 0,
             transition: pill.animated
-              ? "top 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.18s ease"
-              : "opacity 0.18s ease",
+              ? "top 0.22s cubic-bezier(0.4,0,0.2,1), opacity 0.45s ease"
+              : "opacity 0.45s ease",
           }}/>
         )}
         {sections.map((section, si) => (
