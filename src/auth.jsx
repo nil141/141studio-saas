@@ -87,17 +87,17 @@ const AuthGate = ({ onAuth }) => {
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
             style={{height:50, marginBottom:12, fontSize:16, borderRadius:16, padding:"12px 20px", background:"#171718", color:"#373737",
-              border: focusedInput === "email" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
-              boxShadow: focusedInput === "email" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
-              outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
+              border: focusedInput === "email" ? "1px solid rgba(130,119,219,0.5)" : "1px solid #2E2E2F",
+              boxShadow: focusedInput === "email" ? "0 0 0 4px rgba(130,119,219,0.2)" : "none",
+              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
           <input className="input auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
             style={{height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px", background:"#171718", color:"#373737",
-              border: focusedInput === "pw" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
-              boxShadow: focusedInput === "pw" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
-              outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
+              border: focusedInput === "pw" ? "1px solid rgba(130,119,219,0.5)" : "1px solid #2E2E2F",
+              boxShadow: focusedInput === "pw" ? "0 0 0 4px rgba(130,119,219,0.2)" : "none",
+              outline:"none", transition:"border-color 0.3s cubic-bezier(0.4,0,0.2,1), box-shadow 0.3s cubic-bezier(0.4,0,0.2,1)"}}/>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
