@@ -733,7 +733,27 @@
 </style>
 </head>
 <body>
-<div id="root"></div>
+<style>
+  #app-loader {
+    position: fixed; inset: 0;
+    background: #0a0a0a;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999;
+  }
+  .app-loader-ring {
+    width: 28px; height: 28px;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    border-top-color: rgba(130,119,219,0.7);
+    border-radius: 50%;
+    animation: app-spin 0.75s linear infinite;
+  }
+  @keyframes app-spin { to { transform: rotate(360deg); } }
+</style>
+<div id="root">
+  <div id="app-loader">
+    <div class="app-loader-ring"></div>
+  </div>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
