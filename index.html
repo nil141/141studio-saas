@@ -156,10 +156,13 @@
     font-size: 13px;
     font-family: inherit;
     width: 100%;
-    transition: border-color .12s, background .12s;
+    transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
   }
   .input:focus, .select:focus, .textarea:focus {
-    outline: none; border-color: var(--text); background: var(--bg-elev-2);
+    outline: none;
+    border-color: var(--accent);
+    background: var(--bg-elev-2);
+    box-shadow: 0 0 0 3px rgba(158,154,229,0.13);
   }
   .textarea { padding: 10px 12px; height: auto; resize: vertical; min-height: 80px; line-height: 1.5; }
   .label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; display: block; font-weight: 400; }
@@ -747,7 +750,7 @@
 <script type="text/babel" src="src/agency-pipeline.jsx"></script>
 <script type="text/babel" src="src/campaigns.jsx?v=1"></script>
 <script type="text/babel" src="src/client-portal.jsx?v=6"></script>
-<script type="text/babel" src="src/auth.jsx?v=7"></script>
+<script type="text/babel" src="src/auth.jsx?v=8"></script>
 <script type="text/babel" src="src/onboarding.jsx?v=8"></script>
 <script type="text/babel" src="src/assistant.jsx?v=6"></script>
 <script type="text/babel" src="src/gmail.jsx?v=8"></script>
