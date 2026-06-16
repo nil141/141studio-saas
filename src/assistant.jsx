@@ -328,4 +328,128 @@ function formatMarkdownish(s) {
   return out;
 }
 
-Object.assign(window, { AssistantPanel });
+// ── NoraPage — full-page AI chat (style: Outdomode AI Chat) ──────────────────
+const NoraPage = () => {
+  const [messages, setMessages] = useState([]);
+  const [input, setInput]       = useState("");
+  const [busy, setBusy]         = useState(false);
+  const scrollRef  = useRef(null);
+  const inputRef   = useRef(null);
+
+  useEffect(() => {
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+  }, [messages, busy]);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  const send = async (text) => {
+    const trimmed = (text ?? input).trim();
+    if (!trimmed || busy) return;
+    const userMsg = { role:"user", content: trimmed };
+    const history = [...messages, userMsg];
+    setMessages([...history, { role:"assistant", content:"", thinking:true }]);
+    setInput("");
+    setBusy(true);
+    try {
+      const reply = await window.claude.complete({
+        messages: [{ role:"user", content: ASSISTANT_SYSTEM + "\n\n---\n\nConversación:\n" +
+          history.map(m => (m.role==="user"?"Tú":"Nora") + ": " + m.content).join("\n") + "\n\nNora:" }]
+      });
+      const { text: cleanText, tasks: parsedTasks } = parseAssistantReply(reply);
+      setMessages(m => { const c=[...m]; c[c.length-1]={role:"assistant",content:cleanText,tasks:parsedTasks}; return c; });
+    } catch {
+      setMessages(m => { const c=[...m]; c[c.length-1]={role:"assistant",content:"No he podido conectar. ¿Lo intentamos de nuevo?"}; return c; });
+    }
+    setBusy(false);
+  };
+
+  const quickPrompts = [
+    "Mis puntos débiles",
+    "¿Qué hacer hoy?",
+    "Repaso semanal",
+    "Analiza la carga de trabajo",
+    "Necesito motivación",
+  ];
+
+  const isEmpty = messages.length === 0;
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100vh", background:"var(--bg)" }}>
+      <style>{`
+        @keyframes pulse { 0%,100%{opacity:.3}50%{opacity:1} }
+        .nora-dot { animation: pulse 1.2s infinite; }
+        .nora-dot:nth-child(2) { animation-delay:.15s; }
+        .nora-dot:nth-child(3) { animation-delay:.3s; }
+        .nora-msg { line-height:1.6; font-size:14px; white-space:pre-wrap; word-wrap:break-word; }
+        .nora-msg b { font-weight:500; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{ height:56, display:"flex", alignItems:"center", justifyContent:"center", position:"relative", borderBottom:"0.5px solid var(--border)", flexShrink:0 }}>
+        <span style={{ fontSize:15, fontWeight:500, letterSpacing:"-0.5px" }}>Nora IA</span>
+        <button onClick={() => setMessages([])} style={{ position:"absolute", right:16, width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border)", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
+          <Icon name="rotate-ccw" size={14}/>
+        </button>
+      </div>
+
+      {/* Messages / Empty state */}
+      <div ref={scrollRef} style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column" }}>
+        {isEmpty ? (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"0 24px", gap:16 }}>
+            <div style={{ width:72, height:72, borderRadius:"50%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <Icon name="sparkles" size={28} strokeWidth={1.4} color="var(--text-muted)"/>
+            </div>
+            <div style={{ textAlign:"center" }}>
+              <div style={{ fontSize:28, fontWeight:400, letterSpacing:"-1.2px", marginBottom:8 }}>¿En qué te ayudo?</div>
+              <div style={{ fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.4px" }}>Gestiona tu agencia, crea tareas y redacta mensajes con tu asistente IA.</div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", gap:16, padding:"24px 24px 8px", maxWidth:720, width:"100%", margin:"0 auto", boxSizing:"border-box" }}>
+            {messages.map((m, i) => (
+              m.thinking ? null : <NoraMessage key={i} m={m}/>
+            ))}
+            {busy && (
+              <div style={{ display:"flex", gap:4, padding:"4px 0" }}>
+                <span className="dot muted nora-dot" style={{ width:5, height:5, boxShadow:"none" }}/>
+                <span className="dot muted nora-dot" style={{ width:5, height:5, boxShadow:"none" }}/>
+                <span className="dot muted nora-dot" style={{ width:5, height:5, boxShadow:"none" }}/>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom: quick chips + input */}
+      <div style={{ flexShrink:0, padding:"12px 16px calc(12px + env(safe-area-inset-bottom))", borderTop:"0.5px solid var(--border)", maxWidth:720, width:"100%", margin:"0 auto", boxSizing:"border-box" }}>
+        {isEmpty && (
+          <div style={{ display:"flex", gap:8, overflowX:"auto", paddingBottom:12, scrollbarWidth:"none" }}>
+            {quickPrompts.map(q => (
+              <button key={q} onClick={() => send(q)} style={{ flexShrink:0, padding:"8px 16px", borderRadius:99, background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)", color:"var(--text-muted)", fontSize:13, letterSpacing:"-0.4px", cursor:"pointer", fontFamily:"inherit", whiteSpace:"nowrap", transition:"background .12s" }}
+                onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
+              >{q}</button>
+            ))}
+          </div>
+        )}
+        <div style={{ display:"flex", alignItems:"flex-end", gap:10, background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border-strong)", borderRadius:16, padding:"10px 10px 10px 16px" }}>
+          <textarea
+            ref={inputRef}
+            value={input}
+            onChange={e => setInput(e.target.value)}
+            onKeyDown={e => { if (e.key==="Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
+            placeholder="Escribe a Nora…"
+            rows={1}
+            style={{ flex:1, border:0, outline:0, background:"transparent", resize:"none", fontFamily:"inherit", fontSize:14, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.5, maxHeight:120 }}
+          />
+          <button onClick={() => send()} disabled={!input.trim() || busy}
+            style={{ width:34, height:34, borderRadius:"50%", background: input.trim() && !busy ? "var(--accent)" : "rgba(255,255,255,0.08)", border:"none", cursor: input.trim() && !busy ? "pointer":"default", display:"flex", alignItems:"center", justifyContent:"center", color:"#fff", flexShrink:0, opacity: input.trim() && !busy ? 1 : 0.4, transition:"all .15s" }}>
+            <Icon name="arrow-up" size={15}/>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { AssistantPanel, NoraPage });

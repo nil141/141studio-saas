@@ -130,7 +130,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     );
   };
 
-  const FooterItem = ({ icon, label, onClick, kbd }) => {
+  const FooterItem = ({ icon, label, onClick, kbd, active }) => {
     const [hov, setHov] = React.useState(false);
     return (
       <div
@@ -140,9 +140,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         style={{
           display:"flex", alignItems:"center", gap:10,
           padding:"9px 10px", borderRadius:10, cursor:"pointer",
-          background:"transparent",
-          color: hov ? "#cccccc" : "var(--text-muted)",
-          transition:"color .12s",
+          background: active ? "var(--bg-hover)" : "transparent",
+          color: active || hov ? "#cccccc" : "var(--text-muted)",
+          transition:"color .12s, background .12s",
           fontSize:15, fontWeight:400, letterSpacing:"-0.96px", userSelect:"none",
         }}
       >
@@ -214,7 +214,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {/* Footer */}
       <div style={{borderTop:"0.5px solid rgba(255,255,255,0.06)", paddingTop:8, display:"flex", flexDirection:"column", gap:0}}>
         {kind === "agency" && session?.role === "admin" && (
-          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} kbd="⌘J"/>
+          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} kbd="⌘J" active={current === "nora"}/>
         )}
         {kind === "agency" && session?.role === "admin" && (
           <FooterItem icon="eye" label="Ver como cliente" onClick={() => onNavigate("__switch")}/>

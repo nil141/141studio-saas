@@ -74,7 +74,7 @@ const App = () => {
     const onKey = e => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
         e.preventDefault();
-        if (session && session.role === "admin") setAssistantOpen(o => !o);
+        if (session && session.role === "admin") navigate("nora");
       }
     };
     window.addEventListener("keydown", onKey);
@@ -142,6 +142,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "campaigns": return <CampaignsPage navigate={navigate}/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
+      case "nora": return <NoraPage/>;
       case "billing": return null; // rendered always below
       case "mail": return null; // rendered always below
       case "settings": return <SettingsPage/>;
@@ -172,7 +173,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </div>
       )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
-        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => setAssistantOpen(o => !o)} onQuickCreate={() => setQuickCreate(true)}/>
+        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           {isClient ? renderClient() : renderAgency()}
