@@ -124,6 +124,7 @@ const AuthGate = ({ onAuth }) => {
             style={{height:49, fontSize:15, fontWeight:400, borderRadius:16,
               background:"rgba(130,119,219,0.25)", border:"1px solid rgb(130,119,219)",
               color:"rgb(130,119,219)", letterSpacing:"-0.96px",
+              boxShadow:"rgba(130,119,219,0.267) 0px 0px 20px 0px",
               transition:"box-shadow 0.5s cubic-bezier(0.4,0,0.2,1)"}}
             disabled={busy}>
             {busy ? "Entrando…" : "Entrar"}
