@@ -77,23 +77,24 @@ const AuthGate = ({ onAuth }) => {
       height:"100dvh", display:"flex", alignItems:"center", justifyContent:"center",
       background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
     }}>
+      <style>{`.auth-input::placeholder { color: #2E2E2F; opacity: 1; }`}</style>
       <div style={{width:"100%", maxWidth:400, display:"flex", flexDirection:"column", gap:32}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
           <h1 style={{fontSize:28, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)", textAlign:"center"}}>Inicia sesión.</h1>
           <div className="muted" style={{fontSize:14, marginBottom:28, textAlign:"center"}}>Accede con tus credenciales.</div>
 
-          <input className="input" type="email" autoComplete="email" value={email}
+          <input className="input auth-input" type="email" autoComplete="email" value={email}
             onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
             onFocus={() => setFocusedInput("email")} onBlur={() => setFocusedInput(null)}
-            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718",
+            style={{height:48, marginBottom:12, fontSize:14, borderRadius:14, background:"#171718", color:"#2E2E2F",
               border: focusedInput === "email" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
               boxShadow: focusedInput === "email" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
               outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
 
-          <input className="input" type="password" autoComplete="current-password" value={pw}
+          <input className="input auth-input" type="password" autoComplete="current-password" value={pw}
             onChange={e => setPw(e.target.value)} placeholder="••••••••"
             onFocus={() => setFocusedInput("pw")} onBlur={() => setFocusedInput(null)}
-            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718",
+            style={{height:48, marginBottom:20, fontSize:14, borderRadius:14, background:"#171718", color:"#2E2E2F",
               border: focusedInput === "pw" ? "0.5px solid #5A597D" : "0.5px solid #2E2E2F",
               boxShadow: focusedInput === "pw" ? "0 0 0 3px rgba(90,89,125,0.15)" : "none",
               outline:"none", transition:"border-color .18s ease, box-shadow .18s ease"}}/>
