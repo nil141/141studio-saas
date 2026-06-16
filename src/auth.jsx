@@ -77,13 +77,9 @@ const AuthGate = ({ onAuth }) => {
       background:"var(--bg)", padding:"24px 16px", overflow:"hidden",
     }}>
       <div style={{width:"100%", maxWidth:400, display:"flex", flexDirection:"column", gap:32}}>
-        <div className="row tight">
-          <div className="brand-mark">141</div>
-          <div className="brand-name">141<span className="tick">'</span>STUDIO</div>
-        </div>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
-          <h1 style={{fontSize:28, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)"}}>Inicia sesión.</h1>
-          <div className="muted" style={{fontSize:14, marginBottom:28}}>Accede con tus credenciales.</div>
+          <h1 style={{fontSize:28, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)", textAlign:"center"}}>Inicia sesión.</h1>
+          <div className="muted" style={{fontSize:14, marginBottom:28, textAlign:"center"}}>Accede con tus credenciales.</div>
 
           <div className="label">Email</div>
           <input className="input" type="email" autoComplete="email" value={email}
