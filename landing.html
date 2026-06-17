@@ -5398,9 +5398,12 @@
       track.style.animation = 'none';
 
       var half = track.scrollWidth / 2;          // ancho de un grupo (el contenido está duplicado)
-      var speed = half / (28 * 60);              // px por frame ≈ vuelta de 28s a 60fps
+      var speed = half / (28 * 60);              // velocidad base: px/frame ≈ vuelta de 28s a 60fps
       var offset = 0;
-      var dragging = false, startX = 0, startOffset = 0;
+      var base = -speed;                          // velocidad de crucero (hacia la izquierda)
+      var vel = base;                             // velocidad actual (px/frame)
+      var dragging = false, startX = 0, startOffset = 0, lastX = 0, dragVel = 0;
+      var FRICTION = 0.045;                       // cuánto se acerca por frame a la velocidad base (inercia)
 
       function wrap() {
         if (offset <= -half) offset += half;
@@ -5409,19 +5412,30 @@
       function apply() { track.style.transform = 'translateX(' + offset + 'px)'; }
 
       function frame() {
-        if (!dragging) { offset -= speed; wrap(); apply(); }
+        if (!dragging) {
+          // la velocidad del lanzamiento se mezcla suavemente con la velocidad base
+          vel += (base - vel) * FRICTION;
+          offset += vel;
+          wrap();
+          apply();
+        }
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
 
       track.addEventListener('pointerdown', function (e) {
         dragging = true;
-        startX = e.clientX;
+        startX = lastX = e.clientX;
         startOffset = offset;
+        dragVel = 0;
         track.classList.add('dragging');
       });
       track.addEventListener('pointermove', function (e) {
         if (!dragging) return;
+        var dx = e.clientX - lastX;
+        lastX = e.clientX;
+        // velocidad del gesto suavizada (para el impulso al soltar)
+        dragVel = dragVel * 0.6 + dx * 0.4;
         offset = startOffset + (e.clientX - startX);
         wrap();
         apply();
@@ -5429,6 +5443,7 @@
       function endDrag() {
         if (!dragging) return;
         dragging = false;
+        vel = dragVel;                            // conserva el impulso del gesto
         track.classList.remove('dragging');
       }
       track.addEventListener('pointerup', endDrag);
@@ -5439,6 +5454,7 @@
       window.addEventListener('load', function () {
         half = track.scrollWidth / 2;
         speed = half / (28 * 60);
+        base = -speed;
       });
     })();
   </script>
