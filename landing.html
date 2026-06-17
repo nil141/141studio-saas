@@ -347,7 +347,12 @@
       padding: 0 0 3rem;
       width: max-content;
       animation: clientsMarquee 28s linear infinite;
+      cursor: grab;
+      touch-action: pan-y;       /* scroll vertical normal; el horizontal lo gestiona el arrastre */
+      user-select: none;
     }
+    .clients-track.dragging { cursor: grabbing; }
+    .client-card img { -webkit-user-drag: none; user-drag: none; }
     .clients-group {
       display: flex;
       gap: 1.75rem;
@@ -5381,6 +5386,61 @@
         e.target.reset();
       }, 3000);
     }
+  </script>
+
+  <!-- ─── Marquesina de clientes: auto-scroll + arrastre manual ──── -->
+  <script>
+    (function () {
+      var track = document.getElementById('clientsTrack');
+      if (!track) return;
+
+      // Tomamos el control por JS (desactivamos la animación CSS)
+      track.style.animation = 'none';
+
+      var half = track.scrollWidth / 2;          // ancho de un grupo (el contenido está duplicado)
+      var speed = half / (28 * 60);              // px por frame ≈ vuelta de 28s a 60fps
+      var offset = 0;
+      var dragging = false, startX = 0, startOffset = 0;
+
+      function wrap() {
+        if (offset <= -half) offset += half;
+        if (offset > 0)      offset -= half;
+      }
+      function apply() { track.style.transform = 'translateX(' + offset + 'px)'; }
+
+      function frame() {
+        if (!dragging) { offset -= speed; wrap(); apply(); }
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+
+      track.addEventListener('pointerdown', function (e) {
+        dragging = true;
+        startX = e.clientX;
+        startOffset = offset;
+        track.classList.add('dragging');
+      });
+      track.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        offset = startOffset + (e.clientX - startX);
+        wrap();
+        apply();
+      });
+      function endDrag() {
+        if (!dragging) return;
+        dragging = false;
+        track.classList.remove('dragging');
+      }
+      track.addEventListener('pointerup', endDrag);
+      track.addEventListener('pointercancel', endDrag);
+      track.addEventListener('pointerleave', endDrag);
+
+      // recalcula el ancho cuando las imágenes ya han cargado
+      window.addEventListener('load', function () {
+        half = track.scrollWidth / 2;
+        speed = half / (28 * 60);
+      });
+    })();
   </script>
 </body>
 </html>
