@@ -191,39 +191,32 @@ const AgendaPage = ({ navigate }) => {
     saveCustom(updated);
   };
   const typeLabel = { task: "Tarea", project: "Proyecto", invoice: "Factura", custom: "Evento", meeting: "Reuni\xF3n" };
+  const GL = "rgba(255,255,255,0.055)";
   return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
-    justifyContent: "space-between",
-    padding: "0 28px",
-    height: 56,
-    borderBottom: "0.5px solid var(--border)",
-    flexShrink: 0
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 20, fontWeight: 400, letterSpacing: "-0.96px", margin: 0 } }, "Agenda"), /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, /* @__PURE__ */ React.createElement(Icon, { name: "grid", size: 12, strokeWidth: 1.6 }), " Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12, strokeWidth: 1.6 }), " Semana"))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+    padding: "0 20px",
+    height: 52,
+    flexShrink: 0,
+    borderBottom: `1px solid ${GL}`
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, flex: 1 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 18, fontWeight: 500, letterSpacing: "-0.8px", margin: 0 } }, "Agenda"), /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, /* @__PURE__ */ React.createElement(Icon, { name: "grid", size: 11, strokeWidth: 1.6 }), " Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 11, strokeWidth: 1.6 }), " Semana"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goPrev }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 400, letterSpacing: "-0.4px", minWidth: 150, textAlign: "center", color: "var(--text-muted)" } }, navTitle), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
     setForm((f) => ({ ...f, date: selected }));
     setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo evento")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, borderRight: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    borderBottom: "0.5px solid var(--border)",
-    flexShrink: 0
-  } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goPrev }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-0.96px" } }, navTitle), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", borderBottom: "0.5px solid var(--border)", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Nuevo evento"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0 } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", flexShrink: 0, borderBottom: `1px solid ${GL}` } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
-    padding: "8px 4px",
-    fontSize: 11,
-    fontWeight: 500,
-    letterSpacing: "0.06em",
+    padding: "9px 0 7px",
+    fontSize: 10,
+    fontWeight: 600,
+    letterSpacing: "0.08em",
     textTransform: "uppercase",
     color: "var(--text-subtle)"
   } }, d))), viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(7,1fr)", alignContent: "start" } }, cells.map((cell, i) => {
     if (!cell) return /* @__PURE__ */ React.createElement("div", { key: i, style: {
-      minHeight: 88,
-      padding: "8px 6px",
-      borderRight: (i + 1) % 7 === 0 ? "none" : "0.5px solid var(--border)",
-      borderBottom: i < cells.length - 7 ? "0.5px solid var(--border)" : "none",
-      background: "rgba(0,0,0,0.15)"
+      minHeight: 96,
+      padding: "10px 8px",
+      borderRight: (i + 1) % 7 === 0 ? "none" : `1px solid ${GL}`,
+      borderBottom: i < cells.length - 7 ? `1px solid ${GL}` : "none",
+      background: "rgba(0,0,0,0.07)"
     } });
     const isToday = cell.ymd === today;
     const isSelected = cell.ymd === selected;
@@ -233,16 +226,16 @@ const AgendaPage = ({ navigate }) => {
         key: i,
         onClick: () => setSelected(cell.ymd),
         style: {
-          minHeight: 88,
-          padding: "8px 6px",
-          borderRight: (i + 1) % 7 === 0 ? "none" : "0.5px solid var(--border)",
-          borderBottom: i < cells.length - 7 ? "0.5px solid var(--border)" : "none",
+          minHeight: 96,
+          padding: "10px 8px",
+          borderRight: (i + 1) % 7 === 0 ? "none" : `1px solid ${GL}`,
+          borderBottom: i < cells.length - 7 ? `1px solid ${GL}` : "none",
           cursor: "pointer",
-          background: isSelected ? "rgba(158,154,229,0.10)" : "transparent",
-          transition: "background .1s"
+          background: isSelected ? "rgba(158,154,229,0.09)" : "transparent",
+          transition: "background .12s"
         },
         onMouseEnter: (e) => {
-          if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+          if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.025)";
         },
         onMouseLeave: (e) => {
           if (!isSelected) e.currentTarget.style.background = "transparent";
@@ -255,12 +248,12 @@ const AgendaPage = ({ navigate }) => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        marginBottom: 4,
+        marginBottom: 5,
         background: isToday ? "var(--accent)" : "transparent",
         color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
         fontSize: 13,
         fontWeight: isToday ? 600 : 400,
-        letterSpacing: "-0.5px"
+        letterSpacing: "-0.4px"
       } }, cell.dayNum),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, cell.events.slice(0, 3).map((ev) => {
         const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
@@ -268,20 +261,21 @@ const AgendaPage = ({ navigate }) => {
           background: c.bg,
           color: c.text,
           fontSize: 10,
-          padding: "2px 5px",
-          borderRadius: 5,
+          padding: "2px 6px",
+          borderRadius: 4,
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
-          letterSpacing: "-0.3px"
+          letterSpacing: "-0.2px"
         } }, ev.title);
-      }), cell.events.length > 3 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 2 } }, "+", cell.events.length - 3, " m\xE1s"))
+      }), cell.events.length > 3 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 2, letterSpacing: "-0.2px" } }, "+", cell.events.length - 3, " m\xE1s"))
     );
   })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(7,1fr)" } }, weekDays.map((dayDate, col) => {
     const ymd = ymdOf(dayDate);
     const isToday = ymd === today;
     const isSelected = ymd === selected;
     const evts = eventsByDate[ymd] || [];
+    const dayAbbr = DAYS_ES[(dayDate.getDay() + 6) % 7];
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -292,41 +286,54 @@ const AgendaPage = ({ navigate }) => {
           setMonth(dayDate.getMonth());
         },
         style: {
-          borderRight: col < 6 ? "0.5px solid var(--border)" : "none",
+          borderRight: col < 6 ? `1px solid ${GL}` : "none",
           cursor: "pointer",
-          background: isSelected ? "rgba(158,154,229,0.07)" : "transparent",
-          transition: "background .1s",
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          background: isSelected ? "rgba(158,154,229,0.07)" : isToday ? "rgba(158,154,229,0.03)" : "transparent",
+          transition: "background .12s"
         },
         onMouseEnter: (e) => {
-          if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+          if (!isSelected && !isToday) e.currentTarget.style.background = "rgba(255,255,255,0.025)";
         },
         onMouseLeave: (e) => {
-          e.currentTarget.style.background = isSelected ? "rgba(158,154,229,0.07)" : "transparent";
+          e.currentTarget.style.background = isSelected ? "rgba(158,154,229,0.07)" : isToday ? "rgba(158,154,229,0.03)" : "transparent";
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 10px 8px", display: "flex", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 34,
-        height: 34,
+      /* @__PURE__ */ React.createElement("div", { style: {
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        padding: "14px 0 10px",
+        borderBottom: `1px solid ${GL}`
+      } }, /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 10,
+        fontWeight: 600,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        marginBottom: 6,
+        color: isToday ? "var(--accent)" : "var(--text-subtle)"
+      } }, dayAbbr), /* @__PURE__ */ React.createElement("div", { style: {
+        width: 32,
+        height: 32,
         borderRadius: "50%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         background: isToday ? "var(--accent)" : "transparent",
-        color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
-        fontSize: 17,
+        color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text)",
+        fontSize: 18,
         fontWeight: isToday ? 600 : 400,
         letterSpacing: "-0.5px"
       } }, dayDate.getDate())),
-      /* @__PURE__ */ React.createElement("div", { style: { padding: "0 6px 10px", display: "flex", flexDirection: "column", gap: 3 } }, evts.map((ev) => {
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "8px 5px", display: "flex", flexDirection: "column", gap: 3 } }, evts.map((ev) => {
         const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
         return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: {
           background: c.bg,
           color: c.text,
           fontSize: 11,
           padding: "4px 7px",
-          borderRadius: 6,
+          borderRadius: 5,
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap",
@@ -335,45 +342,35 @@ const AgendaPage = ({ navigate }) => {
         } }, ev.title);
       }))
     );
-  }))), /* @__PURE__ */ React.createElement("div", { style: { width: 280, flexShrink: 0, display: "flex", flexDirection: "column", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "Selecciona un d\xEDa"), selectedEvents.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card-sub" }, selectedEvents.length, " evento", selectedEvents.length > 1 ? "s" : "")), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      className: "btn ghost icon-only sm",
-      onClick: () => {
-        setForm((f) => ({ ...f, date: selected }));
-        setShowForm(true);
-      },
-      "data-tooltip": "A\xF1adir evento"
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 })
-  )), /* @__PURE__ */ React.createElement("div", { style: { padding: selectedEvents.length ? "0" : "32px 20px" } }, selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", null, selectedEvents.map((ev, idx) => {
+  }))), /* @__PURE__ */ React.createElement("div", { style: {
+    width: 256,
+    flexShrink: 0,
+    display: "flex",
+    flexDirection: "column",
+    overflowY: "auto",
+    borderLeft: `1px solid ${GL}`
+  } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 18px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.5px" } }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "Selecciona un d\xEDa"), selectedEvents.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2 } }, selectedEvents.length, " evento", selectedEvents.length > 1 ? "s" : "")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => {
+    setForm((f) => ({ ...f, date: selected }));
+    setShowForm(true);
+  }, "data-tooltip": "A\xF1adir evento" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }))), selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "24px 0 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 12 } }, "Sin eventos") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 0 } }, selectedEvents.map((ev, idx) => {
     const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const isCustom = ev.id.startsWith("custom-");
     return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: {
       display: "flex",
       alignItems: "flex-start",
-      gap: 12,
-      padding: "14px 18px",
-      borderBottom: idx < selectedEvents.length - 1 ? "0.5px solid var(--border)" : "none"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: c.dot, flexShrink: 0, marginTop: 5 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, letterSpacing: "-0.96px", color: "var(--text)" } }, ev.title), (ev.time || ev.sub) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2, letterSpacing: "-0.5px" } }, ev.time ? `${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}${ev.sub ? " \xB7 " + ev.sub : ""}` : ev.sub), /* @__PURE__ */ React.createElement("div", { style: {
+      gap: 10,
+      padding: "10px 0",
+      borderBottom: idx < selectedEvents.length - 1 ? `1px solid ${GL}` : "none"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0, marginTop: 4 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, ev.title), (ev.time || ev.sub) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 1 } }, ev.time ? `${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}${ev.sub ? " \xB7 " + ev.sub : ""}` : ev.sub), /* @__PURE__ */ React.createElement("div", { style: {
       display: "inline-block",
-      marginTop: 5,
+      marginTop: 4,
       fontSize: 10,
-      padding: "1px 7px",
+      padding: "1px 6px",
       borderRadius: 99,
       background: c.bg,
-      color: c.text,
-      letterSpacing: "0.02em"
-    } }, typeLabel[ev.type] || ev.type)), isCustom && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        className: "btn ghost icon-only sm",
-        onClick: () => deleteCustom(ev.id),
-        style: { flexShrink: 0, color: "var(--text-subtle)" }
-      },
-      /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
-    ));
-  })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Pr\xF3ximos 14 d\xEDas")), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "24px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos pr\xF3ximos") : upcoming.map((ev, idx) => {
+      color: c.text
+    } }, typeLabel[ev.type] || ev.type)), isCustom && /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => deleteCustom(ev.id), style: { flexShrink: 0, color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11 })));
+  }))), /* @__PURE__ */ React.createElement("div", { style: { height: `1px`, background: GL, margin: "16px 0" } }), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-subtle)", marginBottom: 12 } }, "Pr\xF3ximos 14 d\xEDas"), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 12 } }, "Sin eventos pr\xF3ximos") : upcoming.map((ev, idx) => {
     const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const d = /* @__PURE__ */ new Date(ev.date + "T12:00:00");
     const isToday2 = ev.date === today;
@@ -389,18 +386,17 @@ const AgendaPage = ({ navigate }) => {
         style: {
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "11px 18px",
+          gap: 10,
+          padding: "9px 0",
           cursor: "pointer",
-          borderBottom: idx < upcoming.length - 1 ? "0.5px solid var(--border)" : "none"
+          borderBottom: idx < upcoming.length - 1 ? `1px solid ${GL}` : "none"
         },
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+        onMouseEnter: (e) => e.currentTarget.style.opacity = "0.7",
+        onMouseLeave: (e) => e.currentTarget.style.opacity = "1"
       },
-      /* @__PURE__ */ React.createElement("div", { style: { width: 36, textAlign: "center", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-1px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight: 1 } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.05em" } }, DAYS_ES[(d.getDay() + 6) % 7])),
-      /* @__PURE__ */ React.createElement("div", { style: { width: "0.5px", height: 30, background: "var(--border)", flexShrink: 0 } }),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.96px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.title), ev.sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, ev.sub)),
-      /* @__PURE__ */ React.createElement("div", { style: { width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 } })
+      /* @__PURE__ */ React.createElement("div", { style: { width: 30, textAlign: "center", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 400, letterSpacing: "-0.8px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight: 1 } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.05em", marginTop: 1 } }, DAYS_ES[(d.getDay() + 6) % 7])),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text)", letterSpacing: "-0.5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.title), ev.sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-muted)", marginTop: 1 } }, ev.sub)),
+      /* @__PURE__ */ React.createElement("div", { style: { width: 5, height: 5, borderRadius: "50%", background: c.dot, flexShrink: 0 } })
     );
   })))), showForm && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
     "div",
