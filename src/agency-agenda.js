@@ -391,17 +391,16 @@ const AgendaPage = ({ navigate }) => {
           e.currentTarget.style.background = isSel ? "var(--accent-soft)" : "var(--bg-elev-2)";
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, padding: "11px 11px 9px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 10,
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 9, padding: "12px 11px 10px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 11,
         fontWeight: 600,
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         color: isT ? "var(--accent)" : "var(--text-subtle)"
       } }, dayAbbr), /* @__PURE__ */ React.createElement("div", { style: {
-        minWidth: 28,
-        height: 28,
-        padding: "0 4px",
-        borderRadius: 8,
+        width: 26,
+        height: 26,
+        borderRadius: "50%",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -409,8 +408,7 @@ const AgendaPage = ({ navigate }) => {
         color: isT ? "#fff" : isSel ? "var(--accent)" : "var(--text)",
         fontSize: 16,
         fontWeight: 600,
-        letterSpacing: "-0.5px",
-        marginLeft: -2
+        letterSpacing: "-0.5px"
       } }, dayDate.getDate())),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "0 11px 11px", display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats: stats || { total: 0, done: 0, pct: 0 } })), evts.map((ev) => /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev })))
     );

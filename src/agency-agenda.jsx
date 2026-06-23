@@ -424,16 +424,16 @@ const AgendaPage = ({ navigate }) => {
                     onMouseEnter={e => { if (!isSel) e.currentTarget.style.background="var(--bg-hover)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = isSel ? "var(--accent-soft)" : "var(--bg-elev-2)"; }}
                   >
-                    {/* Tile header — alineado a la izquierda */}
-                    <div style={{display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"11px 11px 9px", flexShrink:0}}>
-                      <span style={{fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase",
+                    {/* Tile header — día + número en línea (estilo Tareas) */}
+                    <div style={{display:"flex", alignItems:"center", gap:9, padding:"12px 11px 10px", flexShrink:0}}>
+                      <span style={{fontSize:11, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase",
                         color: isT ? "var(--accent)" : "var(--text-subtle)"}}>{dayAbbr}</span>
                       <div style={{
-                        minWidth:28, height:28, padding:"0 4px", borderRadius:8,
+                        width:26, height:26, borderRadius:"50%",
                         display:"flex", alignItems:"center", justifyContent:"center",
                         background: isT ? "var(--accent)" : "transparent",
                         color: isT ? "#fff" : isSel ? "var(--accent)" : "var(--text)",
-                        fontSize:16, fontWeight:600, letterSpacing:"-0.5px", marginLeft:-2,
+                        fontSize:16, fontWeight:600, letterSpacing:"-0.5px",
                       }}>{dayDate.getDate()}</div>
                     </div>
                     {/* Events — siempre muestra el resumen de tareas (0/0 incluido) */}
