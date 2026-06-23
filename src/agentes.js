@@ -304,7 +304,7 @@ const AgenteDetail = ({ navigate, agentId }) => {
       "div",
       {
         key: i,
-        onClick: () => agentesLog("Abrir entregable: " + d.title),
+        onClick: () => d.status === "pending" ? navigate("revisar", { agentId: a.id }) : agentesLog("Abrir entregable: " + d.title),
         style: {
           display: "flex",
           alignItems: "center",

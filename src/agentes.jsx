@@ -332,7 +332,9 @@ const AgenteDetail = ({ navigate, agentId }) => {
               const ds = DELIV_STATUS[d.status] || DELIV_STATUS.pending;
               return (
                 <div key={i}
-                  onClick={() => agentesLog("Abrir entregable: " + d.title)}
+                  onClick={() => d.status === "pending"
+                    ? navigate("revisar", { agentId: a.id })
+                    : agentesLog("Abrir entregable: " + d.title)}
                   style={{
                     display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
                     padding:"13px 18px", cursor:"pointer",
