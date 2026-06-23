@@ -234,8 +234,6 @@ const AgendaPage = ({ navigate }) => {
     saveCustom(updated);
   };
 
-  const typeLabel = { task:"Tarea", project:"Proyecto", invoice:"Factura", custom:"Evento", meeting:"Reunión" };
-
   const numWeeks = Math.ceil(cells.length / 7);
   const isCurrentPeriod = viewMode === "week"
     ? weekDays.some(d => ymdOf(d) === today)
@@ -280,6 +278,47 @@ const AgendaPage = ({ navigate }) => {
       </span>
     </div>
   );
+
+  // Cajita de evento estilo calendario: barra de color + título + hora con reloj
+  const EventCard = ({ ev, onDelete }) => {
+    const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+    return (
+      <div style={{
+        position:"relative",
+        background:c.bg, borderRadius:8, padding:"7px 9px",
+        borderLeft:`3px solid ${c.dot}`,
+      }}>
+        <div style={{
+          fontSize:12, fontWeight:600, color:c.text, letterSpacing:"-0.3px",
+          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+          paddingRight: onDelete ? 16 : 0,
+        }}>{ev.title}</div>
+        {ev.time ? (
+          <div style={{display:"flex", alignItems:"center", gap:4, fontSize:11, color:c.text, opacity:0.85, marginTop:2}}>
+            <Icon name="clock" size={10} strokeWidth={2}/>
+            <span>{ev.time}{ev.timeEnd ? ` – ${ev.timeEnd}` : ""}</span>
+          </div>
+        ) : ev.sub ? (
+          <div style={{fontSize:11, color:c.text, opacity:0.7, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+            {ev.sub}
+          </div>
+        ) : null}
+        {onDelete && (
+          <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            style={{
+              position:"absolute", top:6, right:6, width:18, height:18,
+              border:"none", background:"transparent", cursor:"pointer",
+              color:c.text, opacity:0.55, display:"flex", alignItems:"center", justifyContent:"center",
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity="1"}
+            onMouseLeave={e => e.currentTarget.style.opacity="0.55"}
+          >
+            <Icon name="x" size={11}/>
+          </button>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
@@ -406,7 +445,7 @@ const AgendaPage = ({ navigate }) => {
                     {/* Events */}
                     <div style={{flex:1, overflowY:"auto", padding:"2px 9px 10px", display:"flex", flexDirection:"column", gap:6}}>
                       {stats && <div><TaskChip stats={stats}/></div>}
-                      {evts.length > 0 && <DayEventList events={evts}/>}
+                      {evts.map(ev => <EventCard key={ev.id} ev={ev}/>)}
                       {!stats && evts.length === 0 && (
                         <div style={{textAlign:"center", fontSize:11, color:"var(--text-subtle)", paddingTop:6}}>·</div>
                       )}
@@ -480,33 +519,11 @@ const AgendaPage = ({ navigate }) => {
                 </div>
               )
             ) : (
-              <div style={{display:"flex", flexDirection:"column"}}>
-                {selectedEvents.map((ev, idx) => {
-                  const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+              <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                {selectedEvents.map(ev => {
                   const isCustom = ev.id.startsWith("custom-");
                   return (
-                    <div key={ev.id} style={{
-                      display:"flex", alignItems:"flex-start", gap:11, padding:"12px 0",
-                      borderBottom: idx < selectedEvents.length-1 ? "0.5px solid var(--border)" : "none",
-                    }}>
-                      <span style={{width:7, height:7, borderRadius:"50%", background:c.dot, flexShrink:0, marginTop:5}}/>
-                      <div style={{flex:1, minWidth:0}}>
-                        <div style={{fontSize:13, fontWeight:500, letterSpacing:"-0.4px", color:"var(--text)"}}>{ev.title}</div>
-                        {(ev.time || ev.sub) && (
-                          <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2, letterSpacing:"-0.2px"}}>
-                            {ev.time ? `${ev.time}${ev.timeEnd?` – ${ev.timeEnd}`:""}${ev.sub?" · "+ev.sub:""}` : ev.sub}
-                          </div>
-                        )}
-                        <div style={{fontSize:10, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.05em", marginTop:4}}>
-                          {typeLabel[ev.type] || ev.type}
-                        </div>
-                      </div>
-                      {isCustom && (
-                        <button className="btn ghost icon-only sm" onClick={() => deleteCustom(ev.id)} style={{flexShrink:0, color:"var(--text-subtle)"}}>
-                          <Icon name="x" size={11}/>
-                        </button>
-                      )}
-                    </div>
+                    <EventCard key={ev.id} ev={ev} onDelete={isCustom ? () => deleteCustom(ev.id) : null}/>
                   );
                 })}
               </div>
