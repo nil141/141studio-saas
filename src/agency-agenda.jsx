@@ -109,19 +109,24 @@ const AgendaPage = ({ navigate }) => {
   }, [D.PROJECTS, D.INVOICES, customEvents]);
 
   // Tareas agregadas por día → { ymd: { total, done, pct } }
+  // Las vencidas sin completar también se arrastran a HOY (igual que en Tareas).
   const taskStatsByDate = useMemo(() => {
     const map = {};
-    Object.values(D.TASKS).flat().forEach(t => {
-      const ymd = toYMD(t.deadline);
-      if (!ymd) return;
+    const add = (ymd, t) => {
       if (!map[ymd]) map[ymd] = { total:0, done:0, sum:0 };
       map[ymd].total++;
       if (t.column === "done") map[ymd].done++;
       map[ymd].sum += (t.column === "done" ? 100 : (t.progress || 0));
+    };
+    Object.values(D.TASKS).flat().forEach(t => {
+      const ymd = toYMD(t.deadline);
+      if (!ymd) return;
+      add(ymd, t);
+      if (ymd < today && t.column !== "done") add(today, t); // arrastre a hoy
     });
     Object.values(map).forEach(s => { s.pct = s.total ? Math.round(s.sum / s.total) : 0; });
     return map;
-  }, [D.TASKS]);
+  }, [D.TASKS, today]);
 
   const eventsByDate = useMemo(() => {
     const map = {};

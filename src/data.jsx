@@ -543,26 +543,47 @@ const addTask = (input) => {
   return t;
 };
 
+const _todayStr = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+};
+
 const moveTask = (projectId, taskId, newColumn) => {
   const uid = _uid(); if (!uid) return;
   if (!_store.TASKS[projectId]) return;
-  _store.TASKS[projectId] = _store.TASKS[projectId].map(t =>
-    t.id === taskId ? { ...t, column: newColumn } : t
-  ); _emit();
-  _sb.from("tasks").update({ col: newColumn }).eq("id", taskId).then();
+  const today = _todayStr();
+  let reDate = null;
+  _store.TASKS[projectId] = _store.TASKS[projectId].map(t => {
+    if (t.id !== taskId) return t;
+    // Al completar una tarea vencida, la fechamos a hoy para que se quede
+    // como hecha en el día actual (y no desaparezca al recargar).
+    if (newColumn === "done" && t.deadline && t.deadline < today) reDate = today;
+    return { ...t, column: newColumn, ...(reDate ? { deadline: reDate } : {}) };
+  }); _emit();
+  const upd = { col: newColumn };
+  if (reDate) upd.deadline = reDate;
+  _sb.from("tasks").update(upd).eq("id", taskId).then();
 };
 
 const updateTask = (projectId, taskId, changes) => {
   const uid = _uid(); if (!uid) return;
   if (!_store.TASKS[projectId]) return;
+  const eff = { ...changes };
+  // Mismo criterio que moveTask: completar una vencida la pasa a hoy.
+  if (changes.column === "done") {
+    const cur = _store.TASKS[projectId].find(t => t.id === taskId);
+    const dl  = (changes.deadline !== undefined ? changes.deadline : cur && cur.deadline);
+    const today = _todayStr();
+    if (dl && dl < today) eff.deadline = today;
+  }
   _store.TASKS[projectId] = _store.TASKS[projectId].map(t =>
-    t.id === taskId ? { ...t, ...changes } : t
+    t.id === taskId ? { ...t, ...eff } : t
   ); _emit();
   const dbChanges = {};
-  if (changes.column   !== undefined) dbChanges.col      = changes.column;
-  if (changes.done     !== undefined) dbChanges.done     = changes.done;
-  if (changes.title    !== undefined) dbChanges.title    = changes.title;
-  if (changes.deadline !== undefined) dbChanges.deadline = changes.deadline || null;
+  if (eff.column   !== undefined) dbChanges.col      = eff.column;
+  if (eff.done     !== undefined) dbChanges.done     = eff.done;
+  if (eff.title    !== undefined) dbChanges.title    = eff.title;
+  if (eff.deadline !== undefined) dbChanges.deadline = eff.deadline || null;
   _sb.from("tasks").update(dbChanges).eq("id", taskId).then();
 };
 
