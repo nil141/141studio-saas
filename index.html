@@ -708,14 +708,12 @@
   .tasks-mobile-header { display: none; }
   .tasks-desktop-header { display: flex; align-items: center; justify-content: space-between; }
   .mobile-pill-inline { display: none !important; }
+  /* Agenda: en pantallas medianas el panel se estrecha para dar aire a los días */
+  @media (max-width: 1240px) { .agenda-drawer { width: 232px !important; } }
   @media (max-width: 768px) {
     .tasks-left { display: none !important; }
     .tasks-right { padding: 20px 16px 100px !important; }
-    .agenda-drawer {
-      position: fixed !important; inset: 0 !important; z-index: 90;
-      width: 100% !important; border-left: none !important;
-      animation: slideUp .22s ease-out !important;
-    }
+    .agenda-drawer { display: none !important; }
     .tasks-mobile-header { display: block; }
     .tasks-desktop-header { display: none !important; }
     .task-row { border-bottom: none !important; }

@@ -62,7 +62,7 @@ const AgendaPage = ({ navigate }) => {
   const [month, setMonth] = useState((/* @__PURE__ */ new Date()).getMonth());
   const [selected, setSelected] = useState(today);
   const [viewMode, setViewMode] = useState(loadView);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(true);
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "" });
@@ -270,7 +270,7 @@ const AgendaPage = ({ navigate }) => {
   ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => {
     setForm((f) => ({ ...f, date: selected }));
     setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Nuevo evento"))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 14px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Nuevo evento"))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
     fontSize: 11,
     fontWeight: 500,
@@ -325,7 +325,7 @@ const AgendaPage = ({ navigate }) => {
       stats && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 4 } }, /* @__PURE__ */ React.createElement(TaskChip, { stats })),
       /* @__PURE__ */ React.createElement(DayEventList, { events: cell.events, max: stats ? 2 : 3 })
     );
-  })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 8, paddingTop: 6, minHeight: 0 } }, weekDays.map((dayDate) => {
+  })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, paddingTop: 6, minHeight: 0 } }, weekDays.map((dayDate) => {
     const ymd = ymdOf(dayDate);
     const isT = ymd === today;
     const isSel = ymd === selected && panelOpen;
@@ -376,17 +376,17 @@ const AgendaPage = ({ navigate }) => {
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "2px 9px 10px", display: "flex", flexDirection: "column", gap: 6 } }, stats && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats })), evts.length > 0 && /* @__PURE__ */ React.createElement(DayEventList, { events: evts }), !stats && evts.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 11, color: "var(--text-subtle)", paddingTop: 6 } }, "\xB7"))
     );
   }))), panelOpen && /* @__PURE__ */ React.createElement("div", { className: "agenda-drawer", style: {
-    width: 300,
+    width: 280,
     flexShrink: 0,
     overflowY: "auto",
     borderLeft: "0.5px solid var(--border)",
     background: "var(--bg)",
     padding: "20px 18px",
     animation: "slideRight .22s cubic-bezier(.2,.8,.2,1)"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 38, fontWeight: 600, letterSpacing: "-2px", lineHeight: 1, color: "var(--text)" } }, selectedDate ? selectedDate.getDate() : "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 5, letterSpacing: "-0.3px" } }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "A\xF1adir evento", onClick: () => {
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 38, fontWeight: 600, letterSpacing: "-2px", lineHeight: 1, color: "var(--text)" } }, selectedDate ? selectedDate.getDate() : "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 5, letterSpacing: "-0.3px" } }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "A\xF1adir evento", onClick: () => {
     setForm((f) => ({ ...f, date: selected }));
     setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "Cerrar", onClick: () => setPanelOpen(false) }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 })))), (() => {
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }))), (() => {
     const stats = taskStatsByDate[selected];
     if (!stats) return null;
     return /* @__PURE__ */ React.createElement(

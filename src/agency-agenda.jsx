@@ -62,7 +62,7 @@ const AgendaPage = ({ navigate }) => {
   const [month, setMonth] = useState(new Date().getMonth()); // 0-indexed
   const [selected, setSelected] = useState(today);
   const [viewMode, setViewMode] = useState(loadView); // "month" | "week"
-  const [panelOpen, setPanelOpen] = useState(false);   // detalle del día (drawer)
+  const [panelOpen, setPanelOpen] = useState(true);   // detalle del día (siempre visible)
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
@@ -317,7 +317,7 @@ const AgendaPage = ({ navigate }) => {
       <div style={{flex:1, display:"flex", minHeight:0, overflow:"hidden"}}>
 
         {/* ── Calendar ── */}
-        <div style={{flex:1, display:"flex", flexDirection:"column", minWidth:0, padding:"0 14px 12px"}}>
+        <div style={{flex:1, display:"flex", flexDirection:"column", minWidth:0, padding:"0 10px 12px"}}>
 
           {/* MONTH: weekday header row */}
           {viewMode === "month" && (
@@ -371,7 +371,7 @@ const AgendaPage = ({ navigate }) => {
 
           {/* ── WEEK: day tiles fill height ── */}
           {viewMode === "week" && (
-            <div style={{flex:1, display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:8, paddingTop:6, minHeight:0}}>
+            <div style={{flex:1, display:"grid", gridTemplateColumns:"repeat(7,1fr)", gap:6, paddingTop:6, minHeight:0}}>
               {weekDays.map(dayDate => {
                 const ymd  = ymdOf(dayDate);
                 const isT  = ymd === today;
@@ -418,16 +418,16 @@ const AgendaPage = ({ navigate }) => {
           )}
         </div>
 
-        {/* ── Detail drawer — solo cuando hay un día seleccionado ── */}
+        {/* ── Detail drawer — siempre visible (ancho fijo, en .agenda-drawer) ── */}
         {panelOpen && (
           <div className="agenda-drawer" style={{
-            width:300, flexShrink:0, overflowY:"auto",
+            width:280, flexShrink:0, overflowY:"auto",
             borderLeft:"0.5px solid var(--border)", background:"var(--bg)",
             padding:"20px 18px",
             animation:"slideRight .22s cubic-bezier(.2,.8,.2,1)",
           }}>
 
-            {/* Hero: número + cerrar */}
+            {/* Hero: número del día */}
             <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:18}}>
               <div style={{minWidth:0}}>
                 <div style={{fontSize:38, fontWeight:600, letterSpacing:"-2px", lineHeight:1, color:"var(--text)"}}>
@@ -439,14 +439,9 @@ const AgendaPage = ({ navigate }) => {
                     : ""}
                 </div>
               </div>
-              <div style={{display:"flex", gap:2, flexShrink:0}}>
-                <button className="btn ghost icon-only sm" data-tooltip="Añadir evento" onClick={() => { setForm(f=>({...f,date:selected})); setShowForm(true); }}>
-                  <Icon name="plus" size={13}/>
-                </button>
-                <button className="btn ghost icon-only sm" data-tooltip="Cerrar" onClick={() => setPanelOpen(false)}>
-                  <Icon name="x" size={14}/>
-                </button>
-              </div>
+              <button className="btn ghost icon-only sm" data-tooltip="Añadir evento" onClick={() => { setForm(f=>({...f,date:selected})); setShowForm(true); }}>
+                <Icon name="plus" size={13}/>
+              </button>
             </div>
 
             {/* Resumen de tareas — enlaza con la página de Tareas */}
