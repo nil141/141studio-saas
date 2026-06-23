@@ -28,6 +28,15 @@ const loadCustom = () => {
   }
 };
 const saveCustom = (evts) => localStorage.setItem(CUSTOM_KEY, JSON.stringify(evts));
+const VIEW_KEY = "agenda_view";
+const loadView = () => {
+  try {
+    return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month";
+  } catch (e) {
+    return "month";
+  }
+};
+const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const AgendaPage = ({ navigate }) => {
   const D = window.Data;
   D.useStore();
@@ -35,6 +44,7 @@ const AgendaPage = ({ navigate }) => {
   const [year, setYear] = useState((/* @__PURE__ */ new Date()).getFullYear());
   const [month, setMonth] = useState((/* @__PURE__ */ new Date()).getMonth());
   const [selected, setSelected] = useState(today);
+  const [viewMode, setViewMode] = useState(loadView);
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "" });
@@ -113,6 +123,39 @@ const AgendaPage = ({ navigate }) => {
       setYear((y) => y + 1);
     } else setMonth((m) => m + 1);
   };
+  const setView = (v) => {
+    setViewMode(v);
+    try {
+      localStorage.setItem(VIEW_KEY, v);
+    } catch (e) {
+    }
+  };
+  const weekDays = useMemo(() => {
+    const base = /* @__PURE__ */ new Date(selected + "T12:00:00");
+    const dow = (base.getDay() + 6) % 7;
+    const mon = new Date(base);
+    mon.setDate(base.getDate() - dow);
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(mon);
+      d.setDate(mon.getDate() + i);
+      return d;
+    });
+  }, [selected]);
+  const shiftWeek = (dir) => {
+    const d = /* @__PURE__ */ new Date(selected + "T12:00:00");
+    d.setDate(d.getDate() + dir * 7);
+    setSelected(ymdOf(d));
+    setYear(d.getFullYear());
+    setMonth(d.getMonth());
+  };
+  const goPrev = () => viewMode === "week" ? shiftWeek(-1) : prevMonth();
+  const goNext = () => viewMode === "week" ? shiftWeek(1) : nextMonth();
+  const navTitle = viewMode === "week" ? (() => {
+    const s = weekDays[0], e = weekDays[6];
+    const sm = MONTHS_ES[s.getMonth()].slice(0, 3);
+    const em = MONTHS_ES[e.getMonth()].slice(0, 3);
+    return s.getMonth() === e.getMonth() ? `${s.getDate()} \u2013 ${e.getDate()} ${em} ${e.getFullYear()}` : `${s.getDate()} ${sm} \u2013 ${e.getDate()} ${em} ${e.getFullYear()}`;
+  })() : `${MONTHS_ES[month]} ${year}`;
   const selectedEvents = eventsByDate[selected] || [];
   const selectedDate = selected ? /* @__PURE__ */ new Date(selected + "T12:00:00") : null;
   const upcoming = useMemo(() => {
@@ -148,24 +191,33 @@ const AgendaPage = ({ navigate }) => {
     saveCustom(updated);
   };
   const typeLabel = { task: "Tarea", project: "Proyecto", invoice: "Factura", custom: "Evento", meeting: "Reuni\xF3n" };
-  return /* @__PURE__ */ React.createElement("div", { className: "page", style: { paddingBottom: 40 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 28, fontWeight: 400, letterSpacing: "-1.44px" } }, "Agenda"), /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-muted)", fontSize: 14, marginTop: 4, letterSpacing: "-0.96px" } }, "Calendario de tareas, proyectos y eventos")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
-    setForm((f) => ({ ...f, date: selected }));
-    setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo evento")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 300px", gap: 20, alignItems: "start" } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "16px 20px",
-    borderBottom: "0.5px solid var(--border)"
-  } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: prevMonth }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 400, letterSpacing: "-0.96px" } }, MONTHS_ES[month], " ", year), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: nextMonth }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", borderBottom: "0.5px solid var(--border)" } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+    padding: "0 28px",
+    height: 56,
+    borderBottom: "0.5px solid var(--border)",
+    flexShrink: 0
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 20, fontWeight: 400, letterSpacing: "-0.96px", margin: 0 } }, "Agenda"), /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, /* @__PURE__ */ React.createElement(Icon, { name: "grid", size: 12, strokeWidth: 1.6 }), " Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12, strokeWidth: 1.6 }), " Semana"))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+    setForm((f) => ({ ...f, date: selected }));
+    setShowForm(true);
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo evento")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flex: 1, minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, borderRight: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "10px 20px",
+    borderBottom: "0.5px solid var(--border)",
+    flexShrink: 0
+  } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goPrev }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-0.96px" } }, navTitle), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", borderBottom: "0.5px solid var(--border)", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
-    padding: "10px 4px",
+    padding: "8px 4px",
     fontSize: 11,
     fontWeight: 500,
     letterSpacing: "0.06em",
     textTransform: "uppercase",
     color: "var(--text-subtle)"
-  } }, d))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)" } }, cells.map((cell, i) => {
+  } }, d))), viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(7,1fr)", alignContent: "start" } }, cells.map((cell, i) => {
     if (!cell) return /* @__PURE__ */ React.createElement("div", { key: i, style: {
       minHeight: 88,
       padding: "8px 6px",
@@ -175,7 +227,6 @@ const AgendaPage = ({ navigate }) => {
     } });
     const isToday = cell.ymd === today;
     const isSelected = cell.ymd === selected;
-    const hasEvents = cell.events.length > 0;
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -226,7 +277,65 @@ const AgendaPage = ({ navigate }) => {
         } }, ev.title);
       }), cell.events.length > 3 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 2 } }, "+", cell.events.length - 3, " m\xE1s"))
     );
-  }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "Selecciona un d\xEDa"), selectedEvents.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card-sub" }, selectedEvents.length, " evento", selectedEvents.length > 1 ? "s" : "")), /* @__PURE__ */ React.createElement(
+  })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", display: "grid", gridTemplateColumns: "repeat(7,1fr)" } }, weekDays.map((dayDate, col) => {
+    const ymd = ymdOf(dayDate);
+    const isToday = ymd === today;
+    const isSelected = ymd === selected;
+    const evts = eventsByDate[ymd] || [];
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: ymd,
+        onClick: () => {
+          setSelected(ymd);
+          setYear(dayDate.getFullYear());
+          setMonth(dayDate.getMonth());
+        },
+        style: {
+          borderRight: col < 6 ? "0.5px solid var(--border)" : "none",
+          cursor: "pointer",
+          background: isSelected ? "rgba(158,154,229,0.07)" : "transparent",
+          transition: "background .1s",
+          display: "flex",
+          flexDirection: "column"
+        },
+        onMouseEnter: (e) => {
+          if (!isSelected) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.background = isSelected ? "rgba(158,154,229,0.07)" : "transparent";
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 10px 8px", display: "flex", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
+        width: 34,
+        height: 34,
+        borderRadius: "50%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: isToday ? "var(--accent)" : "transparent",
+        color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
+        fontSize: 17,
+        fontWeight: isToday ? 600 : 400,
+        letterSpacing: "-0.5px"
+      } }, dayDate.getDate())),
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "0 6px 10px", display: "flex", flexDirection: "column", gap: 3 } }, evts.map((ev) => {
+        const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+        return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: {
+          background: c.bg,
+          color: c.text,
+          fontSize: 11,
+          padding: "4px 7px",
+          borderRadius: 6,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+          letterSpacing: "-0.3px",
+          lineHeight: "1.3"
+        } }, ev.title);
+      }))
+    );
+  }))), /* @__PURE__ */ React.createElement("div", { style: { width: 280, flexShrink: 0, display: "flex", flexDirection: "column", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "Selecciona un d\xEDa"), selectedEvents.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card-sub" }, selectedEvents.length, " evento", selectedEvents.length > 1 ? "s" : "")), /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "btn ghost icon-only sm",
@@ -237,7 +346,7 @@ const AgendaPage = ({ navigate }) => {
       "data-tooltip": "A\xF1adir evento"
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 })
-  )), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: selectedEvents.length ? "0" : "40px 20px" } }, selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", null, selectedEvents.map((ev, idx) => {
+  )), /* @__PURE__ */ React.createElement("div", { style: { padding: selectedEvents.length ? "0" : "32px 20px" } }, selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", null, selectedEvents.map((ev, idx) => {
     const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const isCustom = ev.id.startsWith("custom-");
     return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: {
@@ -246,14 +355,7 @@ const AgendaPage = ({ navigate }) => {
       gap: 12,
       padding: "14px 18px",
       borderBottom: idx < selectedEvents.length - 1 ? "0.5px solid var(--border)" : "none"
-    } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 8,
-      height: 8,
-      borderRadius: "50%",
-      background: c.dot,
-      flexShrink: 0,
-      marginTop: 5
-    } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, letterSpacing: "-0.96px", color: "var(--text)" } }, ev.title), (ev.time || ev.sub) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2, letterSpacing: "-0.5px" } }, ev.time ? `${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}${ev.sub ? " \xB7 " + ev.sub : ""}` : ev.sub), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: c.dot, flexShrink: 0, marginTop: 5 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, letterSpacing: "-0.96px", color: "var(--text)" } }, ev.title), (ev.time || ev.sub) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2, letterSpacing: "-0.5px" } }, ev.time ? `${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}${ev.sub ? " \xB7 " + ev.sub : ""}` : ev.sub), /* @__PURE__ */ React.createElement("div", { style: {
       display: "inline-block",
       marginTop: 5,
       fontSize: 10,
@@ -271,7 +373,7 @@ const AgendaPage = ({ navigate }) => {
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
     ));
-  })))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Pr\xF3ximos 14 d\xEDas")), /* @__PURE__ */ React.createElement("div", null, upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "30px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos pr\xF3ximos") : upcoming.map((ev, idx) => {
+  })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Pr\xF3ximos 14 d\xEDas")), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "24px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos pr\xF3ximos") : upcoming.map((ev, idx) => {
     const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const d = /* @__PURE__ */ new Date(ev.date + "T12:00:00");
     const isToday2 = ev.date === today;
@@ -295,16 +397,12 @@ const AgendaPage = ({ navigate }) => {
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
         onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
       },
-      /* @__PURE__ */ React.createElement("div", { style: {
-        width: 36,
-        textAlign: "center",
-        flexShrink: 0
-      } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-1px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight: 1 } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.05em" } }, DAYS_ES[(d.getDay() + 6) % 7])),
+      /* @__PURE__ */ React.createElement("div", { style: { width: 36, textAlign: "center", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-1px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight: 1 } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.05em" } }, DAYS_ES[(d.getDay() + 6) % 7])),
       /* @__PURE__ */ React.createElement("div", { style: { width: "0.5px", height: 30, background: "var(--border)", flexShrink: 0 } }),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.96px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.title), ev.sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, ev.sub)),
       /* @__PURE__ */ React.createElement("div", { style: { width: 6, height: 6, borderRadius: "50%", background: c.dot, flexShrink: 0 } })
     );
-  }))))), showForm && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+  })))), showForm && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
     "div",
     {
       style: {

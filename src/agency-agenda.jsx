@@ -33,6 +33,11 @@ const CUSTOM_KEY = "agenda_custom_events";
 const loadCustom = () => { try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch{ return []; }};
 const saveCustom = evts => localStorage.setItem(CUSTOM_KEY, JSON.stringify(evts));
 
+const VIEW_KEY = "agenda_view";
+const loadView = () => { try { return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month"; } catch{ return "month"; }};
+
+const ymdOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
 // ── AgendaPage ────────────────────────────────────────────────────────────────
 const AgendaPage = ({ navigate }) => {
   const D = window.Data;
@@ -42,6 +47,7 @@ const AgendaPage = ({ navigate }) => {
   const [year,  setYear]  = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth()); // 0-indexed
   const [selected, setSelected] = useState(today);
+  const [viewMode, setViewMode] = useState(loadView); // "month" | "week"
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
@@ -128,6 +134,35 @@ const AgendaPage = ({ navigate }) => {
   const prevMonth = () => { if (month === 0) { setMonth(11); setYear(y=>y-1); } else setMonth(m=>m-1); };
   const nextMonth = () => { if (month === 11) { setMonth(0);  setYear(y=>y+1); } else setMonth(m=>m+1); };
 
+  const setView = (v) => { setViewMode(v); try { localStorage.setItem(VIEW_KEY, v); } catch{} };
+
+  // ── week view: 7 days (Mon-first) of the week containing the selected day ────
+  const weekDays = useMemo(() => {
+    const base = new Date(selected + "T12:00:00");
+    const dow  = (base.getDay() + 6) % 7; // Mon = 0
+    const mon  = new Date(base); mon.setDate(base.getDate() - dow);
+    return Array.from({ length: 7 }, (_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return d; });
+  }, [selected]);
+
+  const shiftWeek = (dir) => {
+    const d = new Date(selected + "T12:00:00");
+    d.setDate(d.getDate() + dir * 7);
+    setSelected(ymdOf(d)); setYear(d.getFullYear()); setMonth(d.getMonth());
+  };
+  const goPrev = () => viewMode === "week" ? shiftWeek(-1) : prevMonth();
+  const goNext = () => viewMode === "week" ? shiftWeek(1)  : nextMonth();
+
+  const navTitle = viewMode === "week"
+    ? (() => {
+        const s = weekDays[0], e = weekDays[6];
+        const sm = MONTHS_ES[s.getMonth()].slice(0,3);
+        const em = MONTHS_ES[e.getMonth()].slice(0,3);
+        return s.getMonth() === e.getMonth()
+          ? `${s.getDate()} – ${e.getDate()} ${em} ${e.getFullYear()}`
+          : `${s.getDate()} ${sm} – ${e.getDate()} ${em} ${e.getFullYear()}`;
+      })()
+    : `${MONTHS_ES[month]} ${year}`;
+
   const selectedEvents = eventsByDate[selected] || [];
   const selectedDate = selected ? new Date(selected + "T12:00:00") : null;
 
@@ -174,13 +209,22 @@ const AgendaPage = ({ navigate }) => {
   const typeLabel = { task:"Tarea", project:"Proyecto", invoice:"Factura", custom:"Evento", meeting:"Reunión" };
 
   return (
-    <div className="page" style={{paddingBottom:40}}>
-      {/* Header */}
-      <div className="page-head" style={{marginBottom:24}}>
-        <div>
-          <h1 style={{fontSize:28, fontWeight:400, letterSpacing:"-1.44px"}}>Agenda</h1>
-          <div style={{color:"var(--text-muted)", fontSize:14, marginTop:4, letterSpacing:"-0.96px"}}>
-            Calendario de tareas, proyectos y eventos
+    <div style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
+
+      {/* ── Header ── */}
+      <div style={{
+        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding:"0 28px", height:56, borderBottom:"0.5px solid var(--border)", flexShrink:0,
+      }}>
+        <div style={{display:"flex", alignItems:"center", gap:14}}>
+          <h1 style={{fontSize:20, fontWeight:400, letterSpacing:"-0.96px", margin:0}}>Agenda</h1>
+          <div className="seg">
+            <button className={viewMode === "month" ? "active" : ""} onClick={() => setView("month")}>
+              <Icon name="grid" size={12} strokeWidth={1.6}/> Mes
+            </button>
+            <button className={viewMode === "week" ? "active" : ""} onClick={() => setView("week")}>
+              <Icon name="calendar" size={12} strokeWidth={1.6}/> Semana
+            </button>
           </div>
         </div>
         <button className="btn primary" onClick={() => { setForm(f=>({...f, date: selected})); setShowForm(true); }}>
@@ -188,107 +232,154 @@ const AgendaPage = ({ navigate }) => {
         </button>
       </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"1fr 300px", gap:20, alignItems:"start"}}>
+      {/* ── Body ── */}
+      <div style={{display:"flex", flex:1, minHeight:0, overflow:"hidden"}}>
 
-        {/* ── Calendar ── */}
-        <div className="card" style={{overflow:"hidden"}}>
-          {/* Month nav */}
+        {/* ── Calendar panel ── */}
+        <div style={{flex:1, display:"flex", flexDirection:"column", minWidth:0, borderRight:"0.5px solid var(--border)"}}>
+
+          {/* Nav row */}
           <div style={{
             display:"flex", alignItems:"center", justifyContent:"space-between",
-            padding:"16px 20px", borderBottom:"0.5px solid var(--border)"
+            padding:"10px 20px", borderBottom:"0.5px solid var(--border)", flexShrink:0,
           }}>
-            <button className="btn ghost icon-only" onClick={prevMonth}><Icon name="chevron-left" size={16}/></button>
-            <div style={{fontSize:22, fontWeight:400, letterSpacing:"-0.96px"}}>
-              {MONTHS_ES[month]} {year}
-            </div>
-            <button className="btn ghost icon-only" onClick={nextMonth}><Icon name="chevron-right" size={16}/></button>
+            <button className="btn ghost icon-only" onClick={goPrev}><Icon name="chevron-left" size={16}/></button>
+            <div style={{fontSize:18, fontWeight:400, letterSpacing:"-0.96px"}}>{navTitle}</div>
+            <button className="btn ghost icon-only" onClick={goNext}><Icon name="chevron-right" size={16}/></button>
           </div>
 
           {/* Day headers */}
-          <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", borderBottom:"0.5px solid var(--border)"}}>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)", borderBottom:"0.5px solid var(--border)", flexShrink:0}}>
             {DAYS_ES.map(d => (
               <div key={d} style={{
-                textAlign:"center", padding:"10px 4px",
+                textAlign:"center", padding:"8px 4px",
                 fontSize:11, fontWeight:500, letterSpacing:"0.06em", textTransform:"uppercase",
                 color:"var(--text-subtle)",
               }}>{d}</div>
             ))}
           </div>
 
-          {/* Grid */}
-          <div style={{display:"grid", gridTemplateColumns:"repeat(7,1fr)"}}>
-            {cells.map((cell, i) => {
-              if (!cell) return (
-                <div key={i} style={{
-                  minHeight:88, padding:"8px 6px",
-                  borderRight: (i+1)%7===0 ? "none" : "0.5px solid var(--border)",
-                  borderBottom: i < cells.length-7 ? "0.5px solid var(--border)" : "none",
-                  background:"rgba(0,0,0,0.15)",
-                }}/>
-              );
-              const isToday    = cell.ymd === today;
-              const isSelected = cell.ymd === selected;
-              const hasEvents  = cell.events.length > 0;
-              return (
-                <div
-                  key={i}
-                  onClick={() => setSelected(cell.ymd)}
-                  style={{
+          {/* MONTH view */}
+          {viewMode === "month" && (
+            <div style={{flex:1, overflowY:"auto", display:"grid", gridTemplateColumns:"repeat(7,1fr)", alignContent:"start"}}>
+              {cells.map((cell, i) => {
+                if (!cell) return (
+                  <div key={i} style={{
                     minHeight:88, padding:"8px 6px",
                     borderRight: (i+1)%7===0 ? "none" : "0.5px solid var(--border)",
                     borderBottom: i < cells.length-7 ? "0.5px solid var(--border)" : "none",
-                    cursor:"pointer",
-                    background: isSelected ? "rgba(158,154,229,0.10)" : "transparent",
-                    transition:"background .1s",
-                  }}
-                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="rgba(255,255,255,0.03)"; }}
-                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}
-                >
-                  {/* Day number */}
-                  <div style={{
-                    width:26, height:26, borderRadius:"50%",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    marginBottom:4,
-                    background: isToday ? "var(--accent)" : "transparent",
-                    color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
-                    fontSize:13, fontWeight: isToday ? 600 : 400,
-                    letterSpacing:"-0.5px",
-                  }}>
-                    {cell.dayNum}
-                  </div>
-
-                  {/* Event pills */}
-                  <div style={{display:"flex", flexDirection:"column", gap:2}}>
-                    {cell.events.slice(0,3).map(ev => {
-                      const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-                      return (
-                        <div key={ev.id} style={{
-                          background: c.bg, color: c.text,
-                          fontSize:10, padding:"2px 5px", borderRadius:5,
-                          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-                          letterSpacing:"-0.3px",
-                        }}>
-                          {ev.title}
+                    background:"rgba(0,0,0,0.15)",
+                  }}/>
+                );
+                const isToday    = cell.ymd === today;
+                const isSelected = cell.ymd === selected;
+                return (
+                  <div
+                    key={i}
+                    onClick={() => setSelected(cell.ymd)}
+                    style={{
+                      minHeight:88, padding:"8px 6px",
+                      borderRight: (i+1)%7===0 ? "none" : "0.5px solid var(--border)",
+                      borderBottom: i < cells.length-7 ? "0.5px solid var(--border)" : "none",
+                      cursor:"pointer",
+                      background: isSelected ? "rgba(158,154,229,0.10)" : "transparent",
+                      transition:"background .1s",
+                    }}
+                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="rgba(255,255,255,0.03)"; }}
+                    onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background="transparent"; }}
+                  >
+                    <div style={{
+                      width:26, height:26, borderRadius:"50%",
+                      display:"flex", alignItems:"center", justifyContent:"center",
+                      marginBottom:4,
+                      background: isToday ? "var(--accent)" : "transparent",
+                      color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
+                      fontSize:13, fontWeight: isToday ? 600 : 400, letterSpacing:"-0.5px",
+                    }}>
+                      {cell.dayNum}
+                    </div>
+                    <div style={{display:"flex", flexDirection:"column", gap:2}}>
+                      {cell.events.slice(0,3).map(ev => {
+                        const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+                        return (
+                          <div key={ev.id} style={{
+                            background: c.bg, color: c.text,
+                            fontSize:10, padding:"2px 5px", borderRadius:5,
+                            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                            letterSpacing:"-0.3px",
+                          }}>{ev.title}</div>
+                        );
+                      })}
+                      {cell.events.length > 3 && (
+                        <div style={{fontSize:10, color:"var(--text-subtle)", paddingLeft:2}}>
+                          +{cell.events.length - 3} más
                         </div>
-                      );
-                    })}
-                    {cell.events.length > 3 && (
-                      <div style={{fontSize:10, color:"var(--text-subtle)", paddingLeft:2}}>
-                        +{cell.events.length - 3} más
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* WEEK view */}
+          {viewMode === "week" && (
+            <div style={{flex:1, overflowY:"auto", display:"grid", gridTemplateColumns:"repeat(7,1fr)"}}>
+              {weekDays.map((dayDate, col) => {
+                const ymd        = ymdOf(dayDate);
+                const isToday    = ymd === today;
+                const isSelected = ymd === selected;
+                const evts       = eventsByDate[ymd] || [];
+                return (
+                  <div
+                    key={ymd}
+                    onClick={() => { setSelected(ymd); setYear(dayDate.getFullYear()); setMonth(dayDate.getMonth()); }}
+                    style={{
+                      borderRight: col < 6 ? "0.5px solid var(--border)" : "none",
+                      cursor:"pointer",
+                      background: isSelected ? "rgba(158,154,229,0.07)" : "transparent",
+                      transition:"background .1s",
+                      display:"flex", flexDirection:"column",
+                    }}
+                    onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background="rgba(255,255,255,0.03)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = isSelected ? "rgba(158,154,229,0.07)" : "transparent"; }}
+                  >
+                    <div style={{padding:"14px 10px 8px", display:"flex", justifyContent:"center"}}>
+                      <div style={{
+                        width:34, height:34, borderRadius:"50%",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        background: isToday ? "var(--accent)" : "transparent",
+                        color: isToday ? "#fff" : isSelected ? "#c8c5f2" : "var(--text-muted)",
+                        fontSize:17, fontWeight: isToday ? 600 : 400, letterSpacing:"-0.5px",
+                      }}>
+                        {dayDate.getDate()}
+                      </div>
+                    </div>
+                    <div style={{padding:"0 6px 10px", display:"flex", flexDirection:"column", gap:3}}>
+                      {evts.map(ev => {
+                        const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+                        return (
+                          <div key={ev.id} style={{
+                            background: c.bg, color: c.text,
+                            fontSize:11, padding:"4px 7px", borderRadius:6,
+                            overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                            letterSpacing:"-0.3px", lineHeight:"1.3",
+                          }}>{ev.title}</div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* ── Right panel ── */}
-        <div style={{display:"flex", flexDirection:"column", gap:16}}>
+        <div style={{width:280, flexShrink:0, display:"flex", flexDirection:"column", overflowY:"auto"}}>
 
           {/* Selected day */}
-          <div className="card" style={{overflow:"hidden"}}>
+          <div style={{borderBottom:"0.5px solid var(--border)"}}>
             <div className="card-header">
               <div>
                 <div className="card-title">
@@ -308,7 +399,7 @@ const AgendaPage = ({ navigate }) => {
                 <Icon name="plus" size={13}/>
               </button>
             </div>
-            <div className="card-body" style={{padding: selectedEvents.length ? "0" : "40px 20px"}}>
+            <div style={{padding: selectedEvents.length ? "0" : "32px 20px"}}>
               {selectedEvents.length === 0 ? (
                 <div style={{textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
                   Sin eventos este día
@@ -324,10 +415,7 @@ const AgendaPage = ({ navigate }) => {
                         padding:"14px 18px",
                         borderBottom: idx < selectedEvents.length-1 ? "0.5px solid var(--border)" : "none",
                       }}>
-                        <div style={{
-                          width:8, height:8, borderRadius:"50%",
-                          background: c.dot, flexShrink:0, marginTop:5,
-                        }}/>
+                        <div style={{width:8, height:8, borderRadius:"50%", background:c.dot, flexShrink:0, marginTop:5}}/>
                         <div style={{flex:1, minWidth:0}}>
                           <div style={{fontSize:13, fontWeight:500, letterSpacing:"-0.96px", color:"var(--text)"}}>
                             {ev.title}
@@ -340,7 +428,7 @@ const AgendaPage = ({ navigate }) => {
                           <div style={{
                             display:"inline-block", marginTop:5,
                             fontSize:10, padding:"1px 7px", borderRadius:99,
-                            background: c.bg, color: c.text, letterSpacing:"0.02em",
+                            background:c.bg, color:c.text, letterSpacing:"0.02em",
                           }}>
                             {typeLabel[ev.type] || ev.type}
                           </div>
@@ -363,57 +451,51 @@ const AgendaPage = ({ navigate }) => {
           </div>
 
           {/* Upcoming */}
-          <div className="card" style={{overflow:"hidden"}}>
+          <div>
             <div className="card-header">
               <div className="card-title">Próximos 14 días</div>
             </div>
-            <div>
-              {upcoming.length === 0 ? (
-                <div style={{padding:"30px 20px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
-                  Sin eventos próximos
-                </div>
-              ) : upcoming.map((ev, idx) => {
-                const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-                const d = new Date(ev.date + "T12:00:00");
-                const isToday2 = ev.date === today;
-                return (
-                  <div
-                    key={ev.id}
-                    onClick={() => { setSelected(ev.date); setYear(d.getFullYear()); setMonth(d.getMonth()); }}
-                    style={{
-                      display:"flex", alignItems:"center", gap:12,
-                      padding:"11px 18px", cursor:"pointer",
-                      borderBottom: idx < upcoming.length-1 ? "0.5px solid var(--border)" : "none",
-                    }}
-                    onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.03)"}
-                    onMouseLeave={e => e.currentTarget.style.background="transparent"}
-                  >
-                    <div style={{
-                      width:36, textAlign:"center", flexShrink:0,
-                    }}>
-                      <div style={{fontSize:18, fontWeight:400, letterSpacing:"-1px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight:1}}>
-                        {d.getDate()}
-                      </div>
-                      <div style={{fontSize:10, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.05em"}}>
-                        {DAYS_ES[(d.getDay()+6)%7]}
-                      </div>
+            {upcoming.length === 0 ? (
+              <div style={{padding:"24px 20px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
+                Sin eventos próximos
+              </div>
+            ) : upcoming.map((ev, idx) => {
+              const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
+              const d = new Date(ev.date + "T12:00:00");
+              const isToday2 = ev.date === today;
+              return (
+                <div
+                  key={ev.id}
+                  onClick={() => { setSelected(ev.date); setYear(d.getFullYear()); setMonth(d.getMonth()); }}
+                  style={{
+                    display:"flex", alignItems:"center", gap:12,
+                    padding:"11px 18px", cursor:"pointer",
+                    borderBottom: idx < upcoming.length-1 ? "0.5px solid var(--border)" : "none",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.03)"}
+                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
+                >
+                  <div style={{width:36, textAlign:"center", flexShrink:0}}>
+                    <div style={{fontSize:18, fontWeight:400, letterSpacing:"-1px", color: isToday2 ? "var(--accent)" : "var(--text)", lineHeight:1}}>
+                      {d.getDate()}
                     </div>
-                    <div style={{width:"0.5px", height:30, background:"var(--border)", flexShrink:0}}/>
-                    <div style={{flex:1, minWidth:0}}>
-                      <div style={{fontSize:13, color:"var(--text)", letterSpacing:"-0.96px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                        {ev.title}
-                      </div>
-                      {ev.sub && (
-                        <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2}}>
-                          {ev.sub}
-                        </div>
-                      )}
+                    <div style={{fontSize:10, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.05em"}}>
+                      {DAYS_ES[(d.getDay()+6)%7]}
                     </div>
-                    <div style={{width:6, height:6, borderRadius:"50%", background:c.dot, flexShrink:0}}/>
                   </div>
-                );
-              })}
-            </div>
+                  <div style={{width:"0.5px", height:30, background:"var(--border)", flexShrink:0}}/>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:13, color:"var(--text)", letterSpacing:"-0.96px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                      {ev.title}
+                    </div>
+                    {ev.sub && (
+                      <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2}}>{ev.sub}</div>
+                    )}
+                  </div>
+                  <div style={{width:6, height:6, borderRadius:"50%", background:c.dot, flexShrink:0}}/>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
