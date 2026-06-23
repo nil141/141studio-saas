@@ -37,6 +37,23 @@ const loadView = () => {
   }
 };
 const ymdOf = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const MiniRing = ({ pct, size = 13, stroke = 2 }) => {
+  const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
+  return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { flexShrink: 0, display: "block" } }, /* @__PURE__ */ React.createElement("circle", { cx: c, cy: c, r, fill: "none", stroke: "var(--border-strong)", strokeWidth: stroke }), pct > 0 && /* @__PURE__ */ React.createElement(
+    "circle",
+    {
+      cx: c,
+      cy: c,
+      r,
+      fill: "none",
+      stroke: "var(--accent)",
+      strokeWidth: stroke,
+      strokeLinecap: "round",
+      strokeDasharray: `${pct / 100 * circ} ${circ}`,
+      transform: `rotate(-90 ${c} ${c})`
+    }
+  ));
+};
 const AgendaPage = ({ navigate }) => {
   const D = window.Data;
   D.useStore();
@@ -52,21 +69,6 @@ const AgendaPage = ({ navigate }) => {
   const [pickerFor, setPickerFor] = useState(null);
   const allEvents = useMemo(() => {
     const evts = [];
-    Object.entries(D.TASKS).forEach(([pid, tasks]) => {
-      tasks.forEach((t) => {
-        const ymd = toYMD(t.deadline);
-        if (!ymd) return;
-        const proj = D.PROJECTS.find((p) => p.id === pid);
-        evts.push({
-          id: "task-" + t.id,
-          date: ymd,
-          title: t.title,
-          sub: proj ? proj.name : t.clientName || "",
-          type: "task",
-          source: t
-        });
-      });
-    });
     D.PROJECTS.forEach((p) => {
       const ymd = toYMD(p.deadline);
       if (!ymd || ymd === "\u2014") return;
@@ -93,7 +95,22 @@ const AgendaPage = ({ navigate }) => {
     });
     customEvents.forEach((e) => evts.push(e));
     return evts;
-  }, [D.TASKS, D.PROJECTS, D.INVOICES, customEvents]);
+  }, [D.PROJECTS, D.INVOICES, customEvents]);
+  const taskStatsByDate = useMemo(() => {
+    const map = {};
+    Object.values(D.TASKS).flat().forEach((t) => {
+      const ymd = toYMD(t.deadline);
+      if (!ymd) return;
+      if (!map[ymd]) map[ymd] = { total: 0, done: 0, sum: 0 };
+      map[ymd].total++;
+      if (t.column === "done") map[ymd].done++;
+      map[ymd].sum += t.column === "done" ? 100 : t.progress || 0;
+    });
+    Object.values(map).forEach((s) => {
+      s.pct = s.total ? Math.round(s.sum / s.total) : 0;
+    });
+    return map;
+  }, [D.TASKS]);
   const eventsByDate = useMemo(() => {
     const map = {};
     allEvents.forEach((e) => {
@@ -222,6 +239,16 @@ const AgendaPage = ({ navigate }) => {
       } }, ev.title));
     }), max && events.length > max && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 11 } }, "+", events.length - max, " m\xE1s"));
   };
+  const TaskChip = ({ stats }) => /* @__PURE__ */ React.createElement("div", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    maxWidth: "100%",
+    padding: "2px 7px 2px 5px",
+    borderRadius: 99,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)"
+  } }, /* @__PURE__ */ React.createElement(MiniRing, { pct: stats.pct, size: 12 }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "-0.2px", whiteSpace: "nowrap" } }, stats.done, "/", stats.total, " tareas"));
   return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
@@ -256,6 +283,7 @@ const AgendaPage = ({ navigate }) => {
     if (!cell) return /* @__PURE__ */ React.createElement("div", { key: i });
     const isToday = cell.ymd === today;
     const isSelected = cell.ymd === selected && panelOpen;
+    const stats = taskStatsByDate[cell.ymd];
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -290,13 +318,15 @@ const AgendaPage = ({ navigate }) => {
         letterSpacing: "-0.3px",
         marginBottom: 5
       } }, cell.dayNum),
-      /* @__PURE__ */ React.createElement(DayEventList, { events: cell.events, max: 3 })
+      stats && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 4 } }, /* @__PURE__ */ React.createElement(TaskChip, { stats })),
+      /* @__PURE__ */ React.createElement(DayEventList, { events: cell.events, max: stats ? 2 : 3 })
     );
   })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 8, paddingTop: 6, minHeight: 0 } }, weekDays.map((dayDate) => {
     const ymd = ymdOf(dayDate);
     const isT = ymd === today;
     const isSel = ymd === selected && panelOpen;
     const evts = eventsByDate[ymd] || [];
+    const stats = taskStatsByDate[ymd];
     const dayAbbr = DAYS_ES[(dayDate.getDay() + 6) % 7];
     return /* @__PURE__ */ React.createElement(
       "div",
@@ -339,7 +369,7 @@ const AgendaPage = ({ navigate }) => {
         fontWeight: 600,
         letterSpacing: "-0.5px"
       } }, dayDate.getDate())),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "2px 9px 10px" } }, evts.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 11, color: "var(--text-subtle)", paddingTop: 6 } }, "\xB7") : /* @__PURE__ */ React.createElement(DayEventList, { events: evts }))
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "2px 9px 10px", display: "flex", flexDirection: "column", gap: 6 } }, stats && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats })), evts.length > 0 && /* @__PURE__ */ React.createElement(DayEventList, { events: evts }), !stats && evts.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 11, color: "var(--text-subtle)", paddingTop: 6 } }, "\xB7"))
     );
   }))), panelOpen && /* @__PURE__ */ React.createElement("div", { className: "agenda-drawer", style: {
     width: 300,
@@ -352,7 +382,33 @@ const AgendaPage = ({ navigate }) => {
   } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 38, fontWeight: 600, letterSpacing: "-2px", lineHeight: 1, color: "var(--text)" } }, selectedDate ? selectedDate.getDate() : "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 5, letterSpacing: "-0.3px" } }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 2, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "A\xF1adir evento", onClick: () => {
     setForm((f) => ({ ...f, date: selected }));
     setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "Cerrar", onClick: () => setPanelOpen(false) }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 })))), selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "24px 0 28px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, selectedEvents.map((ev, idx) => {
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", "data-tooltip": "Cerrar", onClick: () => setPanelOpen(false) }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 })))), (() => {
+    const stats = taskStatsByDate[selected];
+    if (!stats) return null;
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick: () => navigate("tasks", { date: selected }),
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 14px",
+          marginBottom: 14,
+          cursor: "pointer",
+          background: "var(--bg-elev-2)",
+          border: "0.5px solid var(--border)",
+          borderRadius: 12,
+          transition: "background .12s"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "var(--bg-elev-2)"
+      },
+      /* @__PURE__ */ React.createElement(MiniRing, { pct: stats.pct, size: 34, stroke: 3 }),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" } }, "Tareas del d\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, stats.done, "/", stats.total, " completadas \xB7 ", stats.pct, "%")),
+      /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15, style: { color: "var(--text-subtle)", flexShrink: 0 } })
+    );
+  })(), selectedEvents.length === 0 ? !taskStatsByDate[selected] && /* @__PURE__ */ React.createElement("div", { style: { padding: "24px 0 28px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, selectedEvents.map((ev, idx) => {
     const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const isCustom = ev.id.startsWith("custom-");
     return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: {

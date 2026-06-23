@@ -139,7 +139,7 @@ const App = () => {
       case "project":
         return /* @__PURE__ */ React.createElement(AgencyProject, { navigate, openModal, projectId: view.params.projectId });
       case "tasks":
-        return /* @__PURE__ */ React.createElement(TasksBoard, { navigate, openModal });
+        return /* @__PURE__ */ React.createElement(TasksBoard, { navigate, openModal, initialDate: view.params.date });
       case "campaigns":
         return /* @__PURE__ */ React.createElement(CampaignsPage, { navigate });
       case "campaign":

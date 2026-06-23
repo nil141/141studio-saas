@@ -127,11 +127,23 @@ const GeneralTaskColumn = ({ tasks, toast, openModal }) => {
     ")"
   ), doneOpen && done.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { padding: "0 8px" } }, /* @__PURE__ */ React.createElement(GeneralTaskCard, { ...cardProps(t) }))))));
 };
-const TasksBoard = ({ navigate, openModal }) => {
+const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const D = window.Data;
   D.useStore();
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDay, setSelectedDay] = useState(/* @__PURE__ */ new Date());
+  const initWeekOffset = (() => {
+    if (!initialDate) return 0;
+    const mondayOf = (d) => {
+      const x = new Date(d);
+      x.setHours(0, 0, 0, 0);
+      x.setDate(x.getDate() - (x.getDay() + 6) % 7);
+      return x;
+    };
+    const nowMon = mondayOf(/* @__PURE__ */ new Date());
+    const selMon = mondayOf(/* @__PURE__ */ new Date(initialDate + "T12:00:00"));
+    return Math.round((selMon - nowMon) / (7 * 864e5));
+  })();
+  const [weekOffset, setWeekOffset] = useState(initWeekOffset);
+  const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : /* @__PURE__ */ new Date());
   const daysContainerRef = useRef(null);
   const dayItemRefs = useRef({});
   const [dayPill, setDayPill] = useState(null);

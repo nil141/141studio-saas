@@ -38,6 +38,20 @@ const loadView = () => { try { return localStorage.getItem(VIEW_KEY) === "week" 
 
 const ymdOf = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
+// Mini anillo de progreso para el resumen de tareas
+const MiniRing = ({ pct, size = 13, stroke = 2 }) => {
+  const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
+  return (
+    <svg width={size} height={size} style={{flexShrink:0, display:"block"}}>
+      <circle cx={c} cy={c} r={r} fill="none" stroke="var(--border-strong)" strokeWidth={stroke}/>
+      {pct > 0 && (
+        <circle cx={c} cy={c} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={`${(pct/100)*circ} ${circ}`} transform={`rotate(-90 ${c} ${c})`}/>
+      )}
+    </svg>
+  );
+};
+
 // ── AgendaPage ────────────────────────────────────────────────────────────────
 const AgendaPage = ({ navigate }) => {
   const D = window.Data;
@@ -55,25 +69,10 @@ const AgendaPage = ({ navigate }) => {
   const [pickerFor, setPickerFor] = useState(null); // null | "start" | "end"
 
   // ── build event list from all sources ──────────────────────────────────────
+  // NOTE: las tareas NO se listan como eventos sueltos (ensucia la agenda).
+  // Se agregan por día en `taskStatsByDate` y enlazan con la página de Tareas.
   const allEvents = useMemo(() => {
     const evts = [];
-
-    // Tasks with deadline
-    Object.entries(D.TASKS).forEach(([pid, tasks]) => {
-      tasks.forEach(t => {
-        const ymd = toYMD(t.deadline);
-        if (!ymd) return;
-        const proj = D.PROJECTS.find(p => p.id === pid);
-        evts.push({
-          id: "task-" + t.id,
-          date: ymd,
-          title: t.title,
-          sub: proj ? proj.name : (t.clientName || ""),
-          type: "task",
-          source: t,
-        });
-      });
-    });
 
     // Project deadlines
     D.PROJECTS.forEach(p => {
@@ -107,7 +106,22 @@ const AgendaPage = ({ navigate }) => {
     customEvents.forEach(e => evts.push(e));
 
     return evts;
-  }, [D.TASKS, D.PROJECTS, D.INVOICES, customEvents]);
+  }, [D.PROJECTS, D.INVOICES, customEvents]);
+
+  // Tareas agregadas por día → { ymd: { total, done, pct } }
+  const taskStatsByDate = useMemo(() => {
+    const map = {};
+    Object.values(D.TASKS).flat().forEach(t => {
+      const ymd = toYMD(t.deadline);
+      if (!ymd) return;
+      if (!map[ymd]) map[ymd] = { total:0, done:0, sum:0 };
+      map[ymd].total++;
+      if (t.column === "done") map[ymd].done++;
+      map[ymd].sum += (t.column === "done" ? 100 : (t.progress || 0));
+    });
+    Object.values(map).forEach(s => { s.pct = s.total ? Math.round(s.sum / s.total) : 0; });
+    return map;
+  }, [D.TASKS]);
 
   const eventsByDate = useMemo(() => {
     const map = {};
@@ -248,6 +262,20 @@ const AgendaPage = ({ navigate }) => {
     );
   };
 
+  // Chip compacto de resumen de tareas para una celda del calendario
+  const TaskChip = ({ stats }) => (
+    <div style={{
+      display:"inline-flex", alignItems:"center", gap:5, maxWidth:"100%",
+      padding:"2px 7px 2px 5px", borderRadius:99,
+      background:"var(--bg-elev-2)", border:"0.5px solid var(--border)",
+    }}>
+      <MiniRing pct={stats.pct} size={12}/>
+      <span style={{fontSize:10, fontWeight:500, color:"var(--text-muted)", letterSpacing:"-0.2px", whiteSpace:"nowrap"}}>
+        {stats.done}/{stats.total} tareas
+      </span>
+    </div>
+  );
+
   return (
     <div style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
 
@@ -310,6 +338,7 @@ const AgendaPage = ({ navigate }) => {
                 if (!cell) return <div key={i}/>;
                 const isToday    = cell.ymd === today;
                 const isSelected = cell.ymd === selected && panelOpen;
+                const stats      = taskStatsByDate[cell.ymd];
                 return (
                   <div key={i} onClick={() => pickDay(cell.ymd, new Date(cell.ymd + "T12:00:00"))} style={{
                     borderRadius:12, padding:"7px 9px", cursor:"pointer", overflow:"hidden",
@@ -327,7 +356,8 @@ const AgendaPage = ({ navigate }) => {
                       fontSize:13, fontWeight: isToday ? 600 : 400, letterSpacing:"-0.3px",
                       marginBottom:5,
                     }}>{cell.dayNum}</div>
-                    <DayEventList events={cell.events} max={3}/>
+                    {stats && <div style={{marginBottom:4}}><TaskChip stats={stats}/></div>}
+                    <DayEventList events={cell.events} max={stats ? 2 : 3}/>
                   </div>
                 );
               })}
@@ -342,6 +372,7 @@ const AgendaPage = ({ navigate }) => {
                 const isT  = ymd === today;
                 const isSel = ymd === selected && panelOpen;
                 const evts  = eventsByDate[ymd] || [];
+                const stats = taskStatsByDate[ymd];
                 const dayAbbr = DAYS_ES[(dayDate.getDay()+6)%7];
                 return (
                   <div key={ymd}
@@ -368,10 +399,12 @@ const AgendaPage = ({ navigate }) => {
                       }}>{dayDate.getDate()}</div>
                     </div>
                     {/* Events */}
-                    <div style={{flex:1, overflowY:"auto", padding:"2px 9px 10px"}}>
-                      {evts.length === 0
-                        ? <div style={{textAlign:"center", fontSize:11, color:"var(--text-subtle)", paddingTop:6}}>·</div>
-                        : <DayEventList events={evts}/>}
+                    <div style={{flex:1, overflowY:"auto", padding:"2px 9px 10px", display:"flex", flexDirection:"column", gap:6}}>
+                      {stats && <div><TaskChip stats={stats}/></div>}
+                      {evts.length > 0 && <DayEventList events={evts}/>}
+                      {!stats && evts.length === 0 && (
+                        <div style={{textAlign:"center", fontSize:11, color:"var(--text-subtle)", paddingTop:6}}>·</div>
+                      )}
                     </div>
                   </div>
                 );
@@ -411,11 +444,41 @@ const AgendaPage = ({ navigate }) => {
               </div>
             </div>
 
+            {/* Resumen de tareas — enlaza con la página de Tareas */}
+            {(() => {
+              const stats = taskStatsByDate[selected];
+              if (!stats) return null;
+              return (
+                <div
+                  onClick={() => navigate("tasks", { date: selected })}
+                  style={{
+                    display:"flex", alignItems:"center", gap:12,
+                    padding:"12px 14px", marginBottom:14, cursor:"pointer",
+                    background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12,
+                    transition:"background .12s",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background="var(--bg-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.background="var(--bg-elev-2)"}
+                >
+                  <MiniRing pct={stats.pct} size={34} stroke={3}/>
+                  <div style={{flex:1, minWidth:0}}>
+                    <div style={{fontSize:13, fontWeight:500, color:"var(--text)", letterSpacing:"-0.3px"}}>Tareas del día</div>
+                    <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2}}>
+                      {stats.done}/{stats.total} completadas · {stats.pct}%
+                    </div>
+                  </div>
+                  <Icon name="chevron-right" size={15} style={{color:"var(--text-subtle)", flexShrink:0}}/>
+                </div>
+              );
+            })()}
+
             {/* Eventos del día */}
             {selectedEvents.length === 0 ? (
-              <div style={{padding:"24px 0 28px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
-                Sin eventos este día
-              </div>
+              !taskStatsByDate[selected] && (
+                <div style={{padding:"24px 0 28px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
+                  Sin eventos este día
+                </div>
+              )
             ) : (
               <div style={{display:"flex", flexDirection:"column"}}>
                 {selectedEvents.map((ev, idx) => {

@@ -156,12 +156,21 @@ const GeneralTaskColumn = ({ tasks, toast, openModal }) => {
 };
 
 // ── TasksBoard v2 — week view + grouped by client ────────────
-const TasksBoard = ({ navigate, openModal }) => {
+const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const D = window.Data;
   D.useStore();
 
-  const [weekOffset, setWeekOffset] = useState(0);
-  const [selectedDay, setSelectedDay] = useState(new Date());
+  // Si venimos de la Agenda con un día concreto, aterrizamos en esa semana/día
+  const initWeekOffset = (() => {
+    if (!initialDate) return 0;
+    const mondayOf = d => { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
+    const nowMon = mondayOf(new Date());
+    const selMon = mondayOf(new Date(initialDate + "T12:00:00"));
+    return Math.round((selMon - nowMon) / (7 * 86400000));
+  })();
+
+  const [weekOffset, setWeekOffset] = useState(initWeekOffset);
+  const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : new Date());
 
   // Sliding pill for day selector
   const daysContainerRef = useRef(null);

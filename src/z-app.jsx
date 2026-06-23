@@ -138,7 +138,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "clientDetail": return <AgencyClientDetail navigate={navigate} openModal={openModal} clientId={view.params.clientId}/>;
       case "projects": return <AgencyProjects navigate={navigate} openModal={openModal}/>;
       case "project": return <AgencyProject navigate={navigate} openModal={openModal} projectId={view.params.projectId}/>;
-      case "tasks": return <TasksBoard navigate={navigate} openModal={openModal}/>;
+      case "tasks": return <TasksBoard navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
       case "campaigns": return <CampaignsPage navigate={navigate}/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
