@@ -244,18 +244,15 @@ const AgendaPage = ({ navigate }) => {
     const shown = max ? events.slice(0, max) : events;
     return (
       <div style={{display:"flex", flexDirection:"column", gap:3}}>
-        {shown.map(ev => {
-          const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-          return (
-            <div key={ev.id} style={{display:"flex", alignItems:"center", gap:6, minWidth:0}}>
-              <span style={{width:5, height:5, borderRadius:"50%", background:c.dot, flexShrink:0}}/>
-              <span style={{
-                fontSize:11, letterSpacing:"-0.2px", color:"var(--text)",
-                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-              }}>{ev.title}</span>
-            </div>
-          );
-        })}
+        {shown.map(ev => (
+          <div key={ev.id} style={{display:"flex", alignItems:"center", gap:6, minWidth:0}}>
+            <span style={{width:5, height:5, borderRadius:"50%", background:"rgba(255,255,255,0.4)", flexShrink:0}}/>
+            <span style={{
+              fontSize:11, letterSpacing:"-0.2px", color:"var(--text)",
+              overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+            }}>{ev.title}</span>
+          </div>
+        ))}
         {max && events.length > max && (
           <span style={{fontSize:10, color:"var(--text-subtle)", paddingLeft:11}}>
             +{events.length - max} más
@@ -279,46 +276,43 @@ const AgendaPage = ({ navigate }) => {
     </div>
   );
 
-  // Cajita de evento estilo calendario: barra de color + título + hora con reloj
-  const EventCard = ({ ev, onDelete }) => {
-    const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-    return (
+  // Cajita de evento estilo calendario — color neutro (igual para todos los tipos)
+  const EventCard = ({ ev, onDelete }) => (
+    <div style={{
+      position:"relative",
+      background:"rgba(255,255,255,0.06)", borderRadius:8, padding:"7px 9px",
+      borderLeft:"2px solid rgba(255,255,255,0.35)",
+    }}>
       <div style={{
-        position:"relative",
-        background:c.bg, borderRadius:8, padding:"7px 9px",
-        borderLeft:`3px solid ${c.dot}`,
-      }}>
-        <div style={{
-          fontSize:12, fontWeight:600, color:c.text, letterSpacing:"-0.3px",
-          overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
-          paddingRight: onDelete ? 16 : 0,
-        }}>{ev.title}</div>
-        {ev.time ? (
-          <div style={{display:"flex", alignItems:"center", gap:4, fontSize:11, color:c.text, opacity:0.85, marginTop:2}}>
-            <Icon name="clock" size={10} strokeWidth={2}/>
-            <span>{ev.time}{ev.timeEnd ? ` – ${ev.timeEnd}` : ""}</span>
-          </div>
-        ) : ev.sub ? (
-          <div style={{fontSize:11, color:c.text, opacity:0.7, marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-            {ev.sub}
-          </div>
-        ) : null}
-        {onDelete && (
-          <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            style={{
-              position:"absolute", top:6, right:6, width:18, height:18,
-              border:"none", background:"transparent", cursor:"pointer",
-              color:c.text, opacity:0.55, display:"flex", alignItems:"center", justifyContent:"center",
-            }}
-            onMouseEnter={e => e.currentTarget.style.opacity="1"}
-            onMouseLeave={e => e.currentTarget.style.opacity="0.55"}
-          >
-            <Icon name="x" size={11}/>
-          </button>
-        )}
-      </div>
-    );
-  };
+        fontSize:12, fontWeight:600, color:"var(--text)", letterSpacing:"-0.3px",
+        overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+        paddingRight: onDelete ? 16 : 0,
+      }}>{ev.title}</div>
+      {ev.time ? (
+        <div style={{display:"flex", alignItems:"center", gap:4, fontSize:11, color:"var(--text-muted)", marginTop:2}}>
+          <Icon name="clock" size={10} strokeWidth={2}/>
+          <span>{ev.time}{ev.timeEnd ? ` – ${ev.timeEnd}` : ""}</span>
+        </div>
+      ) : ev.sub ? (
+        <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+          {ev.sub}
+        </div>
+      ) : null}
+      {onDelete && (
+        <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          style={{
+            position:"absolute", top:6, right:6, width:18, height:18,
+            border:"none", background:"transparent", cursor:"pointer",
+            color:"var(--text-subtle)", display:"flex", alignItems:"center", justifyContent:"center",
+          }}
+          onMouseEnter={e => e.currentTarget.style.color="var(--text)"}
+          onMouseLeave={e => e.currentTarget.style.color="var(--text-subtle)"}
+        >
+          <Icon name="x" size={11}/>
+        </button>
+      )}
+    </div>
+  );
 
   return (
     <div style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
@@ -430,25 +424,22 @@ const AgendaPage = ({ navigate }) => {
                     onMouseEnter={e => { if (!isSel) e.currentTarget.style.background="var(--bg-hover)"; }}
                     onMouseLeave={e => { e.currentTarget.style.background = isSel ? "var(--accent-soft)" : "var(--bg-elev-2)"; }}
                   >
-                    {/* Tile header */}
-                    <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:5, padding:"12px 0 10px", flexShrink:0}}>
+                    {/* Tile header — alineado a la izquierda */}
+                    <div style={{display:"flex", flexDirection:"column", alignItems:"flex-start", gap:4, padding:"11px 11px 9px", flexShrink:0}}>
                       <span style={{fontSize:10, fontWeight:600, letterSpacing:"0.06em", textTransform:"uppercase",
                         color: isT ? "var(--accent)" : "var(--text-subtle)"}}>{dayAbbr}</span>
                       <div style={{
-                        width:30, height:30, borderRadius:"50%",
+                        minWidth:28, height:28, padding:"0 4px", borderRadius:8,
                         display:"flex", alignItems:"center", justifyContent:"center",
                         background: isT ? "var(--accent)" : "transparent",
                         color: isT ? "#fff" : isSel ? "var(--accent)" : "var(--text)",
-                        fontSize:16, fontWeight:600, letterSpacing:"-0.5px",
+                        fontSize:16, fontWeight:600, letterSpacing:"-0.5px", marginLeft:-2,
                       }}>{dayDate.getDate()}</div>
                     </div>
-                    {/* Events */}
-                    <div style={{flex:1, overflowY:"auto", padding:"2px 9px 10px", display:"flex", flexDirection:"column", gap:6}}>
-                      {stats && <div><TaskChip stats={stats}/></div>}
+                    {/* Events — siempre muestra el resumen de tareas (0/0 incluido) */}
+                    <div style={{flex:1, overflowY:"auto", padding:"0 11px 11px", display:"flex", flexDirection:"column", gap:6}}>
+                      <div><TaskChip stats={stats || { total:0, done:0, pct:0 }}/></div>
                       {evts.map(ev => <EventCard key={ev.id} ev={ev}/>)}
-                      {!stats && evts.length === 0 && (
-                        <div style={{textAlign:"center", fontSize:11, color:"var(--text-subtle)", paddingTop:6}}>·</div>
-                      )}
                     </div>
                   </div>
                 );
@@ -539,7 +530,6 @@ const AgendaPage = ({ navigate }) => {
               ) : (
                 <div style={{display:"flex", flexDirection:"column", gap:12}}>
                   {upcoming.map(ev => {
-                    const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
                     const d = new Date(ev.date + "T12:00:00");
                     const isToday2 = ev.date === today;
                     return (
@@ -569,7 +559,7 @@ const AgendaPage = ({ navigate }) => {
                             <div style={{fontSize:11, color:"var(--text-muted)", marginTop:1, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{ev.sub}</div>
                           )}
                         </div>
-                        <span style={{width:5, height:5, borderRadius:"50%", background:c.dot, flexShrink:0}}/>
+                        <span style={{width:5, height:5, borderRadius:"50%", background:"rgba(255,255,255,0.4)", flexShrink:0}}/>
                       </div>
                     );
                   })}

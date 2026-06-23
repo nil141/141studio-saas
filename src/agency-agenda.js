@@ -230,17 +230,14 @@ const AgendaPage = ({ navigate }) => {
   const isCurrentPeriod = viewMode === "week" ? weekDays.some((d) => ymdOf(d) === today) : year === (/* @__PURE__ */ new Date()).getFullYear() && month === (/* @__PURE__ */ new Date()).getMonth();
   const DayEventList = ({ events, max }) => {
     const shown = max ? events.slice(0, max) : events;
-    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3 } }, shown.map((ev) => {
-      const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-      return /* @__PURE__ */ React.createElement("div", { key: ev.id, style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: "50%", background: c.dot, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 11,
-        letterSpacing: "-0.2px",
-        color: "var(--text)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, ev.title));
-    }), max && events.length > max && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 11 } }, "+", events.length - max, " m\xE1s"));
+    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 3 } }, shown.map((ev) => /* @__PURE__ */ React.createElement("div", { key: ev.id, style: { display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.4)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 11,
+      letterSpacing: "-0.2px",
+      color: "var(--text)",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    } }, ev.title))), max && events.length > max && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", paddingLeft: 11 } }, "+", events.length - max, " m\xE1s"));
   };
   const TaskChip = ({ stats }) => /* @__PURE__ */ React.createElement("div", { style: {
     display: "inline-flex",
@@ -252,51 +249,47 @@ const AgendaPage = ({ navigate }) => {
     background: "var(--bg-elev-2)",
     border: "0.5px solid var(--border)"
   } }, /* @__PURE__ */ React.createElement(MiniRing, { pct: stats.pct, size: 12 }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontWeight: 500, color: "var(--text-muted)", letterSpacing: "-0.2px", whiteSpace: "nowrap" } }, stats.done, "/", stats.total, " tareas"));
-  const EventCard = ({ ev, onDelete }) => {
-    const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
-    return /* @__PURE__ */ React.createElement("div", { style: {
-      position: "relative",
-      background: c.bg,
-      borderRadius: 8,
-      padding: "7px 9px",
-      borderLeft: `3px solid ${c.dot}`
-    } }, /* @__PURE__ */ React.createElement("div", { style: {
-      fontSize: 12,
-      fontWeight: 600,
-      color: c.text,
-      letterSpacing: "-0.3px",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap",
-      paddingRight: onDelete ? 16 : 0
-    } }, ev.title), ev.time ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: c.text, opacity: 0.85, marginTop: 2 } }, /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 10, strokeWidth: 2 }), /* @__PURE__ */ React.createElement("span", null, ev.time, ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : "")) : ev.sub ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: c.text, opacity: 0.7, marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.sub) : null, onDelete && /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: (e) => {
-          e.stopPropagation();
-          onDelete();
-        },
-        style: {
-          position: "absolute",
-          top: 6,
-          right: 6,
-          width: 18,
-          height: 18,
-          border: "none",
-          background: "transparent",
-          cursor: "pointer",
-          color: c.text,
-          opacity: 0.55,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        },
-        onMouseEnter: (e) => e.currentTarget.style.opacity = "1",
-        onMouseLeave: (e) => e.currentTarget.style.opacity = "0.55"
+  const EventCard = ({ ev, onDelete }) => /* @__PURE__ */ React.createElement("div", { style: {
+    position: "relative",
+    background: "rgba(255,255,255,0.06)",
+    borderRadius: 8,
+    padding: "7px 9px",
+    borderLeft: "2px solid rgba(255,255,255,0.35)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: "var(--text)",
+    letterSpacing: "-0.3px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+    paddingRight: onDelete ? 16 : 0
+  } }, ev.title), ev.time ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 10, strokeWidth: 2 }), /* @__PURE__ */ React.createElement("span", null, ev.time, ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : "")) : ev.sub ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.sub) : null, onDelete && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: (e) => {
+        e.stopPropagation();
+        onDelete();
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11 })
-    ));
-  };
+      style: {
+        position: "absolute",
+        top: 6,
+        right: 6,
+        width: 18,
+        height: 18,
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "var(--text-subtle)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.color = "var(--text)",
+      onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11 })
+  ));
   return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
@@ -398,16 +391,17 @@ const AgendaPage = ({ navigate }) => {
           e.currentTarget.style.background = isSel ? "var(--accent-soft)" : "var(--bg-elev-2)";
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 5, padding: "12px 0 10px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 4, padding: "11px 11px 9px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: {
         fontSize: 10,
         fontWeight: 600,
         letterSpacing: "0.06em",
         textTransform: "uppercase",
         color: isT ? "var(--accent)" : "var(--text-subtle)"
       } }, dayAbbr), /* @__PURE__ */ React.createElement("div", { style: {
-        width: 30,
-        height: 30,
-        borderRadius: "50%",
+        minWidth: 28,
+        height: 28,
+        padding: "0 4px",
+        borderRadius: 8,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -415,9 +409,10 @@ const AgendaPage = ({ navigate }) => {
         color: isT ? "#fff" : isSel ? "var(--accent)" : "var(--text)",
         fontSize: 16,
         fontWeight: 600,
-        letterSpacing: "-0.5px"
+        letterSpacing: "-0.5px",
+        marginLeft: -2
       } }, dayDate.getDate())),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "2px 9px 10px", display: "flex", flexDirection: "column", gap: 6 } }, stats && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats })), evts.map((ev) => /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev })), !stats && evts.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", fontSize: 11, color: "var(--text-subtle)", paddingTop: 6 } }, "\xB7"))
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "0 11px 11px", display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats: stats || { total: 0, done: 0, pct: 0 } })), evts.map((ev) => /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev })))
     );
   }))), panelOpen && /* @__PURE__ */ React.createElement("div", { className: "agenda-drawer", style: {
     width: 280,
@@ -460,7 +455,6 @@ const AgendaPage = ({ navigate }) => {
     const isCustom = ev.id.startsWith("custom-");
     return /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev, onDelete: isCustom ? () => deleteCustom(ev.id) : null });
   })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 22, borderTop: "0.5px solid var(--border)", paddingTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-subtle)", marginBottom: 14 } }, "Pr\xF3ximos 14 d\xEDas"), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 12 } }, "Sin eventos pr\xF3ximos") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, upcoming.map((ev) => {
-    const c = EVENT_COLORS[ev.type] || EVENT_COLORS.custom;
     const d = /* @__PURE__ */ new Date(ev.date + "T12:00:00");
     const isToday2 = ev.date === today;
     return /* @__PURE__ */ React.createElement(
@@ -484,7 +478,7 @@ const AgendaPage = ({ navigate }) => {
         background: isToday2 ? "var(--accent)" : "var(--bg-elev-2)"
       } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 600, letterSpacing: "-0.5px", color: isToday2 ? "#fff" : "var(--text)", lineHeight: 1 } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 8, textTransform: "uppercase", letterSpacing: "0.04em", marginTop: 2, color: isToday2 ? "rgba(255,255,255,0.8)" : "var(--text-subtle)" } }, DAYS_ES[(d.getDay() + 6) % 7])),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.title), ev.sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.sub)),
-      /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: "50%", background: c.dot, flexShrink: 0 } })
+      /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: "50%", background: "rgba(255,255,255,0.4)", flexShrink: 0 } })
     );
   }))))), showForm && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
     "div",
