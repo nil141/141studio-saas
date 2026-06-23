@@ -143,6 +143,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
       case "agentes": return <AgentesPage navigate={navigate}/>;
+      case "agente": return <AgenteDetail navigate={navigate} agentId={view.params.agentId}/>;
       case "nora": return <NoraPage/>;
       case "billing": return null; // rendered always below
       case "mail": return null; // rendered always below

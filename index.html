@@ -708,6 +708,12 @@
   .tasks-mobile-header { display: none; }
   .tasks-desktop-header { display: flex; align-items: center; justify-content: space-between; }
   .mobile-pill-inline { display: none !important; }
+  /* Ficha de agente: 2 columnas que se apilan en pantallas estrechas */
+  .agente-info { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
+  .agente-main { display: grid; grid-template-columns: minmax(0,1.7fr) minmax(0,1fr); gap: 16px; align-items: start; }
+  @media (max-width: 900px) {
+    .agente-info, .agente-main { grid-template-columns: 1fr; }
+  }
   /* Agenda: en pantallas medianas el panel se estrecha para dar aire a los días */
   @media (max-width: 1240px) { .agenda-drawer { width: 232px !important; } }
   @media (max-width: 768px) {
