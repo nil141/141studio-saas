@@ -282,6 +282,62 @@ def api_agents_list(body):
         })
     return {"ok": True, "agents": agents}
 
+# ── Magnific / Freepik (texto → imagen) ─────────────────────────────────────
+# Usa el endpoint clásico síncrono: POST /v1/ai/text-to-image devuelve las
+# imágenes en base64 directamente, sin polling. La API key se lee del entorno
+# (Railway), nunca del repo. Soporta FREEPIK_API_KEY o MAGNIFIC_API_KEY.
+
+def _freepik_key():
+    return os.environ.get("FREEPIK_API_KEY") or os.environ.get("MAGNIFIC_API_KEY")
+
+def api_agents_image(body):
+    api_key = _freepik_key()
+    if not api_key:
+        return {"ok": False, "error": "Falta FREEPIK_API_KEY en el entorno del servidor"}
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        return {"ok": False, "error": "Escribe una descripción para generar la imagen"}
+
+    num = body.get("num_images")
+    try:    num = max(1, min(4, int(num)))
+    except Exception: num = 1
+    size = body.get("size") or "square_1_1"
+
+    payload = {
+        "prompt": prompt,
+        "num_images": num,
+        "image": {"size": size},
+        "filter_nsfw": True,
+    }
+    if body.get("negative_prompt"):
+        payload["negative_prompt"] = str(body["negative_prompt"])
+
+    req = urllib.request.Request(
+        "https://api.freepik.com/v1/ai/text-to-image",
+        data=json.dumps(payload).encode("utf-8"),
+        method="POST",
+    )
+    req.add_header("Content-Type", "application/json")
+    req.add_header("x-freepik-api-key", api_key)
+    try:
+        with urllib.request.urlopen(req, timeout=90) as r:
+            data = json.loads(r.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:    msg = json.loads(e.read().decode()).get("message") or json.loads(e.read().decode()).get("error", str(e))
+        except Exception: msg = f"Error {e.code} de Freepik"
+        return {"ok": False, "error": str(msg)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    images = []
+    for item in data.get("data", []):
+        b64 = item.get("base64")
+        if b64:
+            images.append("data:image/png;base64," + b64)
+    if not images:
+        return {"ok": False, "error": "La API no devolvió ninguna imagen"}
+    return {"ok": True, "images": images, "prompt": prompt}
+
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
 def _stripe_auth():
@@ -656,6 +712,7 @@ STRIPE_HANDLERS = {
 
 AGENTS_HANDLERS = {
     "list": api_agents_list,
+    "image": api_agents_image,
 }
 
 class Handler(SimpleHTTPRequestHandler):
