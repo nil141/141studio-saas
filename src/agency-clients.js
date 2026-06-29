@@ -3,14 +3,11 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   D.useStore();
   const confirm = useConfirm();
   const toast = useToast();
-  const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
   const [menuOpen, setMenuOpen] = useState(null);
-  const filtered = D.CLIENTS.filter((c) => {
-    if (filter !== "all" && c.status !== filter) return false;
-    if (q && !(c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = D.CLIENTS.filter(
+    (c) => !q || (c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())
+  );
   const removeClient = async (c) => {
     setMenuOpen(null);
     const projectsCount = D.PROJECTS.filter((p) => p.clientId === c.id).length;
@@ -25,24 +22,46 @@ const AgencyClientsList = ({ navigate, openModal }) => {
       toast(`${c.company} eliminado`, "success");
     }
   };
-  return /* @__PURE__ */ React.createElement("div", { className: "page", onClick: () => setMenuOpen(null) }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, D.CLIENTS.length, " en total \xB7 ", D.CLIENTS.filter((c) => c.status === "active").length, " activos")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => openModal("invite") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14 }), " Invitar cliente"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "search", style: { maxWidth: 380 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14 }), /* @__PURE__ */ React.createElement("input", { placeholder: "Buscar por nombre, empresa, email\u2026", value: q, onChange: (e) => setQ(e.target.value) })), /* @__PURE__ */ React.createElement("div", { className: "seg" }, [{ id: "all", label: "Todos" }, { id: "active", label: "Activos" }, { id: "review", label: "Revisi\xF3n" }, { id: "paused", label: "Pausados" }].map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, className: filter === f.id ? "active" : "", onClick: () => setFilter(f.id) }, f.label)))), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, filtered.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "No hay clientes que coincidan con tus filtros." }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { style: { width: "52%" } }, "Cliente"), /* @__PURE__ */ React.createElement("th", null, "Servicio"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 52 } }))), /* @__PURE__ */ React.createElement("tbody", null, filtered.map((c) => /* @__PURE__ */ React.createElement("tr", { key: c.id, onClick: () => navigate("clientDetail", { clientId: c.id }) }, /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(Avatar, { name: c.name, initials: c.initials, color: c.color }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, c.company), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, c.name, c.email ? " \xB7 " + c.email : "")))), /* @__PURE__ */ React.createElement("td", null, c.service && c.service !== "\u2014" ? /* @__PURE__ */ React.createElement("span", { className: "chip" }, c.service) : /* @__PURE__ */ React.createElement("span", { className: "subtle" }, "\u2014")), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StatusChip, { status: c.status })), /* @__PURE__ */ React.createElement("td", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => setMenuOpen(menuOpen === c.id ? null : c.id) }, /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 14 })), menuOpen === c.id && /* @__PURE__ */ React.createElement("div", { style: {
-    position: "absolute",
-    right: 12,
-    top: "calc(100% - 6px)",
-    zIndex: 10,
-    background: "var(--bg-elev)",
-    border: "0.5px solid var(--border-strong)",
-    borderRadius: 10,
-    padding: 4,
-    minWidth: 180,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
-  } }, /* @__PURE__ */ React.createElement(MenuItem, { icon: "edit", onClick: () => {
-    setMenuOpen(null);
-    navigate("clientDetail", { clientId: c.id });
-  } }, "Ver detalle"), /* @__PURE__ */ React.createElement(MenuItem, { icon: "archive", onClick: () => {
-    setMenuOpen(null);
-    toast("Cliente archivado");
-  } }, "Archivar"), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--border)", margin: "4px 0" } }), /* @__PURE__ */ React.createElement(MenuItem, { icon: "x", danger: true, onClick: () => removeClient(c) }, "Eliminar"))))))))));
+  return /* @__PURE__ */ React.createElement("div", { className: "page", onClick: () => setMenuOpen(null) }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, D.CLIENTS.length, " en total \xB7 ", D.CLIENTS.filter((c) => c.status === "active").length, " activos")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => openModal("invite") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14 }), " Invitar cliente"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "search", style: { maxWidth: 380 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14 }), /* @__PURE__ */ React.createElement("input", { placeholder: "Buscar cliente\u2026", value: q, onChange: (e) => setQ(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, filtered.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }) : filtered.map((c, i) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: c.id,
+      onClick: () => navigate("clientDetail", { clientId: c.id }),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        padding: "13px 18px",
+        cursor: "pointer",
+        transition: "background .1s",
+        borderBottom: i === filtered.length - 1 ? "0" : "0.5px solid var(--border)"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement(Avatar, { name: c.name, initials: c.initials, color: c.color }),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.company), (c.name || c.email) && /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.name, c.email ? " \xB7 " + c.email : "")),
+    c.service && c.service !== "\u2014" && /* @__PURE__ */ React.createElement("span", { className: "chip", style: { flexShrink: 0 } }, c.service),
+    /* @__PURE__ */ React.createElement(StatusChip, { status: c.status }),
+    /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => setMenuOpen(menuOpen === c.id ? null : c.id) }, /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 14 })), menuOpen === c.id && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      right: 0,
+      top: "calc(100% - 2px)",
+      zIndex: 10,
+      background: "var(--bg-elev)",
+      border: "0.5px solid var(--border-strong)",
+      borderRadius: 10,
+      padding: 4,
+      minWidth: 180,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
+    } }, /* @__PURE__ */ React.createElement(MenuItem, { icon: "edit", onClick: () => {
+      setMenuOpen(null);
+      navigate("clientDetail", { clientId: c.id });
+    } }, "Ver detalle"), /* @__PURE__ */ React.createElement(MenuItem, { icon: "archive", onClick: () => {
+      setMenuOpen(null);
+      toast("Cliente archivado");
+    } }, "Archivar"), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--border)", margin: "4px 0" } }), /* @__PURE__ */ React.createElement(MenuItem, { icon: "x", danger: true, onClick: () => removeClient(c) }, "Eliminar")))
+  )))));
 };
 const MenuItem = ({ icon, onClick, children, danger }) => /* @__PURE__ */ React.createElement(
   "button",

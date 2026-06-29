@@ -4,15 +4,12 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   D.useStore();
   const confirm = useConfirm();
   const toast = useToast();
-  const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
   const [menuOpen, setMenuOpen] = useState(null);
 
-  const filtered = D.CLIENTS.filter(c => {
-    if (filter !== "all" && c.status !== filter) return false;
-    if (q && !(c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())) return false;
-    return true;
-  });
+  const filtered = D.CLIENTS.filter(c =>
+    !q || (c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())
+  );
 
   const removeClient = async (c) => {
     setMenuOpen(null);
@@ -48,61 +45,51 @@ const AgencyClientsList = ({ navigate, openModal }) => {
         <div className="card-header">
           <div className="search" style={{maxWidth: 380}}>
             <Icon name="search" size={14}/>
-            <input placeholder="Buscar por nombre, empresa, email…" value={q} onChange={e => setQ(e.target.value)}/>
-          </div>
-          <div className="seg">
-            {[{id:"all",label:"Todos"},{id:"active",label:"Activos"},{id:"review",label:"Revisión"},{id:"paused",label:"Pausados"}].map(f => (
-              <button key={f.id} className={filter === f.id ? "active" : ""} onClick={() => setFilter(f.id)}>{f.label}</button>
-            ))}
+            <input placeholder="Buscar cliente…" value={q} onChange={e => setQ(e.target.value)}/>
           </div>
         </div>
         <div className="card-body flush">
           {filtered.length === 0 ? (
-            <Empty icon="users" title="Sin clientes" sub="No hay clientes que coincidan con tus filtros."/>
-          ) : (
-          <table className="table">
-            <thead>
-              <tr>
-                <th style={{width: "52%"}}>Cliente</th>
-                <th>Servicio</th>
-                <th>Estado</th>
-                <th style={{width: 52}}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(c => (
-                <tr key={c.id} onClick={() => navigate("clientDetail", { clientId: c.id })}>
-                  <td>
-                    <div className="row tight">
-                      <Avatar name={c.name} initials={c.initials} color={c.color}/>
-                      <div>
-                        <div style={{fontWeight: 500, fontSize: 13.5}}>{c.company}</div>
-                        <div className="subtle xsmall">{c.name}{c.email ? " · " + c.email : ""}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{c.service && c.service !== "—" ? <span className="chip">{c.service}</span> : <span className="subtle">—</span>}</td>
-                  <td><StatusChip status={c.status}/></td>
-                  <td style={{position:"relative"}} onClick={e => e.stopPropagation()}>
-                    <button className="btn ghost icon-only sm" onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}>
-                      <Icon name="more-h" size={14}/>
-                    </button>
-                    {menuOpen === c.id && (
-                      <div style={{position:"absolute", right: 12, top: "calc(100% - 6px)", zIndex: 10,
-                        background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
-                        borderRadius: 10, padding: 4, minWidth: 180, boxShadow:"0 8px 24px rgba(0,0,0,0.3)"}}>
-                        <MenuItem icon="edit" onClick={() => { setMenuOpen(null); navigate("clientDetail", { clientId: c.id }); }}>Ver detalle</MenuItem>
-                        <MenuItem icon="archive" onClick={() => { setMenuOpen(null); toast("Cliente archivado"); }}>Archivar</MenuItem>
-                        <div style={{height: 1, background: "var(--border)", margin: "4px 0"}}/>
-                        <MenuItem icon="x" danger onClick={() => removeClient(c)}>Eliminar</MenuItem>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          )}
+            <Empty icon="users" title="Sin clientes" sub="Añade tu primer cliente para empezar."/>
+          ) : filtered.map((c, i) => (
+            <div key={c.id}
+              onClick={() => navigate("clientDetail", { clientId: c.id })}
+              style={{
+                display:"flex", alignItems:"center", gap:14,
+                padding:"13px 18px", cursor:"pointer", transition:"background .1s",
+                borderBottom: i === filtered.length - 1 ? "0" : "0.5px solid var(--border)",
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              <Avatar name={c.name} initials={c.initials} color={c.color}/>
+              <div style={{flex:1, minWidth:0}}>
+                <div style={{fontWeight:500, fontSize:14, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{c.company}</div>
+                {(c.name || c.email) && (
+                  <div className="subtle xsmall" style={{overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+                    {c.name}{c.email ? " · " + c.email : ""}
+                  </div>
+                )}
+              </div>
+              {c.service && c.service !== "—" && <span className="chip" style={{flexShrink:0}}>{c.service}</span>}
+              <StatusChip status={c.status}/>
+              <div style={{position:"relative", flexShrink:0}} onClick={e => e.stopPropagation()}>
+                <button className="btn ghost icon-only sm" onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}>
+                  <Icon name="more-h" size={14}/>
+                </button>
+                {menuOpen === c.id && (
+                  <div style={{position:"absolute", right: 0, top: "calc(100% - 2px)", zIndex: 10,
+                    background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
+                    borderRadius: 10, padding: 4, minWidth: 180, boxShadow:"0 8px 24px rgba(0,0,0,0.3)"}}>
+                    <MenuItem icon="edit" onClick={() => { setMenuOpen(null); navigate("clientDetail", { clientId: c.id }); }}>Ver detalle</MenuItem>
+                    <MenuItem icon="archive" onClick={() => { setMenuOpen(null); toast("Cliente archivado"); }}>Archivar</MenuItem>
+                    <div style={{height: 1, background: "var(--border)", margin: "4px 0"}}/>
+                    <MenuItem icon="x" danger onClick={() => removeClient(c)}>Eliminar</MenuItem>
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>
