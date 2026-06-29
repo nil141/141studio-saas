@@ -55,15 +55,11 @@ const AssistantPanel = ({ open, onClose }) => {
     setInput("");
     setBusy(true);
     try {
-      const conversation = next.map((m) => (m.role === "user" ? "Andr\xE9s" : "Nora") + ": " + m.content).join("\n") + "\nNora:";
-      const r = await fetch("/api/agents/nora", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: ASSISTANT_SYSTEM, conversation })
+      const reply = await window.claude.complete({
+        messages: [
+          { role: "user", content: ASSISTANT_SYSTEM + "\n\n---\n\nConversaci\xF3n hasta ahora:\n" + next.map((m) => (m.role === "user" ? "Andr\xE9s" : "Nora") + ": " + m.content).join("\n") + "\n\nNora:" }
+        ]
       });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error || "fallo");
-      const reply = data.reply;
       const { text: cleanText, tasks: parsedTasks } = parseAssistantReply(reply);
       setMessages((m) => {
         const copy = [...m];
@@ -276,15 +272,9 @@ const NoraPage = () => {
     setInput("");
     setBusy(true);
     try {
-      const conversation = history.map((m) => (m.role === "user" ? "T\xFA" : "Nora") + ": " + m.content).join("\n") + "\nNora:";
-      const r = await fetch("/api/agents/nora", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ system: ASSISTANT_SYSTEM, conversation })
+      const reply = await window.claude.complete({
+        messages: [{ role: "user", content: ASSISTANT_SYSTEM + "\n\n---\n\nConversaci\xF3n:\n" + history.map((m) => (m.role === "user" ? "T\xFA" : "Nora") + ": " + m.content).join("\n") + "\n\nNora:" }]
       });
-      const data = await r.json();
-      if (!data.ok) throw new Error(data.error || "fallo");
-      const reply = data.reply;
       const { text: cleanText, tasks: parsedTasks } = parseAssistantReply(reply);
       setMessages((m) => {
         const c = [...m];

@@ -9,7 +9,7 @@ URL:  http://localhost:8080
 """
 import os, sys, json, re, imaplib, smtplib, email, traceback, secrets, random
 import urllib.request, urllib.parse, urllib.error, base64, time, datetime
-from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
+from http.server import HTTPServer, SimpleHTTPRequestHandler
 from email.header  import decode_header as _dh
 from email.mime.text      import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -246,97 +246,6 @@ def api_action(body):
     finally:
         try: imap.logout()
         except: pass
-
-# ── Agents (Claude) ────────────────────────────────────────────────────────
-
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-
-CLIENTE_DEFECTO = {
-    "nombre": "Gust i Tradicio",
-    "tipo": "Restaurante catalan de producto local y de temporada",
-    "idioma_copy": "catalan",
-    "tono": "Elegante, sobrio, limpio. Sin emojis decorativos. Sin exceso de "
-            "exclamaciones. Sin descuentos agresivos.",
-    "eje": "La puresa de l'origen",
-    "contexto": "Chef Josep Quintana, recorrido en cocina de nivel. ~30 cubiertos. "
-                "Cocina catalana de proximidad, producto de temporada, oficio y calma.",
-    "hacer": "Producto de temporada, origen, proceso, oficio, calidad.",
-    "evitar": "Emojis decorativos, hashtags genericos en ingles, tono hortera.",
-}
-
-AGENT_SOCIAL_SYSTEM = """Eres un subagente especialista en contenido de Instagram de la agencia 141'STUDIO.
-Generas piezas para un cliente respetando ESCRUPULOSAMENTE su ficha de marca.
-- El copy se escribe en el idioma indicado en la ficha del cliente.
-- Respeta el tono exacto: lo que dice "evitar" no aparece nunca.
-- El brief de imagen va en INGLES, concreto: encuadre, luz, sujeto, mood.
-- Mezcla formatos de forma logica para una semana real.
-Devuelves UNICAMENTE un objeto JSON valido, sin texto antes ni despues, sin ``` ni markdown:
-{
-  "estrategia_semana": "1-2 frases",
-  "piezas": [
-    {"dia":"Dilluns","formato":"post|carrusel|reel|story","tema":"...","copy":"...","hashtags":["#..."],"brief_imagen":"image brief in English"}
-  ]
-}
-"""
-
-def _claude_call(system, user_text, max_tokens=4000):
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
-    if not api_key:
-        raise RuntimeError("Falta ANTHROPIC_API_KEY en el entorno del servidor")
-    payload = json.dumps({
-        "model": ANTHROPIC_MODEL,
-        "max_tokens": max_tokens,
-        "system": system,
-        "messages": [{"role": "user", "content": user_text}],
-    }).encode("utf-8")
-    req = urllib.request.Request(
-        "https://api.anthropic.com/v1/messages",
-        data=payload, method="POST",
-        headers={
-            "x-api-key": api_key,
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        data = json.loads(resp.read().decode("utf-8"))
-    return "".join(b.get("text","") for b in data.get("content",[]) if b.get("type")=="text")
-
-def _parse_json(texto):
-    limpio = texto.strip()
-    if limpio.startswith("```"):
-        limpio = limpio.strip("`")
-        if limpio.lstrip().lower().startswith("json"):
-            limpio = limpio.lstrip()[4:]
-    try:
-        return json.loads(limpio)
-    except json.JSONDecodeError:
-        ini, fin = limpio.find("{"), limpio.rfind("}")
-        if ini != -1 and fin != -1:
-            return json.loads(limpio[ini:fin+1])
-        raise
-
-def api_agents_social(body):
-    cliente = body.get("cliente") or CLIENTE_DEFECTO
-    encargo = body.get("encargo", "Contenido de Instagram para esta semana.")
-    num     = body.get("num_piezas", 5)
-    user = (f"Cliente:\n{json.dumps(cliente, ensure_ascii=False, indent=2)}\n\n"
-            f"Encargo: {encargo}\nGenera exactamente {num} piezas.\nResponde SOLO con el JSON.")
-    texto = _claude_call(AGENT_SOCIAL_SYSTEM, user)
-    try:
-        resultado = _parse_json(texto)
-    except Exception:
-        return {"ok": False, "error": "respuesta_no_json", "raw": texto}
-    return {"ok": True, **resultado}
-
-def api_agents_nora(body):
-    system       = body.get("system", "")
-    conversation = body.get("conversation", "")
-    try:
-        reply = _claude_call(system, conversation)
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-    return {"ok": True, "reply": reply}
 
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
@@ -702,11 +611,6 @@ MAIL_HANDLERS = {
     "action":   api_action,
 }
 
-AGENTS_HANDLERS = {
-    "social": api_agents_social,
-    "nora":   api_agents_nora,
-}
-
 STRIPE_HANDLERS = {
     "balance":         api_stripe_balance,
     "invoices":        api_stripe_invoices,
@@ -744,8 +648,6 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api(self.path[len("/api/invite/"):], INVITE_HANDLERS)
         elif self.path.startswith("/api/auth/"):
             self._handle_api(self.path[len("/api/auth/"):], AUTH_HANDLERS)
-        elif self.path.startswith("/api/agents/"):
-            self._handle_api(self.path[len("/api/agents/"):], AGENTS_HANDLERS)
         else:
             self.send_error(405)
 
@@ -771,7 +673,7 @@ class Handler(SimpleHTTPRequestHandler):
             print(f"  {self.address_string()} {fmt % args}")
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("", PORT), Handler)
+    server = HTTPServer(("", PORT), Handler)
     print(f"\n  141'STUDIO  →  http://localhost:{PORT}\n  Ctrl+C para parar\n")
     try:
         server.serve_forever()
