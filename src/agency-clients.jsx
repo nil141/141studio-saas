@@ -63,9 +63,8 @@ const AgencyClientsList = ({ navigate, openModal }) => {
           <table className="table">
             <thead>
               <tr>
-                <th style={{width: "46%"}}>Cliente</th>
+                <th style={{width: "52%"}}>Cliente</th>
                 <th>Servicio</th>
-                <th style={{textAlign:"right"}}>MRR</th>
                 <th>Estado</th>
                 <th style={{width: 52}}></th>
               </tr>
@@ -83,7 +82,6 @@ const AgencyClientsList = ({ navigate, openModal }) => {
                     </div>
                   </td>
                   <td>{c.service && c.service !== "—" ? <span className="chip">{c.service}</span> : <span className="subtle">—</span>}</td>
-                  <td style={{textAlign:"right", fontVariantNumeric:"tabular-nums"}}>{c.mrr ? "€" + c.mrr : <span className="subtle">—</span>}</td>
                   <td><StatusChip status={c.status}/></td>
                   <td style={{position:"relative"}} onClick={e => e.stopPropagation()}>
                     <button className="btn ghost icon-only sm" onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}>
