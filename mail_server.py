@@ -809,6 +809,79 @@ AGENTS_HANDLERS = {
     "studio": api_agents_studio,
 }
 
+# ── Servidor MCP (puente para que un agente de Claude Console llame a Magnific) ──
+# Expone una sola herramienta `generar_imagen` por JSON-RPC (MCP Streamable HTTP).
+# Por dentro llama a Freepik con FREEPIK_API_KEY (del entorno). Se protege con un
+# token Bearer opcional (MCP_BEARER_TOKEN) que se guarda en un vault de Anthropic.
+
+MCP_PROTOCOL_VERSION = "2025-06-18"
+
+MCP_TOOLS = [{
+    "name": "generar_imagen",
+    "description": (
+        "Genera imágenes a partir de un prompt usando Magnific/Freepik. "
+        "Pásale un prompt detallado en inglés y devuelve la(s) imagen(es) generada(s). "
+        "Úsalo cuando el usuario pida crear, generar o producir imágenes."
+    ),
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "prompt": {"type": "string", "description": "Prompt detallado de la imagen (en inglés rinde mejor)."},
+            "num_images": {"type": "integer", "description": "Número de imágenes (1-4).", "default": 1},
+            "size": {"type": "string", "description": "Tamaño: square_1_1, social_story_9_16, widescreen_16_9, portrait_2_3.", "default": "square_1_1"},
+        },
+        "required": ["prompt"],
+    },
+}]
+
+def _mcp_generar_imagen(args):
+    prompt = (args.get("prompt") or "").strip()
+    if not prompt:
+        return {"content": [{"type": "text", "text": "Falta el prompt."}], "isError": True}
+    if not _freepik_key():
+        return {"content": [{"type": "text", "text": "El servidor no tiene FREEPIK_API_KEY configurada."}], "isError": True}
+    try:    num = max(1, min(4, int(args.get("num_images", 1))))
+    except Exception: num = 1
+    size = args.get("size") or "square_1_1"
+    try:
+        images = _freepik_generate(prompt, size, num)
+    except urllib.error.HTTPError as e:
+        return {"content": [{"type": "text", "text": _freepik_err(e)}], "isError": True}
+    except Exception as e:
+        return {"content": [{"type": "text", "text": str(e)}], "isError": True}
+    if not images:
+        return {"content": [{"type": "text", "text": "La API no devolvió ninguna imagen."}], "isError": True}
+    content = [{"type": "text", "text": f"{len(images)} imagen(es) generada(s) para: {prompt}"}]
+    for dataurl in images:
+        b64 = dataurl.split(",", 1)[1] if "," in dataurl else dataurl
+        content.append({"type": "image", "data": b64, "mimeType": "image/png"})
+    return {"content": content, "isError": False}
+
+def _mcp_dispatch(req):
+    """Procesa un mensaje JSON-RPC del protocolo MCP. Devuelve dict de respuesta o None (notificación)."""
+    method = req.get("method")
+    rid = req.get("id")
+    if method == "initialize":
+        return {"jsonrpc": "2.0", "id": rid, "result": {
+            "protocolVersion": MCP_PROTOCOL_VERSION,
+            "capabilities": {"tools": {}},
+            "serverInfo": {"name": "141-magnific", "version": "1.0.0"},
+        }}
+    if method in ("notifications/initialized", "notifications/cancelled"):
+        return None  # notificación: sin respuesta
+    if method == "ping":
+        return {"jsonrpc": "2.0", "id": rid, "result": {}}
+    if method == "tools/list":
+        return {"jsonrpc": "2.0", "id": rid, "result": {"tools": MCP_TOOLS}}
+    if method == "tools/call":
+        params = req.get("params") or {}
+        name = params.get("name")
+        args = params.get("arguments") or {}
+        if name == "generar_imagen":
+            return {"jsonrpc": "2.0", "id": rid, "result": _mcp_generar_imagen(args)}
+        return {"jsonrpc": "2.0", "id": rid, "error": {"code": -32601, "message": f"Herramienta desconocida: {name}"}}
+    return {"jsonrpc": "2.0", "id": rid, "error": {"code": -32601, "message": f"Método no soportado: {method}"}}
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
@@ -816,18 +889,68 @@ class Handler(SimpleHTTPRequestHandler):
     def _cors(self):
         self.send_header("Access-Control-Allow-Origin",  "*")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, Mcp-Session-Id, Mcp-Protocol-Version")
 
     def do_OPTIONS(self):
         self.send_response(200); self._cors(); self.end_headers()
 
     def do_GET(self):
+        # MCP no usa el canal GET (SSE saliente): respondemos 405 como indica el spec
+        if self.path.startswith("/mcp"):
+            self.send_response(405); self._cors(); self.end_headers()
+            return
         # SPA routing: serve index.html for /invite/* paths
         if self.path.startswith("/invite/"):
             self.path = "/index.html"
         super().do_GET()
 
+    def _mcp_authorized(self):
+        token = os.environ.get("MCP_BEARER_TOKEN")
+        if not token:
+            return True  # sin token configurado → abierto (recomendado configurarlo)
+        auth = self.headers.get("Authorization", "")
+        return auth == f"Bearer {token}"
+
+    def _handle_mcp(self):
+        if not self._mcp_authorized():
+            self.send_response(401); self._cors(); self.end_headers()
+            self.wfile.write(b'{"error":"no autorizado"}')
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length).decode("utf-8") if length else "{}"
+            msg = json.loads(raw)
+        except Exception as e:
+            self.send_response(400); self._cors(); self.end_headers()
+            self.wfile.write(json.dumps({"jsonrpc": "2.0", "id": None,
+                "error": {"code": -32700, "message": f"Parse error: {e}"}}).encode())
+            return
+        # Soporta batch (lista) o mensaje único
+        try:
+            if isinstance(msg, list):
+                out = [r for r in (_mcp_dispatch(m) for m in msg) if r is not None]
+                resp = json.dumps(out, ensure_ascii=False).encode("utf-8") if out else b""
+            else:
+                r = _mcp_dispatch(msg)
+                resp = json.dumps(r, ensure_ascii=False).encode("utf-8") if r is not None else b""
+        except Exception as e:
+            traceback.print_exc()
+            resp = json.dumps({"jsonrpc": "2.0", "id": msg.get("id") if isinstance(msg, dict) else None,
+                "error": {"code": -32603, "message": str(e)}}).encode()
+        if not resp:
+            self.send_response(202); self._cors(); self.end_headers()  # notificación
+            return
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(resp)))
+        self._cors()
+        self.end_headers()
+        self.wfile.write(resp)
+
     def do_POST(self):
+        if self.path == "/mcp" or self.path.startswith("/mcp"):
+            self._handle_mcp()
+            return
         if self.path.startswith("/api/mail/"):
             self._handle_api(self.path[len("/api/mail/"):], MAIL_HANDLERS)
         elif self.path.startswith("/api/stripe/"):
