@@ -329,6 +329,15 @@ def api_agents_social(body):
         return {"ok": False, "error": "respuesta_no_json", "raw": texto}
     return {"ok": True, **resultado}
 
+def api_agents_nora(body):
+    system       = body.get("system", "")
+    conversation = body.get("conversation", "")
+    try:
+        reply = _claude_call(system, conversation)
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    return {"ok": True, "reply": reply}
+
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
 def _stripe_auth():
@@ -695,6 +704,7 @@ MAIL_HANDLERS = {
 
 AGENTS_HANDLERS = {
     "social": api_agents_social,
+    "nora":   api_agents_nora,
 }
 
 STRIPE_HANDLERS = {
