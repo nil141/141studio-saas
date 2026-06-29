@@ -632,6 +632,8 @@ window.Data = {
   get SETTINGS()     { return _store.SETTINGS; },
   // Auth
   authLogin, authSignOut, initAccount,
+  // Re-fetch all data from Supabase (p. ej. al abrir una página)
+  reload: () => _loadAll(),
   // Supabase client (for onboarding)
   _sb, _SB_URL, _SB_KEY,
   // Mutators

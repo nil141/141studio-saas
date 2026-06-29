@@ -1,6 +1,9 @@
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
+  useEffect(() => {
+    D.reload && D.reload();
+  }, []);
   const clients = D.CLIENTS;
   const COLS = "1.3fr 1.2fr 1.7fr 1fr";
   const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
