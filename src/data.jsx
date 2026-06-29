@@ -153,24 +153,29 @@ const _loadAll = async () => {
     .upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
 
-  // Get profile to determine role and agency context
-  // If the profiles table doesn't exist, fall back to treating user as admin
+  // Get profile to determine role and agency context.
+  // SEGURIDAD: quien se registró por invitación lleva user_metadata.role = "client".
+  // A ese usuario NUNCA se le da rol admin, aunque le falte el perfil.
+  const metaRole = _store._user?.user_metadata?.role;
   let prof = null;
   try {
-    const { data: profData, error: profErr } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
-    if (profData) {
-      prof = profData;
-    } else if (!profErr || profErr.code === "PGRST116") {
-      // Table exists but no row — try to create one
-      const { data: created } = await _sb.from("profiles")
-        .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
-        .select().single();
-      prof = created;
-    }
-    // If profErr (e.g. table not found), prof stays null → fallback below
+    const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (profData) prof = profData;
   } catch(e) { /* ignore */ }
-  // Fallback: no profiles table or upsert failed → treat as single-admin
-  if (!prof) prof = { role: "admin", agency_id: uid };
+  if (!prof) {
+    if (metaRole === "client") {
+      // Cliente sin perfil completo → acceso de cliente, jamás admin
+      prof = { role: "client", agency_id: null, client_db_id: null };
+    } else {
+      // Dueño de la agencia (primer acceso) → admin + crear su perfil
+      try {
+        const { data: created } = await _sb.from("profiles")
+          .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
+          .select().single();
+        prof = created || { role: "admin", agency_id: uid };
+      } catch(e) { prof = { role: "admin", agency_id: uid }; }
+    }
+  }
 
   const agencyId   = prof.agency_id || uid;
   const isClient   = prof.role === "client";
@@ -243,25 +248,32 @@ const _setupRealtime = () => {
 const authLogin = async (email, password) => {
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
+  const uid = data.user.id;
+  // SEGURIDAD: un usuario registrado por invitación lleva user_metadata.role = "client".
+  // No se le concede admin aunque le falte el perfil.
+  const metaRole = data.user.user_metadata?.role;
   let prof = null;
   try {
-    const { data: profData } = await _sb.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
-    if (profData) {
-      prof = profData;
-    } else {
-      const uid = data.user.id;
-      const { data: created } = await _sb.from("profiles")
-        .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
-        .select().single();
-      prof = created;
-    }
+    const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (profData) prof = profData;
   } catch(e) { /* profiles table may not exist */ }
-  if (!prof) prof = { role: "admin", agency_id: data.user.id };
+  if (!prof) {
+    if (metaRole === "client") {
+      prof = { role: "client", agency_id: null, client_db_id: null };
+    } else {
+      try {
+        const { data: created } = await _sb.from("profiles")
+          .upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid })
+          .select().single();
+        prof = created || { role: "admin", agency_id: uid };
+      } catch(e) { prof = { role: "admin", agency_id: uid }; }
+    }
+  }
   return {
     ok: true,
     session: {
       email:      data.user.email,
-      role:       prof?.role || "admin",
+      role:       prof?.role || "client",
       name:       prof?.name || data.user.email,
       initials:   prof?.initials || data.user.email[0]?.toUpperCase() || "?",
       agencyId:   prof?.agency_id,

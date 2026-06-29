@@ -183,18 +183,25 @@ const _loadAll = async () => {
   const agencyEmail = _store._user?.email || "";
   const { error: agErr } = await _sb.from("agencies").upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
+  const metaRole = _store._user?.user_metadata?.role;
   let prof = null;
   try {
-    const { data: profData, error: profErr } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
-    if (profData) {
-      prof = profData;
-    } else if (!profErr || profErr.code === "PGRST116") {
-      const { data: created } = await _sb.from("profiles").upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid }).select().single();
-      prof = created;
-    }
+    const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (profData) prof = profData;
   } catch (e) {
   }
-  if (!prof) prof = { role: "admin", agency_id: uid };
+  if (!prof) {
+    if (metaRole === "client") {
+      prof = { role: "client", agency_id: null, client_db_id: null };
+    } else {
+      try {
+        const { data: created } = await _sb.from("profiles").upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid }).select().single();
+        prof = created || { role: "admin", agency_id: uid };
+      } catch (e) {
+        prof = { role: "admin", agency_id: uid };
+      }
+    }
+  }
   const agencyId = prof.agency_id || uid;
   const isClient = prof.role === "client";
   const clientDbId = prof.client_db_id;
@@ -255,24 +262,31 @@ const _setupRealtime = () => {
 const authLogin = async (email, password) => {
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
+  const uid = data.user.id;
+  const metaRole = data.user.user_metadata?.role;
   let prof = null;
   try {
-    const { data: profData } = await _sb.from("profiles").select("*").eq("id", data.user.id).maybeSingle();
-    if (profData) {
-      prof = profData;
-    } else {
-      const uid = data.user.id;
-      const { data: created } = await _sb.from("profiles").upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid }).select().single();
-      prof = created;
-    }
+    const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
+    if (profData) prof = profData;
   } catch (e) {
   }
-  if (!prof) prof = { role: "admin", agency_id: data.user.id };
+  if (!prof) {
+    if (metaRole === "client") {
+      prof = { role: "client", agency_id: null, client_db_id: null };
+    } else {
+      try {
+        const { data: created } = await _sb.from("profiles").upsert({ id: uid, role: "admin", name: "", initials: "", agency_id: uid }).select().single();
+        prof = created || { role: "admin", agency_id: uid };
+      } catch (e) {
+        prof = { role: "admin", agency_id: uid };
+      }
+    }
+  }
   return {
     ok: true,
     session: {
       email: data.user.email,
-      role: prof?.role || "admin",
+      role: prof?.role || "client",
       name: prof?.name || data.user.email,
       initials: prof?.initials || data.user.email[0]?.toUpperCase() || "?",
       agencyId: prof?.agency_id,
