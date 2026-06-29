@@ -247,6 +247,41 @@ def api_action(body):
         try: imap.logout()
         except: pass
 
+# ── Agents (Claude Managed Agents) ──────────────────────────────────────────
+ANTHROPIC_AGENTS_BETA = "managed-agents-2026-04-01"
+
+def _anthropic_get(path):
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("Falta ANTHROPIC_API_KEY en el entorno del servidor")
+    req = urllib.request.Request("https://api.anthropic.com/v1/" + path, method="GET")
+    req.add_header("x-api-key", api_key)
+    req.add_header("anthropic-version", "2023-06-01")
+    req.add_header("anthropic-beta", ANTHROPIC_AGENTS_BETA)
+    with urllib.request.urlopen(req, timeout=30) as r:
+        return json.loads(r.read().decode("utf-8"))
+
+def api_agents_list(body):
+    try:
+        data = _anthropic_get("agents?limit=100")
+    except urllib.error.HTTPError as e:
+        try:    msg = json.loads(e.read().decode()).get("error", {}).get("message", str(e))
+        except Exception: msg = str(e)
+        return {"ok": False, "error": msg}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    agents = []
+    for a in data.get("data", []):
+        m = a.get("model")
+        agents.append({
+            "id":          a.get("id"),
+            "name":        a.get("name"),
+            "model":       m if isinstance(m, str) else (m or {}).get("id"),
+            "description": a.get("description") or "",
+            "created_at":  a.get("created_at"),
+        })
+    return {"ok": True, "agents": agents}
+
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
 def _stripe_auth():
@@ -619,6 +654,10 @@ STRIPE_HANDLERS = {
     "create_invoice":  api_stripe_create_invoice,
 }
 
+AGENTS_HANDLERS = {
+    "list": api_agents_list,
+}
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
@@ -648,6 +687,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api(self.path[len("/api/invite/"):], INVITE_HANDLERS)
         elif self.path.startswith("/api/auth/"):
             self._handle_api(self.path[len("/api/auth/"):], AUTH_HANDLERS)
+        elif self.path.startswith("/api/agents/"):
+            self._handle_api(self.path[len("/api/agents/"):], AGENTS_HANDLERS)
         else:
             self.send_error(405)
 

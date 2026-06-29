@@ -25,7 +25,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         { id: "projects", label: "Proyectos", icon: "folder" },
         { id: "tasks", label: "Tareas", icon: "list-todo" },
         { id: "clients", label: "Clientes", icon: "users" },
-        { id: "campaigns", label: "Campa\xF1as", icon: "megaphone" }
+        { id: "campaigns", label: "Campa\xF1as", icon: "megaphone" },
+        { id: "agentes", label: "Agentes", icon: "sparkles" }
       ]
     },
     {

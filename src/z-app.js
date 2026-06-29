@@ -146,6 +146,8 @@ const App = () => {
         return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate });
       case "agenda":
         return /* @__PURE__ */ React.createElement(AgendaPage, { navigate });
+      case "agentes":
+        return /* @__PURE__ */ React.createElement(AgentesPage, { navigate });
       case "nora":
         return /* @__PURE__ */ React.createElement(NoraPage, null);
       case "billing":
