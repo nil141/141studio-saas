@@ -934,6 +934,21 @@ MCP_TOOLS = [{
     },
 }]
 
+# Almacén en memoria de imágenes generadas, servidas por URL (/img/<id>).
+# Evita devolver el base64 al agente (que dispararía el coste en tokens).
+PUBLIC_BASE = (os.environ.get("PUBLIC_BASE_URL") or "https://web-production-f9998.up.railway.app").rstrip("/")
+_GENERATED = {}
+_GENERATED_ORDER = []
+
+def _store_generated(b64):
+    img_id = os.urandom(6).hex()
+    _GENERATED[img_id] = b64
+    _GENERATED_ORDER.append(img_id)
+    while len(_GENERATED_ORDER) > 60:  # conserva solo las últimas 60
+        old = _GENERATED_ORDER.pop(0)
+        _GENERATED.pop(old, None)
+    return PUBLIC_BASE + "/img/" + img_id
+
 def _mcp_generar_imagen(args):
     prompt = (args.get("prompt") or "").strip()
     if not prompt:
@@ -951,11 +966,11 @@ def _mcp_generar_imagen(args):
         return {"content": [{"type": "text", "text": str(e)}], "isError": True}
     if not images:
         return {"content": [{"type": "text", "text": "La API no devolvió ninguna imagen."}], "isError": True}
-    content = [{"type": "text", "text": f"{len(images)} imagen(es) generada(s) para: {prompt}"}]
-    for dataurl in images:
-        b64 = dataurl.split(",", 1)[1] if "," in dataurl else dataurl
-        content.append({"type": "image", "data": b64, "mimeType": "image/png"})
-    return {"content": content, "isError": False}
+    # Guardamos cada imagen y devolvemos SOLO la URL (no el base64) para no inflar tokens.
+    urls = [_store_generated(d.split(",", 1)[1] if "," in d else d) for d in images]
+    txt = "%d imagen(es) generada(s). Comparte estas URLs con el usuario para que las vea:\n%s" % (
+        len(urls), "\n".join(urls))
+    return {"content": [{"type": "text", "text": txt}], "isError": False}
 
 def _mcp_dispatch(req):
     """Procesa un mensaje JSON-RPC del protocolo MCP. Devuelve dict de respuesta o None (notificación)."""
@@ -995,6 +1010,25 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200); self._cors(); self.end_headers()
 
     def do_GET(self):
+        # Imágenes generadas por el puente MCP: /img/<id> sirve el PNG
+        if self.path.startswith("/img/"):
+            img_id = self.path[len("/img/"):].split("?")[0]
+            b64 = _GENERATED.get(img_id)
+            if not b64:
+                self.send_response(404); self._cors(); self.end_headers()
+                self.wfile.write(b"not found")
+                return
+            try:    data = base64.b64decode(b64)
+            except Exception:
+                self.send_response(500); self._cors(); self.end_headers(); return
+            self.send_response(200)
+            self.send_header("Content-Type", "image/png")
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "public, max-age=86400")
+            self._cors()
+            self.end_headers()
+            self.wfile.write(data)
+            return
         # MCP no usa el canal GET (SSE saliente): respondemos 405 como indica el spec
         if self.path.startswith("/mcp"):
             self.send_response(405); self._cors(); self.end_headers()
