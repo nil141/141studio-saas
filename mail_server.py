@@ -261,6 +261,18 @@ def _anthropic_get(path):
     with urllib.request.urlopen(req, timeout=30) as r:
         return json.loads(r.read().decode("utf-8"))
 
+def _anthropic_post(path, payload):
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("Falta ANTHROPIC_API_KEY en el entorno del servidor")
+    req = urllib.request.Request("https://api.anthropic.com/v1/" + path,
+        data=json.dumps(payload).encode("utf-8"), method="POST")
+    req.add_header("x-api-key", api_key)
+    req.add_header("anthropic-version", "2023-06-01")
+    req.add_header("content-type", "application/json")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode("utf-8"))
+
 def api_agents_list(body):
     try:
         data = _anthropic_get("agents?limit=100")
@@ -290,28 +302,15 @@ def api_agents_list(body):
 def _freepik_key():
     return os.environ.get("FREEPIK_API_KEY") or os.environ.get("MAGNIFIC_API_KEY")
 
-def api_agents_image(body):
+def _freepik_generate(prompt, size, num=1):
+    """Llama al endpoint clásico de Freepik. Devuelve lista de data-URLs (base64)."""
     api_key = _freepik_key()
-    if not api_key:
-        return {"ok": False, "error": "Falta FREEPIK_API_KEY en el entorno del servidor"}
-    prompt = (body.get("prompt") or "").strip()
-    if not prompt:
-        return {"ok": False, "error": "Escribe una descripción para generar la imagen"}
-
-    num = body.get("num_images")
-    try:    num = max(1, min(4, int(num)))
-    except Exception: num = 1
-    size = body.get("size") or "square_1_1"
-
     payload = {
         "prompt": prompt,
-        "num_images": num,
+        "num_images": max(1, min(4, num)),
         "image": {"size": size},
         "filter_nsfw": True,
     }
-    if body.get("negative_prompt"):
-        payload["negative_prompt"] = str(body["negative_prompt"])
-
     req = urllib.request.Request(
         "https://api.freepik.com/v1/ai/text-to-image",
         data=json.dumps(payload).encode("utf-8"),
@@ -319,24 +318,118 @@ def api_agents_image(body):
     )
     req.add_header("Content-Type", "application/json")
     req.add_header("x-freepik-api-key", api_key)
-    try:
-        with urllib.request.urlopen(req, timeout=90) as r:
-            data = json.loads(r.read().decode("utf-8"))
-    except urllib.error.HTTPError as e:
-        try:    msg = json.loads(e.read().decode()).get("message") or json.loads(e.read().decode()).get("error", str(e))
-        except Exception: msg = f"Error {e.code} de Freepik"
-        return {"ok": False, "error": str(msg)}
-    except Exception as e:
-        return {"ok": False, "error": str(e)}
-
+    with urllib.request.urlopen(req, timeout=90) as r:
+        data = json.loads(r.read().decode("utf-8"))
     images = []
     for item in data.get("data", []):
         b64 = item.get("base64")
         if b64:
             images.append("data:image/png;base64," + b64)
+    return images
+
+def _freepik_err(e):
+    try:    return str(json.loads(e.read().decode()).get("message") or f"Error {e.code} de Freepik")
+    except Exception: return f"Error {e.code} de Freepik"
+
+def api_agents_image(body):
+    """Generación directa: el usuario escribe el prompt tal cual."""
+    if not _freepik_key():
+        return {"ok": False, "error": "Falta FREEPIK_API_KEY en el entorno del servidor"}
+    prompt = (body.get("prompt") or "").strip()
+    if not prompt:
+        return {"ok": False, "error": "Escribe una descripción para generar la imagen"}
+    num = body.get("num_images")
+    try:    num = max(1, min(4, int(num)))
+    except Exception: num = 1
+    size = body.get("size") or "square_1_1"
+    try:
+        images = _freepik_generate(prompt, size, num)
+    except urllib.error.HTTPError as e:
+        return {"ok": False, "error": _freepik_err(e)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
     if not images:
         return {"ok": False, "error": "La API no devolvió ninguna imagen"}
     return {"ok": True, "images": images, "prompt": prompt}
+
+# ── Agente de imágenes (Claude escribe los prompts + Magnific los ejecuta) ───
+# Flujo: el usuario pide algo en lenguaje natural → Claude (con skills de
+# prompt engineering) escribe N prompts optimizados → cada prompt se ejecuta
+# en Magnific/Freepik → se devuelven las imágenes junto al prompt que las creó.
+
+_STUDIO_SYSTEM = (
+    "Eres un director de arte y experto en prompt engineering para generación de imágenes "
+    "(Magnific / Freepik). El usuario te pedirá algo en lenguaje natural. Conviértelo en prompts "
+    "de altísima calidad, en INGLÉS (el modelo rinde mejor en inglés), detallados y cinematográficos: "
+    "cuida sujeto, composición, encuadre, iluminación, lente/cámara, materiales, paleta, estilo y nivel "
+    "de detalle. Cada prompt debe ser una VARIACIÓN distinta y claramente mejorada de lo que pide el usuario "
+    "(distintos ángulos, atmósferas o enfoques), no repeticiones. No incluyas texto dentro de la imagen salvo "
+    "que lo pidan. Devuelve EXCLUSIVAMENTE un JSON válido con la forma "
+    "{\"prompts\": [\"...\"]} con EXACTAMENTE el número de prompts solicitado, sin ningún texto adicional."
+)
+
+def _extract_prompts(text, n):
+    try:
+        start = text.index("{"); end = text.rindex("}") + 1
+        obj = json.loads(text[start:end])
+        ps = [str(p).strip() for p in (obj.get("prompts") or []) if str(p).strip()]
+        if ps: return ps[:n]
+    except Exception:
+        pass
+    lines = [l.strip(" -*0123456789.\t") for l in text.splitlines() if l.strip()]
+    lines = [l for l in lines if len(l) > 8]
+    return lines[:n]
+
+def _studio_make_prompts(instruction, n):
+    payload = {
+        "model": "claude-haiku-4-5-20251001",
+        "max_tokens": 2000,
+        "system": _STUDIO_SYSTEM,
+        "messages": [{"role": "user", "content":
+            f"Petición del usuario: {instruction}\n\nGenera exactamente {n} prompts."}],
+    }
+    data = _anthropic_post("messages", payload)
+    text = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+    return _extract_prompts(text, n)
+
+def api_agents_studio(body):
+    if not _freepik_key():
+        return {"ok": False, "error": "Falta FREEPIK_API_KEY en el entorno del servidor"}
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return {"ok": False, "error": "Falta ANTHROPIC_API_KEY en el entorno del servidor"}
+    instruction = (body.get("instruction") or "").strip()
+    if not instruction:
+        return {"ok": False, "error": "Escribe qué quieres que genere el agente"}
+    n = body.get("num_variations")
+    try:    n = max(1, min(12, int(n)))
+    except Exception: n = 4
+    size = body.get("size") or "square_1_1"
+
+    # 1) Claude escribe los prompts
+    try:
+        prompts = _studio_make_prompts(instruction, n)
+    except urllib.error.HTTPError as e:
+        try:    msg = json.loads(e.read().decode()).get("error", {}).get("message", str(e))
+        except Exception: msg = str(e)
+        return {"ok": False, "error": "El agente no pudo escribir los prompts: " + str(msg)}
+    except Exception as e:
+        return {"ok": False, "error": "El agente no pudo escribir los prompts: " + str(e)}
+    if not prompts:
+        return {"ok": False, "error": "El agente no devolvió ningún prompt"}
+
+    # 2) Magnific ejecuta cada prompt
+    items = []
+    for p in prompts:
+        try:
+            imgs = _freepik_generate(p, size, 1)
+            items.append({"prompt": p, "image": imgs[0] if imgs else None,
+                          "error": None if imgs else "Sin imagen"})
+        except urllib.error.HTTPError as e:
+            items.append({"prompt": p, "image": None, "error": _freepik_err(e)})
+        except Exception as e:
+            items.append({"prompt": p, "image": None, "error": str(e)})
+
+    return {"ok": True, "instruction": instruction, "items": items}
 
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
@@ -713,6 +806,7 @@ STRIPE_HANDLERS = {
 AGENTS_HANDLERS = {
     "list": api_agents_list,
     "image": api_agents_image,
+    "studio": api_agents_studio,
 }
 
 class Handler(SimpleHTTPRequestHandler):

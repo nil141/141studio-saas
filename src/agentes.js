@@ -5,27 +5,28 @@ const IMG_SIZES = [
   { id: "widescreen_16_9", label: "Horizontal \xB7 16:9" },
   { id: "portrait_2_3", label: "Retrato \xB7 2:3" }
 ];
+const IMG_COUNTS = [1, 2, 4, 6, 8, 12];
 const ImageStudio = () => {
-  const [prompt, setPrompt] = useState("");
+  const [instruction, setInstruction] = useState("");
   const [size, setSize] = useState("square_1_1");
-  const [num, setNum] = useState(1);
+  const [num, setNum] = useState(4);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [images, setImages] = useState([]);
+  const [items, setItems] = useState([]);
   const generate = async () => {
-    if (!prompt.trim() || loading) return;
+    if (!instruction.trim() || loading) return;
     setLoading(true);
     setError(null);
-    setImages([]);
+    setItems([]);
     try {
-      const r = await fetch("/api/agents/image", {
+      const r = await fetch("/api/agents/studio", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: prompt.trim(), size, num_images: num })
+        body: JSON.stringify({ instruction: instruction.trim(), size, num_variations: num })
       });
       const data = await r.json();
       if (!data.ok) throw new Error(data.error || "No se pudo generar");
-      setImages(data.images || []);
+      setItems(data.items || []);
     } catch (e) {
       setError(e.message || "Error de conexi\xF3n");
     }
@@ -39,6 +40,7 @@ const ImageStudio = () => {
     a.click();
     a.remove();
   };
+  const ok = items.filter((it) => it.image);
   return /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden", marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
@@ -56,15 +58,15 @@ const ImageStudio = () => {
     background: "var(--accent-soft)",
     border: "0.5px solid var(--border)",
     color: "var(--accent)"
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "image", size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.4px" } }, "Generador de im\xE1genes"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Texto \u2192 imagen con tu cuenta de Magnific"))), /* @__PURE__ */ React.createElement("div", { style: { padding: 18, display: "flex", flexDirection: "column", gap: 13 } }, /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "image", size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.4px" } }, "Agente de im\xE1genes"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "P\xEDdeselo en lenguaje natural \xB7 \xE9l escribe los prompts y los genera en Magnific"))), /* @__PURE__ */ React.createElement("div", { style: { padding: 18, display: "flex", flexDirection: "column", gap: 13 } }, /* @__PURE__ */ React.createElement(
     "textarea",
     {
-      value: prompt,
-      onChange: (e) => setPrompt(e.target.value),
+      value: instruction,
+      onChange: (e) => setInstruction(e.target.value),
       onKeyDown: (e) => {
         if ((e.metaKey || e.ctrlKey) && e.key === "Enter") generate();
       },
-      placeholder: "Describe la imagen que quieres crear\u2026 p. ej. \xABLogo minimalista de una agencia creativa, fondo negro, acento dorado\xBB",
+      placeholder: "P\xEDdele lo que quieras\u2026 p. ej. \xAB20 variaciones premium de un plato de pasta para una carta de restaurante, estilo editorial gastron\xF3mico\xBB",
       rows: 3,
       style: {
         width: "100%",
@@ -119,18 +121,18 @@ const ImageStudio = () => {
         cursor: "pointer"
       }
     },
-    [1, 2, 3, 4].map((n) => /* @__PURE__ */ React.createElement("option", { key: n, value: n }, n, " ", n === 1 ? "imagen" : "im\xE1genes"))
+    IMG_COUNTS.map((n) => /* @__PURE__ */ React.createElement("option", { key: n, value: n }, n, " ", n === 1 ? "variaci\xF3n" : "variaciones"))
   ), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "btn primary",
-      disabled: loading || !prompt.trim(),
+      disabled: loading || !instruction.trim(),
       onClick: generate,
-      style: { opacity: loading || !prompt.trim() ? 0.6 : 1 }
+      style: { opacity: loading || !instruction.trim() ? 0.6 : 1 }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 14 }),
-    loading ? "Generando\u2026" : "Generar"
-  )), error && /* @__PURE__ */ React.createElement("div", { style: {
+    loading ? "Trabajando\u2026" : "Generar"
+  )), loading && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "El agente est\xE1 escribiendo los prompts y generando las im\xE1genes\u2026 esto puede tardar un poco."), error && /* @__PURE__ */ React.createElement("div", { style: {
     padding: "10px 13px",
     borderRadius: 10,
     fontSize: 12.5,
@@ -141,7 +143,7 @@ const ImageStudio = () => {
     letterSpacing: "-0.2px"
   } }, error), loading && /* @__PURE__ */ React.createElement("div", { style: {
     display: "grid",
-    gridTemplateColumns: `repeat(${Math.min(num, 2)}, 1fr)`,
+    gridTemplateColumns: `repeat(${Math.min(num, 3)}, 1fr)`,
     gap: 12
   } }, Array.from({ length: num }).map((_, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
     aspectRatio: "1 / 1",
@@ -149,28 +151,29 @@ const ImageStudio = () => {
     background: "var(--bg-elev-2)",
     border: "0.5px solid var(--border)",
     animation: "pulse 1.4s ease-in-out infinite"
-  } }))), !loading && images.length > 0 && /* @__PURE__ */ React.createElement("div", { style: {
+  } }))), !loading && items.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", letterSpacing: "-0.2px" } }, ok.length, " de ", items.length, " ", items.length === 1 ? "imagen generada" : "im\xE1genes generadas"), /* @__PURE__ */ React.createElement("div", { style: {
     display: "grid",
-    gridTemplateColumns: `repeat(${Math.min(images.length, 2)}, 1fr)`,
+    gridTemplateColumns: `repeat(auto-fill, minmax(220px, 1fr))`,
     gap: 12
-  } }, images.map((src, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
-    position: "relative",
+  } }, items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
     borderRadius: 12,
     overflow: "hidden",
     border: "0.5px solid var(--border)",
-    background: "var(--bg-elev)"
-  } }, /* @__PURE__ */ React.createElement(
+    background: "var(--bg-elev)",
+    display: "flex",
+    flexDirection: "column"
+  } }, it.image ? /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement(
     "img",
     {
-      src,
-      alt: `Resultado ${i + 1}`,
+      src: it.image,
+      alt: `Variaci\xF3n ${i + 1}`,
       style: { display: "block", width: "100%", height: "auto" }
     }
   ), /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "btn sm",
-      onClick: () => download(src, i),
+      onClick: () => download(it.image, i),
       style: {
         position: "absolute",
         top: 8,
@@ -181,9 +184,29 @@ const ImageStudio = () => {
         backdropFilter: "blur(6px)"
       }
     },
-    /* @__PURE__ */ React.createElement(Icon, { name: "download", size: 13 }),
-    " Descargar"
-  ))))));
+    /* @__PURE__ */ React.createElement(Icon, { name: "download", size: 13 })
+  )) : /* @__PURE__ */ React.createElement("div", { style: {
+    aspectRatio: "1 / 1",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center",
+    padding: 14,
+    fontSize: 11.5,
+    color: "var(--red, #d33)",
+    background: "var(--bg-elev-2)"
+  } }, it.error || "No se pudo generar"), /* @__PURE__ */ React.createElement("div", { title: it.prompt, style: {
+    padding: "9px 11px",
+    fontSize: 11,
+    lineHeight: 1.4,
+    color: "var(--text-muted)",
+    letterSpacing: "-0.1px",
+    borderTop: "0.5px solid var(--border)",
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden"
+  } }, it.prompt)))))));
 };
 const AgentesPage = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
