@@ -605,12 +605,16 @@ const updateSettings = (changes) => {
 
 // ── INVITES (create from admin) ──────────────────────────────────────
 const createInvite = async (service = "") => {
-  const uid = _uid(); if (!uid) return null;
+  const uid = _uid();
+  if (!uid) return { error: "Sesión no válida — vuelve a iniciar sesión" };
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   const token = [...Array(24)].map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
   const { error } = await _sb.from("invites").insert({ token, agency_id: uid, service, used: false });
-  if (error) return null;
-  return token;
+  if (error) {
+    console.error("createInvite error:", error);
+    return { error: error.message || error.hint || "No se pudo crear la invitación" };
+  }
+  return { token };
 };
 
 // ── window.Data ──────────────────────────────────────────────────────

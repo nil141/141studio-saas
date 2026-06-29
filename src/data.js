@@ -178,10 +178,9 @@ const _ms = (r) => r && {
   tagline: r.tagline
 };
 const _loadAll = async () => {
-  var _a, _b, _c;
-  const uid = (_a = _store._user) == null ? void 0 : _a.id;
+  const uid = _store._user?.id;
   if (!uid) return;
-  const agencyEmail = ((_b = _store._user) == null ? void 0 : _b.email) || "";
+  const agencyEmail = _store._user?.email || "";
   const { error: agErr } = await _sb.from("agencies").upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
   let prof = null;
@@ -211,7 +210,7 @@ const _loadAll = async () => {
     _store.CLIENTS = [];
     _store.LEADS = [];
     _store.TASKS = {};
-    if ((_c = proj.data) == null ? void 0 : _c.length) {
+    if (proj.data?.length) {
       const pids = proj.data.map((p) => p.id);
       const { data: dData } = await _sb.from("deliverables").select("*").in("project_id", pids);
       _store.DELIVERABLES = (dData || []).map(_md);
@@ -245,8 +244,7 @@ const _loadAll = async () => {
 };
 let _channel = null;
 const _setupRealtime = () => {
-  var _a;
-  const uid = (_a = _store._user) == null ? void 0 : _a.id;
+  const uid = _store._user?.id;
   if (!uid) return;
   if (_channel) {
     _sb.removeChannel(_channel);
@@ -255,7 +253,6 @@ const _setupRealtime = () => {
   _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
-  var _a;
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
   let prof = null;
@@ -275,11 +272,11 @@ const authLogin = async (email, password) => {
     ok: true,
     session: {
       email: data.user.email,
-      role: (prof == null ? void 0 : prof.role) || "admin",
-      name: (prof == null ? void 0 : prof.name) || data.user.email,
-      initials: (prof == null ? void 0 : prof.initials) || ((_a = data.user.email[0]) == null ? void 0 : _a.toUpperCase()) || "?",
-      agencyId: prof == null ? void 0 : prof.agency_id,
-      clientId: prof == null ? void 0 : prof.client_db_id,
+      role: prof?.role || "admin",
+      name: prof?.name || data.user.email,
+      initials: prof?.initials || data.user.email[0]?.toUpperCase() || "?",
+      agencyId: prof?.agency_id,
+      clientId: prof?.client_db_id,
       adminEmail: data.user.email
       // backward compat with z-app
     }
@@ -303,11 +300,11 @@ const authSignOut = async () => {
 };
 const initAccount = async (_ignored) => {
   let { data: { session } } = await _sb.auth.getSession();
-  if (!(session == null ? void 0 : session.user)) {
+  if (!session?.user) {
     const { data: refreshed } = await _sb.auth.refreshSession();
-    session = refreshed == null ? void 0 : refreshed.session;
+    session = refreshed?.session;
   }
-  if (session == null ? void 0 : session.user) {
+  if (session?.user) {
     _store._user = session.user;
     await _loadAll();
     _setupRealtime();
@@ -315,16 +312,10 @@ const initAccount = async (_ignored) => {
     window.dispatchEvent(new CustomEvent("141-session-expired"));
   }
 };
-const _uid = () => {
-  var _a;
-  return (_a = _store._user) == null ? void 0 : _a.id;
-};
+const _uid = () => _store._user?.id;
 const _id = () => crypto.randomUUID();
 const _palette = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
-const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => {
-  var _a;
-  return ((_a = s[0]) == null ? void 0 : _a.toUpperCase()) || "";
-}).join("") || "??";
+const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase() || "").join("") || "??";
 const addClient = (input) => {
   const uid = _uid();
   if (!uid) return;
@@ -423,7 +414,7 @@ const addProject = (input) => {
     id: _id(),
     name: input.name || "Proyecto sin nombre",
     clientId: input.clientId,
-    clientName: (client == null ? void 0 : client.company) || "\u2014",
+    clientName: client?.company || "\u2014",
     service: input.template || "\u2014",
     light: "green",
     phase: 0,
@@ -488,8 +479,8 @@ const addInvoice = (input) => {
   const inv = {
     id: num,
     clientId: input.clientId,
-    project: (project == null ? void 0 : project.name) || "\u2014",
-    client: (client == null ? void 0 : client.company) || "\u2014",
+    project: project?.name || "\u2014",
+    client: client?.company || "\u2014",
     amount: Number(input.amount) || 0,
     type: input.type || "Extra",
     issued: "hoy",
@@ -698,12 +689,15 @@ const updateSettings = (changes) => {
 };
 const createInvite = async (service = "") => {
   const uid = _uid();
-  if (!uid) return null;
+  if (!uid) return { error: "Sesi\xF3n no v\xE1lida \u2014 vuelve a iniciar sesi\xF3n" };
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   const token = [...Array(24)].map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
   const { error } = await _sb.from("invites").insert({ token, agency_id: uid, service, used: false });
-  if (error) return null;
-  return token;
+  if (error) {
+    console.error("createInvite error:", error);
+    return { error: error.message || error.hint || "No se pudo crear la invitaci\xF3n" };
+  }
+  return { token };
 };
 window.Data = {
   // Static

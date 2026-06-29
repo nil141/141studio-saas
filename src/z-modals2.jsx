@@ -162,11 +162,11 @@ const InviteClientModal = ({ open, onClose, session }) => {
 
   const generate = async () => {
     setBusy(true);
-    const token = await window.Data.createInvite();
-    if (token) {
-      setLink(`${window.location.origin}/invite/${token}`);
+    const res = await window.Data.createInvite();
+    if (res && res.token) {
+      setLink(`${window.location.origin}/invite/${res.token}`);
     } else {
-      toast("Error al generar el enlace", "error");
+      toast(res?.error || "Error al generar el enlace", "error");
     }
     setBusy(false);
   };
