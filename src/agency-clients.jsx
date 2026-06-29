@@ -63,13 +63,11 @@ const AgencyClientsList = ({ navigate, openModal }) => {
           <table className="table">
             <thead>
               <tr>
-                <th style={{width: "26%"}}>Cliente</th>
+                <th style={{width: "46%"}}>Cliente</th>
                 <th>Servicio</th>
-                <th style={{textAlign:"right"}}>Proyectos</th>
                 <th style={{textAlign:"right"}}>MRR</th>
-                <th>Último contacto</th>
                 <th>Estado</th>
-                <th style={{width: 60}}></th>
+                <th style={{width: 52}}></th>
               </tr>
             </thead>
             <tbody>
@@ -80,14 +78,12 @@ const AgencyClientsList = ({ navigate, openModal }) => {
                       <Avatar name={c.name} initials={c.initials} color={c.color}/>
                       <div>
                         <div style={{fontWeight: 500, fontSize: 13.5}}>{c.company}</div>
-                        <div className="subtle xsmall">{c.name} · {c.email}</div>
+                        <div className="subtle xsmall">{c.name}{c.email ? " · " + c.email : ""}</div>
                       </div>
                     </div>
                   </td>
-                  <td><span className="chip">{c.service}</span></td>
-                  <td style={{textAlign:"right", fontVariantNumeric:"tabular-nums"}}>{c.projects}</td>
+                  <td>{c.service && c.service !== "—" ? <span className="chip">{c.service}</span> : <span className="subtle">—</span>}</td>
                   <td style={{textAlign:"right", fontVariantNumeric:"tabular-nums"}}>{c.mrr ? "€" + c.mrr : <span className="subtle">—</span>}</td>
-                  <td className="muted">{c.lastContact}</td>
                   <td><StatusChip status={c.status}/></td>
                   <td style={{position:"relative"}} onClick={e => e.stopPropagation()}>
                     <button className="btn ghost icon-only sm" onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}>
