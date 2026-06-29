@@ -212,6 +212,27 @@ const AgentesPage = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [agents, setAgents] = useState([]);
+  const [setupBusy, setSetupBusy] = useState(false);
+  const [setupMsg, setSetupMsg] = useState(null);
+  const setupAgent = async () => {
+    if (setupBusy) return;
+    setSetupBusy(true);
+    setSetupMsg(null);
+    try {
+      const r = await fetch("/api/agents/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: "141setup2026" })
+      });
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || "No se pudo crear");
+      setSetupMsg({ ok: true, text: data.secured ? "Agente creado y conectado a Magnific (con token)." : "Agente creado. \u26A0\uFE0F Sin MCP_BEARER_TOKEN: el puente queda abierto." });
+      await load();
+    } catch (e) {
+      setSetupMsg({ ok: false, text: e.message || "Error de conexi\xF3n" });
+    }
+    setSetupBusy(false);
+  };
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -317,7 +338,17 @@ const AgentesPage = ({ navigate }) => {
       letterSpacing: "-0.1px"
     } }, /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, a.id), a.created_at && /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, fmtDate(a.created_at)))
   );
-  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Agentes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Tu equipo de especialistas \xB7 creados en Claude Console")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: load }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14 }), " Actualizar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => window.open(AGENTS_CONSOLE_URL, "_blank") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo agente"))), /* @__PURE__ */ React.createElement(ImageStudio, null), loading ? /* @__PURE__ */ React.createElement("div", { style: { padding: "60px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 14 } }, "Cargando agentes\u2026") : error ? /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "28px 24px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text)", fontSize: 14, marginBottom: 6 } }, "No se pudieron cargar los agentes"), /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-muted)", fontSize: 13, marginBottom: 16 } }, error), /* @__PURE__ */ React.createElement("button", { className: "btn sm", onClick: load }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 13 }), " Reintentar")) : agents.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "40px 24px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Agentes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Tu equipo de especialistas \xB7 creados en Claude Console")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: load }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14 }), " Actualizar"), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: setupAgent, disabled: setupBusy }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 14 }), " ", setupBusy ? "Creando\u2026" : "Crear mi agente de im\xE1genes"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => window.open(AGENTS_CONSOLE_URL, "_blank") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo agente"))), setupMsg && /* @__PURE__ */ React.createElement("div", { style: {
+    padding: "10px 13px",
+    borderRadius: 10,
+    fontSize: 12.5,
+    lineHeight: 1.45,
+    marginBottom: 16,
+    letterSpacing: "-0.2px",
+    background: setupMsg.ok ? "var(--accent-soft)" : "var(--red-soft, rgba(220,60,60,.1))",
+    color: setupMsg.ok ? "var(--accent)" : "var(--red, #d33)",
+    border: "0.5px solid " + (setupMsg.ok ? "var(--accent)" : "var(--red, #d33)")
+  } }, setupMsg.text), /* @__PURE__ */ React.createElement(ImageStudio, null), loading ? /* @__PURE__ */ React.createElement("div", { style: { padding: "60px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 14 } }, "Cargando agentes\u2026") : error ? /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "28px 24px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text)", fontSize: 14, marginBottom: 6 } }, "No se pudieron cargar los agentes"), /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-muted)", fontSize: 13, marginBottom: 16 } }, error), /* @__PURE__ */ React.createElement("button", { className: "btn sm", onClick: load }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 13 }), " Reintentar")) : agents.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "40px 24px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 54,
     height: 54,
     borderRadius: 14,

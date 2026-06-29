@@ -194,6 +194,29 @@ const AgentesPage = ({ navigate }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState(null);
   const [agents, setAgents]   = useState([]);
+  const [setupBusy, setSetupBusy] = useState(false);
+  const [setupMsg, setSetupMsg]   = useState(null);
+
+  const setupAgent = async () => {
+    if (setupBusy) return;
+    setSetupBusy(true); setSetupMsg(null);
+    try {
+      const r = await fetch("/api/agents/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: "141setup2026" }),
+      });
+      const data = await r.json();
+      if (!data.ok) throw new Error(data.error || "No se pudo crear");
+      setSetupMsg({ ok: true, text: data.secured
+        ? "Agente creado y conectado a Magnific (con token)."
+        : "Agente creado. ⚠️ Sin MCP_BEARER_TOKEN: el puente queda abierto." });
+      await load();
+    } catch (e) {
+      setSetupMsg({ ok: false, text: e.message || "Error de conexión" });
+    }
+    setSetupBusy(false);
+  };
 
   const load = async () => {
     setLoading(true); setError(null);
@@ -276,11 +299,24 @@ const AgentesPage = ({ navigate }) => {
         </div>
         <div className="row tight">
           <button className="btn" onClick={load}><Icon name="refresh-cw" size={14}/> Actualizar</button>
+          <button className="btn" onClick={setupAgent} disabled={setupBusy}>
+            <Icon name="sparkles" size={14}/> {setupBusy ? "Creando…" : "Crear mi agente de imágenes"}
+          </button>
           <button className="btn primary" onClick={() => window.open(AGENTS_CONSOLE_URL, "_blank")}>
             <Icon name="plus" size={14}/> Nuevo agente
           </button>
         </div>
       </div>
+
+      {setupMsg && (
+        <div style={{
+          padding: "10px 13px", borderRadius: 10, fontSize: 12.5, lineHeight: 1.45, marginBottom: 16,
+          letterSpacing: "-0.2px",
+          background: setupMsg.ok ? "var(--accent-soft)" : "var(--red-soft, rgba(220,60,60,.1))",
+          color: setupMsg.ok ? "var(--accent)" : "var(--red, #d33)",
+          border: "0.5px solid " + (setupMsg.ok ? "var(--accent)" : "var(--red, #d33)"),
+        }}>{setupMsg.text}</div>
+      )}
 
       <ImageStudio/>
 

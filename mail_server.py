@@ -273,6 +273,20 @@ def _anthropic_post(path, payload):
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read().decode("utf-8"))
 
+def _anthropic_post_beta(path, payload):
+    """POST a la API de Anthropic con la cabecera beta de Managed Agents."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise RuntimeError("Falta ANTHROPIC_API_KEY en el entorno del servidor")
+    req = urllib.request.Request("https://api.anthropic.com/v1/" + path,
+        data=json.dumps(payload).encode("utf-8"), method="POST")
+    req.add_header("x-api-key", api_key)
+    req.add_header("anthropic-version", "2023-06-01")
+    req.add_header("anthropic-beta", ANTHROPIC_AGENTS_BETA)
+    req.add_header("content-type", "application/json")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.loads(r.read().decode("utf-8"))
+
 def api_agents_list(body):
     try:
         data = _anthropic_get("agents?limit=100")
@@ -430,6 +444,91 @@ def api_agents_studio(body):
             items.append({"prompt": p, "image": None, "error": str(e)})
 
     return {"ok": True, "instruction": instruction, "items": items}
+
+# ── Setup del Managed Agent (crea el agente en Claude Console, idempotente) ──
+MA_ENV_NAME      = "141-studio"
+MA_AGENT_NAME    = "Experto en Imágenes"
+MA_VAULT_NAME    = "141-magnific"
+MA_MCP_NAME      = "magnific"
+MA_DEFAULT_MCP_URL = "https://web-production-f9998.up.railway.app/mcp"
+MA_SYSTEM = (
+    "Eres un director de arte y experto en prompt engineering para generación de imágenes. "
+    "Cuando el usuario te pida algo, conviértelo en prompts detallados y cinematográficos en INGLÉS "
+    "(cuida sujeto, composición, encuadre, iluminación, lente, materiales, paleta, estilo y nivel de detalle) "
+    "y úsalos con tu herramienta `generar_imagen` para crear las imágenes. Si pide varias variaciones, "
+    "escribe prompts distintos entre sí y llama a la herramienta las veces necesarias. "
+    "Después, describe brevemente en español lo que has generado. No inventes URLs ni identificadores."
+)
+
+def _ma_find(path, name_field, name):
+    try:
+        data = _anthropic_get(path)
+    except Exception:
+        return None
+    for it in data.get("data", []):
+        if it.get(name_field) == name and not it.get("archived_at"):
+            return it
+    return None
+
+def api_agents_setup(body):
+    if body.get("secret") != os.environ.get("AGENT_SETUP_SECRET", "141setup2026"):
+        return {"ok": False, "error": "No autorizado"}
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        return {"ok": False, "error": "Falta ANTHROPIC_API_KEY en el entorno del servidor"}
+    mcp_url = (body.get("mcp_url") or MA_DEFAULT_MCP_URL).strip()
+    try:
+        # 1) Entorno (reutiliza si ya existe; nombre único)
+        env = _ma_find("environments?limit=100", "name", MA_ENV_NAME)
+        if not env:
+            env = _anthropic_post_beta("environments", {
+                "name": MA_ENV_NAME,
+                "config": {"type": "cloud", "networking": {"type": "unrestricted"}},
+            })
+        env_id = env.get("id")
+
+        # 2) Agente (crea o actualiza → nueva versión)
+        agent_payload = {
+            "name": MA_AGENT_NAME,
+            "model": "claude-opus-4-8",
+            "system": MA_SYSTEM,
+            "description": "Genera imágenes con Magnific a partir de tus peticiones en lenguaje natural.",
+            "mcp_servers": [{"type": "url", "name": MA_MCP_NAME, "url": mcp_url}],
+            "tools": [
+                {"type": "agent_toolset_20260401"},
+                {"type": "mcp_toolset", "mcp_server_name": MA_MCP_NAME},
+            ],
+        }
+        existing = _ma_find("agents?limit=100", "name", MA_AGENT_NAME)
+        agent = _anthropic_post_beta("agents/" + existing["id"], agent_payload) if existing \
+                else _anthropic_post_beta("agents", agent_payload)
+        agent_id = agent.get("id")
+
+        # 3) Vault + credencial bearer (solo si hay token configurado)
+        vault_id = None
+        token = os.environ.get("MCP_BEARER_TOKEN")
+        if token:
+            vault = _ma_find("vaults?limit=100", "display_name", MA_VAULT_NAME)
+            if not vault:
+                vault = _anthropic_post_beta("vaults", {"display_name": MA_VAULT_NAME})
+            vault_id = vault.get("id")
+            try:
+                _anthropic_post_beta("vaults/%s/credentials" % vault_id, {
+                    "display_name": "141 MCP bearer",
+                    "auth": {"type": "static_bearer", "mcp_server_url": mcp_url, "token": token},
+                })
+            except urllib.error.HTTPError as e:
+                if e.code != 409:  # 409 = ya existe esa credencial
+                    raise
+    except urllib.error.HTTPError as e:
+        try:    msg = json.loads(e.read().decode()).get("error", {}).get("message", str(e))
+        except Exception: msg = f"Error {e.code} de Anthropic"
+        return {"ok": False, "error": str(msg)}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+
+    return {"ok": True, "agent_id": agent_id, "environment_id": env_id,
+            "vault_id": vault_id, "mcp_url": mcp_url,
+            "secured": bool(os.environ.get("MCP_BEARER_TOKEN"))}
 
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
@@ -807,6 +906,7 @@ AGENTS_HANDLERS = {
     "list": api_agents_list,
     "image": api_agents_image,
     "studio": api_agents_studio,
+    "setup": api_agents_setup,
 }
 
 # ── Servidor MCP (puente para que un agente de Claude Console llame a Magnific) ──
