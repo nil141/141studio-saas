@@ -662,6 +662,32 @@ const generarContenidoSocial = async (clientId, encargo) => {
   return deliverableId;
 };
 
+// Lectura de deliverables del usuario actual (más recientes primero)
+const listDeliverables = async () => {
+  const uid = _uid(); if (!uid) return [];
+  const { data, error } = await _sb.from("deliverables")
+    .select("id, title, agent, status, client_id, created_at")
+    .eq("agency_id", uid)
+    .order("created_at", { ascending: false });
+  if (error) { console.error("[listDeliverables]", error.message); return []; }
+  return data || [];
+};
+
+// Un deliverable + sus piezas (ordenadas por 'orden' asc)
+const getDeliverable = async (deliverableId) => {
+  const uid = _uid(); if (!uid) return null;
+  const { data: deliverable, error: dErr } = await _sb.from("deliverables")
+    .select("id, title, agent, status, client_id, created_at")
+    .eq("agency_id", uid).eq("id", deliverableId).maybeSingle();
+  if (dErr) { console.error("[getDeliverable]", dErr.message); return null; }
+  const { data: pieces, error: pErr } = await _sb.from("pieces")
+    .select("*")
+    .eq("agency_id", uid).eq("deliverable_id", deliverableId)
+    .order("orden", { ascending: true });
+  if (pErr) console.error("[getDeliverable pieces]", pErr.message);
+  return { deliverable, pieces: pieces || [] };
+};
+
 // ── window.Data ──────────────────────────────────────────────────────
 window.Data = {
   // Static
@@ -689,6 +715,7 @@ window.Data = {
   updateSettings,
   createInvite,
   generarContenidoSocial,
+  listDeliverables, getDeliverable,
   useStore,
 };
 

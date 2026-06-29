@@ -151,7 +151,7 @@ const App = () => {
       case "agente":
         return /* @__PURE__ */ React.createElement(AgenteDetail, { navigate, agentId: view.params.agentId });
       case "revisar":
-        return /* @__PURE__ */ React.createElement(EntregableReview, { navigate, agentId: view.params.agentId });
+        return /* @__PURE__ */ React.createElement(EntregableReview, { navigate, agentId: view.params.agentId, deliverableId: view.params.deliverableId });
       case "nora":
         return /* @__PURE__ */ React.createElement(NoraPage, null);
       case "billing":

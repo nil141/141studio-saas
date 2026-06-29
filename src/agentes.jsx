@@ -8,12 +8,16 @@ const AGENT_STATUS = {
   paused:  { label: "En pausa",   dot: "var(--text-subtle)" },
 };
 
-// Estados de un entregable
+// Estados de un entregable (valores reales de la columna 'status')
 const DELIV_STATUS = {
-  pending:  { label: "Pendiente de revisar", color: "var(--amber)", soft: "var(--amber-soft)" },
-  approved: { label: "Aprobado",             color: "var(--green)", soft: "var(--green-soft)" },
-  rejected: { label: "Rechazado",            color: "var(--red)",   soft: "var(--red-soft)" },
+  en_revision: { label: "En revisión", color: "var(--amber)", soft: "var(--amber-soft)" },
+  listo:       { label: "Listo",       color: "var(--green)", soft: "var(--green-soft)" },
+  aprobado:    { label: "Aprobado",    color: "var(--green)", soft: "var(--green-soft)" },
+  rechazado:   { label: "Rechazado",   color: "var(--red)",   soft: "var(--red-soft)" },
 };
+
+// Mapa id de agente (UI) → columna 'agent' en la tabla deliverables
+const AGENT_COL = { social: "social_media" };
 
 // Datos de ejemplo (mock). "Social Media" va poblado del todo.
 const AGENTS = [
@@ -218,12 +222,27 @@ const AgenteDetail = ({ navigate, agentId }) => {
   const s = AGENT_STATUS[a.status] || AGENT_STATUS.active;
   const skills = a.skills || [a.skill];
   const chat = a.chat || [];
-  const deliverables = a.deliverables || [];
   const stats = [
     a.stat,
     a.status === "working" ? "Trabajando ahora" : "Estado: " + s.label,
     "Última actividad: " + (a.lastActivity || "—"),
   ];
+
+  // Entregables reales desde Supabase (filtrados por este agente)
+  const [deliverables, setDeliverables] = useState([]);
+  const [delivLoading, setDelivLoading] = useState(true);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setDelivLoading(true);
+      const col = AGENT_COL[a.id] || a.id;
+      const list = await window.Data.listDeliverables();
+      if (cancel) return;
+      setDeliverables(list.filter(d => d.agent === col));
+      setDelivLoading(false);
+    })();
+    return () => { cancel = true; };
+  }, [a.id]);
 
   return (
     <div className="page">
@@ -324,17 +343,22 @@ const AgenteDetail = ({ navigate, agentId }) => {
             <div className="card-title">Entregables recientes</div>
           </div>
           <div>
-            {deliverables.length === 0 ? (
+            {delivLoading ? (
+              <div style={{padding:"28px 20px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
+                Cargando…
+              </div>
+            ) : deliverables.length === 0 ? (
               <div style={{padding:"28px 20px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>
                 Sin entregables todavía.
               </div>
             ) : deliverables.map((d, i) => {
-              const ds = DELIV_STATUS[d.status] || DELIV_STATUS.pending;
+              const ds = DELIV_STATUS[d.status] || { label: d.status || "—", color:"var(--text-muted)", soft:"var(--bg-elev-2)" };
+              const fecha = d.created_at
+                ? new Date(d.created_at).toLocaleDateString("es-ES", { day:"numeric", month:"short" })
+                : "";
               return (
-                <div key={i}
-                  onClick={() => d.status === "pending"
-                    ? navigate("revisar", { agentId: a.id })
-                    : agentesLog("Abrir entregable: " + d.title)}
+                <div key={d.id || i}
+                  onClick={() => navigate("revisar", { agentId: a.id, deliverableId: d.id })}
                   style={{
                     display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
                     padding:"13px 18px", cursor:"pointer",
@@ -347,7 +371,7 @@ const AgenteDetail = ({ navigate, agentId }) => {
                   <div style={{minWidth:0}}>
                     <div style={{fontSize:13, fontWeight:500, color:"var(--text)", letterSpacing:"-0.3px",
                       overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{d.title}</div>
-                    <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:2}}>{d.date}</div>
+                    <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:2}}>{fecha}</div>
                   </div>
                   <span style={{
                     flexShrink:0, fontSize:11, padding:"3px 9px", borderRadius:99,

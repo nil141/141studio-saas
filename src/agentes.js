@@ -4,10 +4,12 @@ const AGENT_STATUS = {
   paused: { label: "En pausa", dot: "var(--text-subtle)" }
 };
 const DELIV_STATUS = {
-  pending: { label: "Pendiente de revisar", color: "var(--amber)", soft: "var(--amber-soft)" },
-  approved: { label: "Aprobado", color: "var(--green)", soft: "var(--green-soft)" },
-  rejected: { label: "Rechazado", color: "var(--red)", soft: "var(--red-soft)" }
+  en_revision: { label: "En revisi\xF3n", color: "var(--amber)", soft: "var(--amber-soft)" },
+  listo: { label: "Listo", color: "var(--green)", soft: "var(--green-soft)" },
+  aprobado: { label: "Aprobado", color: "var(--green)", soft: "var(--green-soft)" },
+  rechazado: { label: "Rechazado", color: "var(--red)", soft: "var(--red-soft)" }
 };
+const AGENT_COL = { social: "social_media" };
 const AGENTS = [
   {
     id: "social",
@@ -250,12 +252,27 @@ const AgenteDetail = ({ navigate, agentId }) => {
   const s = AGENT_STATUS[a.status] || AGENT_STATUS.active;
   const skills = a.skills || [a.skill];
   const chat = a.chat || [];
-  const deliverables = a.deliverables || [];
   const stats = [
     a.stat,
     a.status === "working" ? "Trabajando ahora" : "Estado: " + s.label,
     "\xDAltima actividad: " + (a.lastActivity || "\u2014")
   ];
+  const [deliverables, setDeliverables] = useState([]);
+  const [delivLoading, setDelivLoading] = useState(true);
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      setDelivLoading(true);
+      const col = AGENT_COL[a.id] || a.id;
+      const list = await window.Data.listDeliverables();
+      if (cancel) return;
+      setDeliverables(list.filter((d) => d.agent === col));
+      setDelivLoading(false);
+    })();
+    return () => {
+      cancel = true;
+    };
+  }, [a.id]);
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("agentes") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Volver")), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 48,
     height: 48,
@@ -298,13 +315,14 @@ const AgenteDetail = ({ navigate, agentId }) => {
       style: { width: 34, height: 34, borderRadius: "50%", background: "var(--accent)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", flexShrink: 0 }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 })
-  )))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Entregables recientes")), /* @__PURE__ */ React.createElement("div", null, deliverables.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin entregables todav\xEDa.") : deliverables.map((d, i) => {
-    const ds = DELIV_STATUS[d.status] || DELIV_STATUS.pending;
+  )))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Entregables recientes")), /* @__PURE__ */ React.createElement("div", null, delivLoading ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando\u2026") : deliverables.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin entregables todav\xEDa.") : deliverables.map((d, i) => {
+    const ds = DELIV_STATUS[d.status] || { label: d.status || "\u2014", color: "var(--text-muted)", soft: "var(--bg-elev-2)" };
+    const fecha = d.created_at ? new Date(d.created_at).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : "";
     return /* @__PURE__ */ React.createElement(
       "div",
       {
-        key: i,
-        onClick: () => d.status === "pending" ? navigate("revisar", { agentId: a.id }) : agentesLog("Abrir entregable: " + d.title),
+        key: d.id || i,
+        onClick: () => navigate("revisar", { agentId: a.id, deliverableId: d.id }),
         style: {
           display: "flex",
           alignItems: "center",
@@ -326,7 +344,7 @@ const AgenteDetail = ({ navigate, agentId }) => {
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
-      } }, d.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2 } }, d.date)),
+      } }, d.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2 } }, fecha)),
       /* @__PURE__ */ React.createElement("span", { style: {
         flexShrink: 0,
         fontSize: 11,
