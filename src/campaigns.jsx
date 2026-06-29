@@ -149,11 +149,14 @@ const TabLeads = ({ c }) => {
     { name:"Tom Nielsen",     company:"NorthStar AB",  status:"opened",     email:"t.nielsen@northstar.se" },
   ];
   const statusMap = {
-    replied: { label:"Respondió",  cls:"green" },
-    opened:  { label:"Abrió",      cls:"blue" },
-    sent:    { label:"Enviado",    cls:"" },
-    bounced: { label:"Rebotó",     cls:"red" },
+    replied: { label:"Respondió",  color:"var(--green)" },
+    opened:  { label:"Abrió",      color:"var(--blue)" },
+    sent:    { label:"Enviado",    color:"var(--text-subtle)" },
+    bounced: { label:"Rebotó",     color:"var(--red)" },
   };
+  const _AV = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#14b8a6","#ef4444"];
+  const _initials = (n) => (n||"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const COLS = "minmax(0,1.7fr) minmax(0,1.2fr) minmax(0,1.7fr) 120px";
   return (
     <div>
       <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
@@ -164,23 +167,66 @@ const TabLeads = ({ c }) => {
         </div>
       </div>
       <div className="card" style={{padding:0, overflow:"hidden"}}>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Nombre</th><th>Empresa</th><th>Email</th><th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {leads.map((l, i) => (
-              <tr key={i}>
-                <td style={{fontWeight:500}}>{l.name}</td>
-                <td style={{color:"var(--text-muted)"}}>{l.company}</td>
-                <td style={{color:"var(--text-muted)", fontSize:12}}>{l.email}</td>
-                <td><span className={`chip ${statusMap[l.status]?.cls || ""}`}>{statusMap[l.status]?.label}</span></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {/* Cabecera */}
+        <div style={{
+          display:"grid", gridTemplateColumns:COLS, gap:18, padding:"13px 22px",
+          borderBottom:"0.5px solid var(--border)",
+        }}>
+          {["Nombre","Empresa","Email","Estado"].map((h, idx) => (
+            <div key={h} style={{
+              fontSize:10.5, fontWeight:600, letterSpacing:"0.7px", textTransform:"uppercase",
+              color:"var(--text-subtle)", textAlign: idx===3 ? "right" : "left",
+            }}>{h}</div>
+          ))}
+        </div>
+
+        {/* Filas */}
+        {leads.map((l, i) => {
+          const st = statusMap[l.status] || { label:l.status, color:"var(--text-subtle)" };
+          const col = _AV[i % _AV.length];
+          return (
+            <div key={i} style={{
+              display:"grid", gridTemplateColumns:COLS, gap:18, alignItems:"center",
+              padding:"13px 22px", transition:"background .12s",
+              borderBottom: i === leads.length-1 ? "0" : "0.5px solid var(--border)",
+            }}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-elev-2)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              {/* Nombre + avatar */}
+              <div style={{display:"flex", alignItems:"center", gap:12, minWidth:0}}>
+                <div style={{
+                  width:34, height:34, borderRadius:"50%", flexShrink:0,
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  fontSize:12, fontWeight:600, letterSpacing:"-0.02em",
+                  background: col + "22", color: col, border:"0.5px solid " + col + "33",
+                }}>{_initials(l.name)}</div>
+                <span style={{fontSize:13.5, fontWeight:500, color:"var(--text)",
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{l.name}</span>
+              </div>
+
+              {/* Empresa */}
+              <div style={{fontSize:13, color:"var(--text-muted)",
+                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{l.company}</div>
+
+              {/* Email */}
+              <div style={{fontSize:12.5, color:"var(--text-subtle)",
+                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{l.email}</div>
+
+              {/* Estado */}
+              <div style={{display:"flex", justifyContent:"flex-end"}}>
+                <span style={{
+                  display:"inline-flex", alignItems:"center", gap:6,
+                  padding:"4px 11px 4px 9px", borderRadius:99, fontSize:12, fontWeight:500,
+                  background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text-muted)",
+                }}>
+                  <span style={{width:6, height:6, borderRadius:"50%", background:st.color, flexShrink:0}}/>
+                  {st.label}
+                </span>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
