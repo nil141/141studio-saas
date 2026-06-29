@@ -7,9 +7,12 @@ const OnboardingPage = ({ token }) => {
   const [step, setStep] = useState(0);
   const [err, setErr] = useState("");
   const [topErr, setTopErr] = useState("");
+  const [code, setCode] = useState("");
+  const [codeErr, setCodeErr] = useState("");
+  const [resendMsg, setResendMsg] = useState("");
+  const _sb = () => window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
   useEffect(() => {
-    const _sbInv = window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
-    _sbInv.from("invites").select("service,used").eq("token", token).single().then(({ data, error }) => {
+    _sb().from("invites").select("service,used").eq("token", token).single().then(({ data, error }) => {
       if (!data || data.used || error) {
         setErrMsg("Enlace no v\xE1lido o ya utilizado");
         setStatus("error");
@@ -45,7 +48,7 @@ const OnboardingPage = ({ token }) => {
     {
       key: "email",
       title: () => "Tu email de acceso",
-      sub: "Lo usar\xE1s para entrar al portal.",
+      sub: "Te enviaremos un c\xF3digo para confirmarlo.",
       fields: [{ id: "email", ph: "tu@empresa.com", type: "email", autoC: "email" }]
     },
     {
@@ -81,47 +84,102 @@ const OnboardingPage = ({ token }) => {
       setStep(step + 1);
       return;
     }
-    doSubmit();
+    startSignup();
   };
   const back = () => {
     setErr("");
     setStep((s2) => Math.max(0, s2 - 1));
   };
-  const doSubmit = async () => {
+  const finishSignup = async (sb) => {
+    const { data: result, error: rpcError } = await sb.rpc("complete_invite", {
+      p_token: token,
+      p_name: form.name.trim(),
+      p_company: form.company.trim(),
+      p_phone: form.phone.trim()
+    });
+    if (rpcError || !result?.ok) {
+      return result?.error || rpcError?.message || "Error al completar el registro";
+    }
+    await sb.auth.signOut();
+    sessionStorage.removeItem("141_session");
+    localStorage.removeItem("141_session");
+    localStorage.removeItem("141_session_exp");
+    return null;
+  };
+  const startSignup = async () => {
     setBusy(true);
     setTopErr("");
     try {
-      const _sbInv = window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
-      const { error: authError } = await _sbInv.auth.signUp({
+      const sb = _sb();
+      const { data, error } = await sb.auth.signUp({
         email: form.email.trim(),
         password: form.pw,
         options: { data: { name: form.name.trim(), role: "client" } }
       });
-      if (authError) {
-        setTopErr(authError.message || "Error al crear la cuenta");
+      if (error) {
+        setTopErr(error.message || "Error al crear la cuenta");
         setBusy(false);
         return;
       }
-      const { data: result, error: rpcError } = await _sbInv.rpc("complete_invite", {
-        p_token: token,
-        p_name: form.name.trim(),
-        p_company: form.company.trim(),
-        p_phone: form.phone.trim()
-      });
-      if (rpcError || !result?.ok) {
-        setTopErr(result?.error || rpcError?.message || "Error al completar el registro");
-        setBusy(false);
-        return;
+      if (data.session) {
+        const e = await finishSignup(sb);
+        if (e) {
+          setTopErr(e);
+          setBusy(false);
+          return;
+        }
+        setStatus("done");
+      } else {
+        setCode("");
+        setCodeErr("");
+        setResendMsg("");
+        setStatus("verify");
       }
-      await _sbInv.auth.signOut();
-      sessionStorage.removeItem("141_session");
-      localStorage.removeItem("141_session");
-      localStorage.removeItem("141_session_exp");
-      setStatus("done");
-    } catch (err2) {
+    } catch (e) {
       setTopErr("No se pudo conectar con el servidor");
     }
     setBusy(false);
+  };
+  const verifyAndComplete = async () => {
+    if (code.trim().length < 6) {
+      setCodeErr("Introduce el c\xF3digo de 6 d\xEDgitos");
+      return;
+    }
+    setBusy(true);
+    setCodeErr("");
+    try {
+      const sb = _sb();
+      const { error: vErr } = await sb.auth.verifyOtp({
+        email: form.email.trim(),
+        token: code.trim(),
+        type: "signup"
+      });
+      if (vErr) {
+        setCodeErr(vErr.message || "C\xF3digo incorrecto o caducado");
+        setBusy(false);
+        return;
+      }
+      const e = await finishSignup(sb);
+      if (e) {
+        setCodeErr(e);
+        setBusy(false);
+        return;
+      }
+      setStatus("done");
+    } catch (e) {
+      setCodeErr("No se pudo conectar con el servidor");
+    }
+    setBusy(false);
+  };
+  const resendCode = async () => {
+    setResendMsg("Enviando\u2026");
+    setCodeErr("");
+    try {
+      const { error } = await _sb().auth.resend({ type: "signup", email: form.email.trim() });
+      setResendMsg(error ? error.message || "No se pudo reenviar" : "C\xF3digo reenviado \u2713");
+    } catch {
+      setResendMsg("No se pudo reenviar");
+    }
   };
   const wrap = (children) => /* @__PURE__ */ React.createElement("div", { style: {
     minHeight: "100dvh",
@@ -164,7 +222,7 @@ const OnboardingPage = ({ token }) => {
       display: "grid",
       placeItems: "center",
       marginBottom: 20
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 22 })), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 24, fontWeight: 500, marginBottom: 8, fontFamily: "var(--font-display)" } }, first(form.name) ? `\xA1Listo, ${first(form.name)}!` : "\xA1Cuenta creada!"), /* @__PURE__ */ React.createElement("p", { style: { color: "var(--text-muted)", fontSize: 14, marginBottom: 24 } }, "Tu cuenta est\xE1 creada. Ya puedes entrar al portal con tu email y contrase\xF1a."), /* @__PURE__ */ React.createElement("a", { href: "/", className: "btn primary full", style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 22 })), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 24, fontWeight: 500, marginBottom: 8, fontFamily: "var(--font-display)" } }, first(form.name) ? `\xA1Listo, ${first(form.name)}!` : "\xA1Cuenta verificada!"), /* @__PURE__ */ React.createElement("p", { style: { color: "var(--text-muted)", fontSize: 14, marginBottom: 24 } }, "Tu cuenta est\xE1 confirmada. Ya puedes entrar al portal con tu email y contrase\xF1a."), /* @__PURE__ */ React.createElement("a", { href: "/", className: "btn primary full", style: {
       height: 46,
       fontSize: 14,
       textDecoration: "none",
@@ -174,16 +232,85 @@ const OnboardingPage = ({ token }) => {
       gap: 8
     } }, "Entrar al portal ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 })))
   );
+  if (status === "verify") return wrap(
+    /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "var(--bg-elev-2)", borderRadius: 99, overflow: "hidden", marginBottom: 30 } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: "100%", background: "var(--accent)", borderRadius: 99 } })), /* @__PURE__ */ React.createElement("div", { style: { animation: "pop .25s ease", display: "flex", flexDirection: "column", gap: 18 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 48,
+      height: 48,
+      borderRadius: 14,
+      background: "var(--accent-soft)",
+      color: "var(--accent)",
+      display: "grid",
+      placeItems: "center",
+      marginBottom: 16
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 22 })), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginBottom: 10, letterSpacing: "0.6px", textTransform: "uppercase" } }, "\xDAltimo paso \xB7 verificaci\xF3n"), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 26, fontWeight: 500, lineHeight: 1.2, marginBottom: 6, fontFamily: "var(--font-display)" } }, "Confirma tu cuenta"), /* @__PURE__ */ React.createElement("div", { className: "muted", style: { fontSize: 14, lineHeight: 1.5 } }, "Te hemos enviado un c\xF3digo de 6 d\xEDgitos a ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, form.email), ". Introd\xFAcelo para activar tu cuenta.")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "input",
+        inputMode: "numeric",
+        maxLength: 6,
+        autoFocus: true,
+        placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022",
+        value: code,
+        onChange: (e) => {
+          setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+          if (codeErr) setCodeErr("");
+        },
+        onKeyDown: (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            verifyAndComplete();
+          }
+        },
+        style: {
+          height: 58,
+          fontSize: 26,
+          letterSpacing: "10px",
+          textAlign: "center",
+          fontFamily: "var(--font-mono)",
+          borderColor: codeErr ? "var(--red)" : void 0
+        }
+      }
+    ), codeErr && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--red)", fontSize: 12.5 } }, codeErr), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        className: "btn primary full",
+        onClick: verifyAndComplete,
+        disabled: busy,
+        style: { height: 48, fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }
+      },
+      busy ? "Verificando\u2026" : "Verificar y entrar",
+      " ",
+      !busy && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
+    ), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        type: "button",
+        onClick: resendCode,
+        disabled: busy,
+        style: {
+          background: "transparent",
+          border: 0,
+          color: "var(--text-muted)",
+          fontSize: 13,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          textDecoration: "underline"
+        }
+      },
+      "\xBFNo te llega? Reenviar c\xF3digo"
+    ), resendMsg && /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 6 } }, resendMsg))))
+  );
   const s = STEPS[step];
   const title = typeof s.title === "function" ? s.title(form) : s.title;
   return wrap(
     /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "var(--bg-elev-2)", borderRadius: 99, overflow: "hidden", marginBottom: 30 } }, /* @__PURE__ */ React.createElement("div", { style: {
       height: "100%",
-      width: `${(step + 1) / STEPS.length * 100}%`,
+      width: `${(step + 1) / (STEPS.length + 1) * 100}%`,
       background: "var(--accent)",
       borderRadius: 99,
       transition: "width .35s ease"
-    } })), /* @__PURE__ */ React.createElement("div", { key: step, style: { animation: "pop .25s ease", display: "flex", flexDirection: "column", gap: 18 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginBottom: 10, letterSpacing: "0.6px", textTransform: "uppercase" } }, "Paso ", step + 1, " de ", STEPS.length), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 26, fontWeight: 500, lineHeight: 1.2, marginBottom: 6, fontFamily: "var(--font-display)" } }, title), /* @__PURE__ */ React.createElement("div", { className: "muted", style: { fontSize: 14 } }, s.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, s.fields.map((fd, idx) => /* @__PURE__ */ React.createElement(
+    } })), /* @__PURE__ */ React.createElement("div", { key: step, style: { animation: "pop .25s ease", display: "flex", flexDirection: "column", gap: 18 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginBottom: 10, letterSpacing: "0.6px", textTransform: "uppercase" } }, "Paso ", step + 1, " de ", STEPS.length + 1), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 26, fontWeight: 500, lineHeight: 1.2, marginBottom: 6, fontFamily: "var(--font-display)" } }, title), /* @__PURE__ */ React.createElement("div", { className: "muted", style: { fontSize: 14 } }, s.sub)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, s.fields.map((fd, idx) => /* @__PURE__ */ React.createElement(
       "input",
       {
         key: fd.id,
@@ -225,8 +352,8 @@ const OnboardingPage = ({ token }) => {
         disabled: busy,
         style: { height: 48, fontSize: 14, flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }
       },
-      busy ? "Creando cuenta\u2026" : isLast ? "Crear mi cuenta" : "Continuar",
-      !busy && /* @__PURE__ */ React.createElement(Icon, { name: isLast ? "check" : "arrow", size: 13 })
+      busy ? "Enviando c\xF3digo\u2026" : isLast ? "Crear cuenta" : "Continuar",
+      !busy && /* @__PURE__ */ React.createElement(Icon, { name: isLast ? "arrow" : "arrow", size: 13 })
     ))))
   );
 };

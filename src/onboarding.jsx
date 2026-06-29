@@ -1,19 +1,23 @@
 // Client onboarding page — shown at /invite/TOKEN (Supabase v8)
-// Flujo guiado paso a paso (un campo cada vez).
+// Flujo guiado paso a paso + verificación por código de email.
 
 const OnboardingPage = ({ token }) => {
   const { useState, useEffect } = React;
-  const [status, setStatus] = useState("checking");
+  const [status, setStatus] = useState("checking"); // checking | error | form | verify | done
   const [errMsg, setErrMsg] = useState("");
   const [busy, setBusy]     = useState(false);
   const [form, setForm]     = useState({ name:"", company:"", email:"", pw:"", pw2:"", phone:"" });
   const [step, setStep]     = useState(0);
   const [err, setErr]       = useState("");   // error del paso actual
   const [topErr, setTopErr] = useState("");   // error al crear la cuenta
+  const [code, setCode]     = useState("");
+  const [codeErr, setCodeErr]   = useState("");
+  const [resendMsg, setResendMsg] = useState("");
+
+  const _sb = () => window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
 
   useEffect(() => {
-    const _sbInv = window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
-    _sbInv.from("invites").select("service,used").eq("token", token).single()
+    _sb().from("invites").select("service,used").eq("token", token).single()
       .then(({ data, error }) => {
         if (!data || data.used || error) {
           setErrMsg("Enlace no válido o ya utilizado");
@@ -39,7 +43,7 @@ const OnboardingPage = ({ token }) => {
       sub:"Teléfono o WhatsApp (opcional).",
       fields:[{ id:"phone", ph:"+34 600 000 000", type:"tel", autoC:"tel" }] },
     { key:"email",   title: () => "Tu email de acceso",
-      sub:"Lo usarás para entrar al portal.",
+      sub:"Te enviaremos un código para confirmarlo.",
       fields:[{ id:"email", ph:"tu@empresa.com", type:"email", autoC:"email" }] },
     { key:"pw",      title: () => "Crea una contraseña",
       sub:"Mínimo 6 caracteres.",
@@ -59,7 +63,7 @@ const OnboardingPage = ({ token }) => {
       if (form.pw.length < 6) return "Mínimo 6 caracteres";
       if (form.pw !== form.pw2) return "Las contraseñas no coinciden";
     }
-    return ""; // phone es opcional
+    return "";
   };
 
   const next = () => {
@@ -67,41 +71,80 @@ const OnboardingPage = ({ token }) => {
     if (e) { setErr(e); return; }
     setErr("");
     if (!isLast) { setStep(step + 1); return; }
-    doSubmit();
+    startSignup();
   };
   const back = () => { setErr(""); setStep(s => Math.max(0, s - 1)); };
 
-  const doSubmit = async () => {
+  // Completa el alta (crea cliente + perfil) y cierra sesión. Devuelve mensaje de error o null.
+  const finishSignup = async (sb) => {
+    const { data: result, error: rpcError } = await sb.rpc("complete_invite", {
+      p_token:   token,
+      p_name:    form.name.trim(),
+      p_company: form.company.trim(),
+      p_phone:   form.phone.trim(),
+    });
+    if (rpcError || !result?.ok) {
+      return result?.error || rpcError?.message || "Error al completar el registro";
+    }
+    await sb.auth.signOut();
+    sessionStorage.removeItem("141_session");
+    localStorage.removeItem("141_session");
+    localStorage.removeItem("141_session_exp");
+    return null;
+  };
+
+  const startSignup = async () => {
     setBusy(true); setTopErr("");
     try {
-      const _sbInv = window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
-      const { error: authError } = await _sbInv.auth.signUp({
+      const sb = _sb();
+      const { data, error } = await sb.auth.signUp({
         email: form.email.trim(),
         password: form.pw,
         options: { data: { name: form.name.trim(), role: "client" } },
       });
-      if (authError) { setTopErr(authError.message || "Error al crear la cuenta"); setBusy(false); return; }
+      if (error) { setTopErr(error.message || "Error al crear la cuenta"); setBusy(false); return; }
 
-      const { data: result, error: rpcError } = await _sbInv.rpc("complete_invite", {
-        p_token:   token,
-        p_name:    form.name.trim(),
-        p_company: form.company.trim(),
-        p_phone:   form.phone.trim(),
-      });
-      if (rpcError || !result?.ok) {
-        setTopErr(result?.error || rpcError?.message || "Error al completar el registro");
-        setBusy(false); return;
+      if (data.session) {
+        // "Confirm email" está desactivado en Supabase → ya hay sesión, completamos directo
+        const e = await finishSignup(sb);
+        if (e) { setTopErr(e); setBusy(false); return; }
+        setStatus("done");
+      } else {
+        // Requiere verificación por código
+        setCode(""); setCodeErr(""); setResendMsg("");
+        setStatus("verify");
       }
-
-      await _sbInv.auth.signOut();
-      sessionStorage.removeItem("141_session");
-      localStorage.removeItem("141_session");
-      localStorage.removeItem("141_session_exp");
-      setStatus("done");
-    } catch (err) {
+    } catch (e) {
       setTopErr("No se pudo conectar con el servidor");
     }
     setBusy(false);
+  };
+
+  const verifyAndComplete = async () => {
+    if (code.trim().length < 6) { setCodeErr("Introduce el código de 6 dígitos"); return; }
+    setBusy(true); setCodeErr("");
+    try {
+      const sb = _sb();
+      const { error: vErr } = await sb.auth.verifyOtp({
+        email: form.email.trim(), token: code.trim(), type: "signup",
+      });
+      if (vErr) { setCodeErr(vErr.message || "Código incorrecto o caducado"); setBusy(false); return; }
+
+      const e = await finishSignup(sb);
+      if (e) { setCodeErr(e); setBusy(false); return; }
+      setStatus("done");
+    } catch (e) {
+      setCodeErr("No se pudo conectar con el servidor");
+    }
+    setBusy(false);
+  };
+
+  const resendCode = async () => {
+    setResendMsg("Enviando…"); setCodeErr("");
+    try {
+      const { error } = await _sb().auth.resend({ type: "signup", email: form.email.trim() });
+      setResendMsg(error ? (error.message || "No se pudo reenviar") : "Código reenviado ✓");
+    } catch { setResendMsg("No se pudo reenviar"); }
   };
 
   const wrap = (children) => (
@@ -141,15 +184,63 @@ const OnboardingPage = ({ token }) => {
         <Icon name="check" size={22}/>
       </div>
       <h1 style={{fontSize:24, fontWeight:500, marginBottom:8, fontFamily:"var(--font-display)"}}>
-        {first(form.name) ? `¡Listo, ${first(form.name)}!` : "¡Cuenta creada!"}
+        {first(form.name) ? `¡Listo, ${first(form.name)}!` : "¡Cuenta verificada!"}
       </h1>
       <p style={{color:"var(--text-muted)", fontSize:14, marginBottom:24}}>
-        Tu cuenta está creada. Ya puedes entrar al portal con tu email y contraseña.
+        Tu cuenta está confirmada. Ya puedes entrar al portal con tu email y contraseña.
       </p>
       <a href="/" className="btn primary full" style={{height:46, fontSize:14, textDecoration:"none",
         display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
         Entrar al portal <Icon name="arrow" size={13}/>
       </a>
+    </div>
+  );
+
+  // ── Paso de verificación por código ──
+  if (status === "verify") return wrap(
+    <div>
+      <div style={{height:3, background:"var(--bg-elev-2)", borderRadius:99, overflow:"hidden", marginBottom:30}}>
+        <div style={{height:"100%", width:"100%", background:"var(--accent)", borderRadius:99}}/>
+      </div>
+      <div style={{animation:"pop .25s ease", display:"flex", flexDirection:"column", gap:18}}>
+        <div>
+          <div style={{width:48, height:48, borderRadius:14, background:"var(--accent-soft)", color:"var(--accent)",
+            display:"grid", placeItems:"center", marginBottom:16}}>
+            <Icon name="mail" size={22}/>
+          </div>
+          <div className="subtle xsmall" style={{marginBottom:10, letterSpacing:"0.6px", textTransform:"uppercase"}}>
+            Último paso · verificación
+          </div>
+          <h1 style={{fontSize:26, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)"}}>
+            Confirma tu cuenta
+          </h1>
+          <div className="muted" style={{fontSize:14, lineHeight:1.5}}>
+            Te hemos enviado un código de 6 dígitos a <b style={{color:"var(--text)"}}>{form.email}</b>. Introdúcelo para activar tu cuenta.
+          </div>
+        </div>
+
+        <input className="input" inputMode="numeric" maxLength={6} autoFocus placeholder="••••••"
+          value={code}
+          onChange={e => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); if (codeErr) setCodeErr(""); }}
+          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); verifyAndComplete(); } }}
+          style={{height:58, fontSize:26, letterSpacing:"10px", textAlign:"center",
+            fontFamily:"var(--font-mono)", borderColor: codeErr ? "var(--red)" : undefined}}/>
+        {codeErr && <div style={{color:"var(--red)", fontSize:12.5}}>{codeErr}</div>}
+
+        <button type="button" className="btn primary full" onClick={verifyAndComplete} disabled={busy}
+          style={{height:48, fontSize:14, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
+          {busy ? "Verificando…" : "Verificar y entrar"} {!busy && <Icon name="check" size={13}/>}
+        </button>
+
+        <div style={{textAlign:"center"}}>
+          <button type="button" onClick={resendCode} disabled={busy}
+            style={{background:"transparent", border:0, color:"var(--text-muted)", fontSize:13,
+              cursor:"pointer", fontFamily:"inherit", textDecoration:"underline"}}>
+            ¿No te llega? Reenviar código
+          </button>
+          {resendMsg && <div className="subtle xsmall" style={{marginTop:6}}>{resendMsg}</div>}
+        </div>
+      </div>
     </div>
   );
 
@@ -159,16 +250,15 @@ const OnboardingPage = ({ token }) => {
 
   return wrap(
     <div>
-      {/* Barra de progreso */}
       <div style={{height:3, background:"var(--bg-elev-2)", borderRadius:99, overflow:"hidden", marginBottom:30}}>
-        <div style={{height:"100%", width:`${((step + 1) / STEPS.length) * 100}%`,
+        <div style={{height:"100%", width:`${((step + 1) / (STEPS.length + 1)) * 100}%`,
           background:"var(--accent)", borderRadius:99, transition:"width .35s ease"}}/>
       </div>
 
       <div key={step} style={{animation:"pop .25s ease", display:"flex", flexDirection:"column", gap:18}}>
         <div>
           <div className="subtle xsmall" style={{marginBottom:10, letterSpacing:"0.6px", textTransform:"uppercase"}}>
-            Paso {step + 1} de {STEPS.length}
+            Paso {step + 1} de {STEPS.length + 1}
           </div>
           <h1 style={{fontSize:26, fontWeight:500, lineHeight:1.2, marginBottom:6, fontFamily:"var(--font-display)"}}>
             {title}
@@ -202,8 +292,8 @@ const OnboardingPage = ({ token }) => {
           )}
           <button type="button" className="btn primary full" onClick={next} disabled={busy}
             style={{height:48, fontSize:14, flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:8}}>
-            {busy ? "Creando cuenta…" : isLast ? "Crear mi cuenta" : "Continuar"}
-            {!busy && <Icon name={isLast ? "check" : "arrow"} size={13}/>}
+            {busy ? "Enviando código…" : isLast ? "Crear cuenta" : "Continuar"}
+            {!busy && <Icon name={isLast ? "arrow" : "arrow"} size={13}/>}
           </button>
         </div>
       </div>
