@@ -613,6 +613,55 @@ const createInvite = async (service = "") => {
   return token;
 };
 
+// ── AGENTS — generación de contenido (Social Media) ──────────────────
+// Llama al endpoint /api/agents/social y guarda el resultado en Supabase
+// (deliverables + pieces). Reutiliza _sb (anon key) y _uid() como el resto.
+const generarContenidoSocial = async (clientId, encargo) => {
+  const uid = _uid();
+  if (!uid) throw new Error("No hay sesión activa");
+
+  // 1) Generar contenido con el backend (Claude)
+  const r = await fetch("/api/agents/social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ encargo }),
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error || "fallo generando");
+
+  // 2) Insertar UNA fila en 'deliverables' y recuperar su id
+  const { data: deliv, error: dErr } = await _sb.from("deliverables").insert({
+    agency_id: uid,
+    client_id: clientId || null,
+    agent: "social_media",
+    title: encargo,
+    status: "en_revision",
+  }).select().single();
+  if (dErr) throw dErr;
+  const deliverableId = deliv.id;
+
+  // 3) Insertar las piezas en 'pieces' (una por cada elemento de data.piezas)
+  const rows = (data.piezas || []).map((p, i) => ({
+    deliverable_id: deliverableId,
+    agency_id: uid,
+    orden: i,
+    dia: p.dia,
+    formato: p.formato,
+    tema: p.tema,
+    caption: p.copy,            // el JSON trae "copy" pero la columna es "caption"
+    hashtags: p.hashtags || [],
+    brief_imagen: p.brief_imagen,
+    status: "pendiente",
+  }));
+  if (rows.length) {
+    const { error: pErr } = await _sb.from("pieces").insert(rows);
+    if (pErr) throw pErr;
+  }
+
+  // 4) Devolver el id del deliverable creado
+  return deliverableId;
+};
+
 // ── window.Data ──────────────────────────────────────────────────────
 window.Data = {
   // Static
@@ -639,5 +688,10 @@ window.Data = {
   addTask, moveTask, updateTask, deleteTask,
   updateSettings,
   createInvite,
+  generarContenidoSocial,
   useStore,
 };
+
+// TEMPORAL: expuesta como global para poder probarla una vez desde la consola.
+// (Quitar cuando se conecte a Nora.)
+window.generarContenidoSocial = generarContenidoSocial;

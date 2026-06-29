@@ -705,6 +705,44 @@ const createInvite = async (service = "") => {
   if (error) return null;
   return token;
 };
+const generarContenidoSocial = async (clientId, encargo) => {
+  const uid = _uid();
+  if (!uid) throw new Error("No hay sesi\xF3n activa");
+  const r = await fetch("/api/agents/social", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ encargo })
+  });
+  const data = await r.json();
+  if (!data.ok) throw new Error(data.error || "fallo generando");
+  const { data: deliv, error: dErr } = await _sb.from("deliverables").insert({
+    agency_id: uid,
+    client_id: clientId || null,
+    agent: "social_media",
+    title: encargo,
+    status: "en_revision"
+  }).select().single();
+  if (dErr) throw dErr;
+  const deliverableId = deliv.id;
+  const rows = (data.piezas || []).map((p, i) => ({
+    deliverable_id: deliverableId,
+    agency_id: uid,
+    orden: i,
+    dia: p.dia,
+    formato: p.formato,
+    tema: p.tema,
+    caption: p.copy,
+    // el JSON trae "copy" pero la columna es "caption"
+    hashtags: p.hashtags || [],
+    brief_imagen: p.brief_imagen,
+    status: "pendiente"
+  }));
+  if (rows.length) {
+    const { error: pErr } = await _sb.from("pieces").insert(rows);
+    if (pErr) throw pErr;
+  }
+  return deliverableId;
+};
 window.Data = {
   // Static
   TEAM,
@@ -765,5 +803,7 @@ window.Data = {
   deleteTask,
   updateSettings,
   createInvite,
+  generarContenidoSocial,
   useStore
 };
+window.generarContenidoSocial = generarContenidoSocial;
