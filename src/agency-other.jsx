@@ -1434,7 +1434,7 @@ const _finId = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() :
 const _subMonthly = (s) => (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0));
 const _sameMonth = (iso) => { if (!iso) return false; const d = new Date(iso); const n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); };
 const _todayISO = () => new Date().toISOString().slice(0, 10);
-const _fmtDate = (iso) => { if (!iso) return "—"; const d = new Date(iso); const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return isNaN(d) ? "—" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`; };
+const _finDate = (iso) => { if (!iso) return "—"; const d = new Date(iso); const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return isNaN(d) ? "—" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`; };
 
 const FIN_INPUT = {
   padding: "9px 11px", borderRadius: 9, fontSize: 13, fontFamily: "inherit",
@@ -1552,7 +1552,7 @@ const AgencyBilling = () => {
             <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border)" }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                <div style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>{_fmtDate(s.nextRenewal)}</div>
+                <div style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>{_finDate(s.nextRenewal)}</div>
               </div>
               <div style={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{_eur(s.amount)}</div>
             </div>
@@ -1611,7 +1611,7 @@ const AgencyBilling = () => {
                       <td className="muted">{s.cycle === "yearly" ? "Anual" : "Mensual"}</td>
                       <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(s.amount)}</td>
                       <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>{_eur(_subMonthly(s))}</td>
-                      <td className="muted">{_fmtDate(s.nextRenewal)}</td>
+                      <td className="muted">{_finDate(s.nextRenewal)}</td>
                       <td>
                         <button className="btn ghost sm" onClick={() => toggleSub(s.id)} style={{ color: s.active ? "var(--green)" : "var(--text-subtle)" }}>
                           {s.active ? "Activa" : "Pausada"}
@@ -1656,7 +1656,7 @@ const AgencyBilling = () => {
                 <tbody>
                   {[...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(e => (
                     <tr key={e.id}>
-                      <td className="muted">{_fmtDate(e.date)}</td>
+                      <td className="muted">{_finDate(e.date)}</td>
                       <td style={{ fontWeight: 500 }}>{e.concept}</td>
                       <td className="muted">{e.category}</td>
                       <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(e.amount)}</td>
