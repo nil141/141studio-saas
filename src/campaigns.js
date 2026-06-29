@@ -87,96 +87,17 @@ const TabLeads = ({ c }) => {
     { name: "Tom Nielsen", company: "NorthStar AB", status: "opened", email: "t.nielsen@northstar.se" }
   ];
   const statusMap = {
-    replied: { label: "Respondi\xF3", color: "var(--green)" },
-    opened: { label: "Abri\xF3", color: "var(--blue)" },
-    sent: { label: "Enviado", color: "var(--text-subtle)" },
-    bounced: { label: "Rebot\xF3", color: "var(--red)" }
+    replied: { label: "Respondi\xF3", chip: "green" },
+    opened: { label: "Abri\xF3", chip: "blue" },
+    sent: { label: "Enviado", chip: "neutral" },
+    bounced: { label: "Rebot\xF3", chip: "red" }
   };
   const _AV = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"];
   const _initials = (n) => (n || "").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const COLS = "minmax(0,1.7fr) minmax(0,1.2fr) minmax(0,1.7fr) 120px";
-  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Leads \xB7 ", c.leads, " en total"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "upload", size: 12 }), " Importar CSV"), /* @__PURE__ */ React.createElement("button", { className: "btn sm primary" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir lead"))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "grid",
-    gridTemplateColumns: COLS,
-    gap: 18,
-    padding: "13px 22px",
-    borderBottom: "0.5px solid var(--border)"
-  } }, ["Nombre", "Empresa", "Email", "Estado"].map((h, idx) => /* @__PURE__ */ React.createElement("div", { key: h, style: {
-    fontSize: 10.5,
-    fontWeight: 600,
-    letterSpacing: "0.7px",
-    textTransform: "uppercase",
-    color: "var(--text-subtle)",
-    textAlign: idx === 3 ? "right" : "left"
-  } }, h))), leads.map((l, i) => {
-    const st = statusMap[l.status] || { label: l.status, color: "var(--text-subtle)" };
-    const col = _AV[i % _AV.length];
-    return /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        key: i,
-        style: {
-          display: "grid",
-          gridTemplateColumns: COLS,
-          gap: 18,
-          alignItems: "center",
-          padding: "13px 22px",
-          transition: "background .12s",
-          borderBottom: i === leads.length - 1 ? "0" : "0.5px solid var(--border)"
-        },
-        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-elev-2)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
-      },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 34,
-        height: 34,
-        borderRadius: "50%",
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 12,
-        fontWeight: 600,
-        letterSpacing: "-0.02em",
-        background: col + "22",
-        color: col,
-        border: "0.5px solid " + col + "33"
-      } }, _initials(l.name)), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 13.5,
-        fontWeight: 500,
-        color: "var(--text)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, l.name)),
-      /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 13,
-        color: "var(--text-muted)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, l.company),
-      /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 12.5,
-        color: "var(--text-subtle)",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, l.email),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("span", { style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "4px 11px 4px 9px",
-        borderRadius: 99,
-        fontSize: 12,
-        fontWeight: 500,
-        background: "var(--bg-elev)",
-        border: "0.5px solid var(--border)",
-        color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: st.color, flexShrink: 0 } }), st.label))
-    );
-  })));
+  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Leads \xB7 ", c.leads, " en total"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "upload", size: 12 }), " Importar CSV"), /* @__PURE__ */ React.createElement("button", { className: "btn sm primary" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir lead"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { style: { width: "42%" } }, "Contacto"), /* @__PURE__ */ React.createElement("th", null, "Empresa"), /* @__PURE__ */ React.createElement("th", null, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, leads.map((l, i) => {
+    const st = statusMap[l.status] || { label: l.status, chip: "neutral" };
+    return /* @__PURE__ */ React.createElement("tr", { key: i }, /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(Avatar, { name: l.name, initials: _initials(l.name), color: _AV[i % _AV.length] }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, l.name), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, l.email)))), /* @__PURE__ */ React.createElement("td", { className: "muted" }, l.company), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StatusChip, { status: st.chip, label: st.label })));
+  }))))));
 };
 const TabSchedule = ({ c }) => {
   const days = ["Lunes", "Martes", "Mi\xE9rcoles", "Jueves", "Viernes"];
