@@ -41,7 +41,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     {
       title: "Finanzas",
       items: [
-        { id: "billing", label: "Facturación", icon: "receipt" },
+        { id: "billing", label: "Gastos", icon: "receipt" },
       ],
     },
     {

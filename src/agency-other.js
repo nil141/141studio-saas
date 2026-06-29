@@ -208,7 +208,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       const cl = D.CLIENTS.find((c) => c.id === p.clientId);
       groupMap[key] = {
         clientId: key,
-        clientName: ((cl == null ? void 0 : cl.company) || p.clientName || "Sin cliente").toUpperCase(),
+        clientName: (cl?.company || p.clientName || "Sin cliente").toUpperCase(),
         color: clientColorMap[p.clientId] || "#a78bfa",
         projects: []
       };
@@ -225,7 +225,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         const cl = D.CLIENTS.find((c) => c.id === t.clientId);
         grp = {
           clientId: t.clientId,
-          clientName: ((cl == null ? void 0 : cl.company) || (cl == null ? void 0 : cl.name) || t.clientName || "Sin cliente").toUpperCase(),
+          clientName: (cl?.company || cl?.name || t.clientName || "Sin cliente").toUpperCase(),
           color: clientColorMap[t.clientId] || "#a78bfa",
           projects: []
         };
@@ -453,7 +453,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       setOptionsOpen((o) => !o);
     } }
   ].map((btn) => /* @__PURE__ */ React.createElement("button", { key: btn.icon, onClick: btn.onClick, style: { width: 30, height: 26, borderRadius: "50%", background: "transparent", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: btn.icon, size: 13 }))))), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
-    const pid = (project == null ? void 0 : project.id) || "__none__";
+    const pid = project?.id || "__none__";
     const isDone = t.column === "done";
     const colLabel = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n" }[t.column];
     const isLast = idx === arr.length - 1;
@@ -816,7 +816,7 @@ const AgencyProjects = ({ navigate, openModal }) => {
   const capColor = cap === 0 ? "green" : cap <= 3 ? "green" : cap === 4 ? "amber" : "red";
   const capLabel = cap === 0 ? "Sin proyectos" : cap <= 3 ? "Zona c\xF3moda" : cap === 4 ? "Zona de atenci\xF3n" : "Zona de riesgo";
   const removeProject = async (p, e) => {
-    e == null ? void 0 : e.stopPropagation();
+    e?.stopPropagation();
     const ok = await confirm({
       title: `Eliminar el proyecto "${p.name}"?`,
       body: "Se eliminar\xE1n tambi\xE9n sus entregables. Esta acci\xF3n no se puede deshacer.",
@@ -1136,10 +1136,10 @@ const CreateInvoiceModal = ({ open, onClose, onCreated }) => {
         gap: 10,
         padding: "8px 12px",
         cursor: "pointer",
-        background: (selectedClient == null ? void 0 : selectedClient.id) === c.id ? "var(--accent-soft)" : "transparent"
+        background: selectedClient?.id === c.id ? "var(--accent-soft)" : "transparent"
       },
       onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
-      onMouseLeave: (e) => e.currentTarget.style.background = (selectedClient == null ? void 0 : selectedClient.id) === c.id ? "var(--accent-soft)" : "transparent"
+      onMouseLeave: (e) => e.currentTarget.style.background = selectedClient?.id === c.id ? "var(--accent-soft)" : "transparent"
     },
     /* @__PURE__ */ React.createElement("span", { style: {
       width: 28,
@@ -1159,15 +1159,15 @@ const CreateInvoiceModal = ({ open, onClose, onCreated }) => {
     "button",
     {
       key: p.id,
-      onClick: () => pickProject((selectedProject == null ? void 0 : selectedProject.id) === p.id ? null : p),
+      onClick: () => pickProject(selectedProject?.id === p.id ? null : p),
       style: {
         padding: "5px 12px",
         borderRadius: 99,
         fontSize: 12,
         cursor: "pointer",
-        border: `1px solid ${(selectedProject == null ? void 0 : selectedProject.id) === p.id ? "var(--accent)" : "var(--border-strong)"}`,
-        background: (selectedProject == null ? void 0 : selectedProject.id) === p.id ? "var(--accent-soft)" : "var(--bg-elev-2)",
-        color: (selectedProject == null ? void 0 : selectedProject.id) === p.id ? "var(--accent)" : "var(--text)",
+        border: `1px solid ${selectedProject?.id === p.id ? "var(--accent)" : "var(--border-strong)"}`,
+        background: selectedProject?.id === p.id ? "var(--accent-soft)" : "var(--bg-elev-2)",
+        color: selectedProject?.id === p.id ? "var(--accent)" : "var(--text)",
         transition: "all .1s"
       }
     },
@@ -1274,140 +1274,112 @@ const PERIODS = [
   { id: "3m", label: "3 meses" },
   { id: "12m", label: "1 a\xF1o" }
 ];
-const AgencyBilling = ({ openModal }) => {
-  var _a;
+const FIN_KEY = "141_finance_v1";
+const FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
+const _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const _finLoad = () => {
+  try {
+    const d = JSON.parse(localStorage.getItem(FIN_KEY));
+    return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
+  } catch {
+    return { subs: [], expenses: [] };
+  }
+};
+const _finSave = (d) => {
+  try {
+    localStorage.setItem(FIN_KEY, JSON.stringify(d));
+  } catch {
+  }
+};
+const _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
+const _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
+const _sameMonth = (iso) => {
+  if (!iso) return false;
+  const d = new Date(iso);
+  const n = /* @__PURE__ */ new Date();
+  return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
+};
+const _todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+const _fmtDate = (iso) => {
+  if (!iso) return "\u2014";
+  const d = new Date(iso);
+  const M = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  return isNaN(d) ? "\u2014" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
+};
+const FIN_INPUT = {
+  padding: "9px 11px",
+  borderRadius: 9,
+  fontSize: 13,
+  fontFamily: "inherit",
+  background: "var(--bg-elev)",
+  border: "0.5px solid var(--border)",
+  color: "var(--text)",
+  outline: "none",
+  letterSpacing: "-0.2px",
+  width: "100%"
+};
+const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
+const AgencyBilling = () => {
   const toast = useToast();
-  const [filter, setFilter] = useState("all");
-  const [menuOpen, setMenuOpen] = useState(null);
-  const [invoices, setInvoices] = useState([]);
-  const [balance, setBalance] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [chartLoading, setChartLoading] = useState(true);
-  const [buckets, setBuckets] = useState([]);
-  const [period, setPeriod] = useState("30d");
-  const [periodTotal, setPeriodTotal] = useState(0);
-  const [showCreate, setShowCreate] = useState(false);
-  const [error, setError] = useState("");
-  const load = async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const [balRes, invRes] = await Promise.all([
-        _stripeApi("balance"),
-        _stripeApi("invoices", { limit: 100 })
-      ]);
-      if (balRes.ok) setBalance(balRes);
-      if (invRes.ok) setInvoices(invRes.invoices || []);
-      else setError(invRes.error || "Error cargando facturas");
-    } catch (e) {
-      setError("No se pudo conectar con el servidor. \xBFEst\xE1 mail_server.py en marcha?");
+  const [data, setData] = useState(_finLoad);
+  const [tab, setTab] = useState("subs");
+  const [addSub, setAddSub] = useState(false);
+  const [addExp, setAddExp] = useState(false);
+  const blankSub = { name: "", amount: "", cycle: "monthly", category: "Software", nextRenewal: "" };
+  const blankExp = { date: _todayISO(), concept: "", amount: "", category: "Software" };
+  const [subForm, setSubForm] = useState(blankSub);
+  const [expForm, setExpForm] = useState(blankExp);
+  const persist = (next) => {
+    setData(next);
+    _finSave(next);
+  };
+  const saveSub = () => {
+    if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) {
+      toast("Pon nombre e importe", "error");
+      return;
     }
-    setLoading(false);
+    const sub = { id: _finId(), name: subForm.name.trim(), amount: Number(subForm.amount), cycle: subForm.cycle, category: subForm.category, nextRenewal: subForm.nextRenewal, active: true };
+    persist({ ...data, subs: [sub, ...data.subs] });
+    setSubForm(blankSub);
+    setAddSub(false);
+    toast("Suscripci\xF3n a\xF1adida", "success");
   };
-  const loadChart = async (p) => {
-    setChartLoading(true);
-    try {
-      const res = await _stripeApi("revenue", { period: p });
-      if (res.ok) {
-        setBuckets(res.buckets || []);
-        setPeriodTotal(res.total || 0);
-      }
-    } catch (e) {
+  const toggleSub = (id) => persist({ ...data, subs: data.subs.map((s) => s.id === id ? { ...s, active: !s.active } : s) });
+  const delSub = (id) => persist({ ...data, subs: data.subs.filter((s) => s.id !== id) });
+  const saveExp = () => {
+    if (!expForm.concept.trim() || !(Number(expForm.amount) > 0)) {
+      toast("Pon concepto e importe", "error");
+      return;
     }
-    setChartLoading(false);
+    const exp = { id: _finId(), date: expForm.date || _todayISO(), concept: expForm.concept.trim(), amount: Number(expForm.amount), category: expForm.category };
+    persist({ ...data, expenses: [exp, ...data.expenses] });
+    setExpForm(blankExp);
+    setAddExp(false);
+    toast("Gasto a\xF1adido", "success");
   };
-  const changePeriod = (p) => {
-    setPeriod(p);
-    loadChart(p);
-  };
-  React.useEffect(() => {
-    load();
-    loadChart("30d");
-  }, []);
-  const filtered = invoices.filter(
-    (i) => filter === "all" ? true : filter === "pending" ? i.status === "open" : filter === "paid" ? i.status === "paid" : filter === "void" ? i.status === "void" || i.status === "uncollectible" : true
-  );
-  const totals = {
-    paid: invoices.filter((i) => i.status === "paid").reduce((a, b) => a + b.amount_paid, 0),
-    pending: invoices.filter((i) => i.status === "open").reduce((a, b) => a + b.amount, 0),
-    draft: invoices.filter((i) => i.status === "draft").length
-  };
-  const menuBtn = {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    width: "100%",
-    padding: "7px 10px",
-    border: 0,
-    background: "transparent",
-    color: "var(--text)",
-    fontSize: 13,
-    borderRadius: 6,
-    cursor: "pointer",
-    fontFamily: "inherit",
-    textAlign: "left"
-  };
-  return /* @__PURE__ */ React.createElement("div", { className: "page", onClick: () => setMenuOpen(null) }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("svg", { width: "32", height: "12", viewBox: "0 0 60 25", style: { opacity: 0.5 } }, /* @__PURE__ */ React.createElement("text", { x: "0", y: "20", fontFamily: "Inter", fontWeight: "700", fontSize: "22", fill: "currentColor" }, "stripe")), loading ? "Cargando\u2026" : error ? "Error de conexi\xF3n" : `${invoices.length} facturas`)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: load, disabled: loading }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 13 }), " Actualizar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => setShowCreate(true) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Nueva factura"))), error && /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    gap: 10,
-    padding: "12px 16px",
-    marginBottom: 16,
-    background: "var(--red-soft)",
-    border: "0.5px solid var(--red)",
-    borderRadius: 10,
-    fontSize: 13,
-    color: "var(--red)"
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "alert-triangle", size: 14, style: { flexShrink: 0, marginTop: 1 } }), error), /* @__PURE__ */ React.createElement("div", { className: "rg-4", style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Disponible en Stripe"), /* @__PURE__ */ React.createElement("div", { className: "metric-value" }, balance ? _cents(balance.available) : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, "Saldo liquidado"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "En tr\xE1nsito"), /* @__PURE__ */ React.createElement("div", { className: "metric-value", style: { color: "var(--blue)" } }, balance ? _cents(balance.pending) : "\u2014"), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, "Pendiente de liquidar"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Cobrado (facturas)"), /* @__PURE__ */ React.createElement("div", { className: "metric-value" }, _cents(totals.paid)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, invoices.filter((i) => i.status === "paid").length, " pagadas"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Por cobrar"), /* @__PURE__ */ React.createElement("div", { className: "metric-value", style: { color: "var(--amber)" } }, _cents(totals.pending)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, invoices.filter((i) => i.status === "open").length, " abiertas")))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13 } }, "Ingresos cobrados"), !chartLoading && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2 } }, _cents(periodTotal), " en ", (_a = PERIODS.find((p) => p.id === period)) == null ? void 0 : _a.label)), /* @__PURE__ */ React.createElement("div", { className: "seg" }, PERIODS.map((p) => /* @__PURE__ */ React.createElement("button", { key: p.id, className: period === p.id ? "active" : "", onClick: () => changePeriod(p.id) }, p.label)))), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: "20px 32px" } }, /* @__PURE__ */ React.createElement(RevenueChart, { buckets, loading: chartLoading }))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, [{ id: "all", label: "Todas" }, { id: "pending", label: "Pendientes" }, { id: "paid", label: "Pagadas" }, { id: "void", label: "Anuladas" }].map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, className: filter === f.id ? "active" : "", onClick: () => setFilter(f.id) }, f.label))), /* @__PURE__ */ React.createElement("div", { className: "row tight muted xsmall" }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: "var(--green)" } }), "Stripe conectado")), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, loading ? /* @__PURE__ */ React.createElement("div", { style: { padding: 60, textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando facturas\u2026") : filtered.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "receipt", title: "Sin facturas", sub: "No hay facturas con esos filtros" }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "N\xBA"), /* @__PURE__ */ React.createElement("th", null, "Cliente"), /* @__PURE__ */ React.createElement("th", null, "Fecha"), /* @__PURE__ */ React.createElement("th", null, "Vencimiento"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Importe"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 50 } }))), /* @__PURE__ */ React.createElement("tbody", null, filtered.map((inv) => /* @__PURE__ */ React.createElement("tr", { key: inv.stripe_id }, /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-subtle)" } }, inv.id), /* @__PURE__ */ React.createElement("td", { style: { maxWidth: 200, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, inv.customer), /* @__PURE__ */ React.createElement("td", { className: "muted" }, _tsDate(inv.created)), /* @__PURE__ */ React.createElement("td", { className: "muted" }, inv.due_date ? _tsDate(inv.due_date) : "\u2014"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontVariantNumeric: "tabular-nums", fontWeight: 500 } }, _cents(inv.amount, inv.currency)), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StripeChip, { status: inv.status })), /* @__PURE__ */ React.createElement("td", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      className: "btn ghost icon-only sm",
-      onClick: () => setMenuOpen(menuOpen === inv.stripe_id ? null : inv.stripe_id)
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 13 })
-  ), menuOpen === inv.stripe_id && /* @__PURE__ */ React.createElement("div", { style: {
-    position: "absolute",
-    right: 12,
-    top: "calc(100% - 6px)",
-    zIndex: 10,
-    background: "var(--bg-elev)",
-    border: "0.5px solid var(--border-strong)",
-    borderRadius: 10,
-    padding: 4,
-    minWidth: 200,
-    boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
-  } }, inv.pdf_url && /* @__PURE__ */ React.createElement(
-    "a",
-    {
-      href: inv.pdf_url,
-      target: "_blank",
-      rel: "noreferrer",
-      style: { ...menuBtn, textDecoration: "none" },
-      onClick: () => setMenuOpen(null)
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "download", size: 13 }),
-    " Descargar PDF"
-  ), inv.hosted_url && /* @__PURE__ */ React.createElement(
-    "a",
-    {
-      href: inv.hosted_url,
-      target: "_blank",
-      rel: "noreferrer",
-      style: { ...menuBtn, textDecoration: "none" },
-      onClick: () => setMenuOpen(null)
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }),
-    " Ver en Stripe"
-  ))))))))), /* @__PURE__ */ React.createElement(
-    CreateInvoiceModal,
-    {
-      open: showCreate,
-      onClose: () => setShowCreate(false),
-      onCreated: () => {
-        load();
-        loadChart(period);
-      }
-    }
-  ));
+  const delExp = (id) => persist({ ...data, expenses: data.expenses.filter((e) => e.id !== id) });
+  const activeSubs = data.subs.filter((s) => s.active);
+  const recurringMo = activeSubs.reduce((a, s) => a + _subMonthly(s), 0);
+  const expMonth = data.expenses.filter((e) => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+  const totalMonth = recurringMo + expMonth;
+  const upcoming = activeSubs.filter((s) => s.nextRenewal).map((s) => ({ ...s, _d: new Date(s.nextRenewal) })).filter((s) => !isNaN(s._d)).sort((a, b) => a._d - b._d).slice(0, 4);
+  const byCat = {};
+  activeSubs.forEach((s) => {
+    byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s);
+  });
+  data.expenses.filter((e) => _sameMonth(e.date)).forEach((e) => {
+    byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0);
+  });
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  const catMax = cats.length ? cats[0][1] : 1;
+  const monthName = (/* @__PURE__ */ new Date()).toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Control de gastos y suscripciones \xB7 ", monthName))), /* @__PURE__ */ React.createElement("div", { className: "rg-4", style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Gasto este mes"), /* @__PURE__ */ React.createElement("div", { className: "metric-value" }, _eur(totalMonth)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, "Recurrente + puntual"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Recurrente / mes"), /* @__PURE__ */ React.createElement("div", { className: "metric-value", style: { color: "var(--blue)" } }, _eur(recurringMo)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, activeSubs.length, " suscripciones activas"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Gastos puntuales"), /* @__PURE__ */ React.createElement("div", { className: "metric-value", style: { color: "var(--amber)" } }, _eur(expMonth)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, "Este mes"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Coste anual estimado"), /* @__PURE__ */ React.createElement("div", { className: "metric-value" }, _eur(recurringMo * 12)), /* @__PURE__ */ React.createElement("div", { className: "metric-delta" }, "Solo suscripciones")))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, marginBottom: 18 }, className: "fin-split" }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13, marginBottom: 14 } }, "Desglose por categor\xEDa (este mes)"), cats.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" } }, "Sin datos todav\xEDa.") : cats.map(([cat, amt]) => /* @__PURE__ */ React.createElement("div", { key: cat, style: { marginBottom: 11 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", null, cat), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)" } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 6, borderRadius: 99, background: "var(--bg-elev-2)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(4, amt / catMax * 100)}%`, background: "var(--accent)", borderRadius: 99 } })))))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13, marginBottom: 14 } }, "Pr\xF3ximas renovaciones"), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" } }, "Sin fechas de renovaci\xF3n.") : upcoming.map((s) => /* @__PURE__ */ React.createElement("div", { key: s.id, style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, s.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, _fmtDate(s.nextRenewal))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, fontVariantNumeric: "tabular-nums", flexShrink: 0 } }, _eur(s.amount))))))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: tab === "subs" ? "active" : "", onClick: () => setTab("subs") }, "Suscripciones"), /* @__PURE__ */ React.createElement("button", { className: tab === "expenses" ? "active" : "", onClick: () => setTab("expenses") }, "Gastos")), tab === "subs" ? /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => setAddSub((v) => !v) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Suscripci\xF3n") : /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => setAddExp((v) => !v) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Gasto")), tab === "subs" && /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, addSub && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.9fr 1fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, placeholder: "Nombre (ej. Adobe CC)", value: subForm.name, onChange: (e) => setSubForm({ ...subForm, name: e.target.value }) }), /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, type: "number", step: "0.01", placeholder: "\u20AC", value: subForm.amount, onChange: (e) => setSubForm({ ...subForm, amount: e.target.value }) }), /* @__PURE__ */ React.createElement("select", { style: FIN_INPUT, value: subForm.cycle, onChange: (e) => setSubForm({ ...subForm, cycle: e.target.value }) }, FIN_CYCLES.map((c) => /* @__PURE__ */ React.createElement("option", { key: c.id, value: c.id }, c.label))), /* @__PURE__ */ React.createElement("select", { style: FIN_INPUT, value: subForm.category, onChange: (e) => setSubForm({ ...subForm, category: e.target.value }) }, FIN_CATS.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))), /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, type: "date", title: "Pr\xF3xima renovaci\xF3n", value: subForm.nextRenewal, onChange: (e) => setSubForm({ ...subForm, nextRenewal: e.target.value }) }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: saveSub }, "Guardar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
+    setAddSub(false);
+    setSubForm(blankSub);
+  } }, "\u2715"))), data.subs.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "refresh-cw", title: "Sin suscripciones", sub: "A\xF1ade tus gastos recurrentes para controlarlos" }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Suscripci\xF3n"), /* @__PURE__ */ React.createElement("th", null, "Categor\xEDa"), /* @__PURE__ */ React.createElement("th", null, "Ciclo"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Importe"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Equiv. /mes"), /* @__PURE__ */ React.createElement("th", null, "Renovaci\xF3n"), /* @__PURE__ */ React.createElement("th", null, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 44 } }))), /* @__PURE__ */ React.createElement("tbody", null, data.subs.map((s) => /* @__PURE__ */ React.createElement("tr", { key: s.id, style: { opacity: s.active ? 1 : 0.5 } }, /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 500 } }, s.name), /* @__PURE__ */ React.createElement("td", { className: "muted" }, s.category), /* @__PURE__ */ React.createElement("td", { className: "muted" }, s.cycle === "yearly" ? "Anual" : "Mensual"), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontVariantNumeric: "tabular-nums" } }, _eur(s.amount)), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" } }, _eur(_subMonthly(s))), /* @__PURE__ */ React.createElement("td", { className: "muted" }, _fmtDate(s.nextRenewal)), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleSub(s.id), style: { color: s.active ? "var(--green)" : "var(--text-subtle)" } }, s.active ? "Activa" : "Pausada")), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delSub(s.id), title: "Eliminar" }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))))), tab === "expenses" && /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, addExp && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1.6fr 0.8fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, type: "date", value: expForm.date, onChange: (e) => setExpForm({ ...expForm, date: e.target.value }) }), /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, placeholder: "Concepto", value: expForm.concept, onChange: (e) => setExpForm({ ...expForm, concept: e.target.value }) }), /* @__PURE__ */ React.createElement("input", { style: FIN_INPUT, type: "number", step: "0.01", placeholder: "\u20AC", value: expForm.amount, onChange: (e) => setExpForm({ ...expForm, amount: e.target.value }) }), /* @__PURE__ */ React.createElement("select", { style: FIN_INPUT, value: expForm.category, onChange: (e) => setExpForm({ ...expForm, category: e.target.value }) }, FIN_CATS.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: saveExp }, "Guardar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
+    setAddExp(false);
+    setExpForm(blankExp);
+  } }, "\u2715"))), data.expenses.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "receipt", title: "Sin gastos", sub: "Registra tus gastos puntuales del mes" }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "Fecha"), /* @__PURE__ */ React.createElement("th", null, "Concepto"), /* @__PURE__ */ React.createElement("th", null, "Categor\xEDa"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Importe"), /* @__PURE__ */ React.createElement("th", { style: { width: 44 } }))), /* @__PURE__ */ React.createElement("tbody", null, [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((e) => /* @__PURE__ */ React.createElement("tr", { key: e.id }, /* @__PURE__ */ React.createElement("td", { className: "muted" }, _fmtDate(e.date)), /* @__PURE__ */ React.createElement("td", { style: { fontWeight: 500 } }, e.concept), /* @__PURE__ */ React.createElement("td", { className: "muted" }, e.category), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontVariantNumeric: "tabular-nums" } }, _eur(e.amount)), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delExp(e.id), title: "Eliminar" }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))))))));
 };
 const SimplePage = ({ title, sub, icon }) => /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, title), sub && /* @__PURE__ */ React.createElement("div", { className: "sub" }, sub))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon, title: "Pr\xF3ximamente", sub: "Esta secci\xF3n est\xE1 en construcci\xF3n" }))));
 const SESSION_OPTS = [
@@ -1417,9 +1389,8 @@ const SESSION_OPTS = [
   { days: 30, label: "30 d\xEDas", sub: "Comodidad m\xE1xima" }
 ];
 const SessionCard = () => {
-  var _a;
   const toast = useToast();
-  const info = ((_a = window._sessionUtils) == null ? void 0 : _a.info()) || { days: 0, exp: null };
+  const info = window._sessionUtils?.info() || { days: 0, exp: null };
   const [days, setDays] = React.useState(info.days || 0);
   const expLabel = (() => {
     if (!info.exp || info.exp === "0") return "Solo esta sesi\xF3n (cierra con el navegador)";
@@ -1439,7 +1410,7 @@ const SessionCard = () => {
       }
       window._sessionUtils.save(JSON.parse(raw), days);
       toast("Sesi\xF3n actualizada", "success");
-    } catch (e) {
+    } catch {
       toast("Error al guardar", "error");
     }
   };

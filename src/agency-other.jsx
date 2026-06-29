@@ -1418,222 +1418,259 @@ const PERIODS = [
   { id:"12m", label:"1 año"   },
 ];
 
-const AgencyBilling = ({ openModal }) => {
+// ── Finanzas: control manual de gastos y suscripciones (localStorage) ──
+const FIN_KEY  = "141_finance_v1";
+const FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
+
+const _eur = (n) => "€" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const _finLoad = () => {
+  try {
+    const d = JSON.parse(localStorage.getItem(FIN_KEY));
+    return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
+  } catch { return { subs: [], expenses: [] }; }
+};
+const _finSave = (d) => { try { localStorage.setItem(FIN_KEY, JSON.stringify(d)); } catch {} };
+const _finId = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6));
+const _subMonthly = (s) => (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0));
+const _sameMonth = (iso) => { if (!iso) return false; const d = new Date(iso); const n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); };
+const _todayISO = () => new Date().toISOString().slice(0, 10);
+const _fmtDate = (iso) => { if (!iso) return "—"; const d = new Date(iso); const M = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"]; return isNaN(d) ? "—" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`; };
+
+const FIN_INPUT = {
+  padding: "9px 11px", borderRadius: 9, fontSize: 13, fontFamily: "inherit",
+  background: "var(--bg-elev)", border: "0.5px solid var(--border)", color: "var(--text)",
+  outline: "none", letterSpacing: "-0.2px", width: "100%",
+};
+const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
+
+const AgencyBilling = () => {
   const toast = useToast();
-  const [filter,       setFilter]       = useState("all");
-  const [menuOpen,     setMenuOpen]     = useState(null);
-  const [invoices,     setInvoices]     = useState([]);
-  const [balance,      setBalance]      = useState(null);
-  const [loading,      setLoading]      = useState(true);
-  const [chartLoading, setChartLoading] = useState(true);
-  const [buckets,      setBuckets]      = useState([]);
-  const [period,       setPeriod]       = useState("30d");
-  const [periodTotal,  setPeriodTotal]  = useState(0);
-  const [showCreate,   setShowCreate]   = useState(false);
-  const [error,        setError]        = useState("");
+  const [data, setData] = useState(_finLoad);
+  const [tab, setTab]   = useState("subs"); // subs | expenses
+  const [addSub, setAddSub] = useState(false);
+  const [addExp, setAddExp] = useState(false);
+  const blankSub = { name: "", amount: "", cycle: "monthly", category: "Software", nextRenewal: "" };
+  const blankExp = { date: _todayISO(), concept: "", amount: "", category: "Software" };
+  const [subForm, setSubForm] = useState(blankSub);
+  const [expForm, setExpForm] = useState(blankExp);
 
-  const load = async () => {
-    setLoading(true); setError("");
-    try {
-      const [balRes, invRes] = await Promise.all([
-        _stripeApi("balance"),
-        _stripeApi("invoices", { limit: 100 }),
-      ]);
-      if (balRes.ok) setBalance(balRes);
-      if (invRes.ok) setInvoices(invRes.invoices || []);
-      else setError(invRes.error || "Error cargando facturas");
-    } catch (e) {
-      setError("No se pudo conectar con el servidor. ¿Está mail_server.py en marcha?");
-    }
-    setLoading(false);
+  const persist = (next) => { setData(next); _finSave(next); };
+
+  const saveSub = () => {
+    if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) { toast("Pon nombre e importe", "error"); return; }
+    const sub = { id: _finId(), name: subForm.name.trim(), amount: Number(subForm.amount), cycle: subForm.cycle, category: subForm.category, nextRenewal: subForm.nextRenewal, active: true };
+    persist({ ...data, subs: [sub, ...data.subs] });
+    setSubForm(blankSub); setAddSub(false); toast("Suscripción añadida", "success");
   };
+  const toggleSub = (id) => persist({ ...data, subs: data.subs.map(s => s.id === id ? { ...s, active: !s.active } : s) });
+  const delSub = (id) => persist({ ...data, subs: data.subs.filter(s => s.id !== id) });
 
-  const loadChart = async (p) => {
-    setChartLoading(true);
-    try {
-      const res = await _stripeApi("revenue", { period: p });
-      if (res.ok) { setBuckets(res.buckets || []); setPeriodTotal(res.total || 0); }
-    } catch {}
-    setChartLoading(false);
+  const saveExp = () => {
+    if (!expForm.concept.trim() || !(Number(expForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
+    const exp = { id: _finId(), date: expForm.date || _todayISO(), concept: expForm.concept.trim(), amount: Number(expForm.amount), category: expForm.category };
+    persist({ ...data, expenses: [exp, ...data.expenses] });
+    setExpForm(blankExp); setAddExp(false); toast("Gasto añadido", "success");
   };
+  const delExp = (id) => persist({ ...data, expenses: data.expenses.filter(e => e.id !== id) });
 
-  const changePeriod = (p) => { setPeriod(p); loadChart(p); };
+  const activeSubs  = data.subs.filter(s => s.active);
+  const recurringMo = activeSubs.reduce((a, s) => a + _subMonthly(s), 0);
+  const expMonth    = data.expenses.filter(e => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+  const totalMonth  = recurringMo + expMonth;
 
-  React.useEffect(() => { load(); loadChart("30d"); }, []);
+  const upcoming = activeSubs
+    .filter(s => s.nextRenewal)
+    .map(s => ({ ...s, _d: new Date(s.nextRenewal) }))
+    .filter(s => !isNaN(s._d))
+    .sort((a, b) => a._d - b._d)
+    .slice(0, 4);
 
-  const filtered = invoices.filter(i =>
-    filter === "all"      ? true :
-    filter === "pending"  ? i.status === "open"  :
-    filter === "paid"     ? i.status === "paid"  :
-    filter === "void"     ? (i.status === "void" || i.status === "uncollectible") : true
-  );
+  const byCat = {};
+  activeSubs.forEach(s => { byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s); });
+  data.expenses.filter(e => _sameMonth(e.date)).forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0); });
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
+  const catMax = cats.length ? cats[0][1] : 1;
 
-  const totals = {
-    paid:    invoices.filter(i => i.status === "paid").reduce((a,b) => a + b.amount_paid, 0),
-    pending: invoices.filter(i => i.status === "open").reduce((a,b) => a + b.amount, 0),
-    draft:   invoices.filter(i => i.status === "draft").length,
-  };
-
-  const menuBtn = {
-    display:"flex", alignItems:"center", gap:8, width:"100%",
-    padding:"7px 10px", border:0, background:"transparent",
-    color:"var(--text)", fontSize:13, borderRadius:6,
-    cursor:"pointer", fontFamily:"inherit", textAlign:"left",
-  };
+  const monthName = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 
   return (
-    <div className="page" onClick={() => setMenuOpen(null)}>
+    <div className="page">
       <div className="page-head">
         <div>
-          <h1>Facturación</h1>
-          <div className="sub" style={{display:"flex", alignItems:"center", gap:6}}>
-            <svg width="32" height="12" viewBox="0 0 60 25" style={{opacity:0.5}}><text x="0" y="20" fontFamily="Inter" fontWeight="700" fontSize="22" fill="currentColor">stripe</text></svg>
-            {loading ? "Cargando…" : error ? "Error de conexión" : `${invoices.length} facturas`}
-          </div>
-        </div>
-        <div style={{display:"flex", gap:8}}>
-          <button className="btn ghost sm" onClick={load} disabled={loading}>
-            <Icon name="refresh-cw" size={13}/> Actualizar
-          </button>
-          <button className="btn primary sm" onClick={() => setShowCreate(true)}>
-            <Icon name="plus" size={13}/> Nueva factura
-          </button>
+          <h1>Gastos</h1>
+          <div className="sub">Control de gastos y suscripciones · {monthName}</div>
         </div>
       </div>
-
-      {error && (
-        <div style={{display:"flex", gap:10, padding:"12px 16px", marginBottom:16,
-          background:"var(--red-soft)", border:"0.5px solid var(--red)",
-          borderRadius:10, fontSize:13, color:"var(--red)"}}>
-          <Icon name="alert-triangle" size={14} style={{flexShrink:0, marginTop:1}}/>{error}
-        </div>
-      )}
 
       {/* ── Métricas ── */}
-      <div className="rg-4" style={{marginBottom:18}}>
+      <div className="rg-4" style={{ marginBottom: 18 }}>
         <div className="card"><div className="card-body">
-          <div className="metric-label">Disponible en Stripe</div>
-          <div className="metric-value">{balance ? _cents(balance.available) : "—"}</div>
-          <div className="metric-delta">Saldo liquidado</div>
+          <div className="metric-label">Gasto este mes</div>
+          <div className="metric-value">{_eur(totalMonth)}</div>
+          <div className="metric-delta">Recurrente + puntual</div>
         </div></div>
         <div className="card"><div className="card-body">
-          <div className="metric-label">En tránsito</div>
-          <div className="metric-value" style={{color:"var(--blue)"}}>{balance ? _cents(balance.pending) : "—"}</div>
-          <div className="metric-delta">Pendiente de liquidar</div>
+          <div className="metric-label">Recurrente / mes</div>
+          <div className="metric-value" style={{ color: "var(--blue)" }}>{_eur(recurringMo)}</div>
+          <div className="metric-delta">{activeSubs.length} suscripciones activas</div>
         </div></div>
         <div className="card"><div className="card-body">
-          <div className="metric-label">Cobrado (facturas)</div>
-          <div className="metric-value">{_cents(totals.paid)}</div>
-          <div className="metric-delta">{invoices.filter(i=>i.status==="paid").length} pagadas</div>
+          <div className="metric-label">Gastos puntuales</div>
+          <div className="metric-value" style={{ color: "var(--amber)" }}>{_eur(expMonth)}</div>
+          <div className="metric-delta">Este mes</div>
         </div></div>
         <div className="card"><div className="card-body">
-          <div className="metric-label">Por cobrar</div>
-          <div className="metric-value" style={{color:"var(--amber)"}}>{_cents(totals.pending)}</div>
-          <div className="metric-delta">{invoices.filter(i=>i.status==="open").length} abiertas</div>
+          <div className="metric-label">Coste anual estimado</div>
+          <div className="metric-value">{_eur(recurringMo * 12)}</div>
+          <div className="metric-delta">Solo suscripciones</div>
         </div></div>
       </div>
 
-      {/* ── Gráfico de ingresos ── */}
-      <div className="card" style={{marginBottom:18}}>
-        <div className="card-header">
-          <div style={{flex:1}}>
-            <div style={{fontWeight:500, fontSize:13}}>Ingresos cobrados</div>
-            {!chartLoading && (
-              <div style={{fontSize:12, color:"var(--text-subtle)", marginTop:2}}>
-                {_cents(periodTotal)} en {PERIODS.find(p=>p.id===period)?.label}
+      {/* ── Desglose + próximas renovaciones ── */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, marginBottom: 18 }} className="fin-split">
+        <div className="card"><div className="card-body">
+          <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 14 }}>Desglose por categoría (este mes)</div>
+          {cats.length === 0 ? (
+            <div style={{ color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" }}>Sin datos todavía.</div>
+          ) : cats.map(([cat, amt]) => (
+            <div key={cat} style={{ marginBottom: 11 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5, color: "var(--text-muted)" }}>
+                <span>{cat}</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--text)" }}>{_eur(amt)}</span>
               </div>
-            )}
-          </div>
-          <div className="seg">
-            {PERIODS.map(p => (
-              <button key={p.id} className={period === p.id ? "active" : ""} onClick={() => changePeriod(p.id)}>
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="card-body" style={{padding:"20px 32px"}}>
-          <RevenueChart buckets={buckets} loading={chartLoading}/>
-        </div>
+              <div style={{ height: 6, borderRadius: 99, background: "var(--bg-elev-2)", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${Math.max(4, (amt / catMax) * 100)}%`, background: "var(--accent)", borderRadius: 99 }} />
+              </div>
+            </div>
+          ))}
+        </div></div>
+        <div className="card"><div className="card-body">
+          <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 14 }}>Próximas renovaciones</div>
+          {upcoming.length === 0 ? (
+            <div style={{ color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" }}>Sin fechas de renovación.</div>
+          ) : upcoming.map(s => (
+            <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border)" }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
+                <div style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>{_fmtDate(s.nextRenewal)}</div>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{_eur(s.amount)}</div>
+            </div>
+          ))}
+        </div></div>
       </div>
 
-      {/* ── Tabla de facturas ── */}
+      {/* ── Tabs Suscripciones / Gastos ── */}
       <div className="card">
         <div className="card-header">
           <div className="seg">
-            {[{id:"all",label:"Todas"},{id:"pending",label:"Pendientes"},{id:"paid",label:"Pagadas"},{id:"void",label:"Anuladas"}].map(f => (
-              <button key={f.id} className={filter === f.id ? "active" : ""} onClick={() => setFilter(f.id)}>{f.label}</button>
-            ))}
+            <button className={tab === "subs" ? "active" : ""} onClick={() => setTab("subs")}>Suscripciones</button>
+            <button className={tab === "expenses" ? "active" : ""} onClick={() => setTab("expenses")}>Gastos</button>
           </div>
-          <div className="row tight muted xsmall">
-            <div style={{width:7,height:7,borderRadius:"50%",background:"var(--green)"}}/>
-            Stripe conectado
-          </div>
-        </div>
-        <div className="card-body flush">
-          {loading ? (
-            <div style={{padding:60, textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>Cargando facturas…</div>
-          ) : filtered.length === 0 ? (
-            <Empty icon="receipt" title="Sin facturas" sub="No hay facturas con esos filtros"/>
+          {tab === "subs" ? (
+            <button className="btn primary sm" onClick={() => setAddSub(v => !v)}><Icon name="plus" size={13} /> Suscripción</button>
           ) : (
-            <table className="table">
-              <thead><tr>
-                <th>Nº</th><th>Cliente</th><th>Fecha</th><th>Vencimiento</th>
-                <th style={{textAlign:"right"}}>Importe</th><th>Estado</th><th style={{width:50}}></th>
-              </tr></thead>
-              <tbody>
-                {filtered.map(inv => (
-                  <tr key={inv.stripe_id}>
-                    <td style={{fontFamily:"var(--font-mono)", fontSize:11, color:"var(--text-subtle)"}}>{inv.id}</td>
-                    <td style={{maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{inv.customer}</td>
-                    <td className="muted">{_tsDate(inv.created)}</td>
-                    <td className="muted">{inv.due_date ? _tsDate(inv.due_date) : "—"}</td>
-                    <td style={{textAlign:"right", fontVariantNumeric:"tabular-nums", fontWeight:500}}>
-                      {_cents(inv.amount, inv.currency)}
-                    </td>
-                    <td><StripeChip status={inv.status}/></td>
-                    <td style={{position:"relative"}} onClick={e => e.stopPropagation()}>
-                      <button className="btn ghost icon-only sm"
-                        onClick={() => setMenuOpen(menuOpen === inv.stripe_id ? null : inv.stripe_id)}>
-                        <Icon name="more-h" size={13}/>
-                      </button>
-                      {menuOpen === inv.stripe_id && (
-                        <div style={{
-                          position:"absolute", right:12, top:"calc(100% - 6px)", zIndex:10,
-                          background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
-                          borderRadius:10, padding:4, minWidth:200,
-                          boxShadow:"0 8px 24px rgba(0,0,0,0.3)",
-                        }}>
-                          {inv.pdf_url && (
-                            <a href={inv.pdf_url} target="_blank" rel="noreferrer"
-                              style={{...menuBtn, textDecoration:"none"}}
-                              onClick={() => setMenuOpen(null)}>
-                              <Icon name="download" size={13}/> Descargar PDF
-                            </a>
-                          )}
-                          {inv.hosted_url && (
-                            <a href={inv.hosted_url} target="_blank" rel="noreferrer"
-                              style={{...menuBtn, textDecoration:"none"}}
-                              onClick={() => setMenuOpen(null)}>
-                              <Icon name="external-link" size={13}/> Ver en Stripe
-                            </a>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <button className="btn primary sm" onClick={() => setAddExp(v => !v)}><Icon name="plus" size={13} /> Gasto</button>
           )}
         </div>
-      </div>
 
-      <CreateInvoiceModal
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        onCreated={() => { load(); loadChart(period); }}
-      />
+        {/* ── Suscripciones ── */}
+        {tab === "subs" && (
+          <div className="card-body flush">
+            {addSub && (
+              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.9fr 1fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" }}>
+                <input style={FIN_INPUT} placeholder="Nombre (ej. Adobe CC)" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} />
+                <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={subForm.amount} onChange={e => setSubForm({ ...subForm, amount: e.target.value })} />
+                <select style={FIN_INPUT} value={subForm.cycle} onChange={e => setSubForm({ ...subForm, cycle: e.target.value })}>
+                  {FIN_CYCLES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+                <select style={FIN_INPUT} value={subForm.category} onChange={e => setSubForm({ ...subForm, category: e.target.value })}>
+                  {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <input style={FIN_INPUT} type="date" title="Próxima renovación" value={subForm.nextRenewal} onChange={e => setSubForm({ ...subForm, nextRenewal: e.target.value })} />
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn primary sm" onClick={saveSub}>Guardar</button>
+                  <button className="btn ghost sm" onClick={() => { setAddSub(false); setSubForm(blankSub); }}>✕</button>
+                </div>
+              </div>
+            )}
+            {data.subs.length === 0 ? (
+              <Empty icon="refresh-cw" title="Sin suscripciones" sub="Añade tus gastos recurrentes para controlarlos" />
+            ) : (
+              <table className="table">
+                <thead><tr>
+                  <th>Suscripción</th><th>Categoría</th><th>Ciclo</th>
+                  <th style={{ textAlign: "right" }}>Importe</th><th style={{ textAlign: "right" }}>Equiv. /mes</th>
+                  <th>Renovación</th><th>Estado</th><th style={{ width: 44 }}></th>
+                </tr></thead>
+                <tbody>
+                  {data.subs.map(s => (
+                    <tr key={s.id} style={{ opacity: s.active ? 1 : 0.5 }}>
+                      <td style={{ fontWeight: 500 }}>{s.name}</td>
+                      <td className="muted">{s.category}</td>
+                      <td className="muted">{s.cycle === "yearly" ? "Anual" : "Mensual"}</td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(s.amount)}</td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>{_eur(_subMonthly(s))}</td>
+                      <td className="muted">{_fmtDate(s.nextRenewal)}</td>
+                      <td>
+                        <button className="btn ghost sm" onClick={() => toggleSub(s.id)} style={{ color: s.active ? "var(--green)" : "var(--text-subtle)" }}>
+                          {s.active ? "Activa" : "Pausada"}
+                        </button>
+                      </td>
+                      <td style={{ textAlign: "right" }}>
+                        <button className="btn ghost icon-only sm" onClick={() => delSub(s.id)} title="Eliminar"><Icon name="trash" size={13} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+
+        {/* ── Gastos ── */}
+        {tab === "expenses" && (
+          <div className="card-body flush">
+            {addExp && (
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 0.8fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" }}>
+                <input style={FIN_INPUT} type="date" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} />
+                <input style={FIN_INPUT} placeholder="Concepto" value={expForm.concept} onChange={e => setExpForm({ ...expForm, concept: e.target.value })} />
+                <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} />
+                <select style={FIN_INPUT} value={expForm.category} onChange={e => setExpForm({ ...expForm, category: e.target.value })}>
+                  {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button className="btn primary sm" onClick={saveExp}>Guardar</button>
+                  <button className="btn ghost sm" onClick={() => { setAddExp(false); setExpForm(blankExp); }}>✕</button>
+                </div>
+              </div>
+            )}
+            {data.expenses.length === 0 ? (
+              <Empty icon="receipt" title="Sin gastos" sub="Registra tus gastos puntuales del mes" />
+            ) : (
+              <table className="table">
+                <thead><tr>
+                  <th>Fecha</th><th>Concepto</th><th>Categoría</th>
+                  <th style={{ textAlign: "right" }}>Importe</th><th style={{ width: 44 }}></th>
+                </tr></thead>
+                <tbody>
+                  {[...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(e => (
+                    <tr key={e.id}>
+                      <td className="muted">{_fmtDate(e.date)}</td>
+                      <td style={{ fontWeight: 500 }}>{e.concept}</td>
+                      <td className="muted">{e.category}</td>
+                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(e.amount)}</td>
+                      <td style={{ textAlign: "right" }}>
+                        <button className="btn ghost icon-only sm" onClick={() => delExp(e.id)} title="Eliminar"><Icon name="trash" size={13} /></button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
