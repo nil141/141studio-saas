@@ -1,67 +1,38 @@
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
-  const confirm = useConfirm();
-  const toast = useToast();
-  const [q, setQ] = useState("");
-  const [menuOpen, setMenuOpen] = useState(null);
-  const filtered = D.CLIENTS.filter(
-    (c) => !q || (c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())
-  );
-  const removeClient = async (c) => {
-    setMenuOpen(null);
-    const projectsCount = D.PROJECTS.filter((p) => p.clientId === c.id).length;
-    const ok = await confirm({
-      title: `Eliminar a ${c.company}?`,
-      body: projectsCount > 0 ? `Se eliminar\xE1n tambi\xE9n ${projectsCount} proyecto${projectsCount === 1 ? "" : "s"} y todas las facturas asociadas. Esta acci\xF3n no se puede deshacer.` : "Se eliminar\xE1n tambi\xE9n todas las facturas asociadas. Esta acci\xF3n no se puede deshacer.",
-      confirmLabel: "S\xED, eliminar",
-      danger: true
-    });
-    if (ok) {
-      D.deleteClient(c.id);
-      toast(`${c.company} eliminado`, "success");
-    }
-  };
-  return /* @__PURE__ */ React.createElement("div", { className: "page", onClick: () => setMenuOpen(null) }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, D.CLIENTS.length, " en total \xB7 ", D.CLIENTS.filter((c) => c.status === "active").length, " activos")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => openModal("invite") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14 }), " Invitar cliente"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "search", style: { maxWidth: 380 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14 }), /* @__PURE__ */ React.createElement("input", { placeholder: "Buscar cliente\u2026", value: q, onChange: (e) => setQ(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, filtered.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }) : filtered.map((c, i) => /* @__PURE__ */ React.createElement(
+  const clients = D.CLIENTS;
+  const COLS = "1.3fr 1.2fr 1.7fr 1fr";
+  const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => openModal("invite") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14 }), " Invitar cliente"))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "grid",
+    gridTemplateColumns: COLS,
+    gap: 24,
+    padding: "16px 26px",
+    borderBottom: "0.5px solid var(--border)"
+  } }, ["Nombre", "Empresa", "Email", "Tel\xE9fono"].map((h) => /* @__PURE__ */ React.createElement("div", { key: h, style: { fontSize: 13.5, color: "var(--text-subtle)" } }, h))), clients.map((c, i) => /* @__PURE__ */ React.createElement(
     "div",
     {
       key: c.id,
       onClick: () => navigate("clientDetail", { clientId: c.id }),
       style: {
-        display: "flex",
+        display: "grid",
+        gridTemplateColumns: COLS,
+        gap: 24,
         alignItems: "center",
-        gap: 14,
-        padding: "13px 18px",
+        padding: "18px 26px",
         cursor: "pointer",
         transition: "background .1s",
-        borderBottom: i === filtered.length - 1 ? "0" : "0.5px solid var(--border)"
+        borderBottom: i === clients.length - 1 ? "0" : "0.5px solid var(--border)"
       },
       onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
       onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
     },
-    /* @__PURE__ */ React.createElement(Avatar, { name: c.name, initials: c.initials, color: c.color }),
-    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.company), (c.name || c.email) && /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.name, c.email ? " \xB7 " + c.email : "")),
-    c.service && c.service !== "\u2014" && /* @__PURE__ */ React.createElement("span", { className: "chip", style: { flexShrink: 0 } }, c.service),
-    /* @__PURE__ */ React.createElement(StatusChip, { status: c.status }),
-    /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => setMenuOpen(menuOpen === c.id ? null : c.id) }, /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 14 })), menuOpen === c.id && /* @__PURE__ */ React.createElement("div", { style: {
-      position: "absolute",
-      right: 0,
-      top: "calc(100% - 2px)",
-      zIndex: 10,
-      background: "var(--bg-elev)",
-      border: "0.5px solid var(--border-strong)",
-      borderRadius: 10,
-      padding: 4,
-      minWidth: 180,
-      boxShadow: "0 8px 24px rgba(0,0,0,0.3)"
-    } }, /* @__PURE__ */ React.createElement(MenuItem, { icon: "edit", onClick: () => {
-      setMenuOpen(null);
-      navigate("clientDetail", { clientId: c.id });
-    } }, "Ver detalle"), /* @__PURE__ */ React.createElement(MenuItem, { icon: "archive", onClick: () => {
-      setMenuOpen(null);
-      toast("Cliente archivado");
-    } }, "Archivar"), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--border)", margin: "4px 0" } }), /* @__PURE__ */ React.createElement(MenuItem, { icon: "x", danger: true, onClick: () => removeClient(c) }, "Eliminar")))
-  )))));
+    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.name || c.company || "\u2014"),
+    /* @__PURE__ */ React.createElement("div", { style: cell }, c.company || "\u2014"),
+    /* @__PURE__ */ React.createElement("div", { style: cell }, c.email || "\u2014"),
+    /* @__PURE__ */ React.createElement("div", { style: cell }, c.whatsapp || c.phone || "\u2014")
+  ))));
 };
 const MenuItem = ({ icon, onClick, children, danger }) => /* @__PURE__ */ React.createElement(
   "button",

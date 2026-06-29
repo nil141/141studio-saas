@@ -2,38 +2,17 @@
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
-  const confirm = useConfirm();
-  const toast = useToast();
-  const [q, setQ] = useState("");
-  const [menuOpen, setMenuOpen] = useState(null);
 
-  const filtered = D.CLIENTS.filter(c =>
-    !q || (c.name + c.company + c.email).toLowerCase().includes(q.toLowerCase())
-  );
-
-  const removeClient = async (c) => {
-    setMenuOpen(null);
-    const projectsCount = D.PROJECTS.filter(p => p.clientId === c.id).length;
-    const ok = await confirm({
-      title: `Eliminar a ${c.company}?`,
-      body: projectsCount > 0
-        ? `Se eliminarán también ${projectsCount} proyecto${projectsCount === 1 ? "" : "s"} y todas las facturas asociadas. Esta acción no se puede deshacer.`
-        : "Se eliminarán también todas las facturas asociadas. Esta acción no se puede deshacer.",
-      confirmLabel: "Sí, eliminar",
-      danger: true,
-    });
-    if (ok) {
-      D.deleteClient(c.id);
-      toast(`${c.company} eliminado`, "success");
-    }
-  };
+  const clients = D.CLIENTS;
+  const COLS = "1.3fr 1.2fr 1.7fr 1fr";
+  const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 
   return (
-    <div className="page" onClick={() => setMenuOpen(null)}>
+    <div className="page">
       <div className="page-head">
         <div>
           <h1>Clientes</h1>
-          <div className="sub">{D.CLIENTS.length} en total · {D.CLIENTS.filter(c=>c.status==="active").length} activos</div>
+          <div className="sub">{clients.length} en total</div>
         </div>
         <div className="row tight">
           <button className="btn" onClick={() => openModal("newClient")}><Icon name="plus" size={14}/> Nuevo cliente</button>
@@ -41,57 +20,44 @@ const AgencyClientsList = ({ navigate, openModal }) => {
         </div>
       </div>
 
-      <div className="card">
-        <div className="card-header">
-          <div className="search" style={{maxWidth: 380}}>
-            <Icon name="search" size={14}/>
-            <input placeholder="Buscar cliente…" value={q} onChange={e => setQ(e.target.value)}/>
+      {clients.length === 0 ? (
+        <div className="card"><div className="card-body" style={{ padding: 48 }}>
+          <Empty icon="users" title="Sin clientes" sub="Añade tu primer cliente para empezar."/>
+        </div></div>
+      ) : (
+        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          {/* Cabecera */}
+          <div style={{
+            display: "grid", gridTemplateColumns: COLS, gap: 24,
+            padding: "16px 26px", borderBottom: "0.5px solid var(--border)",
+          }}>
+            {["Nombre", "Empresa", "Email", "Teléfono"].map(h => (
+              <div key={h} style={{ fontSize: 13.5, color: "var(--text-subtle)" }}>{h}</div>
+            ))}
           </div>
-        </div>
-        <div className="card-body flush">
-          {filtered.length === 0 ? (
-            <Empty icon="users" title="Sin clientes" sub="Añade tu primer cliente para empezar."/>
-          ) : filtered.map((c, i) => (
+
+          {/* Filas */}
+          {clients.map((c, i) => (
             <div key={c.id}
               onClick={() => navigate("clientDetail", { clientId: c.id })}
               style={{
-                display:"flex", alignItems:"center", gap:14,
-                padding:"13px 18px", cursor:"pointer", transition:"background .1s",
-                borderBottom: i === filtered.length - 1 ? "0" : "0.5px solid var(--border)",
+                display: "grid", gridTemplateColumns: COLS, gap: 24, alignItems: "center",
+                padding: "18px 26px", cursor: "pointer", transition: "background .1s",
+                borderBottom: i === clients.length - 1 ? "0" : "0.5px solid var(--border)",
               }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
               onMouseLeave={e => e.currentTarget.style.background = "transparent"}
             >
-              <Avatar name={c.name} initials={c.initials} color={c.color}/>
-              <div style={{flex:1, minWidth:0}}>
-                <div style={{fontWeight:500, fontSize:14, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{c.company}</div>
-                {(c.name || c.email) && (
-                  <div className="subtle xsmall" style={{overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                    {c.name}{c.email ? " · " + c.email : ""}
-                  </div>
-                )}
+              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                {c.name || c.company || "—"}
               </div>
-              {c.service && c.service !== "—" && <span className="chip" style={{flexShrink:0}}>{c.service}</span>}
-              <StatusChip status={c.status}/>
-              <div style={{position:"relative", flexShrink:0}} onClick={e => e.stopPropagation()}>
-                <button className="btn ghost icon-only sm" onClick={() => setMenuOpen(menuOpen === c.id ? null : c.id)}>
-                  <Icon name="more-h" size={14}/>
-                </button>
-                {menuOpen === c.id && (
-                  <div style={{position:"absolute", right: 0, top: "calc(100% - 2px)", zIndex: 10,
-                    background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
-                    borderRadius: 10, padding: 4, minWidth: 180, boxShadow:"0 8px 24px rgba(0,0,0,0.3)"}}>
-                    <MenuItem icon="edit" onClick={() => { setMenuOpen(null); navigate("clientDetail", { clientId: c.id }); }}>Ver detalle</MenuItem>
-                    <MenuItem icon="archive" onClick={() => { setMenuOpen(null); toast("Cliente archivado"); }}>Archivar</MenuItem>
-                    <div style={{height: 1, background: "var(--border)", margin: "4px 0"}}/>
-                    <MenuItem icon="x" danger onClick={() => removeClient(c)}>Eliminar</MenuItem>
-                  </div>
-                )}
-              </div>
+              <div style={cell}>{c.company || "—"}</div>
+              <div style={cell}>{c.email || "—"}</div>
+              <div style={cell}>{c.whatsapp || c.phone || "—"}</div>
             </div>
           ))}
         </div>
-      </div>
+      )}
     </div>
   );
 };
