@@ -332,7 +332,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           </button>
         </div>
 
-        {/* Day strip — Opción 4: glass bar con halo deslizante + ring de progreso + puntos de tareas */}
+        {/* Day strip — Opción 5: tabs minimalistas estilo Things 3 / Linear (sin contenedor) */}
         {(() => {
           const selIdx = weekDays.findIndex(d => {
             const m = new Date(d); m.setHours(0,0,0,0);
@@ -340,44 +340,28 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           });
           const segPct = 100 / 7;
           return (
-            <div style={{
-              position:"relative",
-              display:"flex", alignItems:"stretch",
-              background:"linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02))",
-              border:"0.5px solid rgba(255,255,255,0.07)",
-              borderRadius:22,
-              padding:6,
-              backdropFilter:"blur(28px) saturate(180%)",
-              WebkitBackdropFilter:"blur(28px) saturate(180%)",
-              overflow:"hidden",
-              boxShadow:"inset 0 1px 0 rgba(255,255,255,0.04)",
-            }}>
-              {/* Halo de fondo deslizante — más etéreo, sin borde sólido */}
+            <div style={{ position:"relative", display:"flex", alignItems:"stretch", padding:"6px 0 0" }}>
+
+              {/* Track sutil de fondo */}
+              <div style={{
+                position:"absolute", left:0, right:0, bottom:0,
+                height:"0.5px", background:"rgba(255,255,255,0.05)",
+              }}/>
+
+              {/* Underline accent deslizante */}
               {selIdx >= 0 && (
-                <>
-                  <div style={{
-                    position:"absolute",
-                    top:6, bottom:6,
-                    left:`calc(${selIdx * segPct}% + 6px)`,
-                    width:`calc(${segPct}% - 12px)`,
-                    background:"radial-gradient(ellipse at center, rgba(158,154,229,0.32) 0%, rgba(158,154,229,0.10) 60%, transparent 100%)",
-                    borderRadius:17,
-                    transition:"left .42s cubic-bezier(0.34,1.2,0.46,1), width .42s cubic-bezier(0.34,1.2,0.46,1)",
-                    zIndex:0,
-                    filter:"blur(2px)",
-                  }}/>
-                  <div style={{
-                    position:"absolute",
-                    top:6, bottom:6,
-                    left:`calc(${selIdx * segPct}% + 6px)`,
-                    width:`calc(${segPct}% - 12px)`,
-                    background:"linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015))",
-                    border:"0.5px solid rgba(158,154,229,0.35)",
-                    borderRadius:17,
-                    transition:"left .42s cubic-bezier(0.34,1.2,0.46,1), width .42s cubic-bezier(0.34,1.2,0.46,1)",
-                    zIndex:0,
-                  }}/>
-                </>
+                <div style={{
+                  position:"absolute",
+                  bottom:0,
+                  left:`calc(${selIdx * segPct}% + ${segPct/2}% - 14px)`,
+                  width:"28px",
+                  height:"2px",
+                  background:"var(--accent)",
+                  borderRadius:99,
+                  boxShadow:"0 0 12px rgba(158,154,229,0.5)",
+                  transition:"left .35s cubic-bezier(0.4,0,0.2,1)",
+                  zIndex:2,
+                }}/>
               )}
 
               {weekDays.map((d, i) => {
@@ -388,90 +372,67 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                 const tasksToday = allTasks.filter(t => t.deadline === dStr);
                 const doneToday  = tasksToday.filter(t => t.column === "done").length;
                 const totalToday = tasksToday.length;
-                const loadPct    = totalToday ? Math.min(100, Math.round((doneToday/totalToday)*100)) : 0;
+                const allDone    = totalToday > 0 && doneToday === totalToday;
                 const hasLoad    = totalToday > 0;
-
-                // Hairline: sólo si ni el segmento actual ni el anterior están seleccionados
-                const showHair = i > 0 && !isSel && (() => {
-                  const prevMid = new Date(weekDays[i-1]); prevMid.setHours(0,0,0,0);
-                  return prevMid.getTime() !== selMid.getTime();
-                })();
-
-                // Ring SVG sólo para seleccionado con carga
-                const ringSize = 44, ringR = 19, ringC = 2 * Math.PI * ringR;
 
                 return (
                   <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
                     flex:1, cursor:"pointer", border:"none", background:"transparent",
                     position:"relative", zIndex:1,
                     display:"flex", flexDirection:"column", alignItems:"center",
-                    gap:8, padding:"14px 0 12px",
-                    transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
-                    transform: isSel ? "translateY(-1px)" : "translateY(0)",
-                  }}>
-                    {showHair && (
-                      <span style={{
-                        position:"absolute", left:0, top:"26%", bottom:"26%",
-                        width:"0.5px", background:"rgba(255,255,255,0.05)",
-                      }}/>
-                    )}
-
+                    gap:6, padding:"4px 0 18px",
+                    transition:"all .2s",
+                  }}
+                    onMouseEnter={e => { if (!isSel) e.currentTarget.style.background = "rgba(255,255,255,0.025)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = "transparent"; }}
+                  >
                     {/* Eyebrow */}
                     <span style={{
                       fontSize:10, fontWeight:600,
                       color: isSel ? "var(--accent)" : isToday ? "var(--text-muted)" : "var(--text-subtle)",
-                      letterSpacing:"0.14em", textTransform:"uppercase",
+                      letterSpacing:"0.18em", textTransform:"uppercase",
                       transition:"color .2s",
                     }}>
                       {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
                     </span>
 
-                    {/* Día — con ring de progreso si está seleccionado y tiene carga */}
-                    <div style={{
-                      position:"relative",
-                      width:ringSize, height:ringSize,
-                      display:"flex", alignItems:"center", justifyContent:"center",
+                    {/* Day number — grande, peso ligero */}
+                    <span style={{
+                      fontSize:26,
+                      fontWeight: isSel ? 400 : 300,
+                      color: isSel ? "var(--text)" : isToday ? "var(--text)" : "var(--text-muted)",
+                      letterSpacing:"-1.2px",
+                      lineHeight:1,
+                      transition:"color .2s",
                     }}>
-                      {isSel && hasLoad && (
-                        <svg width={ringSize} height={ringSize} style={{ position:"absolute", inset:0, transform:"rotate(-90deg)" }}>
-                          <circle cx={ringSize/2} cy={ringSize/2} r={ringR} fill="none"
-                            stroke="rgba(255,255,255,0.08)" strokeWidth="1.5"/>
-                          <circle cx={ringSize/2} cy={ringSize/2} r={ringR} fill="none"
-                            stroke="var(--accent)" strokeWidth="1.5" strokeLinecap="round"
-                            strokeDasharray={`${(loadPct/100)*ringC} ${ringC}`}
-                            style={{ transition:"stroke-dasharray .4s ease" }}/>
-                        </svg>
-                      )}
-                      <span style={{
-                        fontSize:23,
-                        fontWeight: isSel ? 500 : 300,
-                        color: isSel ? "#efedff" : isToday ? "var(--text)" : "var(--text-muted)",
-                        letterSpacing:"-1px",
-                        lineHeight:1,
-                        transition:"color .2s",
-                      }}>
-                        {d.getDate()}
-                      </span>
-                    </div>
+                      {d.getDate()}
+                    </span>
 
-                    {/* Puntos de tareas (máx 4) o puntito de hoy */}
+                    {/* Meta row: badge de carga o tick de completado */}
                     <div style={{
-                      display:"flex", gap:3, height:5, alignItems:"center",
-                      marginTop:2, minHeight:5,
+                      display:"flex", alignItems:"center", gap:4,
+                      height:14, marginTop:2,
                     }}>
                       {hasLoad ? (
-                        Array.from({ length: Math.min(totalToday, 4) }).map((_, k) => {
-                          const isDoneDot = k < Math.min(doneToday, 4);
-                          return (
-                            <span key={k} style={{
-                              width:4, height:4, borderRadius:"50%",
-                              background: isDoneDot
-                                ? (isSel ? "var(--accent)" : "rgba(255,255,255,0.55)")
-                                : (isSel ? "rgba(158,154,229,0.30)" : "rgba(255,255,255,0.14)"),
-                              transition:"background .2s",
-                            }}/>
-                          );
-                        })
+                        allDone ? (
+                          <span style={{
+                            display:"inline-flex", alignItems:"center", gap:3,
+                            fontSize:10, fontWeight:500,
+                            color: isSel ? "var(--accent)" : "var(--text-subtle)",
+                            letterSpacing:"-0.1px",
+                          }}>
+                            <Icon name="check" size={10} strokeWidth={2.4}/>
+                            {totalToday}
+                          </span>
+                        ) : (
+                          <span style={{
+                            fontSize:10, fontWeight:500,
+                            color: isSel ? "var(--accent)" : isToday ? "var(--text-muted)" : "var(--text-subtle)",
+                            letterSpacing:"-0.1px",
+                          }}>
+                            {doneToday}<span style={{ opacity:0.5 }}>/{totalToday}</span>
+                          </span>
+                        )
                       ) : (
                         isToday && !isSel ? (
                           <span style={{
@@ -479,14 +440,6 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                             background:"var(--accent)",
                           }}/>
                         ) : null
-                      )}
-                      {/* Indicador "+" si hay más de 4 tareas */}
-                      {hasLoad && totalToday > 4 && (
-                        <span style={{
-                          fontSize:8, fontWeight:600, lineHeight:1,
-                          color: isSel ? "var(--accent)" : "var(--text-subtle)",
-                          marginLeft:1,
-                        }}>+</span>
                       )}
                     </div>
                   </button>
