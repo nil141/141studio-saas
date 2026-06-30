@@ -323,67 +323,122 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           </button>
         </div>
 
-        {/* Day strip — segmented glass bar (Opción 2) */}
-        <div style={{
-          display:"flex", alignItems:"stretch",
-          background:"rgba(255,255,255,0.04)",
-          border:"0.5px solid rgba(255,255,255,0.08)",
-          borderRadius:16,
-          padding:6,
-          backdropFilter:"blur(20px) saturate(180%)",
-          WebkitBackdropFilter:"blur(20px) saturate(180%)",
-        }}>
-          {weekDays.map((d, i) => {
-            const dMid = new Date(d); dMid.setHours(0,0,0,0);
-            const isSel = dMid.getTime() === selMid.getTime();
-            const isToday = dMid.getTime() === todayMid.getTime();
-            return (
-              <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                flex:1, cursor:"pointer", border:"none",
-                position:"relative",
-                background: isSel
-                  ? "linear-gradient(180deg, rgba(158,154,229,0.22), rgba(158,154,229,0.12))"
-                  : "transparent",
-                boxShadow: isSel ? "0 1px 0 rgba(158,154,229,0.35) inset, 0 0 0 0.5px rgba(158,154,229,0.45)" : "none",
-                borderRadius:11,
-                display:"flex", flexDirection:"column", alignItems:"center",
-                gap:6, padding:"12px 0 14px",
-                transition:"all .2s",
-              }}>
-                {/* Separador entre segmentos */}
-                {i > 0 && !isSel && (
-                  <span style={{
-                    position:"absolute", left:0, top:"22%", bottom:"22%",
-                    width:"0.5px", background:"rgba(255,255,255,0.06)",
-                  }}/>
-                )}
-                <span style={{
-                  fontSize:10.5, fontWeight:600,
-                  color: isSel ? "var(--accent)" : "var(--text-subtle)",
-                  letterSpacing:"0.1em", textTransform:"uppercase",
-                  transition:"color .18s",
-                }}>
-                  {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
-                </span>
-                <span style={{
-                  fontSize:20,
-                  fontWeight: isSel ? 500 : isToday ? 500 : 300,
-                  color: isSel ? "#dad7f7" : isToday ? "var(--text)" : "var(--text-muted)",
-                  letterSpacing:"-0.8px",
-                  transition:"color .18s",
-                }}>
-                  {d.getDate()}
-                </span>
-                {/* Today dot (only when not selected) */}
-                <span style={{
-                  width:4, height:4, borderRadius:"50%",
-                  background: isToday && !isSel ? "var(--accent)" : "transparent",
-                  marginTop:-2,
+        {/* Day strip — Opción 3: glass bar con píldora deslizante + indicadores de carga */}
+        {(() => {
+          const selIdx = weekDays.findIndex(d => {
+            const m = new Date(d); m.setHours(0,0,0,0);
+            return m.getTime() === selMid.getTime();
+          });
+          const segPct = 100 / 7;
+          return (
+            <div style={{
+              position:"relative",
+              display:"flex", alignItems:"stretch",
+              background:"rgba(255,255,255,0.035)",
+              border:"0.5px solid rgba(255,255,255,0.07)",
+              borderRadius:18,
+              padding:6,
+              backdropFilter:"blur(24px) saturate(180%)",
+              WebkitBackdropFilter:"blur(24px) saturate(180%)",
+              overflow:"hidden",
+            }}>
+              {/* Píldora deslizante */}
+              {selIdx >= 0 && (
+                <div style={{
+                  position:"absolute",
+                  top:6, bottom:6,
+                  left:`calc(${selIdx * segPct}% + 6px)`,
+                  width:`calc(${segPct}% - 12px)`,
+                  background:"linear-gradient(180deg, rgba(158,154,229,0.28), rgba(158,154,229,0.14))",
+                  borderRadius:13,
+                  boxShadow:"0 0 0 0.5px rgba(158,154,229,0.45), 0 8px 24px rgba(158,154,229,0.12)",
+                  transition:"left .32s cubic-bezier(0.4,0,0.2,1), width .32s cubic-bezier(0.4,0,0.2,1)",
+                  zIndex:0,
                 }}/>
-              </button>
-            );
-          })}
-        </div>
+              )}
+
+              {weekDays.map((d, i) => {
+                const dMid = new Date(d); dMid.setHours(0,0,0,0);
+                const isSel = dMid.getTime() === selMid.getTime();
+                const isToday = dMid.getTime() === todayMid.getTime();
+                const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+                const tasksToday = allTasks.filter(t => t.deadline === dStr);
+                const doneToday  = tasksToday.filter(t => t.column === "done").length;
+                const totalToday = tasksToday.length;
+                const loadPct    = totalToday ? Math.min(100, Math.round((doneToday/totalToday)*100)) : 0;
+                const hasLoad    = totalToday > 0;
+
+                return (
+                  <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
+                    flex:1, cursor:"pointer", border:"none", background:"transparent",
+                    position:"relative", zIndex:1,
+                    display:"flex", flexDirection:"column", alignItems:"center",
+                    gap:6, padding:"12px 0 12px",
+                    transition:"transform .15s",
+                  }}>
+                    {/* Hairline separator */}
+                    {i > 0 && !isSel && weekDays[i-1] && (() => {
+                      const prevMid = new Date(weekDays[i-1]); prevMid.setHours(0,0,0,0);
+                      return prevMid.getTime() !== selMid.getTime();
+                    })() && (
+                      <span style={{
+                        position:"absolute", left:0, top:"24%", bottom:"24%",
+                        width:"0.5px", background:"rgba(255,255,255,0.06)",
+                      }}/>
+                    )}
+
+                    {/* Eyebrow */}
+                    <span style={{
+                      fontSize:10.5, fontWeight:600,
+                      color: isSel ? "var(--accent)" : "var(--text-subtle)",
+                      letterSpacing:"0.12em", textTransform:"uppercase",
+                      transition:"color .2s",
+                    }}>
+                      {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
+                    </span>
+
+                    {/* Day number */}
+                    <span style={{
+                      fontSize:22,
+                      fontWeight: isSel ? 500 : isToday ? 500 : 300,
+                      color: isSel ? "#e7e4ff" : isToday ? "var(--text)" : "var(--text-muted)",
+                      letterSpacing:"-0.9px",
+                      lineHeight:1,
+                      transition:"color .2s",
+                    }}>
+                      {d.getDate()}
+                    </span>
+
+                    {/* Load indicator: mini barra de carga del día (o puntito hoy) */}
+                    <div style={{
+                      height:3, width:24, borderRadius:99, marginTop:4,
+                      background: hasLoad ? "rgba(255,255,255,0.08)" : "transparent",
+                      position:"relative", overflow:"hidden",
+                    }}>
+                      {hasLoad && (
+                        <div style={{
+                          position:"absolute", inset:0,
+                          width:`${loadPct}%`,
+                          background: isSel ? "var(--accent)" : isToday ? "var(--text-muted)" : "rgba(255,255,255,0.22)",
+                          borderRadius:99,
+                          transition:"width .3s",
+                        }}/>
+                      )}
+                      {!hasLoad && isToday && !isSel && (
+                        <span style={{
+                          position:"absolute", left:"50%", top:"50%",
+                          transform:"translate(-50%,-50%)",
+                          width:3, height:3, borderRadius:"50%",
+                          background:"var(--accent)",
+                        }}/>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          );
+        })()}
 
         {/* Daily progress */}
         <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:18 }}>

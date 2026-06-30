@@ -120,62 +120,111 @@
           }
         ]
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o - 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)", minWidth: 80, textAlign: "center" } }, MON_ES[weekDays[3].getMonth()], " ", weekDays[3].getFullYear()), /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o + 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), /* @__PURE__ */ React.createElement("div", { style: {
-      display: "flex",
-      alignItems: "stretch",
-      background: "rgba(255,255,255,0.04)",
-      border: "0.5px solid rgba(255,255,255,0.08)",
-      borderRadius: 16,
-      padding: 6,
-      backdropFilter: "blur(20px) saturate(180%)",
-      WebkitBackdropFilter: "blur(20px) saturate(180%)"
-    } }, weekDays.map((d, i) => {
-      const dMid = new Date(d);
-      dMid.setHours(0, 0, 0, 0);
-      const isSel = dMid.getTime() === selMid.getTime();
-      const isToday2 = dMid.getTime() === todayMid.getTime();
-      return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
-        flex: 1,
-        cursor: "pointer",
-        border: "none",
+    )), /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o - 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)", minWidth: 80, textAlign: "center" } }, MON_ES[weekDays[3].getMonth()], " ", weekDays[3].getFullYear()), /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o + 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), (() => {
+      const selIdx = weekDays.findIndex((d) => {
+        const m = new Date(d);
+        m.setHours(0, 0, 0, 0);
+        return m.getTime() === selMid.getTime();
+      });
+      const segPct = 100 / 7;
+      return /* @__PURE__ */ React.createElement("div", { style: {
         position: "relative",
-        background: isSel ? "linear-gradient(180deg, rgba(158,154,229,0.22), rgba(158,154,229,0.12))" : "transparent",
-        boxShadow: isSel ? "0 1px 0 rgba(158,154,229,0.35) inset, 0 0 0 0.5px rgba(158,154,229,0.45)" : "none",
-        borderRadius: 11,
         display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        gap: 6,
-        padding: "12px 0 14px",
-        transition: "all .2s"
-      } }, i > 0 && !isSel && /* @__PURE__ */ React.createElement("span", { style: {
+        alignItems: "stretch",
+        background: "rgba(255,255,255,0.035)",
+        border: "0.5px solid rgba(255,255,255,0.07)",
+        borderRadius: 18,
+        padding: 6,
+        backdropFilter: "blur(24px) saturate(180%)",
+        WebkitBackdropFilter: "blur(24px) saturate(180%)",
+        overflow: "hidden"
+      } }, selIdx >= 0 && /* @__PURE__ */ React.createElement("div", { style: {
         position: "absolute",
-        left: 0,
-        top: "22%",
-        bottom: "22%",
-        width: "0.5px",
-        background: "rgba(255,255,255,0.06)"
-      } }), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 10.5,
-        fontWeight: 600,
-        color: isSel ? "var(--accent)" : "var(--text-subtle)",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        transition: "color .18s"
-      } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 20,
-        fontWeight: isSel ? 500 : isToday2 ? 500 : 300,
-        color: isSel ? "#dad7f7" : isToday2 ? "var(--text)" : "var(--text-muted)",
-        letterSpacing: "-0.8px",
-        transition: "color .18s"
-      } }, d.getDate()), /* @__PURE__ */ React.createElement("span", { style: {
-        width: 4,
-        height: 4,
-        borderRadius: "50%",
-        background: isToday2 && !isSel ? "var(--accent)" : "transparent",
-        marginTop: -2
-      } }));
-    })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 2, background: "var(--border)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))), groups.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), groups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
+        top: 6,
+        bottom: 6,
+        left: `calc(${selIdx * segPct}% + 6px)`,
+        width: `calc(${segPct}% - 12px)`,
+        background: "linear-gradient(180deg, rgba(158,154,229,0.28), rgba(158,154,229,0.14))",
+        borderRadius: 13,
+        boxShadow: "0 0 0 0.5px rgba(158,154,229,0.45), 0 8px 24px rgba(158,154,229,0.12)",
+        transition: "left .32s cubic-bezier(0.4,0,0.2,1), width .32s cubic-bezier(0.4,0,0.2,1)",
+        zIndex: 0
+      } }), weekDays.map((d, i) => {
+        const dMid = new Date(d);
+        dMid.setHours(0, 0, 0, 0);
+        const isSel = dMid.getTime() === selMid.getTime();
+        const isToday2 = dMid.getTime() === todayMid.getTime();
+        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        const tasksToday = allTasks.filter((t) => t.deadline === dStr);
+        const doneToday = tasksToday.filter((t) => t.column === "done").length;
+        const totalToday = tasksToday.length;
+        const loadPct = totalToday ? Math.min(100, Math.round(doneToday / totalToday * 100)) : 0;
+        const hasLoad = totalToday > 0;
+        return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
+          flex: 1,
+          cursor: "pointer",
+          border: "none",
+          background: "transparent",
+          position: "relative",
+          zIndex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 6,
+          padding: "12px 0 12px",
+          transition: "transform .15s"
+        } }, i > 0 && !isSel && weekDays[i - 1] && (() => {
+          const prevMid = new Date(weekDays[i - 1]);
+          prevMid.setHours(0, 0, 0, 0);
+          return prevMid.getTime() !== selMid.getTime();
+        })() && /* @__PURE__ */ React.createElement("span", { style: {
+          position: "absolute",
+          left: 0,
+          top: "24%",
+          bottom: "24%",
+          width: "0.5px",
+          background: "rgba(255,255,255,0.06)"
+        } }), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10.5,
+          fontWeight: 600,
+          color: isSel ? "var(--accent)" : "var(--text-subtle)",
+          letterSpacing: "0.12em",
+          textTransform: "uppercase",
+          transition: "color .2s"
+        } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 22,
+          fontWeight: isSel ? 500 : isToday2 ? 500 : 300,
+          color: isSel ? "#e7e4ff" : isToday2 ? "var(--text)" : "var(--text-muted)",
+          letterSpacing: "-0.9px",
+          lineHeight: 1,
+          transition: "color .2s"
+        } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: {
+          height: 3,
+          width: 24,
+          borderRadius: 99,
+          marginTop: 4,
+          background: hasLoad ? "rgba(255,255,255,0.08)" : "transparent",
+          position: "relative",
+          overflow: "hidden"
+        } }, hasLoad && /* @__PURE__ */ React.createElement("div", { style: {
+          position: "absolute",
+          inset: 0,
+          width: `${loadPct}%`,
+          background: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "rgba(255,255,255,0.22)",
+          borderRadius: 99,
+          transition: "width .3s"
+        } }), !hasLoad && isToday2 && !isSel && /* @__PURE__ */ React.createElement("span", { style: {
+          position: "absolute",
+          left: "50%",
+          top: "50%",
+          transform: "translate(-50%,-50%)",
+          width: 3,
+          height: 3,
+          borderRadius: "50%",
+          background: "var(--accent)"
+        } })));
+      }));
+    })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 2, background: "var(--border)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))), groups.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), groups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
       const pid = (project == null ? void 0 : project.id) || "__none__";
       const isDone = t.column === "done";
       const colLabel = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n" }[t.column];
