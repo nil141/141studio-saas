@@ -321,28 +321,32 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           </button>
         </div>
 
-        {/* Day strip — 7 días, formato móvil */}
-        <div style={{ display:"flex", gap:6 }}>
+        {/* Day strip — píldoras verticales (letra arriba, círculo con día abajo) */}
+        <div style={{ display:"flex", gap:8 }}>
           {weekDays.map(d => {
             const dMid = new Date(d); dMid.setHours(0,0,0,0);
             const isSel = dMid.getTime() === selMid.getTime();
             const isToday = dMid.getTime() === todayMid.getTime();
             return (
               <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                flex:1, background:"transparent", border:"none", cursor:"pointer",
-                display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"6px 0",
+                flex:1, cursor:"pointer",
+                display:"flex", flexDirection:"column", alignItems:"center",
+                gap:10, padding:"14px 0 12px",
+                borderRadius:999,
+                border: isSel ? "1.5px solid var(--accent)" : "0.5px solid rgba(255,255,255,0.08)",
+                background: isSel ? "rgba(158,154,229,0.10)" : "rgba(255,255,255,0.03)",
+                transition:"all .18s",
               }}>
-                <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.02em" }}>
+                <span style={{ fontSize:13, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-muted)", letterSpacing:"0.02em" }}>
                   {["D","L","M","X","J","V","S"][d.getDay()]}
                 </span>
                 <div style={{
-                  width:36, height:36, borderRadius:"50%",
-                  border: isSel ? "1.5px solid var(--accent)" : isToday ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
-                  background: isSel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+                  width:34, height:34, borderRadius:"50%",
+                  background: isSel ? "rgba(158,154,229,0.22)" : "rgba(255,255,255,0.05)",
                   display:"flex", alignItems:"center", justifyContent:"center",
-                  transition:"all .15s",
+                  transition:"all .18s",
                 }}>
-                  <span style={{ fontSize:15, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.4px" }}>
+                  <span style={{ fontSize:14, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#dad7f7" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.3px" }}>
                     {d.getDate()}
                   </span>
                 </div>
