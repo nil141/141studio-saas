@@ -146,25 +146,37 @@
           position: "relative",
           display: "flex",
           alignItems: "stretch",
-          background: "rgba(255,255,255,0.035)",
+          background: "linear-gradient(180deg, rgba(255,255,255,0.045), rgba(255,255,255,0.02))",
           border: "0.5px solid rgba(255,255,255,0.07)",
-          borderRadius: 18,
+          borderRadius: 22,
           padding: 6,
-          backdropFilter: "blur(24px) saturate(180%)",
-          WebkitBackdropFilter: "blur(24px) saturate(180%)",
-          overflow: "hidden"
-        } }, selIdx >= 0 && /* @__PURE__ */ React.createElement("div", { style: {
+          backdropFilter: "blur(28px) saturate(180%)",
+          WebkitBackdropFilter: "blur(28px) saturate(180%)",
+          overflow: "hidden",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)"
+        } }, selIdx >= 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
           position: "absolute",
           top: 6,
           bottom: 6,
           left: `calc(${selIdx * segPct}% + 6px)`,
           width: `calc(${segPct}% - 12px)`,
-          background: "linear-gradient(180deg, rgba(158,154,229,0.28), rgba(158,154,229,0.14))",
-          borderRadius: 13,
-          boxShadow: "0 0 0 0.5px rgba(158,154,229,0.45), 0 8px 24px rgba(158,154,229,0.12)",
-          transition: "left .32s cubic-bezier(0.4,0,0.2,1), width .32s cubic-bezier(0.4,0,0.2,1)",
+          background: "radial-gradient(ellipse at center, rgba(158,154,229,0.32) 0%, rgba(158,154,229,0.10) 60%, transparent 100%)",
+          borderRadius: 17,
+          transition: "left .42s cubic-bezier(0.34,1.2,0.46,1), width .42s cubic-bezier(0.34,1.2,0.46,1)",
+          zIndex: 0,
+          filter: "blur(2px)"
+        } }), /* @__PURE__ */ React.createElement("div", { style: {
+          position: "absolute",
+          top: 6,
+          bottom: 6,
+          left: `calc(${selIdx * segPct}% + 6px)`,
+          width: `calc(${segPct}% - 12px)`,
+          background: "linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.015))",
+          border: "0.5px solid rgba(158,154,229,0.35)",
+          borderRadius: 17,
+          transition: "left .42s cubic-bezier(0.34,1.2,0.46,1), width .42s cubic-bezier(0.34,1.2,0.46,1)",
           zIndex: 0
-        } }), weekDays.map((d, i) => {
+        } })), weekDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
           const isSel = dMid.getTime() === selMid.getTime();
@@ -175,6 +187,12 @@
           const totalToday = tasksToday.length;
           const loadPct = totalToday ? Math.min(100, Math.round(doneToday / totalToday * 100)) : 0;
           const hasLoad = totalToday > 0;
+          const showHair = i > 0 && !isSel && (() => {
+            const prevMid = new Date(weekDays[i - 1]);
+            prevMid.setHours(0, 0, 0, 0);
+            return prevMid.getTime() !== selMid.getTime();
+          })();
+          const ringSize = 44, ringR = 19, ringC = 2 * Math.PI * ringR;
           return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
             flex: 1,
             cursor: "pointer",
@@ -185,59 +203,89 @@
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: 6,
-            padding: "12px 0 12px",
-            transition: "transform .15s"
-          } }, i > 0 && !isSel && weekDays[i - 1] && (() => {
-            const prevMid = new Date(weekDays[i - 1]);
-            prevMid.setHours(0, 0, 0, 0);
-            return prevMid.getTime() !== selMid.getTime();
-          })() && /* @__PURE__ */ React.createElement("span", { style: {
+            gap: 8,
+            padding: "14px 0 12px",
+            transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
+            transform: isSel ? "translateY(-1px)" : "translateY(0)"
+          } }, showHair && /* @__PURE__ */ React.createElement("span", { style: {
             position: "absolute",
             left: 0,
-            top: "24%",
-            bottom: "24%",
+            top: "26%",
+            bottom: "26%",
             width: "0.5px",
-            background: "rgba(255,255,255,0.06)"
+            background: "rgba(255,255,255,0.05)"
           } }), /* @__PURE__ */ React.createElement("span", { style: {
-            fontSize: 10.5,
+            fontSize: 10,
             fontWeight: 600,
-            color: isSel ? "var(--accent)" : "var(--text-subtle)",
-            letterSpacing: "0.12em",
+            color: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "var(--text-subtle)",
+            letterSpacing: "0.14em",
             textTransform: "uppercase",
             transition: "color .2s"
-          } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]), /* @__PURE__ */ React.createElement("span", { style: {
-            fontSize: 22,
-            fontWeight: isSel ? 500 : isToday2 ? 500 : 300,
-            color: isSel ? "#e7e4ff" : isToday2 ? "var(--text)" : "var(--text-muted)",
-            letterSpacing: "-0.9px",
+          } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]), /* @__PURE__ */ React.createElement("div", { style: {
+            position: "relative",
+            width: ringSize,
+            height: ringSize,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          } }, isSel && hasLoad && /* @__PURE__ */ React.createElement("svg", { width: ringSize, height: ringSize, style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: ringSize / 2,
+              cy: ringSize / 2,
+              r: ringR,
+              fill: "none",
+              stroke: "rgba(255,255,255,0.08)",
+              strokeWidth: "1.5"
+            }
+          ), /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: ringSize / 2,
+              cy: ringSize / 2,
+              r: ringR,
+              fill: "none",
+              stroke: "var(--accent)",
+              strokeWidth: "1.5",
+              strokeLinecap: "round",
+              strokeDasharray: `${loadPct / 100 * ringC} ${ringC}`,
+              style: { transition: "stroke-dasharray .4s ease" }
+            }
+          )), /* @__PURE__ */ React.createElement("span", { style: {
+            fontSize: 23,
+            fontWeight: isSel ? 500 : 300,
+            color: isSel ? "#efedff" : isToday2 ? "var(--text)" : "var(--text-muted)",
+            letterSpacing: "-1px",
             lineHeight: 1,
             transition: "color .2s"
-          } }, d.getDate()), /* @__PURE__ */ React.createElement("div", { style: {
-            height: 3,
-            width: 24,
-            borderRadius: 99,
-            marginTop: 4,
-            background: hasLoad ? "rgba(255,255,255,0.08)" : "transparent",
-            position: "relative",
-            overflow: "hidden"
-          } }, hasLoad && /* @__PURE__ */ React.createElement("div", { style: {
-            position: "absolute",
-            inset: 0,
-            width: `${loadPct}%`,
-            background: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "rgba(255,255,255,0.22)",
-            borderRadius: 99,
-            transition: "width .3s"
-          } }), !hasLoad && isToday2 && !isSel && /* @__PURE__ */ React.createElement("span", { style: {
-            position: "absolute",
-            left: "50%",
-            top: "50%",
-            transform: "translate(-50%,-50%)",
-            width: 3,
-            height: 3,
+          } }, d.getDate())), /* @__PURE__ */ React.createElement("div", { style: {
+            display: "flex",
+            gap: 3,
+            height: 5,
+            alignItems: "center",
+            marginTop: 2,
+            minHeight: 5
+          } }, hasLoad ? Array.from({ length: Math.min(totalToday, 4) }).map((_, k) => {
+            const isDoneDot = k < Math.min(doneToday, 4);
+            return /* @__PURE__ */ React.createElement("span", { key: k, style: {
+              width: 4,
+              height: 4,
+              borderRadius: "50%",
+              background: isDoneDot ? isSel ? "var(--accent)" : "rgba(255,255,255,0.55)" : isSel ? "rgba(158,154,229,0.30)" : "rgba(255,255,255,0.14)",
+              transition: "background .2s"
+            } });
+          }) : isToday2 && !isSel ? /* @__PURE__ */ React.createElement("span", { style: {
+            width: 4,
+            height: 4,
             borderRadius: "50%",
             background: "var(--accent)"
-          } })));
+          } }) : null, hasLoad && totalToday > 4 && /* @__PURE__ */ React.createElement("span", { style: {
+            fontSize: 8,
+            fontWeight: 600,
+            lineHeight: 1,
+            color: isSel ? "var(--accent)" : "var(--text-subtle)",
+            marginLeft: 1
+          } }, "+")));
         }));
       })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 2, background: "var(--border)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))),
       /* @__PURE__ */ React.createElement("div", { style: {
