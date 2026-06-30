@@ -141,21 +141,21 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       });
     } catch (err) {
     }
-    const todayMid2 = new Date(now);
-    todayMid2.setHours(0, 0, 0, 0);
+    const todayMid = new Date(now);
+    todayMid.setHours(0, 0, 0, 0);
     return ev.filter((e) => {
       const dMid = new Date(e.date);
       dMid.setHours(0, 0, 0, 0);
-      const diff = Math.round((dMid - todayMid2) / 864e5);
+      const diff = Math.round((dMid - todayMid) / 864e5);
       return diff >= -30 && diff <= 60;
     }).sort((a, b) => a.date - b.date).slice(0, 8);
   }, [D.PROJECTS, D.INVOICES, D.TASKS]);
   const formatEventDate = (d) => {
-    const todayMid2 = /* @__PURE__ */ new Date();
-    todayMid2.setHours(0, 0, 0, 0);
+    const todayMid = /* @__PURE__ */ new Date();
+    todayMid.setHours(0, 0, 0, 0);
     const dMid = new Date(d);
     dMid.setHours(0, 0, 0, 0);
-    const diff = Math.round((dMid - todayMid2) / 864e5);
+    const diff = Math.round((dMid - todayMid) / 864e5);
     if (diff < 0) return `hace ${Math.abs(diff)}d`;
     if (diff === 0) return "Hoy";
     if (diff === 1) return "Ma\xF1ana";
@@ -258,31 +258,41 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     border: "0.5px solid rgba(255,255,255,0.08)",
     borderRadius: 10
   } }, [
-    { id: "v1", label: "General" },
-    { id: "v2", label: "Financiera" },
-    { id: "v3", label: "Del d\xEDa" },
-    { id: "v4", label: "Cartera" }
-  ].map((opt) => /* @__PURE__ */ React.createElement(
+    { id: "v1", title: "Equilibrada (KPIs + Agenda + Colas)" },
+    { id: "v2", title: "Stats inline + Agenda + Colas" },
+    { id: "v3", title: "5 KPIs + 3 columnas iguales" },
+    { id: "v4", title: "Bento asim\xE9trico" },
+    { id: "v5", title: "Una columna apilada" },
+    { id: "v6", title: "Sidebar de KPIs (2/3 + 1/3)" },
+    { id: "v7", title: "Hero con stats integrados" },
+    { id: "v8", title: "KPI grande + 4 mini" },
+    { id: "v9", title: "Vista densa (4 columnas)" },
+    { id: "v10", title: "Widgets macOS (2x2)" }
+  ].map((opt, i) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key: opt.id,
       onClick: () => pickOpt(opt.id),
+      title: opt.title,
       style: {
+        width: 26,
         height: 26,
-        padding: "0 11px",
         borderRadius: 7,
         cursor: "pointer",
-        fontSize: 12,
+        fontSize: 11.5,
         fontWeight: 500,
         letterSpacing: "-0.2px",
-        fontFamily: "inherit",
+        fontFamily: "var(--font-mono)",
         border: 0,
         transition: "background .12s, color .12s",
         background: dashOpt === opt.id ? "var(--accent-soft)" : "transparent",
-        color: dashOpt === opt.id ? "var(--accent)" : "var(--text-muted)"
+        color: dashOpt === opt.id ? "var(--accent)" : "var(--text-muted)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center"
       }
     },
-    opt.label
+    i + 1
   )))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [
     { label: "Nueva tarea", icon: "plus", fn: () => openModal("newTask"), primary: true },
     { label: "Nuevo proyecto", icon: "folder", fn: () => openModal("newProject") },
@@ -359,53 +369,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
   } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(QueueRow, { key: i, q })), /* @__PURE__ */ React.createElement(ActiveProjects, { D, navigate, openModal, APPLE_SECTION })))));
-  const todayMid = /* @__PURE__ */ new Date();
-  todayMid.setHours(0, 0, 0, 0);
-  const todayStrYMD = `${todayMid.getFullYear()}-${String(todayMid.getMonth() + 1).padStart(2, "0")}-${String(todayMid.getDate()).padStart(2, "0")}`;
-  const tasksTodayAndOverdue = Object.entries(D.TASKS).flatMap(
-    ([pid, list]) => (list || []).filter((t) => {
-      if (!t.deadline || t.column === "done") return false;
-      const d = /* @__PURE__ */ new Date(t.deadline + "T00:00:00");
-      return d.getTime() <= todayMid.getTime();
-    }).map((t) => ({ ...t, projectId: pid }))
-  ).sort((a, b) => (a.deadline || "").localeCompare(b.deadline || ""));
-  const upcomingMeetings = upcomingEvents.filter((ev) => ev.type === "Reuni\xF3n");
-  const todayEvents = upcomingEvents.filter((ev) => {
-    const d = new Date(ev.date);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime() === todayMid.getTime();
-  });
-  const pendingInvoicesList = D.INVOICES.filter((i) => i.status !== "paid").map((i) => ({ ...i, _due: parseSpanishDate(i.due) || new Date(9999, 0, 1) })).sort((a, b) => a._due - b._due);
-  const pendingAmount = pendingInvoicesList.reduce((s, i) => s + (i.amount || 0), 0);
-  const clientRevenue = {};
-  D.INVOICES.filter((i) => i.status === "paid").forEach((i) => {
-    const k = i.clientId || i.client || "\u2014";
-    clientRevenue[k] = (clientRevenue[k] || 0) + (i.amount || 0);
-  });
-  const topClients = Object.entries(clientRevenue).map(([k, v]) => {
-    const c = D.CLIENTS.find((cl) => cl.id === k);
-    return { name: c?.company || k, value: v, color: c?.color || "var(--accent)", id: c?.id, initials: c?.initials };
-  }).sort((a, b) => b.value - a.value).slice(0, 5);
-  const topClientsMax = topClients[0]?.value || 1;
-  const finData = (() => {
-    try {
-      const d = JSON.parse(localStorage.getItem("141_finance_v1"));
-      return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
-    } catch {
-      return { subs: [], expenses: [] };
-    }
-  })();
-  const monthlyRecurring = finData.subs.filter((s) => s.active).reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0), 0);
-  const upcomingRenewals = finData.subs.filter((s) => s.active && s.nextRenewal).map((s) => ({ ...s, _d: new Date(s.nextRenewal) })).filter((s) => !isNaN(s._d)).sort((a, b) => a._d - b._d).slice(0, 4);
-  const activeClients = D.CLIENTS.filter((c) => c.status === "active" || !c.status).length;
-  const totalLeads = (D.LEADS || []).filter((l) => l.stage !== "lost" && l.stage !== "won").length;
-  const mrrEstimated = D.CLIENTS.reduce((a, c) => a + (Number(c.mrr) || 0), 0);
-  const leadsByStage = (window.Data.LEAD_STAGES || []).filter((s) => s.id !== "lost").map((s) => ({
-    stage: s,
-    items: (D.LEADS || []).filter((l) => l.stage === s.id)
-  }));
-  const fmtEur = (n) => "\u20AC" + Math.round(n || 0).toLocaleString("es-ES");
-  const fmtEurC = (n) => "\u20AC" + ((n || 0) / 100).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  const recentActivity = [
+    ...D.PROJECTS.slice(0, 2).map((p) => ({ icon: "folder", text: p.name, sub: "Proyecto en curso" })),
+    ...D.CLIENTS.slice(0, 2).map((c) => ({ icon: "users", text: c.company, sub: c.service || "Cliente" })),
+    ...(D.INVOICES || []).slice(0, 1).map((i) => ({ icon: "receipt", text: i.client, sub: "Factura " + (i.status || "\u2014") }))
+  ].slice(0, 5);
   const renderKpiTile = (k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 32,
     height: 32,
@@ -436,295 +404,170 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     color: "var(--text-subtle)",
     letterSpacing: "-0.2px"
   } }, k.sub)));
-  const finKpis = [
-    {
-      label: "Cobrado este mes",
-      icon: "receipt",
-      value: stripeMonth === null ? "\u2026" : stripeMonth === false ? "\u2014" : fmtEurC(stripeMonth),
-      sub: stripeMonth === null ? "Conectando\u2026" : (/* @__PURE__ */ new Date()).toLocaleString("es-ES", { month: "long" })
-    },
-    {
-      label: "Por cobrar",
-      icon: "clock",
-      value: fmtEur(pendingAmount),
-      sub: `${pendingInvoicesList.length} ${pendingInvoicesList.length === 1 ? "factura" : "facturas"} pendientes`
-    },
-    {
-      label: "Gasto recurrente",
-      icon: "refresh-cw",
-      value: fmtEur(monthlyRecurring),
-      sub: monthlyRecurring ? "al mes (suscripciones)" : "Sin suscripciones"
-    },
-    {
-      label: "Facturas vencidas",
-      icon: "alert-triangle",
-      value: pendingInvoicesList.filter((i) => i._due < todayMid).length,
-      sub: "requieren cobro"
-    }
-  ];
-  const V2 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 } }, finKpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  const renderMiniKpi = (k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { ...APPLE_CARD, padding: "14px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 12, strokeWidth: 1.7, style: { color: "var(--text-subtle)" } })), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 18 : 22,
+    fontWeight: 400,
+    letterSpacing: "-0.8px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1
+  } }, k.value));
+  const AgendaBlock = ({ height = 360, slice = 8 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Por cobrar"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Facturas pendientes")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, pendingInvoicesList.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin facturas pendientes", sub: "Todo cobrado." })) : pendingInvoicesList.slice(0, 8).map((inv, i) => {
-    const isOverdue = inv._due < todayMid;
-    return /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        key: inv.id,
-        onClick: () => navigate("billing"),
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "14px 22px",
-          cursor: "pointer",
-          transition: "background .1s",
-          borderBottom: i < Math.min(7, pendingInvoicesList.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none"
-        }
-      },
-      /* @__PURE__ */ React.createElement("div", { style: {
-        width: 36,
-        height: 36,
-        borderRadius: 10,
-        flexShrink: 0,
-        background: isOverdue ? "var(--red-soft)" : "rgba(255,255,255,0.04)",
-        border: "0.5px solid " + (isOverdue ? "rgba(220,91,93,0.25)" : "rgba(255,255,255,0.06)"),
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: isOverdue ? "var(--red)" : "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 15, strokeWidth: 1.7 })),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 13.5,
-        fontWeight: 500,
-        letterSpacing: "-0.3px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, inv.client), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2 } }, inv.id, " \xB7 ", isOverdue ? /* @__PURE__ */ React.createElement("span", { style: { color: "var(--red)" } }, "Vencida") : "Vence " + (inv.due || "\u2014"))),
-      /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 16,
-        fontWeight: 500,
-        fontVariantNumeric: "tabular-nums",
-        letterSpacing: "-0.3px",
-        color: isOverdue ? "var(--red)" : "var(--text)"
-      } }, "\u20AC", (inv.amount || 0).toLocaleString("es-ES"))
-    );
-  }))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" } }, EYEBROW("Top clientes"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Por facturaci\xF3n")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 22px" } }, topClients.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin facturaci\xF3n", sub: "A\xFAn no hay facturas pagadas." })) : topClients.map((c, i) => /* @__PURE__ */ React.createElement(
-    "div",
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.slice(0, slice).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(slice - 1, upcomingEvents.length - 1), formatEventDate }))));
+  const QueuesBlock = ({ height = 360, showProjects = true }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "18px 22px 14px",
+    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(QueueRow, { key: i, q })), showProjects && /* @__PURE__ */ React.createElement(ActiveProjects, { D, navigate, openModal, APPLE_SECTION })));
+  const ProjectsBlock = ({ height = 360, slice = 6 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "18px 22px 14px",
+    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("En curso"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Proyectos")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "14px 22px" } }, D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+    "button",
     {
-      key: i,
-      onClick: () => c.id && navigate("clientDetail", { clientId: c.id }),
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+      onClick: () => openModal("newProject"),
       style: {
-        padding: "12px 8px",
+        background: "transparent",
+        border: 0,
+        color: "var(--accent)",
         cursor: "pointer",
-        borderRadius: 8,
-        transition: "background .1s",
-        marginInline: -8
+        fontSize: 12.5,
+        padding: 0,
+        fontFamily: "inherit",
+        textDecoration: "underline"
       }
     },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 99, background: c.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 13,
-      fontWeight: 500,
-      letterSpacing: "-0.2px",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap"
-    } }, c.name)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" } }, "\u20AC", c.value.toLocaleString("es-ES"))),
-    /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.04)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
-      height: "100%",
-      width: `${c.value / topClientsMax * 100}%`,
-      background: c.color,
-      borderRadius: 99
-    } }))
-  )), upcomingRenewals.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 14, borderTop: "0.5px solid rgba(255,255,255,0.06)" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 10 } }, "Pr\xF3ximas renovaciones"), upcomingRenewals.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "6px 0",
-    fontSize: 12.5
-  } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", letterSpacing: "-0.2px" } }, s.name), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, "\u20AC", (Number(s.amount) || 0).toLocaleString("es-ES")))))))));
-  const todayKpis = [
-    {
-      label: "Tareas para hoy",
-      icon: "list-todo",
-      value: tasksTodayAndOverdue.filter((t) => t.deadline === todayStrYMD).length,
-      sub: "incluyendo vencidas"
-    },
-    {
-      label: "Tareas vencidas",
-      icon: "alert-triangle",
-      value: overdueTasks,
-      sub: overdueTasks ? "requieren atenci\xF3n" : "Todo al d\xEDa"
-    },
-    {
-      label: "Eventos hoy",
-      icon: "calendar",
-      value: todayEvents.length,
-      sub: todayEvents.length ? "en agenda" : "Sin eventos"
-    },
-    {
-      label: "Proyectos en riesgo",
-      icon: "flag",
-      value: atRisk,
-      sub: atRisk ? "sem\xE1foro rojo" : "Todo en orden"
-    }
-  ];
-  const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 } }, todayKpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "18px 22px 14px",
-    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Para m\xED"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas de hoy")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, tasksTodayAndOverdue.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "D\xEDa limpio", sub: "No hay tareas para hoy." })) : tasksTodayAndOverdue.slice(0, 9).map((t, i) => {
-    const overdue = t.deadline < todayStrYMD;
-    const project = t.projectId !== "__none__" ? D.PROJECTS.find((p) => p.id === t.projectId) : null;
+    "Crear uno"
+  )) : D.PROJECTS.slice(0, slice).map((p) => {
+    const pTasks = D.TASKS[p.id] || [];
+    const live = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
     return /* @__PURE__ */ React.createElement(
       "div",
       {
-        key: t.id,
-        onClick: () => navigate(project ? "project" : "tasks", project ? { projectId: project.id } : {}),
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
+        key: p.id,
+        onClick: () => navigate("project", { projectId: p.id }),
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
         onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
         style: {
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "13px 22px",
+          gap: 10,
+          padding: "8px 8px",
           cursor: "pointer",
+          borderRadius: 8,
           transition: "background .1s",
-          borderBottom: i < Math.min(8, tasksTodayAndOverdue.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none"
+          marginInline: -8
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: {
-        width: 18,
-        height: 18,
-        borderRadius: "50%",
-        flexShrink: 0,
-        border: `1.5px solid ${overdue ? "var(--red)" : "var(--border-strong)"}`,
-        background: "transparent"
-      } }),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 13.5,
-        fontWeight: 500,
-        letterSpacing: "-0.3px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, t.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: overdue ? "var(--red)" : "var(--text-subtle)", marginTop: 2 } }, project ? project.name + " \xB7 " : "", overdue ? "Vencida" : "Hoy"))
-    );
-  }))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "18px 22px 14px",
-    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Calendario"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pr\xF3ximas reuniones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Agenda ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingMeetings.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin reuniones", sub: "No tienes reuniones pr\xF3ximas." })) : upcomingMeetings.map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === upcomingMeetings.length - 1, formatEventDate }))))));
-  const carteraKpis = [
-    {
-      label: "Clientes activos",
-      icon: "users",
-      value: activeClients,
-      sub: D.CLIENTS.length + " en total"
-    },
-    { label: "Proyectos en curso", icon: "folder", value: activeProjects, sub: capacityLabel },
-    {
-      label: "Leads abiertos",
-      icon: "flag",
-      value: totalLeads,
-      sub: totalLeads ? "en pipeline" : "Sin actividad"
-    },
-    {
-      label: "MRR estimado",
-      icon: "receipt",
-      value: mrrEstimated ? fmtEur(mrrEstimated) : "\u2014",
-      sub: mrrEstimated ? "mensual recurrente" : "Sin MRR"
-    }
-  ];
-  const V4 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 } }, carteraKpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "18px 22px 14px",
-    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Cartera"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Clientes activos")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("clients"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente." })) : D.CLIENTS.slice(0, 8).map((c, i) => {
-    const projs = D.PROJECTS.filter((p) => p.clientId === c.id);
-    const anyRisk = projs.some((p) => p.light === "red");
-    return /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        key: c.id,
-        onClick: () => navigate("clientDetail", { clientId: c.id }),
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "13px 22px",
-          cursor: "pointer",
-          transition: "background .1s",
-          borderBottom: i < Math.min(7, D.CLIENTS.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none"
-        }
-      },
-      /* @__PURE__ */ React.createElement("div", { style: {
-        width: 36,
-        height: 36,
-        borderRadius: "50%",
-        flexShrink: 0,
-        background: (c.color || "var(--accent)") + "22",
-        border: "0.5px solid " + (c.color || "var(--accent)") + "33",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: c.color || "var(--accent)",
-        fontSize: 12,
-        fontWeight: 600,
-        letterSpacing: "-0.02em"
-      } }, c.initials || (c.company || "?").slice(0, 2).toUpperCase()),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 13.5,
-        fontWeight: 500,
-        letterSpacing: "-0.3px",
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, c.company), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 } }, projs.length, " ", projs.length === 1 ? "proyecto" : "proyectos", c.service && c.service !== "\u2014" ? " \xB7 " + c.service : "")),
+      /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }),
       /* @__PURE__ */ React.createElement("span", { style: {
-        width: 8,
-        height: 8,
-        borderRadius: 99,
-        background: anyRisk ? "var(--red)" : projs.length ? "var(--green)" : "var(--text-subtle)",
-        flexShrink: 0
-      } })
+        flex: 1,
+        fontSize: 13,
+        fontWeight: 500,
+        minWidth: 0,
+        letterSpacing: "-0.2px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, p.name),
+      /* @__PURE__ */ React.createElement("div", { style: { width: 70, display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right" } }, live, "%"))
     );
-  }))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  })));
+  const StatsInline = () => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px" } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 4, minWidth: 130 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 11,
+    color: "var(--text-subtle)",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em",
+    fontWeight: 500
+  } }, k.label), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 22 : 26,
+    fontWeight: 400,
+    letterSpacing: "-0.9px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1.1
+  } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
+  const V2 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(StatsInline, null), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, null), /* @__PURE__ */ React.createElement(QueuesBlock, null)));
+  const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 } }, kpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: 400, slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 400, showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 400 })));
+  const V4 = /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gridTemplateRows: "auto auto", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "24px 26px", gridRow: "span 1" } }, EYEBROW("Capacidad"), /* @__PURE__ */ React.createElement("div", { style: {
+    marginTop: 10,
+    fontSize: 60,
+    fontWeight: 400,
+    lineHeight: 1,
+    letterSpacing: "-2.4px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums"
+  } }, activeProjects), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8, fontSize: 13, color: "var(--text-muted)", letterSpacing: "-0.3px" } }, "Proyectos activos \xB7 ", capacityLabel)), kpis.slice(1, 5).map(renderMiniKpi), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "span 2" } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: 300, slice: 5 })), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 300 }));
+  const V5 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 } }, kpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement(AgendaBlock, { height: 280, slice: 5 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 280 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 280 }));
+  const V6 = /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, null), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 300, showProjects: false })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "18px 22px" } }, EYEBROW("Pulso"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 } }, "De un vistazo"), kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "18px 22px 14px",
-    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pipeline"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Leads por etapa")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("clients"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "10px 22px" } }, leadsByStage.length === 0 || (D.LEADS || []).length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "flag", title: "Sin leads", sub: "El pipeline est\xE1 vac\xEDo." })) : leadsByStage.map((g, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
-    padding: "10px 0",
-    borderBottom: i < leadsByStage.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, g.stage.label), /* @__PURE__ */ React.createElement("span", { style: {
-    fontSize: 14,
+    padding: "12px 0",
+    borderBottom: i < kpis.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 14, strokeWidth: 1.7, style: { color: "var(--text-muted)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, k.sub))), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 18,
+    fontWeight: 400,
+    letterSpacing: "-0.6px",
+    fontFamily: "var(--font-display)",
     fontVariantNumeric: "tabular-nums",
-    color: "var(--text)",
+    flexShrink: 0,
+    paddingLeft: 12
+  } }, k.value)))), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 240, slice: 5 })));
+  const V7 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "26px 28px" } }, EYEBROW("Resumen general"), /* @__PURE__ */ React.createElement("div", { style: {
+    marginTop: 6,
+    fontSize: 22,
+    fontWeight: 500,
+    letterSpacing: "-0.8px",
     fontFamily: "var(--font-display)"
-  } }, g.items.length)), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.04)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    height: "100%",
-    width: `${Math.min(100, g.items.length * 20)}%`,
-    background: "var(--accent)",
-    borderRadius: 99
-  } }))))))));
+  } }, agencyName), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 13, color: "var(--text-muted)" } }, "Lo m\xE1s relevante en una sola pantalla."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 22, display: "flex", flexWrap: "wrap", gap: 8 } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "10px 14px",
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.04)",
+    border: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 13, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("span", { style: {
+    fontSize: 15,
+    fontWeight: 500,
+    fontVariantNumeric: "tabular-nums",
+    fontFamily: "var(--font-display)",
+    letterSpacing: "-0.4px"
+  } }, k.value))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, null), /* @__PURE__ */ React.createElement(QueuesBlock, null)));
+  const V8 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "22px 24px" } }, EYEBROW(kpis[0].label), /* @__PURE__ */ React.createElement("div", { style: {
+    marginTop: 10,
+    fontSize: 50,
+    fontWeight: 400,
+    lineHeight: 1,
+    letterSpacing: "-2px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums"
+  } }, kpis[0].value), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: 12.5, color: "var(--text-muted)" } }, kpis[0].sub)), kpis.slice(1).map(renderMiniKpi)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, null), /* @__PURE__ */ React.createElement(QueuesBlock, null)));
+  const V9 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 } }, kpis.map(renderMiniKpi)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 14 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: 340, slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 340, showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 340 })));
+  const V10 = /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gridAutoRows: "minmax(220px, auto)", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "20px 22px" } }, EYEBROW("Resumen"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 } }, "KPIs"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } }, kpis.slice(0, 4).map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+    padding: "12px 14px",
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.03)",
+    border: "0.5px solid rgba(255,255,255,0.05)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 12, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label)), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 17 : 20,
+    fontWeight: 400,
+    letterSpacing: "-0.6px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1
+  } }, k.value))))), /* @__PURE__ */ React.createElement(AgendaBlock, { height: 260, slice: 4 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 260, showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 260, slice: 5 }));
   return /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     flexDirection: "column",
@@ -732,7 +575,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     padding: "32px 36px 48px",
     maxWidth: 1440,
     margin: "0 auto"
-  } }, Header, dashOpt === "v1" && V1, dashOpt === "v2" && V2, dashOpt === "v3" && V3, dashOpt === "v4" && V4);
+  } }, Header, dashOpt === "v1" && V1, dashOpt === "v2" && V2, dashOpt === "v3" && V3, dashOpt === "v4" && V4, dashOpt === "v5" && V5, dashOpt === "v6" && V6, dashOpt === "v7" && V7, dashOpt === "v8" && V8, dashOpt === "v9" && V9, dashOpt === "v10" && V10);
 };
 const LINK_BTN = {
   display: "inline-flex",
