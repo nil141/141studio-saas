@@ -310,43 +310,53 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
       {/* Tira horizontal: navegación de mes + días + progreso */}
       <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28 }}>
-        {/* Month nav */}
-        <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
+        {/* Month nav — grupo centrado */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:18 }}>
           <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-            <Icon name="chevron-left" size={18}/>
+            <Icon name="chevron-left" size={16}/>
           </button>
-          <span style={{ flex:1, textAlign:"center", fontSize:20, fontWeight:400, letterSpacing:"-0.8px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
+          <span style={{ fontSize:15, fontWeight:500, letterSpacing:"-0.3px", color:"var(--text)", minWidth:80, textAlign:"center" }}>
+            {MON_ES[weekDays[3].getMonth()]} {weekDays[3].getFullYear()}
+          </span>
           <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-            <Icon name="chevron-right" size={18}/>
+            <Icon name="chevron-right" size={16}/>
           </button>
         </div>
 
-        {/* Day strip — píldoras verticales compactas, centradas */}
-        <div style={{ display:"flex", gap:10, justifyContent:"center" }}>
+        {/* Day strip — columnas equilibradas estilo calendario */}
+        <div style={{ display:"flex", alignItems:"stretch", padding:"4px 0" }}>
           {weekDays.map(d => {
             const dMid = new Date(d); dMid.setHours(0,0,0,0);
             const isSel = dMid.getTime() === selMid.getTime();
             const isToday = dMid.getTime() === todayMid.getTime();
             return (
               <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                width:60, cursor:"pointer",
+                flex:1, cursor:"pointer",
+                background:"transparent", border:"none",
                 display:"flex", flexDirection:"column", alignItems:"center",
-                gap:8, padding:"10px 0 8px",
-                borderRadius:999,
-                border: isSel ? "1.5px solid var(--accent)" : "0.5px solid rgba(255,255,255,0.08)",
-                background: isSel ? "rgba(158,154,229,0.10)" : "transparent",
-                transition:"all .18s",
+                gap:12, padding:"4px 0",
               }}>
-                <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.04em" }}>
-                  {["D","L","M","X","J","V","S"][d.getDay()]}
+                <span style={{
+                  fontSize:11, fontWeight:500,
+                  color: isSel ? "var(--accent)" : "var(--text-subtle)",
+                  letterSpacing:"0.08em", textTransform:"uppercase",
+                  transition:"color .15s",
+                }}>
+                  {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
                 </span>
                 <div style={{
-                  width:30, height:30, borderRadius:"50%",
-                  background: isSel ? "rgba(158,154,229,0.22)" : "transparent",
+                  width:40, height:40, borderRadius:"50%",
                   display:"flex", alignItems:"center", justifyContent:"center",
+                  background: isSel ? "var(--accent)" : "transparent",
+                  border: isToday && !isSel ? "1px solid rgba(255,255,255,0.18)" : "1px solid transparent",
                   transition:"all .18s",
                 }}>
-                  <span style={{ fontSize:14, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#dad7f7" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.3px" }}>
+                  <span style={{
+                    fontSize:16,
+                    fontWeight: isSel ? 600 : isToday ? 500 : 400,
+                    color: isSel ? "#0b0b0d" : isToday ? "var(--text)" : "var(--text-muted)",
+                    letterSpacing:"-0.4px",
+                  }}>
                     {d.getDate()}
                   </span>
                 </div>
