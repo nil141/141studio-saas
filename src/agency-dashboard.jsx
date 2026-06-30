@@ -62,6 +62,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     : activeProjects <= 3 ? "Capacidad cómoda"
     : activeProjects <= 4 ? "Capacidad media" : "Al límite";
 
+  // ── Selector de opción de diseño ──
+  const [dashOpt, setDashOpt] = useState(() => {
+    try { return localStorage.getItem("dash_opt") || "v1"; } catch { return "v1"; }
+  });
+  const pickOpt = (o) => { setDashOpt(o); try { localStorage.setItem("dash_opt", o); } catch {} };
+
   // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
   useEffect(() => {
@@ -213,70 +219,91 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     textTransform: "uppercase", letterSpacing: "0.08em",
   };
 
-  return (
-    <div style={{
-      display: "flex", flexDirection: "column", gap: 28,
-      padding: "32px 36px 48px",
-      maxWidth: 1440, margin: "0 auto",
-    }}>
-
-      {/* ── Large Title (HIG) ─────────────────────────────────────────────── */}
-      <header style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
-          <div>
-            <h1 style={{
-              fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
-              margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
-            }}>{greeting}, {adminName}.</h1>
-            <div style={{
-              marginTop: 10, fontSize: 15, color: "var(--text-muted)",
-              letterSpacing: "-0.3px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+  // ── Cabecera común (saludo + selector + quick actions) ───────────────────
+  const Header = (
+    <header style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+        <div>
+          <h1 style={{
+            fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
+            margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
+          }}>{greeting}, {adminName}.</h1>
+          <div style={{
+            marginTop: 10, fontSize: 15, color: "var(--text-muted)",
+            letterSpacing: "-0.3px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+          }}>
+            <span>{agencyName} · {todayStr}</span>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 6,
+              padding: "3px 10px 3px 8px", borderRadius: 99, fontSize: 11.5, fontWeight: 500,
+              background: capacity === "green" ? "var(--green-soft)" : capacity === "amber" ? "var(--amber-soft)" : "var(--red-soft)",
+              color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
+              letterSpacing: 0,
             }}>
-              <span>{agencyName} · {todayStr}</span>
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "3px 10px 3px 8px", borderRadius: 99, fontSize: 11.5, fontWeight: 500,
-                background: capacity === "green" ? "var(--green-soft)" : capacity === "amber" ? "var(--amber-soft)" : "var(--red-soft)",
-                color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
-                letterSpacing: 0,
-              }}>
-                <span style={{ width: 6, height: 6, borderRadius: 99,
-                  background: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)" }}/>
-                {capacityLabel}
-              </span>
-            </div>
+              <span style={{ width: 6, height: 6, borderRadius: 99,
+                background: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)" }}/>
+              {capacityLabel}
+            </span>
           </div>
         </div>
 
-        {/* Quick actions — pills morados estilo macOS toolbar */}
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {/* Selector de opción de diseño */}
+        <div style={{
+          display: "inline-flex", alignItems: "center", gap: 4, padding: 3,
+          background: "rgba(255,255,255,0.04)",
+          border: "0.5px solid rgba(255,255,255,0.08)",
+          borderRadius: 10,
+        }}>
           {[
-            { label: "Nueva tarea",     icon: "plus",          fn: () => openModal("newTask"),    primary: true },
-            { label: "Nuevo proyecto",  icon: "folder",        fn: () => openModal("newProject") },
-            { label: "Invitar cliente", icon: "external-link", fn: () => openModal("invite")     },
-            { label: "Nueva factura",   icon: "receipt",       fn: () => navigate("billing")    },
-          ].map(b => (
-            <button key={b.label} onClick={b.fn}
+            { id: "v1", label: "Opción 1" },
+            { id: "v2", label: "Opción 2" },
+            { id: "v3", label: "Opción 3" },
+          ].map(opt => (
+            <button key={opt.id} onClick={() => pickOpt(opt.id)}
               style={{
-                display: "inline-flex", alignItems: "center", gap: 7,
-                height: 34, padding: "0 14px", borderRadius: 11, cursor: "pointer",
-                fontSize: 13, fontWeight: 500, letterSpacing: "-0.2px",
-                fontFamily: "inherit", transition: "background .12s, border-color .12s",
-                background: b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
-                color: b.primary ? "var(--accent)" : "var(--text)",
-                border: "0.5px solid " + (b.primary ? "rgba(158,154,229,0.4)" : "rgba(255,255,255,0.08)"),
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = b.primary ? "rgba(158,154,229,0.28)" : "rgba(255,255,255,0.07)"}
-              onMouseLeave={e => e.currentTarget.style.background = b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)"}
-            >
-              <Icon name={b.icon} size={13} strokeWidth={1.7}/>
-              {b.label}
-            </button>
+                height: 26, padding: "0 11px", borderRadius: 7, cursor: "pointer",
+                fontSize: 12, fontWeight: 500, letterSpacing: "-0.2px", fontFamily: "inherit",
+                border: 0, transition: "background .12s, color .12s",
+                background: dashOpt === opt.id ? "var(--accent-soft)" : "transparent",
+                color: dashOpt === opt.id ? "var(--accent)" : "var(--text-muted)",
+              }}>{opt.label}</button>
           ))}
         </div>
-      </header>
+      </div>
 
-      {/* ── KPI tiles (estilo Centro de Control) ─────────────────────────── */}
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {[
+          { label: "Nueva tarea",     icon: "plus",          fn: () => openModal("newTask"),    primary: true },
+          { label: "Nuevo proyecto",  icon: "folder",        fn: () => openModal("newProject") },
+          { label: "Invitar cliente", icon: "external-link", fn: () => openModal("invite")     },
+          { label: "Nueva factura",   icon: "receipt",       fn: () => navigate("billing")    },
+        ].map(b => (
+          <button key={b.label} onClick={b.fn}
+            style={{
+              display: "inline-flex", alignItems: "center", gap: 7,
+              height: 34, padding: "0 14px", borderRadius: 11, cursor: "pointer",
+              fontSize: 13, fontWeight: 500, letterSpacing: "-0.2px",
+              fontFamily: "inherit", transition: "background .12s, border-color .12s",
+              background: b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
+              color: b.primary ? "var(--accent)" : "var(--text)",
+              border: "0.5px solid " + (b.primary ? "rgba(158,154,229,0.4)" : "rgba(255,255,255,0.08)"),
+            }}
+            onMouseEnter={e => e.currentTarget.style.background = b.primary ? "rgba(158,154,229,0.28)" : "rgba(255,255,255,0.07)"}
+            onMouseLeave={e => e.currentTarget.style.background = b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)"}
+          >
+            <Icon name={b.icon} size={13} strokeWidth={1.7}/>
+            {b.label}
+          </button>
+        ))}
+      </div>
+    </header>
+  );
+
+  const EYEBROW = (txt) => <div style={APPLE_SECTION}>{txt}</div>;
+
+  // ═══ Opción 1 — Vista equilibrada (actual) ═══════════════════════════════
+  const V1 = (
+    <>
       <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }} className="dash-kpis">
         {kpis.map((k, i) => (
           <div key={i} style={{ ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
@@ -310,29 +337,16 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         ))}
       </section>
 
-      {/* ── Dos columnas (Vibrancy cards) ─────────────────────────────────── */}
       <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="dash-bottom">
-
-        {/* ── Agenda próxima ── */}
+        {/* Agenda */}
         <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)",
-          }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
             <div>
-              <div style={APPLE_SECTION}>Próximamente</div>
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>
-                Agenda
-              </div>
+              {EYEBROW("Próximamente")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>Agenda</div>
             </div>
-            <button onClick={() => navigate("agenda")}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
-                borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
-                background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
-              }}>
-              Ver todo <Icon name="arrow" size={12}/>
-            </button>
+            <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             {upcomingEvents.length === 0 ? (
@@ -340,138 +354,372 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                 <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
               </div>
             ) : upcomingEvents.map((ev, i) => (
-              <div key={i}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                style={{
-                  display: "flex", alignItems: "center", gap: 14,
-                  padding: "14px 22px", transition: "background .1s",
-                  borderBottom: i < upcomingEvents.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none",
-                }}>
-                <div style={{
-                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-                  background: "rgba(255,255,255,0.04)",
-                  border: "0.5px solid rgba(255,255,255,0.06)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  color: ev.color || "var(--text-muted)",
-                }}>
-                  <Icon name={ev.icon} size={15} strokeWidth={1.7}/>
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{
-                    fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
-                    color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                  }}>{ev.label}</div>
-                  <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>
-                    {formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}
-                  </div>
-                </div>
-                <span style={{
-                  fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
-                  background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
-                  border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
-                  whiteSpace: "nowrap", fontWeight: 500,
-                }}>{ev.type}</span>
-              </div>
+              <EventRow key={i} ev={ev} last={i === upcomingEvents.length - 1} formatEventDate={formatEventDate}/>
             ))}
           </div>
         </div>
 
-        {/* ── Colas de trabajo ── */}
+        {/* Colas */}
         <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
-          <div style={{
-            display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)",
-          }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
             <div>
-              <div style={APPLE_SECTION}>Pendiente</div>
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>
-                Colas de trabajo
-              </div>
+              {EYEBROW("Pendiente")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>Colas de trabajo</div>
             </div>
-            <button onClick={() => navigate("projects")}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
-                borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
-                background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
-              }}>
-              Ver todo <Icon name="arrow" size={12}/>
-            </button>
+            <button onClick={() => navigate("projects")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
             {queues.map((q, i) => (
-              <div key={i} onClick={q.action}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "space-between",
-                  padding: "14px 22px", cursor: "pointer", transition: "background .1s",
-                  borderBottom: "0.5px solid rgba(255,255,255,0.04)",
-                }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                  <div style={{
-                    width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "0.5px solid rgba(255,255,255,0.06)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    color: "var(--text-muted)",
-                  }}>
-                    <Icon name={q.icon} size={14} strokeWidth={1.7}/>
-                  </div>
-                  <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" }}>{q.label}</span>
-                </div>
-                <span style={{
-                  fontSize: 17, fontWeight: 400, fontVariantNumeric: "tabular-nums",
-                  color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
-                  letterSpacing: "-0.5px", fontFamily: "var(--font-display)",
-                }}>{q.count}</span>
+              <QueueRow key={i} q={q}/>
+            ))}
+            <ActiveProjects D={D} navigate={navigate} openModal={openModal} APPLE_SECTION={APPLE_SECTION}/>
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
+  // ═══ Opción 2 — Foco del día (resumen ejecutivo) ═════════════════════════
+  const todayTasks = Object.values(D.TASKS).flat().filter(t => {
+    if (!t.deadline || t.column === "done") return false;
+    const d = new Date(t.deadline + "T00:00:00");
+    const today = new Date(); today.setHours(0,0,0,0);
+    return d.getTime() === today.getTime();
+  });
+  const todayEvents = upcomingEvents.filter(ev => {
+    const d = new Date(ev.date); d.setHours(0,0,0,0);
+    const today = new Date(); today.setHours(0,0,0,0);
+    return d.getTime() === today.getTime();
+  });
+
+  const V2 = (
+    <section style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }}>
+      {/* Columna principal */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        {/* Tarjeta Hoy */}
+        <div style={{ ...APPLE_CARD, padding: "22px 24px" }}>
+          {EYEBROW("Hoy")}
+          <div style={{ marginTop: 6, fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px", fontFamily: "var(--font-display)" }}>
+            {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 18 }}>
+            {[
+              { label: "Tareas para hoy", value: todayTasks.length, sub: todayTasks.length ? "pendientes" : "Sin tareas", icon: "list-todo" },
+              { label: "Eventos hoy",     value: todayEvents.length, sub: todayEvents.length ? "en agenda" : "Sin eventos", icon: "calendar" },
+              { label: "Vencidas",        value: overdueTasks, sub: overdueTasks ? "requieren atención" : "Todo al día", icon: "alert-triangle" },
+            ].map((k, i) => (
+              <div key={i} style={{
+                padding: "14px 16px", borderRadius: 12,
+                background: "rgba(255,255,255,0.03)",
+                border: "0.5px solid rgba(255,255,255,0.06)",
+              }}>
+                <Icon name={k.icon} size={14} strokeWidth={1.7} style={{ color: "var(--text-muted)", marginBottom: 10 }}/>
+                <div style={{
+                  fontSize: 26, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)",
+                  fontVariantNumeric: "tabular-nums", lineHeight: 1,
+                }}>{k.value}</div>
+                <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{k.label}</div>
+                <div style={{ marginTop: 2, fontSize: 11, color: "var(--text-subtle)" }}>{k.sub}</div>
               </div>
             ))}
-
-            {/* Proyectos activos */}
-            <div style={{ padding: "18px 22px 14px" }}>
-              <div style={{ ...APPLE_SECTION, marginBottom: 12 }}>Proyectos activos</div>
-              {D.PROJECTS.length === 0 ? (
-                <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
-                  Sin proyectos. <button onClick={() => openModal("newProject")}
-                    style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
-                      fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>
-                    Crear uno
-                  </button>
-                </div>
-              ) : D.PROJECTS.slice(0, 5).map(p => {
-                const pTasks = D.TASKS[p.id] || [];
-                const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
-                return (
-                  <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
-                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                    style={{
-                      display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
-                      cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
-                    }}>
-                    <span className={"dot " + p.light}/>
-                    <span style={{
-                      flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
-                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>{p.name}</span>
-                    <div style={{ width: 78, display: "flex", alignItems: "center", gap: 8 }}>
-                      <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
-                      <span style={{
-                        fontSize: 11, color: "var(--text-muted)",
-                        fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right",
-                      }}>{live}%</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
 
+        {/* Cronología única */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 320 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              {EYEBROW("Próximos días")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Cronología</div>
+            </div>
+            <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {upcomingEvents.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center" }}>
+                <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
+              </div>
+            ) : upcomingEvents.map((ev, i) => (
+              <EventRow key={i} ev={ev} last={i === upcomingEvents.length - 1} formatEventDate={formatEventDate}/>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Sidebar de estado */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ ...APPLE_CARD, padding: "18px 22px" }}>
+          {EYEBROW("Estado")}
+          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 }}>Pulso de la agencia</div>
+          {kpis.map((k, i) => (
+            <div key={i} style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "12px 0", borderBottom: i < kpis.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+                <Icon name={k.icon} size={14} strokeWidth={1.7} style={{ color: "var(--text-muted)", flexShrink: 0 }}/>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" }}>{k.label}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)" }}>{k.sub}</div>
+                </div>
+              </div>
+              <div style={{
+                fontSize: 18, fontWeight: 400, letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
+                fontVariantNumeric: "tabular-nums", flexShrink: 0, paddingLeft: 12,
+              }}>{k.value}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ ...APPLE_CARD, padding: "18px 22px" }}>
+          {EYEBROW("Proyectos")}
+          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 12 }}>Activos</div>
+          {D.PROJECTS.length === 0 ? (
+            <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
+              Sin proyectos. <button onClick={() => openModal("newProject")}
+                style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
+                  fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
+            </div>
+          ) : D.PROJECTS.slice(0, 5).map(p => {
+            const pTasks = D.TASKS[p.id] || [];
+            const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
+            return (
+              <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
+                  cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
+                }}>
+                <span className={"dot " + p.light}/>
+                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{live}%</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+
+  // ═══ Opción 3 — Minimalista (stats inline + 3 columnas) ══════════════════
+  const V3 = (
+    <>
+      {/* Tira de stats inline (sin tiles) */}
+      <div style={{
+        display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px",
+        ...APPLE_CARD,
+      }}>
+        {kpis.map((k, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
+            <div style={{ fontSize: 11, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 500 }}>
+              {k.label}
+            </div>
+            <div style={{
+              fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 26,
+              fontWeight: 400, letterSpacing: "-0.9px", fontFamily: "var(--font-display)",
+              fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
+            }}>{k.value}</div>
+            <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{k.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 3 columnas: Agenda | Colas | Proyectos activos */}
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 16 }}>
+        {/* Agenda */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
+          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            {EYEBROW("Próximamente")}
+            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Agenda</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {upcomingEvents.length === 0 ? (
+              <div style={{ padding: 32, textAlign: "center" }}>
+                <Empty icon="check" title="Sin eventos" sub=""/>
+              </div>
+            ) : upcomingEvents.slice(0, 6).map((ev, i) => (
+              <EventRow key={i} ev={ev} last={i === Math.min(5, upcomingEvents.length - 1)} formatEventDate={formatEventDate}/>
+            ))}
+          </div>
+        </div>
+
+        {/* Colas */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
+          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            {EYEBROW("Pendiente")}
+            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Colas</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {queues.map((q, i) => <QueueRow key={i} q={q}/>)}
+          </div>
+        </div>
+
+        {/* Proyectos */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
+          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            {EYEBROW("En curso")}
+            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Proyectos</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "14px 22px" }}>
+            {D.PROJECTS.length === 0 ? (
+              <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
+                Sin proyectos. <button onClick={() => openModal("newProject")}
+                  style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
+                    fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
+              </div>
+            ) : D.PROJECTS.slice(0, 6).map(p => {
+              const pTasks = D.TASKS[p.id] || [];
+              const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
+              return (
+                <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
+                    cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
+                  }}>
+                  <span className={"dot " + p.light}/>
+                  <span style={{ flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
+                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                  <div style={{ width: 60, display: "flex", alignItems: "center", gap: 6 }}>
+                    <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right" }}>{live}%</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
       </section>
+    </>
+  );
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 28,
+      padding: "32px 36px 48px",
+      maxWidth: 1440, margin: "0 auto",
+    }}>
+      {Header}
+      {dashOpt === "v1" && V1}
+      {dashOpt === "v2" && V2}
+      {dashOpt === "v3" && V3}
     </div>
   );
 };
+
+// ─── Subcomponentes compartidos (fuera del cuerpo de AgencyDashboard) ──────
+const LINK_BTN = {
+  display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
+  borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
+  background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+};
+
+const EventRow = ({ ev, last, formatEventDate }) => (
+  <div
+    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    style={{
+      display: "flex", alignItems: "center", gap: 14,
+      padding: "14px 22px", transition: "background .1s",
+      borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)",
+    }}>
+    <div style={{
+      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+      background: "rgba(255,255,255,0.04)",
+      border: "0.5px solid rgba(255,255,255,0.06)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: ev.color || "var(--text-muted)",
+    }}>
+      <Icon name={ev.icon} size={15} strokeWidth={1.7}/>
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{
+        fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+        color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{ev.label}</div>
+      <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>
+        {formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}
+      </div>
+    </div>
+    <span style={{
+      fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
+      background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
+      border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
+      whiteSpace: "nowrap", fontWeight: 500,
+    }}>{ev.type}</span>
+  </div>
+);
+
+const QueueRow = ({ q }) => (
+  <div onClick={q.action}
+    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "14px 22px", cursor: "pointer", transition: "background .1s",
+      borderBottom: "0.5px solid rgba(255,255,255,0.04)",
+    }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        background: "rgba(255,255,255,0.04)",
+        border: "0.5px solid rgba(255,255,255,0.06)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "var(--text-muted)",
+      }}>
+        <Icon name={q.icon} size={14} strokeWidth={1.7}/>
+      </div>
+      <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" }}>{q.label}</span>
+    </div>
+    <span style={{
+      fontSize: 17, fontWeight: 400, fontVariantNumeric: "tabular-nums",
+      color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
+      letterSpacing: "-0.5px", fontFamily: "var(--font-display)",
+    }}>{q.count}</span>
+  </div>
+);
+
+const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => (
+  <div style={{ padding: "18px 22px 14px" }}>
+    <div style={{ ...APPLE_SECTION, marginBottom: 12 }}>Proyectos activos</div>
+    {D.PROJECTS.length === 0 ? (
+      <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
+        Sin proyectos. <button onClick={() => openModal("newProject")}
+          style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
+            fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
+      </div>
+    ) : D.PROJECTS.slice(0, 5).map(p => {
+      const pTasks = D.TASKS[p.id] || [];
+      const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
+      return (
+        <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          style={{
+            display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
+            cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
+          }}>
+          <span className={"dot " + p.light}/>
+          <span style={{
+            flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{p.name}</span>
+          <div style={{ width: 78, display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
+            <span style={{
+              fontSize: 11, color: "var(--text-muted)",
+              fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right",
+            }}>{live}%</span>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
 
 window.AgencyDashboard = AgencyDashboard;

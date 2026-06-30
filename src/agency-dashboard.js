@@ -52,6 +52,20 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const atRisk = D.PROJECTS.filter((p) => p.light === "red").length;
   const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
   const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad c\xF3moda" : activeProjects <= 4 ? "Capacidad media" : "Al l\xEDmite";
+  const [dashOpt, setDashOpt] = useState(() => {
+    try {
+      return localStorage.getItem("dash_opt") || "v1";
+    } catch {
+      return "v1";
+    }
+  });
+  const pickOpt = (o) => {
+    setDashOpt(o);
+    try {
+      localStorage.setItem("dash_opt", o);
+    } catch {
+    }
+  };
   const [stripeMonth, setStripeMonth] = useState(null);
   useEffect(() => {
     const now = /* @__PURE__ */ new Date();
@@ -202,14 +216,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     textTransform: "uppercase",
     letterSpacing: "0.08em"
   };
-  return /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 28,
-    padding: "32px 36px 48px",
-    maxWidth: 1440,
-    margin: "0 auto"
-  } }, /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: {
+  const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: {
     fontSize: 36,
     fontWeight: 400,
     letterSpacing: "-1.2px",
@@ -242,7 +249,40 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     height: 6,
     borderRadius: 99,
     background: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)"
-  } }), capacityLabel)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [
+  } }), capacityLabel))), /* @__PURE__ */ React.createElement("div", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    padding: 3,
+    background: "rgba(255,255,255,0.04)",
+    border: "0.5px solid rgba(255,255,255,0.08)",
+    borderRadius: 10
+  } }, [
+    { id: "v1", label: "Opci\xF3n 1" },
+    { id: "v2", label: "Opci\xF3n 2" },
+    { id: "v3", label: "Opci\xF3n 3" }
+  ].map((opt) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: opt.id,
+      onClick: () => pickOpt(opt.id),
+      style: {
+        height: 26,
+        padding: "0 11px",
+        borderRadius: 7,
+        cursor: "pointer",
+        fontSize: 12,
+        fontWeight: 500,
+        letterSpacing: "-0.2px",
+        fontFamily: "inherit",
+        border: 0,
+        transition: "background .12s, color .12s",
+        background: dashOpt === opt.id ? "var(--accent-soft)" : "transparent",
+        color: dashOpt === opt.id ? "var(--accent)" : "var(--text-muted)"
+      }
+    },
+    opt.label
+  )))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [
     { label: "Nueva tarea", icon: "plus", fn: () => openModal("newTask"), primary: true },
     { label: "Nuevo proyecto", icon: "folder", fn: () => openModal("newProject") },
     { label: "Invitar cliente", icon: "external-link", fn: () => openModal("invite") },
@@ -274,7 +314,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     },
     /* @__PURE__ */ React.createElement(Icon, { name: b.icon, size: 13, strokeWidth: 1.7 }),
     b.label
-  )))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }, className: "dash-kpis" }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ))));
+  const EYEBROW = (txt) => /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, txt);
+  const V1 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }, className: "dash-kpis" }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 32,
     height: 32,
     borderRadius: 9,
@@ -309,143 +351,64 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     justifyContent: "space-between",
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Agenda")), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => navigate("agenda"),
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        height: 28,
-        padding: "0 10px",
-        borderRadius: 8,
-        fontSize: 12,
-        fontWeight: 500,
-        color: "var(--accent)",
-        background: "transparent",
-        border: 0,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        letterSpacing: "-0.2px"
-      }
-    },
-    "Ver todo ",
-    /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })
-  )), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.map((ev, i) => /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      key: i,
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 14,
-        padding: "14px 22px",
-        transition: "background .1s",
-        borderBottom: i < upcomingEvents.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none"
-      }
-    },
-    /* @__PURE__ */ React.createElement("div", { style: {
-      width: 36,
-      height: 36,
-      borderRadius: 10,
-      flexShrink: 0,
-      background: "rgba(255,255,255,0.04)",
-      border: "0.5px solid rgba(255,255,255,0.06)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: ev.color || "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: ev.icon, size: 15, strokeWidth: 1.7 })),
-    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      fontSize: 13.5,
-      fontWeight: 500,
-      letterSpacing: "-0.3px",
-      color: "var(--text)",
-      overflow: "hidden",
-      textOverflow: "ellipsis",
-      whiteSpace: "nowrap"
-    } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, formatEventDate(ev.date), ev.time ? `, ${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}` : "")),
-    /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 10.5,
-      padding: "3px 9px",
-      borderRadius: 99,
-      background: "rgba(255,255,255,0.05)",
-      color: "var(--text-muted)",
-      border: "0.5px solid rgba(255,255,255,0.08)",
-      letterSpacing: "-0.1px",
-      whiteSpace: "nowrap",
-      fontWeight: 500
-    } }, ev.type)
-  )))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === upcomingEvents.length - 1, formatEventDate })))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => navigate("projects"),
-      style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 4,
-        height: 28,
-        padding: "0 10px",
-        borderRadius: 8,
-        fontSize: 12,
-        fontWeight: 500,
-        color: "var(--accent)",
-        background: "transparent",
-        border: 0,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        letterSpacing: "-0.2px"
-      }
-    },
-    "Ver todo ",
-    /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })
-  )), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      key: i,
-      onClick: q.action,
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "14px 22px",
-        cursor: "pointer",
-        transition: "background .1s",
-        borderBottom: "0.5px solid rgba(255,255,255,0.04)"
-      }
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 32,
-      height: 32,
-      borderRadius: 9,
-      flexShrink: 0,
-      background: "rgba(255,255,255,0.04)",
-      border: "0.5px solid rgba(255,255,255,0.06)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" } }, q.label)),
-    /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 17,
-      fontWeight: 400,
-      fontVariantNumeric: "tabular-nums",
-      color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
-      letterSpacing: "-0.5px",
-      fontFamily: "var(--font-display)"
-    } }, q.count)
-  )), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(QueueRow, { key: i, q })), /* @__PURE__ */ React.createElement(ActiveProjects, { D, navigate, openModal, APPLE_SECTION })))));
+  const todayTasks = Object.values(D.TASKS).flat().filter((t) => {
+    if (!t.deadline || t.column === "done") return false;
+    const d = /* @__PURE__ */ new Date(t.deadline + "T00:00:00");
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  });
+  const todayEvents = upcomingEvents.filter((ev) => {
+    const d = new Date(ev.date);
+    d.setHours(0, 0, 0, 0);
+    const today = /* @__PURE__ */ new Date();
+    today.setHours(0, 0, 0, 0);
+    return d.getTime() === today.getTime();
+  });
+  const V2 = /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "22px 24px" } }, EYEBROW("Hoy"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px", fontFamily: "var(--font-display)" } }, (/* @__PURE__ */ new Date()).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 18 } }, [
+    { label: "Tareas para hoy", value: todayTasks.length, sub: todayTasks.length ? "pendientes" : "Sin tareas", icon: "list-todo" },
+    { label: "Eventos hoy", value: todayEvents.length, sub: todayEvents.length ? "en agenda" : "Sin eventos", icon: "calendar" },
+    { label: "Vencidas", value: overdueTasks, sub: overdueTasks ? "requieren atenci\xF3n" : "Todo al d\xEDa", icon: "alert-triangle" }
+  ].map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+    padding: "14px 16px",
+    borderRadius: 12,
+    background: "rgba(255,255,255,0.03)",
+    border: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 14, strokeWidth: 1.7, style: { color: "var(--text-muted)", marginBottom: 10 } }), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 26,
+    fontWeight: 400,
+    letterSpacing: "-1px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1
+  } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 500 } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 2, fontSize: 11, color: "var(--text-subtle)" } }, k.sub))))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 320 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "18px 22px 14px",
+    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos d\xEDas"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Cronolog\xEDa")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === upcomingEvents.length - 1, formatEventDate }))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "18px 22px" } }, EYEBROW("Estado"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 } }, "Pulso de la agencia"), kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "12px 0",
+    borderBottom: i < kpis.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 14, strokeWidth: 1.7, style: { color: "var(--text-muted)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, k.sub))), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 18,
+    fontWeight: 400,
+    letterSpacing: "-0.6px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    flexShrink: 0,
+    paddingLeft: 12
+  } }, k.value)))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, padding: "18px 22px" } }, EYEBROW("Proyectos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 12 } }, "Activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => openModal("newProject"),
@@ -493,14 +456,237 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
       } }, p.name),
-      /* @__PURE__ */ React.createElement("div", { style: { width: 78, display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        fontVariantNumeric: "tabular-nums",
-        width: 28,
-        textAlign: "right"
-      } }, live, "%"))
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" } }, live, "%")
     );
-  }))))));
+  }))));
+  const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 32,
+    padding: "20px 24px",
+    ...APPLE_CARD
+  } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 4, minWidth: 130 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 500 } }, k.label), /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 22 : 26,
+    fontWeight: 400,
+    letterSpacing: "-0.9px",
+    fontFamily: "var(--font-display)",
+    fontVariantNumeric: "tabular-nums",
+    lineHeight: 1.1
+  } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub)))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" } }, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 32, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos", sub: "" })) : upcomingEvents.slice(0, 6).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(5, upcomingEvents.length - 1), formatEventDate })))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" } }, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Colas")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(QueueRow, { key: i, q })))), /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" } }, EYEBROW("En curso"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Proyectos")), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "14px 22px" } }, D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => openModal("newProject"),
+      style: {
+        background: "transparent",
+        border: 0,
+        color: "var(--accent)",
+        cursor: "pointer",
+        fontSize: 12.5,
+        padding: 0,
+        fontFamily: "inherit",
+        textDecoration: "underline"
+      }
+    },
+    "Crear uno"
+  )) : D.PROJECTS.slice(0, 6).map((p) => {
+    const pTasks = D.TASKS[p.id] || [];
+    const live = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: p.id,
+        onClick: () => navigate("project", { projectId: p.id }),
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          padding: "8px 8px",
+          cursor: "pointer",
+          borderRadius: 8,
+          transition: "background .1s",
+          marginInline: -8
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }),
+      /* @__PURE__ */ React.createElement("span", { style: {
+        flex: 1,
+        fontSize: 13,
+        fontWeight: 500,
+        minWidth: 0,
+        letterSpacing: "-0.2px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, p.name),
+      /* @__PURE__ */ React.createElement("div", { style: { width: 60, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right" } }, live, "%"))
+    );
+  })))));
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 28,
+    padding: "32px 36px 48px",
+    maxWidth: 1440,
+    margin: "0 auto"
+  } }, Header, dashOpt === "v1" && V1, dashOpt === "v2" && V2, dashOpt === "v3" && V3);
 };
+const LINK_BTN = {
+  display: "inline-flex",
+  alignItems: "center",
+  gap: 4,
+  height: 28,
+  padding: "0 10px",
+  borderRadius: 8,
+  fontSize: 12,
+  fontWeight: 500,
+  color: "var(--accent)",
+  background: "transparent",
+  border: 0,
+  cursor: "pointer",
+  fontFamily: "inherit",
+  letterSpacing: "-0.2px"
+};
+const EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
+  "div",
+  {
+    onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
+    onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+    style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      padding: "14px 22px",
+      transition: "background .1s",
+      borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)"
+    }
+  },
+  /* @__PURE__ */ React.createElement("div", { style: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    flexShrink: 0,
+    background: "rgba(255,255,255,0.04)",
+    border: "0.5px solid rgba(255,255,255,0.06)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: ev.color || "var(--text-muted)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: ev.icon, size: 15, strokeWidth: 1.7 })),
+  /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 13.5,
+    fontWeight: 500,
+    letterSpacing: "-0.3px",
+    color: "var(--text)",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, formatEventDate(ev.date), ev.time ? `, ${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}` : "")),
+  /* @__PURE__ */ React.createElement("span", { style: {
+    fontSize: 10.5,
+    padding: "3px 9px",
+    borderRadius: 99,
+    background: "rgba(255,255,255,0.05)",
+    color: "var(--text-muted)",
+    border: "0.5px solid rgba(255,255,255,0.08)",
+    letterSpacing: "-0.1px",
+    whiteSpace: "nowrap",
+    fontWeight: 500
+  } }, ev.type)
+);
+const QueueRow = ({ q }) => /* @__PURE__ */ React.createElement(
+  "div",
+  {
+    onClick: q.action,
+    onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
+    onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+    style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "14px 22px",
+      cursor: "pointer",
+      transition: "background .1s",
+      borderBottom: "0.5px solid rgba(255,255,255,0.04)"
+    }
+  },
+  /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    flexShrink: 0,
+    background: "rgba(255,255,255,0.04)",
+    border: "0.5px solid rgba(255,255,255,0.06)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "var(--text-muted)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" } }, q.label)),
+  /* @__PURE__ */ React.createElement("span", { style: {
+    fontSize: 17,
+    fontWeight: 400,
+    fontVariantNumeric: "tabular-nums",
+    color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
+    letterSpacing: "-0.5px",
+    fontFamily: "var(--font-display)"
+  } }, q.count)
+);
+const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+  "button",
+  {
+    onClick: () => openModal("newProject"),
+    style: {
+      background: "transparent",
+      border: 0,
+      color: "var(--accent)",
+      cursor: "pointer",
+      fontSize: 12.5,
+      padding: 0,
+      fontFamily: "inherit",
+      textDecoration: "underline"
+    }
+  },
+  "Crear uno"
+)) : D.PROJECTS.slice(0, 5).map((p) => {
+  const pTasks = D.TASKS[p.id] || [];
+  const live = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: p.id,
+      onClick: () => navigate("project", { projectId: p.id }),
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "8px 8px",
+        cursor: "pointer",
+        borderRadius: 8,
+        transition: "background .1s",
+        marginInline: -8
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }),
+    /* @__PURE__ */ React.createElement("span", { style: {
+      flex: 1,
+      fontSize: 13,
+      fontWeight: 500,
+      minWidth: 0,
+      letterSpacing: "-0.2px",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      whiteSpace: "nowrap"
+    } }, p.name),
+    /* @__PURE__ */ React.createElement("div", { style: { width: 78, display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 11,
+      color: "var(--text-muted)",
+      fontVariantNumeric: "tabular-nums",
+      width: 28,
+      textAlign: "right"
+    } }, live, "%"))
+  );
+}));
 window.AgencyDashboard = AgencyDashboard;
