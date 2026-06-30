@@ -62,12 +62,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     : activeProjects <= 3 ? "Capacidad cómoda"
     : activeProjects <= 4 ? "Capacidad media" : "Al límite";
 
-  // ── Selector de opción de diseño ──
-  const [dashOpt, setDashOpt] = useState(() => {
-    try { return localStorage.getItem("dash_opt") || "v1"; } catch { return "v1"; }
-  });
-  const pickOpt = (o) => { setDashOpt(o); try { localStorage.setItem("dash_opt", o); } catch {} };
-
   // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
   useEffect(() => {
@@ -247,36 +241,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           </div>
         </div>
 
-        {/* Selector de opción de diseño */}
-        <div style={{
-          display: "inline-flex", alignItems: "center", gap: 4, padding: 3,
-          background: "rgba(255,255,255,0.04)",
-          border: "0.5px solid rgba(255,255,255,0.08)",
-          borderRadius: 10,
-        }}>
-          {[
-            { id: "v1",  title: "Equilibrada (KPIs + Agenda + Colas)" },
-            { id: "v2",  title: "Stats inline + Agenda + Colas" },
-            { id: "v3",  title: "5 KPIs + 3 columnas iguales" },
-            { id: "v4",  title: "Bento asimétrico" },
-            { id: "v5",  title: "Una columna apilada" },
-            { id: "v6",  title: "Sidebar de KPIs (2/3 + 1/3)" },
-            { id: "v7",  title: "Hero con stats integrados" },
-            { id: "v8",  title: "KPI grande + 4 mini" },
-            { id: "v9",  title: "Vista densa (4 columnas)" },
-            { id: "v10", title: "Widgets macOS (2x2)" },
-          ].map((opt, i) => (
-            <button key={opt.id} onClick={() => pickOpt(opt.id)} title={opt.title}
-              style={{
-                width: 26, height: 26, borderRadius: 7, cursor: "pointer",
-                fontSize: 11.5, fontWeight: 500, letterSpacing: "-0.2px", fontFamily: "var(--font-mono)",
-                border: 0, transition: "background .12s, color .12s",
-                background: dashOpt === opt.id ? "var(--accent-soft)" : "transparent",
-                color: dashOpt === opt.id ? "var(--accent)" : "var(--text-muted)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>{i + 1}</button>
-          ))}
-        </div>
       </div>
 
       <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
@@ -308,85 +272,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   );
 
   const EYEBROW = (txt) => <div style={APPLE_SECTION}>{txt}</div>;
-
-  // ═══ Opción 1 — Vista equilibrada (actual) ═══════════════════════════════
-  const V1 = (
-    <>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }} className="dash-kpis">
-        {kpis.map((k, i) => (
-          <div key={i} style={{ ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <div style={{
-                width: 32, height: 32, borderRadius: 9,
-                background: "rgba(158,154,229,0.12)",
-                border: "0.5px solid rgba(158,154,229,0.18)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "var(--accent)",
-              }}>
-                <Icon name={k.icon} size={15} strokeWidth={1.7}/>
-              </div>
-            </div>
-            <div>
-              <div style={{
-                fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 28,
-                fontWeight: 400, lineHeight: 1, letterSpacing: "-1.1px",
-                fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
-                color: "var(--text)",
-              }}>{k.value}</div>
-              <div style={{
-                marginTop: 8, fontSize: 12, color: "var(--text-muted)",
-                fontWeight: 500, letterSpacing: "-0.3px",
-              }}>{k.label}</div>
-              <div style={{
-                marginTop: 3, fontSize: 11, color: "var(--text-subtle)", letterSpacing: "-0.2px",
-              }}>{k.sub}</div>
-            </div>
-          </div>
-        ))}
-      </section>
-
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="dash-bottom">
-        {/* Agenda */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
-            <div>
-              {EYEBROW("Próximamente")}
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>Agenda</div>
-            </div>
-            <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {upcomingEvents.length === 0 ? (
-              <div style={{ padding: 40, textAlign: "center" }}>
-                <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
-              </div>
-            ) : upcomingEvents.map((ev, i) => (
-              <EventRow key={i} ev={ev} last={i === upcomingEvents.length - 1} formatEventDate={formatEventDate}/>
-            ))}
-          </div>
-        </div>
-
-        {/* Colas */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
-            <div>
-              {EYEBROW("Pendiente")}
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>Colas de trabajo</div>
-            </div>
-            <button onClick={() => navigate("projects")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {queues.map((q, i) => (
-              <QueueRow key={i} q={q}/>
-            ))}
-            <ActiveProjects D={D} navigate={navigate} openModal={openModal} APPLE_SECTION={APPLE_SECTION}/>
-          </div>
-        </div>
-      </section>
-    </>
-  );
 
   // ── Activity reciente (datos compartidos para varias vistas) ─────────────
   const recentActivity = [
@@ -542,17 +427,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </div>
   );
 
-  // ═══ Opción 2 — Stats inline + 2 cols ════════════════════════════════════
-  const V2 = (
-    <>
-      <StatsInline/>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <AgendaBlock/>
-        <QueuesBlock/>
-      </section>
-    </>
-  );
-
   // ═══ Opción 3 — Tres columnas iguales ════════════════════════════════════
   const V3 = (
     <>
@@ -567,182 +441,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </>
   );
 
-  // ═══ Opción 4 — Bento asimétrico ═════════════════════════════════════════
-  const V4 = (
-    <section style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gridTemplateRows: "auto auto", gap: 14 }}>
-      {/* Hero KPI grande (proyectos activos) */}
-      <div style={{ ...APPLE_CARD, padding: "24px 26px", gridRow: "span 1" }}>
-        {EYEBROW("Capacidad")}
-        <div style={{
-          marginTop: 10, fontSize: 60, fontWeight: 400, lineHeight: 1, letterSpacing: "-2.4px",
-          fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums",
-        }}>{activeProjects}</div>
-        <div style={{ marginTop: 8, fontSize: 13, color: "var(--text-muted)", letterSpacing: "-0.3px" }}>
-          Proyectos activos · {capacityLabel}
-        </div>
-      </div>
-      {/* 4 mini KPIs (2x2) en los huecos siguientes */}
-      {kpis.slice(1, 5).map(renderMiniKpi)}
-
-      {/* Agenda (col 1-2) */}
-      <div style={{ gridColumn: "span 2" }}>
-        <AgendaBlock height={300} slice={5}/>
-      </div>
-      {/* Colas (col 3) */}
-      <QueuesBlock height={300}/>
-    </section>
-  );
-
-  // ═══ Opción 5 — Una columna apilada ══════════════════════════════════════
-  const V5 = (
-    <>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
-        {kpis.map(renderKpiTile)}
-      </section>
-      <AgendaBlock height={280} slice={5}/>
-      <QueuesBlock height={280}/>
-      <ProjectsBlock height={280}/>
-    </>
-  );
-
-  // ═══ Opción 6 — Sidebar de stats (2/3 + 1/3) ═════════════════════════════
-  const V6 = (
-    <section style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr", gap: 16 }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <AgendaBlock/>
-        <QueuesBlock height={300} showProjects={false}/>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        {/* KPIs apilados como filas en una sola card */}
-        <div style={{ ...APPLE_CARD, padding: "18px 22px" }}>
-          {EYEBROW("Pulso")}
-          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 }}>De un vistazo</div>
-          {kpis.map((k, i) => (
-            <div key={i} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px 0", borderBottom: i < kpis.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                <Icon name={k.icon} size={14} strokeWidth={1.7} style={{ color: "var(--text-muted)", flexShrink: 0 }}/>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" }}>{k.label}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-subtle)" }}>{k.sub}</div>
-                </div>
-              </div>
-              <div style={{
-                fontSize: 18, fontWeight: 400, letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
-                fontVariantNumeric: "tabular-nums", flexShrink: 0, paddingLeft: 12,
-              }}>{k.value}</div>
-            </div>
-          ))}
-        </div>
-        <ProjectsBlock height={240} slice={5}/>
-      </div>
-    </section>
-  );
-
-  // ═══ Opción 7 — Hero con stats integrados ════════════════════════════════
-  const V7 = (
-    <>
-      <div style={{ ...APPLE_CARD, padding: "26px 28px" }}>
-        {EYEBROW("Resumen general")}
-        <div style={{ marginTop: 6, fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px",
-          fontFamily: "var(--font-display)" }}>{agencyName}</div>
-        <div style={{ marginTop: 4, fontSize: 13, color: "var(--text-muted)" }}>
-          Lo más relevante en una sola pantalla.
-        </div>
-        <div style={{ marginTop: 22, display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {kpis.map((k, i) => (
-            <div key={i} style={{
-              display: "inline-flex", alignItems: "center", gap: 10,
-              padding: "10px 14px", borderRadius: 12,
-              background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.06)",
-            }}>
-              <Icon name={k.icon} size={13} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
-              <span style={{ fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{k.label}</span>
-              <span style={{
-                fontSize: 15, fontWeight: 500, fontVariantNumeric: "tabular-nums",
-                fontFamily: "var(--font-display)", letterSpacing: "-0.4px",
-              }}>{k.value}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <AgendaBlock/>
-        <QueuesBlock/>
-      </section>
-    </>
-  );
-
-  // ═══ Opción 8 — Cards de tamaños distintos ═══════════════════════════════
-  const V8 = (
-    <>
-      <section style={{ display: "grid", gridTemplateColumns: "1.4fr repeat(4, 1fr)", gap: 14 }}>
-        {/* KPI grande: el primero (proyectos activos) */}
-        <div style={{ ...APPLE_CARD, padding: "22px 24px" }}>
-          {EYEBROW(kpis[0].label)}
-          <div style={{ marginTop: 10, fontSize: 50, fontWeight: 400, lineHeight: 1, letterSpacing: "-2px",
-            fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums" }}>{kpis[0].value}</div>
-          <div style={{ marginTop: 10, fontSize: 12.5, color: "var(--text-muted)" }}>{kpis[0].sub}</div>
-        </div>
-        {/* 4 mini KPIs */}
-        {kpis.slice(1).map(renderMiniKpi)}
-      </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
-        <AgendaBlock/>
-        <QueuesBlock/>
-      </section>
-    </>
-  );
-
-  // ═══ Opción 9 — Vista densa (4 columnas compactas) ═══════════════════════
-  const V9 = (
-    <>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12 }}>
-        {kpis.map(renderMiniKpi)}
-      </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: 14 }}>
-        <AgendaBlock height={340} slice={6}/>
-        <QueuesBlock height={340} showProjects={false}/>
-        <ProjectsBlock height={340}/>
-      </section>
-    </>
-  );
-
-  // ═══ Opción 10 — Widgets macOS (cuadrícula 2x2 grande) ═══════════════════
-  const V10 = (
-    <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridAutoRows: "minmax(220px, auto)", gap: 16 }}>
-      {/* Widget de KPIs (cuadrícula 2x2 dentro) */}
-      <div style={{ ...APPLE_CARD, padding: "20px 22px" }}>
-        {EYEBROW("Resumen")}
-        <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 }}>KPIs</div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {kpis.slice(0, 4).map((k, i) => (
-            <div key={i} style={{ padding: "12px 14px", borderRadius: 10,
-              background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-                <Icon name={k.icon} size={12} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
-                <span style={{ fontSize: 11, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{k.label}</span>
-              </div>
-              <div style={{
-                fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 17 : 20,
-                fontWeight: 400, letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
-                fontVariantNumeric: "tabular-nums", lineHeight: 1,
-              }}>{k.value}</div>
-            </div>
-          ))}
-        </div>
-      </div>
-      {/* Widget Agenda */}
-      <AgendaBlock height={260} slice={4}/>
-      {/* Widget Colas */}
-      <QueuesBlock height={260} showProjects={false}/>
-      {/* Widget Proyectos */}
-      <ProjectsBlock height={260} slice={5}/>
-    </section>
-  );
-
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 28,
@@ -750,16 +448,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       maxWidth: 1440, margin: "0 auto",
     }}>
       {Header}
-      {dashOpt === "v1" && V1}
-      {dashOpt === "v2" && V2}
-      {dashOpt === "v3" && V3}
-      {dashOpt === "v4" && V4}
-      {dashOpt === "v5" && V5}
-      {dashOpt === "v6" && V6}
-      {dashOpt === "v7" && V7}
-      {dashOpt === "v8" && V8}
-      {dashOpt === "v9" && V9}
-      {dashOpt === "v10" && V10}
+      {V3}
     </div>
   );
 };
