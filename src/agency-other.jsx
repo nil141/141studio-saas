@@ -288,10 +288,19 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   })();
 
   return (
-    <div className="page" onClick={() => setOptionsOpen(false)}>
+    <div
+      onClick={() => setOptionsOpen(false)}
+      style={{
+        height:"100vh",
+        display:"flex", flexDirection:"column",
+        padding:"28px 32px 0",
+        maxWidth:1400, margin:"0 auto",
+        overflow:"hidden",
+      }}
+    >
 
       {/* Header — title + ActionPill (igual que el resto de páginas) */}
-      <div className="page-head">
+      <div className="page-head" style={{ flexShrink:0 }}>
         <div>
           <h1>Tareas</h1>
           <div className="sub">
@@ -309,7 +318,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       </div>
 
       {/* Tira horizontal: navegación de mes + días + progreso */}
-      <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28 }}>
+      <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28, flexShrink:0 }}>
         {/* Month nav — grupo centrado */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:18 }}>
           <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
@@ -452,6 +461,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         </div>
       </div>
 
+      {/* Zona scrollable: solo las tareas se deslizan */}
+      <div style={{
+        flex:1, minHeight:0,
+        overflowY:"auto",
+        scrollbarGutter:"stable",
+        paddingRight:4, paddingBottom:80,
+      }}>
+
       {groups.length === 0 && (
         <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
           Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
@@ -526,6 +543,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
         </div>
       ))}
+
+      </div>
 
       {taskModal && (
         <TaskProgressModal
