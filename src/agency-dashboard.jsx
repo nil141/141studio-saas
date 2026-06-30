@@ -197,226 +197,279 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, action:()=>navigate("invoices") },
   ];
 
+  // ───────────────────────────────────────────────────────────────────────────
+  // Apple HIG style — tokens locales (vibrancy / continuous radius / SF system)
+  // ───────────────────────────────────────────────────────────────────────────
+  const APPLE_CARD = {
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+    border: "0.5px solid rgba(255,255,255,0.08)",
+    borderRadius: 18,
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)",
+  };
+  const APPLE_SECTION = {
+    fontSize: 11, fontWeight: 600, color: "var(--text-subtle)",
+    textTransform: "uppercase", letterSpacing: "0.08em",
+  };
+
   return (
-    <div className="dash-wrap" style={{
-      display:"flex", flexDirection:"column", gap:12,
-      padding:"20px 28px 20px",
-      height:"100vh", overflow:"hidden", boxSizing:"border-box",
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 28,
+      padding: "32px 36px 48px",
+      maxWidth: 1440, margin: "0 auto",
     }}>
 
-      {/* ── Welcome header ── */}
-      <div style={{paddingTop:12, paddingBottom:24, borderBottom:"0.5px solid var(--border)"}}>
-        <div style={{display:"flex", alignItems:"flex-end", justifyContent:"space-between", marginBottom:14}}>
+      {/* ── Large Title (HIG) ─────────────────────────────────────────────── */}
+      <header style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
           <div>
-            <div style={{fontSize:36, fontWeight:400, lineHeight:"40px", letterSpacing:"-1.44px", marginBottom:6}}>
-              {greeting}, {adminName}.
-            </div>
-            <div style={{fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.5px", display:"flex", alignItems:"center", gap:8}}>
-              {agencyName} · {todayStr}
+            <h1 style={{
+              fontSize: 44, fontWeight: 600, letterSpacing: "-1.6px", lineHeight: 1.05,
+              margin: 0, fontFamily: "var(--font-display)",
+            }}>{greeting}, <span style={{ color: "var(--accent)" }}>{adminName}</span>.</h1>
+            <div style={{
+              marginTop: 10, fontSize: 15, color: "var(--text-muted)",
+              letterSpacing: "-0.3px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+            }}>
+              <span>{agencyName} · {todayStr}</span>
               <span style={{
-                fontSize:11, padding:"2px 8px", borderRadius:99,
-                background: capacity==="green"?"var(--green-soft)":capacity==="amber"?"var(--amber-soft)":"var(--red-soft)",
-                color: capacity==="green"?"var(--green)":capacity==="amber"?"var(--amber)":"var(--red)",
-                letterSpacing:0,
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "3px 10px 3px 8px", borderRadius: 99, fontSize: 11.5, fontWeight: 500,
+                background: capacity === "green" ? "var(--green-soft)" : capacity === "amber" ? "var(--amber-soft)" : "var(--red-soft)",
+                color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
+                letterSpacing: 0,
               }}>
+                <span style={{ width: 6, height: 6, borderRadius: 99,
+                  background: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)" }}/>
                 {capacityLabel}
               </span>
             </div>
           </div>
         </div>
-        <div style={{display:"flex", gap:8, flexWrap:"wrap", marginTop:16}}>
+
+        {/* Quick actions — pills morados estilo macOS toolbar */}
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           {[
-            { label:"Nueva tarea",     icon:"plus",          fn:()=>openModal("newTask")    },
-            { label:"Nuevo proyecto",  icon:"plus",          fn:()=>openModal("newProject") },
-            { label:"Invitar cliente", icon:"external-link", fn:()=>openModal("invite")     },
-            { label:"Nueva factura",   icon:"receipt",       fn:()=>navigate("invoices")    },
+            { label: "Nueva tarea",     icon: "plus",          fn: () => openModal("newTask"),    primary: true },
+            { label: "Nuevo proyecto",  icon: "folder",        fn: () => openModal("newProject") },
+            { label: "Invitar cliente", icon: "external-link", fn: () => openModal("invite")     },
+            { label: "Nueva factura",   icon: "receipt",       fn: () => navigate("billing")    },
           ].map(b => (
-            <button key={b.label} className="btn sm" onClick={b.fn}
-              style={{display:"flex", alignItems:"center", gap:6}}>
-              <Icon name={b.icon} size={13}/> {b.label}
+            <button key={b.label} onClick={b.fn}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 7,
+                height: 34, padding: "0 14px", borderRadius: 11, cursor: "pointer",
+                fontSize: 13, fontWeight: 500, letterSpacing: "-0.2px",
+                fontFamily: "inherit", transition: "background .12s, border-color .12s",
+                background: b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
+                color: b.primary ? "var(--accent)" : "var(--text)",
+                border: "0.5px solid " + (b.primary ? "rgba(158,154,229,0.4)" : "rgba(255,255,255,0.08)"),
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = b.primary ? "rgba(158,154,229,0.28)" : "rgba(255,255,255,0.07)"}
+              onMouseLeave={e => e.currentTarget.style.background = b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)"}
+            >
+              <Icon name={b.icon} size={13} strokeWidth={1.7}/>
+              {b.label}
             </button>
           ))}
         </div>
-      </div>
+      </header>
 
-      {/* ── KPI row ── */}
-      <div className="dash-kpis" style={{display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:12}}>
-        {kpis.map((k,i) => (
-          <div key={i} className="card" style={{padding:0, overflow:"hidden", cursor:"default"}}>
-            <div style={{padding:"14px 18px 12px"}}>
-              <div style={{marginBottom:10}}>
-                <IconBadge icon={k.icon}/>
-              </div>
-              <div style={{fontSize:11, color:"var(--text-muted)", fontWeight:400, marginBottom:6, letterSpacing:"-0.96px"}}>
-                {k.label}
-              </div>
+      {/* ── KPI tiles (estilo Centro de Control) ─────────────────────────── */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }} className="dash-kpis">
+        {kpis.map((k, i) => (
+          <div key={i} style={{ ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{
-                fontSize: typeof k.value==="string" && k.value.startsWith("€") ? 20 : 28,
-                fontWeight:400, lineHeight:1, letterSpacing:"-1.44px", fontVariantNumeric:"tabular-nums", marginBottom:4,
+                width: 32, height: 32, borderRadius: 9,
+                background: "rgba(158,154,229,0.12)",
+                border: "0.5px solid rgba(158,154,229,0.18)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "var(--accent)",
               }}>
-                {k.value}
-              </div>
-              <div style={{fontSize:11, color:"var(--text-subtle)", letterSpacing:"-0.96px"}}>
-                {k.sub}
+                <Icon name={k.icon} size={15} strokeWidth={1.7}/>
               </div>
             </div>
-            <div style={{height:2, background:"var(--border)"}}/>
+            <div>
+              <div style={{
+                fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 26 : 34,
+                fontWeight: 600, lineHeight: 1, letterSpacing: "-1.4px",
+                fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
+                color: "var(--text)",
+              }}>{k.value}</div>
+              <div style={{
+                marginTop: 8, fontSize: 12.5, color: "var(--text)",
+                fontWeight: 500, letterSpacing: "-0.3px",
+              }}>{k.label}</div>
+              <div style={{
+                marginTop: 3, fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.2px",
+              }}>{k.sub}</div>
+            </div>
           </div>
         ))}
-      </div>
+      </section>
 
-      {/* ── Bottom two columns ── */}
-      <div className="dash-bottom" style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:12, flex:1, minHeight:0, overflow:"hidden"}}>
+      {/* ── Dos columnas (Vibrancy cards) ─────────────────────────────────── */}
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }} className="dash-bottom">
 
-        {/* Agenda próxima */}
-        <div className="card" style={{display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0}}>
-          <div className="card-header">
-            <div style={{display:"flex", alignItems:"center", gap:10}}>
-              <IconBadge icon="calendar"/>
-              <div>
-                <div className="card-title">Agenda próxima</div>
-                <div className="card-sub">Los próximos vencimientos y entregas</div>
+        {/* ── Agenda próxima ── */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)",
+          }}>
+            <div>
+              <div style={APPLE_SECTION}>Próximamente</div>
+              <div style={{ marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" }}>
+                Agenda
               </div>
             </div>
-            <button className="btn ghost sm" onClick={() => navigate("projects")}>
+            <button onClick={() => navigate("agenda")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
+                borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
+                background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+              }}>
               Ver todo <Icon name="arrow" size={12}/>
             </button>
           </div>
-          <div className="card-body flush" style={{flex:1, overflowY:"auto"}}>
-            {upcomingEvents.length===0 ? (
-              <div style={{padding:32, textAlign:"center"}}>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {upcomingEvents.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center" }}>
                 <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
               </div>
-            ) : upcomingEvents.map((ev,i) => (
-              <div key={i} style={{
-                display:"flex", alignItems:"center", gap:12, padding:"12px 20px",
-                borderBottom: i<upcomingEvents.length-1 ? "0.5px solid var(--border)" : "none",
-              }}>
-                <div style={{
-                  width:32, height:32, borderRadius:8, flexShrink:0,
-                  background:"var(--bg-elev-2)",
-                  border:"0.5px solid var(--border)",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  color:"var(--text-muted)",
+            ) : upcomingEvents.map((ev, i) => (
+              <div key={i}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{
+                  display: "flex", alignItems: "center", gap: 14,
+                  padding: "14px 22px", transition: "background .1s",
+                  borderBottom: i < upcomingEvents.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none",
                 }}>
-                  <Icon name={ev.icon} size={14} strokeWidth={1.8}/>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                  background: "rgba(255,255,255,0.04)",
+                  border: "0.5px solid rgba(255,255,255,0.06)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: ev.color || "var(--text-muted)",
+                }}>
+                  <Icon name={ev.icon} size={15} strokeWidth={1.7}/>
                 </div>
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{fontSize:13, fontWeight:500, overflow:"hidden",
-                    textOverflow:"ellipsis", whiteSpace:"nowrap", letterSpacing:"-0.5px"}}>{ev.label}</div>
-                  <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.3px"}}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+                    color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  }}>{ev.label}</div>
+                  <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>
                     {formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}
                   </div>
                 </div>
-                <div style={{display:"flex", alignItems:"center", flexShrink:0}}>
-                  <span style={{
-                    fontSize:10, padding:"2px 8px", borderRadius:99,
-                    background:"var(--bg-elev-2)", color:"var(--text-muted)",
-                    border:"0.5px solid var(--border)", letterSpacing:"-0.3px",
-                    whiteSpace:"nowrap",
-                  }}>{ev.type}</span>
-                </div>
+                <span style={{
+                  fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
+                  background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
+                  border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
+                  whiteSpace: "nowrap", fontWeight: 500,
+                }}>{ev.type}</span>
               </div>
             ))}
           </div>
         </div>
 
-        {/* Colas de trabajo */}
-        <div className="card" style={{display:"flex", flexDirection:"column", overflow:"hidden", minHeight:0}}>
-          <div className="card-header">
-            <div style={{display:"flex", alignItems:"center", gap:10}}>
-              <IconBadge icon="inbox"/>
-              <div>
-                <div className="card-title">Colas de trabajo</div>
-                <div className="card-sub">Seguimiento inmediato en tareas y proyectos</div>
+        {/* ── Colas de trabajo ── */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)",
+          }}>
+            <div>
+              <div style={APPLE_SECTION}>Pendiente</div>
+              <div style={{ marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" }}>
+                Colas de trabajo
               </div>
             </div>
-            <button className="btn ghost sm" onClick={() => navigate("projects")}>
+            <button onClick={() => navigate("projects")}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
+                borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
+                background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+              }}>
               Ver todo <Icon name="arrow" size={12}/>
             </button>
           </div>
-          <div className="card-body flush" style={{flex:1, overflowY:"auto"}}>
-            {queues.map((q,i) => (
-              <div key={i}
-                onClick={q.action}
-                onMouseEnter={e => e.currentTarget.style.background="var(--bg-hover)"}
-                onMouseLeave={e => e.currentTarget.style.background="transparent"}
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {queues.map((q, i) => (
+              <div key={i} onClick={q.action}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 style={{
-                  display:"flex", alignItems:"center", justifyContent:"space-between",
-                  padding:"13px 20px", cursor:"pointer", transition:"background .08s",
-                  borderBottom: i<queues.length-1 ? "0.5px solid var(--border)" : "0.5px solid var(--border)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                  padding: "14px 22px", cursor: "pointer", transition: "background .1s",
+                  borderBottom: "0.5px solid rgba(255,255,255,0.04)",
                 }}>
-                <div style={{display:"flex", alignItems:"center", gap:10}}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                   <div style={{
-                    width:28, height:28, borderRadius:7, flexShrink:0,
-                    background:"var(--bg-elev-2)",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                    color:"var(--text-subtle)",
+                    width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+                    background: "rgba(255,255,255,0.04)",
+                    border: "0.5px solid rgba(255,255,255,0.06)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "var(--text-muted)",
                   }}>
-                    <Icon name={q.icon} size={13} strokeWidth={1.8}/>
+                    <Icon name={q.icon} size={14} strokeWidth={1.7}/>
                   </div>
-                  <span style={{fontSize:13}}>{q.label}</span>
+                  <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" }}>{q.label}</span>
                 </div>
                 <span style={{
-                  fontSize:18, fontWeight:700, color:"var(--text)",
-                  fontVariantNumeric:"tabular-nums",
+                  fontSize: 20, fontWeight: 600, fontVariantNumeric: "tabular-nums",
+                  color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
+                  letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
                 }}>{q.count}</span>
               </div>
             ))}
 
-            {/* Active projects mini list */}
-            <div style={{padding:"14px 20px 10px"}}>
-              <div style={{
-                fontSize:10, fontWeight:700, color:"var(--text-subtle)",
-                textTransform:"uppercase", letterSpacing:"0.1em", marginBottom:10,
-              }}>
-                Proyectos activos
-              </div>
-              {D.PROJECTS.length===0 ? (
-                <div style={{fontSize:12, color:"var(--text-subtle)", padding:"6px 0"}}>
-                  Sin proyectos — <button className="btn ghost sm" onClick={()=>openModal("newProject")}
-                    style={{display:"inline",padding:"0 4px"}}>Crear uno</button>
+            {/* Proyectos activos */}
+            <div style={{ padding: "18px 22px 14px" }}>
+              <div style={{ ...APPLE_SECTION, marginBottom: 12 }}>Proyectos activos</div>
+              {D.PROJECTS.length === 0 ? (
+                <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
+                  Sin proyectos. <button onClick={() => openModal("newProject")}
+                    style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
+                      fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>
+                    Crear uno
+                  </button>
                 </div>
-              ) : D.PROJECTS.slice(0,5).map((p) => {
-                const pTasks = D.TASKS[p.id]||[];
-                const live = pTasks.length ? Math.round(pTasks.filter(t=>t.column==="done").length/pTasks.length*100) : 0;
+              ) : D.PROJECTS.slice(0, 5).map(p => {
+                const pTasks = D.TASKS[p.id] || [];
+                const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
                 return (
-                  <div key={p.id}
-                    onClick={() => navigate("project",{projectId:p.id})}
-                    onMouseEnter={e=>e.currentTarget.style.background="var(--bg-hover)"}
-                    onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+                  <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+                    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                     style={{
-                      display:"flex", alignItems:"center", gap:10, padding:"6px 4px",
-                      cursor:"pointer", borderRadius:6, transition:"background .08s",
+                      display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
+                      cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
                     }}>
-                    <span className={"dot "+p.light}/>
-                    <span style={{flex:1, fontSize:12.5, fontWeight:500, minWidth:0,
-                      overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-                      {p.name}
-                    </span>
-                    <div style={{width:72, display:"flex", alignItems:"center", gap:6}}>
-                      <div className="progress" style={{flex:1}}>
-                        <i style={{width:live+"%"}}/>
-                      </div>
+                    <span className={"dot " + p.light}/>
+                    <span style={{
+                      flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                    }}>{p.name}</span>
+                    <div style={{ width: 78, display: "flex", alignItems: "center", gap: 8 }}>
+                      <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
                       <span style={{
-                        fontSize:11, color:"var(--text-muted)",
-                        fontVariantNumeric:"tabular-nums", width:28, textAlign:"right",
+                        fontSize: 11, color: "var(--text-muted)",
+                        fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right",
                       }}>{live}%</span>
                     </div>
                   </div>
                 );
               })}
-              {D.PROJECTS.length>5 && (
-                <button className="btn ghost sm" style={{marginTop:8,width:"100%"}}
-                  onClick={()=>navigate("projects")}>
-                  Ver todos ({D.PROJECTS.length}) <Icon name="arrow" size={11}/>
-                </button>
-              )}
             </div>
           </div>
         </div>
 
-      </div>
+      </section>
     </div>
   );
 };
