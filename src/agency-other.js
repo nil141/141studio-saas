@@ -136,31 +136,7 @@
         }
       )),
       /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o - 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)", minWidth: 80, textAlign: "center" } }, MON_ES[weekDays[3].getMonth()], " ", weekDays[3].getFullYear()), /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o + 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), (() => {
-        const selIdx = weekDays.findIndex((d) => {
-          const m = new Date(d);
-          m.setHours(0, 0, 0, 0);
-          return m.getTime() === selMid.getTime();
-        });
-        const segPct = 100 / 7;
-        return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "flex", alignItems: "stretch", padding: "6px 0 0" } }, /* @__PURE__ */ React.createElement("div", { style: {
-          position: "absolute",
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: "0.5px",
-          background: "rgba(255,255,255,0.05)"
-        } }), selIdx >= 0 && /* @__PURE__ */ React.createElement("div", { style: {
-          position: "absolute",
-          bottom: 0,
-          left: `calc(${selIdx * segPct}% + ${segPct / 2}% - 14px)`,
-          width: "28px",
-          height: "2px",
-          background: "var(--accent)",
-          borderRadius: 99,
-          boxShadow: "0 0 12px rgba(158,154,229,0.5)",
-          transition: "left .35s cubic-bezier(0.4,0,0.2,1)",
-          zIndex: 2
-        } }), weekDays.map((d, i) => {
+        return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "stretch", padding: "4px 0" } }, weekDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
           const isSel = dMid.getTime() === selMid.getTime();
@@ -169,76 +145,98 @@
           const tasksToday = allTasks.filter((t) => t.deadline === dStr);
           const doneToday = tasksToday.filter((t) => t.column === "done").length;
           const totalToday = tasksToday.length;
-          const allDone = totalToday > 0 && doneToday === totalToday;
+          const loadPct = totalToday ? Math.min(100, Math.round(doneToday / totalToday * 100)) : 0;
           const hasLoad = totalToday > 0;
-          return /* @__PURE__ */ React.createElement(
-            "button",
+          const sz = 56;
+          const r = 24;
+          const sw = 3;
+          const c = 2 * Math.PI * r;
+          const trackCol = isSel ? "rgba(158,154,229,0.18)" : isToday2 ? "rgba(158,154,229,0.10)" : "rgba(255,255,255,0.06)";
+          const ringCol = isSel ? "var(--accent)" : isToday2 ? "rgba(158,154,229,0.65)" : "rgba(255,255,255,0.35)";
+          return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
+            flex: 1,
+            cursor: "pointer",
+            border: "none",
+            background: "transparent",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 8,
+            padding: "6px 0",
+            transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
+            transform: isSel ? "scale(1.04)" : "scale(1)"
+          } }, /* @__PURE__ */ React.createElement("span", { style: {
+            fontSize: 10,
+            fontWeight: 600,
+            color: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "var(--text-subtle)",
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            transition: "color .2s"
+          } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]), /* @__PURE__ */ React.createElement("div", { style: {
+            position: "relative",
+            width: sz,
+            height: sz,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          } }, /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement(
+            "circle",
             {
-              key: d.toISOString(),
-              onClick: () => setSelectedDay(new Date(d)),
+              cx: sz / 2,
+              cy: sz / 2,
+              r,
+              fill: "none",
+              stroke: trackCol,
+              strokeWidth: sw
+            }
+          ), hasLoad && /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: sz / 2,
+              cy: sz / 2,
+              r,
+              fill: "none",
+              stroke: ringCol,
+              strokeWidth: sw,
+              strokeLinecap: "round",
+              strokeDasharray: `${loadPct / 100 * c} ${c}`,
               style: {
-                flex: 1,
-                cursor: "pointer",
-                border: "none",
-                background: "transparent",
-                position: "relative",
-                zIndex: 1,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 6,
-                padding: "4px 0 18px",
-                transition: "all .2s"
-              },
-              onMouseEnter: (e) => {
-                if (!isSel) e.currentTarget.style.background = "rgba(255,255,255,0.025)";
-              },
-              onMouseLeave: (e) => {
-                e.currentTarget.style.background = "transparent";
+                transition: "stroke-dasharray .5s ease, stroke .25s",
+                filter: isSel ? "drop-shadow(0 0 6px rgba(158,154,229,0.55))" : "none"
               }
-            },
-            /* @__PURE__ */ React.createElement("span", { style: {
-              fontSize: 10,
-              fontWeight: 600,
-              color: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "var(--text-subtle)",
-              letterSpacing: "0.18em",
-              textTransform: "uppercase",
-              transition: "color .2s"
-            } }, ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"][d.getDay()]),
-            /* @__PURE__ */ React.createElement("span", { style: {
-              fontSize: 26,
-              fontWeight: isSel ? 400 : 300,
-              color: isSel ? "var(--text)" : isToday2 ? "var(--text)" : "var(--text-muted)",
-              letterSpacing: "-1.2px",
-              lineHeight: 1,
-              transition: "color .2s"
-            } }, d.getDate()),
-            /* @__PURE__ */ React.createElement("div", { style: {
-              display: "flex",
-              alignItems: "center",
-              gap: 4,
-              height: 14,
-              marginTop: 2
-            } }, hasLoad ? allDone ? /* @__PURE__ */ React.createElement("span", { style: {
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 3,
-              fontSize: 10,
-              fontWeight: 500,
-              color: isSel ? "var(--accent)" : "var(--text-subtle)",
-              letterSpacing: "-0.1px"
-            } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 10, strokeWidth: 2.4 }), totalToday) : /* @__PURE__ */ React.createElement("span", { style: {
-              fontSize: 10,
-              fontWeight: 500,
-              color: isSel ? "var(--accent)" : isToday2 ? "var(--text-muted)" : "var(--text-subtle)",
-              letterSpacing: "-0.1px"
-            } }, doneToday, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.5 } }, "/", totalToday)) : isToday2 && !isSel ? /* @__PURE__ */ React.createElement("span", { style: {
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              background: "var(--accent)"
-            } }) : null)
-          );
+            }
+          ), !hasLoad && isToday2 && /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: sz / 2,
+              cy: sz / 2 - r,
+              r: 2.5,
+              fill: "var(--accent)",
+              transform: `rotate(90 ${sz / 2} ${sz / 2})`
+            }
+          )), isSel && /* @__PURE__ */ React.createElement("div", { style: {
+            position: "absolute",
+            width: sz - sw * 2 - 4,
+            height: sz - sw * 2 - 4,
+            borderRadius: "50%",
+            background: "radial-gradient(circle, rgba(158,154,229,0.22) 0%, rgba(158,154,229,0.05) 70%, transparent 100%)"
+          } }), /* @__PURE__ */ React.createElement("span", { style: {
+            position: "relative",
+            zIndex: 1,
+            fontSize: 18,
+            fontWeight: isSel ? 500 : 400,
+            color: isSel ? "#f0eeff" : isToday2 ? "var(--text)" : "var(--text-muted)",
+            letterSpacing: "-0.6px",
+            lineHeight: 1,
+            transition: "color .2s"
+          } }, d.getDate())), /* @__PURE__ */ React.createElement("span", { style: {
+            fontSize: 10,
+            fontWeight: 500,
+            color: isSel ? "var(--accent)" : "var(--text-subtle)",
+            letterSpacing: "-0.1px",
+            minHeight: 12,
+            transition: "color .2s"
+          } }, hasLoad ? doneToday === totalToday ? `${totalToday} hechas` : `${doneToday}/${totalToday}` : ""));
         }));
       })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 2, background: "var(--border)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))),
       /* @__PURE__ */ React.createElement("div", { style: {
