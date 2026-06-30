@@ -37,8 +37,14 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   };
 
   return (
-    <div className="page">
-      <div className="page-head">
+    <div style={{
+      height:"100vh",
+      display:"flex", flexDirection:"column",
+      padding:"28px 32px 0",
+      maxWidth:1400, margin:"0 auto",
+      overflow:"hidden",
+    }}>
+      <div className="page-head" style={{ flexShrink:0 }}>
         <div>
           <h1>Clientes</h1>
           <div className="sub">{clients.length} en total</div>
@@ -99,41 +105,48 @@ const AgencyClientsList = ({ navigate, openModal }) => {
       )}
 
       {clients.length === 0 ? (
-        <div className="card"><div className="card-body" style={{ padding: 48 }}>
+        <div className="card" style={{ flexShrink:0 }}><div className="card-body" style={{ padding: 48 }}>
           <Empty icon="users" title="Sin clientes" sub="Añade tu primer cliente para empezar."/>
         </div></div>
       ) : (
-        <div className="card" style={{ padding: 0, overflow: "hidden" }}>
-          {/* Cabecera */}
+        <div className="card" style={{
+          padding: 0, overflow: "hidden",
+          display:"flex", flexDirection:"column",
+          flex:1, minHeight:0, marginBottom:24,
+        }}>
+          {/* Cabecera fija */}
           <div style={{
             display: "grid", gridTemplateColumns: COLS, gap: 24,
             padding: "16px 26px", borderBottom: "0.5px solid var(--border)",
+            flexShrink:0,
           }}>
             {["Nombre", "Empresa", "Email", "Teléfono"].map(h => (
               <div key={h} style={{ fontSize: 13.5, color: "var(--text-subtle)" }}>{h}</div>
             ))}
           </div>
 
-          {/* Filas */}
-          {clients.map((c, i) => (
-            <div key={c.id}
-              onClick={() => navigate("clientDetail", { clientId: c.id })}
-              style={{
-                display: "grid", gridTemplateColumns: COLS, gap: 24, alignItems: "center",
-                padding: "18px 26px", cursor: "pointer", transition: "background .1s",
-                borderBottom: i === clients.length - 1 ? "0" : "0.5px solid var(--border)",
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {c.name || c.company || "—"}
+          {/* Filas — sólo esta zona scrollea */}
+          <div style={{ flex:1, overflowY:"auto", scrollbarGutter:"stable" }}>
+            {clients.map((c, i) => (
+              <div key={c.id}
+                onClick={() => navigate("clientDetail", { clientId: c.id })}
+                style={{
+                  display: "grid", gridTemplateColumns: COLS, gap: 24, alignItems: "center",
+                  padding: "18px 26px", cursor: "pointer", transition: "background .1s",
+                  borderBottom: i === clients.length - 1 ? "0" : "0.5px solid var(--border)",
+                }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+              >
+                <div style={{ fontSize: 15, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {c.name || c.company || "—"}
+                </div>
+                <div style={cell}>{c.company || "—"}</div>
+                <div style={cell}>{c.email || "—"}</div>
+                <div style={cell}>{c.whatsapp || c.phone || "—"}</div>
               </div>
-              <div style={cell}>{c.company || "—"}</div>
-              <div style={cell}>{c.email || "—"}</div>
-              <div style={cell}>{c.whatsapp || c.phone || "—"}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
