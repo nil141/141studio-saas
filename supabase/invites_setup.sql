@@ -1,6 +1,5 @@
 -- ============================================================================
--- 141'STUDIO — Sistema de invitaciones de clientes
--- Crea la tabla `invites` + la función `complete_invite` que usa el onboarding.
+-- 141'STUDIO — Sistema de invitaciones de clientes (v2: vinculadas a ficha)
 -- Ejecutar UNA vez en: Supabase → SQL Editor → New query → pegar → Run.
 -- ============================================================================
 
@@ -13,25 +12,27 @@ create table if not exists public.invites (
   created_at timestamptz not null default now()
 );
 
+-- v2: vinculación con una ficha de cliente existente (puede ser NULL)
+alter table public.invites
+  add column if not exists client_id uuid references public.clients(id) on delete cascade;
+
 alter table public.invites enable row level security;
 
 -- 2) Políticas RLS
--- La agencia (admin autenticado) gestiona sus propias invitaciones.
 drop policy if exists "agency manage own invites" on public.invites;
 create policy "agency manage own invites" on public.invites
   for all
   using (agency_id = auth.uid())
   with check (agency_id = auth.uid());
 
--- El invitado (aún sin cuenta) necesita validar el enlace por su token.
--- El token es secreto y aleatorio, así que basta con permitir la lectura.
+-- El invitado lee la invitación por su token (token = secreto)
 drop policy if exists "read invite by token" on public.invites;
 create policy "read invite by token" on public.invites
   for select
   using (true);
 
--- 3) Función que completa el alta: crea el cliente + el perfil del usuario.
---    SECURITY DEFINER para poder escribir en clients/profiles saltándose RLS.
+-- 3) Función complete_invite — vincula al cliente existente si hay client_id,
+--    o crea ficha nueva si no (compatibilidad con flujo antiguo).
 create or replace function public.complete_invite(
   p_token   text,
   p_name    text,
@@ -45,7 +46,7 @@ as $$
 declare
   v_invite public.invites%rowtype;
   v_uid    uuid := auth.uid();
-  v_client uuid := gen_random_uuid();
+  v_client uuid;
   v_email  text;
 begin
   if v_uid is null then
@@ -62,16 +63,27 @@ begin
 
   select email into v_email from auth.users where id = v_uid;
 
-  -- Registro de cliente bajo la agencia que invitó
-  insert into public.clients (id, agency_id, name, company, email, phone, initials, color, sector)
-  values (
-    v_client, v_invite.agency_id, p_name, p_company, v_email, p_phone,
-    upper(left(coalesce(nullif(p_company, ''), nullif(p_name, ''), 'C'), 2)),
-    '#60a5fa',
-    coalesce(nullif(v_invite.service, ''), '—')
-  );
+  if v_invite.client_id is not null then
+    -- Vincular a la ficha de cliente existente: actualizar contacto
+    v_client := v_invite.client_id;
+    update public.clients
+       set name  = coalesce(nullif(p_name, ''), name),
+           phone = coalesce(nullif(p_phone, ''), phone),
+           email = v_email
+     where id = v_client;
+  else
+    -- Compat: sin client_id → crear ficha nueva (flujo antiguo)
+    v_client := gen_random_uuid();
+    insert into public.clients (id, agency_id, name, company, email, phone, initials, color, sector)
+    values (
+      v_client, v_invite.agency_id, p_name, p_company, v_email, p_phone,
+      upper(left(coalesce(nullif(p_company, ''), nullif(p_name, ''), 'C'), 2)),
+      '#60a5fa',
+      coalesce(nullif(v_invite.service, ''), '—')
+    );
+  end if;
 
-  -- Perfil del usuario como cliente de esa agencia
+  -- Perfil del usuario como cliente
   insert into public.profiles (id, role, name, initials, agency_id, client_db_id)
   values (
     v_uid, 'client', p_name,
@@ -84,7 +96,6 @@ begin
     agency_id    = excluded.agency_id,
     client_db_id = excluded.client_db_id;
 
-  -- Marcar la invitación como usada
   update public.invites set used = true where token = p_token;
 
   return json_build_object('ok', true, 'client_id', v_client);

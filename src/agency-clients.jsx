@@ -20,7 +20,6 @@ const AgencyClientsList = ({ navigate, openModal }) => {
         </div>
         <div className="row tight">
           <button className="btn" onClick={() => openModal("newClient")}><Icon name="plus" size={14}/> Nuevo cliente</button>
-          <button className="btn primary" onClick={() => openModal("invite")}><Icon name="external-link" size={14}/> Invitar cliente</button>
         </div>
       </div>
 
@@ -93,6 +92,30 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const [tab, setTab] = useState("projects");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+
+  // ── Portal de cliente ──
+  const hasPortal = !!c.email && c.email.includes("@");  // existe acceso si tiene email vinculado por complete_invite
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalLink, setPortalLink] = useState("");
+  const [portalCopied, setPortalCopied] = useState(false);
+  const createPortal = async () => {
+    if (portalBusy) return;
+    setPortalBusy(true);
+    const res = await D.createInvite({ clientId: c.id, service: c.service || "" });
+    if (res && res.token) {
+      setPortalLink(`${window.location.origin}/invite/${res.token}`);
+    } else {
+      toast(res?.error || "Error al generar el portal", "error");
+    }
+    setPortalBusy(false);
+  };
+  const copyPortal = () => {
+    navigator.clipboard.writeText(portalLink).then(() => {
+      setPortalCopied(true);
+      toast("Enlace copiado", "success");
+      setTimeout(() => setPortalCopied(false), 2000);
+    });
+  };
 
   const startEdit = () => {
     setForm({ name: c.name, company: c.company, email: c.email, whatsapp: c.whatsapp, service: c.service, status: c.status });
@@ -260,6 +283,50 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Portal de cliente */}
+      {!editing && (
+        <div className="card" style={{ padding: "16px 20px", marginBottom: 16,
+          display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            background: hasPortal ? "var(--green-soft)" : "var(--bg-elev-2)",
+            color: hasPortal ? "var(--green)" : "var(--text-muted)",
+            border: "0.5px solid var(--border)",
+          }}>
+            <Icon name={hasPortal ? "check" : "external-link"} size={16} strokeWidth={1.7}/>
+          </div>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px" }}>
+              {hasPortal ? "Portal de cliente activo" : "Sin portal de cliente"}
+            </div>
+            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
+              {hasPortal
+                ? `${c.email} tiene acceso al portal.`
+                : "Genera un enlace para que cree su acceso."}
+            </div>
+          </div>
+          {portalLink ? (
+            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+              <input readOnly value={portalLink} onClick={e => e.target.select()}
+                style={{
+                  fontSize: 12, padding: "8px 12px", borderRadius: 8,
+                  background: "var(--bg-elev)", border: "0.5px solid var(--border)",
+                  color: "var(--text-muted)", fontFamily: "var(--font-mono)",
+                  width: 320, maxWidth: "100%",
+                }}/>
+              <button className="btn primary sm" onClick={copyPortal}>
+                {portalCopied ? <Icon name="check" size={12}/> : null} {portalCopied ? "Copiado" : "Copiar enlace"}
+              </button>
+            </div>
+          ) : !hasPortal && (
+            <button className="btn primary" onClick={createPortal} disabled={portalBusy}>
+              <Icon name="external-link" size={13}/> {portalBusy ? "Generando…" : "Crear portal"}
+            </button>
+          )}
         </div>
       )}
 

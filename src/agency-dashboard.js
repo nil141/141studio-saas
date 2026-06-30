@@ -238,7 +238,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   } }), capacityLabel)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, [
     { label: "Nueva tarea", icon: "plus", fn: () => openModal("newTask"), primary: true },
     { label: "Nuevo proyecto", icon: "folder", fn: () => openModal("newProject") },
-    { label: "Invitar cliente", icon: "external-link", fn: () => openModal("invite") },
+    { label: "Nuevo cliente", icon: "users", fn: () => openModal("newClient") },
     { label: "Nueva factura", icon: "receipt", fn: () => navigate("billing") }
   ].map((b) => /* @__PURE__ */ React.createElement(
     "button",

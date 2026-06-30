@@ -701,12 +701,15 @@ const updateSettings = (changes) => {
     updated_at: (/* @__PURE__ */ new Date()).toISOString()
   }).then();
 };
-const createInvite = async (service = "") => {
+const createInvite = async (arg = {}) => {
+  const opts = typeof arg === "string" ? { service: arg } : arg || {};
   const uid = _uid();
   if (!uid) return { error: "Sesi\xF3n no v\xE1lida \u2014 vuelve a iniciar sesi\xF3n" };
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
   const token = [...Array(24)].map(() => chars[Math.floor(Math.random() * chars.length)]).join("");
-  const { error } = await _sb.from("invites").insert({ token, agency_id: uid, service, used: false });
+  const payload = { token, agency_id: uid, service: opts.service || "", used: false };
+  if (opts.clientId) payload.client_id = opts.clientId;
+  const { error } = await _sb.from("invites").insert(payload);
   if (error) {
     console.error("createInvite error:", error);
     return { error: error.message || error.hint || "No se pudo crear la invitaci\xF3n" };

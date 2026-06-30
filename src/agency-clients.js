@@ -7,7 +7,7 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   const clients = D.CLIENTS;
   const COLS = "1.3fr 1.2fr 1.7fr 1fr";
   const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
-  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => openModal("invite") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14 }), " Invitar cliente"))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "grid",
     gridTemplateColumns: COLS,
     gap: 24,
@@ -78,6 +78,28 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const [tab, setTab] = useState("projects");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
+  const hasPortal = !!c.email && c.email.includes("@");
+  const [portalBusy, setPortalBusy] = useState(false);
+  const [portalLink, setPortalLink] = useState("");
+  const [portalCopied, setPortalCopied] = useState(false);
+  const createPortal = async () => {
+    if (portalBusy) return;
+    setPortalBusy(true);
+    const res = await D.createInvite({ clientId: c.id, service: c.service || "" });
+    if (res && res.token) {
+      setPortalLink(`${window.location.origin}/invite/${res.token}`);
+    } else {
+      toast(res?.error || "Error al generar el portal", "error");
+    }
+    setPortalBusy(false);
+  };
+  const copyPortal = () => {
+    navigator.clipboard.writeText(portalLink).then(() => {
+      setPortalCopied(true);
+      toast("Enlace copiado", "success");
+      setTimeout(() => setPortalCopied(false), 2e3);
+    });
+  };
   const startEdit = () => {
     setForm({ name: c.name, company: c.company, email: c.email, whatsapp: c.whatsapp, service: c.service, status: c.status });
     setEditing(true);
@@ -170,7 +192,43 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   }, style: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", border: 0, background: "transparent", color: "var(--text)", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement(Icon, { name: "archive", size: 13 }), " Archivar cliente"), /* @__PURE__ */ React.createElement("div", { style: { height: 1, background: "var(--border)", margin: "4px 0" } }), /* @__PURE__ */ React.createElement("button", { onClick: () => {
     setMenuOpen(false);
     removeClient();
-  }, style: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", border: 0, background: "transparent", color: "var(--red)", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 }), " Eliminar cliente")))))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+  }, style: { display: "flex", alignItems: "center", gap: 8, width: "100%", padding: "7px 10px", border: 0, background: "transparent", color: "var(--red)", fontSize: 13, borderRadius: 6, cursor: "pointer", fontFamily: "inherit" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 }), " Eliminar cliente")))))), !editing && /* @__PURE__ */ React.createElement("div", { className: "card", style: {
+    padding: "16px 20px",
+    marginBottom: 16,
+    display: "flex",
+    alignItems: "center",
+    gap: 14,
+    flexWrap: "wrap"
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    flexShrink: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: hasPortal ? "var(--green-soft)" : "var(--bg-elev-2)",
+    color: hasPortal ? "var(--green)" : "var(--text-muted)",
+    border: "0.5px solid var(--border)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: hasPortal ? "check" : "external-link", size: 16, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 200 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px" } }, hasPortal ? "Portal de cliente activo" : "Sin portal de cliente"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, hasPortal ? `${c.email} tiene acceso al portal.` : "Genera un enlace para que cree su acceso.")), portalLink ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      readOnly: true,
+      value: portalLink,
+      onClick: (e) => e.target.select(),
+      style: {
+        fontSize: 12,
+        padding: "8px 12px",
+        borderRadius: 8,
+        background: "var(--bg-elev)",
+        border: "0.5px solid var(--border)",
+        color: "var(--text-muted)",
+        fontFamily: "var(--font-mono)",
+        width: 320,
+        maxWidth: "100%"
+      }
+    }
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: copyPortal }, portalCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }) : null, " ", portalCopied ? "Copiado" : "Copiar enlace")) : !hasPortal && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: createPortal, disabled: portalBusy }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " ", portalBusy ? "Generando\u2026" : "Crear portal")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
     { id: "projects", label: "Proyectos", count: projects.length },
     { id: "billing", label: "Facturaci\xF3n", count: invoices.length },
     { id: "files", label: "Archivos (Drive)" },
