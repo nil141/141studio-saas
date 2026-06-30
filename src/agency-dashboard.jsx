@@ -255,9 +255,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           borderRadius: 10,
         }}>
           {[
-            { id: "v1", label: "Opción 1" },
-            { id: "v2", label: "Opción 2" },
-            { id: "v3", label: "Opción 3" },
+            { id: "v1", label: "General" },
+            { id: "v2", label: "Financiera" },
+            { id: "v3", label: "Del día" },
+            { id: "v4", label: "Cartera" },
           ].map(opt => (
             <button key={opt.id} onClick={() => pickOpt(opt.id)}
               style={{
@@ -380,218 +381,421 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </>
   );
 
-  // ═══ Opción 2 — Foco del día (resumen ejecutivo) ═════════════════════════
-  const todayTasks = Object.values(D.TASKS).flat().filter(t => {
-    if (!t.deadline || t.column === "done") return false;
-    const d = new Date(t.deadline + "T00:00:00");
-    const today = new Date(); today.setHours(0,0,0,0);
-    return d.getTime() === today.getTime();
-  });
+  // ── Datos derivados para las vistas alternativas ─────────────────────────
+  const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+  const todayStrYMD = `${todayMid.getFullYear()}-${String(todayMid.getMonth()+1).padStart(2,'0')}-${String(todayMid.getDate()).padStart(2,'0')}`;
+
+  // Tareas (hoy + vencidas) ordenadas: vencidas primero
+  const tasksTodayAndOverdue = Object.entries(D.TASKS).flatMap(([pid, list]) =>
+    (list || []).filter(t => {
+      if (!t.deadline || t.column === "done") return false;
+      const d = new Date(t.deadline + "T00:00:00");
+      return d.getTime() <= todayMid.getTime();
+    }).map(t => ({ ...t, projectId: pid }))
+  ).sort((a, b) => (a.deadline || "").localeCompare(b.deadline || ""));
+
+  // Próximas reuniones
+  const upcomingMeetings = upcomingEvents.filter(ev => ev.type === "Reunión");
+
+  // Próximos eventos hoy
   const todayEvents = upcomingEvents.filter(ev => {
     const d = new Date(ev.date); d.setHours(0,0,0,0);
-    const today = new Date(); today.setHours(0,0,0,0);
-    return d.getTime() === today.getTime();
+    return d.getTime() === todayMid.getTime();
   });
 
-  const V2 = (
-    <section style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }}>
-      {/* Columna principal */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        {/* Tarjeta Hoy */}
-        <div style={{ ...APPLE_CARD, padding: "22px 24px" }}>
-          {EYEBROW("Hoy")}
-          <div style={{ marginTop: 6, fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px", fontFamily: "var(--font-display)" }}>
-            {new Date().toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" })}
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14, marginTop: 18 }}>
-            {[
-              { label: "Tareas para hoy", value: todayTasks.length, sub: todayTasks.length ? "pendientes" : "Sin tareas", icon: "list-todo" },
-              { label: "Eventos hoy",     value: todayEvents.length, sub: todayEvents.length ? "en agenda" : "Sin eventos", icon: "calendar" },
-              { label: "Vencidas",        value: overdueTasks, sub: overdueTasks ? "requieren atención" : "Todo al día", icon: "alert-triangle" },
-            ].map((k, i) => (
-              <div key={i} style={{
-                padding: "14px 16px", borderRadius: 12,
-                background: "rgba(255,255,255,0.03)",
-                border: "0.5px solid rgba(255,255,255,0.06)",
-              }}>
-                <Icon name={k.icon} size={14} strokeWidth={1.7} style={{ color: "var(--text-muted)", marginBottom: 10 }}/>
-                <div style={{
-                  fontSize: 26, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)",
-                  fontVariantNumeric: "tabular-nums", lineHeight: 1,
-                }}>{k.value}</div>
-                <div style={{ marginTop: 6, fontSize: 12, color: "var(--text-muted)", fontWeight: 500 }}>{k.label}</div>
-                <div style={{ marginTop: 2, fontSize: 11, color: "var(--text-subtle)" }}>{k.sub}</div>
-              </div>
-            ))}
-          </div>
-        </div>
+  // Facturas pendientes (orden por vencimiento)
+  const pendingInvoicesList = D.INVOICES
+    .filter(i => i.status !== "paid")
+    .map(i => ({ ...i, _due: parseSpanishDate(i.due) || new Date(9999, 0, 1) }))
+    .sort((a, b) => a._due - b._due);
+  const pendingAmount = pendingInvoicesList.reduce((s, i) => s + (i.amount || 0), 0);
 
-        {/* Cronología única */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 320 }}>
+  // Top clientes por facturación pagada
+  const clientRevenue = {};
+  D.INVOICES.filter(i => i.status === "paid").forEach(i => {
+    const k = i.clientId || i.client || "—";
+    clientRevenue[k] = (clientRevenue[k] || 0) + (i.amount || 0);
+  });
+  const topClients = Object.entries(clientRevenue).map(([k, v]) => {
+    const c = D.CLIENTS.find(cl => cl.id === k);
+    return { name: c?.company || k, value: v, color: c?.color || "var(--accent)", id: c?.id, initials: c?.initials };
+  }).sort((a, b) => b.value - a.value).slice(0, 5);
+  const topClientsMax = topClients[0]?.value || 1;
+
+  // Gastos mensuales recurrentes (de la página Gastos)
+  const finData = (() => {
+    try {
+      const d = JSON.parse(localStorage.getItem("141_finance_v1"));
+      return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
+    } catch { return { subs: [], expenses: [] }; }
+  })();
+  const monthlyRecurring = finData.subs.filter(s => s.active).reduce((a, s) =>
+    a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0)), 0);
+  const upcomingRenewals = finData.subs.filter(s => s.active && s.nextRenewal)
+    .map(s => ({ ...s, _d: new Date(s.nextRenewal) }))
+    .filter(s => !isNaN(s._d))
+    .sort((a, b) => a._d - b._d)
+    .slice(0, 4);
+
+  // Cartera: clientes activos, leads, MRR estimado
+  const activeClients = D.CLIENTS.filter(c => c.status === "active" || !c.status).length;
+  const totalLeads = (D.LEADS || []).filter(l => l.stage !== "lost" && l.stage !== "won").length;
+  const mrrEstimated = D.CLIENTS.reduce((a, c) => a + (Number(c.mrr) || 0), 0);
+
+  // Leads por etapa (pipeline)
+  const leadsByStage = (window.Data.LEAD_STAGES || []).filter(s => s.id !== "lost").map(s => ({
+    stage: s, items: (D.LEADS || []).filter(l => l.stage === s.id),
+  }));
+
+  // Formato €
+  const fmtEur = (n) => "€" + Math.round(n || 0).toLocaleString("es-ES");
+  const fmtEurC = (n) => "€" + ((n || 0) / 100).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+  // KPI tile compartido (estilo Apple)
+  const renderKpiTile = (k, i) => (
+    <div key={i} style={{ ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 9,
+          background: "rgba(158,154,229,0.12)",
+          border: "0.5px solid rgba(158,154,229,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--accent)",
+        }}>
+          <Icon name={k.icon} size={15} strokeWidth={1.7}/>
+        </div>
+      </div>
+      <div>
+        <div style={{
+          fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 28,
+          fontWeight: 400, lineHeight: 1, letterSpacing: "-1.1px",
+          fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
+          color: "var(--text)",
+        }}>{k.value}</div>
+        <div style={{
+          marginTop: 8, fontSize: 12, color: "var(--text-muted)",
+          fontWeight: 500, letterSpacing: "-0.3px",
+        }}>{k.label}</div>
+        <div style={{
+          marginTop: 3, fontSize: 11, color: "var(--text-subtle)", letterSpacing: "-0.2px",
+        }}>{k.sub}</div>
+      </div>
+    </div>
+  );
+
+  // ═══ Opción 2 — Vista financiera ═════════════════════════════════════════
+  const finKpis = [
+    { label: "Cobrado este mes", icon: "receipt",
+      value: stripeMonth === null ? "…" : stripeMonth === false ? "—" : fmtEurC(stripeMonth),
+      sub: stripeMonth === null ? "Conectando…" : new Date().toLocaleString("es-ES", { month: "long" }) },
+    { label: "Por cobrar", icon: "clock", value: fmtEur(pendingAmount),
+      sub: `${pendingInvoicesList.length} ${pendingInvoicesList.length === 1 ? "factura" : "facturas"} pendientes` },
+    { label: "Gasto recurrente", icon: "refresh-cw", value: fmtEur(monthlyRecurring),
+      sub: monthlyRecurring ? "al mes (suscripciones)" : "Sin suscripciones" },
+    { label: "Facturas vencidas", icon: "alert-triangle",
+      value: pendingInvoicesList.filter(i => i._due < todayMid).length,
+      sub: "requieren cobro" },
+  ];
+
+  const V2 = (
+    <>
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+        {finKpis.map(renderKpiTile)}
+      </section>
+
+      <section style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+        {/* Facturas pendientes */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
             padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
             <div>
-              {EYEBROW("Próximos días")}
-              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Cronología</div>
+              {EYEBROW("Por cobrar")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Facturas pendientes</div>
             </div>
-            <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+            <button onClick={() => navigate("billing")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
           </div>
           <div style={{ flex: 1, overflowY: "auto" }}>
-            {upcomingEvents.length === 0 ? (
+            {pendingInvoicesList.length === 0 ? (
               <div style={{ padding: 40, textAlign: "center" }}>
-                <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
+                <Empty icon="check" title="Sin facturas pendientes" sub="Todo cobrado."/>
               </div>
-            ) : upcomingEvents.map((ev, i) => (
-              <EventRow key={i} ev={ev} last={i === upcomingEvents.length - 1} formatEventDate={formatEventDate}/>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Sidebar de estado */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <div style={{ ...APPLE_CARD, padding: "18px 22px" }}>
-          {EYEBROW("Estado")}
-          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 14 }}>Pulso de la agencia</div>
-          {kpis.map((k, i) => (
-            <div key={i} style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              padding: "12px 0", borderBottom: i < kpis.length - 1 ? "0.5px solid rgba(255,255,255,0.05)" : "none",
-            }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-                <Icon name={k.icon} size={14} strokeWidth={1.7} style={{ color: "var(--text-muted)", flexShrink: 0 }}/>
-                <div style={{ minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" }}>{k.label}</div>
-                  <div style={{ fontSize: 11, color: "var(--text-subtle)" }}>{k.sub}</div>
-                </div>
-              </div>
-              <div style={{
-                fontSize: 18, fontWeight: 400, letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
-                fontVariantNumeric: "tabular-nums", flexShrink: 0, paddingLeft: 12,
-              }}>{k.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ ...APPLE_CARD, padding: "18px 22px" }}>
-          {EYEBROW("Proyectos")}
-          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 12 }}>Activos</div>
-          {D.PROJECTS.length === 0 ? (
-            <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
-              Sin proyectos. <button onClick={() => openModal("newProject")}
-                style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
-                  fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
-            </div>
-          ) : D.PROJECTS.slice(0, 5).map(p => {
-            const pTasks = D.TASKS[p.id] || [];
-            const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
-            return (
-              <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
-                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
-                  cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
-                }}>
-                <span className={"dot " + p.light}/>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
-                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums" }}>{live}%</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </section>
-  );
-
-  // ═══ Opción 3 — Minimalista (stats inline + 3 columnas) ══════════════════
-  const V3 = (
-    <>
-      {/* Tira de stats inline (sin tiles) */}
-      <div style={{
-        display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px",
-        ...APPLE_CARD,
-      }}>
-        {kpis.map((k, i) => (
-          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
-            <div style={{ fontSize: 11, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 500 }}>
-              {k.label}
-            </div>
-            <div style={{
-              fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 26,
-              fontWeight: 400, letterSpacing: "-0.9px", fontFamily: "var(--font-display)",
-              fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
-            }}>{k.value}</div>
-            <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{k.sub}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* 3 columnas: Agenda | Colas | Proyectos activos */}
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, marginTop: 16 }}>
-        {/* Agenda */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
-          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
-            {EYEBROW("Próximamente")}
-            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Agenda</div>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {upcomingEvents.length === 0 ? (
-              <div style={{ padding: 32, textAlign: "center" }}>
-                <Empty icon="check" title="Sin eventos" sub=""/>
-              </div>
-            ) : upcomingEvents.slice(0, 6).map((ev, i) => (
-              <EventRow key={i} ev={ev} last={i === Math.min(5, upcomingEvents.length - 1)} formatEventDate={formatEventDate}/>
-            ))}
-          </div>
-        </div>
-
-        {/* Colas */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
-          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
-            {EYEBROW("Pendiente")}
-            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Colas</div>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto" }}>
-            {queues.map((q, i) => <QueueRow key={i} q={q}/>)}
-          </div>
-        </div>
-
-        {/* Proyectos */}
-        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 380 }}>
-          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
-            {EYEBROW("En curso")}
-            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Proyectos</div>
-          </div>
-          <div style={{ flex: 1, overflowY: "auto", padding: "14px 22px" }}>
-            {D.PROJECTS.length === 0 ? (
-              <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
-                Sin proyectos. <button onClick={() => openModal("newProject")}
-                  style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
-                    fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
-              </div>
-            ) : D.PROJECTS.slice(0, 6).map(p => {
-              const pTasks = D.TASKS[p.id] || [];
-              const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
+            ) : pendingInvoicesList.slice(0, 8).map((inv, i) => {
+              const isOverdue = inv._due < todayMid;
               return (
-                <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
-                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                <div key={inv.id} onClick={() => navigate("billing")}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                   style={{
-                    display: "flex", alignItems: "center", gap: 10, padding: "8px 8px",
-                    cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
+                    display: "flex", alignItems: "center", gap: 14, padding: "14px 22px",
+                    cursor: "pointer", transition: "background .1s",
+                    borderBottom: i < Math.min(7, pendingInvoicesList.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none",
                   }}>
-                  <span className={"dot " + p.light}/>
-                  <span style={{ flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
-                    overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
-                  <div style={{ width: 60, display: "flex", alignItems: "center", gap: 6 }}>
-                    <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right" }}>{live}%</span>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+                    background: isOverdue ? "var(--red-soft)" : "rgba(255,255,255,0.04)",
+                    border: "0.5px solid " + (isOverdue ? "rgba(220,91,93,0.25)" : "rgba(255,255,255,0.06)"),
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: isOverdue ? "var(--red)" : "var(--text-muted)",
+                  }}>
+                    <Icon name="receipt" size={15} strokeWidth={1.7}/>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{inv.client}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2 }}>
+                      {inv.id} · {isOverdue ? <span style={{ color: "var(--red)" }}>Vencida</span> : "Vence " + (inv.due || "—")}
+                    </div>
+                  </div>
+                  <div style={{
+                    fontSize: 16, fontWeight: 500, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.3px",
+                    color: isOverdue ? "var(--red)" : "var(--text)",
+                  }}>€{(inv.amount || 0).toLocaleString("es-ES")}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Top clientes */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{ padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            {EYEBROW("Top clientes")}
+            <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Por facturación</div>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 22px" }}>
+            {topClients.length === 0 ? (
+              <div style={{ padding: 30, textAlign: "center" }}>
+                <Empty icon="users" title="Sin facturación" sub="Aún no hay facturas pagadas."/>
+              </div>
+            ) : topClients.map((c, i) => (
+              <div key={i} onClick={() => c.id && navigate("clientDetail", { clientId: c.id })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{ padding: "12px 8px", cursor: "pointer", borderRadius: 8, transition: "background .1s",
+                  marginInline: -8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: 99, background: c.color, flexShrink: 0 }}/>
+                    <span style={{ fontSize: 13, fontWeight: 500, letterSpacing: "-0.2px",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                  </div>
+                  <span style={{ fontSize: 12.5, fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>
+                    €{c.value.toLocaleString("es-ES")}
+                  </span>
+                </div>
+                <div style={{ height: 4, borderRadius: 99, background: "rgba(255,255,255,0.04)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${(c.value / topClientsMax) * 100}%`,
+                    background: c.color, borderRadius: 99 }}/>
+                </div>
+              </div>
+            ))}
+
+            {upcomingRenewals.length > 0 && (
+              <div style={{ marginTop: 16, paddingTop: 14, borderTop: "0.5px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ ...APPLE_SECTION, marginBottom: 10 }}>Próximas renovaciones</div>
+                {upcomingRenewals.map((s, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+                    padding: "6px 0", fontSize: 12.5 }}>
+                    <span style={{ color: "var(--text)", letterSpacing: "-0.2px" }}>{s.name}</span>
+                    <span style={{ color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>
+                      €{(Number(s.amount) || 0).toLocaleString("es-ES")}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
+  // ═══ Opción 3 — Vista del día ════════════════════════════════════════════
+  const todayKpis = [
+    { label: "Tareas para hoy", icon: "list-todo",
+      value: tasksTodayAndOverdue.filter(t => t.deadline === todayStrYMD).length,
+      sub: "incluyendo vencidas" },
+    { label: "Tareas vencidas", icon: "alert-triangle", value: overdueTasks,
+      sub: overdueTasks ? "requieren atención" : "Todo al día" },
+    { label: "Eventos hoy", icon: "calendar", value: todayEvents.length,
+      sub: todayEvents.length ? "en agenda" : "Sin eventos" },
+    { label: "Proyectos en riesgo", icon: "flag", value: atRisk,
+      sub: atRisk ? "semáforo rojo" : "Todo en orden" },
+  ];
+
+  const V3 = (
+    <>
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+        {todayKpis.map(renderKpiTile)}
+      </section>
+
+      <section style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+        {/* Mis tareas (hoy + vencidas) */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              {EYEBROW("Para mí")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Tareas de hoy</div>
+            </div>
+            <button onClick={() => navigate("tasks")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {tasksTodayAndOverdue.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center" }}>
+                <Empty icon="check" title="Día limpio" sub="No hay tareas para hoy."/>
+              </div>
+            ) : tasksTodayAndOverdue.slice(0, 9).map((t, i) => {
+              const overdue = t.deadline < todayStrYMD;
+              const project = t.projectId !== "__none__" ? D.PROJECTS.find(p => p.id === t.projectId) : null;
+              return (
+                <div key={t.id} onClick={() => navigate(project ? "project" : "tasks", project ? { projectId: project.id } : {})}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 22px",
+                    cursor: "pointer", transition: "background .1s",
+                    borderBottom: i < Math.min(8, tasksTodayAndOverdue.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none" }}>
+                  <div style={{
+                    width: 18, height: 18, borderRadius: "50%", flexShrink: 0,
+                    border: `1.5px solid ${overdue ? "var(--red)" : "var(--border-strong)"}`,
+                    background: "transparent",
+                  }}/>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+                    <div style={{ fontSize: 11.5, color: overdue ? "var(--red)" : "var(--text-subtle)", marginTop: 2 }}>
+                      {project ? project.name + " · " : ""}{overdue ? "Vencida" : "Hoy"}
+                    </div>
                   </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Próximas reuniones */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              {EYEBROW("Calendario")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Próximas reuniones</div>
+            </div>
+            <button onClick={() => navigate("agenda")} style={LINK_BTN}>Agenda <Icon name="arrow" size={12}/></button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {upcomingMeetings.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center" }}>
+                <Empty icon="users" title="Sin reuniones" sub="No tienes reuniones próximas."/>
+              </div>
+            ) : upcomingMeetings.map((ev, i) => (
+              <EventRow key={i} ev={ev} last={i === upcomingMeetings.length - 1} formatEventDate={formatEventDate}/>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+
+  // ═══ Opción 4 — Vista de cartera ═════════════════════════════════════════
+  const carteraKpis = [
+    { label: "Clientes activos", icon: "users", value: activeClients,
+      sub: D.CLIENTS.length + " en total" },
+    { label: "Proyectos en curso", icon: "folder", value: activeProjects, sub: capacityLabel },
+    { label: "Leads abiertos", icon: "flag", value: totalLeads,
+      sub: totalLeads ? "en pipeline" : "Sin actividad" },
+    { label: "MRR estimado", icon: "receipt", value: mrrEstimated ? fmtEur(mrrEstimated) : "—",
+      sub: mrrEstimated ? "mensual recurrente" : "Sin MRR" },
+  ];
+
+  const V4 = (
+    <>
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14 }}>
+        {carteraKpis.map(renderKpiTile)}
+      </section>
+
+      <section style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16 }}>
+        {/* Cartera de clientes */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              {EYEBROW("Cartera")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Clientes activos</div>
+            </div>
+            <button onClick={() => navigate("clients")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto" }}>
+            {D.CLIENTS.length === 0 ? (
+              <div style={{ padding: 40, textAlign: "center" }}>
+                <Empty icon="users" title="Sin clientes" sub="Añade tu primer cliente."/>
+              </div>
+            ) : D.CLIENTS.slice(0, 8).map((c, i) => {
+              const projs = D.PROJECTS.filter(p => p.clientId === c.id);
+              const anyRisk = projs.some(p => p.light === "red");
+              return (
+                <div key={c.id} onClick={() => navigate("clientDetail", { clientId: c.id })}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ display: "flex", alignItems: "center", gap: 14, padding: "13px 22px",
+                    cursor: "pointer", transition: "background .1s",
+                    borderBottom: i < Math.min(7, D.CLIENTS.length - 1) ? "0.5px solid rgba(255,255,255,0.04)" : "none" }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                    background: (c.color || "var(--accent)") + "22",
+                    border: "0.5px solid " + (c.color || "var(--accent)") + "33",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: c.color || "var(--accent)",
+                    fontSize: 12, fontWeight: 600, letterSpacing: "-0.02em",
+                  }}>{c.initials || (c.company || "?").slice(0,2).toUpperCase()}</div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.company}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 }}>
+                      {projs.length} {projs.length === 1 ? "proyecto" : "proyectos"}
+                      {c.service && c.service !== "—" ? " · " + c.service : ""}
+                    </div>
+                  </div>
+                  <span style={{
+                    width: 8, height: 8, borderRadius: 99,
+                    background: anyRisk ? "var(--red)" : projs.length ? "var(--green)" : "var(--text-subtle)",
+                    flexShrink: 0,
+                  }}/>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Pipeline de leads */}
+        <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+            <div>
+              {EYEBROW("Pipeline")}
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Leads por etapa</div>
+            </div>
+            <button onClick={() => navigate("clients")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+          </div>
+          <div style={{ flex: 1, overflowY: "auto", padding: "10px 22px" }}>
+            {leadsByStage.length === 0 || (D.LEADS || []).length === 0 ? (
+              <div style={{ padding: 30, textAlign: "center" }}>
+                <Empty icon="flag" title="Sin leads" sub="El pipeline está vacío."/>
+              </div>
+            ) : leadsByStage.map((g, i) => (
+              <div key={i} style={{ padding: "10px 0",
+                borderBottom: i < leadsByStage.length - 1 ? "0.5px solid rgba(255,255,255,0.04)" : "none" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                  <span style={{ fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{g.stage.label}</span>
+                  <span style={{ fontSize: 14, fontVariantNumeric: "tabular-nums", color: "var(--text)",
+                    fontFamily: "var(--font-display)" }}>{g.items.length}</span>
+                </div>
+                <div style={{ marginTop: 6, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.04)", overflow: "hidden" }}>
+                  <div style={{ height: "100%", width: `${Math.min(100, g.items.length * 20)}%`,
+                    background: "var(--accent)", borderRadius: 99 }}/>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -608,6 +812,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       {dashOpt === "v1" && V1}
       {dashOpt === "v2" && V2}
       {dashOpt === "v3" && V3}
+      {dashOpt === "v4" && V4}
     </div>
   );
 };
