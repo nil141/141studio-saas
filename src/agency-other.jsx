@@ -172,30 +172,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const [weekOffset, setWeekOffset] = useState(initWeekOffset);
   const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : new Date());
 
-  // Sliding pill for day selector
-  const daysContainerRef = useRef(null);
-  const dayItemRefs      = useRef({});
-  const [dayPill, setDayPill] = useState(null);
-  const firstDayPill     = useRef(true);
   const [taskModal,      setTaskModal]      = useState(null); // { task, pid }
   const [hideCompleted,  setHideCompleted]  = useState(false);
   const [optionsOpen,    setOptionsOpen]    = useState(false);
-
-  useEffect(() => {
-    const key = new Date(selectedDay).toDateString();
-    const el  = dayItemRefs.current[key];
-    const container = daysContainerRef.current;
-    if (!el || !container) return;
-    const eR = el.getBoundingClientRect();
-    const cR = container.getBoundingClientRect();
-    const top = eR.top - cR.top + container.scrollTop;
-    if (firstDayPill.current) {
-      firstDayPill.current = false;
-      setDayPill({ top, height: eR.height, animated: false });
-    } else {
-      setDayPill({ top, height: eR.height, animated: true });
-    }
-  }, [selectedDay]);
 
   const DAY_ES  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
   const MON_ES  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -309,245 +288,96 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   })();
 
   return (
-    <div style={{ display:"flex", height:"100vh", overflow:"hidden" }}>
+    <div className="page" onClick={() => setOptionsOpen(false)}>
 
-      {/* ── Left: week selector ───────────────────── */}
-      <div className="tasks-left" style={{
-        width:260, flexShrink:0,
-        borderRight:"0.5px solid var(--border)",
-        display:"flex", flexDirection:"column",
-        justifyContent:"flex-start",
-        padding:"20px 16px 20px 20px",
-        overflow:"hidden",
-      }}>
-        {/* Month nav — FIRST, large centered */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16 }}>
-          <button onClick={() => setWeekOffset(o => o-1)}
-            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"6px 8px", borderRadius:8, display:"flex", alignItems:"center" }}>
-            <Icon name="chevron-left" size={16}/>
-          </button>
-          <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1px", color:"var(--text)" }}>
-            {MON_ES[weekDays[3].getMonth()]}
-          </span>
-          <button onClick={() => setWeekOffset(o => o+1)}
-            style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"6px 8px", borderRadius:8, display:"flex", alignItems:"center" }}>
-            <Icon name="chevron-right" size={16}/>
-          </button>
-        </div>
-
-        {/* Progress — below month nav, in a card */}
-        <div style={{ background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border)", borderRadius:12, padding:"12px 14px", marginBottom:14 }}>
-          <div style={{ display:"flex", justifyContent:"space-between", fontSize:11, color:"var(--text-subtle)", marginBottom:8, letterSpacing:"0.05em", textTransform:"uppercase", fontWeight:500 }}>
-            <span>Daily Progress</span>
-            <span style={{ fontWeight:600, color:"var(--text-muted)" }}>{donePct}%</span>
-          </div>
-          <div style={{ height:3, background:"var(--border)", borderRadius:99 }}>
-            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
+      {/* Header — title + ActionPill (igual que el resto de páginas) */}
+      <div className="page-head">
+        <div>
+          <h1>Tareas</h1>
+          <div className="sub">
+            {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
           </div>
         </div>
-
-        {/* Day rows — current week + next weeks dimmed to fill space */}
-        {(() => {
-          const nextDays = Array.from({ length: 7 }, (_, i) => {
-            const d = new Date(weekDays[6]); d.setDate(weekDays[6].getDate() + 1 + i); return d;
-          });
-          const allDays = weekDays.map(d => ({ d, dimmed: false }))
-            .concat(nextDays.map(d => ({ d, dimmed: true })));
-          return (
-            <div ref={daysContainerRef} style={{ position:"relative", display:"flex", flexDirection:"column", gap:6 }}>
-              {/* Sliding pill — sits behind the day boxes */}
-              {dayPill && (
-                <div style={{
-                  position:"absolute", left:0, right:0,
-                  top: dayPill.top, height: dayPill.height,
-                  background:"rgba(158,154,229,0.18)",
-                  borderRadius:10, pointerEvents:"none", zIndex:0,
-                  transition: dayPill.animated ? "top 0.22s cubic-bezier(0.4,0,0.2,1)" : "none",
-                }}/>
-              )}
-              {allDays.map(({ d, dimmed }) => {
-                const dMid = new Date(d); dMid.setHours(0,0,0,0);
-                const isToday = dMid.getTime() === todayMid.getTime();
-                const isSel   = dMid.getTime() === selMid.getTime();
-                const dayTasks = allTasks.filter(t => {
-                  if (!t.deadline) return false;
-                  const td = new Date(t.deadline + "T00:00:00"); td.setHours(0,0,0,0);
-                  return td.getTime() === dMid.getTime();
-                });
-                return (
-                  <div
-                    key={d.toISOString()}
-                    ref={el => { dayItemRefs.current[d.toDateString()] = el; }}
-                    onClick={() => setSelectedDay(new Date(d))}
-                    style={{
-                      position:"relative", zIndex:1,
-                      display:"flex", alignItems:"center", gap:12,
-                      padding:"7px 12px", borderRadius:10, cursor:"pointer",
-                      background: isSel ? "transparent" : "rgba(255,255,255,0.035)",
-                      border: isSel ? "none" : "0.5px solid var(--border)",
-                      opacity: dimmed ? 0.38 : 1,
-                      transition: "opacity .15s",
-                    }}>
-                    {/* Day name */}
-                    <span style={{ fontSize:13, width:28, letterSpacing:"-0.2px", flexShrink:0,
-                      color: isSel ? "var(--accent)" : "var(--text-subtle)", fontWeight: isSel ? 500 : 400 }}>
-                      {DAY_ES[d.getDay()]}
-                    </span>
-                    {/* Day number */}
-                    <span style={{ fontSize:20, fontWeight:400, letterSpacing:"-0.5px", flex:1,
-                      color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)" }}>
-                      {d.getDate()}
-                    </span>
-                    {/* Today dot */}
-                    {isToday && (
-                      <span style={{ width:5, height:5, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })()}
-
+        <ActionPill
+          plusActions={() => openModal("newTask", { date: selDateStr })}
+          moreActions={[
+            { icon: hideCompleted ? "eye" : "eye-off",
+              label: hideCompleted ? "Mostrar completadas" : "Ocultar completadas",
+              onClick: () => setHideCompleted(h => !h) },
+          ]}
+        />
       </div>
 
-      {/* ── Right: tasks grouped by client ───────── */}
-      <div style={{ flex:1, overflowY:"auto", padding:"28px 32px" }} className="tasks-right" onClick={() => setOptionsOpen(false)}>
+      {/* Tira horizontal: navegación de mes + días + progreso */}
+      <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28 }}>
+        {/* Month nav */}
+        <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
+          <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
+            <Icon name="chevron-left" size={18}/>
+          </button>
+          <span style={{ flex:1, textAlign:"center", fontSize:20, fontWeight:400, letterSpacing:"-0.8px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
+          <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
+            <Icon name="chevron-right" size={18}/>
+          </button>
+        </div>
 
-        {/* Mobile-only: month nav + day strip + progress */}
-        <div className="tasks-mobile-header">
-          {/* Month nav */}
-          <div style={{ display:"flex", alignItems:"center", marginBottom:14 }}>
-            <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-              <Icon name="chevron-left" size={18}/>
-            </button>
-            <span style={{ flex:1, textAlign:"center", fontSize:24, fontWeight:400, letterSpacing:"-1px" }}>{MON_ES[weekDays[3].getMonth()]}</span>
-            <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-              <Icon name="chevron-right" size={18}/>
-            </button>
-          </div>
-          {/* Day strip — flex:1 so all 7 fit without scroll */}
-          <div style={{ display:"flex", gap:4 }}>
-            {weekDays.map(d => {
-              const dMid = new Date(d); dMid.setHours(0,0,0,0);
-              const isSel = dMid.getTime() === selMid.getTime();
-              const isToday = dMid.getTime() === todayMid.getTime();
-              return (
-                <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                  flex:1, background:"transparent", border:"none", cursor:"pointer",
-                  display:"flex", flexDirection:"column", alignItems:"center", gap:6, padding:"4px 0",
+        {/* Day strip — 7 días, formato móvil */}
+        <div style={{ display:"flex", gap:6 }}>
+          {weekDays.map(d => {
+            const dMid = new Date(d); dMid.setHours(0,0,0,0);
+            const isSel = dMid.getTime() === selMid.getTime();
+            const isToday = dMid.getTime() === todayMid.getTime();
+            return (
+              <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
+                flex:1, background:"transparent", border:"none", cursor:"pointer",
+                display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"6px 0",
+              }}>
+                <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.02em" }}>
+                  {["D","L","M","X","J","V","S"][d.getDay()]}
+                </span>
+                <div style={{
+                  width:36, height:36, borderRadius:"50%",
+                  border: isSel ? "1.5px solid var(--accent)" : isToday ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
+                  background: isSel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  transition:"all .15s",
                 }}>
-                  <span style={{ fontSize:11, fontWeight:500, color: isSel ? "var(--accent)" : "var(--text-subtle)", letterSpacing:"0.02em" }}>
-                    {["D","L","M","X","J","V","S"][d.getDay()]}
+                  <span style={{ fontSize:15, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.4px" }}>
+                    {d.getDate()}
                   </span>
-                  <div style={{
-                    width:34, height:34, borderRadius:"50%",
-                    border: isSel ? "1.5px solid var(--accent)" : isToday ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(255,255,255,0.1)",
-                    background: isSel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
-                    display:"flex", alignItems:"center", justifyContent:"center",
-                  }}>
-                    <span style={{ fontSize:15, fontWeight: isSel || isToday ? 500 : 400, color: isSel ? "#c8c5f2" : isToday ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.4px" }}>
-                      {d.getDate()}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-          {/* Progress */}
-          <div style={{ display:"flex", alignItems:"center", gap:10, margin:"14px 0 0", paddingBottom:14 }}>
-            <div style={{ flex:1, height:2, background:"var(--border)", borderRadius:99 }}>
-              <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
-            </div>
-            <span style={{ fontSize:13, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
-          </div>
+                </div>
+              </button>
+            );
+          })}
         </div>
 
-        {/* Desktop header */}
-        <div className="tasks-desktop-header" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:28, paddingBottom:20, borderBottom:"0.5px solid var(--border)" }}>
-          <div>
-            <h1 style={{ margin:0, fontSize:22, fontWeight:400, letterSpacing:"-0.96px" }}>Tareas</h1>
-            <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:4, letterSpacing:"-0.5px" }}>
-              {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
-            </div>
+        {/* Daily progress */}
+        <div style={{ display:"flex", alignItems:"center", gap:12, marginTop:18 }}>
+          <span style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.05em", textTransform:"uppercase", fontWeight:500, flexShrink:0 }}>
+            Daily Progress
+          </span>
+          <div style={{ flex:1, height:2, background:"var(--border)", borderRadius:99 }}>
+            <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
           </div>
-          <div style={{ position:"relative" }}>
-            <div style={{
-              display:"flex", alignItems:"center", gap:2, padding:"3px 4px",
-              background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
-              borderRadius:99,
-            }}>
-              {[
-                { icon:"plus",    onClick: () => openModal("newTask", { date: selDateStr }) },
-                { icon:"more-h",  onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-              ].map((btn) => (
-                <button key={btn.icon} onClick={btn.onClick} style={{
-                  width:34, height:34, borderRadius:"50%",
-                  background:"transparent", border:"none",
-                  cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
-                  color:"var(--text-muted)", transition:"background .12s", flexShrink:0,
-                }}
-                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
-                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
-                >
-                  <Icon name={btn.icon} size={15}/>
-                </button>
-              ))}
-            </div>
-            {optionsOpen && (
-              <div style={{
-                position:"absolute", top:44, right:0, zIndex:50,
-                background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.1)",
-                borderRadius:14, padding:"8px 0", minWidth:210,
-                boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
-              }} onClick={e => e.stopPropagation()}>
-                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 16px", cursor:"pointer" }}
-                  onClick={() => setHideCompleted(h => !h)}>
-                  <span style={{ fontSize:13, color:"var(--text)", letterSpacing:"-0.5px" }}>Ocultar completadas</span>
-                  <div style={{
-                    width:36, height:20, borderRadius:99, position:"relative",
-                    background: hideCompleted ? "var(--accent)" : "rgba(255,255,255,0.12)",
-                    transition:"background .2s", flexShrink:0,
-                  }}>
-                    <div style={{
-                      position:"absolute", top:2, left: hideCompleted ? 18 : 2,
-                      width:16, height:16, borderRadius:"50%", background:"white",
-                      transition:"left .2s",
-                    }}/>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
+          <span style={{ fontSize:12, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
         </div>
+      </div>
 
-        {groups.length === 0 && (
-          <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-            Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
+      {groups.length === 0 && (
+        <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+          Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
+        </div>
+      )}
+
+      {groups.map((group, gIdx) => (
+        <div key={group.clientId} style={{ marginBottom:32 }}>
+          {/* Client header */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+            <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
+            <span style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e" }}>
+              {group.clientName}
+            </span>
           </div>
-        )}
-
-        {groups.map((group, gIdx) => (
-          <div key={group.clientId} style={{ marginBottom:32 }}>
-            {/* Client header */}
-            <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-              <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
-              <span style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e" }}>
-                {group.clientName}
-              </span>
-              {gIdx === 0 && (
-                <div className="mobile-pill-inline" style={{ marginLeft:"auto", display:"flex", alignItems:"center", gap:2, padding:"3px 4px", background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
-                  {[
-                    { icon:"plus",   onClick: () => openModal("newTask", { date: selDateStr }) },
-                    { icon:"more-h", onClick: (e) => { e.stopPropagation(); setOptionsOpen(o => !o); } },
-                  ].map(btn => (
-                    <button key={btn.icon} onClick={btn.onClick} style={{ width:30, height:26, borderRadius:"50%", background:"transparent", border:"none", cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", color:"var(--text-muted)" }}>
-                      <Icon name={btn.icon} size={13}/>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
 
             {/* Task rows — no individual cards, flat rows with divider */}
             {group.projects.map(({ project, tasks }) => tasks.filter(t => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
@@ -604,10 +434,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
               );
             }))}
 
-            <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
-          </div>
-        ))}
-      </div>
+          <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
+        </div>
+      ))}
 
       {taskModal && (
         <TaskProgressModal
