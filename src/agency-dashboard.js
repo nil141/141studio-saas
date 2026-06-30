@@ -210,13 +210,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     maxWidth: 1440,
     margin: "0 auto"
   } }, /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: {
-    fontSize: 44,
-    fontWeight: 600,
-    letterSpacing: "-1.6px",
+    fontSize: 36,
+    fontWeight: 400,
+    letterSpacing: "-1.2px",
     lineHeight: 1.05,
     margin: 0,
-    fontFamily: "var(--font-display)"
-  } }, greeting, ", ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, adminName), "."), /* @__PURE__ */ React.createElement("div", { style: {
+    fontFamily: "var(--font-display)",
+    color: "var(--text)"
+  } }, greeting, ", ", adminName, "."), /* @__PURE__ */ React.createElement("div", { style: {
     marginTop: 10,
     fontSize: 15,
     color: "var(--text-muted)",
@@ -284,22 +285,22 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     justifyContent: "center",
     color: "var(--accent)"
   } }, /* @__PURE__ */ React.createElement(Icon, { name: k.icon, size: 15, strokeWidth: 1.7 }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: {
-    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 26 : 34,
-    fontWeight: 600,
+    fontSize: typeof k.value === "string" && k.value.startsWith("\u20AC") ? 22 : 28,
+    fontWeight: 400,
     lineHeight: 1,
-    letterSpacing: "-1.4px",
+    letterSpacing: "-1.1px",
     fontVariantNumeric: "tabular-nums",
     fontFamily: "var(--font-display)",
     color: "var(--text)"
   } }, k.value), /* @__PURE__ */ React.createElement("div", { style: {
     marginTop: 8,
-    fontSize: 12.5,
-    color: "var(--text)",
+    fontSize: 12,
+    color: "var(--text-muted)",
     fontWeight: 500,
     letterSpacing: "-0.3px"
   } }, k.label), /* @__PURE__ */ React.createElement("div", { style: {
     marginTop: 3,
-    fontSize: 11.5,
+    fontSize: 11,
     color: "var(--text-subtle)",
     letterSpacing: "-0.2px"
   } }, k.sub))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }, className: "dash-bottom" }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: {
@@ -308,7 +309,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     justifyContent: "space-between",
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" } }, "Agenda")), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Agenda")), /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => navigate("agenda"),
@@ -384,7 +385,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     justifyContent: "space-between",
     padding: "18px 22px 14px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, "Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => navigate("projects"),
@@ -437,11 +438,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       color: "var(--text-muted)"
     } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" } }, q.label)),
     /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 20,
-      fontWeight: 600,
+      fontSize: 17,
+      fontWeight: 400,
       fontVariantNumeric: "tabular-nums",
       color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
-      letterSpacing: "-0.6px",
+      letterSpacing: "-0.5px",
       fontFamily: "var(--font-display)"
     } }, q.count)
   )), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(

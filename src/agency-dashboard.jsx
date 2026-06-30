@@ -225,9 +225,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
           <div>
             <h1 style={{
-              fontSize: 44, fontWeight: 600, letterSpacing: "-1.6px", lineHeight: 1.05,
-              margin: 0, fontFamily: "var(--font-display)",
-            }}>{greeting}, <span style={{ color: "var(--accent)" }}>{adminName}</span>.</h1>
+              fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
+              margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
+            }}>{greeting}, {adminName}.</h1>
             <div style={{
               marginTop: 10, fontSize: 15, color: "var(--text-muted)",
               letterSpacing: "-0.3px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
@@ -293,17 +293,17 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             </div>
             <div>
               <div style={{
-                fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 26 : 34,
-                fontWeight: 600, lineHeight: 1, letterSpacing: "-1.4px",
+                fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 28,
+                fontWeight: 400, lineHeight: 1, letterSpacing: "-1.1px",
                 fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
                 color: "var(--text)",
               }}>{k.value}</div>
               <div style={{
-                marginTop: 8, fontSize: 12.5, color: "var(--text)",
+                marginTop: 8, fontSize: 12, color: "var(--text-muted)",
                 fontWeight: 500, letterSpacing: "-0.3px",
               }}>{k.label}</div>
               <div style={{
-                marginTop: 3, fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.2px",
+                marginTop: 3, fontSize: 11, color: "var(--text-subtle)", letterSpacing: "-0.2px",
               }}>{k.sub}</div>
             </div>
           </div>
@@ -321,7 +321,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           }}>
             <div>
               <div style={APPLE_SECTION}>Próximamente</div>
-              <div style={{ marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" }}>
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>
                 Agenda
               </div>
             </div>
@@ -385,7 +385,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           }}>
             <div>
               <div style={APPLE_SECTION}>Pendiente</div>
-              <div style={{ marginTop: 4, fontSize: 17, fontWeight: 600, letterSpacing: "-0.6px", color: "var(--text)" }}>
+              <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)" }}>
                 Colas de trabajo
               </div>
             </div>
@@ -421,9 +421,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                   <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" }}>{q.label}</span>
                 </div>
                 <span style={{
-                  fontSize: 20, fontWeight: 600, fontVariantNumeric: "tabular-nums",
+                  fontSize: 17, fontWeight: 400, fontVariantNumeric: "tabular-nums",
                   color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
-                  letterSpacing: "-0.6px", fontFamily: "var(--font-display)",
+                  letterSpacing: "-0.5px", fontFamily: "var(--font-display)",
                 }}>{q.count}</span>
               </div>
             ))}
