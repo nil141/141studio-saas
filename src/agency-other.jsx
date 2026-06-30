@@ -323,43 +323,63 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           </button>
         </div>
 
-        {/* Day strip — columnas equilibradas estilo calendario */}
-        <div style={{ display:"flex", alignItems:"stretch", padding:"4px 0" }}>
-          {weekDays.map(d => {
+        {/* Day strip — segmented glass bar (Opción 2) */}
+        <div style={{
+          display:"flex", alignItems:"stretch",
+          background:"rgba(255,255,255,0.04)",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:16,
+          padding:6,
+          backdropFilter:"blur(20px) saturate(180%)",
+          WebkitBackdropFilter:"blur(20px) saturate(180%)",
+        }}>
+          {weekDays.map((d, i) => {
             const dMid = new Date(d); dMid.setHours(0,0,0,0);
             const isSel = dMid.getTime() === selMid.getTime();
             const isToday = dMid.getTime() === todayMid.getTime();
             return (
               <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                flex:1, cursor:"pointer",
-                background:"transparent", border:"none",
+                flex:1, cursor:"pointer", border:"none",
+                position:"relative",
+                background: isSel
+                  ? "linear-gradient(180deg, rgba(158,154,229,0.22), rgba(158,154,229,0.12))"
+                  : "transparent",
+                boxShadow: isSel ? "0 1px 0 rgba(158,154,229,0.35) inset, 0 0 0 0.5px rgba(158,154,229,0.45)" : "none",
+                borderRadius:11,
                 display:"flex", flexDirection:"column", alignItems:"center",
-                gap:12, padding:"4px 0",
+                gap:6, padding:"12px 0 14px",
+                transition:"all .2s",
               }}>
+                {/* Separador entre segmentos */}
+                {i > 0 && !isSel && (
+                  <span style={{
+                    position:"absolute", left:0, top:"22%", bottom:"22%",
+                    width:"0.5px", background:"rgba(255,255,255,0.06)",
+                  }}/>
+                )}
                 <span style={{
-                  fontSize:11, fontWeight:500,
+                  fontSize:10.5, fontWeight:600,
                   color: isSel ? "var(--accent)" : "var(--text-subtle)",
-                  letterSpacing:"0.08em", textTransform:"uppercase",
-                  transition:"color .15s",
+                  letterSpacing:"0.1em", textTransform:"uppercase",
+                  transition:"color .18s",
                 }}>
                   {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
                 </span>
-                <div style={{
-                  width:40, height:40, borderRadius:"50%",
-                  display:"flex", alignItems:"center", justifyContent:"center",
-                  background: isSel ? "var(--accent)" : "transparent",
-                  border: isToday && !isSel ? "1px solid rgba(255,255,255,0.18)" : "1px solid transparent",
-                  transition:"all .18s",
+                <span style={{
+                  fontSize:20,
+                  fontWeight: isSel ? 500 : isToday ? 500 : 300,
+                  color: isSel ? "#dad7f7" : isToday ? "var(--text)" : "var(--text-muted)",
+                  letterSpacing:"-0.8px",
+                  transition:"color .18s",
                 }}>
-                  <span style={{
-                    fontSize:16,
-                    fontWeight: isSel ? 600 : isToday ? 500 : 400,
-                    color: isSel ? "#0b0b0d" : isToday ? "var(--text)" : "var(--text-muted)",
-                    letterSpacing:"-0.4px",
-                  }}>
-                    {d.getDate()}
-                  </span>
-                </div>
+                  {d.getDate()}
+                </span>
+                {/* Today dot (only when not selected) */}
+                <span style={{
+                  width:4, height:4, borderRadius:"50%",
+                  background: isToday && !isSel ? "var(--accent)" : "transparent",
+                  marginTop:-2,
+                }}/>
               </button>
             );
           })}
