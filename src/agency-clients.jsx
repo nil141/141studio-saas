@@ -28,19 +28,19 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 
   // ── Menú "+" y modal de enlace ──
-  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(null);   // null | "plus" | "more"
   const [inviteLink, setInviteLink] = useState("");
   const [inviteCopied, setInviteCopied] = useState(false);
   const [inviteBusy, setInviteBusy] = useState(false);
   useEffect(() => {
     if (!menuOpen) return;
-    const close = () => setMenuOpen(false);
+    const close = () => setMenuOpen(null);
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [menuOpen]);
 
   const generateInvite = async () => {
-    setMenuOpen(false);
+    setMenuOpen(null);
     if (inviteBusy) return;
     setInviteBusy(true);
     const res = await D.createInvite({});  // sin clientId → la ficha se creará al completar el onboarding
@@ -66,18 +66,40 @@ const AgencyClientsList = ({ navigate, openModal }) => {
           <h1>Clientes</h1>
           <div className="sub">{clients.length} en total</div>
         </div>
-        <div className="row tight" style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-          <button className="btn primary" onClick={() => setMenuOpen(v => !v)}>
-            <Icon name="plus" size={14}/> Nuevo cliente
-          </button>
-          {menuOpen && (
+        <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+          {/* Pill con dos botones circulares — mismo estilo que la página de Tareas */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 2, padding: "3px 4px",
+            background: "rgba(255,255,255,0.07)",
+            border: "0.5px solid rgba(255,255,255,0.1)",
+            borderRadius: 99,
+          }}>
+            {[
+              { icon: "plus",   key: "plus",   onClick: (e) => { e.stopPropagation(); setMenuOpen(o => o === "plus" ? false : "plus"); } },
+              { icon: "more-h", key: "more-h", onClick: (e) => { e.stopPropagation(); setMenuOpen(o => o === "more" ? false : "more"); } },
+            ].map(btn => (
+              <button key={btn.key} onClick={btn.onClick} style={{
+                width: 34, height: 34, borderRadius: "50%",
+                background: "transparent", border: "none", cursor: "pointer",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                color: "var(--text-muted)", transition: "background .12s", flexShrink: 0,
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <Icon name={btn.icon} size={15}/>
+              </button>
+            ))}
+          </div>
+
+          {/* Menú "+" — 2 opciones para crear cliente */}
+          {menuOpen === "plus" && (
             <div style={{
-              position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20,
-              background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)",
-              borderRadius: 12, padding: 5, minWidth: 280,
-              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+              position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50,
+              background: "#1a1a1c", border: "0.5px solid rgba(255,255,255,0.1)",
+              borderRadius: 14, padding: 5, minWidth: 280,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
             }}>
-              <button onClick={() => { setMenuOpen(false); openModal("newClient"); }}
+              <button onClick={() => { setMenuOpen(null); openModal("newClient"); }}
                 style={menuItem}
                 onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
@@ -99,6 +121,24 @@ const AgencyClientsList = ({ navigate, openModal }) => {
                   <div style={menuSub}>Él rellena sus datos al registrarse.</div>
                 </div>
               </button>
+            </div>
+          )}
+
+          {/* Menú "•••" — opciones de página */}
+          {menuOpen === "more" && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50,
+              background: "#1a1a1c", border: "0.5px solid rgba(255,255,255,0.1)",
+              borderRadius: 14, padding: "6px 0", minWidth: 200,
+              boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+            }}>
+              <div style={{ padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+                onClick={() => { setMenuOpen(null); D.reload && D.reload(); toast("Lista actualizada", "success"); }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <Icon name="refresh-cw" size={13} style={{ color: "var(--text-muted)" }}/>
+                <span style={{ fontSize: 13, color: "var(--text)", letterSpacing: "-0.3px" }}>Actualizar lista</span>
+              </div>
             </div>
           )}
         </div>
