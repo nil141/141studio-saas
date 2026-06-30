@@ -1,7 +1,23 @@
 // Agency Clients list + detail (MVP — WhatsApp + Drive + service)
+const menuItem = {
+  display: "flex", alignItems: "center", gap: 12, width: "100%",
+  padding: "10px 12px", borderRadius: 9, cursor: "pointer",
+  background: "transparent", border: 0, fontFamily: "inherit", textAlign: "left",
+  transition: "background .1s",
+};
+const menuIconBox = {
+  width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+  background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
+  display: "flex", alignItems: "center", justifyContent: "center",
+  color: "var(--text-muted)",
+};
+const menuTitle = { fontSize: 13.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.2px" };
+const menuSub   = { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.1px" };
+
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
+  const toast = useToast();
 
   // Al abrir Clientes, re-cargar desde Supabase para ver altas recientes
   // (p. ej. clientes que se acaban de registrar por el enlace de invitación).
@@ -11,6 +27,38 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   const COLS = "1.3fr 1.2fr 1.7fr 1fr";
   const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
 
+  // ── Menú "+" y modal de enlace ──
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuOpen]);
+
+  const generateInvite = async () => {
+    setMenuOpen(false);
+    if (inviteBusy) return;
+    setInviteBusy(true);
+    const res = await D.createInvite({});  // sin clientId → la ficha se creará al completar el onboarding
+    if (res && res.token) {
+      setInviteLink(`${window.location.origin}/invite/${res.token}`);
+    } else {
+      toast(res?.error || "Error al generar el enlace", "error");
+    }
+    setInviteBusy(false);
+  };
+  const copyInvite = () => {
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setInviteCopied(true);
+      toast("Enlace copiado", "success");
+      setTimeout(() => setInviteCopied(false), 2000);
+    });
+  };
+
   return (
     <div className="page">
       <div className="page-head">
@@ -18,10 +66,84 @@ const AgencyClientsList = ({ navigate, openModal }) => {
           <h1>Clientes</h1>
           <div className="sub">{clients.length} en total</div>
         </div>
-        <div className="row tight">
-          <button className="btn" onClick={() => openModal("newClient")}><Icon name="plus" size={14}/> Nuevo cliente</button>
+        <div className="row tight" style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+          <button className="btn primary" onClick={() => setMenuOpen(v => !v)}>
+            <Icon name="plus" size={14}/> Nuevo cliente
+          </button>
+          {menuOpen && (
+            <div style={{
+              position: "absolute", right: 0, top: "calc(100% + 6px)", zIndex: 20,
+              background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)",
+              borderRadius: 12, padding: 5, minWidth: 280,
+              boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
+            }}>
+              <button onClick={() => { setMenuOpen(false); openModal("newClient"); }}
+                style={menuItem}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={menuIconBox}><Icon name="edit" size={14} strokeWidth={1.7}/></div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={menuTitle}>Añadir ficha manualmente</div>
+                  <div style={menuSub}>Tú rellenas sus datos.</div>
+                </div>
+              </button>
+              <button onClick={generateInvite}
+                style={menuItem}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={{ ...menuIconBox, background: "var(--accent-soft)", color: "var(--accent)" }}>
+                  <Icon name="external-link" size={14} strokeWidth={1.7}/>
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={menuTitle}>Generar enlace de portal</div>
+                  <div style={menuSub}>Él rellena sus datos al registrarse.</div>
+                </div>
+              </button>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Modal del enlace generado */}
+      {inviteLink && (
+        <div onClick={() => setInviteLink("")} style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)",
+          backdropFilter: "blur(6px)", zIndex: 100,
+          display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+        }}>
+          <div onClick={e => e.stopPropagation()} style={{
+            background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)",
+            borderRadius: 16, padding: 24, maxWidth: 460, width: "100%",
+            boxShadow: "0 30px 60px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 12, marginBottom: 14,
+              background: "var(--accent-soft)", color: "var(--accent)",
+              display: "flex", alignItems: "center", justifyContent: "center",
+            }}>
+              <Icon name="external-link" size={20} strokeWidth={1.7}/>
+            </div>
+            <h2 style={{ fontSize: 19, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 6 }}>
+              Enlace de portal generado
+            </h2>
+            <p style={{ fontSize: 13.5, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.5 }}>
+              Comparte este enlace con el cliente. Cuando se registre, su ficha se creará automáticamente.
+            </p>
+            <input readOnly value={inviteLink} onClick={e => e.target.select()} style={{
+              width: "100%", padding: "11px 14px", borderRadius: 10, marginBottom: 14,
+              background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
+              color: "var(--text)", fontFamily: "var(--font-mono)", fontSize: 12,
+            }}/>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button className="btn" onClick={() => setInviteLink("")}>Cerrar</button>
+              <button className="btn primary" onClick={copyInvite}>
+                {inviteCopied ? <Icon name="check" size={13}/> : null}
+                {inviteCopied ? "Copiado" : "Copiar enlace"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {clients.length === 0 ? (
         <div className="card"><div className="card-body" style={{ padding: 48 }}>

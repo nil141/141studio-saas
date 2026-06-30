@@ -1,13 +1,143 @@
+const menuItem = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  width: "100%",
+  padding: "10px 12px",
+  borderRadius: 9,
+  cursor: "pointer",
+  background: "transparent",
+  border: 0,
+  fontFamily: "inherit",
+  textAlign: "left",
+  transition: "background .1s"
+};
+const menuIconBox = {
+  width: 32,
+  height: 32,
+  borderRadius: 9,
+  flexShrink: 0,
+  background: "var(--bg-elev-2)",
+  border: "0.5px solid var(--border)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "var(--text-muted)"
+};
+const menuTitle = { fontSize: 13.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.2px" };
+const menuSub = { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.1px" };
 const AgencyClientsList = ({ navigate, openModal }) => {
   const D = window.Data;
   D.useStore();
+  const toast = useToast();
   useEffect(() => {
     D.reload && D.reload();
   }, []);
   const clients = D.CLIENTS;
   const COLS = "1.3fr 1.2fr 1.7fr 1fr";
   const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
-  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => openModal("newClient") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [inviteLink, setInviteLink] = useState("");
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const [inviteBusy, setInviteBusy] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const close = () => setMenuOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [menuOpen]);
+  const generateInvite = async () => {
+    setMenuOpen(false);
+    if (inviteBusy) return;
+    setInviteBusy(true);
+    const res = await D.createInvite({});
+    if (res && res.token) {
+      setInviteLink(`${window.location.origin}/invite/${res.token}`);
+    } else {
+      toast(res?.error || "Error al generar el enlace", "error");
+    }
+    setInviteBusy(false);
+  };
+  const copyInvite = () => {
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setInviteCopied(true);
+      toast("Enlace copiado", "success");
+      setTimeout(() => setInviteCopied(false), 2e3);
+    });
+  };
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => setMenuOpen((v) => !v) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo cliente"), menuOpen && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 6px)",
+    zIndex: 20,
+    background: "var(--bg-elev)",
+    border: "0.5px solid var(--border-strong)",
+    borderRadius: 12,
+    padding: 5,
+    minWidth: 280,
+    boxShadow: "0 10px 30px rgba(0,0,0,0.35)"
+  } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => {
+        setMenuOpen(false);
+        openModal("newClient");
+      },
+      style: menuItem,
+      onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement("div", { style: menuIconBox }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 14, strokeWidth: 1.7 })),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: menuTitle }, "A\xF1adir ficha manualmente"), /* @__PURE__ */ React.createElement("div", { style: menuSub }, "T\xFA rellenas sus datos."))
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: generateInvite,
+      style: menuItem,
+      onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { ...menuIconBox, background: "var(--accent-soft)", color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 14, strokeWidth: 1.7 })),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: menuTitle }, "Generar enlace de portal"), /* @__PURE__ */ React.createElement("div", { style: menuSub }, "\xC9l rellena sus datos al registrarse."))
+  )))), inviteLink && /* @__PURE__ */ React.createElement("div", { onClick: () => setInviteLink(""), style: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.55)",
+    backdropFilter: "blur(6px)",
+    zIndex: 100,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24
+  } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+    background: "var(--bg-elev)",
+    border: "0.5px solid var(--border-strong)",
+    borderRadius: 16,
+    padding: 24,
+    maxWidth: 460,
+    width: "100%",
+    boxShadow: "0 30px 60px rgba(0,0,0,0.5)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    marginBottom: 14,
+    background: "var(--accent-soft)",
+    color: "var(--accent)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 20, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 19, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 6 } }, "Enlace de portal generado"), /* @__PURE__ */ React.createElement("p", { style: { fontSize: 13.5, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.5 } }, "Comparte este enlace con el cliente. Cuando se registre, su ficha se crear\xE1 autom\xE1ticamente."), /* @__PURE__ */ React.createElement("input", { readOnly: true, value: inviteLink, onClick: (e) => e.target.select(), style: {
+    width: "100%",
+    padding: "11px 14px",
+    borderRadius: 10,
+    marginBottom: 14,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
+    color: "var(--text)",
+    fontFamily: "var(--font-mono)",
+    fontSize: 12
+  } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => setInviteLink("") }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: copyInvite }, inviteCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }) : null, inviteCopied ? "Copiado" : "Copiar enlace")))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "grid",
     gridTemplateColumns: COLS,
     gap: 24,
