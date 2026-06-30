@@ -527,9 +527,7 @@ const CampaignsPage = ({ navigate }) => {
           <h1>Campañas</h1>
           <div className="sub">{total} campañas · {active} activas · {totalSent.toLocaleString()} emails enviados</div>
         </div>
-        <button className="btn primary" onClick={() => {}}>
-          <Icon name="plus" size={14}/> Nueva campaña
-        </button>
+        <ActionPill plusActions={() => {}} />
       </div>
 
       {campaigns.length === 0 ? (

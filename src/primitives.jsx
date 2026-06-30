@@ -370,6 +370,113 @@ const StatusChip = ({ status, label }) => {
   return <span className={"chip " + m.cls}>{m.text}</span>;
 };
 
+// ── ActionPill — botón de acción estilo Tareas (pill translúcido) ────
+// Uso: <ActionPill plusActions={...} moreActions={[...]} />
+//   plusActions: () => void  →  el "+" ejecuta directo
+//   plusActions: [{icon,label,sub,accent,onClick}, ...]  →  el "+" abre menú
+//   moreActions: [{icon,label,onClick}, ...] | null
+const ActionPill = ({ plusActions, moreActions, plusIcon = "plus" }) => {
+  const [open, setOpen] = useState(null); // null | "plus" | "more"
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+
+  const pillBtn = {
+    width: 34, height: 34, borderRadius: "50%",
+    background: "transparent", border: "none", cursor: "pointer",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    color: "var(--text-muted)", transition: "background .12s", flexShrink: 0,
+  };
+  const dropdown = {
+    position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 50,
+    background: "#1a1a1c", border: "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 14, boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+  };
+  const mItem = {
+    display: "flex", alignItems: "center", gap: 12, width: "100%",
+    padding: "10px 12px", borderRadius: 9, cursor: "pointer",
+    background: "transparent", border: 0, fontFamily: "inherit", textAlign: "left",
+    transition: "background .1s",
+  };
+  const mIcon = {
+    width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+    background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    color: "var(--text-muted)",
+  };
+
+  const handlePlus = (e) => {
+    e.stopPropagation();
+    if (typeof plusActions === "function") return plusActions();
+    if (Array.isArray(plusActions) && plusActions.length === 1) return plusActions[0].onClick();
+    setOpen(o => o === "plus" ? null : "plus");
+  };
+  const handleMore = (e) => {
+    e.stopPropagation();
+    if (!moreActions || !moreActions.length) return;
+    setOpen(o => o === "more" ? null : "more");
+  };
+
+  return (
+    <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 2, padding: "3px 4px",
+        background: "rgba(255,255,255,0.07)",
+        border: "0.5px solid rgba(255,255,255,0.1)",
+        borderRadius: 99,
+      }}>
+        <button onClick={handlePlus} style={pillBtn}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+          <Icon name={plusIcon} size={15}/>
+        </button>
+        {moreActions && moreActions.length > 0 && (
+          <button onClick={handleMore} style={pillBtn}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+            <Icon name="more-h" size={15}/>
+          </button>
+        )}
+      </div>
+
+      {open === "plus" && Array.isArray(plusActions) && plusActions.length > 1 && (
+        <div style={{ ...dropdown, padding: 5, minWidth: 280 }}>
+          {plusActions.map((a, i) => (
+            <button key={i} onClick={() => { setOpen(null); a.onClick(); }} style={mItem}
+              onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <div style={a.accent ? { ...mIcon, background: "var(--accent-soft)", color: "var(--accent)" } : mIcon}>
+                <Icon name={a.icon} size={14} strokeWidth={1.7}/>
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.2px" }}>{a.label}</div>
+                {a.sub && <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.1px" }}>{a.sub}</div>}
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {open === "more" && moreActions && (
+        <div style={{ ...dropdown, padding: "6px 0", minWidth: 200 }}>
+          {moreActions.map((a, i) => (
+            <div key={i} onClick={() => { setOpen(null); a.onClick(); }}
+              style={{ padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+              <Icon name={a.icon} size={13} style={{ color: "var(--text-muted)" }}/>
+              <span style={{ fontSize: 13, color: "var(--text)", letterSpacing: "-0.3px" }}>{a.label}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Empty = ({ icon = "inbox", title, sub }) => (
   <div style={{padding: 40, textAlign: "center", color: "var(--text-muted)"}}>
     <div style={{display:"inline-flex", padding: 12, border:"0.5px solid var(--border)", borderRadius: 12, marginBottom: 12}}>

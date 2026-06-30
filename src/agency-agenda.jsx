@@ -340,9 +340,12 @@ const AgendaPage = ({ navigate }) => {
             <button className={viewMode==="month"?"active":""} onClick={()=>setView("month")}>Mes</button>
             <button className={viewMode==="week"?"active":""} onClick={()=>setView("week")}>Semana</button>
           </div>
-          <button className="btn primary sm" onClick={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}>
-            <Icon name="plus" size={13}/> Nuevo evento
-          </button>
+          <ActionPill
+            plusActions={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}
+            moreActions={[
+              { icon: "calendar", label: "Ir a hoy", onClick: goToday },
+            ]}
+          />
         </div>
       </div>
 

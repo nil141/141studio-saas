@@ -193,7 +193,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     textTransform: "uppercase",
     padding: "0 12px",
     marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge }))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
+  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge }))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && session?.role === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
@@ -310,13 +310,138 @@ const StatusChip = ({ status, label }) => {
   const m = map[status] || { cls: "", text: label || status };
   return /* @__PURE__ */ React.createElement("span", { className: "chip " + m.cls }, m.text);
 };
+const ActionPill = ({ plusActions, moreActions, plusIcon = "plus" }) => {
+  const [open, setOpen] = useState(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+  const pillBtn = {
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    background: "transparent",
+    border: "none",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "var(--text-muted)",
+    transition: "background .12s",
+    flexShrink: 0
+  };
+  const dropdown = {
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 8px)",
+    zIndex: 50,
+    background: "#1a1a1c",
+    border: "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 14,
+    boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+  };
+  const mItem = {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    width: "100%",
+    padding: "10px 12px",
+    borderRadius: 9,
+    cursor: "pointer",
+    background: "transparent",
+    border: 0,
+    fontFamily: "inherit",
+    textAlign: "left",
+    transition: "background .1s"
+  };
+  const mIcon = {
+    width: 32,
+    height: 32,
+    borderRadius: 9,
+    flexShrink: 0,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "var(--text-muted)"
+  };
+  const handlePlus = (e) => {
+    e.stopPropagation();
+    if (typeof plusActions === "function") return plusActions();
+    if (Array.isArray(plusActions) && plusActions.length === 1) return plusActions[0].onClick();
+    setOpen((o) => o === "plus" ? null : "plus");
+  };
+  const handleMore = (e) => {
+    e.stopPropagation();
+    if (!moreActions || !moreActions.length) return;
+    setOpen((o) => o === "more" ? null : "more");
+  };
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 2,
+    padding: "3px 4px",
+    background: "rgba(255,255,255,0.07)",
+    border: "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 99
+  } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: handlePlus,
+      style: pillBtn,
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: plusIcon, size: 15 })
+  ), moreActions && moreActions.length > 0 && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: handleMore,
+      style: pillBtn,
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 15 })
+  )), open === "plus" && Array.isArray(plusActions) && plusActions.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { ...dropdown, padding: 5, minWidth: 280 } }, plusActions.map((a, i) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: i,
+      onClick: () => {
+        setOpen(null);
+        a.onClick();
+      },
+      style: mItem,
+      onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement("div", { style: a.accent ? { ...mIcon, background: "var(--accent-soft)", color: "var(--accent)" } : mIcon }, /* @__PURE__ */ React.createElement(Icon, { name: a.icon, size: 14, strokeWidth: 1.7 })),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.2px" } }, a.label), a.sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.1px" } }, a.sub))
+  ))), open === "more" && moreActions && /* @__PURE__ */ React.createElement("div", { style: { ...dropdown, padding: "6px 0", minWidth: 200 } }, moreActions.map((a, i) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: i,
+      onClick: () => {
+        setOpen(null);
+        a.onClick();
+      },
+      style: { padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 },
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: a.icon, size: 13, style: { color: "var(--text-muted)" } }),
+    /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.3px" } }, a.label)
+  ))));
+};
 const Empty = ({ icon = "inbox", title, sub }) => /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center", color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "inline-flex", padding: 12, border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 20 })), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, color: "var(--text)", fontSize: 14 } }, title), sub ? /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4 } }, sub) : null);
 const ConfirmContext = createContext(null);
 const ConfirmProvider = ({ children }) => {
   const [state, setState] = useState(null);
   const confirm = (opts) => new Promise((resolve) => setState({ ...opts, resolve }));
   const close = (val) => {
-    state == null ? void 0 : state.resolve(val);
+    state?.resolve(val);
     setState(null);
   };
   return /* @__PURE__ */ React.createElement(ConfirmContext.Provider, { value: confirm }, children, state && /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: () => close(false) }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 420 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, state.title || "\xBFEst\xE1s seguro?"), state.body ? /* @__PURE__ */ React.createElement("div", { className: "modal-sub", style: { marginTop: 6, lineHeight: 1.5 } }, state.body) : null)), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => close(false) }, state.cancelLabel || "Cancelar"), /* @__PURE__ */ React.createElement(

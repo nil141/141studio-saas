@@ -1,3 +1,4 @@
+const { useState, useEffect, useRef, useMemo } = React;
 const DAYS_ES = ["Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b", "Dom"];
 const MONTHS_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const toYMD = (d) => {
@@ -23,7 +24,7 @@ const CUSTOM_KEY = "agenda_custom_events";
 const loadCustom = () => {
   try {
     return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -32,7 +33,7 @@ const VIEW_KEY = "agenda_view";
 const loadView = () => {
   try {
     return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month";
-  } catch (e) {
+  } catch {
     return "month";
   }
 };
@@ -149,7 +150,7 @@ const AgendaPage = ({ navigate }) => {
     setViewMode(v);
     try {
       localStorage.setItem(VIEW_KEY, v);
-    } catch (e) {
+    } catch {
     }
   };
   const weekDays = useMemo(() => {
@@ -304,10 +305,18 @@ const AgendaPage = ({ navigate }) => {
       style: { opacity: isCurrentPeriod ? 0.35 : 1, pointerEvents: isCurrentPeriod ? "none" : "auto" }
     },
     "Hoy"
-  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => {
-    setForm((f) => ({ ...f, date: selected }));
-    setShowForm(true);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Nuevo evento"))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement(
+    ActionPill,
+    {
+      plusActions: () => {
+        setForm((f) => ({ ...f, date: selected }));
+        setShowForm(true);
+      },
+      moreActions: [
+        { icon: "calendar", label: "Ir a hoy", onClick: goToday }
+      ]
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
     fontSize: 11,
     fontWeight: 500,

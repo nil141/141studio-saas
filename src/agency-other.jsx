@@ -936,7 +936,12 @@ const AgencyProjects = ({ navigate, openModal }) => {
           <h1>Proyectos</h1>
           <div className="sub">{cap} en marcha · {capLabel}</div>
         </div>
-        <button className="btn primary" onClick={() => openModal("newProject")}><Icon name="plus" size={13}/> Nuevo proyecto</button>
+        <ActionPill
+          plusActions={() => openModal("newProject")}
+          moreActions={[
+            { icon: "refresh-cw", label: "Actualizar lista", onClick: () => D.reload && D.reload() },
+          ]}
+        />
       </div>
 
       <div className="card" style={{marginBottom: 16}}>
@@ -1567,11 +1572,14 @@ const AgencyBilling = () => {
             <button className={tab === "subs" ? "active" : ""} onClick={() => setTab("subs")}>Suscripciones</button>
             <button className={tab === "expenses" ? "active" : ""} onClick={() => setTab("expenses")}>Gastos</button>
           </div>
-          {tab === "subs" ? (
-            <button className="btn primary sm" onClick={() => setAddSub(v => !v)}><Icon name="plus" size={13} /> Suscripción</button>
-          ) : (
-            <button className="btn primary sm" onClick={() => setAddExp(v => !v)}><Icon name="plus" size={13} /> Gasto</button>
-          )}
+          <ActionPill
+            plusActions={[
+              { icon: "refresh-cw", label: "Nueva suscripción", sub: "Gasto recurrente (mensual o anual).",
+                onClick: () => { setTab("subs"); setAddSub(true); } },
+              { icon: "receipt",    label: "Nuevo gasto puntual", sub: "Un gasto único de un día.",
+                accent: true, onClick: () => { setTab("expenses"); setAddExp(true); } },
+            ]}
+          />
         </div>
 
         {/* ── Suscripciones ── */}
