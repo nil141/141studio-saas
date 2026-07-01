@@ -366,6 +366,8 @@
       display: "flex",
       flexDirection: "column",
       gap: 28,
+      justifyContent: "flex-end",
+      minHeight: "100vh",
       padding: "32px 36px",
       maxWidth: 1440,
       margin: "0 auto"
