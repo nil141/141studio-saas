@@ -791,7 +791,7 @@
       position: "absolute",
       top: -6,
       left: `${x(hov) / W * 100}%`,
-      transform: `translate(-${8 + x(hov) / W * 84}%, -100%)`,
+      transform: "translate(-50%, -100%)",
       background: "#1c1c1f",
       border: "0.5px solid rgba(255,255,255,0.12)",
       borderRadius: 10,

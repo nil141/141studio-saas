@@ -1466,12 +1466,12 @@ const FinTrendChart = ({ trend }) => {
           </span>
         ))}
       </div>
-      {/* Tooltip — el translate se desliza de -8% a -92% según la posición para no salirse por los bordes */}
+      {/* Tooltip — siempre centrado sobre el crosshair; puede sobresalir de la tarjeta (zIndex la eleva) */}
       {hov !== null && (
         <div style={{
           position:"absolute", top:-6,
           left:`${(x(hov) / W) * 100}%`,
-          transform:`translate(-${8 + (x(hov) / W) * 84}%, -100%)`,
+          transform:"translate(-50%, -100%)",
           background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
           borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
