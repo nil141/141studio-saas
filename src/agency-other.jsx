@@ -482,7 +482,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       )}
 
       {groups.map((group, gIdx) => (
-        <div key={group.clientId} style={{ marginBottom:32 }}>
+        <div key={group.clientId} style={{ marginBottom: gIdx === groups.length - 1 ? 0 : 32 }}>
           {/* Client header */}
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
             <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
@@ -546,7 +546,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
               );
             }))}
 
-          <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
+          {gIdx !== groups.length - 1 && (
+            <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
+          )}
         </div>
       ))}
 
