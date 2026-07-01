@@ -453,7 +453,12 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           <span style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.05em", textTransform:"uppercase", fontWeight:500, flexShrink:0 }}>
             Daily Progress
           </span>
-          <div style={{ flex:1, height:11, background:"var(--border)", borderRadius:99, overflow:"hidden" }}>
+          <div style={{
+            flex:1, height:16, borderRadius:99,
+            border:"0.5px solid var(--border-strong)",
+            background:"rgba(255,255,255,0.02)",
+            padding:2, display:"flex", alignItems:"center",
+          }}>
             <div style={{ width:`${donePct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s" }}/>
           </div>
           <span style={{ fontSize:12, color:"var(--text-muted)", fontWeight:500, flexShrink:0 }}>{donePct}%</span>
