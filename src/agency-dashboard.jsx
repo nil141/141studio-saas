@@ -234,7 +234,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
   const Header = (
-    <header style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+    <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
         <div>
           <h1 style={{
@@ -420,13 +420,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ═══ Opción 3 — Tres columnas iguales ════════════════════════════════════
   const V3 = (
     <>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 }}>
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, flexShrink: 0 }}>
         {kpis.map(renderKpiTile)}
       </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-        <AgendaBlock height={400} slice={6}/>
-        <QueuesBlock height={400} showProjects={false}/>
-        <ProjectsBlock height={400}/>
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 }}>
+        <AgendaBlock height="100%" slice={6}/>
+        <QueuesBlock height="100%" showProjects={false}/>
+        <ProjectsBlock height="100%"/>
       </section>
     </>
   );
@@ -434,8 +434,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 28,
-      justifyContent: "flex-end",
-      minHeight: "100vh",
+      height: "100vh", overflow: "hidden",
       padding: "32px 36px",
       maxWidth: 1440, margin: "0 auto",
     }}>

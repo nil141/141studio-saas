@@ -206,7 +206,7 @@
       textTransform: "uppercase",
       letterSpacing: "0.08em"
     };
-    const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: {
+    const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: {
       fontSize: 36,
       fontWeight: 400,
       letterSpacing: "-1.2px",
@@ -361,13 +361,13 @@
       fontVariantNumeric: "tabular-nums",
       lineHeight: 1.1
     } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
-    const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14 } }, kpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: 400, slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: 400, showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: 400 })));
+    const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, flexShrink: 0 } }, kpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
       gap: 28,
-      justifyContent: "flex-end",
-      minHeight: "100vh",
+      height: "100vh",
+      overflow: "hidden",
       padding: "32px 36px",
       maxWidth: 1440,
       margin: "0 auto"
