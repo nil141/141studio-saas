@@ -213,60 +213,28 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     textTransform: "uppercase", letterSpacing: "0.08em",
   };
 
-  // ── Cabecera común (saludo + selector + quick actions) ───────────────────
+  // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
   const Header = (
     <header style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 24, flexWrap: "wrap" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
         <div>
           <h1 style={{
             fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
             margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
           }}>{greeting}, {adminName}.</h1>
           <div style={{
-            marginTop: 10, fontSize: 15, color: "var(--text-muted)",
-            letterSpacing: "-0.3px", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
-          }}>
-            <span>{agencyName} · {todayStr}</span>
-            <span style={{
-              display: "inline-flex", alignItems: "center", gap: 6,
-              padding: "3px 10px 3px 8px", borderRadius: 99, fontSize: 11.5, fontWeight: 500,
-              background: capacity === "green" ? "var(--green-soft)" : capacity === "amber" ? "var(--amber-soft)" : "var(--red-soft)",
-              color: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)",
-              letterSpacing: 0,
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: 99,
-                background: capacity === "green" ? "var(--green)" : capacity === "amber" ? "var(--amber)" : "var(--red)" }}/>
-              {capacityLabel}
-            </span>
-          </div>
+            marginTop: 10, fontSize: 15, color: "var(--text-muted)", letterSpacing: "-0.3px",
+          }}>{todayStr}</div>
         </div>
 
-      </div>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        {[
-          { label: "Nueva tarea",     icon: "plus",          fn: () => openModal("newTask"),    primary: true },
-          { label: "Nuevo proyecto",  icon: "folder",        fn: () => openModal("newProject") },
-          { label: "Nuevo cliente",   icon: "users",         fn: () => openModal("newClient")  },
-          { label: "Nueva factura",   icon: "receipt",       fn: () => navigate("billing")    },
-        ].map(b => (
-          <button key={b.label} onClick={b.fn}
-            style={{
-              display: "inline-flex", alignItems: "center", gap: 7,
-              height: 34, padding: "0 14px", borderRadius: 11, cursor: "pointer",
-              fontSize: 13, fontWeight: 500, letterSpacing: "-0.2px",
-              fontFamily: "inherit", transition: "background .12s, border-color .12s",
-              background: b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
-              color: b.primary ? "var(--accent)" : "var(--text)",
-              border: "0.5px solid " + (b.primary ? "rgba(158,154,229,0.4)" : "rgba(255,255,255,0.08)"),
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = b.primary ? "rgba(158,154,229,0.28)" : "rgba(255,255,255,0.07)"}
-            onMouseLeave={e => e.currentTarget.style.background = b.primary ? "var(--accent-soft)" : "rgba(255,255,255,0.04)"}
-          >
-            <Icon name={b.icon} size={13} strokeWidth={1.7}/>
-            {b.label}
-          </button>
-        ))}
+        <ActionPill
+          plusActions={[
+            { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
+            { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
+            { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
+            { icon: "receipt", label: "Nueva factura",  sub: "Registra una factura.",    onClick: () => navigate("billing") },
+          ]}
+        />
       </div>
     </header>
   );
