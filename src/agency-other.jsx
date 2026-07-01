@@ -1671,28 +1671,6 @@ const AgencyBilling = () => {
         {/* ── Suscripciones ── */}
         {tab === "subs" && (
           <>
-            {addSub && (
-              <div style={{
-                display:"grid", gridTemplateColumns:"1.4fr 0.7fr 0.9fr 1fr 1fr auto", gap:8,
-                padding:"14px 16px", marginBottom:14, alignItems:"center",
-                background:"rgba(255,255,255,0.03)", border:"0.5px solid var(--border)", borderRadius:14,
-              }}>
-                <input style={FIN_INPUT} autoFocus placeholder="Nombre (ej. Adobe CC)" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} />
-                <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={subForm.amount} onChange={e => setSubForm({ ...subForm, amount: e.target.value })} />
-                <select style={FIN_INPUT} value={subForm.cycle} onChange={e => setSubForm({ ...subForm, cycle: e.target.value })}>
-                  {FIN_CYCLES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-                </select>
-                <select style={FIN_INPUT} value={subForm.category} onChange={e => setSubForm({ ...subForm, category: e.target.value })}>
-                  {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <input style={FIN_INPUT} type="date" title="Próxima renovación" value={subForm.nextRenewal} onChange={e => setSubForm({ ...subForm, nextRenewal: e.target.value })} />
-                <div style={{ display:"flex", gap:6 }}>
-                  <button className="btn primary sm" onClick={saveSub}>Guardar</button>
-                  <button className="btn ghost sm" onClick={() => { setAddSub(false); setSubForm(blankSub); }}>✕</button>
-                </div>
-              </div>
-            )}
-
             {data.subs.length === 0 && !addSub ? (
               <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
                 Sin suscripciones — <button className="btn ghost sm" onClick={() => setAddSub(true)}>añadir una</button>
@@ -1745,25 +1723,6 @@ const AgencyBilling = () => {
         {/* ── Gastos puntuales ── */}
         {tab === "expenses" && (
           <>
-            {addExp && (
-              <div style={{
-                display:"grid", gridTemplateColumns:"1fr 1.6fr 0.7fr 1fr auto", gap:8,
-                padding:"14px 16px", marginBottom:14, alignItems:"center",
-                background:"rgba(255,255,255,0.03)", border:"0.5px solid var(--border)", borderRadius:14,
-              }}>
-                <input style={FIN_INPUT} type="date" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} />
-                <input style={FIN_INPUT} autoFocus placeholder="Concepto" value={expForm.concept} onChange={e => setExpForm({ ...expForm, concept: e.target.value })} />
-                <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} />
-                <select style={FIN_INPUT} value={expForm.category} onChange={e => setExpForm({ ...expForm, category: e.target.value })}>
-                  {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-                <div style={{ display:"flex", gap:6 }}>
-                  <button className="btn primary sm" onClick={saveExp}>Guardar</button>
-                  <button className="btn ghost sm" onClick={() => { setAddExp(false); setExpForm(blankExp); }}>✕</button>
-                </div>
-              </div>
-            )}
-
             {data.expenses.length === 0 && !addExp ? (
               <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
                 Sin gastos puntuales — <button className="btn ghost sm" onClick={() => setAddExp(true)}>añadir uno</button>
@@ -1799,6 +1758,92 @@ const AgencyBilling = () => {
           </>
         )}
       </div>
+
+      {/* ── Pop-up Nueva suscripción — estilo Tareas ── */}
+      <QuickModal
+        open={addSub}
+        onClose={() => { setAddSub(false); setSubForm(blankSub); }}
+        onSubmit={saveSub}
+        canSubmit={!!subForm.name.trim() && Number(subForm.amount) > 0}
+        headerLabel="Nueva suscripción"
+        titlePlaceholder="Nombre de la suscripción..."
+        titleValue={subForm.name}
+        onTitleChange={v => setSubForm({ ...subForm, name: v })}
+        tabs={[
+          { id:"amount",  label:"Importe",    icon:"receipt",    hasVal: Number(subForm.amount) > 0, badge: Number(subForm.amount) > 0 ? _eur(subForm.amount) : null },
+          { id:"cycle",   label:"Ciclo",      icon:"refresh-cw", hasVal: true, badge: subForm.cycle === "yearly" ? "Anual" : "Mensual" },
+          { id:"cat",     label:"Categoría",  icon:"tag",        hasVal: true, badge: subForm.category },
+          { id:"renewal", label:"Renovación", icon:"calendar",   hasVal: !!subForm.nextRenewal, badge: subForm.nextRenewal ? _finDate(subForm.nextRenewal) : null },
+        ]}
+        renderTab={(id) => {
+          if (id === "amount") return (
+            <input style={{ ...QUICK_FIELD, width:180, textAlign:"center", fontSize:22, fontWeight:300, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}
+              type="number" step="0.01" min="0" placeholder="0,00 €" autoFocus
+              value={subForm.amount} onChange={e => setSubForm({ ...subForm, amount: e.target.value })}/>
+          );
+          if (id === "cycle") return (
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              {FIN_CYCLES.map(c => (
+                <QuickPill key={c.id} selected={subForm.cycle === c.id} onClick={() => setSubForm({ ...subForm, cycle: c.id })}>
+                  {c.label}
+                </QuickPill>
+              ))}
+            </div>
+          );
+          if (id === "cat") return (
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+              {FIN_CATS.map(c => (
+                <QuickPill key={c} selected={subForm.category === c} onClick={() => setSubForm({ ...subForm, category: c })}>
+                  {c}
+                </QuickPill>
+              ))}
+            </div>
+          );
+          if (id === "renewal") return (
+            <input style={{ ...QUICK_FIELD }} type="date"
+              value={subForm.nextRenewal} onChange={e => setSubForm({ ...subForm, nextRenewal: e.target.value })}/>
+          );
+          return null;
+        }}
+      />
+
+      {/* ── Pop-up Nuevo gasto puntual — estilo Tareas ── */}
+      <QuickModal
+        open={addExp}
+        onClose={() => { setAddExp(false); setExpForm(blankExp); }}
+        onSubmit={saveExp}
+        canSubmit={!!expForm.concept.trim() && Number(expForm.amount) > 0}
+        headerLabel="Nuevo gasto puntual"
+        titlePlaceholder="Concepto del gasto..."
+        titleValue={expForm.concept}
+        onTitleChange={v => setExpForm({ ...expForm, concept: v })}
+        tabs={[
+          { id:"amount", label:"Importe",   icon:"receipt",  hasVal: Number(expForm.amount) > 0, badge: Number(expForm.amount) > 0 ? _eur(expForm.amount) : null },
+          { id:"date",   label:"Fecha",     icon:"calendar", hasVal: !!expForm.date, badge: expForm.date ? _finDate(expForm.date) : null },
+          { id:"cat",    label:"Categoría", icon:"tag",      hasVal: true, badge: expForm.category },
+        ]}
+        renderTab={(id) => {
+          if (id === "amount") return (
+            <input style={{ ...QUICK_FIELD, width:180, textAlign:"center", fontSize:22, fontWeight:300, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}
+              type="number" step="0.01" min="0" placeholder="0,00 €" autoFocus
+              value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })}/>
+          );
+          if (id === "date") return (
+            <input style={{ ...QUICK_FIELD }} type="date"
+              value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })}/>
+          );
+          if (id === "cat") return (
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+              {FIN_CATS.map(c => (
+                <QuickPill key={c} selected={expForm.category === c} onClick={() => setExpForm({ ...expForm, category: c })}>
+                  {c}
+                </QuickPill>
+              ))}
+            </div>
+          );
+          return null;
+        }}
+      />
     </div>
   );
 };

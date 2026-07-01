@@ -475,10 +475,57 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
       onCreateProject && onCreateProject(createdId);
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " Crear primer proyecto ahora")) }, /* @__PURE__ */ React.createElement("div", { className: "row", style: { gap: 14, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 48, height: 48, borderRadius: 12, background: "var(--green-soft)", color: "var(--green)", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 20 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "\xBFQuieres crear ya un proyecto para ", (data.name || "este cliente").split(" ")[0], "?"), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 4 } }, "Te ahorramos el clic. Si no, podr\xE1s hacerlo desde su ficha."))));
   }
-  return /* @__PURE__ */ React.createElement(Modal, { open: true, onClose: () => {
-    reset();
-    onClose();
-  }, title: "Nuevo cliente", sub: "Solo lo esencial. Detalles adicionales m\xE1s tarde.", footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: submit }, "Crear cliente")) }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Ana Mar\xEDn", value: data.name, onChange: (e) => setData({ ...data, name: e.target.value }), autoFocus: true })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "ana@empresa.com", value: data.email, onChange: (e) => setData({ ...data, email: e.target.value }) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tel\xE9fono"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "+34 600 000 000", value: data.phone, onChange: (e) => setData({ ...data, phone: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Empresa"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Empresa S.L.", value: data.company, onChange: (e) => setData({ ...data, company: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Sector"), /* @__PURE__ */ React.createElement("select", { className: "select", value: data.sector, onChange: (e) => setData({ ...data, sector: e.target.value }) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Selecciona un sector\u2026"), /* @__PURE__ */ React.createElement("option", { value: "Restauraci\xF3n" }, "Restauraci\xF3n"), /* @__PURE__ */ React.createElement("option", { value: "Moda / Retail" }, "Moda / Retail"), /* @__PURE__ */ React.createElement("option", { value: "Salud / Bienestar" }, "Salud / Bienestar"), /* @__PURE__ */ React.createElement("option", { value: "Tecnolog\xEDa" }, "Tecnolog\xEDa"), /* @__PURE__ */ React.createElement("option", { value: "Educaci\xF3n" }, "Educaci\xF3n"), /* @__PURE__ */ React.createElement("option", { value: "Inmobiliaria" }, "Inmobiliaria"), /* @__PURE__ */ React.createElement("option", { value: "Hosteler\xEDa" }, "Hosteler\xEDa"), /* @__PURE__ */ React.createElement("option", { value: "Deporte / Fitness" }, "Deporte / Fitness"), /* @__PURE__ */ React.createElement("option", { value: "ONG / Social" }, "ONG / Social"), /* @__PURE__ */ React.createElement("option", { value: "Consultor\xEDa" }, "Consultor\xEDa"), /* @__PURE__ */ React.createElement("option", { value: "Arte / Cultura" }, "Arte / Cultura"), /* @__PURE__ */ React.createElement("option", { value: "Construcci\xF3n" }, "Construcci\xF3n"), /* @__PURE__ */ React.createElement("option", { value: "Alimentaci\xF3n" }, "Alimentaci\xF3n"), /* @__PURE__ */ React.createElement("option", { value: "Otro" }, "Otro")))));
+  const SECTORES = ["Restauraci\xF3n", "Moda / Retail", "Salud / Bienestar", "Tecnolog\xEDa", "Educaci\xF3n", "Inmobiliaria", "Hosteler\xEDa", "Deporte / Fitness", "ONG / Social", "Consultor\xEDa", "Arte / Cultura", "Construcci\xF3n", "Alimentaci\xF3n", "Otro"];
+  return /* @__PURE__ */ React.createElement(
+    QuickModal,
+    {
+      open: true,
+      onClose: () => {
+        reset();
+        onClose();
+      },
+      onSubmit: submit,
+      canSubmit: !!data.name.trim(),
+      headerLabel: "Nuevo cliente",
+      titlePlaceholder: "Nombre del cliente...",
+      titleValue: data.name,
+      onTitleChange: (v) => setData({ ...data, name: v }),
+      secondPlaceholder: "Empresa (opcional)",
+      secondValue: data.company,
+      onSecondChange: (v) => setData({ ...data, company: v }),
+      tabs: [
+        { id: "email", label: "Email", icon: "mail", hasVal: !!data.email },
+        { id: "phone", label: "Tel\xE9fono", icon: "phone", hasVal: !!data.phone },
+        { id: "sector", label: "Sector", icon: "tag", hasVal: !!data.sector, badge: data.sector || null }
+      ],
+      renderTab: (id) => {
+        if (id === "email") return /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            style: { ...QUICK_FIELD, width: "100%", maxWidth: 320, textAlign: "center" },
+            type: "email",
+            placeholder: "ana@empresa.com",
+            value: data.email,
+            onChange: (e) => setData({ ...data, email: e.target.value }),
+            autoFocus: true
+          }
+        );
+        if (id === "phone") return /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            style: { ...QUICK_FIELD, width: "100%", maxWidth: 320, textAlign: "center" },
+            type: "tel",
+            placeholder: "+34 600 000 000",
+            value: data.phone,
+            onChange: (e) => setData({ ...data, phone: e.target.value }),
+            autoFocus: true
+          }
+        );
+        if (id === "sector") return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", maxHeight: 180, overflowY: "auto" } }, SECTORES.map((s) => /* @__PURE__ */ React.createElement(QuickPill, { key: s, selected: data.sector === s, onClick: () => setData({ ...data, sector: data.sector === s ? "" : s }) }, s)));
+        return null;
+      }
+    }
+  );
 };
 const ApproveDeliverableModal = ({ open, onClose, deliverable }) => {
   const [comment, setComment] = useState("");

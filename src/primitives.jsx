@@ -736,4 +736,176 @@ const TimePicker = ({ value, onChange, onClose }) => {
   );
 };
 
-Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker });
+// ── QuickModal — shell de creación estilo Tareas (overlay blur, card redondeada,
+//    X + flecha de envío, input grande sin bordes, tabs pill abajo) ─────────────
+// Uso:
+//   <QuickModal open onClose onSubmit canSubmit
+//     titlePlaceholder="Nombre..." titleValue={v} onTitleChange={fn}
+//     secondPlaceholder="Descripción (opcional)" secondValue={v2} onSecondChange={fn2}
+//     tabs={[{id,label,icon,hasVal,badge}]} renderTab={(id)=>nodo} />
+const QUICK_FIELD = {
+  background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.14)",
+  borderRadius:14, color:"var(--text)", fontSize:16, padding:"10px 22px",
+  fontFamily:"var(--font-sans)", letterSpacing:"-0.5px", outline:"none",
+};
+
+const QuickPill = ({ selected, onClick, children, accent = "#9e9ae5" }) => (
+  <button onClick={onClick} style={{
+    padding:"8px 18px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
+    background: selected ? accent + "22" : "rgba(255,255,255,0.07)",
+    border: selected ? `1px solid ${accent}66` : "0.5px solid rgba(255,255,255,0.12)",
+    color: selected ? accent : "var(--text-muted)",
+    cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+  }}>
+    {children}
+  </button>
+);
+
+const QuickModal = ({
+  open, onClose, onSubmit, canSubmit,
+  headerLabel = "Crear nuevo",
+  accent = "#9e9ae5",
+  titlePlaceholder = "Nombre...",
+  titleValue = "", onTitleChange,
+  secondPlaceholder, secondValue = "", onSecondChange,
+  tabs = [],
+  renderTab,
+}) => {
+  const [activeTab, setActiveTab] = useState(null);
+  useEffect(() => { if (open) setActiveTab(null); }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const fn = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [open]);
+  if (!open) return null;
+
+  const toggleTab = (id) => setActiveTab(prev => prev === id ? null : id);
+
+  return (
+    <div
+      style={{
+        position:"fixed", inset:0,
+        background:"rgba(0,0,0,0.78)",
+        backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+        zIndex:200,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:24,
+        animation:"fade .15s ease-out",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:520,
+          background:"#111111",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:32,
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+          display:"flex", flexDirection:"column",
+          overflow:"hidden",
+          minHeight:420,
+        }}
+      >
+        {/* Top bar */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"22px 22px 0" }}>
+          <button onClick={onClose} style={{
+            width:40, height:40, borderRadius:"50%",
+            background:"rgba(255,255,255,0.08)",
+            border:"0.5px solid rgba(255,255,255,0.1)",
+            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+            color:"var(--text-muted)",
+          }}>
+            <Icon name="x" size={15}/>
+          </button>
+
+          <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>{headerLabel}</div>
+
+          <button onClick={() => { if (canSubmit) onSubmit(); }} style={{
+            width:40, height:40, borderRadius:"50%",
+            background: canSubmit ? accent : "rgba(255,255,255,0.08)",
+            border:"none", cursor: canSubmit ? "pointer" : "default",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            color:"#fff", transition:"all .15s", opacity: canSubmit ? 1 : 0.4,
+          }}>
+            <Icon name="arrow-up" size={15}/>
+          </button>
+        </div>
+
+        {/* Inputs de título + secundario */}
+        <div style={{ padding:"28px 28px 8px" }}>
+          <input
+            autoFocus
+            placeholder={titlePlaceholder}
+            value={titleValue}
+            onChange={e => onTitleChange && onTitleChange(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && canSubmit) onSubmit(); }}
+            style={{
+              width:"100%", background:"transparent", border:"none", outline:"none",
+              fontSize:28, fontWeight:400, letterSpacing:"-1.4px",
+              color: titleValue ? "var(--text)" : "rgba(255,255,255,0.15)",
+              fontFamily:"var(--font-display)", caretColor: accent,
+            }}
+          />
+          {onSecondChange && (
+            <input
+              placeholder={secondPlaceholder || "Descripción (opcional)"}
+              value={secondValue}
+              onChange={e => onSecondChange(e.target.value)}
+              style={{
+                width:"100%", background:"transparent", border:"none", outline:"none",
+                fontSize:14, letterSpacing:"-0.5px", marginTop:8,
+                color: secondValue ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+                fontFamily:"var(--font-sans)", caretColor: accent,
+              }}
+            />
+          )}
+        </div>
+
+        {/* Zona central — panel del tab activo */}
+        <div style={{ flex:1, padding:"0 28px", minHeight:120, display:"flex", alignItems:"center", justifyContent:"center" }}>
+          {!activeTab ? (
+            <div style={{ color:"rgba(255,255,255,0.08)", fontSize:13, letterSpacing:"-0.5px" }}>
+              Selecciona una opción abajo
+            </div>
+          ) : (renderTab ? renderTab(activeTab) : null)}
+        </div>
+
+        {/* Divider */}
+        <div style={{ height:"0.5px", background:"rgba(255,255,255,0.07)" }}/>
+
+        {/* Tabs inferiores */}
+        <div style={{ display:"flex", gap:8, padding:"16px 22px 22px", flexWrap:"wrap" }}>
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => toggleTab(tab.id)} style={{
+              display:"flex", alignItems:"center", gap:6,
+              padding:"8px 16px", borderRadius:99,
+              background: activeTab === tab.id
+                ? accent + "22"
+                : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+              border: activeTab === tab.id
+                ? `0.5px solid ${accent}55`
+                : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
+              color: activeTab === tab.id ? accent : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
+              fontSize:13, letterSpacing:"-0.5px", cursor:"pointer",
+              fontFamily:"var(--font-sans)", transition:"all .12s",
+            }}>
+              <Icon name={tab.icon} size={13} strokeWidth={1.6}/>
+              {tab.label}
+              {tab.hasVal && tab.badge && (
+                <span style={{ fontSize:10, color:accent, marginLeft:2 }}>{tab.badge}</span>
+              )}
+              {tab.hasVal && !tab.badge && (
+                <span style={{ width:6, height:6, borderRadius:"50%", background:accent, flexShrink:0 }}/>
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker, ActionPill, QuickModal, QuickPill, QUICK_FIELD });

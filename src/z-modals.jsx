@@ -633,52 +633,49 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
     );
   }
 
+  const SECTORES = ["Restauración","Moda / Retail","Salud / Bienestar","Tecnología","Educación","Inmobiliaria","Hostelería","Deporte / Fitness","ONG / Social","Consultoría","Arte / Cultura","Construcción","Alimentación","Otro"];
+
   return (
-    <Modal open={true} onClose={() => { reset(); onClose(); }} title="Nuevo cliente" sub="Solo lo esencial. Detalles adicionales más tarde." footer={
-      <>
-        <button className="btn" onClick={onClose}>Cancelar</button>
-        <button className="btn primary" onClick={submit}>Crear cliente</button>
-      </>
-    }>
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 14}}>
-        <div style={{gridColumn:"1 / -1"}}>
-          <div className="label">Nombre de contacto</div>
-          <input className="input" placeholder="Ej. Ana Marín" value={data.name} onChange={e => setData({...data, name: e.target.value})} autoFocus/>
-        </div>
-        <div>
-          <div className="label">Email</div>
-          <input className="input" placeholder="ana@empresa.com" value={data.email} onChange={e => setData({...data, email: e.target.value})}/>
-        </div>
-        <div>
-          <div className="label">Teléfono</div>
-          <input className="input" placeholder="+34 600 000 000" value={data.phone} onChange={e => setData({...data, phone: e.target.value})}/>
-        </div>
-        <div style={{gridColumn:"1 / -1"}}>
-          <div className="label">Empresa</div>
-          <input className="input" placeholder="Empresa S.L." value={data.company} onChange={e => setData({...data, company: e.target.value})}/>
-        </div>
-        <div style={{gridColumn:"1 / -1"}}>
-          <div className="label">Sector</div>
-          <select className="select" value={data.sector} onChange={e => setData({...data, sector: e.target.value})}>
-            <option value="">Selecciona un sector…</option>
-            <option value="Restauración">Restauración</option>
-            <option value="Moda / Retail">Moda / Retail</option>
-            <option value="Salud / Bienestar">Salud / Bienestar</option>
-            <option value="Tecnología">Tecnología</option>
-            <option value="Educación">Educación</option>
-            <option value="Inmobiliaria">Inmobiliaria</option>
-            <option value="Hostelería">Hostelería</option>
-            <option value="Deporte / Fitness">Deporte / Fitness</option>
-            <option value="ONG / Social">ONG / Social</option>
-            <option value="Consultoría">Consultoría</option>
-            <option value="Arte / Cultura">Arte / Cultura</option>
-            <option value="Construcción">Construcción</option>
-            <option value="Alimentación">Alimentación</option>
-            <option value="Otro">Otro</option>
-          </select>
-        </div>
-      </div>
-    </Modal>
+    <QuickModal
+      open={true}
+      onClose={() => { reset(); onClose(); }}
+      onSubmit={submit}
+      canSubmit={!!data.name.trim()}
+      headerLabel="Nuevo cliente"
+      titlePlaceholder="Nombre del cliente..."
+      titleValue={data.name}
+      onTitleChange={v => setData({ ...data, name: v })}
+      secondPlaceholder="Empresa (opcional)"
+      secondValue={data.company}
+      onSecondChange={v => setData({ ...data, company: v })}
+      tabs={[
+        { id:"email",  label:"Email",    icon:"mail",  hasVal: !!data.email },
+        { id:"phone",  label:"Teléfono", icon:"phone", hasVal: !!data.phone },
+        { id:"sector", label:"Sector",   icon:"tag",   hasVal: !!data.sector, badge: data.sector || null },
+      ]}
+      renderTab={(id) => {
+        if (id === "email") return (
+          <input style={{ ...QUICK_FIELD, width:"100%", maxWidth:320, textAlign:"center" }} type="email"
+            placeholder="ana@empresa.com" value={data.email}
+            onChange={e => setData({ ...data, email: e.target.value })} autoFocus/>
+        );
+        if (id === "phone") return (
+          <input style={{ ...QUICK_FIELD, width:"100%", maxWidth:320, textAlign:"center" }} type="tel"
+            placeholder="+34 600 000 000" value={data.phone}
+            onChange={e => setData({ ...data, phone: e.target.value })} autoFocus/>
+        );
+        if (id === "sector") return (
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", maxHeight:180, overflowY:"auto" }}>
+            {SECTORES.map(s => (
+              <QuickPill key={s} selected={data.sector === s} onClick={() => setData({ ...data, sector: data.sector === s ? "" : s })}>
+                {s}
+              </QuickPill>
+            ))}
+          </div>
+        );
+        return null;
+      }}
+    />
   );
 };
 

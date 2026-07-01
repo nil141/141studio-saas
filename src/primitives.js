@@ -193,7 +193,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     textTransform: "uppercase",
     padding: "0 12px",
     marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge }))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && session?.role === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
+  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge }))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
@@ -441,7 +441,7 @@ const ConfirmProvider = ({ children }) => {
   const [state, setState] = useState(null);
   const confirm = (opts) => new Promise((resolve) => setState({ ...opts, resolve }));
   const close = (val) => {
-    state?.resolve(val);
+    state == null ? void 0 : state.resolve(val);
     setState(null);
   };
   return /* @__PURE__ */ React.createElement(ConfirmContext.Provider, { value: confirm }, children, state && /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: () => close(false) }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 420 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, state.title || "\xBFEst\xE1s seguro?"), state.body ? /* @__PURE__ */ React.createElement("div", { className: "modal-sub", style: { marginTop: 6, lineHeight: 1.5 } }, state.body) : null)), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => close(false) }, state.cancelLabel || "Cancelar"), /* @__PURE__ */ React.createElement(
@@ -701,4 +701,182 @@ const TimePicker = ({ value, onChange, onClose }) => {
     )
   );
 };
-Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker });
+const QUICK_FIELD = {
+  background: "rgba(255,255,255,0.07)",
+  border: "0.5px solid rgba(255,255,255,0.14)",
+  borderRadius: 14,
+  color: "var(--text)",
+  fontSize: 16,
+  padding: "10px 22px",
+  fontFamily: "var(--font-sans)",
+  letterSpacing: "-0.5px",
+  outline: "none"
+};
+const QuickPill = ({ selected, onClick, children, accent = "#9e9ae5" }) => /* @__PURE__ */ React.createElement("button", { onClick, style: {
+  padding: "8px 18px",
+  borderRadius: 99,
+  fontSize: 13,
+  letterSpacing: "-0.5px",
+  background: selected ? accent + "22" : "rgba(255,255,255,0.07)",
+  border: selected ? `1px solid ${accent}66` : "0.5px solid rgba(255,255,255,0.12)",
+  color: selected ? accent : "var(--text-muted)",
+  cursor: "pointer",
+  fontFamily: "var(--font-sans)",
+  transition: "all .1s"
+} }, children);
+const QuickModal = ({
+  open,
+  onClose,
+  onSubmit,
+  canSubmit,
+  headerLabel = "Crear nuevo",
+  accent = "#9e9ae5",
+  titlePlaceholder = "Nombre...",
+  titleValue = "",
+  onTitleChange,
+  secondPlaceholder,
+  secondValue = "",
+  onSecondChange,
+  tabs = [],
+  renderTab
+}) => {
+  const [activeTab, setActiveTab] = useState(null);
+  useEffect(() => {
+    if (open) setActiveTab(null);
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const fn = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [open]);
+  if (!open) return null;
+  const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
+  return /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      style: {
+        position: "fixed",
+        inset: 0,
+        background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(16px)",
+        WebkitBackdropFilter: "blur(16px)",
+        zIndex: 200,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+        animation: "fade .15s ease-out"
+      },
+      onClick: onClose
+    },
+    /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick: (e) => e.stopPropagation(),
+        style: {
+          width: "100%",
+          maxWidth: 520,
+          background: "#111111",
+          border: "0.5px solid rgba(255,255,255,0.08)",
+          borderRadius: 32,
+          animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          minHeight: 420
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        background: "rgba(255,255,255,0.08)",
+        border: "0.5px solid rgba(255,255,255,0.1)",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "var(--text-muted)"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, headerLabel), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+        if (canSubmit) onSubmit();
+      }, style: {
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        background: canSubmit ? accent : "rgba(255,255,255,0.08)",
+        border: "none",
+        cursor: canSubmit ? "pointer" : "default",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        transition: "all .15s",
+        opacity: canSubmit ? 1 : 0.4
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))),
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          placeholder: titlePlaceholder,
+          value: titleValue,
+          onChange: (e) => onTitleChange && onTitleChange(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" && canSubmit) onSubmit();
+          },
+          style: {
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: 28,
+            fontWeight: 400,
+            letterSpacing: "-1.4px",
+            color: titleValue ? "var(--text)" : "rgba(255,255,255,0.15)",
+            fontFamily: "var(--font-display)",
+            caretColor: accent
+          }
+        }
+      ), onSecondChange && /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          placeholder: secondPlaceholder || "Descripci\xF3n (opcional)",
+          value: secondValue,
+          onChange: (e) => onSecondChange(e.target.value),
+          style: {
+            width: "100%",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: 14,
+            letterSpacing: "-0.5px",
+            marginTop: 8,
+            color: secondValue ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+            fontFamily: "var(--font-sans)",
+            caretColor: accent
+          }
+        }
+      )),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab ? /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo") : renderTab ? renderTab(activeTab) : null),
+      /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => toggleTab(tab.id), style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 16px",
+        borderRadius: 99,
+        background: activeTab === tab.id ? accent + "22" : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+        border: activeTab === tab.id ? `0.5px solid ${accent}55` : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
+        color: activeTab === tab.id ? accent : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
+        fontSize: 13,
+        letterSpacing: "-0.5px",
+        cursor: "pointer",
+        fontFamily: "var(--font-sans)",
+        transition: "all .12s"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.hasVal && tab.badge && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accent, marginLeft: 2 } }, tab.badge), tab.hasVal && !tab.badge && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accent, flexShrink: 0 } }))))
+    )
+  );
+};
+Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker, ActionPill, QuickModal, QuickPill, QUICK_FIELD });
