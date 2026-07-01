@@ -31,10 +31,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const D = window.Data;
   D.useStore();
 
-  // Reloj en vivo — se actualiza cada minuto
+  // Reloj en vivo — se actualiza cada segundo
   const [now, setNow] = useState(new Date());
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000 * 30);
+    const id = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -52,7 +52,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
   })();
 
-  const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
+  const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
 
   const agencyName     = D.SETTINGS.name || "141'STUDIO";
   const adminEmail     = D.SETTINGS.email || "nil@141agency.com";

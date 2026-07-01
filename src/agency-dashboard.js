@@ -14,7 +14,7 @@
     D.useStore();
     const [now, setNow] = useState(/* @__PURE__ */ new Date());
     useEffect(() => {
-      const id = setInterval(() => setNow(/* @__PURE__ */ new Date()), 1e3 * 30);
+      const id = setInterval(() => setNow(/* @__PURE__ */ new Date()), 1e3);
       return () => clearInterval(id);
     }, []);
     const greeting = (() => {
@@ -29,7 +29,7 @@
       const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
       return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
     })();
-    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
     const agencyName = D.SETTINGS.name || "141'STUDIO";
     const adminEmail = D.SETTINGS.email || "nil@141agency.com";
     const adminName = (() => {
