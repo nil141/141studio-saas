@@ -65,14 +65,15 @@
     }, []);
     const upcomingEvents = React.useMemo(() => {
       const ev = [];
-      const now2 = /* @__PURE__ */ new Date();
+      const todayMid = /* @__PURE__ */ new Date();
+      todayMid.setHours(0, 0, 0, 0);
       D.PROJECTS.forEach((p) => {
         const d = parseSpanishDate(p.deadline);
         if (d) ev.push({
           date: d,
           label: p.name,
           sub: p.clientName,
-          type: "entrega",
+          type: "Entrega",
           color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--green)",
           icon: "folder"
         });
@@ -83,27 +84,34 @@
           date: d,
           label: i.id,
           sub: `${i.client} \xB7 \u20AC${i.amount}`,
-          type: "factura",
+          type: "Factura",
           color: i.status === "overdue" ? "var(--red)" : "var(--amber)",
           icon: "receipt"
         });
       });
-      Object.entries(D.TASKS).forEach(([pid, taskList]) => {
-        const project = pid !== "__none__" ? D.PROJECTS.find((p) => p.id === pid) : null;
-        (taskList || []).forEach((t) => {
-          if (!t.deadline || t.column === "done") return;
-          const d = /* @__PURE__ */ new Date(t.deadline + "T00:00:00");
+      try {
+        const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+        (fin.subs || []).filter((s) => s.active !== false && s.nextRenewal).forEach((s) => {
+          let d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
           if (isNaN(d)) return;
+          let guard = 0;
+          while (d < todayMid && guard < 60) {
+            if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+            else d.setMonth(d.getMonth() + 1);
+            guard++;
+          }
+          const amount = Number(s.amount) || 0;
           ev.push({
             date: d,
-            label: t.title,
-            sub: project ? project.name : "\u2014",
-            type: "tarea",
-            color: "var(--blue)",
-            icon: "list-todo"
+            label: s.name,
+            sub: `Cobro \xB7 \u20AC${amount.toLocaleString("es-ES")} \xB7 ${s.cycle === "yearly" ? "anual" : "mensual"}`,
+            type: "Suscripci\xF3n",
+            color: "var(--accent)",
+            icon: "refresh-cw"
           });
         });
-      });
+      } catch (err) {
+      }
       try {
         const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
         custom.forEach((e) => {
@@ -125,13 +133,11 @@
         });
       } catch (err) {
       }
-      const todayMid = new Date(now2);
-      todayMid.setHours(0, 0, 0, 0);
       return ev.filter((e) => {
         const dMid = new Date(e.date);
         dMid.setHours(0, 0, 0, 0);
         const diff = Math.round((dMid - todayMid) / 864e5);
-        return diff >= -30 && diff <= 60;
+        return diff >= 0 && diff <= 90;
       }).sort((a, b) => a.date - b.date).slice(0, 8);
     }, [D.PROJECTS, D.INVOICES, D.TASKS]);
     const formatEventDate = (d) => {
@@ -415,7 +421,7 @@
       overflow: "hidden",
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
-    } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, formatEventDate(ev.date), ev.time ? `, ${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}` : "")),
+    } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, formatEventDate(ev.date), ev.time ? `, ${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}` : ""), ev.sub ? ` \xB7 ${ev.sub}` : "")),
     /* @__PURE__ */ React.createElement("span", { style: {
       fontSize: 10.5,
       padding: "3px 9px",

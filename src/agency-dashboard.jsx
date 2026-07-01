@@ -89,53 +89,61 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       .catch(() => setStripeMonth(false));
   }, []);
 
-  // ── Upcoming events ──
+  // ── Próximos eventos (solo lo que está por venir: reuniones, cobros, entregas, facturas) ──
   const upcomingEvents = React.useMemo(() => {
     const ev = [];
-    const now = new Date();
+    const todayMid = new Date(); todayMid.setHours(0,0,0,0);
 
-    // Proyectos con deadline
+    // Entregas de proyectos (con deadline futuro)
     D.PROJECTS.forEach(p => {
       const d = parseSpanishDate(p.deadline);
-      if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "entrega",
+      if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "Entrega",
         color: p.light==="red"?"var(--red)":p.light==="amber"?"var(--amber)":"var(--green)",
         icon: "folder" });
     });
 
-    // Facturas pendientes
+    // Facturas pendientes de cobro
     D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
       const d = parseSpanishDate(i.due);
-      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "factura",
+      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "Factura",
         color: i.status==="overdue"?"var(--red)":"var(--amber)", icon: "receipt" });
     });
 
-    // Tareas con deadline
-    Object.entries(D.TASKS).forEach(([pid, taskList]) => {
-      const project = pid !== "__none__" ? D.PROJECTS.find(p => p.id === pid) : null;
-      (taskList||[]).forEach(t => {
-        if (!t.deadline || t.column === "done") return;
-        const d = new Date(t.deadline + "T00:00:00");
+    // Cobros de suscripciones (siguiente renovación desde Gastos)
+    try {
+      const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+      (fin.subs || []).filter(s => s.active !== false && s.nextRenewal).forEach(s => {
+        let d = new Date(s.nextRenewal + "T00:00:00");
         if (isNaN(d)) return;
-        ev.push({ date: d, label: t.title, sub: project?project.name:"—", type: "tarea",
-          color: "var(--blue)", icon: "list-todo" });
+        // Si la fecha ya pasó, avanzamos al siguiente ciclo hasta que sea futura
+        let guard = 0;
+        while (d < todayMid && guard < 60) {
+          if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+          else d.setMonth(d.getMonth() + 1);
+          guard++;
+        }
+        const amount = Number(s.amount) || 0;
+        ev.push({
+          date: d, label: s.name,
+          sub: `Cobro · €${amount.toLocaleString("es-ES")} · ${s.cycle === "yearly" ? "anual" : "mensual"}`,
+          type: "Suscripción", color: "var(--accent)", icon: "refresh-cw",
+        });
       });
-    });
+    } catch (err) {}
 
-    // Eventos personalizados de Agenda (localStorage)
+    // Eventos personalizados de Agenda (reuniones, etc.)
     try {
       const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
       custom.forEach(e => {
         if (!e.date) return;
         const d = new Date(e.date + "T00:00:00");
         if (isNaN(d)) return;
-        const iconMap = { meeting:"users", task:"list-todo", custom:"calendar" };
+        const iconMap  = { meeting:"users", task:"list-todo", custom:"calendar" };
         const colorMap = { meeting:"var(--red)", task:"var(--accent)", custom:"var(--blue)" };
-        const typeLabel = { meeting:"Reunión", task:"Tarea", custom:"Evento" };
+        const typeLabel= { meeting:"Reunión", task:"Tarea", custom:"Evento" };
         ev.push({
-          date: d,
-          label: e.title,
-          time: e.time || null,
-          timeEnd: e.timeEnd || null,
+          date: d, label: e.title,
+          time: e.time || null, timeEnd: e.timeEnd || null,
           type: typeLabel[e.type] || "Evento",
           color: colorMap[e.type] || "var(--blue)",
           icon: iconMap[e.type] || "calendar",
@@ -143,12 +151,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       });
     } catch(err) {}
 
-    const todayMid = new Date(now); todayMid.setHours(0,0,0,0);
+    // Solo lo que está por venir: hoy en adelante (máx. 90 días)
     return ev
       .filter(e => {
         const dMid = new Date(e.date); dMid.setHours(0,0,0,0);
         const diff = Math.round((dMid - todayMid) / 86400000);
-        return diff >= -30 && diff <= 60;
+        return diff >= 0 && diff <= 90;
       })
       .sort((a,b) => a.date - b.date)
       .slice(0, 8);
@@ -465,8 +473,9 @@ const EventRow = ({ ev, last, formatEventDate }) => (
         fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
         color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
       }}>{ev.label}</div>
-      <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>
-        {formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}
+      <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ color: "var(--text-muted)" }}>{formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}</span>
+        {ev.sub ? ` · ${ev.sub}` : ""}
       </div>
     </div>
     <span style={{
