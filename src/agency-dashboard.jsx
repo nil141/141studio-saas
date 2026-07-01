@@ -31,8 +31,15 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const D = window.Data;
   D.useStore();
 
+  // Reloj en vivo — se actualiza cada minuto
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000 * 30);
+    return () => clearInterval(id);
+  }, []);
+
   const greeting = (() => {
-    const h = new Date().getHours();
+    const h = now.getHours();
     if (h < 6)  return "Buenas noches";
     if (h < 13) return "Buenos días";
     if (h < 21) return "Buenas tardes";
@@ -40,12 +47,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   })();
 
   const todayStr = (() => {
-    const now = new Date();
     const dias  = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
     const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
-    const d = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
-    return d.charAt(0).toUpperCase() + d.slice(1);
+    return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
   })();
+
+  const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}`;
 
   const agencyName     = D.SETTINGS.name || "141'STUDIO";
   const adminEmail     = D.SETTINGS.email || "nil@141agency.com";
@@ -63,16 +70,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     : activeProjects <= 3 ? "Capacidad cómoda"
     : activeProjects <= 4 ? "Capacidad media" : "Al límite";
 
-  // ── Mensaje contextual bajo el saludo (fecha + estado del día) ──
-  const dayMessage = (() => {
-    if (overdueTasks > 0)
-      return `Tienes ${overdueTasks} tarea${overdueTasks > 1 ? "s" : ""} vencida${overdueTasks > 1 ? "s" : ""} y ${pendingTasks} pendiente${pendingTasks !== 1 ? "s" : ""}. Vamos a por ellas.`;
-    if (pendingTasks > 0)
-      return `Tienes ${pendingTasks} tarea${pendingTasks > 1 ? "s" : ""} pendiente${pendingTasks > 1 ? "s" : ""} por delante. A por un buen día.`;
-    if (activeProjects > 0)
-      return "Todo al día por ahora. Buen momento para adelantar trabajo.";
-    return "Aquí empieza todo. Crea tu primer proyecto cuando quieras.";
-  })();
+  // ── Mensaje bajo el saludo: "Hoy es [fecha] y son las [hora]." ──
+  const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}.`;
 
   // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
@@ -238,7 +237,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             marginTop: 10, fontSize: 15, color: "var(--text-muted)", letterSpacing: "-0.3px",
             lineHeight: 1.5, maxWidth: 520,
           }}>
-            <span style={{ color: "var(--text)" }}>{todayStr}.</span> {dayMessage}
+            {dayMessage}
           </div>
         </div>
 

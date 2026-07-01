@@ -12,20 +12,24 @@
   const AgencyDashboard = ({ openModal, navigate, session }) => {
     const D = window.Data;
     D.useStore();
+    const [now, setNow] = useState(/* @__PURE__ */ new Date());
+    useEffect(() => {
+      const id = setInterval(() => setNow(/* @__PURE__ */ new Date()), 1e3 * 30);
+      return () => clearInterval(id);
+    }, []);
     const greeting = (() => {
-      const h = (/* @__PURE__ */ new Date()).getHours();
+      const h = now.getHours();
       if (h < 6) return "Buenas noches";
       if (h < 13) return "Buenos d\xEDas";
       if (h < 21) return "Buenas tardes";
       return "Buenas noches";
     })();
     const todayStr = (() => {
-      const now = /* @__PURE__ */ new Date();
       const dias = ["domingo", "lunes", "martes", "mi\xE9rcoles", "jueves", "viernes", "s\xE1bado"];
       const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-      const d = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
-      return d.charAt(0).toUpperCase() + d.slice(1);
+      return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
     })();
+    const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
     const agencyName = D.SETTINGS.name || "141'STUDIO";
     const adminEmail = D.SETTINGS.email || "nil@141agency.com";
     const adminName = (() => {
@@ -42,19 +46,11 @@
     const atRisk = D.PROJECTS.filter((p) => p.light === "red").length;
     const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
     const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad c\xF3moda" : activeProjects <= 4 ? "Capacidad media" : "Al l\xEDmite";
-    const dayMessage = (() => {
-      if (overdueTasks > 0)
-        return `Tienes ${overdueTasks} tarea${overdueTasks > 1 ? "s" : ""} vencida${overdueTasks > 1 ? "s" : ""} y ${pendingTasks} pendiente${pendingTasks !== 1 ? "s" : ""}. Vamos a por ellas.`;
-      if (pendingTasks > 0)
-        return `Tienes ${pendingTasks} tarea${pendingTasks > 1 ? "s" : ""} pendiente${pendingTasks > 1 ? "s" : ""} por delante. A por un buen d\xEDa.`;
-      if (activeProjects > 0)
-        return "Todo al d\xEDa por ahora. Buen momento para adelantar trabajo.";
-      return "Aqu\xED empieza todo. Crea tu primer proyecto cuando quieras.";
-    })();
+    const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}.`;
     const [stripeMonth, setStripeMonth] = useState(null);
     useEffect(() => {
-      const now = /* @__PURE__ */ new Date();
-      const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1e3);
+      const now2 = /* @__PURE__ */ new Date();
+      const monthStart = Math.floor(new Date(now2.getFullYear(), now2.getMonth(), 1).getTime() / 1e3);
       fetch("/api/stripe/invoices", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ limit: 100 }) }).then((r) => r.json()).then((res) => {
         if (!res.ok) {
           setStripeMonth(false);
@@ -69,7 +65,7 @@
     }, []);
     const upcomingEvents = React.useMemo(() => {
       const ev = [];
-      const now = /* @__PURE__ */ new Date();
+      const now2 = /* @__PURE__ */ new Date();
       D.PROJECTS.forEach((p) => {
         const d = parseSpanishDate(p.deadline);
         if (d) ev.push({
@@ -129,7 +125,7 @@
         });
       } catch (err) {
       }
-      const todayMid = new Date(now);
+      const todayMid = new Date(now2);
       todayMid.setHours(0, 0, 0, 0);
       return ev.filter((e) => {
         const dMid = new Date(e.date);
@@ -219,7 +215,7 @@
       letterSpacing: "-0.3px",
       lineHeight: 1.5,
       maxWidth: 520
-    } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)" } }, todayStr, "."), " ", dayMessage)), /* @__PURE__ */ React.createElement(
+    } }, dayMessage)), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: [
