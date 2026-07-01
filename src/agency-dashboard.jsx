@@ -435,8 +435,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     <div style={{
       display: "flex", flexDirection: "column", gap: 28,
       height: "100vh", overflow: "hidden",
-      padding: "32px 36px",
-      maxWidth: 1440, margin: "0 auto",
+      padding: "28px 32px",
+      maxWidth: 1400, margin: "0 auto",
     }}>
       {Header}
       {V3}

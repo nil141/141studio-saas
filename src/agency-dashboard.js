@@ -368,8 +368,8 @@
       gap: 28,
       height: "100vh",
       overflow: "hidden",
-      padding: "32px 36px",
-      maxWidth: 1440,
+      padding: "28px 32px",
+      maxWidth: 1400,
       margin: "0 auto"
     } }, Header, V3);
   };
