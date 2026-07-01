@@ -136,6 +136,18 @@
   ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg); }
   ::-webkit-scrollbar-track { background: transparent; }
 
+  /* scrollbar minimalista para la lista de tareas — slim, aparece al pasar el ratón */
+  .tasks-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; transition: scrollbar-color .2s; }
+  .tasks-scroll:hover { scrollbar-color: rgba(255,255,255,0.16) transparent; }
+  .tasks-scroll::-webkit-scrollbar { width: 6px; }
+  .tasks-scroll::-webkit-scrollbar-track { background: transparent; margin: 4px 0; }
+  .tasks-scroll::-webkit-scrollbar-thumb {
+    background: transparent; border: none; border-radius: 99px;
+    transition: background .2s;
+  }
+  .tasks-scroll:hover::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.14); }
+  .tasks-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
   /* App layout */
   .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
   .app.client { grid-template-columns: 220px 1fr; }
@@ -821,7 +833,7 @@
 <script src="src/agency-dashboard.js?v=9"></script>
 <script src="src/agency-clients.js?v=11"></script>
 <script src="src/agency-project.js?v=2"></script>
-<script src="src/agency-other.js?v=21"></script>
+<script src="src/agency-other.js?v=22"></script>
 <script src="src/agency-pipeline.js?v=2"></script>
 <script src="src/campaigns.js?v=5"></script>
 <script src="src/client-portal.js?v=2"></script>

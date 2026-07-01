@@ -466,11 +466,11 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       </div>
 
       {/* Zona scrollable: solo las tareas se deslizan */}
-      <div style={{
+      <div className="tasks-scroll" style={{
         flex:1, minHeight:0,
         overflowY:"auto",
         scrollbarGutter:"stable",
-        paddingRight:4, paddingBottom:24,
+        paddingRight:10, paddingBottom:24,
         WebkitMaskImage:"linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)",
         maskImage:"linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)",
       }}>

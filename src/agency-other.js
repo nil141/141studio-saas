@@ -248,12 +248,12 @@
         display: "flex",
         alignItems: "center"
       } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))),
-      /* @__PURE__ */ React.createElement("div", { style: {
+      /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
         flex: 1,
         minHeight: 0,
         overflowY: "auto",
         scrollbarGutter: "stable",
-        paddingRight: 4,
+        paddingRight: 10,
         paddingBottom: 24,
         WebkitMaskImage: "linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)",
         maskImage: "linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)"
