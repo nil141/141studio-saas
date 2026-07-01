@@ -1591,7 +1591,7 @@ const AgencyBilling = () => {
               <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
                 Gasto mensual
               </div>
-              <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
                 <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
                   {_eur(totalMonth)}
                 </span>
