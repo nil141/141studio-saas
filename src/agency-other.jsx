@@ -1491,8 +1491,8 @@ const AgencyBilling = () => {
   const toast = useToast();
   const [data, setData] = useState(_finLoad);
   const [tab, setTab]   = useState("subs"); // subs | expenses
-  const [addSub, setAddSub] = useState(false);
-  const [addExp, setAddExp] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [finType, setFinType] = useState("sub"); // "sub" | "exp" — tipo dentro del pop-up
   const blankSub = { name: "", amount: "", cycle: "monthly", category: "Software", nextRenewal: "" };
   const blankExp = { date: _todayISO(), concept: "", amount: "", category: "Software" };
   const [subForm, setSubForm] = useState(blankSub);
@@ -1504,7 +1504,7 @@ const AgencyBilling = () => {
     if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) { toast("Pon nombre e importe", "error"); return; }
     const sub = { id: _finId(), name: subForm.name.trim(), amount: Number(subForm.amount), cycle: subForm.cycle, category: subForm.category, nextRenewal: subForm.nextRenewal, active: true };
     persist({ ...data, subs: [sub, ...data.subs] });
-    setSubForm(blankSub); setAddSub(false); toast("Suscripción añadida", "success");
+    setSubForm(blankSub); setAddOpen(false); setTab("subs"); toast("Suscripción añadida", "success");
   };
   const toggleSub = (id) => persist({ ...data, subs: data.subs.map(s => s.id === id ? { ...s, active: !s.active } : s) });
   const delSub = (id) => persist({ ...data, subs: data.subs.filter(s => s.id !== id) });
@@ -1513,7 +1513,7 @@ const AgencyBilling = () => {
     if (!expForm.concept.trim() || !(Number(expForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
     const exp = { id: _finId(), date: expForm.date || _todayISO(), concept: expForm.concept.trim(), amount: Number(expForm.amount), category: expForm.category };
     persist({ ...data, expenses: [exp, ...data.expenses] });
-    setExpForm(blankExp); setAddExp(false); toast("Gasto añadido", "success");
+    setExpForm(blankExp); setAddOpen(false); setTab("expenses"); toast("Gasto añadido", "success");
   };
   const delExp = (id) => persist({ ...data, expenses: data.expenses.filter(e => e.id !== id) });
 
@@ -1560,12 +1560,7 @@ const AgencyBilling = () => {
           </div>
         </div>
         <ActionPill
-          plusActions={[
-            { icon: "refresh-cw", label: "Nueva suscripción", sub: "Gasto recurrente (mensual o anual).",
-              onClick: () => { setTab("subs"); setAddSub(true); setAddExp(false); } },
-            { icon: "receipt",    label: "Nuevo gasto puntual", sub: "Un gasto único de un día.",
-              accent: true, onClick: () => { setTab("expenses"); setAddExp(true); setAddSub(false); } },
-          ]}
+          plusActions={() => { setFinType(tab === "expenses" ? "exp" : "sub"); setAddOpen(true); }}
         />
       </div>
 
@@ -1671,9 +1666,9 @@ const AgencyBilling = () => {
         {/* ── Suscripciones ── */}
         {tab === "subs" && (
           <>
-            {data.subs.length === 0 && !addSub ? (
+            {data.subs.length === 0 && !addOpen ? (
               <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-                Sin suscripciones — <button className="btn ghost sm" onClick={() => setAddSub(true)}>añadir una</button>
+                Sin suscripciones — <button className="btn ghost sm" onClick={() => { setFinType("sub"); setAddOpen(true); }}>añadir una</button>
               </div>
             ) : data.subs.map((s, i) => (
               <div key={s.id} className="task-row" style={{
@@ -1723,9 +1718,9 @@ const AgencyBilling = () => {
         {/* ── Gastos puntuales ── */}
         {tab === "expenses" && (
           <>
-            {data.expenses.length === 0 && !addExp ? (
+            {data.expenses.length === 0 && !addOpen ? (
               <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-                Sin gastos puntuales — <button className="btn ghost sm" onClick={() => setAddExp(true)}>añadir uno</button>
+                Sin gastos puntuales — <button className="btn ghost sm" onClick={() => { setFinType("exp"); setAddOpen(true); }}>añadir uno</button>
               </div>
             ) : [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((e, i, arr) => (
               <div key={e.id} className="task-row" style={{
@@ -1759,27 +1754,43 @@ const AgencyBilling = () => {
         )}
       </div>
 
-      {/* ── Pop-up Nueva suscripción — estilo Tareas ── */}
+      {/* ── Pop-up unificado: Suscripción / Gasto puntual — estilo Tareas ── */}
       <QuickModal
-        open={addSub}
-        onClose={() => { setAddSub(false); setSubForm(blankSub); }}
-        onSubmit={saveSub}
-        canSubmit={!!subForm.name.trim() && Number(subForm.amount) > 0}
-        headerLabel="Nueva suscripción"
-        titlePlaceholder="Nombre de la suscripción..."
-        titleValue={subForm.name}
-        onTitleChange={v => setSubForm({ ...subForm, name: v })}
-        tabs={[
+        open={addOpen}
+        onClose={() => { setAddOpen(false); setSubForm(blankSub); setExpForm(blankExp); }}
+        onSubmit={() => (finType === "sub" ? saveSub() : saveExp())}
+        canSubmit={finType === "sub"
+          ? (!!subForm.name.trim() && Number(subForm.amount) > 0)
+          : (!!expForm.concept.trim() && Number(expForm.amount) > 0)}
+        types={[
+          { id:"sub", label:"Suscripción", icon:"refresh-cw" },
+          { id:"exp", label:"Gasto",       icon:"receipt"    },
+        ]}
+        type={finType}
+        onTypeChange={setFinType}
+        titlePlaceholder={finType === "sub" ? "Nombre de la suscripción..." : "Concepto del gasto..."}
+        titleValue={finType === "sub" ? subForm.name : expForm.concept}
+        onTitleChange={v => finType === "sub"
+          ? setSubForm({ ...subForm, name: v })
+          : setExpForm({ ...expForm, concept: v })}
+        tabs={finType === "sub" ? [
           { id:"amount",  label:"Importe",    icon:"receipt",    hasVal: Number(subForm.amount) > 0, badge: Number(subForm.amount) > 0 ? _eur(subForm.amount) : null },
           { id:"cycle",   label:"Ciclo",      icon:"refresh-cw", hasVal: true, badge: subForm.cycle === "yearly" ? "Anual" : "Mensual" },
           { id:"cat",     label:"Categoría",  icon:"tag",        hasVal: true, badge: subForm.category },
           { id:"renewal", label:"Renovación", icon:"calendar",   hasVal: !!subForm.nextRenewal, badge: subForm.nextRenewal ? _finDate(subForm.nextRenewal) : null },
+        ] : [
+          { id:"amount", label:"Importe",   icon:"receipt",  hasVal: Number(expForm.amount) > 0, badge: Number(expForm.amount) > 0 ? _eur(expForm.amount) : null },
+          { id:"date",   label:"Fecha",     icon:"calendar", hasVal: !!expForm.date, badge: expForm.date ? _finDate(expForm.date) : null },
+          { id:"cat",    label:"Categoría", icon:"tag",      hasVal: true, badge: expForm.category },
         ]}
         renderTab={(id) => {
           if (id === "amount") return (
             <input style={{ ...QUICK_FIELD, width:180, textAlign:"center", fontSize:22, fontWeight:300, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}
               type="number" step="0.01" min="0" placeholder="0,00 €" autoFocus
-              value={subForm.amount} onChange={e => setSubForm({ ...subForm, amount: e.target.value })}/>
+              value={finType === "sub" ? subForm.amount : expForm.amount}
+              onChange={e => finType === "sub"
+                ? setSubForm({ ...subForm, amount: e.target.value })
+                : setExpForm({ ...expForm, amount: e.target.value })}/>
           );
           if (id === "cycle") return (
             <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
@@ -1793,7 +1804,11 @@ const AgencyBilling = () => {
           if (id === "cat") return (
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
               {FIN_CATS.map(c => (
-                <QuickPill key={c} selected={subForm.category === c} onClick={() => setSubForm({ ...subForm, category: c })}>
+                <QuickPill key={c}
+                  selected={(finType === "sub" ? subForm.category : expForm.category) === c}
+                  onClick={() => finType === "sub"
+                    ? setSubForm({ ...subForm, category: c })
+                    : setExpForm({ ...expForm, category: c })}>
                   {c}
                 </QuickPill>
               ))}
@@ -1803,43 +1818,9 @@ const AgencyBilling = () => {
             <input style={{ ...QUICK_FIELD }} type="date"
               value={subForm.nextRenewal} onChange={e => setSubForm({ ...subForm, nextRenewal: e.target.value })}/>
           );
-          return null;
-        }}
-      />
-
-      {/* ── Pop-up Nuevo gasto puntual — estilo Tareas ── */}
-      <QuickModal
-        open={addExp}
-        onClose={() => { setAddExp(false); setExpForm(blankExp); }}
-        onSubmit={saveExp}
-        canSubmit={!!expForm.concept.trim() && Number(expForm.amount) > 0}
-        headerLabel="Nuevo gasto puntual"
-        titlePlaceholder="Concepto del gasto..."
-        titleValue={expForm.concept}
-        onTitleChange={v => setExpForm({ ...expForm, concept: v })}
-        tabs={[
-          { id:"amount", label:"Importe",   icon:"receipt",  hasVal: Number(expForm.amount) > 0, badge: Number(expForm.amount) > 0 ? _eur(expForm.amount) : null },
-          { id:"date",   label:"Fecha",     icon:"calendar", hasVal: !!expForm.date, badge: expForm.date ? _finDate(expForm.date) : null },
-          { id:"cat",    label:"Categoría", icon:"tag",      hasVal: true, badge: expForm.category },
-        ]}
-        renderTab={(id) => {
-          if (id === "amount") return (
-            <input style={{ ...QUICK_FIELD, width:180, textAlign:"center", fontSize:22, fontWeight:300, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}
-              type="number" step="0.01" min="0" placeholder="0,00 €" autoFocus
-              value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })}/>
-          );
           if (id === "date") return (
             <input style={{ ...QUICK_FIELD }} type="date"
               value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })}/>
-          );
-          if (id === "cat") return (
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-              {FIN_CATS.map(c => (
-                <QuickPill key={c} selected={expForm.category === c} onClick={() => setExpForm({ ...expForm, category: c })}>
-                  {c}
-                </QuickPill>
-              ))}
-            </div>
           );
           return null;
         }}

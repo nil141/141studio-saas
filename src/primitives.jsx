@@ -770,6 +770,8 @@ const QuickModal = ({
   secondPlaceholder, secondValue = "", onSecondChange,
   tabs = [],
   renderTab,
+  // Selector de tipo en la barra superior (como Tarea/Evento/Reunión en Tareas)
+  types = null, type = null, onTypeChange,
 }) => {
   const [activeTab, setActiveTab] = useState(null);
   useEffect(() => { if (open) setActiveTab(null); }, [open]);
@@ -821,7 +823,26 @@ const QuickModal = ({
             <Icon name="x" size={15}/>
           </button>
 
-          <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>{headerLabel}</div>
+          {types && types.length > 0 ? (
+            <div style={{ display:"flex", gap:6 }}>
+              {types.map(tp => (
+                <button key={tp.id} onClick={() => onTypeChange && onTypeChange(tp.id)} style={{
+                  display:"flex", alignItems:"center", gap:5,
+                  padding:"6px 13px", borderRadius:99,
+                  background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
+                  border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
+                  color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
+                  fontSize:12, letterSpacing:"-0.4px", cursor:"pointer",
+                  fontFamily:"var(--font-sans)", transition:"all .1s",
+                }}>
+                  <Icon name={tp.icon} size={12} strokeWidth={1.6}/>
+                  {tp.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>{headerLabel}</div>
+          )}
 
           <button onClick={() => { if (canSubmit) onSubmit(); }} style={{
             width:40, height:40, borderRadius:"50%",
