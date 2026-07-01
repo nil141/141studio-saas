@@ -471,6 +471,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         overflowY:"auto",
         scrollbarGutter:"stable",
         paddingRight:4, paddingBottom:80,
+        WebkitMaskImage:"linear-gradient(to bottom, #000 calc(100% - 56px), transparent 100%)",
+        maskImage:"linear-gradient(to bottom, #000 calc(100% - 56px), transparent 100%)",
       }}>
 
       {groups.length === 0 && (

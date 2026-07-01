@@ -254,7 +254,9 @@
         overflowY: "auto",
         scrollbarGutter: "stable",
         paddingRight: 4,
-        paddingBottom: 80
+        paddingBottom: 80,
+        WebkitMaskImage: "linear-gradient(to bottom, #000 calc(100% - 56px), transparent 100%)",
+        maskImage: "linear-gradient(to bottom, #000 calc(100% - 56px), transparent 100%)"
       } }, groups.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), groups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
         const pid = (project == null ? void 0 : project.id) || "__none__";
         const isDone = t.column === "done";
