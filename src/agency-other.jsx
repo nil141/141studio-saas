@@ -1408,13 +1408,13 @@ const _finSmooth = (pts) => {
 };
 
 // Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
-const FinTrendChart = ({ trend, recurring }) => {
+const FinTrendChart = ({ trend }) => {
   const [hov, setHov] = useState(null); // índice de mes
   const W = 600, H = 150, PX = 10, PY = 14;
-  const maxV = Math.max(recurring, ...trend.map(t => t.puntual), 1) * 1.15;
+  const maxV = Math.max(...trend.map(t => t.rec), ...trend.map(t => t.puntual), 1) * 1.15;
   const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
   const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
-  const recPts = trend.map((t, i) => [x(i), y(recurring)]);
+  const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
   const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
 
   const onMove = (e) => {
@@ -1448,7 +1448,7 @@ const FinTrendChart = ({ trend, recurring }) => {
         {/* Puntos del mes bajo el cursor (o del último) */}
         {(hov !== null ? [hov] : [trend.length - 1]).map(i => (
           <g key={i}>
-            <circle cx={x(i)} cy={y(recurring)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
+            <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
             <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
           </g>
         ))}
@@ -1474,7 +1474,7 @@ const FinTrendChart = ({ trend, recurring }) => {
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
             <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
             <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(recurring)}</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov].rec)}</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
             <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
@@ -1523,16 +1523,27 @@ const AgencyBilling = () => {
   const totalMonth  = recurringMo + expMonth;
 
   // ── Serie mensual (últimos 6 meses) para el gráfico ──
+  // El recurrente se calcula por mes: cada suscripción cuenta desde su fecha de
+  // renovación (cuando empezó a pagarse), nunca antes. Sin fecha → desde el mes actual.
   const MES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const trend = (() => {
     const now = new Date();
+    const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const subStartKey = (s) => {
+      if (!s.nextRenewal) return nowKey;
+      const k = s.nextRenewal.slice(0, 7); // YYYY-MM
+      return k < nowKey ? k : nowKey;      // si la renovación es futura, ya se paga ahora
+    };
     return Array.from({ length: 6 }, (_, k) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const puntual = data.expenses
         .filter(e => (e.date || "").startsWith(key))
         .reduce((a, e) => a + (Number(e.amount) || 0), 0);
-      return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, total: puntual + recurringMo };
+      const rec = activeSubs
+        .filter(s => subStartKey(s) <= key)
+        .reduce((a, s) => a + _subMonthly(s), 0);
+      return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
     });
   })();
   const deltaPct = trend[4].total > 0
@@ -1603,7 +1614,7 @@ const AgencyBilling = () => {
               ))}
             </div>
           </div>
-          <FinTrendChart trend={trend} recurring={recurringMo}/>
+          <FinTrendChart trend={trend}/>
         </div>
 
         {/* Card B — Por categoría (barras) */}

@@ -703,13 +703,13 @@
     }
     return d;
   };
-  const FinTrendChart = ({ trend, recurring }) => {
+  const FinTrendChart = ({ trend }) => {
     const [hov, setHov] = useState(null);
     const W = 600, H = 150, PX = 10, PY = 14;
-    const maxV = Math.max(recurring, ...trend.map((t) => t.puntual), 1) * 1.15;
+    const maxV = Math.max(...trend.map((t) => t.rec), ...trend.map((t) => t.puntual), 1) * 1.15;
     const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
     const y = (v) => H - PY - v / maxV * (H - 2 * PY);
-    const recPts = trend.map((t, i) => [x(i), y(recurring)]);
+    const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
     const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
     const onMove = (e) => {
       const r = e.currentTarget.getBoundingClientRect();
@@ -782,7 +782,7 @@
           vectorEffect: "non-scaling-stroke"
         }
       ),
-      (hov !== null ? [hov] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(recurring), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
+      (hov !== null ? [hov] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
     ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "6px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 10, color: hov === i ? "var(--text)" : "var(--text-subtle)", letterSpacing: "0.04em", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       top: -6,
@@ -796,7 +796,7 @@
       zIndex: 5,
       boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
       whiteSpace: "nowrap"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(recurring))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov].puntual)))));
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov].puntual)))));
   };
   const AgencyBilling = () => {
     const toast = useToast();
@@ -846,11 +846,18 @@
     const MES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const trend = (() => {
       const now = /* @__PURE__ */ new Date();
+      const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const subStartKey = (s) => {
+        if (!s.nextRenewal) return nowKey;
+        const k = s.nextRenewal.slice(0, 7);
+        return k < nowKey ? k : nowKey;
+      };
       return Array.from({ length: 6 }, (_, k) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         const puntual = data.expenses.filter((e) => (e.date || "").startsWith(key)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
-        return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, total: puntual + recurringMo };
+        const rec = activeSubs.filter((s) => subStartKey(s) <= key).reduce((a, s) => a + _subMonthly(s), 0);
+        return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
       });
     })();
     const deltaPct = trend[4].total > 0 ? Math.round((trend[5].total - trend[4].total) / trend[4].total * 100) : null;
@@ -888,7 +895,7 @@
       fontVariantNumeric: "tabular-nums",
       letterSpacing: "-0.3px",
       color: deltaPct > 0 ? "var(--red)" : deltaPct < 0 ? "var(--green)" : "var(--text-subtle)"
-    } }, deltaPct > 0 ? "\u2197" : deltaPct < 0 ? "\u2198" : "\u2192", " ", Math.abs(deltaPct), "%", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, fontWeight: 500, color: "var(--text-subtle)", letterSpacing: "-0.1px" } }, "vs ", trend[4].label.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement(FinTrendChart, { trend, recurring: recurringMo })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, flexShrink: 0 } }, "Por categor\xEDa \xB7 este mes"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 13 } }, cats.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : cats.map(([cat, amt]) => /* @__PURE__ */ React.createElement("div", { key: cat }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", letterSpacing: "-0.2px" } }, cat), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)" } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(3, amt / catMax * 100)}%`, background: FIN_SERIES.rec, borderRadius: 99, transition: "width .3s" } })))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" } }, [
+    } }, deltaPct > 0 ? "\u2197" : deltaPct < 0 ? "\u2198" : "\u2192", " ", Math.abs(deltaPct), "%", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, fontWeight: 500, color: "var(--text-subtle)", letterSpacing: "-0.1px" } }, "vs ", trend[4].label.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement(FinTrendChart, { trend })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, flexShrink: 0 } }, "Por categor\xEDa \xB7 este mes"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 13 } }, cats.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : cats.map(([cat, amt]) => /* @__PURE__ */ React.createElement("div", { key: cat }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", letterSpacing: "-0.2px" } }, cat), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)" } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(3, amt / catMax * 100)}%`, background: FIN_SERIES.rec, borderRadius: 99, transition: "width .3s" } })))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" } }, [
       { label: "Recurrente", value: _eur(recurringMo), sub: "al mes" },
       { label: "Puntual", value: _eur(expMonth), sub: "este mes" },
       { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo suscripciones" }
