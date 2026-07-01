@@ -319,7 +319,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   // Bloques reutilizables
   const AgendaBlock = ({ height = 360, slice = 8 }) => (
-    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height }}>
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
@@ -341,7 +341,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   );
 
   const QueuesBlock = ({ height = 360, showProjects = true }) => (
-    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height }}>
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
@@ -358,7 +358,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   );
 
   const ProjectsBlock = ({ height = 360, slice = 6 }) => (
-    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: height }}>
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
@@ -434,7 +434,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   return (
     <div style={{
       display: "flex", flexDirection: "column", gap: 28,
-      padding: "32px 36px 48px",
+      padding: "32px 36px",
       maxWidth: 1440, margin: "0 auto",
     }}>
       {Header}
