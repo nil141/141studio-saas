@@ -183,10 +183,11 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           {/* GmailView y AgencyBilling siempre montados para cargar en background */}
           {!isClient && (
             <>
-              <div style={{display: view.name === "mail" ? "contents" : "none"}}>
+              {/* La clase page-enter se añade solo al mostrarse: así la animación se relanza sin desmontar */}
+              <div className={view.name === "mail" ? "page-enter" : ""} style={{display: view.name === "mail" ? "contents" : "none"}}>
                 <GmailView/>
               </div>
-              <div style={{display: view.name === "billing" ? "contents" : "none"}}>
+              <div className={view.name === "billing" ? "page-enter" : ""} style={{display: view.name === "billing" ? "contents" : "none"}}>
                 <AgencyBilling openModal={openModal}/>
               </div>
             </>
