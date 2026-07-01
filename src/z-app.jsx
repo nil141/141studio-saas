@@ -145,6 +145,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "agentes": return <AgentesPage navigate={navigate}/>;
       case "nora": return <NoraPage/>;
       case "billing": return null; // rendered always below
+      case "income": return <IncomePage/>;
       case "mail": return null; // rendered always below
       case "settings": return <SettingsPage/>;
       default: return <AgencyDashboard navigate={navigate} openModal={openModal} session={session}/>;

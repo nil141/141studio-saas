@@ -145,6 +145,8 @@
         case "billing":
           return null;
         // rendered always below
+        case "income":
+          return /* @__PURE__ */ React.createElement(IncomePage, null);
         case "mail":
           return null;
         // rendered always below

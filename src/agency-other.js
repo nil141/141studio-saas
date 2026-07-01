@@ -1482,5 +1482,283 @@
       document.body
     );
   };
-  Object.assign(window, { AgencyBilling, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow });
+  const INC_KEY = "141_income_v1";
+  const _incLoad = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(INC_KEY));
+      return d && typeof d === "object" ? { incomes: d.incomes || [] } : { incomes: [] };
+    } catch (e) {
+      return { incomes: [] };
+    }
+  };
+  const _incSave = (d) => {
+    try {
+      localStorage.setItem(INC_KEY, JSON.stringify(d));
+    } catch (e) {
+    }
+  };
+  const IncTrendChart = ({ trend }) => {
+    const [hov, setHov] = useState(null);
+    const W = 600, H = 150, PX = 10, PY = 14;
+    const COL = "#199e70";
+    const maxV = Math.max(...trend.map((t) => t.total), 1) * 1.15;
+    const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
+    const y = (v) => H - PY - v / maxV * (H - 2 * PY);
+    const pts = trend.map((t, i) => [x(i), y(t.total)]);
+    const onMove = (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      const px = e.clientX - r.left, py = e.clientY - r.top;
+      const relX = px / r.width * W;
+      let best = 0, bd = Infinity;
+      trend.forEach((t, i) => {
+        const d = Math.abs(x(i) - relX);
+        if (d < bd) {
+          bd = d;
+          best = i;
+        }
+      });
+      setHov({ i: best, px, py });
+    };
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(
+      "svg",
+      {
+        width: "100%",
+        height: "100%",
+        viewBox: `0 0 ${W} ${H}`,
+        preserveAspectRatio: "none",
+        style: { flex: 1, minHeight: 0, display: "block", cursor: "crosshair" },
+        onMouseMove: onMove,
+        onMouseLeave: () => setHov(null)
+      },
+      [0.25, 0.5, 0.75].map((f) => /* @__PURE__ */ React.createElement(
+        "line",
+        {
+          key: f,
+          x1: PX,
+          x2: W - PX,
+          y1: PY + f * (H - 2 * PY),
+          y2: PY + f * (H - 2 * PY),
+          stroke: "rgba(255,255,255,0.05)",
+          strokeWidth: "1",
+          vectorEffect: "non-scaling-stroke"
+        }
+      )),
+      hov !== null && /* @__PURE__ */ React.createElement(
+        "line",
+        {
+          x1: x(hov.i),
+          x2: x(hov.i),
+          y1: PY - 4,
+          y2: H - PY + 4,
+          stroke: "rgba(255,255,255,0.18)",
+          strokeWidth: "1",
+          vectorEffect: "non-scaling-stroke"
+        }
+      ),
+      /* @__PURE__ */ React.createElement(
+        "path",
+        {
+          d: _finSmooth(pts),
+          fill: "none",
+          stroke: COL,
+          strokeWidth: "2",
+          strokeLinecap: "round",
+          vectorEffect: "non-scaling-stroke"
+        }
+      ),
+      (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: x(i), cy: y(trend[i].total), r: "3.5", fill: COL, stroke: "var(--bg-elev)", strokeWidth: "2" }))
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "6px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 10, color: hov && hov.i === i ? "var(--text)" : "var(--text-subtle)", letterSpacing: "0.04em", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      left: hov.px + 16,
+      top: hov.py,
+      background: "#1c1c1f",
+      border: "0.5px solid rgba(255,255,255,0.12)",
+      borderRadius: 10,
+      padding: "8px 11px",
+      pointerEvents: "none",
+      zIndex: 5,
+      boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
+      whiteSpace: "nowrap"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: COL, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Ingresos"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].total)))));
+  };
+  const IncomePage = () => {
+    var _a;
+    const D = window.Data;
+    D.useStore();
+    const toast = useToast();
+    const [data, setData] = useState(_incLoad);
+    const [addOpen, setAddOpen] = useState(false);
+    const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "" };
+    const [incForm, setIncForm] = useState(blankInc);
+    const stripeConnected = false;
+    const persist = (next) => {
+      setData(next);
+      _incSave(next);
+    };
+    const saveInc = () => {
+      if (!incForm.concept.trim() || !(Number(incForm.amount) > 0)) {
+        toast("Pon concepto e importe", "error");
+        return;
+      }
+      const client = D.CLIENTS.find((c) => c.id === incForm.clientId);
+      const inc = {
+        id: _finId(),
+        date: incForm.date || _todayISO(),
+        concept: incForm.concept.trim(),
+        amount: Number(incForm.amount),
+        clientId: incForm.clientId || "",
+        clientName: client ? client.company || client.name || "" : ""
+      };
+      persist({ ...data, incomes: [inc, ...data.incomes] });
+      setIncForm(blankInc);
+      setAddOpen(false);
+      toast("Ingreso a\xF1adido", "success");
+    };
+    const delInc = (id) => persist({ ...data, incomes: data.incomes.filter((i) => i.id !== id) });
+    const monthTotal = data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+    const monthCount = data.incomes.filter((i) => _sameMonth(i.date)).length;
+    const MES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+    const trend = (() => {
+      const now = /* @__PURE__ */ new Date();
+      return Array.from({ length: 6 }, (_, k) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+        const total = data.incomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+        return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, total };
+      });
+    })();
+    const deltaPct = trend[4].total > 0 ? Math.round((trend[5].total - trend[4].total) / trend[4].total * 100) : null;
+    const byClient = {};
+    data.incomes.filter((i) => _sameMonth(i.date)).forEach((i) => {
+      const k = i.clientName || "Sin cliente";
+      byClient[k] = (byClient[k] || 0) + (Number(i.amount) || 0);
+    });
+    const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const cliMax = clients.length ? clients[0][1] : 1;
+    const yearTotal = (() => {
+      const y = String((/* @__PURE__ */ new Date()).getFullYear());
+      return data.incomes.filter((i) => (i.date || "").startsWith(y)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+    })();
+    const avg6m = Math.round(trend.reduce((a, t) => a + t.total, 0) / 6 * 100) / 100;
+    const sorted = [...data.incomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    return /* @__PURE__ */ React.createElement("div", { style: {
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      padding: "28px 32px 0",
+      maxWidth: 1400,
+      margin: "0 auto",
+      overflow: "hidden"
+    } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ingresos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, _eur(monthTotal), " este mes \xB7 ", monthCount, " cobro", monthCount === 1 ? "" : "s")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => setAddOpen(true) })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.8fr 1fr 0.72fr", gap: 14, marginBottom: 20, flexShrink: 0, height: 248 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px 14px", display: "flex", flexDirection: "column", overflow: "visible", position: "relative", zIndex: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 } }, "Ingreso mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), deltaPct !== null && /* @__PURE__ */ React.createElement("span", { style: {
+      display: "inline-flex",
+      alignItems: "baseline",
+      gap: 4,
+      fontSize: 14,
+      fontWeight: 600,
+      fontVariantNumeric: "tabular-nums",
+      letterSpacing: "-0.3px",
+      lineHeight: 1,
+      color: deltaPct > 0 ? "var(--green)" : deltaPct < 0 ? "var(--red)" : "var(--text-subtle)"
+    } }, deltaPct > 0 ? "\u2197" : deltaPct < 0 ? "\u2198" : "\u2192", " ", Math.abs(deltaPct), "%", /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, fontWeight: 500, color: "var(--text-subtle)", letterSpacing: "-0.1px" } }, "vs ", trend[4].label.toLowerCase())))), /* @__PURE__ */ React.createElement("span", { style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "4px 11px",
+      borderRadius: 99,
+      fontSize: 11,
+      fontWeight: 500,
+      background: "rgba(255,255,255,0.05)",
+      border: "0.5px solid rgba(255,255,255,0.08)",
+      color: "var(--text-subtle)",
+      letterSpacing: "-0.2px"
+    } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: stripeConnected ? "var(--green)" : "var(--text-subtle)" } }), "Stripe ", stripeConnected ? "conectado" : "sin conectar")), /* @__PURE__ */ React.createElement(IncTrendChart, { trend })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, flexShrink: 0 } }, "Por cliente \xB7 este mes"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 13 } }, clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : clients.map(([cli, amt]) => /* @__PURE__ */ React.createElement("div", { key: cli }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, cli), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)", flexShrink: 0, paddingLeft: 8 } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(3, amt / cliMax * 100)}%`, background: "#199e70", borderRadius: 99, transition: "width .3s" } })))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" } }, [
+      { label: "Este mes", value: _eur(monthTotal), sub: `${monthCount} cobro${monthCount === 1 ? "" : "s"}` },
+      { label: "Media mensual", value: _eur(avg6m), sub: "\xFAltimos 6 meses" },
+      { label: "Este a\xF1o", value: _eur(yearTotal), sub: String((/* @__PURE__ */ new Date()).getFullYear()) }
+    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.label, style: {
+      paddingTop: i === 0 ? 0 : 12,
+      borderTop: i === 0 ? "none" : "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 } }, m.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-0.7px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, m.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 3, letterSpacing: "-0.2px" } }, m.sub))))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+      flex: 1,
+      minHeight: 0,
+      overflowY: "auto",
+      scrollbarGutter: "stable",
+      paddingRight: 10,
+      paddingTop: 16,
+      paddingBottom: 8,
+      WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+      maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
+    } }, sorted.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin ingresos \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setAddOpen(true) }, "a\xF1adir uno")) : sorted.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      padding: "13px 4px",
+      borderBottom: i === sorted.length - 1 ? "none" : "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 38,
+      height: 38,
+      borderRadius: "50%",
+      flexShrink: 0,
+      border: "1px solid rgba(255,255,255,0.1)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#199e70"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, inc.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px", flexShrink: 0 } }, "+", _eur(inc.amount)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), /* @__PURE__ */ React.createElement(
+      QuickModal,
+      {
+        open: addOpen,
+        onClose: () => {
+          setAddOpen(false);
+          setIncForm(blankInc);
+        },
+        onSubmit: saveInc,
+        canSubmit: !!incForm.concept.trim() && Number(incForm.amount) > 0,
+        headerLabel: "Nuevo ingreso",
+        titlePlaceholder: "Concepto del ingreso...",
+        titleValue: incForm.concept,
+        onTitleChange: (v) => setIncForm({ ...incForm, concept: v }),
+        tabs: [
+          { id: "amount", label: "Importe", icon: "receipt", hasVal: Number(incForm.amount) > 0, badge: Number(incForm.amount) > 0 ? _eur(incForm.amount) : null },
+          { id: "date", label: "Fecha", icon: "calendar", hasVal: !!incForm.date, badge: incForm.date ? _finDate(incForm.date) : null },
+          { id: "client", label: "Cliente", icon: "users", hasVal: !!incForm.clientId, badge: incForm.clientId ? ((_a = D.CLIENTS.find((c) => c.id === incForm.clientId)) == null ? void 0 : _a.company) || "" : null }
+        ],
+        renderTab: (id) => {
+          if (id === "amount") return /* @__PURE__ */ React.createElement(
+            "input",
+            {
+              style: { ...QUICK_FIELD, width: 180, textAlign: "center", fontSize: 22, fontWeight: 300, letterSpacing: "-1px", fontFamily: "var(--font-display)" },
+              type: "number",
+              step: "0.01",
+              min: "0",
+              placeholder: "0,00 \u20AC",
+              autoFocus: true,
+              value: incForm.amount,
+              onChange: (e) => setIncForm({ ...incForm, amount: e.target.value })
+            }
+          );
+          if (id === "date") return /* @__PURE__ */ React.createElement(
+            "input",
+            {
+              style: { ...QUICK_FIELD },
+              type: "date",
+              value: incForm.date,
+              onChange: (e) => setIncForm({ ...incForm, date: e.target.value })
+            }
+          );
+          if (id === "client") return /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement(
+            QuickPill,
+            {
+              key: c.id,
+              selected: incForm.clientId === c.id,
+              onClick: () => setIncForm({ ...incForm, clientId: incForm.clientId === c.id ? "" : c.id })
+            },
+            c.company || c.name
+          )));
+          return null;
+        }
+      }
+    ));
+  };
+  Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow });
 })();
