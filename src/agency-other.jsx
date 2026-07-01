@@ -1578,13 +1578,17 @@ const AgencyBilling = () => {
                 <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
                   {_eur(totalMonth)}
                 </span>
-                {deltaPct !== null && deltaPct !== 0 && (
+                {deltaPct !== null && (
                   <span style={{
-                    display:"inline-flex", alignItems:"center", gap:3,
-                    fontSize:12.5, fontWeight:500, fontVariantNumeric:"tabular-nums",
-                    color: deltaPct > 0 ? "var(--red)" : "var(--green)",
+                    display:"inline-flex", alignItems:"baseline", gap:4,
+                    fontSize:14, fontWeight:600, fontVariantNumeric:"tabular-nums",
+                    letterSpacing:"-0.3px",
+                    color: deltaPct > 0 ? "var(--red)" : deltaPct < 0 ? "var(--green)" : "var(--text-subtle)",
                   }}>
-                    {deltaPct > 0 ? "↗" : "↘"} {Math.abs(deltaPct)}%
+                    {deltaPct > 0 ? "↗" : deltaPct < 0 ? "↘" : "→"} {Math.abs(deltaPct)}%
+                    <span style={{ fontSize:10.5, fontWeight:500, color:"var(--text-subtle)", letterSpacing:"-0.1px" }}>
+                      vs {trend[4].label.toLowerCase()}
+                    </span>
                   </span>
                 )}
               </div>
