@@ -1396,13 +1396,18 @@ const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: 
 // Colores de serie del gráfico — validados (CVD/contraste) sobre superficie oscura
 const FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
 
-// Curva suave (Catmull-Rom → Bézier)
+// Curva suave (Catmull-Rom → Bézier). Los puntos de control se acotan en Y al
+// rango del segmento para evitar el overshoot (la curva hundiéndose bajo un tramo plano).
 const _finSmooth = (pts) => {
   if (pts.length < 2) return "";
   let d = `M${pts[0][0]},${pts[0][1]}`;
   for (let i = 0; i < pts.length - 1; i++) {
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
-    d += `C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6},${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6},${p2[0]},${p2[1]}`;
+    const yMin = Math.min(p1[1], p2[1]), yMax = Math.max(p1[1], p2[1]);
+    const clampY = (y) => Math.max(yMin, Math.min(yMax, y));
+    const c1y = clampY(p1[1] + (p2[1] - p0[1]) / 6);
+    const c2y = clampY(p2[1] - (p3[1] - p1[1]) / 6);
+    d += `C${p1[0] + (p2[0] - p0[0]) / 6},${c1y},${p2[0] - (p3[0] - p1[0]) / 6},${c2y},${p2[0]},${p2[1]}`;
   }
   return d;
 };
