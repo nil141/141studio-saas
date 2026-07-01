@@ -1467,12 +1467,11 @@ const FinTrendChart = ({ trend }) => {
           </span>
         ))}
       </div>
-      {/* Tooltip — sigue al ratón: a su derecha, centrado en vertical (estilo Shopify) */}
+      {/* Tooltip — sigue al ratón: a su derecha, con el borde superior a la altura del cursor */}
       {hov !== null && (
         <div style={{
           position:"absolute",
           left: hov.px + 16, top: hov.py,
-          transform:"translateY(-50%)",
           background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
           borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",

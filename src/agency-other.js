@@ -792,7 +792,6 @@
       position: "absolute",
       left: hov.px + 16,
       top: hov.py,
-      transform: "translateY(-50%)",
       background: "#1c1c1f",
       border: "0.5px solid rgba(255,255,255,0.12)",
       borderRadius: 10,
