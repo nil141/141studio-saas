@@ -736,7 +736,7 @@
         height: "100%",
         viewBox: `0 0 ${W} ${H}`,
         preserveAspectRatio: "none",
-        style: { flex: 1, minHeight: 0, display: "block" },
+        style: { flex: 1, minHeight: 0, display: "block", cursor: "crosshair" },
         onMouseMove: onMove,
         onMouseLeave: () => setHov(null)
       },

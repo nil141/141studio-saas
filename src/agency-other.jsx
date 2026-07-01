@@ -1434,7 +1434,7 @@ const FinTrendChart = ({ trend }) => {
   return (
     <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
       <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
-        style={{ flex:1, minHeight:0, display:"block" }}
+        style={{ flex:1, minHeight:0, display:"block", cursor:"crosshair" }}
         onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
         {/* Grid recesivo */}
         {[0.25, 0.5, 0.75].map(f => (
