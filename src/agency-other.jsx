@@ -1393,6 +1393,100 @@ const FIN_INPUT = {
 };
 const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
 
+// Colores de serie del gráfico — validados (CVD/contraste) sobre superficie oscura
+const FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
+
+// Curva suave (Catmull-Rom → Bézier)
+const _finSmooth = (pts) => {
+  if (pts.length < 2) return "";
+  let d = `M${pts[0][0]},${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[Math.max(0, i - 1)], p1 = pts[i], p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)];
+    d += `C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6},${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6},${p2[0]},${p2[1]}`;
+  }
+  return d;
+};
+
+// Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
+const FinTrendChart = ({ trend, recurring }) => {
+  const [hov, setHov] = useState(null); // índice de mes
+  const W = 600, H = 150, PX = 10, PY = 14;
+  const maxV = Math.max(recurring, ...trend.map(t => t.puntual), 1) * 1.15;
+  const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
+  const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
+  const recPts = trend.map((t, i) => [x(i), y(recurring)]);
+  const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
+
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const relX = (e.clientX - r.left) / r.width * W;
+    let best = 0, bd = Infinity;
+    trend.forEach((t, i) => { const d = Math.abs(x(i) - relX); if (d < bd) { bd = d; best = i; } });
+    setHov(best);
+  };
+
+  return (
+    <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
+      <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        style={{ flex:1, minHeight:0, display:"block", cursor:"crosshair" }}
+        onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
+        {/* Grid recesivo */}
+        {[0.25, 0.5, 0.75].map(f => (
+          <line key={f} x1={PX} x2={W - PX} y1={PY + f * (H - 2 * PY)} y2={PY + f * (H - 2 * PY)}
+            stroke="rgba(255,255,255,0.05)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+        ))}
+        {/* Crosshair */}
+        {hov !== null && (
+          <line x1={x(hov)} x2={x(hov)} y1={PY - 4} y2={H - PY + 4}
+            stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+        )}
+        {/* Series */}
+        <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="2"
+          strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+        <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2"
+          strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+        {/* Puntos del mes bajo el cursor (o del último) */}
+        {(hov !== null ? [hov] : [trend.length - 1]).map(i => (
+          <g key={i}>
+            <circle cx={x(i)} cy={y(recurring)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
+            <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
+          </g>
+        ))}
+      </svg>
+      {/* Etiquetas de mes */}
+      <div style={{ display:"flex", justifyContent:"space-between", padding:"6px 2px 0", flexShrink:0 }}>
+        {trend.map((t, i) => (
+          <span key={t.key} style={{ fontSize:10, color: hov === i ? "var(--text)" : "var(--text-subtle)", letterSpacing:"0.04em", transition:"color .1s" }}>
+            {t.label}
+          </span>
+        ))}
+      </div>
+      {/* Tooltip */}
+      {hov !== null && (
+        <div style={{
+          position:"absolute", top:-6,
+          left:`${(x(hov) / W) * 100}%`, transform:"translate(-50%, -100%)",
+          background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
+          borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
+          boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
+        }}>
+          <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov].full}</div>
+          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
+            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
+            <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(recurring)}</span>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
+            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
+            <span style={{ color:"var(--text-muted)" }}>Puntual</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov].puntual)}</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const AgencyBilling = () => {
   const toast = useToast();
   const [data, setData] = useState(_finLoad);
@@ -1428,6 +1522,30 @@ const AgencyBilling = () => {
   const expMonth    = data.expenses.filter(e => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
   const totalMonth  = recurringMo + expMonth;
 
+  // ── Serie mensual (últimos 6 meses) para el gráfico ──
+  const MES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  const trend = (() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, k) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      const puntual = data.expenses
+        .filter(e => (e.date || "").startsWith(key))
+        .reduce((a, e) => a + (Number(e.amount) || 0), 0);
+      return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, total: puntual + recurringMo };
+    });
+  })();
+  const deltaPct = trend[4].total > 0
+    ? Math.round(((trend[5].total - trend[4].total) / trend[4].total) * 100)
+    : null;
+
+  // ── Desglose por categoría (este mes) ──
+  const byCat = {};
+  activeSubs.forEach(s => { byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s); });
+  data.expenses.filter(e => _sameMonth(e.date)).forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0); });
+  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  const catMax = cats.length ? cats[0][1] : 1;
+
   return (
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
@@ -1451,27 +1569,87 @@ const AgencyBilling = () => {
         />
       </div>
 
-      {/* Tira de métricas — minimalista, sin cajas */}
-      <div style={{
-        display:"flex", gap:48, paddingBottom:20, marginBottom:20,
-        borderBottom:"0.5px solid var(--border)", flexShrink:0, flexWrap:"wrap",
-      }}>
-        {[
-          { label: "Este mes",       value: _eur(totalMonth),        sub: "recurrente + puntual" },
-          { label: "Recurrente",     value: `${_eur(recurringMo)}`,  sub: "al mes" },
-          { label: "Puntual",        value: _eur(expMonth),          sub: "este mes" },
-          { label: "Anual estimado", value: _eur(recurringMo * 12),  sub: "solo suscripciones" },
-        ].map(m => (
-          <div key={m.label}>
-            <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>
-              {m.label}
+      {/* ── Fila de gráficos: tendencia + categorías + stats ── */}
+      <div style={{ display:"grid", gridTemplateColumns:"1.8fr 1fr 0.72fr", gap:14, marginBottom:20, flexShrink:0, height:248 }}>
+
+        {/* Card A — Gasto mensual (líneas) */}
+        <div className="card" style={{ padding:"16px 18px 14px", display:"flex", flexDirection:"column", overflow:"visible" }}>
+          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10 }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
+                Gasto mensual
+              </div>
+              <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
+                <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+                  {_eur(totalMonth)}
+                </span>
+                {deltaPct !== null && deltaPct !== 0 && (
+                  <span style={{
+                    display:"inline-flex", alignItems:"center", gap:3,
+                    fontSize:12.5, fontWeight:500, fontVariantNumeric:"tabular-nums",
+                    color: deltaPct > 0 ? "var(--red)" : "var(--green)",
+                  }}>
+                    {deltaPct > 0 ? "↗" : "↘"} {Math.abs(deltaPct)}%
+                  </span>
+                )}
+              </div>
             </div>
-            <div style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.9px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
-              {m.value}
+            {/* Leyenda */}
+            <div style={{ display:"flex", gap:14, paddingTop:2 }}>
+              {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
+                <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
+                  <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
+                  {lbl}
+                </span>
+              ))}
             </div>
-            <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:5, letterSpacing:"-0.2px" }}>{m.sub}</div>
           </div>
-        ))}
+          <FinTrendChart trend={trend} recurring={recurringMo}/>
+        </div>
+
+        {/* Card B — Por categoría (barras) */}
+        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column" }}>
+          <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:14, flexShrink:0 }}>
+            Por categoría · este mes
+          </div>
+          <div style={{ flex:1, minHeight:0, overflow:"hidden", display:"flex", flexDirection:"column", gap:13 }}>
+            {cats.length === 0 ? (
+              <div style={{ color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px" }}>Sin datos todavía.</div>
+            ) : cats.map(([cat, amt]) => (
+              <div key={cat}>
+                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:5 }}>
+                  <span style={{ color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{cat}</span>
+                  <span style={{ fontVariantNumeric:"tabular-nums", color:"var(--text)" }}>{_eur(amt)}</span>
+                </div>
+                <div style={{ height:4, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+                  <div style={{ height:"100%", width:`${Math.max(3, (amt / catMax) * 100)}%`, background:FIN_SERIES.rec, borderRadius:99, transition:"width .3s" }}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Card C — Mini stats en columna */}
+        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+          {[
+            { label: "Recurrente",     value: _eur(recurringMo),      sub: "al mes" },
+            { label: "Puntual",        value: _eur(expMonth),         sub: "este mes" },
+            { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo suscripciones" },
+          ].map((m, i) => (
+            <div key={m.label} style={{
+              paddingTop: i === 0 ? 0 : 12,
+              borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
+            }}>
+              <div style={{ fontSize:10.5, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:5 }}>
+                {m.label}
+              </div>
+              <div style={{ fontSize:18, fontWeight:400, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+                {m.value}
+              </div>
+              <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>{m.sub}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tabs */}
