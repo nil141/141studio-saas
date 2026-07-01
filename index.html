@@ -151,14 +151,17 @@
   }
   .tasks-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); background-clip: padding-box; }
 
-  /* Transición suave al entrar a cada página */
+  /* Transición suave al entrar a cada página.
+     El wrapper usa display:contents para no crear caja (no rompe layouts de 100vh)
+     y la animación entra desde arriba: el overflow superior no genera scrollbar. */
   @keyframes pageIn {
-    from { opacity: 0; transform: translateY(8px); }
+    from { opacity: 0; transform: translateY(-6px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .page-enter { animation: pageIn .38s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  .page-enter { display: contents; }
+  .page-enter > * { animation: pageIn .38s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
   @media (prefers-reduced-motion: reduce) {
-    .page-enter { animation: none; }
+    .page-enter > * { animation: none; }
   }
 
   /* App layout */
@@ -841,7 +844,7 @@
 <script src="src/primitives.js?v=4"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=2"></script>
-<script src="src/z-app.js?v=3"></script>
+<script src="src/z-app.js?v=4"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=19"></script>
 <script src="src/agency-clients.js?v=11"></script>

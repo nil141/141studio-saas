@@ -183,10 +183,10 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           {/* GmailView y AgencyBilling siempre montados para cargar en background */}
           {!isClient && (
             <>
-              <div className={view.name === "mail" ? "page-enter" : ""} style={{display: view.name === "mail" ? "block" : "none"}}>
+              <div style={{display: view.name === "mail" ? "contents" : "none"}}>
                 <GmailView/>
               </div>
-              <div className={view.name === "billing" ? "page-enter" : ""} style={{display: view.name === "billing" ? "block" : "none"}}>
+              <div style={{display: view.name === "billing" ? "contents" : "none"}}>
                 <AgencyBilling openModal={openModal}/>
               </div>
             </>
