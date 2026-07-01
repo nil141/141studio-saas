@@ -159,7 +159,10 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .page-enter { display: contents; }
-  .page-enter > * { animation: pageIn .38s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
+  /* Sin fill-mode "both": el transform desaparece al terminar. Si quedara aplicado,
+     los modales position:fixed de dentro de la página se centrarían respecto a ella
+     (un ancestro con transform crea containing block) en vez de respecto a la ventana. */
+  .page-enter > * { animation: pageIn .38s cubic-bezier(0.2, 0.7, 0.3, 1); }
   @media (prefers-reduced-motion: reduce) {
     .page-enter > * { animation: none; }
   }
