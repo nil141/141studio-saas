@@ -23,7 +23,8 @@
       const now = /* @__PURE__ */ new Date();
       const dias = ["domingo", "lunes", "martes", "mi\xE9rcoles", "jueves", "viernes", "s\xE1bado"];
       const meses = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
-      return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
+      const d = `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
+      return d.charAt(0).toUpperCase() + d.slice(1);
     })();
     const agencyName = D.SETTINGS.name || "141'STUDIO";
     const adminEmail = D.SETTINGS.email || "nil@141agency.com";
@@ -41,6 +42,15 @@
     const atRisk = D.PROJECTS.filter((p) => p.light === "red").length;
     const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
     const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad c\xF3moda" : activeProjects <= 4 ? "Capacidad media" : "Al l\xEDmite";
+    const dayMessage = (() => {
+      if (overdueTasks > 0)
+        return `Tienes ${overdueTasks} tarea${overdueTasks > 1 ? "s" : ""} vencida${overdueTasks > 1 ? "s" : ""} y ${pendingTasks} pendiente${pendingTasks !== 1 ? "s" : ""}. Vamos a por ellas.`;
+      if (pendingTasks > 0)
+        return `Tienes ${pendingTasks} tarea${pendingTasks > 1 ? "s" : ""} pendiente${pendingTasks > 1 ? "s" : ""} por delante. A por un buen d\xEDa.`;
+      if (activeProjects > 0)
+        return "Todo al d\xEDa por ahora. Buen momento para adelantar trabajo.";
+      return "Aqu\xED empieza todo. Crea tu primer proyecto cuando quieras.";
+    })();
     const [stripeMonth, setStripeMonth] = useState(null);
     useEffect(() => {
       const now = /* @__PURE__ */ new Date();
@@ -206,8 +216,10 @@
       marginTop: 10,
       fontSize: 15,
       color: "var(--text-muted)",
-      letterSpacing: "-0.3px"
-    } }, todayStr)), /* @__PURE__ */ React.createElement(
+      letterSpacing: "-0.3px",
+      lineHeight: 1.5,
+      maxWidth: 520
+    } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)" } }, todayStr, "."), " ", dayMessage)), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: [
