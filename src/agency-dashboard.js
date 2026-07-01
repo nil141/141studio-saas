@@ -137,7 +137,7 @@
         const dMid = new Date(e.date);
         dMid.setHours(0, 0, 0, 0);
         const diff = Math.round((dMid - todayMid) / 864e5);
-        return diff >= 0 && diff <= 90;
+        return diff >= 0 && diff <= 7;
       }).sort((a, b) => a.date - b.date).slice(0, 8);
     }, [D.PROJECTS, D.INVOICES, D.TASKS]);
     const formatEventDate = (d) => {

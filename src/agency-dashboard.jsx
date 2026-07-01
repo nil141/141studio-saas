@@ -151,12 +151,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       });
     } catch(err) {}
 
-    // Solo lo que está por venir: hoy en adelante (máx. 90 días)
+    // Solo los próximos 7 días (hoy incluido)
     return ev
       .filter(e => {
         const dMid = new Date(e.date); dMid.setHours(0,0,0,0);
         const diff = Math.round((dMid - todayMid) / 86400000);
-        return diff >= 0 && diff <= 90;
+        return diff >= 0 && diff <= 7;
       })
       .sort((a,b) => a.date - b.date)
       .slice(0, 8);
