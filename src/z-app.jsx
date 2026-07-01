@@ -177,14 +177,16 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
-          {isClient ? renderClient() : renderAgency()}
+          <div key={view.name} className="page-enter">
+            {isClient ? renderClient() : renderAgency()}
+          </div>
           {/* GmailView y AgencyBilling siempre montados para cargar en background */}
           {!isClient && (
             <>
-              <div style={{display: view.name === "mail" ? "contents" : "none"}}>
+              <div className={view.name === "mail" ? "page-enter" : ""} style={{display: view.name === "mail" ? "block" : "none"}}>
                 <GmailView/>
               </div>
-              <div style={{display: view.name === "billing" ? "contents" : "none"}}>
+              <div className={view.name === "billing" ? "page-enter" : ""} style={{display: view.name === "billing" ? "block" : "none"}}>
                 <AgencyBilling openModal={openModal}/>
               </div>
             </>
