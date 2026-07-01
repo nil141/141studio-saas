@@ -470,9 +470,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         flex:1, minHeight:0,
         overflowY:"auto",
         scrollbarGutter:"stable",
-        paddingRight:10, paddingBottom:24,
-        WebkitMaskImage:"linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)",
-        maskImage:"linear-gradient(to bottom, #000 calc(100% - 40px), transparent 100%)",
+        paddingRight:10, paddingTop:22, paddingBottom:24,
+        WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 40px), transparent 100%)",
+        maskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 40px), transparent 100%)",
       }}>
 
       {groups.length === 0 && (
