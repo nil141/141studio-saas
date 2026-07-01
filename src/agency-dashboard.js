@@ -46,7 +46,7 @@
     const atRisk = D.PROJECTS.filter((p) => p.light === "red").length;
     const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
     const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad c\xF3moda" : activeProjects <= 4 ? "Capacidad media" : "Al l\xEDmite";
-    const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}.`;
+    const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}`;
     const [stripeMonth, setStripeMonth] = useState(null);
     useEffect(() => {
       const now2 = /* @__PURE__ */ new Date();

@@ -71,7 +71,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     : activeProjects <= 4 ? "Capacidad media" : "Al límite";
 
   // ── Mensaje bajo el saludo: "Hoy es [fecha] y son las [hora]." ──
-  const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}.`;
+  const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}`;
 
   // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
