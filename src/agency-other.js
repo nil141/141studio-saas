@@ -244,7 +244,7 @@
         borderRadius: 99,
         border: "0.5px solid var(--border-strong)",
         background: "rgba(255,255,255,0.02)",
-        padding: 2,
+        padding: 3,
         display: "flex",
         alignItems: "center"
       } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${donePct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontWeight: 500, flexShrink: 0 } }, donePct, "%"))),
