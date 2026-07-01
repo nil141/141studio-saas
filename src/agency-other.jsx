@@ -454,7 +454,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
             Daily Progress
           </span>
           <div style={{
-            flex:1, height:16, borderRadius:99,
+            flex:1, height:12, borderRadius:99,
             border:"0.5px solid var(--border-strong)",
             background:"rgba(255,255,255,0.02)",
             padding:2, display:"flex", alignItems:"center",

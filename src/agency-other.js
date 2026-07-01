@@ -240,7 +240,7 @@
         }));
       })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: {
         flex: 1,
-        height: 16,
+        height: 12,
         borderRadius: 99,
         border: "0.5px solid var(--border-strong)",
         background: "rgba(255,255,255,0.02)",
