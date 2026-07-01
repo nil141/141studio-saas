@@ -1428,111 +1428,78 @@ const AgencyBilling = () => {
   const expMonth    = data.expenses.filter(e => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
   const totalMonth  = recurringMo + expMonth;
 
-  const upcoming = activeSubs
-    .filter(s => s.nextRenewal)
-    .map(s => ({ ...s, _d: new Date(s.nextRenewal) }))
-    .filter(s => !isNaN(s._d))
-    .sort((a, b) => a._d - b._d)
-    .slice(0, 4);
-
-  const byCat = {};
-  activeSubs.forEach(s => { byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s); });
-  data.expenses.filter(e => _sameMonth(e.date)).forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0); });
-  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-  const catMax = cats.length ? cats[0][1] : 1;
-
-  const monthName = new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" });
-
   return (
-    <div className="page">
-      <div className="page-head">
+    <div style={{
+      height:"100vh", display:"flex", flexDirection:"column",
+      padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
+    }}>
+      {/* Header — título + ActionPill (igual que el resto de páginas) */}
+      <div className="page-head" style={{ flexShrink:0 }}>
         <div>
           <h1>Gastos</h1>
-          <div className="sub">Control de gastos y suscripciones · {monthName}</div>
-        </div>
-      </div>
-
-      {/* ── Métricas ── */}
-      <div className="rg-4" style={{ marginBottom: 18 }}>
-        <div className="card"><div className="card-body">
-          <div className="metric-label">Gasto este mes</div>
-          <div className="metric-value">{_eur(totalMonth)}</div>
-          <div className="metric-delta">Recurrente + puntual</div>
-        </div></div>
-        <div className="card"><div className="card-body">
-          <div className="metric-label">Recurrente / mes</div>
-          <div className="metric-value" style={{ color: "var(--blue)" }}>{_eur(recurringMo)}</div>
-          <div className="metric-delta">{activeSubs.length} suscripciones activas</div>
-        </div></div>
-        <div className="card"><div className="card-body">
-          <div className="metric-label">Gastos puntuales</div>
-          <div className="metric-value" style={{ color: "var(--amber)" }}>{_eur(expMonth)}</div>
-          <div className="metric-delta">Este mes</div>
-        </div></div>
-        <div className="card"><div className="card-body">
-          <div className="metric-label">Coste anual estimado</div>
-          <div className="metric-value">{_eur(recurringMo * 12)}</div>
-          <div className="metric-delta">Solo suscripciones</div>
-        </div></div>
-      </div>
-
-      {/* ── Desglose + próximas renovaciones ── */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 16, marginBottom: 18 }} className="fin-split">
-        <div className="card"><div className="card-body">
-          <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 14 }}>Desglose por categoría (este mes)</div>
-          {cats.length === 0 ? (
-            <div style={{ color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" }}>Sin datos todavía.</div>
-          ) : cats.map(([cat, amt]) => (
-            <div key={cat} style={{ marginBottom: 11 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12.5, marginBottom: 5, color: "var(--text-muted)" }}>
-                <span>{cat}</span>
-                <span style={{ fontVariantNumeric: "tabular-nums", color: "var(--text)" }}>{_eur(amt)}</span>
-              </div>
-              <div style={{ height: 6, borderRadius: 99, background: "var(--bg-elev-2)", overflow: "hidden" }}>
-                <div style={{ height: "100%", width: `${Math.max(4, (amt / catMax) * 100)}%`, background: "var(--accent)", borderRadius: 99 }} />
-              </div>
-            </div>
-          ))}
-        </div></div>
-        <div className="card"><div className="card-body">
-          <div style={{ fontWeight: 500, fontSize: 13, marginBottom: 14 }}>Próximas renovaciones</div>
-          {upcoming.length === 0 ? (
-            <div style={{ color: "var(--text-subtle)", fontSize: 13, padding: "8px 0" }}>Sin fechas de renovación.</div>
-          ) : upcoming.map(s => (
-            <div key={s.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 0", borderBottom: "0.5px solid var(--border)" }}>
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{s.name}</div>
-                <div style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>{_finDate(s.nextRenewal)}</div>
-              </div>
-              <div style={{ fontSize: 13, fontWeight: 500, fontVariantNumeric: "tabular-nums", flexShrink: 0 }}>{_eur(s.amount)}</div>
-            </div>
-          ))}
-        </div></div>
-      </div>
-
-      {/* ── Tabs Suscripciones / Gastos ── */}
-      <div className="card">
-        <div className="card-header">
-          <div className="seg">
-            <button className={tab === "subs" ? "active" : ""} onClick={() => setTab("subs")}>Suscripciones</button>
-            <button className={tab === "expenses" ? "active" : ""} onClick={() => setTab("expenses")}>Gastos</button>
+          <div className="sub">
+            {_eur(totalMonth)} este mes · {activeSubs.length} suscripci{activeSubs.length === 1 ? "ón" : "ones"} activa{activeSubs.length === 1 ? "" : "s"}
           </div>
-          <ActionPill
-            plusActions={[
-              { icon: "refresh-cw", label: "Nueva suscripción", sub: "Gasto recurrente (mensual o anual).",
-                onClick: () => { setTab("subs"); setAddSub(true); } },
-              { icon: "receipt",    label: "Nuevo gasto puntual", sub: "Un gasto único de un día.",
-                accent: true, onClick: () => { setTab("expenses"); setAddExp(true); } },
-            ]}
-          />
         </div>
+        <ActionPill
+          plusActions={[
+            { icon: "refresh-cw", label: "Nueva suscripción", sub: "Gasto recurrente (mensual o anual).",
+              onClick: () => { setTab("subs"); setAddSub(true); setAddExp(false); } },
+            { icon: "receipt",    label: "Nuevo gasto puntual", sub: "Un gasto único de un día.",
+              accent: true, onClick: () => { setTab("expenses"); setAddExp(true); setAddSub(false); } },
+          ]}
+        />
+      </div>
+
+      {/* Tira de métricas — minimalista, sin cajas */}
+      <div style={{
+        display:"flex", gap:48, paddingBottom:20, marginBottom:20,
+        borderBottom:"0.5px solid var(--border)", flexShrink:0, flexWrap:"wrap",
+      }}>
+        {[
+          { label: "Este mes",       value: _eur(totalMonth),        sub: "recurrente + puntual" },
+          { label: "Recurrente",     value: `${_eur(recurringMo)}`,  sub: "al mes" },
+          { label: "Puntual",        value: _eur(expMonth),          sub: "este mes" },
+          { label: "Anual estimado", value: _eur(recurringMo * 12),  sub: "solo suscripciones" },
+        ].map(m => (
+          <div key={m.label}>
+            <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:6 }}>
+              {m.label}
+            </div>
+            <div style={{ fontSize:22, fontWeight:400, letterSpacing:"-0.9px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+              {m.value}
+            </div>
+            <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:5, letterSpacing:"-0.2px" }}>{m.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ marginBottom:6, flexShrink:0 }}>
+        <div className="seg">
+          <button className={tab === "subs" ? "active" : ""} onClick={() => setTab("subs")}>Suscripciones</button>
+          <button className={tab === "expenses" ? "active" : ""} onClick={() => setTab("expenses")}>Gastos puntuales</button>
+        </div>
+      </div>
+
+      {/* Zona scrollable — solo las listas se deslizan */}
+      <div className="tasks-scroll" style={{
+        flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
+        paddingRight:10, paddingTop:16, paddingBottom:8,
+        WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+        maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+      }}>
 
         {/* ── Suscripciones ── */}
         {tab === "subs" && (
-          <div className="card-body flush">
+          <>
             {addSub && (
-              <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.9fr 1fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" }}>
-                <input style={FIN_INPUT} placeholder="Nombre (ej. Adobe CC)" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} />
+              <div style={{
+                display:"grid", gridTemplateColumns:"1.4fr 0.7fr 0.9fr 1fr 1fr auto", gap:8,
+                padding:"14px 16px", marginBottom:14, alignItems:"center",
+                background:"rgba(255,255,255,0.03)", border:"0.5px solid var(--border)", borderRadius:14,
+              }}>
+                <input style={FIN_INPUT} autoFocus placeholder="Nombre (ej. Adobe CC)" value={subForm.name} onChange={e => setSubForm({ ...subForm, name: e.target.value })} />
                 <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={subForm.amount} onChange={e => setSubForm({ ...subForm, amount: e.target.value })} />
                 <select style={FIN_INPUT} value={subForm.cycle} onChange={e => setSubForm({ ...subForm, cycle: e.target.value })}>
                   {FIN_CYCLES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
@@ -1541,87 +1508,117 @@ const AgencyBilling = () => {
                   {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
                 <input style={FIN_INPUT} type="date" title="Próxima renovación" value={subForm.nextRenewal} onChange={e => setSubForm({ ...subForm, nextRenewal: e.target.value })} />
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display:"flex", gap:6 }}>
                   <button className="btn primary sm" onClick={saveSub}>Guardar</button>
                   <button className="btn ghost sm" onClick={() => { setAddSub(false); setSubForm(blankSub); }}>✕</button>
                 </div>
               </div>
             )}
-            {data.subs.length === 0 ? (
-              <Empty icon="refresh-cw" title="Sin suscripciones" sub="Añade tus gastos recurrentes para controlarlos" />
-            ) : (
-              <table className="table">
-                <thead><tr>
-                  <th>Suscripción</th><th>Categoría</th><th>Ciclo</th>
-                  <th style={{ textAlign: "right" }}>Importe</th><th style={{ textAlign: "right" }}>Equiv. /mes</th>
-                  <th>Renovación</th><th>Estado</th><th style={{ width: 44 }}></th>
-                </tr></thead>
-                <tbody>
-                  {data.subs.map(s => (
-                    <tr key={s.id} style={{ opacity: s.active ? 1 : 0.5 }}>
-                      <td style={{ fontWeight: 500 }}>{s.name}</td>
-                      <td className="muted">{s.category}</td>
-                      <td className="muted">{s.cycle === "yearly" ? "Anual" : "Mensual"}</td>
-                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(s.amount)}</td>
-                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums", color: "var(--text-muted)" }}>{_eur(_subMonthly(s))}</td>
-                      <td className="muted">{_finDate(s.nextRenewal)}</td>
-                      <td>
-                        <button className="btn ghost sm" onClick={() => toggleSub(s.id)} style={{ color: s.active ? "var(--green)" : "var(--text-subtle)" }}>
-                          {s.active ? "Activa" : "Pausada"}
-                        </button>
-                      </td>
-                      <td style={{ textAlign: "right" }}>
-                        <button className="btn ghost icon-only sm" onClick={() => delSub(s.id)} title="Eliminar"><Icon name="trash" size={13} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+
+            {data.subs.length === 0 && !addSub ? (
+              <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+                Sin suscripciones — <button className="btn ghost sm" onClick={() => setAddSub(true)}>añadir una</button>
+              </div>
+            ) : data.subs.map((s, i) => (
+              <div key={s.id} className="task-row" style={{
+                display:"flex", alignItems:"center", gap:14,
+                padding:"13px 4px", opacity: s.active ? 1 : 0.45,
+                borderBottom: i === data.subs.length - 1 ? "none" : "0.5px solid var(--border)",
+                transition:"opacity .15s",
+              }}>
+                {/* Icono */}
+                <div style={{
+                  width:38, height:38, borderRadius:"50%", flexShrink:0,
+                  border:"1px solid rgba(255,255,255,0.1)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  color: s.active ? "var(--accent)" : "var(--text-subtle)",
+                }}>
+                  <Icon name="refresh-cw" size={14} strokeWidth={1.7}/>
+                </div>
+                {/* Nombre + meta */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{s.name}</div>
+                  <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                    {s.category} · {s.cycle === "yearly" ? "Anual" : "Mensual"}
+                    {s.nextRenewal ? ` · Renueva ${_finDate(s.nextRenewal)}` : ""}
+                  </div>
+                </div>
+                {/* Importe */}
+                <div style={{ textAlign:"right", flexShrink:0 }}>
+                  <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px" }}>
+                    {_eur(s.amount)}<span style={{ color:"var(--text-subtle)", fontSize:11.5 }}>/{s.cycle === "yearly" ? "año" : "mes"}</span>
+                  </div>
+                  {s.cycle === "yearly" && (
+                    <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>{_eur(_subMonthly(s))}/mes</div>
+                  )}
+                </div>
+                {/* Acciones */}
+                <button className="btn ghost sm" onClick={() => toggleSub(s.id)} style={{ color: s.active ? "var(--green)" : "var(--text-subtle)", flexShrink:0 }}>
+                  {s.active ? "Activa" : "Pausada"}
+                </button>
+                <button className="btn ghost icon-only sm" onClick={() => delSub(s.id)} title="Eliminar" style={{ flexShrink:0 }}>
+                  <Icon name="trash" size={13}/>
+                </button>
+              </div>
+            ))}
+          </>
         )}
 
-        {/* ── Gastos ── */}
+        {/* ── Gastos puntuales ── */}
         {tab === "expenses" && (
-          <div className="card-body flush">
+          <>
             {addExp && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr 0.8fr 1fr auto", gap: 8, padding: "14px 18px", borderBottom: "0.5px solid var(--border)", alignItems: "center", background: "var(--bg-elev)" }}>
+              <div style={{
+                display:"grid", gridTemplateColumns:"1fr 1.6fr 0.7fr 1fr auto", gap:8,
+                padding:"14px 16px", marginBottom:14, alignItems:"center",
+                background:"rgba(255,255,255,0.03)", border:"0.5px solid var(--border)", borderRadius:14,
+              }}>
                 <input style={FIN_INPUT} type="date" value={expForm.date} onChange={e => setExpForm({ ...expForm, date: e.target.value })} />
-                <input style={FIN_INPUT} placeholder="Concepto" value={expForm.concept} onChange={e => setExpForm({ ...expForm, concept: e.target.value })} />
+                <input style={FIN_INPUT} autoFocus placeholder="Concepto" value={expForm.concept} onChange={e => setExpForm({ ...expForm, concept: e.target.value })} />
                 <input style={FIN_INPUT} type="number" step="0.01" placeholder="€" value={expForm.amount} onChange={e => setExpForm({ ...expForm, amount: e.target.value })} />
                 <select style={FIN_INPUT} value={expForm.category} onChange={e => setExpForm({ ...expForm, category: e.target.value })}>
                   {FIN_CATS.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
-                <div style={{ display: "flex", gap: 6 }}>
+                <div style={{ display:"flex", gap:6 }}>
                   <button className="btn primary sm" onClick={saveExp}>Guardar</button>
                   <button className="btn ghost sm" onClick={() => { setAddExp(false); setExpForm(blankExp); }}>✕</button>
                 </div>
               </div>
             )}
-            {data.expenses.length === 0 ? (
-              <Empty icon="receipt" title="Sin gastos" sub="Registra tus gastos puntuales del mes" />
-            ) : (
-              <table className="table">
-                <thead><tr>
-                  <th>Fecha</th><th>Concepto</th><th>Categoría</th>
-                  <th style={{ textAlign: "right" }}>Importe</th><th style={{ width: 44 }}></th>
-                </tr></thead>
-                <tbody>
-                  {[...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(e => (
-                    <tr key={e.id}>
-                      <td className="muted">{_finDate(e.date)}</td>
-                      <td style={{ fontWeight: 500 }}>{e.concept}</td>
-                      <td className="muted">{e.category}</td>
-                      <td style={{ textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{_eur(e.amount)}</td>
-                      <td style={{ textAlign: "right" }}>
-                        <button className="btn ghost icon-only sm" onClick={() => delExp(e.id)} title="Eliminar"><Icon name="trash" size={13} /></button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+
+            {data.expenses.length === 0 && !addExp ? (
+              <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+                Sin gastos puntuales — <button className="btn ghost sm" onClick={() => setAddExp(true)}>añadir uno</button>
+              </div>
+            ) : [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((e, i, arr) => (
+              <div key={e.id} className="task-row" style={{
+                display:"flex", alignItems:"center", gap:14,
+                padding:"13px 4px",
+                borderBottom: i === arr.length - 1 ? "none" : "0.5px solid var(--border)",
+              }}>
+                <div style={{
+                  width:38, height:38, borderRadius:"50%", flexShrink:0,
+                  border:"1px solid rgba(255,255,255,0.1)",
+                  display:"flex", alignItems:"center", justifyContent:"center",
+                  color:"var(--text-muted)",
+                }}>
+                  <Icon name="receipt" size={14} strokeWidth={1.7}/>
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{e.concept}</div>
+                  <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                    {_finDate(e.date)} · {e.category}
+                  </div>
+                </div>
+                <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px", flexShrink:0 }}>
+                  {_eur(e.amount)}
+                </div>
+                <button className="btn ghost icon-only sm" onClick={() => delExp(e.id)} title="Eliminar" style={{ flexShrink:0 }}>
+                  <Icon name="trash" size={13}/>
+                </button>
+              </div>
+            ))}
+          </>
         )}
       </div>
     </div>
