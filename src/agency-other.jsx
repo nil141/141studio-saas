@@ -1591,7 +1591,7 @@ const AgencyBilling = () => {
               <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
                 Gasto mensual
               </div>
-              <div style={{ display:"flex", alignItems:"baseline", gap:10 }}>
+              <div style={{ display:"flex", alignItems:"flex-start", gap:10 }}>
                 <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
                   {_eur(totalMonth)}
                 </span>
@@ -1599,7 +1599,7 @@ const AgencyBilling = () => {
                   <span style={{
                     display:"inline-flex", alignItems:"baseline", gap:4,
                     fontSize:14, fontWeight:600, fontVariantNumeric:"tabular-nums",
-                    letterSpacing:"-0.3px",
+                    letterSpacing:"-0.3px", lineHeight:1,
                     color: deltaPct > 0 ? "var(--red)" : deltaPct < 0 ? "var(--green)" : "var(--text-subtle)",
                   }}>
                     {deltaPct > 0 ? "↗" : deltaPct < 0 ? "↘" : "→"} {Math.abs(deltaPct)}%
