@@ -1414,7 +1414,7 @@ const _finSmooth = (pts) => {
 
 // Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
 const FinTrendChart = ({ trend }) => {
-  const [hov, setHov] = useState(null); // índice de mes
+  const [hov, setHov] = useState(null); // { i: índice de mes, px, py: posición del ratón en px }
   const W = 600, H = 150, PX = 10, PY = 14;
   const maxV = Math.max(...trend.map(t => t.rec), ...trend.map(t => t.puntual), 1) * 1.15;
   const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
@@ -1424,10 +1424,11 @@ const FinTrendChart = ({ trend }) => {
 
   const onMove = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
-    const relX = (e.clientX - r.left) / r.width * W;
+    const px = e.clientX - r.left, py = e.clientY - r.top;
+    const relX = px / r.width * W;
     let best = 0, bd = Infinity;
     trend.forEach((t, i) => { const d = Math.abs(x(i) - relX); if (d < bd) { bd = d; best = i; } });
-    setHov(best);
+    setHov({ i: best, px, py });
   };
 
   return (
@@ -1442,7 +1443,7 @@ const FinTrendChart = ({ trend }) => {
         ))}
         {/* Crosshair */}
         {hov !== null && (
-          <line x1={x(hov)} x2={x(hov)} y1={PY - 4} y2={H - PY + 4}
+          <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
             stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         )}
         {/* Series */}
@@ -1451,7 +1452,7 @@ const FinTrendChart = ({ trend }) => {
         <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2"
           strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
         {/* Puntos del mes bajo el cursor (o del último) */}
-        {(hov !== null ? [hov] : [trend.length - 1]).map(i => (
+        {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
           <g key={i}>
             <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
             <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
@@ -1461,31 +1462,31 @@ const FinTrendChart = ({ trend }) => {
       {/* Etiquetas de mes */}
       <div style={{ display:"flex", justifyContent:"space-between", padding:"6px 2px 0", flexShrink:0 }}>
         {trend.map((t, i) => (
-          <span key={t.key} style={{ fontSize:10, color: hov === i ? "var(--text)" : "var(--text-subtle)", letterSpacing:"0.04em", transition:"color .1s" }}>
+          <span key={t.key} style={{ fontSize:10, color: hov && hov.i === i ? "var(--text)" : "var(--text-subtle)", letterSpacing:"0.04em", transition:"color .1s" }}>
             {t.label}
           </span>
         ))}
       </div>
-      {/* Tooltip — siempre centrado sobre el crosshair; puede sobresalir de la tarjeta (zIndex la eleva) */}
+      {/* Tooltip — sigue al ratón: a su derecha, centrado en vertical (estilo Shopify) */}
       {hov !== null && (
         <div style={{
-          position:"absolute", top:-6,
-          left:`${(x(hov) / W) * 100}%`,
-          transform:"translate(-50%, -100%)",
+          position:"absolute",
+          left: hov.px + 16, top: hov.py,
+          transform:"translateY(-50%)",
           background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
           borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
         }}>
-          <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov].full}</div>
+          <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov.i].full}</div>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
             <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
             <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov].rec)}</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].rec)}</span>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
             <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
             <span style={{ color:"var(--text-muted)" }}>Puntual</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov].puntual)}</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].puntual)}</span>
           </div>
         </div>
       )}

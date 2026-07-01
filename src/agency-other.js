@@ -717,7 +717,8 @@
     const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
     const onMove = (e) => {
       const r = e.currentTarget.getBoundingClientRect();
-      const relX = (e.clientX - r.left) / r.width * W;
+      const px = e.clientX - r.left, py = e.clientY - r.top;
+      const relX = px / r.width * W;
       let best = 0, bd = Infinity;
       trend.forEach((t, i) => {
         const d = Math.abs(x(i) - relX);
@@ -726,7 +727,7 @@
           best = i;
         }
       });
-      setHov(best);
+      setHov({ i: best, px, py });
     };
     return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(
       "svg",
@@ -755,8 +756,8 @@
       hov !== null && /* @__PURE__ */ React.createElement(
         "line",
         {
-          x1: x(hov),
-          x2: x(hov),
+          x1: x(hov.i),
+          x2: x(hov.i),
           y1: PY - 4,
           y2: H - PY + 4,
           stroke: "rgba(255,255,255,0.18)",
@@ -786,12 +787,12 @@
           vectorEffect: "non-scaling-stroke"
         }
       ),
-      (hov !== null ? [hov] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "6px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 10, color: hov === i ? "var(--text)" : "var(--text-subtle)", letterSpacing: "0.04em", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
+      (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "6px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 10, color: hov && hov.i === i ? "var(--text)" : "var(--text-subtle)", letterSpacing: "0.04em", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
-      top: -6,
-      left: `${x(hov) / W * 100}%`,
-      transform: "translate(-50%, -100%)",
+      left: hov.px + 16,
+      top: hov.py,
+      transform: "translateY(-50%)",
       background: "#1c1c1f",
       border: "0.5px solid rgba(255,255,255,0.12)",
       borderRadius: 10,
@@ -800,7 +801,7 @@
       zIndex: 5,
       boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
       whiteSpace: "nowrap"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov].puntual)))));
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].puntual)))));
   };
   const AgencyBilling = () => {
     const toast = useToast();
