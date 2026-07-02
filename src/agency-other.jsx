@@ -2545,22 +2545,21 @@ const IncomePage = () => {
         {/* Card C — Mini stats */}
         <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
           {[
-            { label: "Base imponible",  value: _eur(baseMonth),  sub: "este mes · sin IVA" },
-            { label: "IVA repercutido", value: _eur(ivaMonth),   sub: "a apartar para Hacienda" },
-            { label: "IRPF retenido",   value: _eur(irpfMonth),  sub: "adelantado por clientes" },
-            { label: "Cobras",          value: _eur(monthTotal - irpfMonth), sub: "con IVA − IRPF" },
+            { label: "Cobras",          value: _eur(monthTotal - irpfMonth), sub: "te entra este mes" },
+            { label: "Base imponible",  value: _eur(baseMonth),              sub: "tu ingreso real · sin IVA" },
+            { label: "IVA repercutido", value: _eur(ivaMonth),               sub: "a apartar para Hacienda" },
           ].map((m, i) => (
             <div key={m.label} style={{
-              paddingTop: i === 0 ? 0 : 8,
+              paddingTop: i === 0 ? 0 : 12,
               borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
             }}>
-              <div style={{ fontSize:10, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>
+              <div style={{ fontSize:10.5, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:5 }}>
                 {m.label}
               </div>
-              <div style={{ fontSize:16, fontWeight:400, letterSpacing:"-0.6px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+              <div style={{ fontSize:18, fontWeight:400, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
                 {m.value}
               </div>
-              <div style={{ fontSize:10, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>{m.sub}</div>
+              <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>{m.sub}</div>
             </div>
           ))}
         </div>
