@@ -175,6 +175,22 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   };
 
   // ── KPI config ──
+  // Gastos de este mes — mismos datos que la página de Gastos (recurrente + puntual)
+  const monthSpend = (() => {
+    try {
+      const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+      const rec = (fin.subs || []).filter(s => s.active !== false)
+        .reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0)), 0);
+      const now = new Date();
+      const exp = (fin.expenses || []).filter(e => {
+        if (!e.date) return false;
+        const d = new Date(e.date);
+        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+      return rec + exp;
+    } catch { return 0; }
+  })();
+
   const kpis = [
     {
       label:  "Proyectos activos",
@@ -195,10 +211,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       icon:   "alert-triangle",
     },
     {
-      label:  "Proyectos en riesgo",
-      value:  atRisk,
-      sub:    atRisk===0 ? "Todo en orden" : "semáforo rojo",
-      icon:   "flag",
+      label:  "Gastos este mes",
+      value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      sub:    monthSpend === 0 ? "Sin gastos aún" : "recurrente + puntual",
+      icon:   "receipt",
     },
     {
       label:  "Facturado este mes",

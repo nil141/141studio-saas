@@ -153,6 +153,21 @@
       const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
       return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
     };
+    const monthSpend = (() => {
+      try {
+        const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+        const rec = (fin.subs || []).filter((s) => s.active !== false).reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0), 0);
+        const now2 = /* @__PURE__ */ new Date();
+        const exp = (fin.expenses || []).filter((e) => {
+          if (!e.date) return false;
+          const d = new Date(e.date);
+          return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth();
+        }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+        return rec + exp;
+      } catch (e) {
+        return 0;
+      }
+    })();
     const kpis = [
       {
         label: "Proyectos activos",
@@ -173,10 +188,10 @@
         icon: "alert-triangle"
       },
       {
-        label: "Proyectos en riesgo",
-        value: atRisk,
-        sub: atRisk === 0 ? "Todo en orden" : "sem\xE1foro rojo",
-        icon: "flag"
+        label: "Gastos este mes",
+        value: `\u20AC${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        sub: monthSpend === 0 ? "Sin gastos a\xFAn" : "recurrente + puntual",
+        icon: "receipt"
       },
       {
         label: "Facturado este mes",

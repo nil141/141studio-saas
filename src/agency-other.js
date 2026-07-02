@@ -1505,8 +1505,8 @@
     const [tab, setTab] = useState("recs");
     const [addOpen, setAddOpen] = useState(false);
     const [incType, setIncType] = useState("rec");
-    const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "" };
-    const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "" };
+    const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21 };
+    const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "", vat: 21 };
     const [recForm, setRecForm] = useState(blankRec);
     const [incForm, setIncForm] = useState(blankInc);
     const stripeConnected = false;
@@ -1518,6 +1518,10 @@
       const c = D.CLIENTS.find((c2) => c2.id === id);
       return c ? c.company || c.name || "" : "";
     };
+    const _vatOf = (x) => x.vat === void 0 || x.vat === null ? 21 : Number(x.vat);
+    const _withVat = (x) => (Number(x.amount) || 0) * (1 + _vatOf(x) / 100);
+    const _recMoVat = (r) => r.cycle === "yearly" ? _withVat(r) / 12 : _withVat(r);
+    const _recMoBase = (r) => _subMonthly(r);
     const saveRec = () => {
       if (!recForm.concept.trim() || !(Number(recForm.amount) > 0)) {
         toast("Pon concepto e importe", "error");
@@ -1531,6 +1535,7 @@
         clientId: recForm.clientId || "",
         clientName: clientName(recForm.clientId),
         nextCharge: recForm.nextCharge,
+        vat: Number(recForm.vat) || 0,
         active: true
       };
       persist({ ...data, recs: [rec, ...data.recs] });
@@ -1552,7 +1557,8 @@
         concept: incForm.concept.trim(),
         amount: Number(incForm.amount),
         clientId: incForm.clientId || "",
-        clientName: clientName(incForm.clientId)
+        clientName: clientName(incForm.clientId),
+        vat: Number(incForm.vat) || 0
       };
       persist({ ...data, incomes: [inc, ...data.incomes] });
       setIncForm(blankInc);
@@ -1562,9 +1568,11 @@
     };
     const delInc = (id) => persist({ ...data, incomes: data.incomes.filter((i) => i.id !== id) });
     const activeRecs = data.recs.filter((r) => r.active);
-    const recurringMo = activeRecs.reduce((a, r) => a + _subMonthly(r), 0);
-    const punMonth = data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+    const recurringMo = activeRecs.reduce((a, r) => a + _recMoVat(r), 0);
+    const punMonth = data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
     const monthTotal = recurringMo + punMonth;
+    const baseMonth = activeRecs.reduce((a, r) => a + _recMoBase(r), 0) + data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+    const ivaMonth = monthTotal - baseMonth;
     const MES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const trend = (() => {
       const now = /* @__PURE__ */ new Date();
@@ -1577,8 +1585,8 @@
       return Array.from({ length: 6 }, (_, k) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const puntual = data.incomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
-        const rec = activeRecs.filter((r) => recStartKey(r) <= key).reduce((a, r) => a + _subMonthly(r), 0);
+        const puntual = data.incomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + _withVat(i), 0);
+        const rec = activeRecs.filter((r) => recStartKey(r) <= key).reduce((a, r) => a + _recMoVat(r), 0);
         return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
       });
     })();
@@ -1586,11 +1594,11 @@
     const byClient = {};
     activeRecs.forEach((r) => {
       const k = r.clientName || "Sin cliente";
-      byClient[k] = (byClient[k] || 0) + _subMonthly(r);
+      byClient[k] = (byClient[k] || 0) + _recMoVat(r);
     });
     data.incomes.filter((i) => _sameMonth(i.date)).forEach((i) => {
       const k = i.clientName || "Sin cliente";
-      byClient[k] = (byClient[k] || 0) + (Number(i.amount) || 0);
+      byClient[k] = (byClient[k] || 0) + _withVat(i);
     });
     const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const cliMax = clients.length ? clients[0][1] : 1;
@@ -1603,10 +1611,10 @@
       maxWidth: 1400,
       margin: "0 auto",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ingresos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, _eur(monthTotal), " este mes \xB7 ", activeRecs.length, " mensualidad", activeRecs.length === 1 ? "" : "es", " activa", activeRecs.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
+    } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, _eur(monthTotal), " facturado este mes \xB7 ", activeRecs.length, " mensualidad", activeRecs.length === 1 ? "" : "es", " activa", activeRecs.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
       setIncType(tab === "oneoff" ? "pun" : "rec");
       setAddOpen(true);
-    } })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.8fr 1fr 0.72fr", gap: 14, marginBottom: 20, flexShrink: 0, height: 248 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px 14px", display: "flex", flexDirection: "column", overflow: "visible", position: "relative", zIndex: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 } }, "Ingreso mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), deltaPct !== null && /* @__PURE__ */ React.createElement("span", { style: {
+    } })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.8fr 1fr 0.72fr", gap: 14, marginBottom: 20, flexShrink: 0, height: 248 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px 14px", display: "flex", flexDirection: "column", overflow: "visible", position: "relative", zIndex: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 } }, "Facturaci\xF3n mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), deltaPct !== null && /* @__PURE__ */ React.createElement("span", { style: {
       display: "inline-flex",
       alignItems: "baseline",
       gap: 4,
@@ -1630,9 +1638,9 @@
       letterSpacing: "-0.2px",
       whiteSpace: "nowrap"
     } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: stripeConnected ? "var(--green)" : "var(--text-subtle)" } }), "Stripe ", stripeConnected ? "conectado" : "sin conectar"))), /* @__PURE__ */ React.createElement(FinTrendChart, { trend })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, flexShrink: 0 } }, "Por cliente \xB7 este mes"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 13 } }, clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : clients.map(([cli, amt]) => /* @__PURE__ */ React.createElement("div", { key: cli }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, cli), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)", flexShrink: 0, paddingLeft: 8 } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(3, amt / cliMax * 100)}%`, background: FIN_SERIES.pun, borderRadius: 99, transition: "width .3s" } })))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" } }, [
-      { label: "Recurrente", value: _eur(recurringMo), sub: "al mes" },
-      { label: "Puntual", value: _eur(punMonth), sub: "este mes" },
-      { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo mensualidades" }
+      { label: "Base imponible", value: _eur(baseMonth), sub: "este mes \xB7 sin IVA" },
+      { label: "IVA repercutido", value: _eur(ivaMonth), sub: "a apartar este mes" },
+      { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "mensualidades con IVA" }
     ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.label, style: {
       paddingTop: i === 0 ? 0 : 12,
       borderTop: i === 0 ? "none" : "0.5px solid var(--border)"
@@ -1667,7 +1675,7 @@
       alignItems: "center",
       justifyContent: "center",
       color: r.active ? FIN_SERIES.rec : "var(--text-subtle)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(r.amount), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), r.cycle === "yearly" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _eur(_subMonthly(r)), "/mes")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), tab === "oneoff" && (sortedInc.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin ingresos puntuales \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(_withVat(r)), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, "Base ", _eur(r.amount), _vatOf(r) > 0 ? ` + IVA ${_vatOf(r)}%` : " \xB7 sin IVA")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), tab === "oneoff" && (sortedInc.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin ingresos puntuales \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
       setIncType("pun");
       setAddOpen(true);
     } }, "a\xF1adir uno")) : sortedInc.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
@@ -1686,7 +1694,7 @@
       alignItems: "center",
       justifyContent: "center",
       color: FIN_SERIES.pun
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, inc.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px", flexShrink: 0 } }, "+", _eur(inc.amount)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, inc.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, "+", _eur(_withVat(inc))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, "Base ", _eur(inc.amount), _vatOf(inc) > 0 ? ` + IVA ${_vatOf(inc)}%` : " \xB7 sin IVA")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,
@@ -1707,12 +1715,14 @@
         titleValue: incType === "rec" ? recForm.concept : incForm.concept,
         onTitleChange: (v) => incType === "rec" ? setRecForm({ ...recForm, concept: v }) : setIncForm({ ...incForm, concept: v }),
         tabs: incType === "rec" ? [
-          { id: "amount", label: "Importe", icon: "receipt", hasVal: Number(recForm.amount) > 0, badge: Number(recForm.amount) > 0 ? _eur(recForm.amount) : null },
+          { id: "amount", label: "Importe", icon: "receipt", hasVal: Number(recForm.amount) > 0, badge: Number(recForm.amount) > 0 ? `${_eur(recForm.amount)} base` : null },
+          { id: "vat", label: "IVA", icon: "tag", hasVal: true, badge: `${recForm.vat}%` },
           { id: "cycle", label: "Ciclo", icon: "refresh-cw", hasVal: true, badge: recForm.cycle === "yearly" ? "Anual" : "Mensual" },
           { id: "client", label: "Cliente", icon: "users", hasVal: !!recForm.clientId, badge: recForm.clientId ? clientName(recForm.clientId) : null },
           { id: "charge", label: "Cobro", icon: "calendar", hasVal: !!recForm.nextCharge, badge: recForm.nextCharge ? _finDate(recForm.nextCharge) : null }
         ] : [
-          { id: "amount", label: "Importe", icon: "receipt", hasVal: Number(incForm.amount) > 0, badge: Number(incForm.amount) > 0 ? _eur(incForm.amount) : null },
+          { id: "amount", label: "Importe", icon: "receipt", hasVal: Number(incForm.amount) > 0, badge: Number(incForm.amount) > 0 ? `${_eur(incForm.amount)} base` : null },
+          { id: "vat", label: "IVA", icon: "tag", hasVal: true, badge: `${incForm.vat}%` },
           { id: "date", label: "Fecha", icon: "calendar", hasVal: !!incForm.date, badge: incForm.date ? _finDate(incForm.date) : null },
           { id: "client", label: "Cliente", icon: "users", hasVal: !!incForm.clientId, badge: incForm.clientId ? clientName(incForm.clientId) : null }
         ],
@@ -1730,6 +1740,23 @@
               onChange: (e) => incType === "rec" ? setRecForm({ ...recForm, amount: e.target.value }) : setIncForm({ ...incForm, amount: e.target.value })
             }
           );
+          if (id === "vat") return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "center" } }, [21, 10, 0].map((v) => {
+            const sel = Number(incType === "rec" ? recForm.vat : incForm.vat) === v;
+            return /* @__PURE__ */ React.createElement(
+              QuickPill,
+              {
+                key: v,
+                selected: sel,
+                onClick: () => incType === "rec" ? setRecForm({ ...recForm, vat: v }) : setIncForm({ ...incForm, vat: v })
+              },
+              v === 0 ? "Sin IVA" : `${v}%`
+            );
+          })), (() => {
+            const f = incType === "rec" ? recForm : incForm;
+            const base = Number(f.amount) || 0;
+            if (!base) return null;
+            return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", letterSpacing: "-0.3px" } }, "Base ", _eur(base), " \u2192 Total ", _eur(base * (1 + Number(f.vat) / 100)));
+          })());
           if (id === "cycle") return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "center" } }, FIN_CYCLES.map((c) => /* @__PURE__ */ React.createElement(QuickPill, { key: c.id, selected: recForm.cycle === c.id, onClick: () => setRecForm({ ...recForm, cycle: c.id }) }, c.label)));
           if (id === "client") return /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => {
             const sel = (incType === "rec" ? recForm.clientId : incForm.clientId) === c.id;

@@ -32,7 +32,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     {
       title: "Finanzas",
       items: [
-        { id: "income", label: "Ingresos", icon: "trending-up" },
+        { id: "income", label: "Facturaci\xF3n", icon: "trending-up" },
         { id: "billing", label: "Gastos", icon: "receipt" }
       ]
     },
