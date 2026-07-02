@@ -308,7 +308,12 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           </div>
         </div>
         <ActionPill
-          plusActions={() => openModal("newTask", { date: selDateStr })}
+          plusActions={[
+            { icon:"list-todo", label:"Nueva tarea", sub:"Una tarea puntual para un día.", accent:true,
+              onClick:() => openModal("newTask", { date: selDateStr }) },
+            { icon:"refresh-cw", label:"Nueva rutina", sub:"Una tarea que se repite en el tiempo.",
+              onClick:() => openModal("newRoutine", { date: selDateStr }) },
+          ]}
           moreActions={[
             { icon: hideCompleted ? "eye" : "eye-off",
               label: hideCompleted ? "Mostrar completadas" : "Ocultar completadas",

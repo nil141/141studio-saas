@@ -115,8 +115,8 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
-    if (name === "newTask") {
-      setQuickCreateType("task");
+    if (name === "newTask" || name === "newRoutine") {
+      setQuickCreateType(name === "newRoutine" ? "routine" : "task");
       setQuickCreateDate(params.date || "");
       setQuickCreateLock(true);
       setQuickCreate(true);

@@ -560,6 +560,71 @@ const _todayStr = () => {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 };
 
+const _ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+
+// ── ROUTINES ─────────────────────────────────────────────────────────
+// Una rutina es una tarea que se repite. No creamos una tabla nueva:
+// materializamos instancias reales en `tasks` (una por fecha) sobre un
+// horizonte razonable, para que aparezcan en su día y se puedan completar
+// como cualquier otra tarea. Devuelve las fechas generadas.
+//
+//   frequency: "daily" | "weekdays" | "weekly" | "monthly"
+//   startDate: "YYYY-MM-DD" (por defecto hoy)
+const addRoutine = (input) => {
+  const uid = _uid(); if (!uid) return { count: 0 };
+  const freq = input.frequency || "daily";
+  const pid  = input.projectId || "__none__";
+
+  const start = input.startDate ? new Date(input.startDate + "T12:00:00") : new Date();
+  start.setHours(12, 0, 0, 0);
+
+  // Horizonte por frecuencia (equilibrio entre utilidad y no saturar el tablero)
+  const HORIZON = { daily: 14, weekdays: 28, weekly: 56, monthly: 122 }[freq] || 14;
+  const end = new Date(start); end.setDate(end.getDate() + HORIZON);
+
+  const dates = [];
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const dow = d.getDay(); // 0 dom … 6 sáb
+    let hit = false;
+    if (freq === "daily")         hit = true;
+    else if (freq === "weekdays") hit = dow >= 1 && dow <= 5;
+    else if (freq === "weekly")   hit = dow === start.getDay();
+    else if (freq === "monthly")  hit = d.getDate() === start.getDate();
+    if (hit) dates.push(_ymd(d));
+  }
+  if (dates.length === 0) return { count: 0 };
+
+  const clientId   = input.clientId || null;
+  const clientName = input.clientName || null;
+
+  const tasks = dates.map(deadline => ({
+    id: _id(), title: input.title || "Rutina", column: "todo",
+    assignee: input.assignee || "Tú",
+    clientId, clientName, phase: null,
+    done: false, deadline, routine: true,
+  }));
+
+  if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
+  _store.TASKS[pid] = [...tasks, ..._store.TASKS[pid]]; _emit();
+
+  _sb.from("tasks").insert(tasks.map(t => ({
+    id: t.id, agency_id: uid,
+    project_id: pid === "__none__" ? null : pid,
+    title: t.title, col: t.column, assignee: t.assignee,
+    client_id: clientId, client_name: clientName,
+    deadline: t.deadline, done: false,
+  }))).then(({ error }) => {
+    if (error) {
+      console.error("[addRoutine] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+      const ids = new Set(tasks.map(t => t.id));
+      _store.TASKS[pid] = (_store.TASKS[pid] || []).filter(x => !ids.has(x.id));
+      _emit();
+    }
+  });
+
+  return { count: tasks.length, first: dates[0], last: dates[dates.length - 1] };
+};
+
 const moveTask = (projectId, taskId, newColumn) => {
   const uid = _uid(); if (!uid) return;
   if (!_store.TASKS[projectId]) return;
@@ -678,7 +743,7 @@ window.Data = {
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
   addLead,
-  addTask, moveTask, updateTask, deleteTask,
+  addTask, addRoutine, moveTask, updateTask, deleteTask,
   updateSettings,
   createInvite,
   useStore,

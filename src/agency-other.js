@@ -125,7 +125,10 @@
       /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, DAY_ES[new Date(selectedDay).getDay()], " ", new Date(selectedDay).getDate(), " ", MON_ES[new Date(selectedDay).getMonth()], " \xB7 ", dayTasks.filter((t) => t.column !== "done").length, " pendientes")), /* @__PURE__ */ React.createElement(
         ActionPill,
         {
-          plusActions: () => openModal("newTask", { date: selDateStr }),
+          plusActions: [
+            { icon: "list-todo", label: "Nueva tarea", sub: "Una tarea puntual para un d\xEDa.", accent: true, onClick: () => openModal("newTask", { date: selDateStr }) },
+            { icon: "refresh-cw", label: "Nueva rutina", sub: "Una tarea que se repite en el tiempo.", onClick: () => openModal("newRoutine", { date: selDateStr }) }
+          ],
           moreActions: [
             {
               icon: hideCompleted ? "eye" : "eye-off",
