@@ -14,7 +14,16 @@ from email.header  import decode_header as _dh
 from email.mime.text      import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-STRIPE_SK = os.environ.get("STRIPE_SK", "sk_live_REDACTED")
+STRIPE_SK = os.environ.get("STRIPE_SK", "")  # sin fallback: si falta, los endpoints de Stripe fallan con error claro
+
+# Supabase — para validar los JWT que envía el frontend (la anon key es pública por diseño)
+SB_URL  = os.environ.get("SUPABASE_URL", "https://ofnkazimemuiwovhxepq.supabase.co")
+SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbmthemltZW11aXdvdmh4ZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU5OTcsImV4cCI6MjA5NDUzMTk5N30.NVRoZb_Ie2ZgPELFkS7CxNWrLGZcgdOdWGEEkT_CNqo")
+
+# Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
+ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
+    "ALLOWED_ORIGINS", "https://app.141agency.com,http://localhost:8080"
+).split(",") if o.strip()]
 
 PORT = int(os.environ.get("PORT", 8080))
 BASE = os.path.dirname(os.path.abspath(__file__))
@@ -113,6 +122,33 @@ def _parse_fetch(data):
             })
         except Exception: continue
     return msgs
+
+# ── auth: validación del JWT de Supabase ──────────────────────────────────
+import hashlib as _hashlib
+_token_cache = {}  # sha256(token) -> (caduca_en, user)
+
+def _verify_supabase_token(token):
+    """Valida un access token contra Supabase y devuelve el usuario (o None)."""
+    if not token:
+        return None
+    key = _hashlib.sha256(token.encode()).hexdigest()
+    hit = _token_cache.get(key)
+    if hit and hit[0] > time.time():
+        return hit[1]
+    req = urllib.request.Request(SB_URL + "/auth/v1/user")
+    req.add_header("Authorization", "Bearer " + token)
+    req.add_header("apikey", SB_ANON)
+    try:
+        with urllib.request.urlopen(req, timeout=10) as r:
+            user = json.loads(r.read().decode())
+    except Exception:
+        return None
+    if not isinstance(user, dict) or not user.get("id"):
+        return None
+    if len(_token_cache) > 500:
+        _token_cache.clear()
+    _token_cache[key] = (time.time() + 300, user)
+    return user
 
 # ── endpoints ──────────────────────────────────────────────────────────────
 
@@ -250,6 +286,8 @@ def api_action(body):
 # ── Stripe helpers ─────────────────────────────────────────────────────────
 
 def _stripe_auth():
+    if not STRIPE_SK:
+        raise Exception("Stripe no configurado (falta la variable STRIPE_SK)")
     return base64.b64encode(f"{STRIPE_SK}:".encode()).decode()
 
 def _stripe(path, params=None):
@@ -412,195 +450,8 @@ def api_stripe_create_invoice(body):
 
 # ── HTTP handler ───────────────────────────────────────────────────────────
 
-# ── Store persistente ───────────────────────────────────────────────────────
-STORE_FILE = os.path.join(_STORE_DIR, "store.json")
-_store_lock = __import__("threading").Lock()
-
-def _read_store():
-    try:
-        with open(STORE_FILE, encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-def _write_store(data):
-    with _store_lock:
-        with open(STORE_FILE, "w", encoding="utf-8") as f:
-            json.dump(data, f, ensure_ascii=False, indent=2)
-
-def _rebuild_clients_from_accounts(account, admin_data, all_data):
-    """Ensure CLIENTS contains every client that registered under this admin account.
-    Uses __accounts__ as the source of truth — entries are never deleted from there."""
-    colors   = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6"]
-    existing = {c["id"]: c for c in admin_data.get("CLIENTS", [])}
-    changed  = False
-    for email_, acc in all_data.get("__accounts__", {}).items():
-        if acc.get("role") != "client" or acc.get("adminEmail") != account:
-            continue
-        cid = acc.get("clientId")
-        if not cid or cid in existing:
-            continue
-        # Reconstruct a minimal client entry from whatever we have stored
-        name    = acc.get("name", "")
-        company = acc.get("company") or name
-        admin_data.setdefault("CLIENTS", []).append({
-            "id":          cid,
-            "name":        name,
-            "company":     company,
-            "email":       acc.get("email", email_),
-            "whatsapp":    acc.get("phone", ""),
-            "initials":    acc.get("initials", name[:2].upper()),
-            "color":       acc.get("color", colors[hash(cid) % len(colors)]),
-            "projects":    0,
-            "mrr":         0,
-            "lastContact": "Hoy",
-            "status":      "active",
-            "service":     acc.get("service", ""),
-            "since":       acc.get("since", ""),
-        })
-        existing[cid] = True
-        changed = True
-    return changed
-
-def api_store_get(body):
-    account = body.get("account", "__default__")
-    all_data = _read_store()
-    return {"ok": True, "data": all_data.get(account, {})}
-
-def api_store_set(body):
-    account = body.get("account", "__default__")
-    data = body.get("data")
-    if not isinstance(data, dict):
-        return {"ok": False, "error": "data must be an object"}
-    all_data = _read_store()
-    all_data[account] = data
-    _write_store(all_data)
-    return {"ok": True}
-
-STORE_HANDLERS = {
-    "get": api_store_get,
-    "set": api_store_set,
-}
-
-# ── Invites ──────────────────────────────────────────────────────────────────
-
-def api_invite_create(body):
-    admin_email = body.get("account", "")
-    service     = body.get("service", "")
-    token = secrets.token_urlsafe(20)
-    all_data = _read_store()
-    all_data.setdefault("__invites__", {})[token] = {
-        "adminEmail": admin_email,
-        "createdAt":  time.time(),
-        "used":       False,
-        "service":    service,
-    }
-    _write_store(all_data)
-    return {"ok": True, "token": token}
-
-def api_invite_check(body):
-    token    = body.get("token", "")
-    all_data = _read_store()
-    inv = all_data.get("__invites__", {}).get(token)
-    if not inv:
-        return {"ok": False, "error": "Enlace no válido"}
-    if inv.get("used"):
-        return {"ok": False, "error": "Este enlace ya fue utilizado", "used": True}
-    return {"ok": True, "service": inv.get("service", "")}
-
-def api_invite_complete(body):
-    token   = body.get("token", "")
-    name    = body.get("name", "").strip()
-    company = body.get("company", "").strip()
-    email_  = body.get("email", "").strip().lower()
-    pw      = body.get("pw", "")
-    phone   = body.get("phone", "").strip()
-
-    if not all([token, name, company, email_, pw]):
-        return {"ok": False, "error": "Rellena todos los campos obligatorios"}
-
-    all_data = _read_store()
-    inv = all_data.get("__invites__", {}).get(token)
-    if not inv or inv.get("used"):
-        return {"ok": False, "error": "Enlace no válido o ya utilizado"}
-    if email_ in all_data.get("__accounts__", {}):
-        return {"ok": False, "error": "Este email ya tiene una cuenta"}
-
-    admin_email = inv["adminEmail"]
-    colors    = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6"]
-    color     = random.choice(colors)
-    initials  = (name[:1] + (company[:1] if company else name[1:2])).upper()
-    client_id = "c" + secrets.token_hex(4)
-    now_str   = datetime.datetime.now().strftime("%b %Y")
-
-    admin_data = all_data.setdefault(admin_email, {})
-    admin_data.setdefault("CLIENTS", []).append({
-        "id": client_id, "name": name, "company": company,
-        "email": email_, "whatsapp": phone,
-        "initials": initials, "color": color,
-        "projects": 0, "mrr": 0, "lastContact": "Hoy",
-        "status": "active", "service": inv.get("service", ""),
-        "since": now_str,
-    })
-    # Bump _ts so the admin's polling detects the new client automatically
-    admin_data["_ts"] = int(time.time() * 1000)
-
-    all_data.setdefault("__accounts__", {})[email_] = {
-        "role": "client", "name": name, "pw": pw,
-        "adminEmail": admin_email, "clientId": client_id, "initials": initials,
-        # Store full profile so _rebuild_clients_from_accounts can reconstruct the entry
-        "email": email_, "company": company, "phone": phone,
-        "color": color, "since": now_str, "service": inv.get("service", ""),
-    }
-    all_data["__invites__"][token]["used"] = True
-    _write_store(all_data)
-    return {"ok": True}
-
-INVITE_HANDLERS = {
-    "create":   api_invite_create,
-    "check":    api_invite_check,
-    "complete": api_invite_complete,
-}
-
-# ── Auth ─────────────────────────────────────────────────────────────────────
-
-def api_auth_login(body):
-    email_ = body.get("email", "").strip().lower()
-    pw     = body.get("pw", "")
-    all_data = _read_store()
-    acc = all_data.get("__accounts__", {}).get(email_)
-    if not acc or acc.get("pw") != pw:
-        return {"ok": False}
-    return {"ok": True, "account": {
-        "email":      email_,
-        "role":       acc["role"],
-        "name":       acc["name"],
-        "initials":   acc.get("initials", ""),
-        "adminEmail": acc.get("adminEmail"),
-        "clientId":   acc.get("clientId"),
-    }}
-
-def api_auth_reset_clients(body):
-    """Clear CLIENTS list and remove all client accounts for an admin store key."""
-    email_ = body.get("email", "").strip().lower()
-    secret = body.get("secret", "")
-    if secret != "141reset2025":
-        return {"ok": False, "error": "No autorizado"}
-    all_data = _read_store()
-    # Remove all client accounts under this admin
-    accounts = all_data.get("__accounts__", {})
-    to_delete = [e for e, a in accounts.items() if a.get("adminEmail") == email_ and a.get("role") == "client"]
-    for e in to_delete:
-        del accounts[e]
-    # Clear CLIENTS array and bump _ts
-    admin_data = all_data.get(email_, {})
-    admin_data["CLIENTS"] = []
-    admin_data["_ts"] = int(time.time() * 1000)
-    all_data[email_] = admin_data
-    _write_store(all_data)
-    return {"ok": True, "deleted": len(to_delete)}
-
-AUTH_HANDLERS = {"login": api_auth_login, "reset-clients": api_auth_reset_clients}
+# Los antiguos endpoints /api/store, /api/invite y /api/auth (con contraseñas en
+# claro en store.json) se han eliminado: la app usa Supabase (RLS) para todo eso.
 
 MAIL_HANDLERS = {
     "connect":  api_connect,
@@ -623,50 +474,88 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
 
+    # Ficheros que el servidor estático nunca debe servir
+    _BLOCKED_NAMES = {"store.json", "mail_server.py", "requirements.txt",
+                      "railway.toml", "procfile", "build.sh"}
+
+    def _path_blocked(self):
+        path = urllib.parse.urlparse(self.path).path.lower()
+        if "/." in path:               # .git, .env y cualquier dotfile/dotdir
+            return True
+        name = path.rsplit("/", 1)[-1]
+        return name in self._BLOCKED_NAMES or path.endswith(".py")
+
     def _cors(self):
-        self.send_header("Access-Control-Allow-Origin",  "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        origin = self.headers.get("Origin", "")
+        if origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+    def end_headers(self):
+        # Cabeceras de seguridad en todas las respuestas
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        super().end_headers()
 
     def do_OPTIONS(self):
-        self.send_response(200); self._cors(); self.end_headers()
+        self.send_response(204); self._cors(); super().end_headers()
 
     def do_GET(self):
+        if self._path_blocked():
+            self.send_error(404); return
         # SPA routing: serve index.html for /invite/* paths
         if self.path.startswith("/invite/"):
             self.path = "/index.html"
         super().do_GET()
+
+    def do_HEAD(self):
+        if self._path_blocked():
+            self.send_error(404); return
+        super().do_HEAD()
 
     def do_POST(self):
         if self.path.startswith("/api/mail/"):
             self._handle_api(self.path[len("/api/mail/"):], MAIL_HANDLERS)
         elif self.path.startswith("/api/stripe/"):
             self._handle_api(self.path[len("/api/stripe/"):], STRIPE_HANDLERS)
-        elif self.path.startswith("/api/store/"):
-            self._handle_api(self.path[len("/api/store/"):], STORE_HANDLERS)
-        elif self.path.startswith("/api/invite/"):
-            self._handle_api(self.path[len("/api/invite/"):], INVITE_HANDLERS)
-        elif self.path.startswith("/api/auth/"):
-            self._handle_api(self.path[len("/api/auth/"):], AUTH_HANDLERS)
+        elif self.path.startswith(("/api/store/", "/api/invite/", "/api/auth/")):
+            self._json(410, {"ok": False, "error": "Endpoint retirado — la app usa Supabase"})
         else:
             self.send_error(405)
 
-    def _handle_api(self, endpoint, handlers):
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            body   = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
-            fn     = handlers.get(endpoint)
-            result = fn(body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
-        except Exception as e:
-            traceback.print_exc()
-            result = {"ok": False, "error": str(e)}
-        resp = json.dumps(result, ensure_ascii=False).encode("utf-8")
-        self.send_response(200)
+    def _json(self, status, obj):
+        resp = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+        self.send_response(status)
         self.send_header("Content-Type",   "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(resp)))
         self._cors()
         self.end_headers()
         self.wfile.write(resp)
+
+    def _handle_api(self, endpoint, handlers):
+        # Autenticación obligatoria: JWT de Supabase válido y que no sea un cliente del portal
+        auth  = self.headers.get("Authorization", "")
+        token = auth[7:] if auth.startswith("Bearer ") else ""
+        user  = _verify_supabase_token(token)
+        role  = ((user or {}).get("user_metadata") or {}).get("role")
+        if not user or role == "client":
+            self._json(401, {"ok": False, "error": "No autorizado"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 1_000_000:
+                self._json(413, {"ok": False, "error": "Payload demasiado grande"})
+                return
+            body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            fn   = handlers.get(endpoint)
+            result = fn(body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
+        except Exception as e:
+            traceback.print_exc()
+            result = {"ok": False, "error": str(e)}
+        self._json(200, result)
 
     def log_message(self, fmt, *args):
         if "/api/" in (self.path if hasattr(self, "path") else ""):

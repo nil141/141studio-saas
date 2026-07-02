@@ -178,12 +178,13 @@ const _ms = (r) => r && {
   tagline: r.tagline
 };
 const _loadAll = async () => {
-  const uid = _store._user?.id;
+  var _a, _b, _c, _d, _e;
+  const uid = (_a = _store._user) == null ? void 0 : _a.id;
   if (!uid) return;
-  const agencyEmail = _store._user?.email || "";
+  const agencyEmail = ((_b = _store._user) == null ? void 0 : _b.email) || "";
   const { error: agErr } = await _sb.from("agencies").upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
-  const metaRole = _store._user?.user_metadata?.role;
+  const metaRole = (_d = (_c = _store._user) == null ? void 0 : _c.user_metadata) == null ? void 0 : _d.role;
   let prof = null;
   try {
     const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
@@ -217,7 +218,7 @@ const _loadAll = async () => {
     _store.CLIENTS = [];
     _store.LEADS = [];
     _store.TASKS = {};
-    if (proj.data?.length) {
+    if ((_e = proj.data) == null ? void 0 : _e.length) {
       const pids = proj.data.map((p) => p.id);
       const { data: dData } = await _sb.from("deliverables").select("*").in("project_id", pids);
       _store.DELIVERABLES = (dData || []).map(_md);
@@ -251,7 +252,8 @@ const _loadAll = async () => {
 };
 let _channel = null;
 const _setupRealtime = () => {
-  const uid = _store._user?.id;
+  var _a;
+  const uid = (_a = _store._user) == null ? void 0 : _a.id;
   if (!uid) return;
   if (_channel) {
     _sb.removeChannel(_channel);
@@ -260,10 +262,11 @@ const _setupRealtime = () => {
   _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
+  var _a, _b;
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
   const uid = data.user.id;
-  const metaRole = data.user.user_metadata?.role;
+  const metaRole = (_a = data.user.user_metadata) == null ? void 0 : _a.role;
   let prof = null;
   try {
     const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
@@ -286,11 +289,11 @@ const authLogin = async (email, password) => {
     ok: true,
     session: {
       email: data.user.email,
-      role: prof?.role || "client",
-      name: prof?.name || data.user.email,
-      initials: prof?.initials || data.user.email[0]?.toUpperCase() || "?",
-      agencyId: prof?.agency_id,
-      clientId: prof?.client_db_id,
+      role: (prof == null ? void 0 : prof.role) || "client",
+      name: (prof == null ? void 0 : prof.name) || data.user.email,
+      initials: (prof == null ? void 0 : prof.initials) || ((_b = data.user.email[0]) == null ? void 0 : _b.toUpperCase()) || "?",
+      agencyId: prof == null ? void 0 : prof.agency_id,
+      clientId: prof == null ? void 0 : prof.client_db_id,
       adminEmail: data.user.email
       // backward compat with z-app
     }
@@ -314,11 +317,11 @@ const authSignOut = async () => {
 };
 const initAccount = async (_ignored) => {
   let { data: { session } } = await _sb.auth.getSession();
-  if (!session?.user) {
+  if (!(session == null ? void 0 : session.user)) {
     const { data: refreshed } = await _sb.auth.refreshSession();
-    session = refreshed?.session;
+    session = refreshed == null ? void 0 : refreshed.session;
   }
-  if (session?.user) {
+  if (session == null ? void 0 : session.user) {
     _store._user = session.user;
     await _loadAll();
     _setupRealtime();
@@ -326,10 +329,16 @@ const initAccount = async (_ignored) => {
     window.dispatchEvent(new CustomEvent("141-session-expired"));
   }
 };
-const _uid = () => _store._user?.id;
+const _uid = () => {
+  var _a;
+  return (_a = _store._user) == null ? void 0 : _a.id;
+};
 const _id = () => crypto.randomUUID();
 const _palette = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
-const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase() || "").join("") || "??";
+const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => {
+  var _a;
+  return ((_a = s[0]) == null ? void 0 : _a.toUpperCase()) || "";
+}).join("") || "??";
 const addClient = (input) => {
   const uid = _uid();
   if (!uid) return;
@@ -428,7 +437,7 @@ const addProject = (input) => {
     id: _id(),
     name: input.name || "Proyecto sin nombre",
     clientId: input.clientId,
-    clientName: client?.company || "\u2014",
+    clientName: (client == null ? void 0 : client.company) || "\u2014",
     service: input.template || "\u2014",
     light: "green",
     phase: 0,
@@ -493,8 +502,8 @@ const addInvoice = (input) => {
   const inv = {
     id: num,
     clientId: input.clientId,
-    project: project?.name || "\u2014",
-    client: client?.company || "\u2014",
+    project: (project == null ? void 0 : project.name) || "\u2014",
+    client: (client == null ? void 0 : client.company) || "\u2014",
     amount: Number(input.amount) || 0,
     type: input.type || "Extra",
     issued: "hoy",
@@ -716,6 +725,23 @@ const createInvite = async (arg = {}) => {
   }
   return { token };
 };
+const apiFetch = async (path, body = {}) => {
+  let token = null;
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    token = (session == null ? void 0 : session.access_token) || null;
+  } catch (e) {
+  }
+  return fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...token ? { "Authorization": `Bearer ${token}` } : {}
+    },
+    body: JSON.stringify(body)
+  });
+};
+window.apiFetch = apiFetch;
 window.Data = {
   // Static
   TEAM,

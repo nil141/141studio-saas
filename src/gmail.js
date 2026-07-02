@@ -64,12 +64,8 @@ const _findByName = (folders, ...names) => {
   return ((_a = folders.find((f) => ns.has((f.name || f).toLowerCase()))) == null ? void 0 : _a.name) || null;
 };
 const _api = async (endpoint, body) => {
-  const res = await fetch(`${MAIL_API}/${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await window.apiFetch(`${MAIL_API}/${endpoint}`, body);
+  if (!res.ok) throw new Error(res.status === 401 ? "Sesi\xF3n caducada \u2014 vuelve a entrar" : `HTTP ${res.status}`);
   return res.json();
 };
 const _fmtDate = (dateStr) => {

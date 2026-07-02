@@ -946,11 +946,7 @@ const AgencyProjects = ({ navigate, openModal }) => {
 
 // ── helpers Stripe ────────────────────────────────────────────
 const _stripeApi = async (endpoint, body = {}) => {
-  const res = await fetch(`/api/stripe/${endpoint}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
+  const res = await window.apiFetch(`/api/stripe/${endpoint}`, body);
   return res.json();
 };
 

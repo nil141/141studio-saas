@@ -78,7 +78,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   useEffect(() => {
     const now = new Date();
     const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
-    fetch("/api/stripe/invoices", { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify({limit:100}) })
+    window.apiFetch("/api/stripe/invoices", { limit: 100 })
       .then(r => r.json())
       .then(res => {
         if (!res.ok) { setStripeMonth(false); return; }

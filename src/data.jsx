@@ -634,6 +634,26 @@ const createInvite = async (arg = {}) => {
 };
 
 // ── window.Data ──────────────────────────────────────────────────────
+// ── apiFetch — llamadas al backend propio con el JWT de Supabase ──────────
+// El servidor valida el token contra Supabase y rechaza peticiones anónimas,
+// así /api/stripe/* y /api/mail/* dejan de ser endpoints públicos.
+const apiFetch = async (path, body = {}) => {
+  let token = null;
+  try {
+    const { data: { session } } = await _sb.auth.getSession();
+    token = session?.access_token || null;
+  } catch {}
+  return fetch(path, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+};
+window.apiFetch = apiFetch;
+
 window.Data = {
   // Static
   TEAM, ME, PHASES, ROADMAP_P1, LEAD_STAGES, CHANNELS,

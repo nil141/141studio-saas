@@ -51,7 +51,7 @@
     useEffect(() => {
       const now2 = /* @__PURE__ */ new Date();
       const monthStart = Math.floor(new Date(now2.getFullYear(), now2.getMonth(), 1).getTime() / 1e3);
-      fetch("/api/stripe/invoices", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ limit: 100 }) }).then((r) => r.json()).then((res) => {
+      window.apiFetch("/api/stripe/invoices", { limit: 100 }).then((r) => r.json()).then((res) => {
         if (!res.ok) {
           setStripeMonth(false);
           return;

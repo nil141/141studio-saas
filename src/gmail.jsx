@@ -72,12 +72,8 @@ const _findByName = (folders, ...names) => {
 };
 
 const _api = async (endpoint, body) => {
-  const res = await fetch(`${MAIL_API}/${endpoint}`, {
-    method:  "POST",
-    headers: { "Content-Type": "application/json" },
-    body:    JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await window.apiFetch(`${MAIL_API}/${endpoint}`, body);
+  if (!res.ok) throw new Error(res.status === 401 ? "Sesión caducada — vuelve a entrar" : `HTTP ${res.status}`);
   return res.json();
 };
 
