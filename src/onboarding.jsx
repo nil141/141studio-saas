@@ -114,11 +114,20 @@ const OnboardingPage = ({ token }) => {
   };
 
   const verifyAndComplete = async () => {
-    if (code.trim().length < 6) { setCodeErr("Introduce el código de 6 dígitos"); return; }
+    const raw = code.trim();
+    if (raw.length < 6) { setCodeErr("Introduce el código que te ha llegado por correo"); return; }
     setBusy(true); setCodeErr("");
     try {
       const sb = _sb();
-      const { error: vErr } = await sb.auth.verifyOtp({ email: form.email.trim(), token: code.trim(), type: "signup" });
+      // Acepta tanto el código corto de 6 dígitos ({{ .Token }}) como el token largo
+      // ({{ .TokenHash }}) que envían algunas plantillas de correo de Supabase.
+      let vErr = null;
+      if (/^\d{6}$/.test(raw)) {
+        ({ error: vErr } = await sb.auth.verifyOtp({ email: form.email.trim(), token: raw, type: "signup" }));
+      } else {
+        ({ error: vErr } = await sb.auth.verifyOtp({ token_hash: raw, type: "signup" }));
+        if (vErr) ({ error: vErr } = await sb.auth.verifyOtp({ token_hash: raw, type: "email" }));
+      }
       if (vErr) { setCodeErr(vErr.message || "Código incorrecto o caducado"); setBusy(false); return; }
       const e = await finishSignup(sb);
       if (e) { setCodeErr(e); setBusy(false); return; }
@@ -192,13 +201,15 @@ const OnboardingPage = ({ token }) => {
       <Progress pct={100}/>
       <Title>Confirma tu cuenta</Title>
       <Sub mb={24}>
-        Te hemos enviado un código de 6 dígitos a <b style={{color:"#fff"}}>{form.email}</b>.
+        Te hemos enviado un código de verificación a <b style={{color:"#fff"}}>{form.email}</b>.
       </Sub>
-      <input className="auth-input" inputMode="numeric" maxLength={6} autoFocus placeholder="••••••"
+      <input className="auth-input" maxLength={128} autoFocus placeholder="Código del correo"
         value={code}
-        onChange={e => { setCode(e.target.value.replace(/\D/g, "").slice(0, 6)); if (codeErr) setCodeErr(""); }}
+        onChange={e => { setCode(e.target.value.replace(/\s/g, "")); if (codeErr) setCodeErr(""); }}
         onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); verifyAndComplete(); } }}
-        style={{..._AUTH_INPUT, height:56, fontSize:26, letterSpacing:"10px", textAlign:"center",
+        style={{..._AUTH_INPUT, height:56, textAlign:"center",
+          fontSize: code.length > 8 ? 15 : 26,
+          letterSpacing: code.length > 8 ? "0.5px" : "10px",
           fontFamily:"var(--font-mono)", marginBottom:16, borderColor: codeErr ? "var(--red)" : undefined}}/>
       {codeErr && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
         <Icon name="alert-triangle" size={12}/> {codeErr}

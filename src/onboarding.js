@@ -118,7 +118,7 @@ const OnboardingPage = ({ token }) => {
       p_company: form.company.trim(),
       p_phone: form.phone.trim()
     });
-    if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
+    if (rpcError || !(result == null ? void 0 : result.ok)) return (result == null ? void 0 : result.error) || (rpcError == null ? void 0 : rpcError.message) || "Error al completar el registro";
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");
     localStorage.removeItem("141_session");
@@ -160,15 +160,22 @@ const OnboardingPage = ({ token }) => {
     setBusy(false);
   };
   const verifyAndComplete = async () => {
-    if (code.trim().length < 6) {
-      setCodeErr("Introduce el c\xF3digo de 6 d\xEDgitos");
+    const raw = code.trim();
+    if (raw.length < 6) {
+      setCodeErr("Introduce el c\xF3digo que te ha llegado por correo");
       return;
     }
     setBusy(true);
     setCodeErr("");
     try {
       const sb = _sb();
-      const { error: vErr } = await sb.auth.verifyOtp({ email: form.email.trim(), token: code.trim(), type: "signup" });
+      let vErr = null;
+      if (/^\d{6}$/.test(raw)) {
+        ({ error: vErr } = await sb.auth.verifyOtp({ email: form.email.trim(), token: raw, type: "signup" }));
+      } else {
+        ({ error: vErr } = await sb.auth.verifyOtp({ token_hash: raw, type: "signup" }));
+        if (vErr) ({ error: vErr } = await sb.auth.verifyOtp({ token_hash: raw, type: "email" }));
+      }
       if (vErr) {
         setCodeErr(vErr.message || "C\xF3digo incorrecto o caducado");
         setBusy(false);
@@ -192,7 +199,7 @@ const OnboardingPage = ({ token }) => {
     try {
       const { error } = await _sb().auth.resend({ type: "signup", email: form.email.trim() });
       setResendMsg(error ? error.message || "No se pudo reenviar" : "C\xF3digo reenviado \u2713");
-    } catch {
+    } catch (e) {
       setResendMsg("No se pudo reenviar");
     }
   };
@@ -241,17 +248,16 @@ const OnboardingPage = ({ token }) => {
   );
   const Progress = ({ pct: pct2 }) => /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden", marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${pct2}%`, background: _PURP, borderRadius: 99, transition: "width .35s ease" } }));
   if (status === "verify") return wrap(
-    /* @__PURE__ */ React.createElement("div", { style: { animation: "pop .25s ease" } }, /* @__PURE__ */ React.createElement(Progress, { pct: 100 }), /* @__PURE__ */ React.createElement(Title, null, "Confirma tu cuenta"), /* @__PURE__ */ React.createElement(Sub, { mb: 24 }, "Te hemos enviado un c\xF3digo de 6 d\xEDgitos a ", /* @__PURE__ */ React.createElement("b", { style: { color: "#fff" } }, form.email), "."), /* @__PURE__ */ React.createElement(
+    /* @__PURE__ */ React.createElement("div", { style: { animation: "pop .25s ease" } }, /* @__PURE__ */ React.createElement(Progress, { pct: 100 }), /* @__PURE__ */ React.createElement(Title, null, "Confirma tu cuenta"), /* @__PURE__ */ React.createElement(Sub, { mb: 24 }, "Te hemos enviado un c\xF3digo de verificaci\xF3n a ", /* @__PURE__ */ React.createElement("b", { style: { color: "#fff" } }, form.email), "."), /* @__PURE__ */ React.createElement(
       "input",
       {
         className: "auth-input",
-        inputMode: "numeric",
-        maxLength: 6,
+        maxLength: 128,
         autoFocus: true,
-        placeholder: "\u2022\u2022\u2022\u2022\u2022\u2022",
+        placeholder: "C\xF3digo del correo",
         value: code,
         onChange: (e) => {
-          setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+          setCode(e.target.value.replace(/\s/g, ""));
           if (codeErr) setCodeErr("");
         },
         onKeyDown: (e) => {
@@ -263,9 +269,9 @@ const OnboardingPage = ({ token }) => {
         style: {
           ..._AUTH_INPUT,
           height: 56,
-          fontSize: 26,
-          letterSpacing: "10px",
           textAlign: "center",
+          fontSize: code.length > 8 ? 15 : 26,
+          letterSpacing: code.length > 8 ? "0.5px" : "10px",
           fontFamily: "var(--font-mono)",
           marginBottom: 16,
           borderColor: codeErr ? "var(--red)" : void 0
