@@ -480,7 +480,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         maskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
       }}>
 
-      {groups.length === 0 && (
+      <window.RoutineDayList day={selDateStr} onEdit={(r) => openModal("editRoutine", { routine: r })}/>
+
+      {groups.length === 0 && D.routinesForDay(selDateStr).length === 0 && (
         <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
           Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
         </div>

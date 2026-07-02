@@ -115,8 +115,8 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
-    if (name === "newTask" || name === "newRoutine") {
-      setQuickCreateType(name === "newRoutine" ? "routine" : "task");
+    if (name === "newTask") {
+      setQuickCreateType("task");
       setQuickCreateDate(params.date || "");
       setQuickCreateLock(true);
       setQuickCreate(true);
@@ -219,6 +219,8 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       <NewProjectModal open={modal === "newProject"} onClose={closeModal} prefilledClientId={modalParams.clientId}/>
       <NewClientModal open={modal === "newClient"} onClose={closeModal} onCreateProject={(clientId) => openModal("newProject", { clientId })}/>
       <NewTaskModal open={modal === "newTask"} onClose={closeModal}/>
+      <window.RoutineModal open={modal === "newRoutine" || modal === "editRoutine"} onClose={closeModal}
+        routine={modal === "editRoutine" ? modalParams.routine : null} date={modalParams.date}/>
       <NewLeadModal open={modal === "newLead"} onClose={closeModal}/>
       <NewInvoiceModal open={modal === "newInvoice"} onClose={closeModal}/>
       <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>

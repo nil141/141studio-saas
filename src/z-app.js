@@ -101,8 +101,8 @@
       window.scrollTo({ top: 0 });
     };
     const openModal = (name, params = {}) => {
-      if (name === "newTask" || name === "newRoutine") {
-        setQuickCreateType(name === "newRoutine" ? "routine" : "task");
+      if (name === "newTask") {
+        setQuickCreateType("task");
         setQuickCreateDate(params.date || "");
         setQuickCreateLock(true);
         setQuickCreate(true);
@@ -190,7 +190,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: item.icon, size: 20 }),
       /* @__PURE__ */ React.createElement("span", null, item.label)
-    ))), /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(NewInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
+    ))), /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(window.RoutineModal, { open: modal === "newRoutine" || modal === "editRoutine", onClose: closeModal, routine: modal === "editRoutine" ? modalParams.routine : null, date: modalParams.date }), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(NewInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
       setQuickCreate(false);
       setQuickCreateLock(false);
     }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal }));

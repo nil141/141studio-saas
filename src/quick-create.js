@@ -9,12 +9,6 @@ const FREQ_OPTS = [
   { id: "weekly", label: "Semanal" },
   { id: "monthly", label: "Mensual" }
 ];
-const ROUTINE_FREQ = [
-  { id: "daily", label: "Cada d\xEDa" },
-  { id: "weekdays", label: "D\xEDas laborables" },
-  { id: "weekly", label: "Cada semana" },
-  { id: "monthly", label: "Cada mes" }
-];
 const today = () => {
   const n = /* @__PURE__ */ new Date();
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
@@ -40,7 +34,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       setDate(defaultDate || today());
       setTime("");
       setTimeEnd("");
-      setFreq(defaultType === "routine" ? "daily" : "once");
+      setFreq("once");
       setType(defaultType);
       setActiveTab(null);
       setPickerFor(null);
@@ -59,21 +53,6 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const handleSubmit = () => {
     if (!canSubmit) return;
     const t = title.trim();
-    if (type === "routine") {
-      const client = clientId ? D.CLIENTS.find((c) => c.id === clientId) : null;
-      const proj = clientId ? D.PROJECTS.find((p) => p.clientId === clientId) : null;
-      D.addRoutine({
-        title: t,
-        frequency: freq,
-        startDate: defaultDate || today(),
-        assignee: "",
-        projectId: proj ? proj.id : "__none__",
-        clientId: proj ? null : clientId || null,
-        clientName: proj ? null : (client == null ? void 0 : client.company) || (client == null ? void 0 : client.name) || null
-      });
-      onClose();
-      return;
-    }
     if (type === "task") {
       const deadline = defaultDate || null;
       if (clientId) {
@@ -108,15 +87,13 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     }
     onClose();
   };
-  const accentColor = { task: "var(--accent)", routine: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
-  const accentHex = { task: "#9e9ae5", routine: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
-  const freqSet = type === "routine" ? ROUTINE_FREQ : FREQ_OPTS;
-  const isRoutine = type === "routine";
+  const accentColor = { task: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
+  const accentHex = { task: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
   const tabs = [
-    ...type === "task" || isRoutine ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
-    { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: isRoutine ? true : freq !== "once" },
-    ...!isRoutine ? [{ id: "time", label: "Hora", icon: "clock", hasVal: !!time }] : [],
-    ...type !== "task" && !isRoutine ? [{ id: "date", label: "Fecha", icon: "calendar", hasVal: false }] : []
+    ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
+    { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
+    { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
+    ...type !== "task" ? [{ id: "date", label: "Fecha", icon: "calendar", hasVal: false }] : []
   ];
   const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
   return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
@@ -164,7 +141,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         alignItems: "center",
         justifyContent: "center",
         color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px", display: "flex", alignItems: "center", gap: 7 } }, isRoutine && /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, strokeWidth: 1.8, style: { color: accentHex } }), isRoutine ? "Nueva rutina" : "Nueva tarea") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Crear nuevo") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
         display: "flex",
         alignItems: "center",
         gap: 5,
@@ -196,7 +173,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         "input",
         {
           autoFocus: true,
-          placeholder: { task: "Nombre de la tarea...", routine: "Nombre de la rutina...", event: "Nombre del evento...", meeting: "Nombre de la reuni\xF3n..." }[type],
+          placeholder: { task: "Nombre de la tarea...", event: "Nombre del evento...", meeting: "Nombre de la reuni\xF3n..." }[type],
           value: title,
           onChange: (e) => setTitle(e.target.value),
           onKeyDown: (e) => {
@@ -248,7 +225,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         transition: "all .1s",
         textAlign: "left",
         width: "100%"
-      } }, c.company || c.name))), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, freqSet.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
+      } }, c.company || c.name))), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, FREQ_OPTS.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
         padding: "8px 18px",
         borderRadius: 99,
         fontSize: 13,
@@ -259,12 +236,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         cursor: "pointer",
         fontFamily: "var(--font-sans)",
         transition: "all .1s"
-      } }, f.label))), isRoutine && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.3px", textAlign: "center", maxWidth: 320 } }, {
-        daily: "Se crea una tarea cada d\xEDa durante las pr\xF3ximas 2 semanas.",
-        weekdays: "Se crea una tarea de lunes a viernes durante las pr\xF3ximas 4 semanas.",
-        weekly: "Se crea una tarea cada semana durante los pr\xF3ximos 2 meses.",
-        monthly: "Se crea una tarea cada mes durante los pr\xF3ximos 4 meses."
-      }[freq])), activeTab === "time" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("start"), style: {
+      } }, f.label))), activeTab === "time" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("start"), style: {
         padding: "10px 22px",
         borderRadius: 14,
         cursor: "pointer",
@@ -323,7 +295,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           cursor: "pointer",
           fontFamily: "var(--font-sans)",
           transition: "all .12s"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = freqSet.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time));
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time));
       }))
     )
   ), pickerFor && /* @__PURE__ */ React.createElement(

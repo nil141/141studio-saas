@@ -560,69 +560,91 @@ const _todayStr = () => {
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 };
 
-const _ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-
-// ── ROUTINES ─────────────────────────────────────────────────────────
-// Una rutina es una tarea que se repite. No creamos una tabla nueva:
-// materializamos instancias reales en `tasks` (una por fecha) sobre un
-// horizonte razonable, para que aparezcan en su día y se puedan completar
-// como cualquier otra tarea. Devuelve las fechas generadas.
+// ── ROUTINES (checklists recurrentes) ────────────────────────────────
+// Una rutina es una plantilla que se repite (ej. "Rutina mañanera") y que
+// contiene VARIOS pasos (un checklist). Cada día que toca, se muestra la
+// rutina con sus pasos y se pueden ir tachando. La finalización se guarda
+// por rutina + día + paso.
 //
+// Persistencia local (localStorage), igual que los eventos personalizados
+// de la Agenda: es un panel de uso propio y así funciona sin cambios de
+// esquema en Supabase.
 //   frequency: "daily" | "weekdays" | "weekly" | "monthly"
-//   startDate: "YYYY-MM-DD" (por defecto hoy)
+const _RKEY  = "141_routines";
+const _RDKEY = "141_routine_done";
+const _loadLS = (k, def) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } };
+const _saveLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+// Hidratar en el store (device-local, no depende del login)
+_store.ROUTINES     = _loadLS(_RKEY, []);
+_store.ROUTINE_DONE = _loadLS(_RDKEY, {});
+
+// ¿esta rutina aplica en la fecha dada? (YYYY-MM-DD)
+const _routineMatchesDay = (r, dateStr) => {
+  const d = new Date(dateStr + "T12:00:00");
+  const start = new Date((r.startDate || dateStr) + "T12:00:00");
+  d.setHours(12,0,0,0); start.setHours(12,0,0,0);
+  if (d < start) return false;
+  const dow = d.getDay();
+  if (r.frequency === "daily")    return true;
+  if (r.frequency === "weekdays") return dow >= 1 && dow <= 5;
+  if (r.frequency === "weekly")   return dow === start.getDay();
+  if (r.frequency === "monthly")  return d.getDate() === start.getDate();
+  return true;
+};
+
+const routinesForDay = (dateStr) =>
+  (_store.ROUTINES || []).filter(r => _routineMatchesDay(r, dateStr));
+
 const addRoutine = (input) => {
-  const uid = _uid(); if (!uid) return { count: 0 };
-  const freq = input.frequency || "daily";
-  const pid  = input.projectId || "__none__";
+  const r = {
+    id: _id(),
+    title: (input.title || "Rutina").trim(),
+    frequency: input.frequency || "daily",
+    startDate: input.startDate || _todayStr(),
+    items: (input.items || [])
+      .map(t => (typeof t === "string" ? t : t.text) || "")
+      .map(t => t.trim()).filter(Boolean)
+      .map(text => ({ id: _id(), text })),
+    createdAt: Date.now(),
+  };
+  _store.ROUTINES = [r, ...(_store.ROUTINES || [])];
+  _saveLS(_RKEY, _store.ROUTINES); _emit();
+  return r;
+};
 
-  const start = input.startDate ? new Date(input.startDate + "T12:00:00") : new Date();
-  start.setHours(12, 0, 0, 0);
-
-  // Horizonte por frecuencia (equilibrio entre utilidad y no saturar el tablero)
-  const HORIZON = { daily: 14, weekdays: 28, weekly: 56, monthly: 122 }[freq] || 14;
-  const end = new Date(start); end.setDate(end.getDate() + HORIZON);
-
-  const dates = [];
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const dow = d.getDay(); // 0 dom … 6 sáb
-    let hit = false;
-    if (freq === "daily")         hit = true;
-    else if (freq === "weekdays") hit = dow >= 1 && dow <= 5;
-    else if (freq === "weekly")   hit = dow === start.getDay();
-    else if (freq === "monthly")  hit = d.getDate() === start.getDate();
-    if (hit) dates.push(_ymd(d));
-  }
-  if (dates.length === 0) return { count: 0 };
-
-  const clientId   = input.clientId || null;
-  const clientName = input.clientName || null;
-
-  const tasks = dates.map(deadline => ({
-    id: _id(), title: input.title || "Rutina", column: "todo",
-    assignee: input.assignee || "Tú",
-    clientId, clientName, phase: null,
-    done: false, deadline, routine: true,
-  }));
-
-  if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
-  _store.TASKS[pid] = [...tasks, ..._store.TASKS[pid]]; _emit();
-
-  _sb.from("tasks").insert(tasks.map(t => ({
-    id: t.id, agency_id: uid,
-    project_id: pid === "__none__" ? null : pid,
-    title: t.title, col: t.column, assignee: t.assignee,
-    client_id: clientId, client_name: clientName,
-    deadline: t.deadline, done: false,
-  }))).then(({ error }) => {
-    if (error) {
-      console.error("[addRoutine] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
-      const ids = new Set(tasks.map(t => t.id));
-      _store.TASKS[pid] = (_store.TASKS[pid] || []).filter(x => !ids.has(x.id));
-      _emit();
+const updateRoutine = (id, changes) => {
+  _store.ROUTINES = (_store.ROUTINES || []).map(r => {
+    if (r.id !== id) return r;
+    const next = { ...r, ...changes };
+    if (changes.items) {
+      next.items = changes.items
+        .map(it => (typeof it === "string" ? { id: _id(), text: it } : it))
+        .map(it => ({ id: it.id || _id(), text: (it.text || "").trim() }))
+        .filter(it => it.text);
     }
+    return next;
   });
+  _saveLS(_RKEY, _store.ROUTINES); _emit();
+};
 
-  return { count: tasks.length, first: dates[0], last: dates[dates.length - 1] };
+const deleteRoutine = (id) => {
+  _store.ROUTINES = (_store.ROUTINES || []).filter(r => r.id !== id);
+  const done = { ..._store.ROUTINE_DONE }; delete done[id];
+  _store.ROUTINE_DONE = done;
+  _saveLS(_RKEY, _store.ROUTINES); _saveLS(_RDKEY, _store.ROUTINE_DONE); _emit();
+};
+
+const routineItemDone = (routineId, dateStr, itemId) =>
+  !!(_store.ROUTINE_DONE?.[routineId]?.[dateStr]?.[itemId]);
+
+const toggleRoutineItem = (routineId, dateStr, itemId) => {
+  const done = { ..._store.ROUTINE_DONE };
+  done[routineId] = { ...(done[routineId] || {}) };
+  done[routineId][dateStr] = { ...(done[routineId][dateStr] || {}) };
+  done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
+  _store.ROUTINE_DONE = done;
+  _saveLS(_RDKEY, _store.ROUTINE_DONE); _emit();
 };
 
 const moveTask = (projectId, taskId, newColumn) => {
@@ -730,6 +752,7 @@ window.Data = {
   get DELIVERABLES() { return _store.DELIVERABLES; },
   get LEADS()        { return _store.LEADS; },
   get TASKS()        { return _store.TASKS; },
+  get ROUTINES()     { return _store.ROUTINES; },
   get SETTINGS()     { return _store.SETTINGS; },
   // Auth
   authLogin, authSignOut, initAccount,
@@ -743,7 +766,9 @@ window.Data = {
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
   addLead,
-  addTask, addRoutine, moveTask, updateTask, deleteTask,
+  addTask, moveTask, updateTask, deleteTask,
+  addRoutine, updateRoutine, deleteRoutine,
+  routinesForDay, routineItemDone, toggleRoutineItem,
   updateSettings,
   createInvite,
   useStore,

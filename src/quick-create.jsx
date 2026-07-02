@@ -14,14 +14,6 @@ const FREQ_OPTS = [
   { id: "monthly", label: "Mensual"  },
 ];
 
-// Frecuencias para una rutina (siempre se repite → sin "una vez")
-const ROUTINE_FREQ = [
-  { id: "daily",    label: "Cada día"        },
-  { id: "weekdays", label: "Días laborables" },
-  { id: "weekly",   label: "Cada semana"     },
-  { id: "monthly",  label: "Cada mes"        },
-];
-
 const today = () => {
   const n = new Date();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
@@ -45,7 +37,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   useEffect(() => {
     if (open) {
       setTitle(""); setDesc(""); setClientId(""); setDate(defaultDate || today());
-      setTime(""); setTimeEnd(""); setFreq(defaultType === "routine" ? "daily" : "once");
+      setTime(""); setTimeEnd(""); setFreq("once");
       setType(defaultType); setActiveTab(null); setPickerFor(null);
     }
   }, [open, defaultType, defaultDate]);
@@ -64,21 +56,6 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const handleSubmit = () => {
     if (!canSubmit) return;
     const t = title.trim();
-    if (type === "routine") {
-      const client = clientId ? D.CLIENTS.find(c => c.id === clientId) : null;
-      const proj   = clientId ? D.PROJECTS.find(p => p.clientId === clientId) : null;
-      D.addRoutine({
-        title: t,
-        frequency: freq,
-        startDate: defaultDate || today(),
-        assignee: "",
-        projectId:  proj ? proj.id : "__none__",
-        clientId:   proj ? null : (clientId || null),
-        clientName: proj ? null : (client?.company || client?.name || null),
-      });
-      onClose();
-      return;
-    }
     if (type === "task") {
       const deadline = defaultDate || null;
       if (clientId) {
@@ -104,18 +81,15 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     onClose();
   };
 
-  const accentColor = { task:"var(--accent)", routine:"var(--accent)", event:"#60a5fa", meeting:"#34d399" }[type];
-  const accentHex   = { task:"#9e9ae5",       routine:"#9e9ae5",       event:"#60a5fa", meeting:"#34d399" }[type];
+  const accentColor = { task:"var(--accent)", event:"#60a5fa", meeting:"#34d399" }[type];
+  const accentHex   = { task:"#9e9ae5",       event:"#60a5fa", meeting:"#34d399" }[type];
 
-  const freqSet = type === "routine" ? ROUTINE_FREQ : FREQ_OPTS;
-  const isRoutine = type === "routine";
-
-  // Tab definitions — cliente para tarea y rutina; rutina no lleva hora ni fecha (arranca en el día elegido)
+  // Tab definitions — "cliente" only for task
   const tabs = [
-    ...((type === "task" || isRoutine) ? [{ id:"client", label:"Cliente", icon:"users", hasVal: !!clientId }] : []),
-    { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: isRoutine ? true : freq !== "once" },
-    ...(!isRoutine ? [{ id:"time", label:"Hora", icon:"clock", hasVal: !!time }] : []),
-    ...(type !== "task" && !isRoutine ? [{ id:"date", label:"Fecha", icon:"calendar", hasVal: false }] : []),
+    ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users",    hasVal: !!clientId }] : []),
+    { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
+    { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
+    ...(type !== "task" ? [{ id:"date", label:"Fecha", icon:"calendar", hasVal: false }] : []),
   ];
 
   const toggleTab = (id) => setActiveTab(prev => prev === id ? null : id);
@@ -161,10 +135,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
           {/* Type pills — hidden when lockType */}
           {lockType
-            ? <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px", display:"flex", alignItems:"center", gap:7 }}>
-                {isRoutine && <Icon name="refresh-cw" size={12} strokeWidth={1.8} style={{ color:accentHex }}/>}
-                {isRoutine ? "Nueva rutina" : "Nueva tarea"}
-              </div>
+            ? <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>Crear nuevo</div>
             : <div style={{ display:"flex", gap:6 }}>
                 {TYPES.map(tp => (
                   <button key={tp.id} onClick={() => setType(tp.id)} style={{
@@ -198,7 +169,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         <div style={{ padding:"28px 28px 8px" }}>
           <input
             autoFocus
-            placeholder={{ task:"Nombre de la tarea...", routine:"Nombre de la rutina...", event:"Nombre del evento...", meeting:"Nombre de la reunión..." }[type]}
+            placeholder={{ task:"Nombre de la tarea...", event:"Nombre del evento...", meeting:"Nombre de la reunión..." }[type]}
             value={title}
             onChange={e => setTitle(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}
@@ -255,28 +226,18 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
           {/* Frecuencia */}
           {activeTab === "freq" && (
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
-              <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
-                {freqSet.map(f => (
-                  <button key={f.id} onClick={() => setFreq(f.id)} style={{
-                    padding:"8px 18px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
-                    background: freq === f.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
-                    border: freq === f.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
-                    color: freq === f.id ? accentHex : "var(--text-muted)",
-                    cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
-                  }}>
-                    {f.label}
-                  </button>
-                ))}
-              </div>
-              {isRoutine && (
-                <span style={{ fontSize:11.5, color:"var(--text-subtle)", letterSpacing:"-0.3px", textAlign:"center", maxWidth:320 }}>
-                  {{ daily:"Se crea una tarea cada día durante las próximas 2 semanas.",
-                     weekdays:"Se crea una tarea de lunes a viernes durante las próximas 4 semanas.",
-                     weekly:"Se crea una tarea cada semana durante los próximos 2 meses.",
-                     monthly:"Se crea una tarea cada mes durante los próximos 4 meses." }[freq]}
-                </span>
-              )}
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
+              {FREQ_OPTS.map(f => (
+                <button key={f.id} onClick={() => setFreq(f.id)} style={{
+                  padding:"8px 18px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
+                  background: freq === f.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
+                  border: freq === f.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+                  color: freq === f.id ? accentHex : "var(--text-muted)",
+                  cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+                }}>
+                  {f.label}
+                </button>
+              ))}
             </div>
           )}
 
@@ -355,7 +316,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               )}
               {tab.id === "freq" && freq !== "once" && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>
-                  {freqSet.find(f => f.id === freq)?.label}
+                  {FREQ_OPTS.find(f => f.id === freq)?.label}
                 </span>
               )}
               {tab.id === "time" && time && (
