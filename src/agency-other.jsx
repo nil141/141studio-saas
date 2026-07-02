@@ -2353,8 +2353,8 @@ const IncomePage = () => {
   const [tab, setTab]   = useState("recs"); // recs | oneoff
   const [addOpen, setAddOpen] = useState(false);
   const [incType, setIncType] = useState("rec"); // "rec" | "pun" — tipo dentro del pop-up
-  const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21 };
-  const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "", vat: 21 };
+  const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21, irpf: 15 };
+  const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "", vat: 21, irpf: 15 };
   const [recForm, setRecForm] = useState(blankRec);
   const [incForm, setIncForm] = useState(blankInc);
 
@@ -2364,18 +2364,23 @@ const IncomePage = () => {
   const persist = (next) => { setData(next); _incSave(next); };
   const clientName = (id) => { const c = D.CLIENTS.find(c => c.id === id); return c ? (c.company || c.name || "") : ""; };
 
-  // IVA por línea (como en Stripe): el importe se introduce como base imponible
+  // IVA e IRPF por línea: el importe se introduce como base imponible.
+  // Total factura = Base + IVA − retención IRPF (15% a empresas/autónomos).
   const _vatOf   = (x) => (x.vat === undefined || x.vat === null ? 21 : Number(x.vat));
+  const _irpfOf  = (x) => (x.irpf === undefined || x.irpf === null ? 0 : Number(x.irpf));
   const _withVat = (x) => (Number(x.amount) || 0) * (1 + _vatOf(x) / 100);
-  const _recMoVat  = (r) => (r.cycle === "yearly" ? _withVat(r) / 12 : _withVat(r));
-  const _recMoBase = (r) => _subMonthly(r);
+  const _cobro   = (x) => (Number(x.amount) || 0) * (1 + _vatOf(x) / 100 - _irpfOf(x) / 100);
+  const _recMoVat   = (r) => (r.cycle === "yearly" ? _withVat(r) / 12 : _withVat(r));
+  const _recMoCobro = (r) => (r.cycle === "yearly" ? _cobro(r) / 12 : _cobro(r));
+  const _recMoBase  = (r) => _subMonthly(r);
+  const _fiscalSub  = (x) => `Base ${_eur(x.amount)}${_vatOf(x) ? ` + IVA ${_vatOf(x)}%` : ""}${_irpfOf(x) ? ` − IRPF ${_irpfOf(x)}%` : ""}`;
 
   const saveRec = () => {
     if (!recForm.concept.trim() || !(Number(recForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
     const rec = {
       id: _finId(), concept: recForm.concept.trim(), amount: Number(recForm.amount),
       cycle: recForm.cycle, clientId: recForm.clientId || "", clientName: clientName(recForm.clientId),
-      nextCharge: recForm.nextCharge, vat: Number(recForm.vat) || 0, active: true,
+      nextCharge: recForm.nextCharge, vat: Number(recForm.vat) || 0, irpf: Number(recForm.irpf) || 0, active: true,
     };
     persist({ ...data, recs: [rec, ...data.recs] });
     setRecForm(blankRec); setAddOpen(false); setTab("recs"); toast("Mensualidad añadida", "success");
@@ -2389,7 +2394,7 @@ const IncomePage = () => {
       id: _finId(), date: incForm.date || _todayISO(),
       concept: incForm.concept.trim(), amount: Number(incForm.amount),
       clientId: incForm.clientId || "", clientName: clientName(incForm.clientId),
-      vat: Number(incForm.vat) || 0,
+      vat: Number(incForm.vat) || 0, irpf: Number(incForm.irpf) || 0,
     };
     persist({ ...data, incomes: [inc, ...data.incomes] });
     setIncForm(blankInc); setAddOpen(false); setTab("oneoff"); toast("Ingreso añadido", "success");
@@ -2403,6 +2408,8 @@ const IncomePage = () => {
   const baseMonth   = activeRecs.reduce((a, r) => a + _recMoBase(r), 0)
                     + data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
   const ivaMonth    = monthTotal - baseMonth;                              // IVA repercutido, a apartar
+  const irpfMonth   = activeRecs.reduce((a, r) => a + _recMoBase(r) * _irpfOf(r) / 100, 0)
+                    + data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0) * _irpfOf(i) / 100, 0);
 
   // ── Serie mensual (últimos 6 meses): cada mensualidad cuenta desde su fecha de cobro ──
   const MES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -2538,21 +2545,22 @@ const IncomePage = () => {
         {/* Card C — Mini stats */}
         <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
           {[
-            { label: "Base imponible",  value: _eur(baseMonth),        sub: "este mes · sin IVA" },
-            { label: "IVA repercutido", value: _eur(ivaMonth),         sub: "a apartar este mes" },
-            { label: "Anual estimado",  value: _eur(recurringMo * 12), sub: "mensualidades con IVA" },
+            { label: "Base imponible",  value: _eur(baseMonth),  sub: "este mes · sin IVA" },
+            { label: "IVA repercutido", value: _eur(ivaMonth),   sub: "a apartar para Hacienda" },
+            { label: "IRPF retenido",   value: _eur(irpfMonth),  sub: "adelantado por clientes" },
+            { label: "Cobras",          value: _eur(monthTotal - irpfMonth), sub: "con IVA − IRPF" },
           ].map((m, i) => (
             <div key={m.label} style={{
-              paddingTop: i === 0 ? 0 : 12,
+              paddingTop: i === 0 ? 0 : 8,
               borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
             }}>
-              <div style={{ fontSize:10.5, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:5 }}>
+              <div style={{ fontSize:10, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:4 }}>
                 {m.label}
               </div>
-              <div style={{ fontSize:18, fontWeight:400, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+              <div style={{ fontSize:16, fontWeight:400, letterSpacing:"-0.6px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
                 {m.value}
               </div>
-              <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>{m.sub}</div>
+              <div style={{ fontSize:10, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>{m.sub}</div>
             </div>
           ))}
         </div>
@@ -2604,10 +2612,10 @@ const IncomePage = () => {
               </div>
               <div style={{ textAlign:"right", flexShrink:0 }}>
                 <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px" }}>
-                  {_eur(_withVat(r))}<span style={{ color:"var(--text-subtle)", fontSize:11.5 }}>/{r.cycle === "yearly" ? "año" : "mes"}</span>
+                  {_eur(_cobro(r))}<span style={{ color:"var(--text-subtle)", fontSize:11.5 }}>/{r.cycle === "yearly" ? "año" : "mes"}</span>
                 </div>
                 <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
-                  Base {_eur(r.amount)}{_vatOf(r) > 0 ? ` + IVA ${_vatOf(r)}%` : " · sin IVA"}
+                  {_fiscalSub(r)}
                 </div>
               </div>
               <button className="btn ghost sm" onClick={() => toggleRec(r.id)} style={{ color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink:0 }}>
@@ -2648,10 +2656,10 @@ const IncomePage = () => {
               </div>
               <div style={{ textAlign:"right", flexShrink:0 }}>
                 <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px" }}>
-                  +{_eur(_withVat(inc))}
+                  +{_eur(_cobro(inc))}
                 </div>
                 <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
-                  Base {_eur(inc.amount)}{_vatOf(inc) > 0 ? ` + IVA ${_vatOf(inc)}%` : " · sin IVA"}
+                  {_fiscalSub(inc)}
                 </div>
               </div>
               <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
@@ -2684,12 +2692,14 @@ const IncomePage = () => {
         tabs={incType === "rec" ? [
           { id:"amount", label:"Importe", icon:"receipt",    hasVal: Number(recForm.amount) > 0, badge: Number(recForm.amount) > 0 ? `${_eur(recForm.amount)} base` : null },
           { id:"vat",    label:"IVA",     icon:"tag",        hasVal: true, badge: `${recForm.vat}%` },
+          { id:"irpf",   label:"IRPF",    icon:"minus",      hasVal: Number(recForm.irpf) > 0, badge: `${recForm.irpf}%` },
           { id:"cycle",  label:"Ciclo",   icon:"refresh-cw", hasVal: true, badge: recForm.cycle === "yearly" ? "Anual" : "Mensual" },
           { id:"client", label:"Cliente", icon:"users",      hasVal: !!recForm.clientId, badge: recForm.clientId ? clientName(recForm.clientId) : null },
           { id:"charge", label:"Cobro",   icon:"calendar",   hasVal: !!recForm.nextCharge, badge: recForm.nextCharge ? _finDate(recForm.nextCharge) : null },
         ] : [
           { id:"amount", label:"Importe", icon:"receipt",  hasVal: Number(incForm.amount) > 0, badge: Number(incForm.amount) > 0 ? `${_eur(incForm.amount)} base` : null },
           { id:"vat",    label:"IVA",     icon:"tag",      hasVal: true, badge: `${incForm.vat}%` },
+          { id:"irpf",   label:"IRPF",    icon:"minus",    hasVal: Number(incForm.irpf) > 0, badge: `${incForm.irpf}%` },
           { id:"date",   label:"Fecha",   icon:"calendar", hasVal: !!incForm.date, badge: incForm.date ? _finDate(incForm.date) : null },
           { id:"client", label:"Cliente", icon:"users",    hasVal: !!incForm.clientId, badge: incForm.clientId ? clientName(incForm.clientId) : null },
         ]}
@@ -2724,6 +2734,36 @@ const IncomePage = () => {
                 return (
                   <span style={{ fontSize:12, color:"var(--text-subtle)", letterSpacing:"-0.3px" }}>
                     Base {_eur(base)} → Total {_eur(base * (1 + Number(f.vat) / 100))}
+                  </span>
+                );
+              })()}
+            </div>
+          );
+          if (id === "irpf") return (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:14 }}>
+              <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+                {[15, 7, 0].map(v => {
+                  const sel = Number(incType === "rec" ? recForm.irpf : incForm.irpf) === v;
+                  return (
+                    <QuickPill key={v} selected={sel}
+                      onClick={() => incType === "rec"
+                        ? setRecForm({ ...recForm, irpf: v })
+                        : setIncForm({ ...incForm, irpf: v })}>
+                      {v === 0 ? "Sin IRPF" : `${v}%`}
+                    </QuickPill>
+                  );
+                })}
+              </div>
+              <span style={{ fontSize:11.5, color:"var(--text-subtle)", letterSpacing:"-0.3px", textAlign:"center", maxWidth:300 }}>
+                Retención para empresas y autónomos. Sin IRPF para particulares.
+              </span>
+              {(() => {
+                const f = incType === "rec" ? recForm : incForm;
+                const base = Number(f.amount) || 0;
+                if (!base) return null;
+                return (
+                  <span style={{ fontSize:12, color:"var(--text-subtle)", letterSpacing:"-0.3px" }}>
+                    Cobras {_eur(base * (1 + Number(f.vat) / 100 - Number(f.irpf) / 100))}
                   </span>
                 );
               })()}
