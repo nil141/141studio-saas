@@ -2333,123 +2333,87 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   );
 };
 
-// ═══ Ingresos — espejo de Gastos. Datos manuales en localStorage; preparada
-//     para conectar Stripe (los cobros de Stripe entrarían como fuente extra). ═══
+// ═══ Ingresos — espejo de Gastos: mensualidades (recurrente) + cobros puntuales.
+//     Datos manuales en localStorage; preparada para conectar Stripe (las
+//     suscripciones de Stripe entrarán como mensualidades y los pagos como puntuales). ═══
 const INC_KEY = "141_income_v1";
 const _incLoad = () => {
   try {
     const d = JSON.parse(localStorage.getItem(INC_KEY));
-    return d && typeof d === "object" ? { incomes: d.incomes || [] } : { incomes: [] };
-  } catch { return { incomes: [] }; }
+    return d && typeof d === "object" ? { recs: d.recs || [], incomes: d.incomes || [] } : { recs: [], incomes: [] };
+  } catch { return { recs: [], incomes: [] }; }
 };
 const _incSave = (d) => { try { localStorage.setItem(INC_KEY, JSON.stringify(d)); } catch {} };
-
-// Gráfico de una serie con crosshair + tooltip que sigue al ratón (mismo lenguaje que Gastos)
-const IncTrendChart = ({ trend }) => {
-  const [hov, setHov] = useState(null); // { i, px, py }
-  const W = 600, H = 150, PX = 10, PY = 14;
-  const COL = "#199e70";
-  const maxV = Math.max(...trend.map(t => t.total), 1) * 1.15;
-  const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
-  const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
-  const pts = trend.map((t, i) => [x(i), y(t.total)]);
-
-  const onMove = (e) => {
-    const r = e.currentTarget.getBoundingClientRect();
-    const px = e.clientX - r.left, py = e.clientY - r.top;
-    const relX = px / r.width * W;
-    let best = 0, bd = Infinity;
-    trend.forEach((t, i) => { const d = Math.abs(x(i) - relX); if (d < bd) { bd = d; best = i; } });
-    setHov({ i: best, px, py });
-  };
-
-  return (
-    <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
-      <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
-        style={{ flex:1, minHeight:0, display:"block", cursor:"crosshair" }}
-        onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
-        {[0.25, 0.5, 0.75].map(f => (
-          <line key={f} x1={PX} x2={W - PX} y1={PY + f * (H - 2 * PY)} y2={PY + f * (H - 2 * PY)}
-            stroke="rgba(255,255,255,0.05)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        ))}
-        {hov !== null && (
-          <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
-            stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        )}
-        <path d={_finSmooth(pts)} fill="none" stroke={COL} strokeWidth="2"
-          strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-        {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
-          <circle key={i} cx={x(i)} cy={y(trend[i].total)} r="3.5" fill={COL} stroke="var(--bg-elev)" strokeWidth="2"/>
-        ))}
-      </svg>
-      <div style={{ display:"flex", justifyContent:"space-between", padding:"6px 2px 0", flexShrink:0 }}>
-        {trend.map((t, i) => (
-          <span key={t.key} style={{ fontSize:10, color: hov && hov.i === i ? "var(--text)" : "var(--text-subtle)", letterSpacing:"0.04em", transition:"color .1s" }}>
-            {t.label}
-          </span>
-        ))}
-      </div>
-      {hov !== null && (
-        <div style={{
-          position:"absolute",
-          left: hov.px + 16, top: hov.py,
-          background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
-          borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
-          boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
-        }}>
-          <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov.i].full}</div>
-          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
-            <span style={{ width:7, height:7, borderRadius:99, background:COL, flexShrink:0 }}/>
-            <span style={{ color:"var(--text-muted)" }}>Ingresos</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].total)}</span>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 const IncomePage = () => {
   const D = window.Data;
   D.useStore();
   const toast = useToast();
   const [data, setData] = useState(_incLoad);
+  const [tab, setTab]   = useState("recs"); // recs | oneoff
   const [addOpen, setAddOpen] = useState(false);
+  const [incType, setIncType] = useState("rec"); // "rec" | "pun" — tipo dentro del pop-up
+  const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "" };
   const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "" };
+  const [recForm, setRecForm] = useState(blankRec);
   const [incForm, setIncForm] = useState(blankInc);
 
   // Cuando se conecte Stripe, esto pasará a true y los cobros entrarán como fuente extra
   const stripeConnected = false;
 
   const persist = (next) => { setData(next); _incSave(next); };
+  const clientName = (id) => { const c = D.CLIENTS.find(c => c.id === id); return c ? (c.company || c.name || "") : ""; };
+
+  const saveRec = () => {
+    if (!recForm.concept.trim() || !(Number(recForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
+    const rec = {
+      id: _finId(), concept: recForm.concept.trim(), amount: Number(recForm.amount),
+      cycle: recForm.cycle, clientId: recForm.clientId || "", clientName: clientName(recForm.clientId),
+      nextCharge: recForm.nextCharge, active: true,
+    };
+    persist({ ...data, recs: [rec, ...data.recs] });
+    setRecForm(blankRec); setAddOpen(false); setTab("recs"); toast("Mensualidad añadida", "success");
+  };
+  const toggleRec = (id) => persist({ ...data, recs: data.recs.map(r => r.id === id ? { ...r, active: !r.active } : r) });
+  const delRec = (id) => persist({ ...data, recs: data.recs.filter(r => r.id !== id) });
 
   const saveInc = () => {
     if (!incForm.concept.trim() || !(Number(incForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
-    const client = D.CLIENTS.find(c => c.id === incForm.clientId);
     const inc = {
       id: _finId(), date: incForm.date || _todayISO(),
       concept: incForm.concept.trim(), amount: Number(incForm.amount),
-      clientId: incForm.clientId || "", clientName: client ? (client.company || client.name || "") : "",
+      clientId: incForm.clientId || "", clientName: clientName(incForm.clientId),
     };
     persist({ ...data, incomes: [inc, ...data.incomes] });
-    setIncForm(blankInc); setAddOpen(false); toast("Ingreso añadido", "success");
+    setIncForm(blankInc); setAddOpen(false); setTab("oneoff"); toast("Ingreso añadido", "success");
   };
   const delInc = (id) => persist({ ...data, incomes: data.incomes.filter(i => i.id !== id) });
 
-  const monthTotal = data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
-  const monthCount = data.incomes.filter(i => _sameMonth(i.date)).length;
+  const activeRecs  = data.recs.filter(r => r.active);
+  const recurringMo = activeRecs.reduce((a, r) => a + _subMonthly(r), 0);
+  const punMonth    = data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+  const monthTotal  = recurringMo + punMonth;
 
-  // Serie mensual — últimos 6 meses
+  // ── Serie mensual (últimos 6 meses): cada mensualidad cuenta desde su fecha de cobro ──
   const MES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const trend = (() => {
     const now = new Date();
+    const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const recStartKey = (r) => {
+      if (!r.nextCharge) return nowKey;
+      const k = r.nextCharge.slice(0, 7);
+      return k < nowKey ? k : nowKey;
+    };
     return Array.from({ length: 6 }, (_, k) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const total = data.incomes
+      const puntual = data.incomes
         .filter(i => (i.date || "").startsWith(key))
         .reduce((a, i) => a + (Number(i.amount) || 0), 0);
-      return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, total };
+      const rec = activeRecs
+        .filter(r => recStartKey(r) <= key)
+        .reduce((a, r) => a + _subMonthly(r), 0);
+      return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
     });
   })();
   // En ingresos, subir es bueno: verde al alza, rojo a la baja
@@ -2457,8 +2421,9 @@ const IncomePage = () => {
     ? Math.round(((trend[5].total - trend[4].total) / trend[4].total) * 100)
     : null;
 
-  // Por cliente — este mes
+  // ── Por cliente · este mes (mensualidades activas + puntuales del mes) ──
   const byClient = {};
+  activeRecs.forEach(r => { const k = r.clientName || "Sin cliente"; byClient[k] = (byClient[k] || 0) + _subMonthly(r); });
   data.incomes.filter(i => _sameMonth(i.date)).forEach(i => {
     const k = i.clientName || "Sin cliente";
     byClient[k] = (byClient[k] || 0) + (Number(i.amount) || 0);
@@ -2466,13 +2431,7 @@ const IncomePage = () => {
   const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const cliMax = clients.length ? clients[0][1] : 1;
 
-  const yearTotal = (() => {
-    const y = String(new Date().getFullYear());
-    return data.incomes.filter(i => (i.date || "").startsWith(y)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
-  })();
-  const avg6m = Math.round(trend.reduce((a, t) => a + t.total, 0) / 6 * 100) / 100;
-
-  const sorted = [...data.incomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const sortedInc = [...data.incomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   return (
     <div style={{
@@ -2484,16 +2443,16 @@ const IncomePage = () => {
         <div>
           <h1>Ingresos</h1>
           <div className="sub">
-            {_eur(monthTotal)} este mes · {monthCount} cobro{monthCount === 1 ? "" : "s"}
+            {_eur(monthTotal)} este mes · {activeRecs.length} mensualidad{activeRecs.length === 1 ? "" : "es"} activa{activeRecs.length === 1 ? "" : "s"}
           </div>
         </div>
-        <ActionPill plusActions={() => setAddOpen(true)}/>
+        <ActionPill plusActions={() => { setIncType(tab === "oneoff" ? "pun" : "rec"); setAddOpen(true); }}/>
       </div>
 
       {/* ── Fila de gráficos: tendencia + clientes + stats ── */}
       <div style={{ display:"grid", gridTemplateColumns:"1.8fr 1fr 0.72fr", gap:14, marginBottom:20, flexShrink:0, height:248 }}>
 
-        {/* Card A — Ingreso mensual */}
+        {/* Card A — Ingreso mensual (recurrente vs puntual, mismo gráfico que Gastos) */}
         <div className="card" style={{ padding:"16px 18px 14px", display:"flex", flexDirection:"column", overflow:"visible", position:"relative", zIndex:2 }}>
           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10 }}>
             <div>
@@ -2519,18 +2478,29 @@ const IncomePage = () => {
                 )}
               </div>
             </div>
-            {/* Estado de Stripe */}
-            <span style={{
-              display:"inline-flex", alignItems:"center", gap:6,
-              padding:"4px 11px", borderRadius:99, fontSize:11, fontWeight:500,
-              background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.08)",
-              color:"var(--text-subtle)", letterSpacing:"-0.2px",
-            }}>
-              <span style={{ width:6, height:6, borderRadius:99, background: stripeConnected ? "var(--green)" : "var(--text-subtle)" }}/>
-              Stripe {stripeConnected ? "conectado" : "sin conectar"}
-            </span>
+            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+              {/* Leyenda */}
+              <div style={{ display:"flex", gap:14, paddingTop:2 }}>
+                {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
+                  <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
+                    <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
+                    {lbl}
+                  </span>
+                ))}
+              </div>
+              {/* Estado de Stripe */}
+              <span style={{
+                display:"inline-flex", alignItems:"center", gap:6,
+                padding:"4px 11px", borderRadius:99, fontSize:11, fontWeight:500,
+                background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.08)",
+                color:"var(--text-subtle)", letterSpacing:"-0.2px", whiteSpace:"nowrap",
+              }}>
+                <span style={{ width:6, height:6, borderRadius:99, background: stripeConnected ? "var(--green)" : "var(--text-subtle)" }}/>
+                Stripe {stripeConnected ? "conectado" : "sin conectar"}
+              </span>
+            </div>
           </div>
-          <IncTrendChart trend={trend}/>
+          <FinTrendChart trend={trend}/>
         </div>
 
         {/* Card B — Por cliente */}
@@ -2548,7 +2518,7 @@ const IncomePage = () => {
                   <span style={{ fontVariantNumeric:"tabular-nums", color:"var(--text)", flexShrink:0, paddingLeft:8 }}>{_eur(amt)}</span>
                 </div>
                 <div style={{ height:4, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
-                  <div style={{ height:"100%", width:`${Math.max(3, (amt / cliMax) * 100)}%`, background:"#199e70", borderRadius:99, transition:"width .3s" }}/>
+                  <div style={{ height:"100%", width:`${Math.max(3, (amt / cliMax) * 100)}%`, background:FIN_SERIES.pun, borderRadius:99, transition:"width .3s" }}/>
                 </div>
               </div>
             ))}
@@ -2558,9 +2528,9 @@ const IncomePage = () => {
         {/* Card C — Mini stats */}
         <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
           {[
-            { label: "Este mes",      value: _eur(monthTotal), sub: `${monthCount} cobro${monthCount === 1 ? "" : "s"}` },
-            { label: "Media mensual", value: _eur(avg6m),      sub: "últimos 6 meses" },
-            { label: "Este año",      value: _eur(yearTotal),  sub: String(new Date().getFullYear()) },
+            { label: "Recurrente",     value: _eur(recurringMo),      sub: "al mes" },
+            { label: "Puntual",        value: _eur(punMonth),         sub: "este mes" },
+            { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo mensualidades" },
           ].map((m, i) => (
             <div key={m.label} style={{
               paddingTop: i === 0 ? 0 : 12,
@@ -2578,84 +2548,177 @@ const IncomePage = () => {
         </div>
       </div>
 
-      {/* Lista de cobros — solo esta zona scrollea */}
+      {/* Tabs */}
+      <div style={{ marginBottom:6, flexShrink:0 }}>
+        <div className="seg">
+          <button className={tab === "recs" ? "active" : ""} onClick={() => setTab("recs")}>Mensualidades</button>
+          <button className={tab === "oneoff" ? "active" : ""} onClick={() => setTab("oneoff")}>Ingresos puntuales</button>
+        </div>
+      </div>
+
+      {/* Zona scrollable — solo las listas se deslizan */}
       <div className="tasks-scroll" style={{
         flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
         paddingRight:10, paddingTop:16, paddingBottom:8,
         WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
         maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       }}>
-        {sorted.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-            Sin ingresos — <button className="btn ghost sm" onClick={() => setAddOpen(true)}>añadir uno</button>
-          </div>
-        ) : sorted.map((inc, i) => (
-          <div key={inc.id} className="task-row" style={{
-            display:"flex", alignItems:"center", gap:14,
-            padding:"13px 4px",
-            borderBottom: i === sorted.length - 1 ? "none" : "0.5px solid var(--border)",
-          }}>
-            <div style={{
-              width:38, height:38, borderRadius:"50%", flexShrink:0,
-              border:"1px solid rgba(255,255,255,0.1)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              color:"#199e70",
+
+        {/* ── Mensualidades ── */}
+        {tab === "recs" && (
+          data.recs.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+              Sin mensualidades — <button className="btn ghost sm" onClick={() => { setIncType("rec"); setAddOpen(true); }}>añadir una</button>
+            </div>
+          ) : data.recs.map((r, i) => (
+            <div key={r.id} className="task-row" style={{
+              display:"flex", alignItems:"center", gap:14,
+              padding:"13px 4px", opacity: r.active ? 1 : 0.45,
+              borderBottom: i === data.recs.length - 1 ? "none" : "0.5px solid var(--border)",
+              transition:"opacity .15s",
             }}>
-              <Icon name="trending-up" size={14} strokeWidth={1.7}/>
-            </div>
-            <div style={{ flex:1, minWidth:0 }}>
-              <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{inc.concept}</div>
-              <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
-                {_finDate(inc.date)}{inc.clientName ? ` · ${inc.clientName}` : ""}
+              <div style={{
+                width:38, height:38, borderRadius:"50%", flexShrink:0,
+                border:"1px solid rgba(255,255,255,0.1)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                color: r.active ? FIN_SERIES.rec : "var(--text-subtle)",
+              }}>
+                <Icon name="refresh-cw" size={14} strokeWidth={1.7}/>
               </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{r.concept}</div>
+                <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                  {r.clientName || "Sin cliente"} · {r.cycle === "yearly" ? "Anual" : "Mensual"}
+                  {r.nextCharge ? ` · Cobro ${_finDate(r.nextCharge)}` : ""}
+                </div>
+              </div>
+              <div style={{ textAlign:"right", flexShrink:0 }}>
+                <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px" }}>
+                  {_eur(r.amount)}<span style={{ color:"var(--text-subtle)", fontSize:11.5 }}>/{r.cycle === "yearly" ? "año" : "mes"}</span>
+                </div>
+                {r.cycle === "yearly" && (
+                  <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>{_eur(_subMonthly(r))}/mes</div>
+                )}
+              </div>
+              <button className="btn ghost sm" onClick={() => toggleRec(r.id)} style={{ color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink:0 }}>
+                {r.active ? "Activa" : "Pausada"}
+              </button>
+              <button className="btn ghost icon-only sm" onClick={() => delRec(r.id)} title="Eliminar" style={{ flexShrink:0 }}>
+                <Icon name="trash" size={13}/>
+              </button>
             </div>
-            <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px", flexShrink:0 }}>
-              +{_eur(inc.amount)}
+          ))
+        )}
+
+        {/* ── Ingresos puntuales ── */}
+        {tab === "oneoff" && (
+          sortedInc.length === 0 ? (
+            <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
+              Sin ingresos puntuales — <button className="btn ghost sm" onClick={() => { setIncType("pun"); setAddOpen(true); }}>añadir uno</button>
             </div>
-            <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
-              <Icon name="trash" size={13}/>
-            </button>
-          </div>
-        ))}
+          ) : sortedInc.map((inc, i) => (
+            <div key={inc.id} className="task-row" style={{
+              display:"flex", alignItems:"center", gap:14,
+              padding:"13px 4px",
+              borderBottom: i === sortedInc.length - 1 ? "none" : "0.5px solid var(--border)",
+            }}>
+              <div style={{
+                width:38, height:38, borderRadius:"50%", flexShrink:0,
+                border:"1px solid rgba(255,255,255,0.1)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                color:FIN_SERIES.pun,
+              }}>
+                <Icon name="trending-up" size={14} strokeWidth={1.7}/>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{inc.concept}</div>
+                <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                  {_finDate(inc.date)}{inc.clientName ? ` · ${inc.clientName}` : ""}
+                </div>
+              </div>
+              <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px", flexShrink:0 }}>
+                +{_eur(inc.amount)}
+              </div>
+              <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
+                <Icon name="trash" size={13}/>
+              </button>
+            </div>
+          ))
+        )}
       </div>
 
-      {/* Pop-up Nuevo ingreso — estilo Tareas */}
+      {/* ── Pop-up unificado: Mensualidad / Puntual — estilo Tareas ── */}
       <QuickModal
         open={addOpen}
-        onClose={() => { setAddOpen(false); setIncForm(blankInc); }}
-        onSubmit={saveInc}
-        canSubmit={!!incForm.concept.trim() && Number(incForm.amount) > 0}
-        headerLabel="Nuevo ingreso"
-        titlePlaceholder="Concepto del ingreso..."
-        titleValue={incForm.concept}
-        onTitleChange={v => setIncForm({ ...incForm, concept: v })}
-        tabs={[
+        onClose={() => { setAddOpen(false); setRecForm(blankRec); setIncForm(blankInc); }}
+        onSubmit={() => (incType === "rec" ? saveRec() : saveInc())}
+        canSubmit={incType === "rec"
+          ? (!!recForm.concept.trim() && Number(recForm.amount) > 0)
+          : (!!incForm.concept.trim() && Number(incForm.amount) > 0)}
+        types={[
+          { id:"rec", label:"Mensualidad", icon:"refresh-cw"   },
+          { id:"pun", label:"Puntual",     icon:"trending-up"  },
+        ]}
+        type={incType}
+        onTypeChange={setIncType}
+        titlePlaceholder={incType === "rec" ? "Concepto (ej. Fee mensual)..." : "Concepto del ingreso..."}
+        titleValue={incType === "rec" ? recForm.concept : incForm.concept}
+        onTitleChange={v => incType === "rec"
+          ? setRecForm({ ...recForm, concept: v })
+          : setIncForm({ ...incForm, concept: v })}
+        tabs={incType === "rec" ? [
+          { id:"amount", label:"Importe", icon:"receipt",    hasVal: Number(recForm.amount) > 0, badge: Number(recForm.amount) > 0 ? _eur(recForm.amount) : null },
+          { id:"cycle",  label:"Ciclo",   icon:"refresh-cw", hasVal: true, badge: recForm.cycle === "yearly" ? "Anual" : "Mensual" },
+          { id:"client", label:"Cliente", icon:"users",      hasVal: !!recForm.clientId, badge: recForm.clientId ? clientName(recForm.clientId) : null },
+          { id:"charge", label:"Cobro",   icon:"calendar",   hasVal: !!recForm.nextCharge, badge: recForm.nextCharge ? _finDate(recForm.nextCharge) : null },
+        ] : [
           { id:"amount", label:"Importe", icon:"receipt",  hasVal: Number(incForm.amount) > 0, badge: Number(incForm.amount) > 0 ? _eur(incForm.amount) : null },
           { id:"date",   label:"Fecha",   icon:"calendar", hasVal: !!incForm.date, badge: incForm.date ? _finDate(incForm.date) : null },
-          { id:"client", label:"Cliente", icon:"users",    hasVal: !!incForm.clientId, badge: incForm.clientId ? (D.CLIENTS.find(c => c.id === incForm.clientId)?.company || "") : null },
+          { id:"client", label:"Cliente", icon:"users",    hasVal: !!incForm.clientId, badge: incForm.clientId ? clientName(incForm.clientId) : null },
         ]}
         renderTab={(id) => {
           if (id === "amount") return (
             <input style={{ ...QUICK_FIELD, width:180, textAlign:"center", fontSize:22, fontWeight:300, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}
               type="number" step="0.01" min="0" placeholder="0,00 €" autoFocus
-              value={incForm.amount} onChange={e => setIncForm({ ...incForm, amount: e.target.value })}/>
+              value={incType === "rec" ? recForm.amount : incForm.amount}
+              onChange={e => incType === "rec"
+                ? setRecForm({ ...recForm, amount: e.target.value })
+                : setIncForm({ ...incForm, amount: e.target.value })}/>
           );
-          if (id === "date") return (
-            <input style={{ ...QUICK_FIELD }} type="date"
-              value={incForm.date} onChange={e => setIncForm({ ...incForm, date: e.target.value })}/>
+          if (id === "cycle") return (
+            <div style={{ display:"flex", gap:8, justifyContent:"center" }}>
+              {FIN_CYCLES.map(c => (
+                <QuickPill key={c.id} selected={recForm.cycle === c.id} onClick={() => setRecForm({ ...recForm, cycle: c.id })}>
+                  {c.label}
+                </QuickPill>
+              ))}
+            </div>
           );
           if (id === "client") return (
             <div style={{ width:"100%", maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
               {D.CLIENTS.length === 0
                 ? <span style={{ fontSize:13, color:"var(--text-subtle)", textAlign:"center" }}>Sin clientes</span>
-                : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map(c => (
-                  <QuickPill key={c.id} selected={incForm.clientId === c.id}
-                    onClick={() => setIncForm({ ...incForm, clientId: incForm.clientId === c.id ? "" : c.id })}>
-                    {c.company || c.name}
-                  </QuickPill>
-                ))
+                : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map(c => {
+                  const sel = (incType === "rec" ? recForm.clientId : incForm.clientId) === c.id;
+                  return (
+                    <QuickPill key={c.id} selected={sel}
+                      onClick={() => incType === "rec"
+                        ? setRecForm({ ...recForm, clientId: sel ? "" : c.id })
+                        : setIncForm({ ...incForm, clientId: sel ? "" : c.id })}>
+                      {c.company || c.name}
+                    </QuickPill>
+                  );
+                })
               }
             </div>
+          );
+          if (id === "charge") return (
+            <input style={{ ...QUICK_FIELD }} type="date"
+              value={recForm.nextCharge} onChange={e => setRecForm({ ...recForm, nextCharge: e.target.value })}/>
+          );
+          if (id === "date") return (
+            <input style={{ ...QUICK_FIELD }} type="date"
+              value={incForm.date} onChange={e => setIncForm({ ...incForm, date: e.target.value })}/>
           );
           return null;
         }}
