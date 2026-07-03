@@ -499,8 +499,18 @@ def api_campaigns_import(body):
                 "createdAt": _today(), "leads": []}
         data["campaigns"].append(camp)
 
-    existing = {(l.get("email") or "").strip().lower()
-                for l in camp["leads"] if l.get("email")}
+    # Dedupe por email y, para leads sin email, por nombre+empresa
+    def _lead_keys(l):
+        keys = []
+        em = (l.get("email") or "").strip().lower()
+        if em: keys.append("e:" + em)
+        nc = ((l.get("name") or "").strip().lower(),
+              (l.get("company") or "").strip().lower())
+        if nc[0] or nc[1]: keys.append("n:" + nc[0] + "|" + nc[1])
+        return keys
+    existing = set()
+    for l in camp["leads"]:
+        existing.update(_lead_keys(l))
     added, skipped = 0, 0
     for l in leads_in:
         if not isinstance(l, dict):
@@ -510,11 +520,11 @@ def api_campaigns_import(body):
         if not lead_name:
             skipped += 1
             continue
-        if email_addr and email_addr.lower() in existing:
+        keys = _lead_keys(l)
+        if any(k in existing for k in keys):
             skipped += 1
             continue
-        if email_addr:
-            existing.add(email_addr.lower())
+        existing.update(keys)
         camp["leads"].append({
             "id":      secrets.token_hex(8),
             "date":    (l.get("date") or _today())[:10],
