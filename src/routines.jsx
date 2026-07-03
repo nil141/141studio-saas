@@ -203,22 +203,15 @@ const RoutineCard = ({ r, day, onEdit }) => {
           <div style={{ fontSize:14.5, fontWeight:500, letterSpacing:"-0.4px", color:"var(--text)" }}>{r.title}</div>
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
             {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
+            {streak > 0 && (
+              <span data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}>
+                {" · "}
+                <span style={{ filter: streakPending ? "grayscale(1) opacity(.5)" : "none", fontSize:10.5 }}>🔥</span>
+                {" "}{streak}
+              </span>
+            )}
           </div>
         </div>
-        {/* Racha 🔥 — naranja si está viva (hoy completa), apagada si pendiente de hoy */}
-        {streak > 0 && (
-          <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
-            style={{
-              display:"flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:99, flexShrink:0,
-              background: streakPending ? "rgba(255,255,255,0.05)" : "rgba(251,146,60,0.13)",
-              border: streakPending ? "0.5px solid var(--border)" : "0.5px solid rgba(251,146,60,0.35)",
-            }}>
-            <span style={{ fontSize:12, lineHeight:1, filter: streakPending ? "grayscale(1) opacity(.55)" : "none" }}>🔥</span>
-            <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px", color: streakPending ? "var(--text-subtle)" : "#fb923c" }}>
-              {streak}
-            </span>
-          </div>
-        )}
         {/* Mini barra de progreso */}
         {total > 0 && (
           <div style={{ width:54, height:5, borderRadius:99, background:"rgba(255,255,255,0.08)", overflow:"hidden", flexShrink:0 }}>
