@@ -214,13 +214,9 @@
     const D = window.Data;
     const streak = Math.max(1, D.routineStreak ? D.routineStreak(rId, day) : 1);
     const msg = CELEB_MSG[(streak - 1) % CELEB_MSG.length];
-    useEffect(() => {
-      const t = setTimeout(onClose, 5e3);
-      return () => clearTimeout(t);
-    }, []);
     const P = "rgb(130,119,219)";
     return ReactDOM.createPortal(
-      /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+      /* @__PURE__ */ React.createElement("div", { style: {
         position: "fixed",
         inset: 0,
         zIndex: 400,

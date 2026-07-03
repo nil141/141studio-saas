@@ -261,19 +261,14 @@ const RoutineCelebration = ({ rId, day, onClose }) => {
   const streak = Math.max(1, D.routineStreak ? D.routineStreak(rId, day) : 1);
   const msg = CELEB_MSG[(streak - 1) % CELEB_MSG.length];
 
-  // Auto-cierre a los 5s
-  useEffect(() => {
-    const t = setTimeout(onClose, 5000);
-    return () => clearTimeout(t);
-  }, []);
-
   const P = "rgb(130,119,219)"; // primary del botón (outdomode)
 
   // Portal a <body>: la tarjeta vive dentro del contenedor de scroll de Tareas,
   // que lleva mask-image (fade de bordes) — la máscara recorta también a los
   // descendientes position:fixed, así que el overlay debe montarse fuera.
+  // Sin autocierre: solo se cierra con el botón.
   return ReactDOM.createPortal(
-    <div onClick={onClose} style={{
+    <div style={{
       position:"fixed", inset:0, zIndex:400, overflow:"hidden",
       display:"flex", alignItems:"center", justifyContent:"center",
       animation:"odFade .3s ease-out",
