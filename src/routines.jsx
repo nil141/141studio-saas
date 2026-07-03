@@ -204,9 +204,10 @@ const RoutineCard = ({ r, day, onEdit }) => {
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
             {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
             {streak > 0 && (
-              <span data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}>
+              <span data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
+                style={{ color: streakPending ? "var(--text-subtle)" : "var(--accent)" }}>
                 {" · "}
-                <span style={{ filter: streakPending ? "grayscale(1) opacity(.5)" : "none", fontSize:10.5 }}>🔥</span>
+                <Icon name="flame" size={11} strokeWidth={1.8} style={{ verticalAlign:"-1.5px" }}/>
                 {" "}{streak}
               </span>
             )}
