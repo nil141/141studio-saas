@@ -134,6 +134,18 @@
     const total = (r.items || []).length;
     const doneCount = (r.items || []).filter((it) => D.routineItemDone(r.id, day, it.id)).length;
     const allDone = total > 0 && doneCount === total;
+    let streak = D.routineStreak ? D.routineStreak(r.id, day) : 0;
+    let streakPending = false;
+    if (!streak && D.routineStreak) {
+      const prev = /* @__PURE__ */ new Date(day + "T12:00:00");
+      prev.setDate(prev.getDate() - 1);
+      const prevStr = `${prev.getFullYear()}-${String(prev.getMonth() + 1).padStart(2, "0")}-${String(prev.getDate()).padStart(2, "0")}`;
+      const s = D.routineStreak(r.id, prevStr);
+      if (s > 0) {
+        streak = s;
+        streakPending = true;
+      }
+    }
     const toggle = (it) => {
       const wasDone = D.routineItemDone(r.id, day, it.id);
       const willComplete = !wasDone && total > 0 && doneCount === total - 1;
@@ -156,7 +168,24 @@
       background: allDone ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
       border: "0.5px solid var(--border)",
       color: allDone ? "var(--accent)" : "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: allDone ? "check" : "refresh-cw", size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, r.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { width: 54, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${doneCount / total * 100}%`, height: "100%", background: "var(--accent)", transition: "width .2s" } })), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: allDone ? "check" : "refresh-cw", size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, r.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")), streak > 0 && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          padding: "4px 10px",
+          borderRadius: 99,
+          flexShrink: 0,
+          background: streakPending ? "rgba(255,255,255,0.05)" : "rgba(251,146,60,0.13)",
+          border: streakPending ? "0.5px solid var(--border)" : "0.5px solid rgba(251,146,60,0.35)"
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, lineHeight: 1, filter: streakPending ? "grayscale(1) opacity(.55)" : "none" } }, "\u{1F525}"),
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px", color: streakPending ? "var(--text-subtle)" : "#fb923c" } }, streak)
+    ), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { width: 54, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${doneCount / total * 100}%`, height: "100%", background: "var(--accent)", transition: "width .2s" } })), /* @__PURE__ */ React.createElement(
       "button",
       {
         className: "btn ghost icon-only sm",

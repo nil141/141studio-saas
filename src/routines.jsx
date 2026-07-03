@@ -164,6 +164,18 @@ const RoutineCard = ({ r, day, onEdit }) => {
   const doneCount = (r.items || []).filter(it => D.routineItemDone(r.id, day, it.id)).length;
   const allDone = total > 0 && doneCount === total;
 
+  // Racha: si el día visible está completo, cuenta desde ese día; si no,
+  // mira si hay racha viva desde el día anterior (pendiente de mantener hoy).
+  let streak = D.routineStreak ? D.routineStreak(r.id, day) : 0;
+  let streakPending = false;
+  if (!streak && D.routineStreak) {
+    const prev = new Date(day + "T12:00:00");
+    prev.setDate(prev.getDate() - 1);
+    const prevStr = `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(prev.getDate()).padStart(2,'0')}`;
+    const s = D.routineStreak(r.id, prevStr);
+    if (s > 0) { streak = s; streakPending = true; }
+  }
+
   const toggle = (it) => {
     const wasDone = D.routineItemDone(r.id, day, it.id);
     // ¿este toque completa la rutina al 100%?
@@ -193,6 +205,20 @@ const RoutineCard = ({ r, day, onEdit }) => {
             {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
           </div>
         </div>
+        {/* Racha 🔥 — naranja si está viva (hoy completa), apagada si pendiente de hoy */}
+        {streak > 0 && (
+          <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
+            style={{
+              display:"flex", alignItems:"center", gap:5, padding:"4px 10px", borderRadius:99, flexShrink:0,
+              background: streakPending ? "rgba(255,255,255,0.05)" : "rgba(251,146,60,0.13)",
+              border: streakPending ? "0.5px solid var(--border)" : "0.5px solid rgba(251,146,60,0.35)",
+            }}>
+            <span style={{ fontSize:12, lineHeight:1, filter: streakPending ? "grayscale(1) opacity(.55)" : "none" }}>🔥</span>
+            <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px", color: streakPending ? "var(--text-subtle)" : "#fb923c" }}>
+              {streak}
+            </span>
+          </div>
+        )}
         {/* Mini barra de progreso */}
         {total > 0 && (
           <div style={{ width:54, height:5, borderRadius:99, background:"rgba(255,255,255,0.08)", overflow:"hidden", flexShrink:0 }}>
