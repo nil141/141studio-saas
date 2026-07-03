@@ -219,7 +219,12 @@ const RoutineCard = ({ r, day, onEdit }) => {
               display:"flex", alignItems:"center", gap:4, flexShrink:0, marginLeft:2,
               color: streakPending ? "var(--text-subtle)" : "var(--accent)",
             }}>
-            <Icon name="flame" size={14} strokeWidth={1.7}/>
+            <span style={{
+              display:"inline-flex", transformOrigin:"50% 85%",
+              animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite",
+            }}>
+              <Icon name="flame" size={14} strokeWidth={1.7}/>
+            </span>
             <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px" }}>{streak}</span>
           </div>
         )}
@@ -397,6 +402,14 @@ const RoutineDayList = ({ day, onEdit }) => {
   if (!routines.length) return null;
   return (
     <div style={{ marginBottom: 32 }}>
+      <style>{`
+        @keyframes rtFlicker {
+          0%, 100% { transform: scale(1) rotate(-2deg); }
+          28%      { transform: scale(1.1) rotate(1.5deg); }
+          52%      { transform: scale(0.94) rotate(-1deg); }
+          78%      { transform: scale(1.06) rotate(2deg); }
+        }
+      `}</style>
       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
         <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)" }}/>
         <span style={{ fontSize:12, fontWeight:400, textTransform:"uppercase", letterSpacing:"0.4px", color:"#9e9e9e" }}>

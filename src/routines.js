@@ -190,7 +190,11 @@
           color: streakPending ? "var(--text-subtle)" : "var(--accent)"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement("span", { style: {
+        display: "inline-flex",
+        transformOrigin: "50% 85%",
+        animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 })),
       /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
     )), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, r.items.map((it, idx) => {
       const done = D.routineItemDone(r.id, day, it.id);
@@ -334,7 +338,14 @@
     D.useStore();
     const routines = D.routinesForDay(day);
     if (!routines.length) return null;
-    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.4px", color: "#9e9e9e" } }, "Rutinas")), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })));
+    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("style", null, `
+        @keyframes rtFlicker {
+          0%, 100% { transform: scale(1) rotate(-2deg); }
+          28%      { transform: scale(1.1) rotate(1.5deg); }
+          52%      { transform: scale(0.94) rotate(-1deg); }
+          78%      { transform: scale(1.06) rotate(2deg); }
+        }
+      `), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.4px", color: "#9e9e9e" } }, "Rutinas")), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })));
   };
   window.RoutineModal = RoutineModal;
   window.RoutineDayList = RoutineDayList;
