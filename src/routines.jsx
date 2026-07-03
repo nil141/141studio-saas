@@ -269,7 +269,10 @@ const RoutineCelebration = ({ rId, day, onClose }) => {
 
   const P = "rgb(130,119,219)"; // primary del botón (outdomode)
 
-  return (
+  // Portal a <body>: la tarjeta vive dentro del contenedor de scroll de Tareas,
+  // que lleva mask-image (fade de bordes) — la máscara recorta también a los
+  // descendientes position:fixed, así que el overlay debe montarse fuera.
+  return ReactDOM.createPortal(
     <div onClick={onClose} style={{
       position:"fixed", inset:0, zIndex:400, overflow:"hidden",
       display:"flex", alignItems:"center", justifyContent:"center",
@@ -366,7 +369,8 @@ const RoutineCelebration = ({ rId, day, onClose }) => {
         </div>
 
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 

@@ -219,16 +219,17 @@
       return () => clearTimeout(t);
     }, []);
     const P = "rgb(130,119,219)";
-    return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
-      position: "fixed",
-      inset: 0,
-      zIndex: 400,
-      overflow: "hidden",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      animation: "odFade .3s ease-out"
-    } }, /* @__PURE__ */ React.createElement("style", null, `
+    return ReactDOM.createPortal(
+      /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+        position: "fixed",
+        inset: 0,
+        zIndex: 400,
+        overflow: "hidden",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        animation: "odFade .3s ease-out"
+      } }, /* @__PURE__ */ React.createElement("style", null, `
         @keyframes odFade   { from{opacity:0} to{opacity:1} }
         @keyframes odPop    { 0%{transform:scale(.55);opacity:0} 60%{transform:scale(1.06);opacity:1} 100%{transform:scale(1)} }
         @keyframes odSpin   { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
@@ -237,71 +238,73 @@
         @keyframes odFloat  { 0%,100%{transform:translateY(0);opacity:.34} 50%{transform:translateY(-2.5px);opacity:.5} }
         @keyframes odRise   { from{opacity:0;filter:blur(8px);transform:translateY(14px)} to{opacity:1;filter:blur(0);transform:translateY(0)} }
       `), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, zIndex: -1, pointerEvents: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, background: "radial-gradient(120% 90% at 50% 0%, #17171d 0%, #0b0b0f 55%, #070709 100%)" } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, background: "rgba(5,5,8,0.55)" } })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "0 16px", width: "100%", maxWidth: 512, textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: 130, height: 130, marginBottom: 16, overflow: "visible", pointerEvents: "none", animation: "odPop .55s cubic-bezier(.2,.8,.2,1) both" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, borderRadius: "50%", background: "rgba(158,154,229,0.2)", filter: "blur(60px)", animation: "odBreath 3s ease-in-out infinite" } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 16, borderRadius: "50%", border: "1px solid rgba(158,154,229,0.6)", filter: "drop-shadow(0 0 8px rgba(158,154,229,0.8))" } }), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10 } }, /* @__PURE__ */ React.createElement("svg", { width: "91", height: "91", viewBox: "0 0 24 24", fill: "none", style: { overflow: "visible", filter: "drop-shadow(0 0 20px rgba(158,154,229,0.5))" } }, /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("linearGradient", { id: "rtNeonGrad", x1: "12", y1: "2", x2: "12", y2: "22", gradientUnits: "userSpaceOnUse" }, /* @__PURE__ */ React.createElement("stop", { offset: "0%", stopColor: "#E0DFFF" }), /* @__PURE__ */ React.createElement("stop", { offset: "40%", stopColor: "#9E9AE5" }), /* @__PURE__ */ React.createElement("stop", { offset: "100%", stopColor: "#6C68B0" }))), /* @__PURE__ */ React.createElement(
-      "path",
-      {
-        d: "M12 2C12 2 19 7 19 13C19 16.866 15.866 20 12 20C8.13401 20 5 16.866 5 13C5 7 12 2 12 2Z",
-        fill: "rgba(158,154,229,0.10)",
-        style: { transformOrigin: "50% 50%", transformBox: "fill-box", animation: "odPulse 2.4s ease-in-out infinite" }
-      }
-    ), /* @__PURE__ */ React.createElement(
-      "path",
-      {
-        d: "M12 2.5C12 2.5 18.5 7.5 18.5 13C18.5 16.59 15.59 19.5 12 19.5C8.41 19.5 5.5 16.59 5.5 13C5.5 7.5 12 2.5 12 2.5Z",
-        fill: "url(#rtNeonGrad)",
-        opacity: "0.95"
-      }
-    ), /* @__PURE__ */ React.createElement(
-      "path",
-      {
-        d: "M12 8C12 8 15 10.5 15 14C15 15.6569 13.6569 17 12 17C10.3431 17 9 15.6569 9 14C9 10.5 12 8 12 8Z",
-        fill: "#fff",
-        style: { mixBlendMode: "overlay", transformOrigin: "50% 50%", transformBox: "fill-box", animation: "odFloat 2.2s ease-in-out infinite" }
-      }
-    ))), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", animation: "odSpin 7s linear infinite" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#fff", opacity: 0.3, filter: "blur(0.2px)" } })), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", animation: "odSpin 11s linear infinite reverse" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#fff", opacity: 0.3, filter: "blur(0.2px)" } }))), /* @__PURE__ */ React.createElement("h2", { style: {
-      fontSize: 32,
-      fontWeight: 500,
-      letterSpacing: "-0.06em",
-      color: "#fff",
-      margin: 0,
-      fontFamily: "var(--font-display)",
-      animation: "odRise .55s ease-out .12s both"
-    } }, streak === 1 ? "1 d\xEDa de racha" : `${streak} d\xEDas de racha`), /* @__PURE__ */ React.createElement("p", { style: {
-      fontSize: 16,
-      color: "rgba(255,255,255,0.5)",
-      maxWidth: 280,
-      margin: "8px auto",
-      letterSpacing: "-0.2px",
-      animation: "odRise .55s ease-out .22s both"
-    } }, msg), /* @__PURE__ */ React.createElement("div", { style: { animation: "odRise .55s ease-out .32s both" } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: onClose,
-        style: {
-          marginTop: 48,
-          padding: "12px 24px",
-          borderRadius: 999,
-          cursor: "pointer",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontSize: 17,
-          fontWeight: 500,
-          letterSpacing: "-0.3px",
-          fontFamily: "inherit",
-          userSelect: "none",
-          backgroundColor: "rgba(130,119,219,0.25)",
-          border: `1px solid ${P}`,
-          boxShadow: "0 0 20px rgba(130,119,219,0.27)",
-          color: P,
-          transition: "filter .3s, transform .15s"
+        "path",
+        {
+          d: "M12 2C12 2 19 7 19 13C19 16.866 15.866 20 12 20C8.13401 20 5 16.866 5 13C5 7 12 2 12 2Z",
+          fill: "rgba(158,154,229,0.10)",
+          style: { transformOrigin: "50% 50%", transformBox: "fill-box", animation: "odPulse 2.4s ease-in-out infinite" }
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "path",
+        {
+          d: "M12 2.5C12 2.5 18.5 7.5 18.5 13C18.5 16.59 15.59 19.5 12 19.5C8.41 19.5 5.5 16.59 5.5 13C5.5 7.5 12 2.5 12 2.5Z",
+          fill: "url(#rtNeonGrad)",
+          opacity: "0.95"
+        }
+      ), /* @__PURE__ */ React.createElement(
+        "path",
+        {
+          d: "M12 8C12 8 15 10.5 15 14C15 15.6569 13.6569 17 12 17C10.3431 17 9 15.6569 9 14C9 10.5 12 8 12 8Z",
+          fill: "#fff",
+          style: { mixBlendMode: "overlay", transformOrigin: "50% 50%", transformBox: "fill-box", animation: "odFloat 2.2s ease-in-out infinite" }
+        }
+      ))), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", animation: "odSpin 7s linear infinite" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#fff", opacity: 0.3, filter: "blur(0.2px)" } })), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, pointerEvents: "none", animation: "odSpin 11s linear infinite reverse" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "15%", left: "50%", transform: "translateX(-50%)", width: 4, height: 4, borderRadius: "50%", background: "#fff", opacity: 0.3, filter: "blur(0.2px)" } }))), /* @__PURE__ */ React.createElement("h2", { style: {
+        fontSize: 32,
+        fontWeight: 500,
+        letterSpacing: "-0.06em",
+        color: "#fff",
+        margin: 0,
+        fontFamily: "var(--font-display)",
+        animation: "odRise .55s ease-out .12s both"
+      } }, streak === 1 ? "1 d\xEDa de racha" : `${streak} d\xEDas de racha`), /* @__PURE__ */ React.createElement("p", { style: {
+        fontSize: 16,
+        color: "rgba(255,255,255,0.5)",
+        maxWidth: 280,
+        margin: "8px auto",
+        letterSpacing: "-0.2px",
+        animation: "odRise .55s ease-out .22s both"
+      } }, msg), /* @__PURE__ */ React.createElement("div", { style: { animation: "odRise .55s ease-out .32s both" } }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: onClose,
+          style: {
+            marginTop: 48,
+            padding: "12px 24px",
+            borderRadius: 999,
+            cursor: "pointer",
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: 17,
+            fontWeight: 500,
+            letterSpacing: "-0.3px",
+            fontFamily: "inherit",
+            userSelect: "none",
+            backgroundColor: "rgba(130,119,219,0.25)",
+            border: `1px solid ${P}`,
+            boxShadow: "0 0 20px rgba(130,119,219,0.27)",
+            color: P,
+            transition: "filter .3s, transform .15s"
+          },
+          onMouseEnter: (e) => e.currentTarget.style.filter = "brightness(1.1)",
+          onMouseLeave: (e) => e.currentTarget.style.filter = "",
+          onMouseDown: (e) => e.currentTarget.style.transform = "scale(0.95)",
+          onMouseUp: (e) => e.currentTarget.style.transform = ""
         },
-        onMouseEnter: (e) => e.currentTarget.style.filter = "brightness(1.1)",
-        onMouseLeave: (e) => e.currentTarget.style.filter = "",
-        onMouseDown: (e) => e.currentTarget.style.transform = "scale(0.95)",
-        onMouseUp: (e) => e.currentTarget.style.transform = ""
-      },
-      "Let's fucking go"
-    ))));
+        "Let's fucking go"
+      )))),
+      document.body
+    );
   };
   var RoutineDayList = ({ day, onEdit }) => {
     const D = window.Data;
