@@ -7,6 +7,33 @@ const _loadCampaigns = () => {
 };
 const _saveCampaigns = (data) => localStorage.setItem("141_campaigns", JSON.stringify(data));
 
+// ── Campañas reales — leads que Claude Cowork envía cada día al backend ──
+// GET vía POST /api/campaigns/data (JWT). El import lo hace Cowork con clave API.
+const useCoworkCampaigns = () => {
+  const [camps, setCamps] = useState(null);   // null = cargando · [] = sin datos
+  const reload = async () => {
+    try {
+      const r = await window.apiFetch("/api/campaigns/data");
+      const j = await r.json();
+      setCamps(j && j.ok ? (j.campaigns || []) : []);
+    } catch (e) { setCamps([]); }
+  };
+  useEffect(() => { reload(); }, []);
+  return [camps, reload];
+};
+
+const LEAD_STATUS = {
+  new:       { label:"Nuevo",      chip:"neutral" },
+  contacted: { label:"Contactado", chip:"blue" },
+  replied:   { label:"Respondió",  chip:"green" },
+  won:       { label:"Ganado",     chip:"green" },
+  discarded: { label:"Descartado", chip:"red" },
+};
+const _todayStr2 = () => {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+};
+
 // ── Tiny chart helpers ───────────────────────────────────────────────
 const MiniBarChart = ({ data, color = "var(--accent)" }) => {
   const max = Math.max(...data.map(d => d.v), 1);
@@ -332,13 +359,267 @@ const TabAIAgent = ({ c }) => (
   </div>
 );
 
+// ── Campaña Cowork: analíticas reales ────────────────────────────────
+const CoworkAnalytics = ({ c }) => {
+  const leads = c.leads || [];
+  const today = _todayStr2();
+  const byStatus = (s) => leads.filter(l => l.status === s).length;
+  const newToday   = leads.filter(l => l.date === today).length;
+  const contacted  = byStatus("contacted") + byStatus("replied") + byStatus("won");
+  const replied    = byStatus("replied") + byStatus("won");
+  const won        = byStatus("won");
+  const replyPct   = contacted ? Math.round((replied / contacted) * 100) : 0;
+
+  // Leads recibidos por día — últimos 7 días
+  const days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (6 - i));
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return { l: ["D","L","M","X","J","V","S"][d.getDay()], v: leads.filter(x => x.date === ds).length };
+  });
+
+  const funnel = [
+    { id:"new",       label:"Nuevos",      v: byStatus("new"),       color:"var(--text-muted)" },
+    { id:"contacted", label:"Contactados", v: byStatus("contacted"), color:"#60a5fa" },
+    { id:"replied",   label:"Respondieron",v: byStatus("replied"),   color:"var(--green)" },
+    { id:"won",       label:"Ganados",     v: won,                   color:"var(--accent)" },
+    { id:"discarded", label:"Descartados", v: byStatus("discarded"), color:"var(--red)" },
+  ];
+
+  return (
+    <div style={{display:"flex", flexDirection:"column", gap:20}}>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:12}}>
+        <StatCard label="Leads totales" value={leads.length} sub={newToday ? `+${newToday} hoy` : "Sin nuevos hoy"}/>
+        <StatCard label="Contactados" value={contacted} sub={leads.length ? Math.round((contacted/leads.length)*100) + "% del total" : "—"} color="#60a5fa"/>
+        <StatCard label="Respuestas" value={replied} sub={contacted ? replyPct + "% de contactados" : "—"} color="var(--green)"/>
+        <StatCard label="Ganados" value={won} sub="Clientes cerrados" color="var(--accent)"/>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
+        <div className="card" style={{padding:18}}>
+          <div className="card-title" style={{marginBottom:14}}>Leads recibidos — últimos 7 días</div>
+          <MiniBarChart data={days} color="var(--accent)"/>
+        </div>
+        <div className="card" style={{padding:18}}>
+          <div className="card-title" style={{marginBottom:14}}>Embudo</div>
+          <div style={{display:"flex", flexDirection:"column", gap:8}}>
+            {funnel.map(f => (
+              <div key={f.id} style={{display:"flex", alignItems:"center", gap:10}}>
+                <span style={{fontSize:12, color:"var(--text-muted)", width:96, flexShrink:0}}>{f.label}</span>
+                <div style={{flex:1, height:6, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden"}}>
+                  <div style={{width: leads.length ? `${(f.v/leads.length)*100}%` : 0, height:"100%", background:f.color, borderRadius:99}}/>
+                </div>
+                <span style={{fontSize:12, fontWeight:600, color:"var(--text)", width:26, textAlign:"right"}}>{f.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Campaña Cowork: leads con auditoría + borrador ───────────────────
+const CoworkLeads = ({ c, onUpdate }) => {
+  const toast = useToast();
+  const [openId, setOpenId] = useState(null);
+  const leads = [...(c.leads || [])].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const _AV = ["#6366f1","#0ea5e9","#10b981","#f59e0b","#ec4899","#8b5cf6","#14b8a6","#ef4444"];
+  const _initials = (n) => (n||"").trim().split(/\s+/).map(w=>w[0]).slice(0,2).join("").toUpperCase();
+  const today = _todayStr2();
+
+  const copyDraft = (l) => {
+    const text = (l.subject ? `Asunto: ${l.subject}\n\n` : "") + (l.draft || "");
+    navigator.clipboard.writeText(text)
+      .then(() => toast("Borrador copiado", "success"))
+      .catch(() => toast("No se pudo copiar", "warn"));
+  };
+
+  const setStatus = async (l, status) => {
+    try {
+      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status });
+      onUpdate && onUpdate();
+    } catch (e) { toast("Error al guardar", "warn"); }
+  };
+
+  if (!leads.length) return (
+    <Empty icon="users" title="Aún no hay leads"
+      sub="Cuando Claude Cowork haga la próxima importación diaria, aparecerán aquí."/>
+  );
+
+  return (
+    <div>
+      <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14}}>
+        <div className="card-title">Leads · {leads.length} en total</div>
+        <div style={{fontSize:12, color:"var(--text-subtle)"}}>
+          {leads.filter(l => l.date === today).length} nuevos hoy · clic en un lead para ver auditoría y borrador
+        </div>
+      </div>
+      <div className="card">
+        <div className="card-body flush">
+          <table className="table">
+            <thead>
+              <tr>
+                <th style={{width:"34%"}}>Contacto</th>
+                <th>Empresa</th>
+                <th style={{width:90}}>Fecha</th>
+                <th style={{width:150}}>Estado</th>
+                <th style={{width:30}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((l, i) => {
+                const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
+                const open = openId === l.id;
+                return (
+                  <React.Fragment key={l.id}>
+                    <tr onClick={() => setOpenId(open ? null : l.id)} style={{cursor:"pointer"}}>
+                      <td>
+                        <div className="row tight">
+                          <Avatar name={l.name} initials={_initials(l.name)} color={_AV[i % _AV.length]}/>
+                          <div>
+                            <div style={{fontWeight:500, fontSize:13.5}}>{l.name}</div>
+                            <div className="subtle xsmall">{l.email || l.website || "—"}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="muted">{l.company || "—"}</td>
+                      <td className="muted" style={{fontSize:12}}>
+                        {l.date === today ? "Hoy" : new Date((l.date || today) + "T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}
+                      </td>
+                      <td onClick={e => e.stopPropagation()}>
+                        <select className="select sm" value={l.status}
+                          onChange={e => setStatus(l, e.target.value)}
+                          style={{fontSize:12, padding:"5px 8px"}}>
+                          {Object.entries(LEAD_STATUS).map(([k, v]) => (
+                            <option key={k} value={k}>{v.label}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <Icon name="chevron-down" size={13}
+                          style={{color:"var(--text-subtle)", transform: open ? "rotate(180deg)" : "none", transition:"transform .15s"}}/>
+                      </td>
+                    </tr>
+                    {open && (
+                      <tr>
+                        <td colSpan={5} style={{background:"var(--bg-elev-2)", padding:"16px 18px"}}>
+                          <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap:16}}>
+                            <div>
+                              <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", marginBottom:8, display:"flex", alignItems:"center", gap:6}}>
+                                <Icon name="search" size={11}/> Auditoría
+                              </div>
+                              <div style={{fontSize:13, lineHeight:1.6, color:"var(--text-muted)", whiteSpace:"pre-wrap"}}>
+                                {l.audit || "Sin auditoría."}
+                              </div>
+                              {l.website && (
+                                <div style={{marginTop:10, fontSize:12}}>
+                                  <a href={l.website.startsWith("http") ? l.website : "https://" + l.website}
+                                    target="_blank" rel="noreferrer" style={{color:"var(--accent)"}}>
+                                    {l.website} ↗
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8}}>
+                                <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", display:"flex", alignItems:"center", gap:6}}>
+                                  <Icon name="mail" size={11}/> Borrador del mensaje
+                                </div>
+                                <button className="btn ghost sm" onClick={e => { e.stopPropagation(); copyDraft(l); }}>
+                                  <Icon name="paperclip" size={11}/> Copiar
+                                </button>
+                              </div>
+                              {l.subject && (
+                                <div style={{fontSize:13, fontWeight:600, color:"var(--text)", marginBottom:6}}>{l.subject}</div>
+                              )}
+                              <div style={{fontSize:13, lineHeight:1.6, color:"var(--text-muted)", whiteSpace:"pre-wrap"}}>
+                                {l.draft || "Sin borrador."}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Campaña Cowork: detalle ──────────────────────────────────────────
+const CoworkCampaignDetail = ({ c, navigate, reload }) => {
+  const [tab, setTab] = useState("leads");
+  const menuItems = [
+    { id:"leads",     label:"Leads",      icon:"users" },
+    { id:"analytics", label:"Analíticas", icon:"bar-chart" },
+  ];
+  return (
+    <div className="page" style={{padding:0}}>
+      <div style={{padding:"16px 24px 0"}}>
+        <button className="btn ghost sm" onClick={() => navigate("campaigns")} style={{marginBottom:4}}>
+          <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Campañas
+        </button>
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"280px 1fr", gap:0, height:"calc(100vh - 110px)", overflow:"hidden"}}>
+        <div style={{borderRight:"0.5px solid var(--border)", display:"flex", flexDirection:"column", overflow:"hidden", padding:"8px 0"}}>
+          <div style={{padding:"12px 20px 16px", borderBottom:"0.5px solid var(--border)"}}>
+            <div style={{fontSize:13, fontWeight:600, color:"var(--text)", lineHeight:1.4}}>{c.name}</div>
+            <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:4}}>
+              {(c.leads || []).length} leads · desde {new Date(c.createdAt + "T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short",year:"numeric"})}
+            </div>
+          </div>
+          <div style={{flex:1, padding:"8px 10px", overflowY:"auto"}}>
+            {menuItems.map(item => (
+              <div key={item.id} onClick={() => setTab(item.id)}
+                style={{
+                  display:"flex", alignItems:"center", gap:10, padding:"9px 12px", borderRadius:8,
+                  cursor:"pointer", marginBottom:2, fontSize:13,
+                  background: tab === item.id ? "var(--bg-elev-2)" : "transparent",
+                  color: tab === item.id ? "var(--text)" : "var(--text-muted)",
+                  fontWeight: tab === item.id ? 500 : 400,
+                  border: tab === item.id ? "0.5px solid var(--border)" : "0.5px solid transparent",
+                  transition:"all .12s",
+                }}>
+                <Icon name={item.icon} size={14}/>
+                {item.label}
+              </div>
+            ))}
+          </div>
+          <div style={{padding:"16px", borderTop:"0.5px solid var(--border)"}}>
+            <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:6}}>
+              <Icon name="sparkles" size={13} style={{color:"var(--accent)"}}/>
+              <span style={{fontSize:12, fontWeight:600, color:"var(--text)"}}>Claude Cowork</span>
+            </div>
+            <div style={{fontSize:11, color:"var(--text-muted)", lineHeight:1.5}}>
+              Esta campaña se alimenta automáticamente cada día con los leads, auditorías y borradores que genera tu programación de Cowork.
+            </div>
+          </div>
+        </div>
+        <div style={{overflowY:"auto", padding:"24px"}}>
+          {tab === "analytics" ? <CoworkAnalytics c={c}/> : <CoworkLeads c={c} onUpdate={reload}/>}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Campaign Detail ──────────────────────────────────────────────────
 const CampaignDetail = ({ campaignId, navigate }) => {
   const [campaigns] = useState(_loadCampaigns);
+  const [real, reloadReal] = useCoworkCampaigns();
   const [tab, setTab] = useState("analytics");
   const [status, setStatus] = useState(null);
 
+  // ¿Es una campaña real (Cowork)?
+  const rc = (real || []).find(x => x.id === campaignId);
+  if (rc) return <CoworkCampaignDetail c={rc} navigate={navigate} reload={reloadReal}/>;
+
   const c = campaigns.find(x => x.id === campaignId);
+  if (!c && real === null) return <div style={{padding:40, color:"var(--text-muted)", fontSize:13}}>Cargando…</div>;
   if (!c) return <Empty icon="megaphone" title="Campaña no encontrada" sub="Vuelve a la lista de campañas."/>;
 
   const currentStatus = status || c.status;
@@ -494,6 +775,51 @@ const CampaignCard = ({ c, navigate }) => {
   );
 };
 
+// ── Tarjeta de campaña Cowork (lista) ────────────────────────────────
+const CoworkCampaignCard = ({ c, navigate }) => {
+  const leads = c.leads || [];
+  const today = _todayStr2();
+  const newToday  = leads.filter(l => l.date === today).length;
+  const contacted = leads.filter(l => ["contacted","replied","won"].includes(l.status)).length;
+  const replied   = leads.filter(l => ["replied","won"].includes(l.status)).length;
+  return (
+    <div className="card" style={{padding:"18px 20px", cursor:"pointer", transition:"border-color .15s"}}
+      onClick={() => navigate("campaign", { campaignId: c.id })}>
+      <div style={{display:"flex", alignItems:"center", gap:16}}>
+        <div style={{
+          width:40, height:40, borderRadius:10, flexShrink:0,
+          background:"linear-gradient(135deg,rgba(167,139,250,0.12),rgba(96,165,250,0.12))",
+          display:"grid", placeItems:"center",
+        }}>
+          <Icon name="sparkles" size={18} style={{color:"var(--accent)"}}/>
+        </div>
+        <div style={{flex:1, minWidth:0}}>
+          <div style={{fontWeight:600, fontSize:14, color:"var(--text)", marginBottom:2}}>{c.name}</div>
+          <div style={{fontSize:11, color:"var(--text-muted)"}}>
+            {leads.length} leads · alimentada por Claude Cowork{newToday ? ` · +${newToday} hoy` : ""}
+          </div>
+        </div>
+        <div style={{display:"flex", gap:20, alignItems:"center"}}>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18, fontWeight:600, color:"var(--text)", fontFamily:"var(--font-display)"}}>{leads.length}</div>
+            <div style={{fontSize:10, color:"var(--text-subtle)"}}>Leads</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18, fontWeight:600, color:"#60a5fa", fontFamily:"var(--font-display)"}}>{contacted}</div>
+            <div style={{fontSize:10, color:"var(--text-subtle)"}}>Contactados</div>
+          </div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:18, fontWeight:600, color:"var(--green)", fontFamily:"var(--font-display)"}}>{replied}</div>
+            <div style={{fontSize:10, color:"var(--text-subtle)"}}>Respuestas</div>
+          </div>
+          <span className="chip green">Activa</span>
+          <Icon name="chevron" size={14} style={{color:"var(--text-subtle)"}}/>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Campaigns list page ──────────────────────────────────────────────
 const CampaignsPage = ({ navigate }) => {
   const [campaigns, setCampaigns] = useState(() => {
@@ -515,25 +841,30 @@ const CampaignsPage = ({ navigate }) => {
     _saveCampaigns(demo);
     return demo;
   });
+  const [real] = useCoworkCampaigns();
 
-  const total    = campaigns.length;
-  const active   = campaigns.filter(c => c.status === "active").length;
-  const totalSent = campaigns.reduce((s, c) => s + c.emailsSent, 0);
+  const realList  = real || [];
+  const total     = campaigns.length + realList.length;
+  const active    = campaigns.filter(c => c.status === "active").length + realList.length;
+  const realLeads = realList.reduce((s, c) => s + (c.leads || []).length, 0);
 
   return (
     <div className="page">
       <div className="page-head">
         <div>
           <h1>Campañas</h1>
-          <div className="sub">{total} campañas · {active} activas · {totalSent.toLocaleString()} emails enviados</div>
+          <div className="sub">{total} campañas · {active} activas{realLeads ? ` · ${realLeads} leads de Cowork` : ""}</div>
         </div>
         <ActionPill plusActions={() => {}} />
       </div>
 
-      {campaigns.length === 0 ? (
+      {total === 0 ? (
         <Empty icon="megaphone" title="Sin campañas" sub="Crea tu primera campaña de outreach para empezar a generar leads."/>
       ) : (
         <div style={{display:"flex", flexDirection:"column", gap:10}}>
+          {realList.map(c => (
+            <CoworkCampaignCard key={c.id} c={c} navigate={navigate}/>
+          ))}
           {campaigns.map(c => (
             <CampaignCard key={c.id} c={c} navigate={navigate}/>
           ))}

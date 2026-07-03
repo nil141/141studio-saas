@@ -448,6 +448,134 @@ def api_stripe_create_invoice(body):
         "status":     inv.get("status"),
     }
 
+# ── Campañas: leads importados desde Claude Cowork ─────────────────────────
+# Un proceso externo (la programación diaria de Claude Cowork) hace POST a
+# /api/campaigns/import con una clave API estática (env LEADS_API_KEY) y los
+# leads del día (nombre, empresa, email, auditoría, borrador del mensaje…).
+# El SaaS los lee con el JWT del usuario en /api/campaigns/data y actualiza
+# el estado de cada lead en /api/campaigns/update_lead.
+
+LEADS_API_KEY  = os.environ.get("LEADS_API_KEY", "")
+_CAMPAIGNS_FILE = os.path.join(_STORE_DIR, "campaign_leads.json")
+
+LEAD_STATUSES = {"new", "contacted", "replied", "won", "discarded"}
+
+def _campaigns_load():
+    try:
+        with open(_CAMPAIGNS_FILE, encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and isinstance(data.get("campaigns"), list):
+            return data
+    except FileNotFoundError:
+        pass
+    except Exception:
+        traceback.print_exc()
+    return {"campaigns": []}
+
+def _campaigns_save(data):
+    tmp = _CAMPAIGNS_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=1)
+    os.replace(tmp, _CAMPAIGNS_FILE)
+
+def _today():
+    return time.strftime("%Y-%m-%d")
+
+def api_campaigns_import(body):
+    """Ingesta desde Cowork. Crea la campaña si no existe y añade los leads
+    (deduplicados por email dentro de la campaña)."""
+    name = (body.get("campaign") or "").strip() or "Outreach Cowork"
+    leads_in = body.get("leads") or []
+    if not isinstance(leads_in, list) or not leads_in:
+        return {"ok": False, "error": "Falta la lista 'leads'"}
+    if len(leads_in) > 100:
+        return {"ok": False, "error": "Máximo 100 leads por importación"}
+
+    data = _campaigns_load()
+    camp = next((c for c in data["campaigns"]
+                 if c["name"].strip().lower() == name.lower()), None)
+    if camp is None:
+        camp = {"id": secrets.token_hex(8), "name": name,
+                "createdAt": _today(), "leads": []}
+        data["campaigns"].append(camp)
+
+    existing = {(l.get("email") or "").strip().lower()
+                for l in camp["leads"] if l.get("email")}
+    added, skipped = 0, 0
+    for l in leads_in:
+        if not isinstance(l, dict):
+            continue
+        email_addr = (l.get("email") or "").strip()
+        lead_name  = (l.get("name") or l.get("company") or "").strip()
+        if not lead_name:
+            skipped += 1
+            continue
+        if email_addr and email_addr.lower() in existing:
+            skipped += 1
+            continue
+        if email_addr:
+            existing.add(email_addr.lower())
+        camp["leads"].append({
+            "id":      secrets.token_hex(8),
+            "date":    (l.get("date") or _today())[:10],
+            "name":    lead_name[:200],
+            "company": (l.get("company") or "")[:200],
+            "email":   email_addr[:200],
+            "phone":   (l.get("phone") or "")[:60],
+            "website": (l.get("website") or "")[:300],
+            "sector":  (l.get("sector") or "")[:120],
+            "audit":   (l.get("audit") or "")[:8000],
+            "subject": (l.get("subject") or "")[:300],
+            "draft":   (l.get("draft") or "")[:8000],
+            "status":  "new",
+        })
+        added += 1
+    _campaigns_save(data)
+    return {"ok": True, "campaign": camp["name"], "added": added,
+            "skipped": skipped, "total": len(camp["leads"])}
+
+def api_campaigns_data(_body):
+    return {"ok": True, **_campaigns_load()}
+
+def api_campaigns_update_lead(body):
+    cid, lid = body.get("campaignId"), body.get("leadId")
+    status   = body.get("status")
+    if status is not None and status not in LEAD_STATUSES:
+        return {"ok": False, "error": "Estado no válido"}
+    data = _campaigns_load()
+    for c in data["campaigns"]:
+        if c["id"] != cid:
+            continue
+        for l in c["leads"]:
+            if l["id"] == lid:
+                if status is not None:
+                    l["status"] = status
+                _campaigns_save(data)
+                return {"ok": True}
+    return {"ok": False, "error": "Lead no encontrado"}
+
+def api_campaigns_delete_lead(body):
+    cid, lid = body.get("campaignId"), body.get("leadId")
+    data = _campaigns_load()
+    for c in data["campaigns"]:
+        if c["id"] == cid:
+            before = len(c["leads"])
+            c["leads"] = [l for l in c["leads"] if l["id"] != lid]
+            if len(c["leads"]) != before:
+                _campaigns_save(data)
+                return {"ok": True}
+    return {"ok": False, "error": "Lead no encontrado"}
+
+def api_campaigns_delete_campaign(body):
+    cid = body.get("campaignId")
+    data = _campaigns_load()
+    before = len(data["campaigns"])
+    data["campaigns"] = [c for c in data["campaigns"] if c["id"] != cid]
+    if len(data["campaigns"]) != before:
+        _campaigns_save(data)
+        return {"ok": True}
+    return {"ok": False, "error": "Campaña no encontrada"}
+
 # ── HTTP handler ───────────────────────────────────────────────────────────
 
 # Los antiguos endpoints /api/store, /api/invite y /api/auth (con contraseñas en
@@ -470,13 +598,21 @@ STRIPE_HANDLERS = {
     "create_invoice":  api_stripe_create_invoice,
 }
 
+# Requieren JWT del usuario (mismo esquema que MAIL/STRIPE)
+CAMPAIGN_HANDLERS = {
+    "data":            api_campaigns_data,
+    "update_lead":     api_campaigns_update_lead,
+    "delete_lead":     api_campaigns_delete_lead,
+    "delete_campaign": api_campaigns_delete_campaign,
+}
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
 
     # Ficheros que el servidor estático nunca debe servir
-    _BLOCKED_NAMES = {"store.json", "mail_server.py", "requirements.txt",
-                      "railway.toml", "procfile", "build.sh"}
+    _BLOCKED_NAMES = {"store.json", "campaign_leads.json", "mail_server.py",
+                      "requirements.txt", "railway.toml", "procfile", "build.sh"}
 
     def _path_blocked(self):
         path = urllib.parse.urlparse(self.path).path.lower()
@@ -521,10 +657,36 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api(self.path[len("/api/mail/"):], MAIL_HANDLERS)
         elif self.path.startswith("/api/stripe/"):
             self._handle_api(self.path[len("/api/stripe/"):], STRIPE_HANDLERS)
+        elif self.path == "/api/campaigns/import":
+            self._handle_import()
+        elif self.path.startswith("/api/campaigns/"):
+            self._handle_api(self.path[len("/api/campaigns/"):], CAMPAIGN_HANDLERS)
         elif self.path.startswith(("/api/store/", "/api/invite/", "/api/auth/")):
             self._json(410, {"ok": False, "error": "Endpoint retirado — la app usa Supabase"})
         else:
             self.send_error(405)
+
+    def _handle_import(self):
+        """Ingesta de leads desde Cowork: clave API estática, no JWT."""
+        if not LEADS_API_KEY:
+            self._json(403, {"ok": False, "error": "LEADS_API_KEY no configurada en el servidor"})
+            return
+        auth = self.headers.get("Authorization", "")
+        key  = self.headers.get("X-Api-Key", "") or (auth[7:] if auth.startswith("Bearer ") else "")
+        if not secrets.compare_digest(key, LEADS_API_KEY):
+            self._json(401, {"ok": False, "error": "Clave API no válida"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 1_000_000:
+                self._json(413, {"ok": False, "error": "Payload demasiado grande"})
+                return
+            body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            result = api_campaigns_import(body)
+        except Exception as e:
+            traceback.print_exc()
+            result = {"ok": False, "error": str(e)}
+        self._json(200, result)
 
     def _json(self, status, obj):
         resp = json.dumps(obj, ensure_ascii=False).encode("utf-8")
