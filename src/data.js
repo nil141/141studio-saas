@@ -733,6 +733,30 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   _saveLS(_RDKEY, _store.ROUTINE_DONE);
   _emit();
 };
+const routineDayComplete = (routineId, dateStr) => {
+  const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
+  if (!r || !(r.items || []).length) return false;
+  return r.items.every((it) => routineItemDone(routineId, dateStr, it.id));
+};
+const _ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const routineStreak = (routineId, dateStr) => {
+  const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
+  if (!r) return 0;
+  const start = /* @__PURE__ */ new Date((r.startDate || dateStr) + "T12:00:00");
+  start.setHours(12, 0, 0, 0);
+  let d = /* @__PURE__ */ new Date(dateStr + "T12:00:00");
+  d.setHours(12, 0, 0, 0);
+  let streak = 0, guard = 0;
+  while (d >= start && guard++ < 730) {
+    const ds = _ymd(d);
+    if (_routineMatchesDay(r, ds)) {
+      if (routineDayComplete(routineId, ds)) streak++;
+      else break;
+    }
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+};
 const moveTask = (projectId, taskId, newColumn) => {
   const uid = _uid();
   if (!uid) return;
@@ -891,6 +915,8 @@ window.Data = {
   routinesForDay,
   routineItemDone,
   toggleRoutineItem,
+  routineDayComplete,
+  routineStreak,
   updateSettings,
   createInvite,
   useStore
