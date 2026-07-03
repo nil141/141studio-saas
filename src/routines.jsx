@@ -199,18 +199,11 @@ const RoutineCard = ({ r, day, onEdit }) => {
         }}>
           <Icon name={allDone ? "check" : "refresh-cw"} size={15} strokeWidth={1.8}/>
         </div>
-        <div style={{ flex:1, minWidth:0 }}>
+        <div onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
+          style={{ flex:1, minWidth:0, cursor:"pointer" }}>
           <div style={{ fontSize:14.5, fontWeight:500, letterSpacing:"-0.4px", color:"var(--text)" }}>{r.title}</div>
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
             {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
-            {streak > 0 && (
-              <span data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
-                style={{ color: streakPending ? "var(--text-subtle)" : "var(--accent)" }}>
-                {" · "}
-                <Icon name="flame" size={11} strokeWidth={1.8} style={{ verticalAlign:"-1.5px" }}/>
-                {" "}{streak}
-              </span>
-            )}
           </div>
         </div>
         {/* Mini barra de progreso */}
@@ -219,10 +212,17 @@ const RoutineCard = ({ r, day, onEdit }) => {
             <div style={{ width:`${(doneCount/total)*100}%`, height:"100%", background:"var(--accent)", transition:"width .2s" }}/>
           </div>
         )}
-        <button className="btn ghost icon-only sm" onClick={() => onEdit && onEdit(r)}
-          data-tooltip="Editar rutina" style={{ flexShrink:0 }}>
-          <Icon name="edit" size={13}/>
-        </button>
+        {/* Racha — en el sitio del lápiz; la edición es clic en el título */}
+        {streak > 0 && (
+          <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
+            style={{
+              display:"flex", alignItems:"center", gap:4, flexShrink:0, marginLeft:2,
+              color: streakPending ? "var(--text-subtle)" : "var(--accent)",
+            }}>
+            <Icon name="flame" size={14} strokeWidth={1.7}/>
+            <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px" }}>{streak}</span>
+          </div>
+        )}
       </div>
 
       {/* Checklist */}

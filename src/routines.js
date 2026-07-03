@@ -168,25 +168,30 @@
       background: allDone ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
       border: "0.5px solid var(--border)",
       color: allDone ? "var(--accent)" : "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: allDone ? "check" : "refresh-cw", size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, r.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "", streak > 0 && /* @__PURE__ */ React.createElement(
-      "span",
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: allDone ? "check" : "refresh-cw", size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement(
+      "div",
       {
-        "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
-        style: { color: streakPending ? "var(--text-subtle)" : "var(--accent)" }
-      },
-      " \xB7 ",
-      /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 11, strokeWidth: 1.8, style: { verticalAlign: "-1.5px" } }),
-      " ",
-      streak
-    ))), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { width: 54, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${doneCount / total * 100}%`, height: "100%", background: "var(--accent)", transition: "width .2s" } })), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        className: "btn ghost icon-only sm",
         onClick: () => onEdit && onEdit(r),
         "data-tooltip": "Editar rutina",
-        style: { flexShrink: 0 }
+        style: { flex: 1, minWidth: 0, cursor: "pointer" }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 13 })
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, r.title),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")
+    ), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { width: 54, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${doneCount / total * 100}%`, height: "100%", background: "var(--accent)", transition: "width .2s" } })), streak > 0 && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          flexShrink: 0,
+          marginLeft: 2,
+          color: streakPending ? "var(--text-subtle)" : "var(--accent)"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
     )), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, r.items.map((it, idx) => {
       const done = D.routineItemDone(r.id, day, it.id);
       const last = idx === r.items.length - 1;
