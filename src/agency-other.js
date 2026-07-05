@@ -48,7 +48,14 @@
     const isToday = selDateStr === todayStr;
     const matchesDay = (t) => t.deadline === selDateStr || isToday && t.deadline && t.deadline < selDateStr && (t.column !== "done" || t.doneAt === todayStr);
     const dayTasks = allTasks.filter(matchesDay);
-    const donePct = dayTasks.length ? Math.round(dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : t.progress || 0), 0) / dayTasks.length) : 0;
+    const dayRoutines = D.routinesForDay ? D.routinesForDay(selDateStr) : [];
+    let routineTotal = 0, routineDone = 0;
+    dayRoutines.forEach((r) => (r.items || []).forEach((it) => {
+      routineTotal += 1;
+      if (D.routineItemDone(r.id, selDateStr, it.id)) routineDone += 1;
+    }));
+    const progressUnits = dayTasks.length + routineTotal;
+    const donePct = progressUnits ? Math.round((dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : t.progress || 0), 0) + routineDone * 100) / progressUnits) : 0;
     const clientColorMap = {};
     D.CLIENTS.forEach((c, i) => {
       clientColorMap[c.id] = C_DOTS[i % C_DOTS.length];
