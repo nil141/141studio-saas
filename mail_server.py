@@ -603,12 +603,27 @@ def api_campaigns_update(body):
     ctype = body.get("ctype")
     if ctype:
         camp["ctype"] = ctype if ctype in CAMPAIGN_TYPES else "otro"
+    if "goal" in body:
+        try:
+            g = int(body.get("goal") or 0)
+            camp["goal"] = max(0, min(100000, g))
+        except (TypeError, ValueError):
+            pass
+    if "note" in body:
+        camp["note"] = (body.get("note") or "")[:2000]
     _campaigns_save(data)
-    return {"ok": True, "campaign": {k: camp[k] for k in ("id", "name", "ctype", "createdAt") if k in camp}}
+    return {"ok": True, "campaign": {k: camp[k] for k in ("id", "name", "ctype", "createdAt", "goal", "note") if k in camp}}
+
+LEAD_EDIT_FIELDS = {
+    "name": 200, "company": 200, "email": 200, "phone": 60, "website": 300,
+    "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
+    "notes": 8000, "followUp": 10,
+}
 
 def api_campaigns_update_lead(body):
     cid, lid = body.get("campaignId"), body.get("leadId")
     status   = body.get("status")
+    fields   = body.get("fields") or {}
     if status is not None and status not in LEAD_STATUSES:
         return {"ok": False, "error": "Estado no válido"}
     data = _campaigns_load()
@@ -619,6 +634,9 @@ def api_campaigns_update_lead(body):
             if l["id"] == lid:
                 if status is not None:
                     l["status"] = status
+                for k, v in fields.items():
+                    if k in LEAD_EDIT_FIELDS:
+                        l[k] = ("" if v is None else str(v))[:LEAD_EDIT_FIELDS[k]]
                 _campaigns_save(data)
                 return {"ok": True}
     return {"ok": False, "error": "Lead no encontrado"}

@@ -277,6 +277,23 @@ const CampaignAnalytics = ({ c }) => {
           sub={bestDay ? new Date(bestDay[0] + "T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"}) : ""}/>
       </div>
 
+      {/* Objetivo de la campaña (si está definido) */}
+      {c.goal > 0 && (
+        <div style={cardStyle}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:12 }}>
+            <div style={cardTitle}>Objetivo · clientes cerrados</div>
+            <div style={{ fontSize:13, color:"var(--text-muted)" }}>
+              <b style={{ color:"var(--accent)", fontSize:16 }}>{won}</b> / {c.goal}
+              {won >= c.goal && <span style={{ color:"var(--green)", marginLeft:8 }}>¡Conseguido! 🎉</span>}
+            </div>
+          </div>
+          <div style={{ height:8, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+            <div style={{ width:`${Math.min(100, (won / c.goal) * 100)}%`, height:"100%",
+              background: won >= c.goal ? "var(--green)" : "var(--accent)", borderRadius:99, transition:"width .3s" }}/>
+          </div>
+        </div>
+      )}
+
       {/* Leads por día — 30 días */}
       <div style={cardStyle}>
         <div style={cardTitle}>Leads recibidos · últimos 30 días</div>
@@ -310,12 +327,13 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
   const toast = useToast();
   const [name, setName]   = useState(c.name);
   const [ctype, setCtype] = useState(c.ctype || "cowork");
-  useEffect(() => { setName(c.name); setCtype(c.ctype || "cowork"); }, [c.id]);
-  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork");
+  const [goal, setGoal]   = useState(String(c.goal || ""));
+  useEffect(() => { setName(c.name); setCtype(c.ctype || "cowork"); setGoal(String(c.goal || "")); }, [c.id]);
+  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork") || (parseInt(goal || 0, 10) || 0) !== (c.goal || 0);
 
   const save = async () => {
     if (!name.trim()) { toast("El nombre no puede quedar vacío", "warn"); return; }
-    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype });
+    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype, goal: parseInt(goal || 0, 10) || 0 });
     const j = await r.json();
     if (!j.ok) { toast(j.error || "No se pudo guardar", "warn"); return; }
     toast("Campaña actualizada", "success");
@@ -356,6 +374,9 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
             );
           })}
         </div>
+        <div className="label" style={{ marginTop:16 }}>Objetivo · clientes a cerrar <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
+        <input className="input" type="number" min="0" placeholder="Ej. 10" value={goal}
+          onChange={e => setGoal(e.target.value)} style={{ maxWidth:160 }}/>
         {dirty && (
           <div style={{ marginTop:16 }}>
             <button className="btn primary sm" onClick={save}><Icon name="check" size={12}/> Guardar cambios</button>
@@ -404,8 +425,27 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
 };
 
 // ── Fila de lead + panel expandible ──────────────────────────────────
-const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy }) => {
+const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }) => {
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
+  const KEYS = ["name","company","email","phone","website","sector","notes","followUp"];
+  const [f, setF] = useState({});
+  useEffect(() => {
+    if (open) { const o = {}; KEYS.forEach(k => o[k] = l[k] || ""); setF(o); }
+  }, [open, l.id]);
+  const set = (k) => (e) => setF(prev => ({ ...prev, [k]: e.target.value }));
+  const dirty = KEYS.some(k => (f[k] || "") !== (l[k] || ""));
+  const hasCowork = l.audit || l.draft || l.subject;
+
+  const followBadge = l.followUp && l.followUp >= _cToday();
+  const field = (label, k, ph, type) => (
+    <div>
+      <div style={{ fontSize:10.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", marginBottom:5 }}>{label}</div>
+      <input className="input" type={type || "text"} placeholder={ph} value={f[k] || ""} onChange={set(k)}
+        onClick={e => e.stopPropagation()}
+        style={{ padding:"8px 11px", fontSize:12.5 }}/>
+    </div>
+  );
+
   return (
     <>
       <div onClick={onToggle} className="task-row" style={{
@@ -413,26 +453,22 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy }) => {
         padding:"13px 4px", cursor:"pointer",
         borderBottom: (last && !open) ? "none" : "0.5px solid var(--border)",
       }}>
-        {/* Punto de estado */}
         <span style={{ width:7, height:7, borderRadius:"50%", background:st.dot, flexShrink:0 }}/>
-        {/* Nombre + empresa */}
         <div style={{ flex:"1.4 1 0", minWidth:0 }}>
-          <div style={{ fontSize:14, letterSpacing:"-0.4px", color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
+          <div style={{ fontSize:14, letterSpacing:"-0.4px", color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", display:"flex", alignItems:"center", gap:7 }}>
             {l.name}
+            {followBadge && <Icon name="clock" size={11} style={{ color:"var(--accent)", flexShrink:0 }} data-tooltip={`Seguimiento ${_cFmtDay(l.followUp)}`}/>}
           </div>
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
             {l.company || "—"}{l.sector ? ` · ${l.sector}` : ""}
           </div>
         </div>
-        {/* Contacto */}
         <div style={{ flex:"1 1 0", minWidth:0, fontSize:12, color:"var(--text-muted)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
           {l.email || l.website || "—"}
         </div>
-        {/* Fecha */}
         <div style={{ width:52, fontSize:12, color:"var(--text-subtle)", textAlign:"right", flexShrink:0 }}>
           {_cFmtDay(l.date)}
         </div>
-        {/* Estado */}
         <LeadStatusPill value={l.status} onChange={onStatus}/>
         <Icon name="chevron-down" size={13} style={{
           color:"rgba(255,255,255,0.2)", flexShrink:0,
@@ -441,46 +477,67 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy }) => {
       </div>
 
       {open && (
-        <div style={{
+        <div onClick={e => e.stopPropagation()} style={{
           margin:"0 0 14px", padding:"18px 20px",
           background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:14,
         }}>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:22 }}>
-            {/* Auditoría */}
-            <div>
-              <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-                <Icon name="search" size={11}/> Auditoría
-              </div>
-              <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
-                {l.audit || "Sin auditoría."}
-              </div>
-              <div style={{ display:"flex", gap:14, marginTop:12, fontSize:12 }}>
-                {l.website && (
-                  <a href={l.website.startsWith("http") ? l.website : "https://" + l.website}
-                    target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-                    style={{ color:"var(--accent)", display:"inline-flex", alignItems:"center", gap:5 }}>
-                    <Icon name="external-link" size={11}/> {l.website}
-                  </a>
-                )}
-                {l.phone && <span style={{ color:"var(--text-muted)", display:"inline-flex", alignItems:"center", gap:5 }}><Icon name="phone" size={11}/> {l.phone}</span>}
-              </div>
-            </div>
-            {/* Borrador */}
-            <div>
-              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", display:"flex", alignItems:"center", gap:6 }}>
-                  <Icon name="mail" size={11}/> Borrador del mensaje
-                </div>
-                <button className="btn ghost sm" onClick={e => { e.stopPropagation(); onCopy(); }}>
-                  <Icon name="file" size={11}/> Copiar
-                </button>
-              </div>
-              {l.subject && <div style={{ fontSize:13.5, fontWeight:600, color:"var(--text)", marginBottom:8, letterSpacing:"-0.3px" }}>{l.subject}</div>}
-              <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
-                {l.draft || "Sin borrador."}
-              </div>
-            </div>
+          {/* Datos de contacto editables */}
+          <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:12, display:"flex", alignItems:"center", gap:6 }}>
+            <Icon name="user-cog" size={12}/> Datos del lead
           </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:12 }}>
+            {field("Nombre", "name", "Nombre")}
+            {field("Empresa", "company", "Empresa")}
+            {field("Sector", "sector", "Sector")}
+            {field("Email", "email", "email@…", "email")}
+            {field("Teléfono", "phone", "+34 …")}
+            {field("Web", "website", "empresa.com")}
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:12, marginBottom:6 }}>
+            <div>
+              <div style={{ fontSize:10.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", marginBottom:5 }}>Notas</div>
+              <textarea className="input" rows={2} placeholder="Notas internas, contexto de la llamada…"
+                value={f.notes || ""} onChange={set("notes")} onClick={e => e.stopPropagation()}
+                style={{ padding:"8px 11px", fontSize:12.5, resize:"vertical", lineHeight:1.5 }}/>
+            </div>
+            {field("Próximo seguimiento", "followUp", "", "date")}
+          </div>
+          {dirty && (
+            <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
+              <button className="btn primary sm" onClick={e => { e.stopPropagation(); onSave(f); }}>
+                <Icon name="check" size={12}/> Guardar cambios
+              </button>
+            </div>
+          )}
+
+          {/* Auditoría + Borrador (de Cowork) */}
+          {hasCowork && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:22, marginTop:8, paddingTop:16, borderTop:"0.5px solid var(--border)" }}>
+              <div>
+                <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+                  <Icon name="search" size={11}/> Auditoría
+                </div>
+                <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
+                  {l.audit || "Sin auditoría."}
+                </div>
+              </div>
+              <div>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                  <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", display:"flex", alignItems:"center", gap:6 }}>
+                    <Icon name="mail" size={11}/> Borrador del mensaje
+                  </div>
+                  <button className="btn ghost sm" onClick={e => { e.stopPropagation(); onCopy(); }}>
+                    <Icon name="file" size={11}/> Copiar
+                  </button>
+                </div>
+                {l.subject && <div style={{ fontSize:13.5, fontWeight:600, color:"var(--text)", marginBottom:8, letterSpacing:"-0.3px" }}>{l.subject}</div>}
+                <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
+                  {l.draft || "Sin borrador."}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Pie: eliminar */}
           <div style={{ display:"flex", justifyContent:"flex-end", marginTop:14, paddingTop:12, borderTop:"0.5px solid var(--border)" }}>
             <button className="btn ghost sm" onClick={e => { e.stopPropagation(); onDelete(); }}
@@ -689,6 +746,29 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       reload();
     } catch (e) { toast("Error al guardar", "warn"); }
   };
+  const saveLead = async (l, fields) => {
+    try {
+      const r = await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, fields });
+      const j = await r.json();
+      if (!j.ok) { toast(j.error || "No se pudo guardar", "warn"); return; }
+      toast("Lead actualizado", "success");
+      reload();
+    } catch (e) { toast("Error al guardar", "warn"); }
+  };
+  const exportCSV = () => {
+    if (!leads.length) { toast("No hay leads que exportar", "warn"); return; }
+    const cols = ["name","company","email","phone","website","sector","status","date","followUp","notes","subject","draft","audit"];
+    const head = ["Nombre","Empresa","Email","Teléfono","Web","Sector","Estado","Fecha","Seguimiento","Notas","Asunto","Borrador","Auditoría"];
+    const esc = (v) => { const s = (v == null ? "" : String(v)); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const rows = leads.map(l => cols.map(k => esc(k === "status" ? (LEAD_STATUS[l.status] || {}).label : l[k])).join(","));
+    const csv = head.join(",") + "\n" + rows.join("\n");
+    const blob = new Blob(["﻿" + csv], { type:"text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${c.name.replace(/[^\w\-]+/g, "_")}_leads.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    toast(`${leads.length} leads exportados`, "success");
+  };
   const removeLead = async (l) => {
     const ok = await confirm({ title:"¿Eliminar este lead?", body:`${l.name}${l.company ? " · " + l.company : ""} se eliminará de la campaña.`, danger:true, confirmLabel:"Eliminar" });
     if (!ok) return;
@@ -739,6 +819,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
               { icon:"sparkles", label:"Conectar Cowork", sub:"Que la llene tu tarea diaria de IA.",  onClick: () => setCoworkOpen(true) },
             ]}
             moreActions={[
+              { icon:"download", label:"Exportar CSV", onClick: exportCSV },
               { icon:"trash", label:"Eliminar campaña", onClick: removeCampaign },
             ]}
           />
@@ -768,16 +849,6 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
             );
           })}
         </div>
-
-        {/* Mini-stats compactas (solo en Leads, con leads) */}
-        {view === "leads" && leads.length > 0 && (
-        <div style={{ display:"flex", gap:26, paddingBottom:16, borderBottom:"0.5px solid var(--border)", marginBottom:16 }}>
-          <CampMiniStat label="Leads" value={leads.length} sub={newToday ? `+${newToday} hoy` : "sin nuevos hoy"}/>
-          <CampMiniStat label="Contactados" value={contacted} sub={leads.length ? `${Math.round((contacted/leads.length)*100)}% del total` : "—"} color="#60a5fa"/>
-          <CampMiniStat label="Respuestas" value={replied} sub={contacted ? `${replyPct}% de contactados` : "—"} color="var(--green)"/>
-          <CampMiniStat label="Ganados" value={nStatus("won")} sub="clientes cerrados" color="var(--accent)"/>
-        </div>
-        )}
 
         {/* Filtros + buscador (solo en Leads, con leads) */}
         {view === "leads" && leads.length > 0 && (
@@ -837,7 +908,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
             onToggle={() => setOpenId(openId === l.id ? null : l.id)}
             onStatus={(s) => setStatus(l, s)}
             onDelete={() => removeLead(l)}
-            onCopy={() => copyDraft(l)}/>
+            onCopy={() => copyDraft(l)}
+            onSave={(fields) => saveLead(l, fields)}/>
         ))}
       </div>
 
