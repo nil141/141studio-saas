@@ -2078,7 +2078,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   // The labels ROTATE: value p appears at angle  90 + (progress − p) * ARC_SWEEP/100
   // so the current progress is always directly under the fixed ▼.
   const CX = 320, CY = 456, R = 456;
-  const ARC_SWEEP = 44;   // total degrees for the 0-100% range (estilo outdomode)
+  const ARC_SWEEP = 64;   // total degrees for the 0-100% range
 
   const toPt = (stdDeg, r = R) => {
     const rad = stdDeg * Math.PI / 180;
@@ -2174,17 +2174,14 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
         className="progress-modal-sheet"
         onClick={e => e.stopPropagation()}
         style={{
-          width:"100%", maxWidth:560,
-          background:"rgba(255,255,255,0.05)",             // color-mix white 5%
-          backdropFilter:"blur(40px)", WebkitBackdropFilter:"blur(40px)",  // blur-2xl
-          border:"1px solid rgba(255,255,255,0.1)",        // white 10%
-          borderRadius:48,                                  // radius-5xl (3rem)
+          width:"100%", maxWidth:540,
+          background:"#111111",
+          border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:32,
           overflow:"hidden",
-          boxShadow:"0 25px 50px -12px rgba(0,0,0,0.45)",   // shadow-2xl
           animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           userSelect:"none",
-          letterSpacing:"-0.06em",
         }}
       >
         {/* Drag handle */}
@@ -2251,11 +2248,11 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
 
         {mode === "progress" ? (<>
           {/* Percentage + status */}
-          <div style={{ textAlign:"center", padding:"34px 0 56px" }}>
-            <div style={{ fontSize:72, fontWeight:300, letterSpacing:"-3px", color:"#fff", lineHeight:1 }}>
+          <div style={{ textAlign:"center", padding:"28px 0 60px" }}>
+            <div style={{ fontSize:86, fontWeight:300, letterSpacing:"-4px", color:"var(--text)", lineHeight:1 }}>
               {progress}%
             </div>
-            <div style={{ fontSize:15, color:"var(--text-muted)", letterSpacing:"0.06em", marginTop:12, fontWeight:300, textTransform:"uppercase" }}>
+            <div style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0.12em", marginTop:10, fontWeight:500 }}>
               {statusLabel}
             </div>
           </div>
@@ -2273,50 +2270,44 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
             {/* Static background arc */}
             <path d={bgArcPath} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="1.5"/>
 
-            {/* Radios rotatorios estilo outdomode: la marca activa (bajo el ▼) va en morado con glow */}
+            {/* Rotating tick marks — each pct label orbits to stay relative to current progress */}
             {TICKS.map(pct => {
               const deg  = tickAngle(pct);
               const rad  = deg * Math.PI / 180;
               const cosR = Math.cos(rad), sinR = Math.sin(rad);
               const [ax, ay] = toPt(deg);
 
-              // Ocultar si se aleja demasiado del arco visible
+              // Hide if too far off the visible arc
               const dist = Math.abs(deg - 90);
-              if (dist > 50) return null;
-              const fade = dist > 30 ? Math.max(0.15, (50 - dist) / 20) : 1;
+              if (dist > 52) return null;
+              const fade = dist > 36 ? Math.max(0, (52 - dist) / 16) : 1;
+
+              const t1x = ax - cosR * 8,  t1y = ay + sinR * 8;   // inward start (gap from arc)
+              const t2x = ax - cosR * 20, t2y = ay + sinR * 20;  // inward end
+              const lx  = ax - cosR * 40, ly  = ay + sinR * 40;
 
               const isActive = pct === progress;
-              const len = isActive ? 30 : 15;                    // largo del radio
-              const t1x = ax - cosR * 6,   t1y = ay + sinR * 6;  // inicio (hueco desde el arco)
-              const t2x = ax - cosR * (6 + len), t2y = ay + sinR * (6 + len); // fin
-              const lx  = ax - cosR * (6 + len + 22), ly  = ay + sinR * (6 + len + 22);
-
-              const purple = "rgb(158,154,229)";
               return (
                 <g key={pct} opacity={fade}>
                   <line x1={t1x.toFixed(1)} y1={t1y.toFixed(1)} x2={t2x.toFixed(1)} y2={t2y.toFixed(1)}
-                    stroke={isActive ? purple : "rgba(255,255,255,0.4)"}
-                    strokeWidth={isActive ? "2.5" : "1.5"} strokeLinecap="round"
-                    style={isActive ? { filter:"drop-shadow(0 0 6px rgba(158,154,229,0.8))" } : undefined}/>
+                    stroke={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)"} strokeWidth={isActive ? "2" : "1.5"} strokeLinecap="round"/>
                   <text x={lx.toFixed(1)} y={ly.toFixed(1)} textAnchor="middle" dominantBaseline="middle"
-                    fontSize={isActive ? "20" : "14"} fontWeight={isActive ? "500" : "400"}
-                    fill={isActive ? purple : "rgba(255,255,255,0.4)"} fontFamily="var(--font-sans)">{pct}%</text>
+                    fontSize={isActive ? "18" : "13"} fontWeight={isActive ? "500" : "400"}
+                    fill={isActive ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.3)"} fontFamily="var(--font-sans)">{pct}%</text>
                 </g>
               );
             })}
 
-            {/* ▼ fijo — flota sobre el arco, sin tallo */}
-            <polygon points={`${CX-5},-22 ${CX+5},-22 ${CX},-10`} fill="rgba(255,255,255,0.85)"/>
+            {/* Fixed ▼ — floats above arc, no stem */}
+            <polygon points={`${CX-5},-22 ${CX+5},-22 ${CX},-10`} fill="white"/>
           </svg>
 
-          {/* Confirm button — estilo outdomode (morado con glow) */}
-          <div style={{ padding:"4px 20px 30px", display:"flex", justifyContent:"center" }}>
+          {/* Confirm button */}
+          <div style={{ padding:"0 20px 28px", display:"flex", justifyContent:"center" }}>
             <button onClick={confirmProgress}
-              style={{ padding:"13px 40px", background:"rgba(130,119,219,0.25)", border:"1px solid rgb(130,119,219)", borderRadius:99, color:"rgb(158,154,229)", fontSize:17, fontWeight:500, letterSpacing:"-0.3px", cursor:"pointer", fontFamily:"var(--font-sans)", boxShadow:"0 0 20px rgba(130,119,219,0.27)", transition:"filter .3s, transform .12s" }}
-              onMouseEnter={e => e.currentTarget.style.filter="brightness(1.15)"}
-              onMouseLeave={e => e.currentTarget.style.filter=""}
-              onMouseDown={e => e.currentTarget.style.transform="scale(0.96)"}
-              onMouseUp={e => e.currentTarget.style.transform=""}
+              style={{ padding:"13px 52px", background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.12)", borderRadius:99, color:"var(--text)", fontSize:14, letterSpacing:"-0.5px", cursor:"pointer", fontFamily:"var(--font-sans)", transition:"background .15s" }}
+              onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
             >Confirmar</button>
           </div>
         </>) : (
