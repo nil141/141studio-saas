@@ -185,40 +185,56 @@ const LeadStatusPill = ({ value, onChange }) => {
     );
   })));
 };
-const LeadsSpark = ({ leads, days: nDays = 14, height = 64 }) => {
+let _sparkGradSeq = 0;
+const LeadsSpark = ({ leads, days: nDays = 14, height = 192 }) => {
+  const gradId = useRef(null);
+  if (!gradId.current) gradId.current = "leadsGrad" + ++_sparkGradSeq;
   const days = Array.from({ length: nDays }, (_, i) => {
     const d = /* @__PURE__ */ new Date();
     d.setDate(d.getDate() - (nDays - 1 - i));
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return {
-      ds,
-      v: leads.filter((x) => x.date === ds).length,
-      lab: d.getDate(),
-      isToday: i === nDays - 1
-    };
+    return { ds, v: leads.filter((x) => x.date === ds).length, lab: d.getDate() };
   });
   const max = Math.max(...days.map((d) => d.v), 1);
-  const barH = height - 18;
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: nDays > 20 ? 3 : 5, height } }, days.map((d, i) => /* @__PURE__ */ React.createElement(
-    "div",
+  const W = 818, H = height, padL = 20, padR = 20, top = 5, base = H - 55;
+  const n = days.length;
+  const X = (i) => padL + i * (W - padL - padR) / (n - 1);
+  const Y = (v) => base - v / max * (base - top);
+  let curve = `M${X(0).toFixed(1)},${Y(days[0].v).toFixed(1)}`;
+  for (let i = 1; i < n; i++) {
+    const x0 = X(i - 1), x1 = X(i), y0 = Y(days[i - 1].v), y1 = Y(days[i].v);
+    const g = (x1 - x0) / 3;
+    curve += `C${(x0 + g).toFixed(1)},${y0.toFixed(1)},${(x0 + 2 * g).toFixed(1)},${y1.toFixed(1)},${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }
+  const area = curve + `L${X(n - 1).toFixed(1)},${base}L${X(0).toFixed(1)},${base}Z`;
+  const refYs = [0, 0.25, 0.5, 0.75, 1].map((t) => base - t * (base - top));
+  const tickEvery = Math.max(1, Math.round((n - 1) / 6));
+  const ticks = days.map((d, i) => ({ ...d, i })).filter((d, i) => i % tickEvery === 0 || i === n - 1);
+  const P = "#8277db";
+  return /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${W} ${H}`, style: { width: "100%", height: "auto", display: "block" } }, /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("linearGradient", { id: gradId.current, x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: P, stopOpacity: "0.3" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: P, stopOpacity: "0" }))), refYs.map((y, i) => /* @__PURE__ */ React.createElement(
+    "line",
     {
       key: i,
-      "data-tooltip": `${d.v} lead${d.v === 1 ? "" : "s"} \xB7 d\xEDa ${d.lab}`,
-      style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 0 }
+      x1: padL,
+      y1: y,
+      x2: W - padR,
+      y2: y,
+      stroke: "rgba(255,255,255,0.05)",
+      strokeDasharray: "3 3",
+      strokeWidth: "1"
+    }
+  )), /* @__PURE__ */ React.createElement("path", { d: area, fill: `url(#${gradId.current})`, stroke: "none" }), /* @__PURE__ */ React.createElement("path", { d: curve, fill: "none", stroke: P, strokeWidth: "3" }), ticks.map((t) => /* @__PURE__ */ React.createElement(
+    "text",
+    {
+      key: t.i,
+      x: X(t.i),
+      y: base + 18,
+      textAnchor: "middle",
+      fontSize: "12",
+      fill: "var(--text-muted)",
+      fontFamily: "var(--font-sans)"
     },
-    /* @__PURE__ */ React.createElement("div", { style: {
-      width: "100%",
-      maxWidth: 22,
-      borderRadius: 5,
-      height: d.v === 0 ? 3 : Math.max(6, d.v / max * barH),
-      background: d.v === 0 ? "rgba(255,255,255,0.06)" : d.isToday ? "var(--accent)" : "rgba(158,154,229,0.45)",
-      transition: "height .2s"
-    } }),
-    /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 9.5,
-      color: d.isToday ? "var(--text)" : "var(--text-subtle)",
-      visibility: nDays > 20 && i % 2 === 1 && !d.isToday ? "hidden" : "visible"
-    } }, d.lab)
+    t.lab
   )));
 };
 const HBars = ({ items, total }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { style: {
@@ -288,7 +304,7 @@ const CampaignAnalytics = ({ c }) => {
     background: won >= c.goal ? "var(--green)" : "var(--accent)",
     borderRadius: 99,
     transition: "width .3s"
-  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Leads recibidos \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30, height: 92 })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Embudo"), /* @__PURE__ */ React.createElement(HBars, { items: funnel, total: leads.length })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por sector"), /* @__PURE__ */ React.createElement(HBars, { items: sectors, total: leads.length }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total: leads.length })));
+  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Leads recibidos \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30 })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Embudo"), /* @__PURE__ */ React.createElement(HBars, { items: funnel, total: leads.length })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por sector"), /* @__PURE__ */ React.createElement(HBars, { items: sectors, total: leads.length }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total: leads.length })));
 };
 const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) => {
   const toast = useToast();

@@ -168,33 +168,61 @@ const LeadStatusPill = ({ value, onChange }) => {
   );
 };
 
-// Barras de leads/día — minimal, sin ejes
-const LeadsSpark = ({ leads, days: nDays = 14, height = 64 }) => {
+// Gráfico de área estilo outdomode: curva suave con tangentes horizontales,
+// borde morado 3px, degradado que se desvanece y referencias punteadas.
+let _sparkGradSeq = 0;
+const LeadsSpark = ({ leads, days: nDays = 14, height = 192 }) => {
+  const gradId = useRef(null);
+  if (!gradId.current) gradId.current = "leadsGrad" + (++_sparkGradSeq);
+
   const days = Array.from({ length: nDays }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (nDays - 1 - i));
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    return { ds, v: leads.filter(x => x.date === ds).length,
-             lab: d.getDate(), isToday: i === nDays - 1 };
+    return { ds, v: leads.filter(x => x.date === ds).length, lab: d.getDate() };
   });
   const max = Math.max(...days.map(d => d.v), 1);
-  const barH = height - 18;
+
+  // Geometría (mismo layout que el original: 818×192, área de 5 a 137)
+  const W = 818, H = height, padL = 20, padR = 20, top = 5, base = H - 55;
+  const n = days.length;
+  const X = (i) => padL + i * (W - padL - padR) / (n - 1);
+  const Y = (v) => base - (v / max) * (base - top);
+
+  // Curva con puntos de control en 1/3 y 2/3 del tramo (tangentes horizontales)
+  let curve = `M${X(0).toFixed(1)},${Y(days[0].v).toFixed(1)}`;
+  for (let i = 1; i < n; i++) {
+    const x0 = X(i - 1), x1 = X(i), y0 = Y(days[i - 1].v), y1 = Y(days[i].v);
+    const g = (x1 - x0) / 3;
+    curve += `C${(x0 + g).toFixed(1)},${y0.toFixed(1)},${(x0 + 2 * g).toFixed(1)},${y1.toFixed(1)},${x1.toFixed(1)},${y1.toFixed(1)}`;
+  }
+  const area = curve + `L${X(n - 1).toFixed(1)},${base}L${X(0).toFixed(1)},${base}Z`;
+
+  // 5 líneas de referencia + ~7 etiquetas del eje X
+  const refYs = [0, 0.25, 0.5, 0.75, 1].map(t => base - t * (base - top));
+  const tickEvery = Math.max(1, Math.round((n - 1) / 6));
+  const ticks = days.map((d, i) => ({ ...d, i })).filter((d, i) => i % tickEvery === 0 || i === n - 1);
+
+  const P = "#8277db";  // primary-600 de outdomode
+
   return (
-    <div style={{ display:"flex", alignItems:"flex-end", gap: nDays > 20 ? 3 : 5, height }}>
-      {days.map((d, i) => (
-        <div key={i} data-tooltip={`${d.v} lead${d.v === 1 ? "" : "s"} · día ${d.lab}`}
-          style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:5, minWidth:0 }}>
-          <div style={{
-            width:"100%", maxWidth:22, borderRadius:5,
-            height: d.v === 0 ? 3 : Math.max(6, (d.v / max) * barH),
-            background: d.v === 0 ? "rgba(255,255,255,0.06)"
-                       : d.isToday ? "var(--accent)" : "rgba(158,154,229,0.45)",
-            transition:"height .2s",
-          }}/>
-          <span style={{ fontSize:9.5, color: d.isToday ? "var(--text)" : "var(--text-subtle)",
-            visibility: nDays > 20 && i % 2 === 1 && !d.isToday ? "hidden" : "visible" }}>{d.lab}</span>
-        </div>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width:"100%", height:"auto", display:"block" }}>
+      <defs>
+        <linearGradient id={gradId.current} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="5%" stopColor={P} stopOpacity="0.3"/>
+          <stop offset="95%" stopColor={P} stopOpacity="0"/>
+        </linearGradient>
+      </defs>
+      {refYs.map((y, i) => (
+        <line key={i} x1={padL} y1={y} x2={W - padR} y2={y}
+          stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1"/>
       ))}
-    </div>
+      <path d={area} fill={`url(#${gradId.current})`} stroke="none"/>
+      <path d={curve} fill="none" stroke={P} strokeWidth="3"/>
+      {ticks.map(t => (
+        <text key={t.i} x={X(t.i)} y={base + 18} textAnchor="middle" fontSize="12"
+          fill="var(--text-muted)" fontFamily="var(--font-sans)">{t.lab}</text>
+      ))}
+    </svg>
   );
 };
 
@@ -297,7 +325,7 @@ const CampaignAnalytics = ({ c }) => {
       {/* Leads por día — 30 días */}
       <div style={cardStyle}>
         <div style={cardTitle}>Leads recibidos · últimos 30 días</div>
-        <LeadsSpark leads={leads} days={30} height={92}/>
+        <LeadsSpark leads={leads} days={30}/>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
