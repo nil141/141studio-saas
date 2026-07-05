@@ -1,20 +1,8 @@
 (() => {
-  const TasksBoard = ({ navigate, openModal, initialDate }) => {
+  // src/agency-other.jsx
+  var TasksBoard = ({ navigate, openModal, initialDate }) => {
     const D = window.Data;
     D.useStore();
-    const initWeekOffset = (() => {
-      if (!initialDate) return 0;
-      const mondayOf = (d) => {
-        const x = new Date(d);
-        x.setHours(0, 0, 0, 0);
-        x.setDate(x.getDate() - (x.getDay() + 6) % 7);
-        return x;
-      };
-      const nowMon = mondayOf(/* @__PURE__ */ new Date());
-      const selMon = mondayOf(/* @__PURE__ */ new Date(initialDate + "T12:00:00"));
-      return Math.round((selMon - nowMon) / (7 * 864e5));
-    })();
-    const [weekOffset, setWeekOffset] = useState(initWeekOffset);
     const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : /* @__PURE__ */ new Date());
     const [taskModal, setTaskModal] = useState(null);
     const [hideCompleted, setHideCompleted] = useState(false);
@@ -22,23 +10,34 @@
     const DAY_ES = ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"];
     const MON_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const C_DOTS = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
-    const weekDays = (() => {
-      const now = /* @__PURE__ */ new Date();
-      const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      const dow = base.getDay();
-      const mon = new Date(base);
-      mon.setDate(base.getDate() - (dow === 0 ? 6 : dow - 1) + weekOffset * 7);
-      return Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(mon);
-        d.setDate(mon.getDate() + i);
+    const DAY_W = 86;
+    const stripDays = (() => {
+      const base = /* @__PURE__ */ new Date();
+      base.setHours(12, 0, 0, 0);
+      return Array.from({ length: 91 }, (_, i) => {
+        const d = new Date(base);
+        d.setDate(base.getDate() - 30 + i);
         return d;
       });
     })();
+    const stripRef = useRef(null);
     const todayMid = /* @__PURE__ */ new Date();
     todayMid.setHours(0, 0, 0, 0);
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
-    const midMonth = MON_ES[weekDays[3].getMonth()];
+    useEffect(() => {
+      const el = stripRef.current;
+      if (!el) return;
+      const idx = stripDays.findIndex((d) => {
+        const m = new Date(d);
+        m.setHours(0, 0, 0, 0);
+        return m.getTime() === selMid.getTime();
+      });
+      if (idx < 0) return;
+      const target = Math.max(0, idx * DAY_W - (el.clientWidth - DAY_W) / 2);
+      el.scrollTo({ left: target, behavior: el.dataset.init ? "smooth" : "auto" });
+      el.dataset.init = "1";
+    }, [selectedDay]);
     const allTasks = Object.values(D.TASKS).flat();
     const selDateStr = (() => {
       const d = new Date(selectedDay);
@@ -101,13 +100,6 @@
       projects: [{ project: null, tasks: generalTasks }]
     });
     const toggleDone = (pid, t) => D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
-    const weekStart = weekDays[0];
-    const weekEnd = weekDays[6];
-    const weekLabel = (() => {
-      const s = `${weekStart.getDate()} ${MON_ES[weekStart.getMonth()]}`;
-      const e = `${weekEnd.getDate()} ${MON_ES[weekEnd.getMonth()]}`;
-      return `${s} \u2014 ${e}`;
-    })();
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -122,12 +114,26 @@
           overflow: "hidden"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, DAY_ES[new Date(selectedDay).getDay()], " ", new Date(selectedDay).getDate(), " ", MON_ES[new Date(selectedDay).getMonth()], " \xB7 ", dayTasks.filter((t) => t.column !== "done").length, " pendientes")), /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
+        const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+        return f.charAt(0).toUpperCase() + f.slice(1);
+      })())), /* @__PURE__ */ React.createElement(
         ActionPill,
         {
           plusActions: [
-            { icon: "list-todo", label: "Nueva tarea", sub: "Una tarea puntual para un d\xEDa.", accent: true, onClick: () => openModal("newTask", { date: selDateStr }) },
-            { icon: "refresh-cw", label: "Nueva rutina", sub: "Una tarea que se repite en el tiempo.", onClick: () => openModal("newRoutine", { date: selDateStr }) }
+            {
+              icon: "list-todo",
+              label: "Nueva tarea",
+              sub: "Una tarea puntual para un d\xEDa.",
+              accent: true,
+              onClick: () => openModal("newTask", { date: selDateStr })
+            },
+            {
+              icon: "refresh-cw",
+              label: "Nueva rutina",
+              sub: "Una tarea que se repite en el tiempo.",
+              onClick: () => openModal("newRoutine", { date: selDateStr })
+            }
           ],
           moreActions: [
             {
@@ -138,8 +144,17 @@
           ]
         }
       )),
-      /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 18 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o - 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 16 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)", minWidth: 80, textAlign: "center" } }, MON_ES[weekDays[3].getMonth()], " ", weekDays[3].getFullYear()), /* @__PURE__ */ React.createElement("button", { onClick: () => setWeekOffset((o) => o + 1), style: { background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: "4px 6px", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16 }))), (() => {
-        return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "stretch", padding: "4px 0" } }, weekDays.map((d, i) => {
+      /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
+        return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", style: {
+          display: "flex",
+          alignItems: "stretch",
+          padding: "4px 0",
+          overflowX: "auto",
+          scrollbarWidth: "none",
+          msOverflowStyle: "none",
+          WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
+          maskImage: "linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)"
+        } }, stripDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
           const isSel = dMid.getTime() === selMid.getTime();
@@ -157,7 +172,8 @@
           const trackCol = isSel ? "rgba(158,154,229,0.18)" : isToday2 ? "rgba(158,154,229,0.10)" : "rgba(255,255,255,0.06)";
           const ringCol = isSel ? "var(--accent)" : isToday2 ? "rgba(158,154,229,0.65)" : "rgba(255,255,255,0.35)";
           return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
-            flex: 1,
+            width: DAY_W,
+            flexShrink: 0,
             cursor: "pointer",
             border: "none",
             background: "transparent",
@@ -332,7 +348,7 @@
       )
     );
   };
-  const ProjectTaskColumn = ({ project: p, navigate, toast }) => {
+  var ProjectTaskColumn = ({ project: p, navigate, toast }) => {
     const D = window.Data;
     const [draft, setDraft] = useState("");
     const [adding, setAdding] = useState(false);
@@ -438,7 +454,7 @@
       ")"
     ), doneOpen && done.map((t) => /* @__PURE__ */ React.createElement(TaskRow, { key: t.id, task: t, onToggle: () => toggleDone(t), onDelete: () => remove(t), onUpdate: (ch) => update(t, ch), COL_COLORS, COL_LABELS, isDone: true, projectId: p.id })))));
   };
-  const TaskDotsMenu = ({ task: t, onDelete, onUpdate }) => {
+  var TaskDotsMenu = ({ task: t, onDelete, onUpdate }) => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState(null);
     const [dateVal, setDateVal] = useState(t.deadline || "");
@@ -563,7 +579,7 @@
       flexShrink: 0
     } }, "\xB7\xB7\xB7"), panel);
   };
-  const TaskRow = ({ task: t, onToggle, onDelete, onUpdate, COL_COLORS, COL_LABELS, isDone, projectId }) => {
+  var TaskRow = ({ task: t, onToggle, onDelete, onUpdate, COL_COLORS, COL_LABELS, isDone, projectId }) => {
     const [hover, setHover] = useState(false);
     return /* @__PURE__ */ React.createElement(
       "div",
@@ -618,7 +634,7 @@
       hover && /* @__PURE__ */ React.createElement(TaskDotsMenu, { task: t, onDelete, onUpdate, projectId })
     );
   };
-  const AgencyProjects = ({ navigate, openModal }) => {
+  var AgencyProjects = ({ navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const confirm = useConfirm();
@@ -663,10 +679,10 @@
       ), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "row between" }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 500 } }, p.name)), /* @__PURE__ */ React.createElement("span", { className: "chip", style: { marginRight: 32 } }, phase.label)), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 6 } }, p.clientName, " \xB7 ", p.service), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 8 } }, p.description), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "progress grow" }, /* @__PURE__ */ React.createElement("i", { style: { width: liveProgress + "%" } })), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, liveProgress, "%")), /* @__PURE__ */ React.createElement("div", { className: "row between", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "muted xsmall" }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 11 }), " ", p.deadline), /* @__PURE__ */ React.createElement("div", { className: "xsmall", style: { color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--text-muted)" } }, "\u2192 ", p.nextMilestone))));
     })));
   };
-  const FIN_KEY = "141_finance_v1";
-  const FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
-  const _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const _finLoad = () => {
+  var FIN_KEY = "141_finance_v1";
+  var FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
+  var _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var _finLoad = () => {
     try {
       const d = JSON.parse(localStorage.getItem(FIN_KEY));
       return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
@@ -674,30 +690,30 @@
       return { subs: [], expenses: [] };
     }
   };
-  const _finSave = (d) => {
+  var _finSave = (d) => {
     try {
       localStorage.setItem(FIN_KEY, JSON.stringify(d));
     } catch (e) {
     }
   };
-  const _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
-  const _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
-  const _sameMonth = (iso) => {
+  var _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
+  var _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
+  var _sameMonth = (iso) => {
     if (!iso) return false;
     const d = new Date(iso);
     const n = /* @__PURE__ */ new Date();
     return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
   };
-  const _todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  const _finDate = (iso) => {
+  var _todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  var _finDate = (iso) => {
     if (!iso) return "\u2014";
     const d = new Date(iso);
     const M = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     return isNaN(d) ? "\u2014" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
   };
-  const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
-  const FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
-  const _finSmooth = (pts) => {
+  var FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
+  var FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
+  var _finSmooth = (pts) => {
     if (pts.length < 2) return "";
     let d = `M${pts[0][0]},${pts[0][1]}`;
     for (let i = 0; i < pts.length - 1; i++) {
@@ -710,7 +726,7 @@
     }
     return d;
   };
-  const FinTrendChart = ({ trend }) => {
+  var FinTrendChart = ({ trend }) => {
     const [hov, setHov] = useState(null);
     const W = 600, H = 150, PX = 10, PY = 14;
     const maxV = Math.max(...trend.map((t) => t.rec), ...trend.map((t) => t.puntual), 1) * 1.15;
@@ -805,7 +821,7 @@
       whiteSpace: "nowrap"
     } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].puntual)))));
   };
-  const AgencyBilling = () => {
+  var AgencyBilling = () => {
     const toast = useToast();
     const [data, setData] = useState(_finLoad);
     const [tab, setTab] = useState("subs");
@@ -1037,14 +1053,14 @@
       }
     ));
   };
-  const SimplePage = ({ title, sub, icon }) => /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, title), sub && /* @__PURE__ */ React.createElement("div", { className: "sub" }, sub))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon, title: "Pr\xF3ximamente", sub: "Esta secci\xF3n est\xE1 en construcci\xF3n" }))));
-  const SESSION_OPTS = [
+  var SimplePage = ({ title, sub, icon }) => /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, title), sub && /* @__PURE__ */ React.createElement("div", { className: "sub" }, sub))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon, title: "Pr\xF3ximamente", sub: "Esta secci\xF3n est\xE1 en construcci\xF3n" }))));
+  var SESSION_OPTS = [
     { days: 0, label: "Solo esta sesi\xF3n", sub: "Se cerrar\xE1 al cerrar el navegador" },
     { days: 1, label: "1 d\xEDa", sub: "Hasta ma\xF1ana a esta hora" },
     { days: 7, label: "7 d\xEDas", sub: "Una semana sin volver a entrar" },
     { days: 30, label: "30 d\xEDas", sub: "Comodidad m\xE1xima" }
   ];
-  const SessionCard = () => {
+  var SessionCard = () => {
     var _a;
     const toast = useToast();
     const info = ((_a = window._sessionUtils) == null ? void 0 : _a.info()) || { days: 0, exp: null };
@@ -1100,7 +1116,7 @@
       /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: days === opt.days ? "var(--accent)" : "var(--text)" } }, opt.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, opt.sub))
     ))), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Aplicar")));
   };
-  const SettingsPage = () => {
+  var SettingsPage = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -1120,7 +1136,7 @@
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Informaci\xF3n de la agencia y preferencias generales")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar cambios")), /* @__PURE__ */ React.createElement("div", { className: "rg-settings" }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Informaci\xF3n de la agencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Nombre de la agencia"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("name"), placeholder: "141'STUDIO" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tagline"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("tagline"), placeholder: "Agencia digital" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Email de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "email", ...field("email"), placeholder: "hello@tuagencia.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tel\xE9fono / WhatsApp"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("phone"), placeholder: "+34 600 000 000" })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Web"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("website"), placeholder: "https://tuagencia.com" })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Credenciales de acceso")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Las credenciales de acceso se gestionan directamente en el c\xF3digo fuente por seguridad."), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" } }, "Email: nil@141agency.com"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Apariencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "El tema claro/oscuro se controla con el bot\xF3n en la barra superior derecha."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "var(--accent-soft)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12 }), " Pr\xF3ximamente: colores de acento personalizables, logo de la agencia y dominio del portal cliente."))), /* @__PURE__ */ React.createElement(SessionCard, null)));
   };
-  const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate }) => {
+  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate }) => {
     const [progress, setProgress] = useState(0);
     const [dotsOpen, setDotsOpen] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -1485,8 +1501,8 @@
       document.body
     );
   };
-  const INC_KEY = "141_income_v1";
-  const _incLoad = () => {
+  var INC_KEY = "141_income_v1";
+  var _incLoad = () => {
     try {
       const d = JSON.parse(localStorage.getItem(INC_KEY));
       return d && typeof d === "object" ? { recs: d.recs || [], incomes: d.incomes || [] } : { recs: [], incomes: [] };
@@ -1494,13 +1510,13 @@
       return { recs: [], incomes: [] };
     }
   };
-  const _incSave = (d) => {
+  var _incSave = (d) => {
     try {
       localStorage.setItem(INC_KEY, JSON.stringify(d));
     } catch (e) {
     }
   };
-  const IncomePage = () => {
+  var IncomePage = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();

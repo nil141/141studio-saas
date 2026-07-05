@@ -160,16 +160,6 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const D = window.Data;
   D.useStore();
 
-  // Si venimos de la Agenda con un día concreto, aterrizamos en esa semana/día
-  const initWeekOffset = (() => {
-    if (!initialDate) return 0;
-    const mondayOf = d => { const x = new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate() - ((x.getDay()+6)%7)); return x; };
-    const nowMon = mondayOf(new Date());
-    const selMon = mondayOf(new Date(initialDate + "T12:00:00"));
-    return Math.round((selMon - nowMon) / (7 * 86400000));
-  })();
-
-  const [weekOffset, setWeekOffset] = useState(initWeekOffset);
   const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : new Date());
 
   const [taskModal,      setTaskModal]      = useState(null); // { task, pid }
@@ -180,21 +170,31 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const MON_ES  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const C_DOTS  = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6","#22d3ee","#f59e0b"];
 
-  // Week days
-  const weekDays = (() => {
-    const now = new Date();
-    const base = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const dow = base.getDay();
-    const mon = new Date(base);
-    mon.setDate(base.getDate() - (dow === 0 ? 6 : dow - 1) + weekOffset * 7);
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(mon); d.setDate(mon.getDate() + i); return d;
+  // Tira de días con scroll: 30 días atrás → 60 adelante (respecto a hoy)
+  const DAY_W = 86;
+  const stripDays = (() => {
+    const base = new Date(); base.setHours(12, 0, 0, 0);
+    return Array.from({ length: 91 }, (_, i) => {
+      const d = new Date(base); d.setDate(base.getDate() - 30 + i); return d;
     });
   })();
+  const stripRef = useRef(null);
 
   const todayMid = new Date(); todayMid.setHours(0,0,0,0);
   const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
-  const midMonth = MON_ES[weekDays[3].getMonth()];
+
+  // Centrar el día seleccionado en la tira (sin animación al montar, suave después)
+  useEffect(() => {
+    const el = stripRef.current; if (!el) return;
+    const idx = stripDays.findIndex(d => {
+      const m = new Date(d); m.setHours(0,0,0,0);
+      return m.getTime() === selMid.getTime();
+    });
+    if (idx < 0) return;
+    const target = Math.max(0, idx * DAY_W - (el.clientWidth - DAY_W) / 2);
+    el.scrollTo({ left: target, behavior: el.dataset.init ? "smooth" : "auto" });
+    el.dataset.init = "1";
+  }, [selectedDay]);
 
   const allTasks = Object.values(D.TASKS).flat();
 
@@ -278,15 +278,6 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const toggleDone = (pid, t) =>
     D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
 
-  // Label for the week range shown in left panel
-  const weekStart = weekDays[0];
-  const weekEnd   = weekDays[6];
-  const weekLabel = (() => {
-    const s = `${weekStart.getDate()} ${MON_ES[weekStart.getMonth()]}`;
-    const e = `${weekEnd.getDate()} ${MON_ES[weekEnd.getMonth()]}`;
-    return `${s} — ${e}`;
-  })();
-
   return (
     <div
       onClick={() => setOptionsOpen(false)}
@@ -304,7 +295,10 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         <div>
           <h1>Tareas</h1>
           <div className="sub">
-            {DAY_ES[new Date(selectedDay).getDay()]} {new Date(selectedDay).getDate()} {MON_ES[new Date(selectedDay).getMonth()]} · {dayTasks.filter(t => t.column !== "done").length} pendientes
+            {(() => {
+              const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
+              return f.charAt(0).toUpperCase() + f.slice(1);
+            })()}
           </div>
         </div>
         <ActionPill
@@ -322,26 +316,20 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         />
       </div>
 
-      {/* Tira horizontal: navegación de mes + días + progreso */}
+      {/* Tira horizontal de días (scroll) + progreso */}
       <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28, flexShrink:0 }}>
-        {/* Month nav — grupo centrado */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:16, marginBottom:18 }}>
-          <button onClick={() => setWeekOffset(o => o-1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-            <Icon name="chevron-left" size={16}/>
-          </button>
-          <span style={{ fontSize:15, fontWeight:500, letterSpacing:"-0.3px", color:"var(--text)", minWidth:80, textAlign:"center" }}>
-            {MON_ES[weekDays[3].getMonth()]} {weekDays[3].getFullYear()}
-          </span>
-          <button onClick={() => setWeekOffset(o => o+1)} style={{ background:"none", border:"none", cursor:"pointer", color:"var(--text-muted)", padding:"4px 6px", display:"flex" }}>
-            <Icon name="chevron-right" size={16}/>
-          </button>
-        </div>
+        <style>{`.day-scroll::-webkit-scrollbar{display:none}`}</style>
 
-        {/* Day strip — Opción 6: activity rings estilo Apple Fitness */}
+        {/* Day strip — activity rings con scroll horizontal */}
         {(() => {
           return (
-            <div style={{ display:"flex", alignItems:"stretch", padding:"4px 0" }}>
-              {weekDays.map((d, i) => {
+            <div ref={stripRef} className="day-scroll" style={{
+              display:"flex", alignItems:"stretch", padding:"4px 0",
+              overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
+              WebkitMaskImage:"linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
+              maskImage:"linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
+            }}>
+              {stripDays.map((d, i) => {
                 const dMid = new Date(d); dMid.setHours(0,0,0,0);
                 const isSel = dMid.getTime() === selMid.getTime();
                 const isToday = dMid.getTime() === todayMid.getTime();
@@ -367,7 +355,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
                 return (
                   <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                    flex:1, cursor:"pointer", border:"none", background:"transparent",
+                    width:DAY_W, flexShrink:0, cursor:"pointer", border:"none", background:"transparent",
                     display:"flex", flexDirection:"column", alignItems:"center",
                     gap:8, padding:"6px 0",
                     transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
