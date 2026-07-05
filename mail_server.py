@@ -481,33 +481,18 @@ def _campaigns_save(data):
 def _today():
     return time.strftime("%Y-%m-%d")
 
-def api_campaigns_import(body):
-    """Ingesta desde Cowork. Crea la campaña si no existe y añade los leads
-    (deduplicados por email dentro de la campaña)."""
-    name = (body.get("campaign") or "").strip() or "Outreach Cowork"
-    leads_in = body.get("leads") or []
-    if not isinstance(leads_in, list) or not leads_in:
-        return {"ok": False, "error": "Falta la lista 'leads'"}
-    if len(leads_in) > 100:
-        return {"ok": False, "error": "Máximo 100 leads por importación"}
+def _lead_keys(l):
+    """Claves de dedupe: email y, para leads sin email, nombre+empresa."""
+    keys = []
+    em = (l.get("email") or "").strip().lower()
+    if em: keys.append("e:" + em)
+    nc = ((l.get("name") or "").strip().lower(),
+          (l.get("company") or "").strip().lower())
+    if nc[0] or nc[1]: keys.append("n:" + nc[0] + "|" + nc[1])
+    return keys
 
-    data = _campaigns_load()
-    camp = next((c for c in data["campaigns"]
-                 if c["name"].strip().lower() == name.lower()), None)
-    if camp is None:
-        camp = {"id": secrets.token_hex(8), "name": name,
-                "createdAt": _today(), "leads": []}
-        data["campaigns"].append(camp)
-
-    # Dedupe por email y, para leads sin email, por nombre+empresa
-    def _lead_keys(l):
-        keys = []
-        em = (l.get("email") or "").strip().lower()
-        if em: keys.append("e:" + em)
-        nc = ((l.get("name") or "").strip().lower(),
-              (l.get("company") or "").strip().lower())
-        if nc[0] or nc[1]: keys.append("n:" + nc[0] + "|" + nc[1])
-        return keys
+def _add_leads(camp, leads_in, source="api"):
+    """Añade leads a una campaña con dedupe. Devuelve (added, skipped)."""
     existing = set()
     for l in camp["leads"]:
         existing.update(_lead_keys(l))
@@ -538,23 +523,65 @@ def api_campaigns_import(body):
             "subject": (l.get("subject") or "")[:300],
             "draft":   (l.get("draft") or "")[:8000],
             "status":  "new",
+            "source":  source,
         })
         added += 1
+    return added, skipped
+
+def api_campaigns_import(body):
+    """Ingesta desde Cowork (clave API). Crea la campaña si no existe."""
+    name = (body.get("campaign") or "").strip() or "Outreach Cowork"
+    leads_in = body.get("leads") or []
+    if not isinstance(leads_in, list) or not leads_in:
+        return {"ok": False, "error": "Falta la lista 'leads'"}
+    if len(leads_in) > 100:
+        return {"ok": False, "error": "Máximo 100 leads por importación"}
+
+    data = _campaigns_load()
+    camp = next((c for c in data["campaigns"]
+                 if c["name"].strip().lower() == name.lower()), None)
+    if camp is None:
+        camp = {"id": secrets.token_hex(8), "name": name, "ctype": "cowork",
+                "createdAt": _today(), "leads": []}
+        data["campaigns"].append(camp)
+
+    added, skipped = _add_leads(camp, leads_in, source="cowork")
     _campaigns_save(data)
     return {"ok": True, "campaign": camp["name"], "added": added,
             "skipped": skipped, "total": len(camp["leads"])}
 
+def api_campaigns_import_leads(body):
+    """Importación desde el propio SaaS (CSV o manual), con el JWT del usuario."""
+    cid = body.get("campaignId")
+    leads_in = body.get("leads") or []
+    if not isinstance(leads_in, list) or not leads_in:
+        return {"ok": False, "error": "Falta la lista 'leads'"}
+    if len(leads_in) > 500:
+        return {"ok": False, "error": "Máximo 500 leads por importación"}
+    data = _campaigns_load()
+    camp = next((c for c in data["campaigns"] if c["id"] == cid), None)
+    if camp is None:
+        return {"ok": False, "error": "Campaña no encontrada"}
+    added, skipped = _add_leads(camp, leads_in, source=body.get("source") or "csv")
+    _campaigns_save(data)
+    return {"ok": True, "added": added, "skipped": skipped, "total": len(camp["leads"])}
+
 def api_campaigns_data(_body):
     return {"ok": True, **_campaigns_load()}
+
+CAMPAIGN_TYPES = {"email", "meta", "google", "cowork", "otro"}
 
 def api_campaigns_create(body):
     name = (body.get("name") or "").strip()
     if not name:
         return {"ok": False, "error": "Falta el nombre"}
+    ctype = body.get("ctype") or "email"
+    if ctype not in CAMPAIGN_TYPES:
+        ctype = "otro"
     data = _campaigns_load()
     if any(c["name"].strip().lower() == name.lower() for c in data["campaigns"]):
         return {"ok": False, "error": "Ya existe una campaña con ese nombre"}
-    camp = {"id": secrets.token_hex(8), "name": name[:120],
+    camp = {"id": secrets.token_hex(8), "name": name[:120], "ctype": ctype,
             "createdAt": _today(), "leads": []}
     data["campaigns"].append(camp)
     _campaigns_save(data)
@@ -625,6 +652,7 @@ STRIPE_HANDLERS = {
 CAMPAIGN_HANDLERS = {
     "data":            api_campaigns_data,
     "create":          api_campaigns_create,
+    "import_leads":    api_campaigns_import_leads,
     "update_lead":     api_campaigns_update_lead,
     "delete_lead":     api_campaigns_delete_lead,
     "delete_campaign": api_campaigns_delete_campaign,
