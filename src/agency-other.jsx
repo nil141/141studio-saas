@@ -347,8 +347,13 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                 const isToday = dMid.getTime() === todayMid.getTime();
                 const dStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
                 const tasksToday = allTasks.filter(t => t.deadline === dStr);
-                const doneToday  = tasksToday.filter(t => t.column === "done").length;
-                const totalToday = tasksToday.length;
+                let doneToday  = tasksToday.filter(t => t.column === "done").length;
+                let totalToday = tasksToday.length;
+                // Los pasos de las rutinas de ese día también cuentan en el aro
+                (D.routinesForDay ? D.routinesForDay(dStr) : []).forEach(r => (r.items || []).forEach(it => {
+                  totalToday += 1;
+                  if (D.routineItemDone(r.id, dStr, it.id)) doneToday += 1;
+                }));
                 const loadPct    = totalToday ? Math.min(100, Math.round((doneToday/totalToday)*100)) : 0;
                 const hasLoad    = totalToday > 0;
 
