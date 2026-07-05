@@ -122,10 +122,34 @@
           overflow: "hidden"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
+      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", null, (() => {
         const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
         return f.charAt(0).toUpperCase() + f.slice(1);
-      })())), /* @__PURE__ */ React.createElement(
+      })()), !isToday && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: () => setSelectedDay(/* @__PURE__ */ new Date()),
+          style: {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "3px 11px",
+            borderRadius: 99,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            background: "rgba(158,154,229,0.12)",
+            border: "0.5px solid rgba(158,154,229,0.35)",
+            color: "var(--accent)",
+            fontSize: 11.5,
+            letterSpacing: "-0.2px",
+            transition: "background .12s"
+          },
+          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.2)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.12)"
+        },
+        /* @__PURE__ */ React.createElement(Icon, { name: "rotate-ccw", size: 11 }),
+        " Hoy"
+      ))), /* @__PURE__ */ React.createElement(
         ActionPill,
         {
           plusActions: [
@@ -261,14 +285,7 @@
             letterSpacing: "-0.6px",
             lineHeight: 1,
             transition: "color .2s"
-          } }, d.getDate())), /* @__PURE__ */ React.createElement("span", { style: {
-            fontSize: 10,
-            fontWeight: 500,
-            color: isSel ? "var(--accent)" : "var(--text-subtle)",
-            letterSpacing: "-0.1px",
-            minHeight: 12,
-            transition: "color .2s"
-          } }, hasLoad ? doneToday === totalToday ? `${totalToday} hechas` : `${doneToday}/${totalToday}` : ""));
+          } }, d.getDate())));
         }));
       })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginTop: 18 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0.05em", textTransform: "uppercase", fontWeight: 500, flexShrink: 0 } }, "Daily Progress"), /* @__PURE__ */ React.createElement("div", { style: {
         flex: 1,
