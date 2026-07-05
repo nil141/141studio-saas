@@ -122,34 +122,21 @@
           overflow: "hidden"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Tareas"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", null, (() => {
-        const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-        return f.charAt(0).toUpperCase() + f.slice(1);
-      })()), !isToday && /* @__PURE__ */ React.createElement(
-        "button",
+      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+        "div",
         {
-          onClick: () => setSelectedDay(/* @__PURE__ */ new Date()),
-          style: {
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 5,
-            padding: "3px 11px",
-            borderRadius: 99,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            background: "rgba(158,154,229,0.12)",
-            border: "0.5px solid rgba(158,154,229,0.35)",
-            color: "var(--accent)",
-            fontSize: 11.5,
-            letterSpacing: "-0.2px",
-            transition: "background .12s"
+          onClick: () => {
+            if (!isToday) setSelectedDay(/* @__PURE__ */ new Date());
           },
-          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.2)",
-          onMouseLeave: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.12)"
+          "data-tooltip": !isToday ? "Volver a hoy" : void 0,
+          style: { cursor: isToday ? "default" : "pointer" }
         },
-        /* @__PURE__ */ React.createElement(Icon, { name: "rotate-ccw", size: 11 }),
-        " Hoy"
-      ))), /* @__PURE__ */ React.createElement(
+        /* @__PURE__ */ React.createElement("h1", null, "Tareas"),
+        /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
+          const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+          return f.charAt(0).toUpperCase() + f.slice(1);
+        })())
+      ), /* @__PURE__ */ React.createElement(
         ActionPill,
         {
           plusActions: [

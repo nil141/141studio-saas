@@ -305,26 +305,15 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
       {/* Header — title + ActionPill (igual que el resto de páginas) */}
       <div className="page-head" style={{ flexShrink:0 }}>
-        <div>
+        <div onClick={() => { if (!isToday) setSelectedDay(new Date()); }}
+          data-tooltip={!isToday ? "Volver a hoy" : undefined}
+          style={{ cursor: isToday ? "default" : "pointer" }}>
           <h1>Tareas</h1>
-          <div className="sub" style={{ display:"flex", alignItems:"center", gap:10 }}>
-            <span>{(() => {
+          <div className="sub">
+            {(() => {
               const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
               return f.charAt(0).toUpperCase() + f.slice(1);
-            })()}</span>
-            {!isToday && (
-              <button onClick={() => setSelectedDay(new Date())} style={{
-                display:"inline-flex", alignItems:"center", gap:5,
-                padding:"3px 11px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
-                background:"rgba(158,154,229,0.12)", border:"0.5px solid rgba(158,154,229,0.35)",
-                color:"var(--accent)", fontSize:11.5, letterSpacing:"-0.2px",
-                transition:"background .12s",
-              }}
-                onMouseEnter={e => e.currentTarget.style.background="rgba(158,154,229,0.2)"}
-                onMouseLeave={e => e.currentTarget.style.background="rgba(158,154,229,0.12)"}>
-                <Icon name="rotate-ccw" size={11}/> Hoy
-              </button>
-            )}
+            })()}
           </div>
         </div>
         <ActionPill
