@@ -267,8 +267,8 @@
             position: "relative",
             zIndex: 1,
             fontSize: 18,
-            fontWeight: isSel ? 500 : 400,
-            color: isSel ? "#f0eeff" : isToday2 ? "var(--text)" : "var(--text-muted)",
+            fontWeight: isToday2 || isSel ? 500 : 400,
+            color: isToday2 ? "var(--accent)" : isSel ? "#f0eeff" : "var(--text-muted)",
             letterSpacing: "-0.6px",
             lineHeight: 1,
             transition: "color .2s"

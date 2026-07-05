@@ -432,8 +432,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                       <span style={{
                         position:"relative", zIndex:1,
                         fontSize:18,
-                        fontWeight: isSel ? 500 : 400,
-                        color: isSel ? "#f0eeff" : isToday ? "var(--text)" : "var(--text-muted)",
+                        fontWeight: isToday || isSel ? 500 : 400,
+                        color: isToday ? "var(--accent)" : isSel ? "#f0eeff" : "var(--text-muted)",
                         letterSpacing:"-0.6px",
                         lineHeight:1,
                         transition:"color .2s",
