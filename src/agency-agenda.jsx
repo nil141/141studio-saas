@@ -1,5 +1,4 @@
 // Agency Agenda — calendar view with tasks, project deadlines + custom events
-const { useState, useEffect, useRef, useMemo } = React;
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 const DAYS_ES  = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];

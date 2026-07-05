@@ -1,4 +1,3 @@
-const { useState, useEffect, useRef, useMemo } = React;
 const DAYS_ES = ["Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b", "Dom"];
 const MONTHS_ES = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 const toYMD = (d) => {
