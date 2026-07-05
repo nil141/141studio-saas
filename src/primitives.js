@@ -161,20 +161,20 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     padding: "20px 12px 16px",
     overflow: "hidden",
     flexShrink: 0
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "4px 10px 24px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: 40,
+    height: 40,
+    borderRadius: 16,
     flexShrink: 0,
-    background: "rgba(158,154,229,0.18)",
-    color: "#c8c5f2",
+    background: "rgba(255,255,255,0.05)",
+    border: "1px solid rgba(255,255,255,0.05)",
+    color: "var(--accent)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 14,
-    fontWeight: 500,
-    letterSpacing: "-0.5px"
-  } }, me.initials), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, letterSpacing: "-0.96px", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", letterSpacing: "-0.5px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none", position: "relative" } }, pill && /* @__PURE__ */ React.createElement("div", { style: {
+    fontSize: 18,
+    fontWeight: 400
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflowY: "auto", scrollbarWidth: "none", msOverflowStyle: "none", position: "relative" } }, pill && /* @__PURE__ */ React.createElement("div", { style: {
     position: "absolute",
     left: 0,
     right: 0,

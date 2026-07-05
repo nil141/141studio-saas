@@ -172,21 +172,22 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       overflow: "hidden",
       flexShrink: 0,
     }}>
-      {/* User profile */}
-      <div style={{display:"flex", alignItems:"center", gap:10, padding:"4px 10px 24px 10px"}}>
+      {/* User profile — estilo outdomode: avatar cuadrado redondeado + inicial morada */}
+      <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
         <div style={{
-          width: 32, height: 32, borderRadius: "50%", flexShrink: 0,
-          background: "rgba(158,154,229,0.18)", color: "#c8c5f2",
+          width: 40, height: 40, borderRadius: 16, flexShrink: 0,
+          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)",
+          color: "var(--accent)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 14, fontWeight: 500, letterSpacing: "-0.5px",
+          fontSize: 18, fontWeight: 400,
         }}>
-          {me.initials}
+          {(me.initials || "").charAt(0)}
         </div>
         <div style={{minWidth:0}}>
-          <div style={{fontSize:15, fontWeight:400, letterSpacing:"-0.96px", color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+          <div style={{fontSize:15, fontWeight:400, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {me.name}
           </div>
-          <div style={{fontSize:12, color:"var(--text-subtle)", letterSpacing:"-0.5px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+          <div style={{fontSize:12, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
           </div>
         </div>
