@@ -1314,18 +1314,24 @@
             onClick: (e) => e.stopPropagation(),
             style: {
               width: "100%",
-              maxWidth: 540,
+              maxWidth: 560,
               background: "rgba(255,255,255,0.05)",
+              // color-mix white 5%
               backdropFilter: "blur(40px)",
               WebkitBackdropFilter: "blur(40px)",
+              // blur-2xl
               border: "1px solid rgba(255,255,255,0.1)",
-              borderRadius: 32,
+              // white 10%
+              borderRadius: 48,
+              // radius-5xl (3rem)
               overflow: "hidden",
-              boxShadow: "0 24px 80px -20px rgba(0,0,0,0.7)",
+              boxShadow: "0 25px 50px -12px rgba(0,0,0,0.45)",
+              // shadow-2xl
               animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
               display: "flex",
               flexDirection: "column",
-              userSelect: "none"
+              userSelect: "none",
+              letterSpacing: "-0.06em"
             }
           },
           /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),

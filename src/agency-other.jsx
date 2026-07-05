@@ -2174,16 +2174,17 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
         className="progress-modal-sheet"
         onClick={e => e.stopPropagation()}
         style={{
-          width:"100%", maxWidth:540,
-          background:"rgba(255,255,255,0.05)",
-          backdropFilter:"blur(40px)", WebkitBackdropFilter:"blur(40px)",
-          border:"1px solid rgba(255,255,255,0.1)",
-          borderRadius:32,
+          width:"100%", maxWidth:560,
+          background:"rgba(255,255,255,0.05)",             // color-mix white 5%
+          backdropFilter:"blur(40px)", WebkitBackdropFilter:"blur(40px)",  // blur-2xl
+          border:"1px solid rgba(255,255,255,0.1)",        // white 10%
+          borderRadius:48,                                  // radius-5xl (3rem)
           overflow:"hidden",
-          boxShadow:"0 24px 80px -20px rgba(0,0,0,0.7)",
+          boxShadow:"0 25px 50px -12px rgba(0,0,0,0.45)",   // shadow-2xl
           animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           userSelect:"none",
+          letterSpacing:"-0.06em",
         }}
       >
         {/* Drag handle */}
