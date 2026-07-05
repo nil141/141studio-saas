@@ -152,7 +152,8 @@
           padding: "4px 0",
           overflowX: "auto",
           scrollbarWidth: "none",
-          msOverflowStyle: "none"
+          msOverflowStyle: "none",
+          scrollSnapType: "x mandatory"
         } }, stripDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
@@ -180,6 +181,9 @@
             alignItems: "center",
             gap: 8,
             padding: "6px 0",
+            scrollSnapAlign: d.getDay() === 1 ? "start" : "none",
+            // encaja por lunes
+            scrollSnapStop: d.getDay() === 1 ? "always" : "normal",
             transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
             transform: isSel ? "scale(1.04)" : "scale(1)"
           } }, /* @__PURE__ */ React.createElement("span", { style: {
