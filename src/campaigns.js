@@ -1,12 +1,4 @@
-const _loadCampaigns = () => {
-  try {
-    return JSON.parse(localStorage.getItem("141_campaigns") || "null") || [];
-  } catch (e) {
-    return [];
-  }
-};
-const _saveCampaigns = (data) => localStorage.setItem("141_campaigns", JSON.stringify(data));
-const useCoworkCampaigns = () => {
+const useCampaigns = () => {
   const [camps, setCamps] = useState(null);
   const reload = async () => {
     try {
@@ -23,436 +15,424 @@ const useCoworkCampaigns = () => {
   return [camps, reload];
 };
 const LEAD_STATUS = {
-  new: { label: "Nuevo", chip: "neutral" },
-  contacted: { label: "Contactado", chip: "blue" },
-  replied: { label: "Respondi\xF3", chip: "green" },
-  won: { label: "Ganado", chip: "green" },
-  discarded: { label: "Descartado", chip: "red" }
+  new: { label: "Nuevo", color: "var(--text-muted)", dot: "rgba(255,255,255,0.35)" },
+  contacted: { label: "Contactado", color: "#60a5fa", dot: "#60a5fa" },
+  replied: { label: "Respondi\xF3", color: "var(--green)", dot: "var(--green)" },
+  won: { label: "Ganado", color: "var(--accent)", dot: "var(--accent)" },
+  discarded: { label: "Descartado", color: "var(--text-subtle)", dot: "rgba(255,255,255,0.18)" }
 };
-const _todayStr2 = () => {
+const STATUS_ORDER = ["new", "contacted", "replied", "won", "discarded"];
+const _cToday = () => {
   const n = /* @__PURE__ */ new Date();
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 };
-const MiniBarChart = ({ data, color = "var(--accent)" }) => {
-  const max = Math.max(...data.map((d) => d.v), 1);
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 3, height: 60 } }, data.map((d, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 3 } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: "100%",
-    borderRadius: 3,
-    height: Math.max(4, d.v / max * 50),
-    background: color,
-    opacity: 0.85
-  } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: "var(--text-subtle)" } }, d.l))));
+const _cFmtDay = (ds) => {
+  if (!ds) return "\u2014";
+  if (ds === _cToday()) return "Hoy";
+  return (/* @__PURE__ */ new Date(ds + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 };
-const MiniLineChart = ({ data, color = "var(--accent)", height = 70 }) => {
-  const vals = data.map((d2) => d2.v);
-  const max = Math.max(...vals, 1);
-  const min = Math.min(...vals, 0);
-  const range = max - min || 1;
-  const W = 300, H = height;
-  const pts = vals.map((v, i) => [
-    i / (vals.length - 1) * W,
-    H - (v - min) / range * (H - 10) - 5
-  ]);
-  const d = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ");
-  const fill = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(" ") + ` L${W},${H} L0,${H} Z`;
-  return /* @__PURE__ */ React.createElement("svg", { viewBox: `0 0 ${W} ${H}`, style: { width: "100%", height }, preserveAspectRatio: "none" }, /* @__PURE__ */ React.createElement("path", { d: fill, fill: color, fillOpacity: 0.12 }), /* @__PURE__ */ React.createElement("path", { d, fill: "none", stroke: color, strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }), pts.map((p, i) => /* @__PURE__ */ React.createElement("circle", { key: i, cx: p[0], cy: p[1], r: 3, fill: color })));
+const CampMiniStat = ({ label, value, sub, color }) => /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 6 } }, label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 600, fontFamily: "var(--font-display)", letterSpacing: "-0.5px", color: color || "var(--text)" } }, value), sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, sub));
+const LeadStatusPill = ({ value, onChange }) => {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+  const st = LEAD_STATUS[value] || LEAD_STATUS.new;
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setOpen((o) => !o),
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "5px 12px",
+        borderRadius: 99,
+        cursor: "pointer",
+        background: "rgba(255,255,255,0.04)",
+        border: "0.5px solid var(--border)",
+        color: st.color,
+        fontSize: 12,
+        letterSpacing: "-0.2px",
+        fontFamily: "inherit",
+        transition: "background .1s"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 } }),
+    st.label,
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 11, style: { opacity: 0.5 } })
+  ), open && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "absolute",
+    right: 0,
+    top: "calc(100% + 6px)",
+    zIndex: 60,
+    minWidth: 160,
+    background: "#1a1a1c",
+    border: "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 12,
+    padding: 5,
+    boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
+  } }, STATUS_ORDER.map((k) => {
+    const s = LEAD_STATUS[k];
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: k,
+        onClick: () => {
+          setOpen(false);
+          onChange(k);
+        },
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 9,
+          width: "100%",
+          padding: "8px 10px",
+          borderRadius: 8,
+          cursor: "pointer",
+          textAlign: "left",
+          background: k === value ? "rgba(255,255,255,0.06)" : "transparent",
+          border: 0,
+          color: s.color,
+          fontSize: 12.5,
+          fontFamily: "inherit"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+        onMouseLeave: (e) => e.currentTarget.style.background = k === value ? "rgba(255,255,255,0.06)" : "transparent"
+      },
+      /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: s.dot } }),
+      s.label
+    );
+  })));
 };
-const StatCard = ({ label, value, sub, color }) => /* @__PURE__ */ React.createElement("div", { style: {
-  padding: "16px 18px",
-  background: "var(--bg-elev)",
-  border: "0.5px solid var(--border)",
-  borderRadius: 12,
-  display: "flex",
-  flexDirection: "column",
-  gap: 4
-} }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.06em" } }, label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 26, fontWeight: 600, color: color || "var(--text)", fontFamily: "var(--font-display)", letterSpacing: "-0.02em" } }, value), sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)" } }, sub));
-const TabAnalytics = ({ c }) => {
-  const weekDays = ["L", "M", "X", "J", "V", "S", "D"];
-  const sent = weekDays.map((l, i) => ({ l, v: Math.round(c.emailsSent / 7 * (0.6 + Math.random() * 0.8)) }));
-  const opens = weekDays.map((l, i) => ({ l, v: Math.round(sent[i].v * (c.openRate / 100)) }));
-  const monthly = ["Ene", "Feb", "Mar", "Abr", "May", "Jun"].map((l, i) => ({
-    l,
-    v: Math.round(c.emailsSent / 6 * (0.4 + i * 0.2))
-  }));
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 } }, /* @__PURE__ */ React.createElement(StatCard, { label: "Emails enviados", value: c.emailsSent.toLocaleString(), sub: "Total acumulado" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Tasa apertura", value: c.openRate + "%", sub: "Promedio campa\xF1a", color: "var(--green)" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Tasa clic", value: c.clickRate + "%", sub: "Sobre emails abiertos", color: "var(--accent)" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Respuestas", value: c.replyRate + "%", sub: "Reply rate", color: "var(--amber)" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Emails enviados \u2014 \xFAltimos 7 d\xEDas"), /* @__PURE__ */ React.createElement(MiniBarChart, { data: sent, color: "var(--accent)" })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Aperturas \u2014 \xFAltimos 7 d\xEDas"), /* @__PURE__ */ React.createElement(MiniBarChart, { data: opens, color: "var(--green)" })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 18, gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Evoluci\xF3n mensual"), /* @__PURE__ */ React.createElement(MiniLineChart, { data: monthly, color: "var(--accent)", height: 80 }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16, marginTop: 8 } }, monthly.map((d, i) => /* @__PURE__ */ React.createElement("span", { key: i, style: { fontSize: 10, color: "var(--text-subtle)", flex: 1, textAlign: "center" } }, d.l))))));
+const LeadsSpark = ({ leads }) => {
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = /* @__PURE__ */ new Date();
+    d.setDate(d.getDate() - (13 - i));
+    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return {
+      ds,
+      v: leads.filter((x) => x.date === ds).length,
+      lab: d.getDate(),
+      isToday: i === 13
+    };
+  });
+  const max = Math.max(...days.map((d) => d.v), 1);
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 5, height: 64 } }, days.map((d, i) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: i,
+      "data-tooltip": `${d.v} lead${d.v === 1 ? "" : "s"} \xB7 d\xEDa ${d.lab}`,
+      style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 5, minWidth: 0 }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: {
+      width: "100%",
+      maxWidth: 22,
+      borderRadius: 5,
+      height: d.v === 0 ? 3 : Math.max(6, d.v / max * 46),
+      background: d.v === 0 ? "rgba(255,255,255,0.06)" : d.isToday ? "var(--accent)" : "rgba(158,154,229,0.45)",
+      transition: "height .2s"
+    } }),
+    /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9.5, color: d.isToday ? "var(--text)" : "var(--text-subtle)" } }, d.lab)
+  )));
 };
-const TabSequence = ({ c }) => {
-  const steps = [
-    { day: 0, subject: "{{firstName}}, \xBFtienes 15 minutos esta semana?", type: "email", status: "sent" },
-    { day: 3, subject: "Seguimiento \u2014 proyecto de crecimiento", type: "email", status: "sent" },
-    { day: 7, subject: "\xDAltima pregunta, {{firstName}}", type: "email", status: "scheduled" },
-    { day: 14, subject: "Cerramos el hilo", type: "email", status: "draft" }
-  ];
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Secuencia de emails"), /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir paso")), steps.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy }) => {
+  const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { onClick: onToggle, className: "task-row", style: {
     display: "flex",
     alignItems: "center",
     gap: 14,
-    padding: "14px 16px",
-    background: "var(--bg-elev)",
-    border: "0.5px solid var(--border)",
-    borderRadius: 10
-  } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+    padding: "13px 4px",
+    cursor: "pointer",
+    borderBottom: last && !open ? "none" : "0.5px solid var(--border)"
+  } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: st.dot, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: "1.4 1 0", minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.4px", color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+    color: "rgba(255,255,255,0.2)",
     flexShrink: 0,
-    background: s.status === "sent" ? "var(--green-soft)" : s.status === "scheduled" ? "rgba(96,165,250,0.1)" : "var(--bg-elev-2)",
-    color: s.status === "sent" ? "var(--green)" : s.status === "scheduled" ? "var(--accent)" : "var(--text-muted)",
-    display: "grid",
-    placeItems: "center",
-    fontSize: 12,
-    fontWeight: 600
-  } }, s.day === 0 ? "D1" : `+${s.day}d`), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: "var(--text)" } }, s.subject), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, s.status === "sent" ? "Enviado" : s.status === "scheduled" ? "Programado" : "Borrador")), /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 13, style: { color: "var(--text-subtle)", cursor: "pointer" } }))));
+    transform: open ? "rotate(180deg)" : "none",
+    transition: "transform .15s"
+  } })), open && /* @__PURE__ */ React.createElement("div", { style: {
+    margin: "0 0 14px",
+    padding: "18px 20px",
+    background: "var(--bg-elev-1)",
+    border: "0.5px solid var(--border)",
+    borderRadius: 14
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 11 }), " Auditor\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.audit || "Sin auditor\xEDa."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, marginTop: 12, fontSize: 12 } }, l.website && /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: l.website.startsWith("http") ? l.website : "https://" + l.website,
+      target: "_blank",
+      rel: "noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      style: { color: "var(--accent)", display: "inline-flex", alignItems: "center", gap: 5 }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 11 }),
+    " ",
+    l.website
+  ), l.phone && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "phone", size: 11 }), " ", l.phone))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 11 }), " Borrador del mensaje"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: (e) => {
+    e.stopPropagation();
+    onCopy();
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 11 }), " Copiar")), l.subject && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", marginBottom: 8, letterSpacing: "-0.3px" } }, l.subject), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.draft || "Sin borrador."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 14, paddingTop: 12, borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "btn ghost sm",
+      onClick: (e) => {
+        e.stopPropagation();
+        onDelete();
+      },
+      style: { color: "var(--red)" }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 }),
+    " Eliminar lead"
+  ))));
 };
-const TabLeads = ({ c }) => {
-  const leads = [
-    { name: "Sarah Mitchell", company: "SaaS Corp", status: "replied", email: "s.mitchell@saascorp.com" },
-    { name: "James Thornton", company: "TechVentures", status: "opened", email: "j.thornton@techv.io" },
-    { name: "Laura Garc\xEDa", company: "DataFlow Ltd", status: "sent", email: "l.garcia@dataflow.co" },
-    { name: "Mark Reynolds", company: "CloudPeak", status: "bounced", email: "m.reynolds@cloudpeak.com" },
-    { name: "Anna Kowalski", company: "GrowthBase", status: "replied", email: "a.kowalski@growthbase.eu" },
-    { name: "Tom Nielsen", company: "NorthStar AB", status: "opened", email: "t.nielsen@northstar.se" }
-  ];
-  const statusMap = {
-    replied: { label: "Respondi\xF3", chip: "green" },
-    opened: { label: "Abri\xF3", chip: "blue" },
-    sent: { label: "Enviado", chip: "neutral" },
-    bounced: { label: "Rebot\xF3", chip: "red" }
-  };
-  const _AV = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"];
-  const _initials = (n) => (n || "").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Leads \xB7 ", c.leads, " en total"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "upload", size: 12 }), " Importar CSV"), /* @__PURE__ */ React.createElement("button", { className: "btn sm primary" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir lead"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { style: { width: "42%" } }, "Contacto"), /* @__PURE__ */ React.createElement("th", null, "Empresa"), /* @__PURE__ */ React.createElement("th", null, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, leads.map((l, i) => {
-    const st = statusMap[l.status] || { label: l.status, chip: "neutral" };
-    return /* @__PURE__ */ React.createElement("tr", { key: i }, /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(Avatar, { name: l.name, initials: _initials(l.name), color: _AV[i % _AV.length] }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, l.name), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, l.email)))), /* @__PURE__ */ React.createElement("td", { className: "muted" }, l.company), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StatusChip, { status: st.chip, label: st.label })));
-  }))))));
-};
-const TabSchedule = ({ c }) => {
-  const days = ["Lunes", "Martes", "Mi\xE9rcoles", "Jueves", "Viernes"];
-  const active = [true, true, true, true, true];
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20, maxWidth: 560 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Horario de env\xEDo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, days.map((d, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement(Switch, { on: active[i], onChange: () => {
-  } }), /* @__PURE__ */ React.createElement("span", { style: { width: 90, fontSize: 13 } }, d), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)" } }, "09:00 \u2013 18:00"))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Configuraci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Zona horaria"), /* @__PURE__ */ React.createElement("select", { className: "select" }, /* @__PURE__ */ React.createElement("option", null, "Europe/Madrid (CET)"), /* @__PURE__ */ React.createElement("option", null, "Europe/London (GMT)"))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "M\xE1x. emails por d\xEDa"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "number", defaultValue: 50, style: { maxWidth: 120 } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Intervalo entre env\xEDos"), /* @__PURE__ */ React.createElement("select", { className: "select", style: { maxWidth: 200 } }, /* @__PURE__ */ React.createElement("option", null, "2 \u2013 5 minutos (aleatorio)"), /* @__PURE__ */ React.createElement("option", null, "5 \u2013 10 minutos"), /* @__PURE__ */ React.createElement("option", null, "10 \u2013 20 minutos"))))));
-};
-const TabOptions = ({ c }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, maxWidth: 560 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "General"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre de la campa\xF1a"), /* @__PURE__ */ React.createElement("input", { className: "input", defaultValue: c.name })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cuenta de env\xEDo"), /* @__PURE__ */ React.createElement("input", { className: "input", defaultValue: "nil@141agency.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del remitente"), /* @__PURE__ */ React.createElement("input", { className: "input", defaultValue: "141'STUDIO" })))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Seguimiento"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, [
-  { label: "Rastrear aperturas", on: true },
-  { label: "Rastrear clics", on: true },
-  { label: "Detener al responder", on: true },
-  { label: "Detener al desuscribirse", on: true }
-].map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13 } }, item.label), /* @__PURE__ */ React.createElement(Switch, { on: item.on, onChange: () => {
-} }))))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", style: { alignSelf: "flex-start" } }, "Guardar cambios"));
-const TabAIAgent = ({ c }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, maxWidth: 560 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: {
-  width: 36,
-  height: 36,
-  borderRadius: 10,
-  background: "linear-gradient(135deg,rgba(167,139,250,0.15),rgba(96,165,250,0.15))",
-  display: "grid",
-  placeItems: "center"
-} }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 16, style: { color: "var(--accent)" } })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Agente IA"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)" } }, "Personalizaci\xF3n autom\xE1tica de emails")), /* @__PURE__ */ React.createElement(Switch, { on: false, onChange: () => {
-}, style: { marginLeft: "auto" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Prompt de personalizaci\xF3n"), /* @__PURE__ */ React.createElement("textarea", { className: "textarea", rows: 4, placeholder: "Ej: Personaliza el saludo con el nombre de la empresa, menciona algo espec\xEDfico de su web y adapta el tono seg\xFAn el cargo..." })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Variables disponibles"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 } }, ["{{firstName}}", "{{lastName}}", "{{company}}", "{{role}}", "{{industry}}"].map((v) => /* @__PURE__ */ React.createElement("span", { key: v, className: "chip", style: { fontFamily: "var(--font-mono)", fontSize: 11 } }, v)))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 4 } }, "Detecci\xF3n de respuestas"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginBottom: 14 } }, "El agente clasifica las respuestas autom\xE1ticamente."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, [
-  { label: "Interesado \u2192 mover a pipeline", on: true },
-  { label: "No interesado \u2192 marcar y pausar", on: true },
-  { label: "Fuera de oficina \u2192 retrasar seguimiento", on: false }
-].map((item, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13 } }, /* @__PURE__ */ React.createElement("span", null, item.label), /* @__PURE__ */ React.createElement(Switch, { on: item.on, onChange: () => {
-} }))))));
-const CoworkAnalytics = ({ c }) => {
-  const leads = c.leads || [];
-  const today = _todayStr2();
-  const byStatus = (s) => leads.filter((l) => l.status === s).length;
-  const newToday = leads.filter((l) => l.date === today).length;
-  const contacted = byStatus("contacted") + byStatus("replied") + byStatus("won");
-  const replied = byStatus("replied") + byStatus("won");
-  const won = byStatus("won");
-  const replyPct = contacted ? Math.round(replied / contacted * 100) : 0;
-  const days = Array.from({ length: 7 }, (_, i) => {
-    const d = /* @__PURE__ */ new Date();
-    d.setDate(d.getDate() - (6 - i));
-    const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { l: ["D", "L", "M", "X", "J", "V", "S"][d.getDay()], v: leads.filter((x) => x.date === ds).length };
-  });
-  const funnel = [
-    { id: "new", label: "Nuevos", v: byStatus("new"), color: "var(--text-muted)" },
-    { id: "contacted", label: "Contactados", v: byStatus("contacted"), color: "#60a5fa" },
-    { id: "replied", label: "Respondieron", v: byStatus("replied"), color: "var(--green)" },
-    { id: "won", label: "Ganados", v: won, color: "var(--accent)" },
-    { id: "discarded", label: "Descartados", v: byStatus("discarded"), color: "var(--red)" }
-  ];
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 } }, /* @__PURE__ */ React.createElement(StatCard, { label: "Leads totales", value: leads.length, sub: newToday ? `+${newToday} hoy` : "Sin nuevos hoy" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Contactados", value: contacted, sub: leads.length ? Math.round(contacted / leads.length * 100) + "% del total" : "\u2014", color: "#60a5fa" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Respuestas", value: replied, sub: contacted ? replyPct + "% de contactados" : "\u2014", color: "var(--green)" }), /* @__PURE__ */ React.createElement(StatCard, { label: "Ganados", value: won, sub: "Clientes cerrados", color: "var(--accent)" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Leads recibidos \u2014 \xFAltimos 7 d\xEDas"), /* @__PURE__ */ React.createElement(MiniBarChart, { data: days, color: "var(--accent)" })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Embudo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, funnel.map((f) => /* @__PURE__ */ React.createElement("div", { key: f.id, style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", width: 96, flexShrink: 0 } }, f.label), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: leads.length ? `${f.v / leads.length * 100}%` : 0, height: "100%", background: f.color, borderRadius: 99 } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--text)", width: 26, textAlign: "right" } }, f.v)))))));
-};
-const CoworkLeads = ({ c, onUpdate }) => {
+const CampaignDetail = ({ campaignId, navigate }) => {
+  const [camps, reload] = useCampaigns();
   const toast = useToast();
+  const confirm = useConfirm();
+  const [filter, setFilter] = useState("all");
+  const [query, setQuery] = useState("");
   const [openId, setOpenId] = useState(null);
+  if (camps === null) return /* @__PURE__ */ React.createElement("div", { style: { padding: "60px 32px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando\u2026");
+  const c = camps.find((x) => x.id === campaignId);
+  if (!c) return /* @__PURE__ */ React.createElement(Empty, { icon: "megaphone", title: "Campa\xF1a no encontrada", sub: "Vuelve a la lista de campa\xF1as." });
   const leads = [...c.leads || []].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
-  const _AV = ["#6366f1", "#0ea5e9", "#10b981", "#f59e0b", "#ec4899", "#8b5cf6", "#14b8a6", "#ef4444"];
-  const _initials = (n) => (n || "").trim().split(/\s+/).map((w) => w[0]).slice(0, 2).join("").toUpperCase();
-  const today = _todayStr2();
+  const today = _cToday();
+  const nStatus = (s) => leads.filter((l) => l.status === s).length;
+  const newToday = leads.filter((l) => l.date === today).length;
+  const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
+  const replied = nStatus("replied") + nStatus("won");
+  const replyPct = contacted ? Math.round(replied / contacted * 100) : 0;
+  const visible = leads.filter((l) => {
+    if (filter !== "all" && l.status !== filter) return false;
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      return [l.name, l.company, l.email, l.website, l.sector].some((v) => (v || "").toLowerCase().includes(q));
+    }
+    return true;
+  });
+  const setStatus = async (l, status) => {
+    try {
+      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status });
+      reload();
+    } catch (e) {
+      toast("Error al guardar", "warn");
+    }
+  };
+  const removeLead = async (l) => {
+    const ok = await confirm({ title: "\xBFEliminar este lead?", body: `${l.name}${l.company ? " \xB7 " + l.company : ""} se eliminar\xE1 de la campa\xF1a.`, danger: true, confirmLabel: "Eliminar" });
+    if (!ok) return;
+    await window.apiFetch("/api/campaigns/delete_lead", { campaignId: c.id, leadId: l.id });
+    toast("Lead eliminado", "success");
+    reload();
+  };
+  const removeCampaign = async () => {
+    const ok = await confirm({ title: "\xBFEliminar la campa\xF1a?", body: `Se eliminar\xE1 "${c.name}" con sus ${leads.length} leads. No se puede deshacer.`, danger: true, confirmLabel: "Eliminar campa\xF1a" });
+    if (!ok) return;
+    await window.apiFetch("/api/campaigns/delete_campaign", { campaignId: c.id });
+    navigate("campaigns");
+  };
   const copyDraft = (l) => {
     const text = (l.subject ? `Asunto: ${l.subject}
 
 ` : "") + (l.draft || "");
     navigator.clipboard.writeText(text).then(() => toast("Borrador copiado", "success")).catch(() => toast("No se pudo copiar", "warn"));
   };
-  const setStatus = async (l, status) => {
-    try {
-      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status });
-      onUpdate && onUpdate();
-    } catch (e) {
-      toast("Error al guardar", "warn");
-    }
-  };
-  if (!leads.length) return /* @__PURE__ */ React.createElement(
-    Empty,
-    {
-      icon: "users",
-      title: "A\xFAn no hay leads",
-      sub: "Cuando Claude Cowork haga la pr\xF3xima importaci\xF3n diaria, aparecer\xE1n aqu\xED."
-    }
-  );
-  return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Leads \xB7 ", leads.length, " en total"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, leads.filter((l) => l.date === today).length, " nuevos hoy \xB7 clic en un lead para ver auditor\xEDa y borrador")), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { style: { width: "34%" } }, "Contacto"), /* @__PURE__ */ React.createElement("th", null, "Empresa"), /* @__PURE__ */ React.createElement("th", { style: { width: 90 } }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { width: 150 } }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: { width: 30 } }))), /* @__PURE__ */ React.createElement("tbody", null, leads.map((l, i) => {
-    const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-    const open = openId === l.id;
-    return /* @__PURE__ */ React.createElement(React.Fragment, { key: l.id }, /* @__PURE__ */ React.createElement("tr", { onClick: () => setOpenId(open ? null : l.id), style: { cursor: "pointer" } }, /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(Avatar, { name: l.name, initials: _initials(l.name), color: _AV[i % _AV.length] }), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, l.name), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, l.email || l.website || "\u2014")))), /* @__PURE__ */ React.createElement("td", { className: "muted" }, l.company || "\u2014"), /* @__PURE__ */ React.createElement("td", { className: "muted", style: { fontSize: 12 } }, l.date === today ? "Hoy" : (/* @__PURE__ */ new Date((l.date || today) + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" })), /* @__PURE__ */ React.createElement("td", { onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
-      "select",
-      {
-        className: "select sm",
-        value: l.status,
-        onChange: (e) => setStatus(l, e.target.value),
-        style: { fontSize: 12, padding: "5px 8px" }
-      },
-      Object.entries(LEAD_STATUS).map(([k, v]) => /* @__PURE__ */ React.createElement("option", { key: k, value: k }, v.label))
-    )), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(
-      Icon,
-      {
-        name: "chevron-down",
-        size: 13,
-        style: { color: "var(--text-subtle)", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }
-      }
-    ))), open && /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("td", { colSpan: 5, style: { background: "var(--bg-elev-2)", padding: "16px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 11 }), " Auditor\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.6, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.audit || "Sin auditor\xEDa."), l.website && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, fontSize: 12 } }, /* @__PURE__ */ React.createElement(
-      "a",
-      {
-        href: l.website.startsWith("http") ? l.website : "https://" + l.website,
-        target: "_blank",
-        rel: "noreferrer",
-        style: { color: "var(--accent)" }
-      },
-      l.website,
-      " \u2197"
-    ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 11 }), " Borrador del mensaje"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: (e) => {
-      e.stopPropagation();
-      copyDraft(l);
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "paperclip", size: 11 }), " Copiar")), l.subject && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text)", marginBottom: 6 } }, l.subject), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.6, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.draft || "Sin borrador."))))));
-  }))))));
-};
-const CoworkCampaignDetail = ({ c, navigate, reload }) => {
-  const [tab, setTab] = useState("leads");
-  const menuItems = [
-    { id: "leads", label: "Leads", icon: "users" },
-    { id: "analytics", label: "Anal\xEDticas", icon: "bar-chart" }
+  const FILTERS = [
+    { id: "all", label: "Todos", n: leads.length },
+    ...STATUS_ORDER.map((s) => ({ id: s, label: LEAD_STATUS[s].label, n: nStatus(s) }))
   ];
-  return /* @__PURE__ */ React.createElement("div", { className: "page", style: { padding: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 0" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("campaigns"), style: { marginBottom: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Campa\xF1as")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 0, height: "calc(100vh - 110px)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { borderRight: "0.5px solid var(--border)", display: "flex", flexDirection: "column", overflow: "hidden", padding: "8px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 20px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text)", lineHeight: 1.4 } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 4 } }, (c.leads || []).length, " leads \xB7 desde ", (/* @__PURE__ */ new Date(c.createdAt + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "8px 10px", overflowY: "auto" } }, menuItems.map((item) => /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      key: item.id,
-      onClick: () => setTab(item.id),
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "9px 12px",
-        borderRadius: 8,
-        cursor: "pointer",
-        marginBottom: 2,
-        fontSize: 13,
-        background: tab === item.id ? "var(--bg-elev-2)" : "transparent",
-        color: tab === item.id ? "var(--text)" : "var(--text-muted)",
-        fontWeight: tab === item.id ? 500 : 400,
-        border: tab === item.id ? "0.5px solid var(--border)" : "0.5px solid transparent",
-        transition: "all .12s"
-      }
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: item.icon, size: 14 }),
-    item.label
-  ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px", borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 13, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, color: "var(--text)" } }, "Claude Cowork")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 } }, "Esta campa\xF1a se alimenta autom\xE1ticamente cada d\xEDa con los leads, auditor\xEDas y borradores que genera tu programaci\xF3n de Cowork."))), /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", padding: "24px" } }, tab === "analytics" ? /* @__PURE__ */ React.createElement(CoworkAnalytics, { c }) : /* @__PURE__ */ React.createElement(CoworkLeads, { c, onUpdate: reload }))));
-};
-const CampaignDetail = ({ campaignId, navigate }) => {
-  const [campaigns] = useState(_loadCampaigns);
-  const [real, reloadReal] = useCoworkCampaigns();
-  const [tab, setTab] = useState("analytics");
-  const [status, setStatus] = useState(null);
-  const rc = (real || []).find((x) => x.id === campaignId);
-  if (rc) return /* @__PURE__ */ React.createElement(CoworkCampaignDetail, { c: rc, navigate, reload: reloadReal });
-  const c = campaigns.find((x) => x.id === campaignId);
-  if (!c && real === null) return /* @__PURE__ */ React.createElement("div", { style: { padding: 40, color: "var(--text-muted)", fontSize: 13 } }, "Cargando\u2026");
-  if (!c) return /* @__PURE__ */ React.createElement(Empty, { icon: "megaphone", title: "Campa\xF1a no encontrada", sub: "Vuelve a la lista de campa\xF1as." });
-  const currentStatus = status || c.status;
-  const menuItems = [
-    { id: "analytics", label: "Anal\xEDticas", icon: "bar-chart" },
-    { id: "sequence", label: "Secuencia de emails", icon: "mail" },
-    { id: "leads", label: "Leads", icon: "users" },
-    { id: "schedule", label: "Horario", icon: "clock" },
-    { id: "options", label: "Opciones", icon: "settings" },
-    { id: "ai", label: "Agente IA", icon: "sparkles" }
-  ];
-  const statusConfig = {
-    active: { label: "Activa", cls: "green", desc: "La campa\xF1a est\xE1 enviando emails." },
-    paused: { label: "Pausada", cls: "amber", desc: "La campa\xF1a est\xE1 pausada y no env\xEDa emails." },
-    draft: { label: "Borrador", cls: "", desc: "Configura la campa\xF1a antes de lanzarla." },
-    completed: { label: "Finalizada", cls: "blue", desc: "La campa\xF1a ha concluido." }
-  };
-  const st = statusConfig[currentStatus] || statusConfig.paused;
-  const renderTab = () => {
-    switch (tab) {
-      case "analytics":
-        return /* @__PURE__ */ React.createElement(TabAnalytics, { c });
-      case "sequence":
-        return /* @__PURE__ */ React.createElement(TabSequence, { c });
-      case "leads":
-        return /* @__PURE__ */ React.createElement(TabLeads, { c });
-      case "schedule":
-        return /* @__PURE__ */ React.createElement(TabSchedule, { c });
-      case "options":
-        return /* @__PURE__ */ React.createElement(TabOptions, { c });
-      case "ai":
-        return /* @__PURE__ */ React.createElement(TabAIAgent, { c });
-      default:
-        return /* @__PURE__ */ React.createElement(TabAnalytics, { c });
-    }
-  };
-  return /* @__PURE__ */ React.createElement("div", { className: "page", style: { padding: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 0" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("campaigns"), style: { marginBottom: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Campa\xF1as")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "280px 1fr", gap: 0, height: "calc(100vh - 110px)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    borderRight: "0.5px solid var(--border)",
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    height: "100vh",
     display: "flex",
     flexDirection: "column",
-    overflow: "hidden",
-    padding: "8px 0"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 20px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 600, color: "var(--text)", lineHeight: 1.4 } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 4 } }, c.leads, " leads \xB7 creada ", new Date(c.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "8px 10px", overflowY: "auto" } }, menuItems.map((item) => /* @__PURE__ */ React.createElement(
-    "div",
+    padding: "28px 32px 0",
+    maxWidth: 1400,
+    margin: "0 auto",
+    overflow: "hidden"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("campaigns"), style: { marginBottom: 14, marginLeft: -8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 13 }), " Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, c.name), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12, style: { color: "var(--accent)" } }), "Alimentada por Claude Cowork \xB7 desde ", (/* @__PURE__ */ new Date(c.createdAt + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }))), /* @__PURE__ */ React.createElement(
+    ActionPill,
     {
-      key: item.id,
-      onClick: () => setTab(item.id),
+      plusActions: () => toast("Los leads los a\xF1ade Claude Cowork cada d\xEDa", "info"),
+      plusIcon: "refresh-cw",
+      moreActions: [
+        { icon: "trash", label: "Eliminar campa\xF1a", onClick: removeCampaign }
+      ]
+    }
+  )), /* @__PURE__ */ React.createElement("div", { style: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1.15fr",
+    gap: 28,
+    paddingBottom: 20,
+    borderBottom: "0.5px solid var(--border)",
+    marginBottom: 18
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Leads", value: leads.length, sub: newToday ? `+${newToday} hoy` : "sin nuevos hoy" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Contactados", value: contacted, sub: leads.length ? `${Math.round(contacted / leads.length * 100)}% del total` : "\u2014", color: "#60a5fa" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Respuestas", value: replied, sub: contacted ? `${replyPct}% de contactados` : "\u2014", color: "var(--green)" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Ganados", value: nStatus("won"), sub: "clientes cerrados", color: "var(--accent)" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 10 } }, "Leads recibidos \xB7 \xFAltimos 14 d\xEDas"), /* @__PURE__ */ React.createElement(LeadsSpark, { leads }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" } }, FILTERS.map((f) => {
+    const on = filter === f.id;
+    return /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFilter(f.id), style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 6,
+      padding: "6px 13px",
+      borderRadius: 99,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+      border: on ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)",
+      color: on ? "var(--accent)" : "var(--text-muted)",
+      fontSize: 12.5,
+      letterSpacing: "-0.2px",
+      transition: "all .12s"
+    } }, f.label, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, opacity: 0.65 } }, f.n));
+  }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13, style: { position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      value: query,
+      onChange: (e) => setQuery(e.target.value),
+      placeholder: "Buscar lead\u2026",
       style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "9px 12px",
-        borderRadius: 8,
-        cursor: "pointer",
-        marginBottom: 2,
-        fontSize: 13,
-        background: tab === item.id ? "var(--bg-elev-2)" : "transparent",
-        color: tab === item.id ? "var(--text)" : "var(--text-muted)",
-        fontWeight: tab === item.id ? 500 : 400,
-        border: tab === item.id ? "0.5px solid var(--border)" : "0.5px solid transparent",
-        transition: "all .12s"
+        background: "rgba(255,255,255,0.04)",
+        border: "0.5px solid var(--border)",
+        borderRadius: 99,
+        padding: "7px 14px 7px 32px",
+        fontSize: 12.5,
+        color: "var(--text)",
+        outline: "none",
+        width: 190,
+        fontFamily: "inherit",
+        letterSpacing: "-0.2px"
       }
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: item.icon, size: 14 }),
-    item.label
-  ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 16px", borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { className: `chip ${st.cls}`, style: { marginBottom: 6, display: "inline-block" } }, st.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", lineHeight: 1.5 } }, st.desc)), currentStatus === "paused" || currentStatus === "draft" ? /* @__PURE__ */ React.createElement(
-    "button",
+    }
+  )))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    scrollbarGutter: "stable",
+    paddingRight: 10,
+    paddingTop: 14,
+    paddingBottom: 8,
+    WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+    maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
+  } }, visible.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 13.5, letterSpacing: "-0.3px" } }, leads.length === 0 ? "A\xFAn no hay leads \u2014 cuando Claude Cowork haga la pr\xF3xima importaci\xF3n aparecer\xE1n aqu\xED." : "Ning\xFAn lead coincide con el filtro.") : visible.map((l, i) => /* @__PURE__ */ React.createElement(
+    LeadRow,
     {
-      className: "btn primary full",
-      style: { width: "100%", justifyContent: "center" },
-      onClick: () => setStatus("active")
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "play", size: 12 }),
-    " Iniciar campa\xF1a"
-  ) : currentStatus === "active" ? /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      className: "btn full",
-      style: { width: "100%", justifyContent: "center" },
-      onClick: () => setStatus("paused")
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "pause", size: 12 }),
-    " Pausar campa\xF1a"
-  ) : null)), /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", padding: "24px" } }, renderTab())));
-};
-const CampaignCard = ({ c, navigate }) => {
-  const statusMap = {
-    active: { label: "Activa", cls: "green" },
-    paused: { label: "Pausada", cls: "amber" },
-    draft: { label: "Borrador", cls: "" },
-    completed: { label: "Finalizada", cls: "blue" }
-  };
-  const st = statusMap[c.status] || statusMap.paused;
-  return /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      className: "card",
-      style: { padding: "18px 20px", cursor: "pointer", transition: "border-color .15s" },
-      onClick: () => navigate("campaign", { campaignId: c.id })
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      flexShrink: 0,
-      background: "linear-gradient(135deg,rgba(167,139,250,0.12),rgba(96,165,250,0.12))",
-      display: "grid",
-      placeItems: "center"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "megaphone", size: 18, style: { color: "var(--accent)" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14, color: "var(--text)", marginBottom: 2 } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)" } }, c.leads, " leads \xB7 ", c.emailsSent.toLocaleString(), " emails enviados")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "var(--green)", fontFamily: "var(--font-display)" } }, c.openRate, "%"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Apertura")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "var(--accent)", fontFamily: "var(--font-display)" } }, c.clickRate, "%"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Clic")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "var(--amber)", fontFamily: "var(--font-display)" } }, c.replyRate, "%"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Respuesta")), /* @__PURE__ */ React.createElement("span", { className: `chip ${st.cls}` }, st.label), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { color: "var(--text-subtle)" } })))
-  );
-};
-const CoworkCampaignCard = ({ c, navigate }) => {
-  const leads = c.leads || [];
-  const today = _todayStr2();
-  const newToday = leads.filter((l) => l.date === today).length;
-  const contacted = leads.filter((l) => ["contacted", "replied", "won"].includes(l.status)).length;
-  const replied = leads.filter((l) => ["replied", "won"].includes(l.status)).length;
-  return /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      className: "card",
-      style: { padding: "18px 20px", cursor: "pointer", transition: "border-color .15s" },
-      onClick: () => navigate("campaign", { campaignId: c.id })
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 40,
-      height: 40,
-      borderRadius: 10,
-      flexShrink: 0,
-      background: "linear-gradient(135deg,rgba(167,139,250,0.12),rgba(96,165,250,0.12))",
-      display: "grid",
-      placeItems: "center"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 18, style: { color: "var(--accent)" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14, color: "var(--text)", marginBottom: 2 } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)" } }, leads.length, " leads \xB7 alimentada por Claude Cowork", newToday ? ` \xB7 +${newToday} hoy` : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-display)" } }, leads.length), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Leads")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "#60a5fa", fontFamily: "var(--font-display)" } }, contacted), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Contactados")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 600, color: "var(--green)", fontFamily: "var(--font-display)" } }, replied), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)" } }, "Respuestas")), /* @__PURE__ */ React.createElement("span", { className: "chip green" }, "Activa"), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { color: "var(--text-subtle)" } })))
-  );
+      key: l.id,
+      l,
+      last: i === visible.length - 1,
+      open: openId === l.id,
+      onToggle: () => setOpenId(openId === l.id ? null : l.id),
+      onStatus: (s) => setStatus(l, s),
+      onDelete: () => removeLead(l),
+      onCopy: () => copyDraft(l)
+    }
+  ))));
 };
 const CampaignsPage = ({ navigate }) => {
-  const [campaigns, setCampaigns] = useState(() => {
-    const saved = _loadCampaigns();
-    if (saved.length) return saved;
-    const demo = [
+  const [camps, reload] = useCampaigns();
+  const toast = useToast();
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const today = _cToday();
+  const list = camps || [];
+  const totalLeads = list.reduce((s, c) => s + (c.leads || []).length, 0);
+  const newToday = list.reduce((s, c) => s + (c.leads || []).filter((l) => l.date === today).length, 0);
+  const createCampaign = async () => {
+    const name = newName.trim();
+    if (!name) {
+      toast("Ponle un nombre a la campa\xF1a", "warn");
+      return;
+    }
+    const r = await window.apiFetch("/api/campaigns/create", { name });
+    const j = await r.json();
+    if (!j.ok) {
+      toast(j.error || "No se pudo crear", "warn");
+      return;
+    }
+    toast("Campa\xF1a creada", "success");
+    setCreating(false);
+    setNewName("");
+    reload();
+  };
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    height: "100vh",
+    display: "flex",
+    flexDirection: "column",
+    padding: "28px 32px 0",
+    maxWidth: 1400,
+    margin: "0 auto",
+    overflow: "hidden"
+  } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, list.length === 0 ? "Sin campa\xF1as todav\xEDa" : `${list.length} ${list.length === 1 ? "campa\xF1a" : "campa\xF1as"} \xB7 ${totalLeads} leads${newToday ? ` \xB7 +${newToday} hoy` : ""}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => setCreating(true) })), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    flex: 1,
+    minHeight: 0,
+    overflowY: "auto",
+    scrollbarGutter: "stable",
+    paddingRight: 10,
+    paddingTop: 22,
+    paddingBottom: 8,
+    WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+    maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
+  } }, camps === null ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando\u2026") : list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "70px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "inline-flex", padding: 14, border: "0.5px solid var(--border)", borderRadius: 14, marginBottom: 14, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "megaphone", size: 22 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" } }, "Sin campa\xF1as"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", marginTop: 6, maxWidth: 340, margin: "6px auto 0", lineHeight: 1.55 } }, "Crea una con el bot\xF3n + o deja que Claude Cowork cree la suya con la primera importaci\xF3n de leads.")) : list.map((c) => {
+    const leads = c.leads || [];
+    const nToday = leads.filter((l) => l.date === today).length;
+    const contacted = leads.filter((l) => ["contacted", "replied", "won"].includes(l.status)).length;
+    const replied = leads.filter((l) => ["replied", "won"].includes(l.status)).length;
+    const won = leads.filter((l) => l.status === "won").length;
+    const pct = leads.length ? contacted / leads.length * 100 : 0;
+    return /* @__PURE__ */ React.createElement(
+      "div",
       {
-        id: crypto.randomUUID(),
-        name: "Marketing Executives \xB7 UK \xB7 Software",
-        status: "paused",
-        leads: 847,
-        emailsSent: 2294,
-        openRate: 38,
-        clickRate: 12,
-        replyRate: 4.2,
-        createdAt: "2025-04-10"
+        key: c.id,
+        onClick: () => navigate("campaign", { campaignId: c.id }),
+        className: "task-row",
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 18,
+          padding: "18px 4px",
+          cursor: "pointer",
+          borderBottom: "0.5px solid var(--border)"
+        }
       },
-      {
-        id: crypto.randomUUID(),
-        name: "E-commerce Directors \xB7 Espa\xF1a",
-        status: "active",
-        leads: 312,
-        emailsSent: 891,
-        openRate: 42,
-        clickRate: 15,
-        replyRate: 6.1,
-        createdAt: "2025-04-28"
-      }
-    ];
-    _saveCampaigns(demo);
-    return demo;
-  });
-  const [real] = useCoworkCampaigns();
-  const realList = real || [];
-  const total = campaigns.length + realList.length;
-  const active = campaigns.filter((c) => c.status === "active").length + realList.length;
-  const realLeads = realList.reduce((s, c) => s + (c.leads || []).length, 0);
-  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, total, " campa\xF1as \xB7 ", active, " activas", realLeads ? ` \xB7 ${realLeads} leads de Cowork` : "")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
-  } })), total === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "megaphone", title: "Sin campa\xF1as", sub: "Crea tu primera campa\xF1a de outreach para empezar a generar leads." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, realList.map((c) => /* @__PURE__ */ React.createElement(CoworkCampaignCard, { key: c.id, c, navigate })), campaigns.map((c) => /* @__PURE__ */ React.createElement(CampaignCard, { key: c.id, c, navigate }))));
+      /* @__PURE__ */ React.createElement("div", { style: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        flexShrink: 0,
+        background: "rgba(158,154,229,0.1)",
+        border: "0.5px solid var(--border)",
+        display: "grid",
+        placeItems: "center",
+        color: "var(--accent)"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 17, strokeWidth: 1.7 })),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 3, letterSpacing: "-0.2px" } }, leads.length, " ", leads.length === 1 ? "lead" : "leads", nToday ? ` \xB7 +${nToday} hoy` : "", " \xB7 Claude Cowork"), /* @__PURE__ */ React.createElement("div", { style: { width: 220, maxWidth: "100%", height: 4, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden", marginTop: 9 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${pct}%`, height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .2s" } }))),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, alignItems: "center", flexShrink: 0 } }, [
+        { v: leads.length, l: "Leads", c: "var(--text)" },
+        { v: contacted, l: "Contactados", c: "#60a5fa" },
+        { v: replied, l: "Respuestas", c: "var(--green)" },
+        { v: won, l: "Ganados", c: "var(--accent)" }
+      ].map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { textAlign: "center", minWidth: 56 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 600, fontFamily: "var(--font-display)", letterSpacing: "-0.4px", color: s.c } }, s.v), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", marginTop: 1 } }, s.l))), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.18)" } }))
+    );
+  })), /* @__PURE__ */ React.createElement(
+    QuickModal,
+    {
+      open: creating,
+      onClose: () => {
+        setCreating(false);
+        setNewName("");
+      },
+      onSubmit: createCampaign,
+      canSubmit: newName.trim().length > 0,
+      headerLabel: "Nueva campa\xF1a",
+      titlePlaceholder: "Nombre de la campa\xF1a...",
+      titleValue: newName,
+      onTitleChange: setNewName,
+      tabs: [{ id: "cowork", label: "Conectar con Cowork", icon: "sparkles", hasVal: false }],
+      renderTab: () => /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.7, color: "var(--text-muted)", maxWidth: 380, textAlign: "center", letterSpacing: "-0.2px" } }, "Los leads entran solos cuando tu tarea de Claude Cowork los env\xEDa usando ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "exactamente este nombre"), " en el campo", /* @__PURE__ */ React.createElement("code", { style: { color: "var(--accent)", background: "rgba(158,154,229,0.1)", padding: "1px 6px", borderRadius: 6, margin: "0 4px" } }, "campaign"), "de la importaci\xF3n.")
+    }
+  ));
 };
 window.CampaignsPage = CampaignsPage;
 window.CampaignDetail = CampaignDetail;

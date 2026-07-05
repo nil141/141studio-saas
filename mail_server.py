@@ -547,6 +547,19 @@ def api_campaigns_import(body):
 def api_campaigns_data(_body):
     return {"ok": True, **_campaigns_load()}
 
+def api_campaigns_create(body):
+    name = (body.get("name") or "").strip()
+    if not name:
+        return {"ok": False, "error": "Falta el nombre"}
+    data = _campaigns_load()
+    if any(c["name"].strip().lower() == name.lower() for c in data["campaigns"]):
+        return {"ok": False, "error": "Ya existe una campaña con ese nombre"}
+    camp = {"id": secrets.token_hex(8), "name": name[:120],
+            "createdAt": _today(), "leads": []}
+    data["campaigns"].append(camp)
+    _campaigns_save(data)
+    return {"ok": True, "campaign": camp}
+
 def api_campaigns_update_lead(body):
     cid, lid = body.get("campaignId"), body.get("leadId")
     status   = body.get("status")
@@ -611,6 +624,7 @@ STRIPE_HANDLERS = {
 # Requieren JWT del usuario (mismo esquema que MAIL/STRIPE)
 CAMPAIGN_HANDLERS = {
     "data":            api_campaigns_data,
+    "create":          api_campaigns_create,
     "update_lead":     api_campaigns_update_lead,
     "delete_lead":     api_campaigns_delete_lead,
     "delete_campaign": api_campaigns_delete_campaign,
