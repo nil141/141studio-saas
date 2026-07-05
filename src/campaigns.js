@@ -541,7 +541,7 @@ const ConnectPanel = ({ onCSV, onManual, onCowork }) => {
     /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 6, lineHeight: 1.55, letterSpacing: "-0.1px" } }, c.sub)
   ))));
 };
-const CampaignDetail = ({ campaignId, navigate }) => {
+const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [camps, reload] = useCampaigns();
   const toast = useToast();
   const confirm = useConfirm();
@@ -552,6 +552,15 @@ const CampaignDetail = ({ campaignId, navigate }) => {
   const [addingLead, setAddingLead] = useState(false);
   const [coworkOpen, setCoworkOpen] = useState(false);
   const [pickCSV, csvInput] = useCSVImport(campaignId, () => reload());
+  const actionRan = useRef(false);
+  useEffect(() => {
+    if (actionRan.current || camps === null || !initialAction) return;
+    if (!camps.find((x) => x.id === campaignId)) return;
+    actionRan.current = true;
+    if (initialAction === "csv") pickCSV();
+    else if (initialAction === "manual") setAddingLead(true);
+    else if (initialAction === "cowork") setCoworkOpen(true);
+  }, [camps, initialAction]);
   if (camps === null) return /* @__PURE__ */ React.createElement("div", { style: { padding: "60px 32px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando\u2026");
   const c = camps.find((x) => x.id === campaignId);
   if (!c) return /* @__PURE__ */ React.createElement(Empty, { icon: "megaphone", title: "Campa\xF1a no encontrada", sub: "Vuelve a la lista de campa\xF1as." });
@@ -714,34 +723,183 @@ const CampaignDetail = ({ campaignId, navigate }) => {
     }
   ))), csvInput, /* @__PURE__ */ React.createElement(AddLeadModal, { open: addingLead, onClose: () => setAddingLead(false), campaignId: c.id, onDone: reload }), /* @__PURE__ */ React.createElement(CoworkConnectModal, { open: coworkOpen, onClose: () => setCoworkOpen(false), campaignName: c.name }));
 };
-const CampaignsPage = ({ navigate }) => {
-  const [camps, reload] = useCampaigns();
+const CampaignSetup = ({ open, onClose, onCreated }) => {
   const toast = useToast();
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newType, setNewType] = useState("email");
-  const today = _cToday();
-  const list = camps || [];
-  const totalLeads = list.reduce((s, c) => s + (c.leads || []).length, 0);
-  const newToday = list.reduce((s, c) => s + (c.leads || []).filter((l) => l.date === today).length, 0);
-  const createCampaign = async () => {
-    const name = newName.trim();
-    if (!name) {
-      toast("Ponle un nombre a la campa\xF1a", "warn");
-      return;
+  const [step, setStep] = useState(0);
+  const [type, setType] = useState(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const nameRef = useRef(null);
+  useEffect(() => {
+    if (open) {
+      setStep(0);
+      setType(null);
+      setName("");
+      setBusy(false);
     }
-    const r = await window.apiFetch("/api/campaigns/create", { name, ctype: newType });
+  }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const fn = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [open]);
+  useEffect(() => {
+    if (open && step === 1) setTimeout(() => nameRef.current && nameRef.current.focus(), 60);
+  }, [step, open]);
+  if (!open) return null;
+  const create = async (source) => {
+    if (busy || !name.trim()) return;
+    setBusy(true);
+    const r = await window.apiFetch("/api/campaigns/create", { name: name.trim(), ctype: type || "otro" });
     const j = await r.json();
+    setBusy(false);
     if (!j.ok) {
       toast(j.error || "No se pudo crear", "warn");
       return;
     }
-    toast("Campa\xF1a creada \u2014 ahora con\xE9ctale los leads", "success");
-    setCreating(false);
-    setNewName("");
-    setNewType("email");
+    onClose();
+    onCreated(j.campaign.id, source);
+  };
+  const TITLES = ["\xBFQu\xE9 tipo de campa\xF1a?", "Ponle un nombre", "\xBFDe d\xF3nde vienen los leads?"];
+  const SUBS = [
+    "Elige el canal principal de esta campa\xF1a.",
+    "Un nombre claro para reconocerla de un vistazo.",
+    "Puedes conectar los leads ahora o hacerlo m\xE1s tarde."
+  ];
+  const sourceCards = [
+    { id: "csv", icon: "upload", title: "Importar CSV", sub: "Sube una lista de leads." },
+    { id: "cowork", icon: "sparkles", title: "Claude Cowork", sub: "Se llena sola cada d\xEDa.", accent: true },
+    { id: "manual", icon: "plus", title: "A\xF1adir a mano", sub: "Un contacto suelto." },
+    { id: null, icon: "clock", title: "Lo har\xE9 luego", sub: "Entrar a la campa\xF1a vac\xEDa." }
+  ];
+  const card = (sel, onClick, icon, title, sub, accent) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick,
+      style: {
+        background: accent ? "rgba(158,154,229,0.07)" : sel ? "rgba(158,154,229,0.1)" : "var(--bg-elev-1)",
+        border: sel || accent ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)",
+        borderRadius: 16,
+        padding: "18px 16px",
+        cursor: "pointer",
+        textAlign: "center",
+        transition: "border-color .15s, background .15s"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.borderColor = "rgba(158,154,229,0.5)",
+      onMouseLeave: (e) => e.currentTarget.style.borderColor = sel || accent ? "rgba(158,154,229,0.4)" : "var(--border)"
+    },
+    /* @__PURE__ */ React.createElement("div", { style: {
+      width: 42,
+      height: 42,
+      borderRadius: 12,
+      margin: "0 auto 11px",
+      background: accent || sel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.05)",
+      border: "0.5px solid var(--border)",
+      display: "grid",
+      placeItems: "center",
+      color: accent || sel ? "var(--accent)" : "var(--text-muted)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.7 })),
+    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.3px" } }, title),
+    /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 5, lineHeight: 1.5 } }, sub)
+  );
+  return ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 300,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(0,0,0,0.72)",
+      backdropFilter: "blur(16px)",
+      WebkitBackdropFilter: "blur(16px)",
+      padding: 24,
+      animation: "fade .15s ease-out"
+    } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+      width: "100%",
+      maxWidth: 560,
+      minHeight: 440,
+      background: "rgba(255,255,255,0.05)",
+      backdropFilter: "blur(40px)",
+      WebkitBackdropFilter: "blur(40px)",
+      border: "1px solid rgba(255,255,255,0.1)",
+      borderRadius: 32,
+      overflow: "hidden",
+      boxShadow: "0 25px 60px -20px rgba(0,0,0,0.6)",
+      display: "flex",
+      flexDirection: "column",
+      animation: "pop .2s cubic-bezier(.2,.8,.2,1)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 20px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, [0, 1, 2].map((i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      width: i === step ? 22 : 7,
+      height: 7,
+      borderRadius: 99,
+      background: i <= step ? "var(--accent)" : "rgba(255,255,255,0.14)",
+      transition: "all .2s"
+    } }))), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+      width: 34,
+      height: 34,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.06)",
+      border: "0.5px solid var(--border)",
+      cursor: "pointer",
+      display: "grid",
+      placeItems: "center",
+      color: "var(--text-muted)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 28px 0", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 23, fontWeight: 500, color: "var(--text)", letterSpacing: "-0.6px" } }, TITLES[step]), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", marginTop: 7, letterSpacing: "-0.2px" } }, SUBS[step])), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "26px 28px", display: "flex", flexDirection: "column", justifyContent: "center" } }, step === 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, ["email", "meta", "google", "otro"].map(
+      (id) => card(type === id, () => {
+        setType(id);
+        setStep(1);
+      }, CTYPES[id].icon, CTYPES[id].label, CTYPES[id].hint, false)
+    )), step === 1 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        ref: nameRef,
+        value: name,
+        onChange: (e) => setName(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter" && name.trim()) setStep(2);
+        },
+        placeholder: "Ej. Outreach ecommerce moda",
+        style: {
+          width: "100%",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          fontSize: 26,
+          fontWeight: 400,
+          letterSpacing: "-1px",
+          textAlign: "center",
+          color: name ? "var(--text)" : "rgba(255,255,255,0.2)",
+          fontFamily: "var(--font-display)",
+          caretColor: "var(--accent)"
+        }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.12)", margin: "14px auto 0", maxWidth: 360 } }), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 10, fontSize: 12, color: "var(--text-subtle)" } }, "Tipo: ", CTYPES[type] ? CTYPES[type].label : "\u2014")), step === 2 && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, sourceCards.map((s, i) => card(false, () => create(s.id), s.icon, s.title, s.sub, s.accent)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px 24px" } }, step > 0 ? /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setStep((s) => s - 1) }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 13 }), " Atr\xE1s") : /* @__PURE__ */ React.createElement("span", null), step === 1 && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        className: "btn primary sm",
+        onClick: () => name.trim() && setStep(2),
+        style: { opacity: name.trim() ? 1 : 0.4, pointerEvents: name.trim() ? "auto" : "none" }
+      },
+      "Continuar ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 13 })
+    )))),
+    document.body
+  );
+};
+const CampaignsPage = ({ navigate }) => {
+  const [camps, reload] = useCampaigns();
+  const [setupOpen, setSetupOpen] = useState(false);
+  const today = _cToday();
+  const list = camps || [];
+  const totalLeads = list.reduce((s, c) => s + (c.leads || []).length, 0);
+  const newToday = list.reduce((s, c) => s + (c.leads || []).filter((l) => l.date === today).length, 0);
+  const onCreated = (id, source) => {
     reload();
-    if (j.campaign && j.campaign.id) navigate("campaign", { campaignId: j.campaign.id });
+    navigate("campaign", { campaignId: id, action: source || void 0 });
   };
   return /* @__PURE__ */ React.createElement("div", { style: {
     height: "100vh",
@@ -751,7 +909,7 @@ const CampaignsPage = ({ navigate }) => {
     maxWidth: 1400,
     margin: "0 auto",
     overflow: "hidden"
-  } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, list.length === 0 ? "Sin campa\xF1as todav\xEDa" : `${list.length} ${list.length === 1 ? "campa\xF1a" : "campa\xF1as"} \xB7 ${totalLeads} leads${newToday ? ` \xB7 +${newToday} hoy` : ""}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => setCreating(true) })), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+  } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, list.length === 0 ? "Sin campa\xF1as todav\xEDa" : `${list.length} ${list.length === 1 ? "campa\xF1a" : "campa\xF1as"} \xB7 ${totalLeads} leads${newToday ? ` \xB7 +${newToday} hoy` : ""}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => setSetupOpen(true) })), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
     flex: 1,
     minHeight: 0,
     overflowY: "auto",
@@ -803,27 +961,7 @@ const CampaignsPage = ({ navigate }) => {
         { v: won, l: "Ganados", c: "var(--accent)" }
       ].map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { textAlign: "center", minWidth: 56 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 600, fontFamily: "var(--font-display)", letterSpacing: "-0.4px", color: s.c } }, s.v), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", marginTop: 1 } }, s.l))), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.18)" } }))
     );
-  })), /* @__PURE__ */ React.createElement(
-    QuickModal,
-    {
-      open: creating,
-      onClose: () => {
-        setCreating(false);
-        setNewName("");
-        setNewType("email");
-      },
-      onSubmit: createCampaign,
-      canSubmit: newName.trim().length > 0,
-      titlePlaceholder: "Nombre de la campa\xF1a...",
-      titleValue: newName,
-      onTitleChange: setNewName,
-      types: ["email", "meta", "google", "otro"].map((id) => ({ id, label: CTYPES[id].label, icon: CTYPES[id].icon })),
-      type: newType,
-      onTypeChange: setNewType,
-      tabs: [{ id: "next", label: "\xBFY los leads?", icon: "users", hasVal: false }],
-      renderTab: () => /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.7, color: "var(--text-muted)", maxWidth: 390, textAlign: "center", letterSpacing: "-0.2px" } }, "Al crearla entrar\xE1s directo a la campa\xF1a, donde podr\xE1s", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, " importar un CSV"), ", ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "a\xF1adir leads a mano"), " o", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, " conectarla con Claude Cowork"), " para que se llene sola cada d\xEDa.")
-    }
-  ));
+  })), /* @__PURE__ */ React.createElement(CampaignSetup, { open: setupOpen, onClose: () => setSetupOpen(false), onCreated }));
 };
 window.CampaignsPage = CampaignsPage;
 window.CampaignDetail = CampaignDetail;

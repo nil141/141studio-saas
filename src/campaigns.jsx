@@ -635,7 +635,7 @@ const ConnectPanel = ({ onCSV, onManual, onCowork }) => {
 };
 
 // ── Detalle de campaña ────────────────────────────────────────────────
-const CampaignDetail = ({ campaignId, navigate }) => {
+const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [camps, reload] = useCampaigns();
   const toast   = useToast();
   const confirm = useConfirm();
@@ -646,6 +646,17 @@ const CampaignDetail = ({ campaignId, navigate }) => {
   const [addingLead, setAddingLead]   = useState(false);
   const [coworkOpen, setCoworkOpen]   = useState(false);
   const [pickCSV, csvInput] = useCSVImport(campaignId, () => reload());
+  const actionRan = useRef(false);
+
+  // Si venimos del wizard con una fuente elegida, la abrimos automáticamente
+  useEffect(() => {
+    if (actionRan.current || camps === null || !initialAction) return;
+    if (!camps.find(x => x.id === campaignId)) return;
+    actionRan.current = true;
+    if (initialAction === "csv") pickCSV();
+    else if (initialAction === "manual") setAddingLead(true);
+    else if (initialAction === "cowork") setCoworkOpen(true);
+  }, [camps, initialAction]);
 
   if (camps === null) return (
     <div style={{ padding:"60px 32px", textAlign:"center", color:"var(--text-subtle)", fontSize:13 }}>Cargando…</div>
@@ -838,29 +849,167 @@ const CampaignDetail = ({ campaignId, navigate }) => {
 };
 
 // ── Lista de campañas ─────────────────────────────────────────────────
+// ── Onboarding de creación de campaña (wizard por pasos) ─────────────
+const CampaignSetup = ({ open, onClose, onCreated }) => {
+  const toast = useToast();
+  const [step, setStep] = useState(0);   // 0 tipo · 1 nombre · 2 fuente
+  const [type, setType] = useState(null);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const nameRef = useRef(null);
+
+  useEffect(() => { if (open) { setStep(0); setType(null); setName(""); setBusy(false); } }, [open]);
+  useEffect(() => {
+    if (!open) return;
+    const fn = e => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", fn);
+    return () => window.removeEventListener("keydown", fn);
+  }, [open]);
+  useEffect(() => { if (open && step === 1) setTimeout(() => nameRef.current && nameRef.current.focus(), 60); }, [step, open]);
+
+  if (!open) return null;
+
+  const create = async (source) => {
+    if (busy || !name.trim()) return;
+    setBusy(true);
+    const r = await window.apiFetch("/api/campaigns/create", { name: name.trim(), ctype: type || "otro" });
+    const j = await r.json();
+    setBusy(false);
+    if (!j.ok) { toast(j.error || "No se pudo crear", "warn"); return; }
+    onClose();
+    onCreated(j.campaign.id, source);
+  };
+
+  const TITLES = ["¿Qué tipo de campaña?", "Ponle un nombre", "¿De dónde vienen los leads?"];
+  const SUBS = [
+    "Elige el canal principal de esta campaña.",
+    "Un nombre claro para reconocerla de un vistazo.",
+    "Puedes conectar los leads ahora o hacerlo más tarde.",
+  ];
+  const sourceCards = [
+    { id:"csv",    icon:"upload",   title:"Importar CSV",     sub:"Sube una lista de leads." },
+    { id:"cowork", icon:"sparkles", title:"Claude Cowork",    sub:"Se llena sola cada día.", accent:true },
+    { id:"manual", icon:"plus",     title:"Añadir a mano",    sub:"Un contacto suelto." },
+    { id:null,     icon:"clock",    title:"Lo haré luego",    sub:"Entrar a la campaña vacía." },
+  ];
+
+  const card = (sel, onClick, icon, title, sub, accent) => (
+    <div onClick={onClick} style={{
+      background: accent ? "rgba(158,154,229,0.07)" : (sel ? "rgba(158,154,229,0.1)" : "var(--bg-elev-1)"),
+      border: sel || accent ? "0.5px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)",
+      borderRadius:16, padding:"18px 16px", cursor:"pointer", textAlign:"center",
+      transition:"border-color .15s, background .15s",
+    }}
+      onMouseEnter={e => e.currentTarget.style.borderColor = "rgba(158,154,229,0.5)"}
+      onMouseLeave={e => e.currentTarget.style.borderColor = (sel || accent) ? "rgba(158,154,229,0.4)" : "var(--border)"}>
+      <div style={{ width:42, height:42, borderRadius:12, margin:"0 auto 11px",
+        background: accent || sel ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.05)",
+        border:"0.5px solid var(--border)", display:"grid", placeItems:"center",
+        color: accent || sel ? "var(--accent)" : "var(--text-muted)" }}>
+        <Icon name={icon} size={18} strokeWidth={1.7}/>
+      </div>
+      <div style={{ fontSize:13.5, fontWeight:500, color:"var(--text)", letterSpacing:"-0.3px" }}>{title}</div>
+      <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:5, lineHeight:1.5 }}>{sub}</div>
+    </div>
+  );
+
+  return ReactDOM.createPortal(
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:300, display:"flex", alignItems:"center", justifyContent:"center",
+      background:"rgba(0,0,0,0.72)", backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
+      padding:24, animation:"fade .15s ease-out",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:"100%", maxWidth:560, minHeight:440,
+        background:"rgba(255,255,255,0.05)", backdropFilter:"blur(40px)", WebkitBackdropFilter:"blur(40px)",
+        border:"1px solid rgba(255,255,255,0.1)", borderRadius:32, overflow:"hidden",
+        boxShadow:"0 25px 60px -20px rgba(0,0,0,0.6)",
+        display:"flex", flexDirection:"column", animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+      }}>
+        {/* Barra superior: progreso + cerrar */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"18px 20px 0" }}>
+          <div style={{ display:"flex", gap:6 }}>
+            {[0,1,2].map(i => (
+              <div key={i} style={{ width: i === step ? 22 : 7, height:7, borderRadius:99,
+                background: i <= step ? "var(--accent)" : "rgba(255,255,255,0.14)", transition:"all .2s" }}/>
+            ))}
+          </div>
+          <button onClick={onClose} style={{ width:34, height:34, borderRadius:"50%",
+            background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border)", cursor:"pointer",
+            display:"grid", placeItems:"center", color:"var(--text-muted)" }}>
+            <Icon name="x" size={14}/>
+          </button>
+        </div>
+
+        {/* Título del paso */}
+        <div style={{ padding:"22px 28px 0", textAlign:"center" }}>
+          <div style={{ fontSize:23, fontWeight:500, color:"var(--text)", letterSpacing:"-0.6px" }}>{TITLES[step]}</div>
+          <div style={{ fontSize:13, color:"var(--text-subtle)", marginTop:7, letterSpacing:"-0.2px" }}>{SUBS[step]}</div>
+        </div>
+
+        {/* Cuerpo */}
+        <div style={{ flex:1, padding:"26px 28px", display:"flex", flexDirection:"column", justifyContent:"center" }}>
+          {step === 0 && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              {["email","meta","google","otro"].map(id =>
+                card(type === id, () => { setType(id); setStep(1); }, CTYPES[id].icon, CTYPES[id].label, CTYPES[id].hint, false)
+              )}
+            </div>
+          )}
+          {step === 1 && (
+            <div>
+              <input ref={nameRef} value={name} onChange={e => setName(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && name.trim()) setStep(2); }}
+                placeholder="Ej. Outreach ecommerce moda"
+                style={{ width:"100%", background:"transparent", border:"none", outline:"none",
+                  fontSize:26, fontWeight:400, letterSpacing:"-1px", textAlign:"center",
+                  color: name ? "var(--text)" : "rgba(255,255,255,0.2)",
+                  fontFamily:"var(--font-display)", caretColor:"var(--accent)" }}/>
+              <div style={{ height:"0.5px", background:"rgba(255,255,255,0.12)", margin:"14px auto 0", maxWidth:360 }}/>
+              <div style={{ textAlign:"center", marginTop:10, fontSize:12, color:"var(--text-subtle)" }}>
+                Tipo: {CTYPES[type] ? CTYPES[type].label : "—"}
+              </div>
+            </div>
+          )}
+          {step === 2 && (
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+              {sourceCards.map((s, i) => card(false, () => create(s.id), s.icon, s.title, s.sub, s.accent))}
+            </div>
+          )}
+        </div>
+
+        {/* Pie: atrás / siguiente */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"0 24px 24px" }}>
+          {step > 0 ? (
+            <button className="btn ghost sm" onClick={() => setStep(s => s - 1)}>
+              <Icon name="chevron-left" size={13}/> Atrás
+            </button>
+          ) : <span/>}
+          {step === 1 && (
+            <button className="btn primary sm" onClick={() => name.trim() && setStep(2)}
+              style={{ opacity: name.trim() ? 1 : 0.4, pointerEvents: name.trim() ? "auto" : "none" }}>
+              Continuar <Icon name="chevron-right" size={13}/>
+            </button>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 const CampaignsPage = ({ navigate }) => {
   const [camps, reload] = useCampaigns();
-  const toast = useToast();
-  const [creating, setCreating] = useState(false);
-  const [newName, setNewName]   = useState("");
-  const [newType, setNewType]   = useState("email");
+  const [setupOpen, setSetupOpen] = useState(false);
 
   const today = _cToday();
   const list = camps || [];
   const totalLeads = list.reduce((s, c) => s + (c.leads || []).length, 0);
   const newToday   = list.reduce((s, c) => s + (c.leads || []).filter(l => l.date === today).length, 0);
 
-  const createCampaign = async () => {
-    const name = newName.trim();
-    if (!name) { toast("Ponle un nombre a la campaña", "warn"); return; }
-    const r = await window.apiFetch("/api/campaigns/create", { name, ctype: newType });
-    const j = await r.json();
-    if (!j.ok) { toast(j.error || "No se pudo crear", "warn"); return; }
-    toast("Campaña creada — ahora conéctale los leads", "success");
-    setCreating(false); setNewName(""); setNewType("email");
+  const onCreated = (id, source) => {
     reload();
-    // Entrar directo a la campaña recién creada (panel de conexión)
-    if (j.campaign && j.campaign.id) navigate("campaign", { campaignId: j.campaign.id });
+    navigate("campaign", { campaignId: id, action: source || undefined });
   };
 
   return (
@@ -876,7 +1025,7 @@ const CampaignsPage = ({ navigate }) => {
               : `${list.length} ${list.length === 1 ? "campaña" : "campañas"} · ${totalLeads} leads${newToday ? ` · +${newToday} hoy` : ""}`}
           </div>
         </div>
-        <ActionPill plusActions={() => setCreating(true)}/>
+        <ActionPill plusActions={() => setSetupOpen(true)}/>
       </div>
 
       <div className="tasks-scroll" style={{
@@ -950,27 +1099,8 @@ const CampaignsPage = ({ navigate }) => {
         })}
       </div>
 
-      {/* Crear campaña — QuickModal (mismo estilo que el resto de "+") */}
-      <QuickModal
-        open={creating}
-        onClose={() => { setCreating(false); setNewName(""); setNewType("email"); }}
-        onSubmit={createCampaign}
-        canSubmit={newName.trim().length > 0}
-        titlePlaceholder="Nombre de la campaña..."
-        titleValue={newName}
-        onTitleChange={setNewName}
-        types={["email","meta","google","otro"].map(id => ({ id, label:CTYPES[id].label, icon:CTYPES[id].icon }))}
-        type={newType}
-        onTypeChange={setNewType}
-        tabs={[{ id:"next", label:"¿Y los leads?", icon:"users", hasVal:false }]}
-        renderTab={() => (
-          <div style={{ fontSize:13, lineHeight:1.7, color:"var(--text-muted)", maxWidth:390, textAlign:"center", letterSpacing:"-0.2px" }}>
-            Al crearla entrarás directo a la campaña, donde podrás
-            <b style={{ color:"var(--text)" }}> importar un CSV</b>, <b style={{ color:"var(--text)" }}>añadir leads a mano</b> o
-            <b style={{ color:"var(--text)" }}> conectarla con Claude Cowork</b> para que se llene sola cada día.
-          </div>
-        )}
-      />
+      {/* Crear campaña — onboarding por pasos */}
+      <CampaignSetup open={setupOpen} onClose={() => setSetupOpen(false)} onCreated={onCreated}/>
     </div>
   );
 };

@@ -135,7 +135,7 @@
         case "campaigns":
           return /* @__PURE__ */ React.createElement(CampaignsPage, { navigate });
         case "campaign":
-          return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate });
+          return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate, initialAction: view.params.action });
         case "agenda":
           return /* @__PURE__ */ React.createElement(AgendaPage, { navigate });
         case "agentes":
