@@ -27,15 +27,16 @@
     useEffect(() => {
       const el = stripRef.current;
       if (!el) return;
+      const monday = new Date(selMid);
+      monday.setDate(monday.getDate() - (monday.getDay() + 6) % 7);
       const idx = stripDays.findIndex((d) => {
         const m = new Date(d);
         m.setHours(0, 0, 0, 0);
-        return m.getTime() === selMid.getTime();
+        return m.getTime() === monday.getTime();
       });
       if (idx < 0) return;
       const dayW = el.clientWidth / 7;
-      const target = Math.max(0, idx * dayW - (el.clientWidth - dayW) / 2);
-      el.scrollTo({ left: target, behavior: el.dataset.init ? "smooth" : "auto" });
+      el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";
     }, [selectedDay]);
     const allTasks = Object.values(D.TASKS).flat();
@@ -151,9 +152,7 @@
           padding: "4px 0",
           overflowX: "auto",
           scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          WebkitMaskImage: "linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)",
-          maskImage: "linear-gradient(to right, transparent 0, #000 36px, #000 calc(100% - 36px), transparent 100%)"
+          msOverflowStyle: "none"
         } }, stripDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
