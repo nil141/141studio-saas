@@ -587,6 +587,25 @@ def api_campaigns_create(body):
     _campaigns_save(data)
     return {"ok": True, "campaign": camp}
 
+def api_campaigns_update(body):
+    """Edita nombre y/o tipo de una campaña."""
+    cid = body.get("campaignId")
+    data = _campaigns_load()
+    camp = next((c for c in data["campaigns"] if c["id"] == cid), None)
+    if camp is None:
+        return {"ok": False, "error": "Campaña no encontrada"}
+    name = (body.get("name") or "").strip()
+    if name:
+        if any(c["id"] != cid and c["name"].strip().lower() == name.lower()
+               for c in data["campaigns"]):
+            return {"ok": False, "error": "Ya existe una campaña con ese nombre"}
+        camp["name"] = name[:120]
+    ctype = body.get("ctype")
+    if ctype:
+        camp["ctype"] = ctype if ctype in CAMPAIGN_TYPES else "otro"
+    _campaigns_save(data)
+    return {"ok": True, "campaign": {k: camp[k] for k in ("id", "name", "ctype", "createdAt") if k in camp}}
+
 def api_campaigns_update_lead(body):
     cid, lid = body.get("campaignId"), body.get("leadId")
     status   = body.get("status")
@@ -652,6 +671,7 @@ STRIPE_HANDLERS = {
 CAMPAIGN_HANDLERS = {
     "data":            api_campaigns_data,
     "create":          api_campaigns_create,
+    "update":          api_campaigns_update,
     "import_leads":    api_campaigns_import_leads,
     "update_lead":     api_campaigns_update_lead,
     "delete_lead":     api_campaigns_delete_lead,

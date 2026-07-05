@@ -168,30 +168,237 @@ const LeadStatusPill = ({ value, onChange }) => {
   );
 };
 
-// Barras de leads/día (14 días) — minimal, sin ejes
-const LeadsSpark = ({ leads }) => {
-  const days = Array.from({ length: 14 }, (_, i) => {
-    const d = new Date(); d.setDate(d.getDate() - (13 - i));
+// Barras de leads/día — minimal, sin ejes
+const LeadsSpark = ({ leads, days: nDays = 14, height = 64 }) => {
+  const days = Array.from({ length: nDays }, (_, i) => {
+    const d = new Date(); d.setDate(d.getDate() - (nDays - 1 - i));
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     return { ds, v: leads.filter(x => x.date === ds).length,
-             lab: d.getDate(), isToday: i === 13 };
+             lab: d.getDate(), isToday: i === nDays - 1 };
   });
   const max = Math.max(...days.map(d => d.v), 1);
+  const barH = height - 18;
   return (
-    <div style={{ display:"flex", alignItems:"flex-end", gap:5, height:64 }}>
+    <div style={{ display:"flex", alignItems:"flex-end", gap: nDays > 20 ? 3 : 5, height }}>
       {days.map((d, i) => (
         <div key={i} data-tooltip={`${d.v} lead${d.v === 1 ? "" : "s"} · día ${d.lab}`}
           style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:5, minWidth:0 }}>
           <div style={{
             width:"100%", maxWidth:22, borderRadius:5,
-            height: d.v === 0 ? 3 : Math.max(6, (d.v / max) * 46),
+            height: d.v === 0 ? 3 : Math.max(6, (d.v / max) * barH),
             background: d.v === 0 ? "rgba(255,255,255,0.06)"
                        : d.isToday ? "var(--accent)" : "rgba(158,154,229,0.45)",
             transition:"height .2s",
           }}/>
-          <span style={{ fontSize:9.5, color: d.isToday ? "var(--text)" : "var(--text-subtle)" }}>{d.lab}</span>
+          <span style={{ fontSize:9.5, color: d.isToday ? "var(--text)" : "var(--text-subtle)",
+            visibility: nDays > 20 && i % 2 === 1 && !d.isToday ? "hidden" : "visible" }}>{d.lab}</span>
         </div>
       ))}
+    </div>
+  );
+};
+
+// Barras horizontales genéricas (embudo, sectores, orígenes)
+const HBars = ({ items, total }) => (
+  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+    {items.map((it, i) => (
+      <div key={i} style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <span style={{ fontSize:12.5, color:"var(--text-muted)", width:110, flexShrink:0, letterSpacing:"-0.2px",
+          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{it.label}</span>
+        <div style={{ flex:1, height:6, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+          <div style={{ width: total ? `${(it.v / total) * 100}%` : 0, height:"100%",
+            background: it.color || "var(--accent)", borderRadius:99, transition:"width .25s" }}/>
+        </div>
+        <span style={{ fontSize:12.5, fontWeight:600, color:"var(--text)", width:34, textAlign:"right", flexShrink:0 }}>{it.v}</span>
+        <span style={{ fontSize:11, color:"var(--text-subtle)", width:38, textAlign:"right", flexShrink:0 }}>
+          {total ? Math.round((it.v / total) * 100) : 0}%
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
+// Bloque de analíticas (sección propia, todo real)
+const CampaignAnalytics = ({ c }) => {
+  const leads = c.leads || [];
+  const today = _cToday();
+  const nStatus = (s) => leads.filter(l => l.status === s).length;
+  const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
+  const replied   = nStatus("replied") + nStatus("won");
+  const won       = nStatus("won");
+
+  if (!leads.length) return (
+    <div style={{ textAlign:"center", padding:"70px 0", color:"var(--text-subtle)", fontSize:13.5, letterSpacing:"-0.3px" }}>
+      Sin datos todavía — las analíticas aparecen cuando la campaña tiene leads.
+    </div>
+  );
+
+  // Días con actividad → media y mejor día
+  const byDay = {};
+  leads.forEach(l => { if (l.date) byDay[l.date] = (byDay[l.date] || 0) + 1; });
+  const dayEntries = Object.entries(byDay).sort((a, b) => b[1] - a[1]);
+  const bestDay = dayEntries[0];
+  const activeDays = dayEntries.length || 1;
+  const avg = (leads.length / activeDays).toFixed(1).replace(".0", "");
+
+  // Sectores (top 6)
+  const bySector = {};
+  leads.forEach(l => { const s = (l.sector || "Sin sector").trim(); bySector[s] = (bySector[s] || 0) + 1; });
+  const sectors = Object.entries(bySector).sort((a, b) => b[1] - a[1]).slice(0, 6)
+    .map(([label, v]) => ({ label, v }));
+
+  // Orígenes
+  const SRC = { cowork:"Claude Cowork", csv:"CSV", manual:"A mano", api:"API" };
+  const bySrc = {};
+  leads.forEach(l => { const s = SRC[l.source] || "Claude Cowork"; bySrc[s] = (bySrc[s] || 0) + 1; });
+  const sources = Object.entries(bySrc).sort((a, b) => b[1] - a[1])
+    .map(([label, v]) => ({ label, v, color:"rgba(158,154,229,0.65)" }));
+
+  const funnel = [
+    { label:"Nuevos",       v:nStatus("new"),       color:"rgba(255,255,255,0.3)" },
+    { label:"Contactados",  v:nStatus("contacted"), color:"#60a5fa" },
+    { label:"Respondieron", v:nStatus("replied"),   color:"var(--green)" },
+    { label:"Ganados",      v:won,                  color:"var(--accent)" },
+    { label:"Descartados",  v:nStatus("discarded"), color:"rgba(255,255,255,0.14)" },
+  ];
+
+  const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"18px 20px" };
+  const cardTitle = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:14 };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16, paddingBottom:24 }}>
+      {/* KPIs */}
+      <div style={{ display:"flex", gap:26, padding:"4px 2px 16px", borderBottom:"0.5px solid var(--border)" }}>
+        <CampMiniStat label="Leads" value={leads.length} sub={`media ${avg}/día`}/>
+        <CampMiniStat label="Contactados" value={contacted} sub={`${Math.round((contacted/leads.length)*100)}% del total`} color="#60a5fa"/>
+        <CampMiniStat label="Respuestas" value={replied} sub={contacted ? `${Math.round((replied/contacted)*100)}% de contactados` : "—"} color="var(--green)"/>
+        <CampMiniStat label="Ganados" value={won} sub={leads.length ? `${Math.round((won/leads.length)*100)}% de cierre` : "—"} color="var(--accent)"/>
+        <CampMiniStat label="Mejor día" value={bestDay ? bestDay[1] : "—"}
+          sub={bestDay ? new Date(bestDay[0] + "T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"}) : ""}/>
+      </div>
+
+      {/* Leads por día — 30 días */}
+      <div style={cardStyle}>
+        <div style={cardTitle}>Leads recibidos · últimos 30 días</div>
+        <LeadsSpark leads={leads} days={30} height={92}/>
+      </div>
+
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+        {/* Embudo */}
+        <div style={cardStyle}>
+          <div style={cardTitle}>Embudo</div>
+          <HBars items={funnel} total={leads.length}/>
+        </div>
+        {/* Sectores */}
+        <div style={cardStyle}>
+          <div style={cardTitle}>Por sector</div>
+          <HBars items={sectors} total={leads.length}/>
+        </div>
+      </div>
+
+      {/* Orígenes */}
+      <div style={cardStyle}>
+        <div style={cardTitle}>Origen de los leads</div>
+        <HBars items={sources} total={leads.length}/>
+      </div>
+    </div>
+  );
+};
+
+// Bloque de ajustes de la campaña
+const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) => {
+  const toast = useToast();
+  const [name, setName]   = useState(c.name);
+  const [ctype, setCtype] = useState(c.ctype || "cowork");
+  useEffect(() => { setName(c.name); setCtype(c.ctype || "cowork"); }, [c.id]);
+  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork");
+
+  const save = async () => {
+    if (!name.trim()) { toast("El nombre no puede quedar vacío", "warn"); return; }
+    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype });
+    const j = await r.json();
+    if (!j.ok) { toast(j.error || "No se pudo guardar", "warn"); return; }
+    toast("Campaña actualizada", "success");
+    reload();
+  };
+
+  const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"20px 22px" };
+  const cardTitle = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:14 };
+  const conns = [
+    { icon:"upload",   label:"Importar CSV",        sub:"Sube una lista de leads.",        onClick:onCSV },
+    { icon:"plus",     label:"Añadir lead a mano",  sub:"Un contacto suelto.",             onClick:onManual },
+    { icon:"sparkles", label:"Conectar Claude Cowork", sub:"Leads automáticos cada día.",  onClick:onCowork },
+  ];
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:16, maxWidth:640, paddingBottom:24 }}>
+      {/* General */}
+      <div style={cardStyle}>
+        <div style={cardTitle}>General</div>
+        <div className="label">Nombre de la campaña</div>
+        <input className="input" value={name} onChange={e => setName(e.target.value)} style={{ marginBottom:14 }}/>
+        <div className="label">Tipo</div>
+        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+          {Object.entries(CTYPES).map(([id, t]) => {
+            const on = ctype === id;
+            return (
+              <button key={id} onClick={() => setCtype(id)} style={{
+                display:"inline-flex", alignItems:"center", gap:6,
+                padding:"7px 14px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
+                background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+                border: on ? "0.5px solid rgba(158,154,229,0.45)" : "0.5px solid var(--border)",
+                color: on ? "var(--accent)" : "var(--text-muted)",
+                fontSize:12.5, letterSpacing:"-0.2px", transition:"all .12s",
+              }}>
+                <Icon name={t.icon} size={12} strokeWidth={1.7}/>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {dirty && (
+          <div style={{ marginTop:16 }}>
+            <button className="btn primary sm" onClick={save}><Icon name="check" size={12}/> Guardar cambios</button>
+          </div>
+        )}
+      </div>
+
+      {/* Fuentes de leads */}
+      <div style={cardStyle}>
+        <div style={cardTitle}>Fuentes de leads</div>
+        <div style={{ display:"flex", flexDirection:"column" }}>
+          {conns.map((cn, i) => (
+            <div key={i} onClick={cn.onClick} className="task-row" style={{
+              display:"flex", alignItems:"center", gap:12, padding:"11px 2px", cursor:"pointer",
+              borderBottom: i === conns.length - 1 ? "none" : "0.5px solid var(--border)",
+            }}>
+              <div style={{ width:32, height:32, borderRadius:9, background:"rgba(255,255,255,0.05)",
+                border:"0.5px solid var(--border)", display:"grid", placeItems:"center", color:"var(--text-muted)", flexShrink:0 }}>
+                <Icon name={cn.icon} size={14} strokeWidth={1.7}/>
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13.5, color:"var(--text)", letterSpacing:"-0.3px" }}>{cn.label}</div>
+                <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:1 }}>{cn.sub}</div>
+              </div>
+              <Icon name="chevron-right" size={13} style={{ color:"rgba(255,255,255,0.18)" }}/>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Zona de peligro */}
+      <div style={{ ...cardStyle, borderColor:"rgba(220,91,93,0.25)" }}>
+        <div style={cardTitle}>Zona de peligro</div>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:14 }}>
+          <div style={{ fontSize:12.5, color:"var(--text-muted)", lineHeight:1.55 }}>
+            Eliminar la campaña borra también todos sus leads. No se puede deshacer.
+          </div>
+          <button className="btn sm" onClick={onRemove}
+            style={{ color:"var(--red)", borderColor:"rgba(220,91,93,0.4)", flexShrink:0 }}>
+            <Icon name="trash" size={12}/> Eliminar campaña
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -432,6 +639,7 @@ const CampaignDetail = ({ campaignId, navigate }) => {
   const [camps, reload] = useCampaigns();
   const toast   = useToast();
   const confirm = useConfirm();
+  const [view, setView]       = useState("leads");   // leads | stats | config
   const [filter, setFilter]   = useState("all");
   const [query, setQuery]     = useState("");
   const [openId, setOpenId]   = useState(null);
@@ -525,29 +733,43 @@ const CampaignDetail = ({ campaignId, navigate }) => {
           />
         </div>
 
-        {/* Mini-stats + gráfico (solo con leads) */}
-        {leads.length > 0 && (
-        <div style={{
-          display:"grid", gridTemplateColumns:"1fr 1.15fr", gap:28,
-          paddingBottom:20, borderBottom:"0.5px solid var(--border)", marginBottom:18,
-        }}>
-          <div style={{ display:"flex", gap:26, alignItems:"flex-start" }}>
-            <CampMiniStat label="Leads" value={leads.length} sub={newToday ? `+${newToday} hoy` : "sin nuevos hoy"}/>
-            <CampMiniStat label="Contactados" value={contacted} sub={leads.length ? `${Math.round((contacted/leads.length)*100)}% del total` : "—"} color="#60a5fa"/>
-            <CampMiniStat label="Respuestas" value={replied} sub={contacted ? `${replyPct}% de contactados` : "—"} color="var(--green)"/>
-            <CampMiniStat label="Ganados" value={nStatus("won")} sub="clientes cerrados" color="var(--accent)"/>
-          </div>
-          <div>
-            <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10 }}>
-              Leads recibidos · últimos 14 días
-            </div>
-            <LeadsSpark leads={leads}/>
-          </div>
+        {/* Secciones: Leads · Analíticas · Ajustes */}
+        <div style={{ display:"flex", alignItems:"center", gap:6, paddingBottom:16, borderBottom:"0.5px solid var(--border)", marginBottom:16 }}>
+          {[
+            { id:"leads",  label:"Leads",      icon:"users" },
+            { id:"stats",  label:"Analíticas", icon:"bar-chart" },
+            { id:"config", label:"Ajustes",    icon:"settings" },
+          ].map(t => {
+            const on = view === t.id;
+            return (
+              <button key={t.id} onClick={() => setView(t.id)} style={{
+                display:"inline-flex", alignItems:"center", gap:7,
+                padding:"7px 15px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
+                background: on ? "rgba(255,255,255,0.08)" : "transparent",
+                border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+                color: on ? "var(--text)" : "var(--text-subtle)",
+                fontSize:13, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
+                transition:"all .12s",
+              }}>
+                <Icon name={t.icon} size={13} strokeWidth={1.7}/>
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Mini-stats compactas (solo en Leads, con leads) */}
+        {view === "leads" && leads.length > 0 && (
+        <div style={{ display:"flex", gap:26, paddingBottom:16, borderBottom:"0.5px solid var(--border)", marginBottom:16 }}>
+          <CampMiniStat label="Leads" value={leads.length} sub={newToday ? `+${newToday} hoy` : "sin nuevos hoy"}/>
+          <CampMiniStat label="Contactados" value={contacted} sub={leads.length ? `${Math.round((contacted/leads.length)*100)}% del total` : "—"} color="#60a5fa"/>
+          <CampMiniStat label="Respuestas" value={replied} sub={contacted ? `${replyPct}% de contactados` : "—"} color="var(--green)"/>
+          <CampMiniStat label="Ganados" value={nStatus("won")} sub="clientes cerrados" color="var(--accent)"/>
         </div>
         )}
 
-        {/* Filtros + buscador (solo con leads) */}
-        {leads.length > 0 && (
+        {/* Filtros + buscador (solo en Leads, con leads) */}
+        {view === "leads" && leads.length > 0 && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
           {FILTERS.map(f => {
             const on = filter === f.id;
@@ -580,17 +802,21 @@ const CampaignDetail = ({ campaignId, navigate }) => {
         )}
       </div>
 
-      {/* Contenido: panel de conexión si está vacía; lista si hay leads */}
-      {leads.length === 0 ? (
-        <ConnectPanel onCSV={pickCSV} onManual={() => setAddingLead(true)} onCowork={() => setCoworkOpen(true)}/>
-      ) : (
+      {/* Contenido por sección */}
       <div className="tasks-scroll" style={{
         flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
         paddingRight:10, paddingTop:14, paddingBottom:8,
         WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
         maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       }}>
-        {visible.length === 0 ? (
+        {view === "stats" ? (
+          <CampaignAnalytics c={c}/>
+        ) : view === "config" ? (
+          <CampaignSettings c={c} reload={reload} onRemove={removeCampaign}
+            onCSV={pickCSV} onManual={() => setAddingLead(true)} onCowork={() => setCoworkOpen(true)}/>
+        ) : leads.length === 0 ? (
+          <ConnectPanel onCSV={pickCSV} onManual={() => setAddingLead(true)} onCowork={() => setCoworkOpen(true)}/>
+        ) : visible.length === 0 ? (
           <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:13.5, letterSpacing:"-0.3px" }}>
             Ningún lead coincide con el filtro.
           </div>
@@ -603,7 +829,6 @@ const CampaignDetail = ({ campaignId, navigate }) => {
             onCopy={() => copyDraft(l)}/>
         ))}
       </div>
-      )}
 
       {csvInput}
       <AddLeadModal open={addingLead} onClose={() => setAddingLead(false)} campaignId={c.id} onDone={reload}/>
