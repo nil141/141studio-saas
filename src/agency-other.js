@@ -10,7 +10,6 @@
     const DAY_ES = ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"];
     const MON_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const C_DOTS = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
-    const DAY_W = 86;
     const stripDays = (() => {
       const base = /* @__PURE__ */ new Date();
       base.setHours(12, 0, 0, 0);
@@ -34,7 +33,8 @@
         return m.getTime() === selMid.getTime();
       });
       if (idx < 0) return;
-      const target = Math.max(0, idx * DAY_W - (el.clientWidth - DAY_W) / 2);
+      const dayW = el.clientWidth / 7;
+      const target = Math.max(0, idx * dayW - (el.clientWidth - dayW) / 2);
       el.scrollTo({ left: target, behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";
     }, [selectedDay]);
@@ -172,8 +172,7 @@
           const trackCol = isSel ? "rgba(158,154,229,0.18)" : isToday2 ? "rgba(158,154,229,0.10)" : "rgba(255,255,255,0.06)";
           const ringCol = isSel ? "var(--accent)" : isToday2 ? "rgba(158,154,229,0.65)" : "rgba(255,255,255,0.35)";
           return /* @__PURE__ */ React.createElement("button", { key: d.toISOString(), onClick: () => setSelectedDay(new Date(d)), style: {
-            width: DAY_W,
-            flexShrink: 0,
+            flex: "0 0 calc(100% / 7)",
             cursor: "pointer",
             border: "none",
             background: "transparent",

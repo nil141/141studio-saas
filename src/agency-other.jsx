@@ -170,8 +170,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const MON_ES  = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
   const C_DOTS  = ["#fb7185","#60a5fa","#fbbf24","#34d399","#a78bfa","#f472b6","#22d3ee","#f59e0b"];
 
-  // Tira de días con scroll: 30 días atrás → 60 adelante (respecto a hoy)
-  const DAY_W = 86;
+  // Tira de días con scroll: se ven 7 (una semana) y se desliza para ver más.
+  // Rango: 30 días atrás → 60 adelante (respecto a hoy).
   const stripDays = (() => {
     const base = new Date(); base.setHours(12, 0, 0, 0);
     return Array.from({ length: 91 }, (_, i) => {
@@ -183,7 +183,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const todayMid = new Date(); todayMid.setHours(0,0,0,0);
   const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
 
-  // Centrar el día seleccionado en la tira (sin animación al montar, suave después)
+  // Centrar el día seleccionado (ancho de día = 1/7 del contenedor visible)
   useEffect(() => {
     const el = stripRef.current; if (!el) return;
     const idx = stripDays.findIndex(d => {
@@ -191,7 +191,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       return m.getTime() === selMid.getTime();
     });
     if (idx < 0) return;
-    const target = Math.max(0, idx * DAY_W - (el.clientWidth - DAY_W) / 2);
+    const dayW = el.clientWidth / 7;
+    const target = Math.max(0, idx * dayW - (el.clientWidth - dayW) / 2);
     el.scrollTo({ left: target, behavior: el.dataset.init ? "smooth" : "auto" });
     el.dataset.init = "1";
   }, [selectedDay]);
@@ -355,7 +356,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
                 return (
                   <button key={d.toISOString()} onClick={() => setSelectedDay(new Date(d))} style={{
-                    width:DAY_W, flexShrink:0, cursor:"pointer", border:"none", background:"transparent",
+                    flex:"0 0 calc(100% / 7)", cursor:"pointer", border:"none", background:"transparent",
                     display:"flex", flexDirection:"column", alignItems:"center",
                     gap:8, padding:"6px 0",
                     transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
