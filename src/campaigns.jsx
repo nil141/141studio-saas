@@ -138,6 +138,35 @@ const _cFmtDay = (ds) => {
   if (ds === _cToday()) return "Hoy";
   return new Date(ds + "T00:00:00").toLocaleDateString("es-ES", { day:"numeric", month:"short" });
 };
+const _cAddDays = (n) => {
+  const d = new Date(); d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+};
+// Enlaces de acción para escribir al lead
+const _digits = (s) => (s || "").replace(/[^\d]/g, "");
+const _waLink = (phone, text) => {
+  const p = _digits(phone);
+  if (!p) return null;
+  return `https://wa.me/${p}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+};
+const _mailtoLink = (email, subject, body) => {
+  if (!email) return null;
+  const q = [];
+  if (subject) q.push(`subject=${encodeURIComponent(subject)}`);
+  if (body)    q.push(`body=${encodeURIComponent(body)}`);
+  return `mailto:${email}${q.length ? "?" + q.join("&") : ""}`;
+};
+// Canales de un paso de seguimiento
+const FU_CH = {
+  email:    { label:"Email",    icon:"mail" },
+  whatsapp: { label:"WhatsApp", icon:"msg-circle" },
+  call:     { label:"Llamada",  icon:"phone" },
+};
+const FU_ORDER = ["email", "whatsapp", "call"];
+const _leadNextDue = (l) => {
+  const p = (Array.isArray(l.followUps) ? l.followUps : []).filter(s => !s.done && s.date).map(s => s.date).sort();
+  return p.length ? p[0] : null;
+};
 
 // ── Piezas pequeñas ───────────────────────────────────────────────────
 const CampMiniStat = ({ label, value, sub, color }) => (
@@ -389,12 +418,15 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
   const [name, setName]   = useState(c.name);
   const [ctype, setCtype] = useState(c.ctype || "cowork");
   const [goal, setGoal]   = useState(String(c.goal || ""));
-  useEffect(() => { setName(c.name); setCtype(c.ctype || "cowork"); setGoal(String(c.goal || "")); }, [c.id]);
-  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork") || (parseInt(goal || 0, 10) || 0) !== (c.goal || 0);
+  const [dailyGoal, setDailyGoal] = useState(String(c.dailyGoal || ""));
+  useEffect(() => { setName(c.name); setCtype(c.ctype || "cowork"); setGoal(String(c.goal || "")); setDailyGoal(String(c.dailyGoal || "")); }, [c.id]);
+  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork")
+    || (parseInt(goal || 0, 10) || 0) !== (c.goal || 0)
+    || (parseInt(dailyGoal || 0, 10) || 0) !== (c.dailyGoal || 0);
 
   const save = async () => {
     if (!name.trim()) { toast("El nombre no puede quedar vacío", "warn"); return; }
-    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype, goal: parseInt(goal || 0, 10) || 0 });
+    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype, goal: parseInt(goal || 0, 10) || 0, dailyGoal: parseInt(dailyGoal || 0, 10) || 0 });
     const j = await r.json();
     if (!j.ok) { toast(j.error || "No se pudo guardar", "warn"); return; }
     toast("Campaña actualizada", "success");
@@ -435,9 +467,18 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
             );
           })}
         </div>
-        <div className="label" style={{ marginTop:16 }}>Objetivo · clientes a cerrar <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
-        <input className="input" type="number" min="0" placeholder="Ej. 10" value={goal}
-          onChange={e => setGoal(e.target.value)} style={{ maxWidth:160 }}/>
+        <div style={{ display:"flex", gap:20, flexWrap:"wrap", marginTop:16 }}>
+          <div>
+            <div className="label">Objetivo · clientes a cerrar <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
+            <input className="input" type="number" min="0" placeholder="Ej. 10" value={goal}
+              onChange={e => setGoal(e.target.value)} style={{ maxWidth:160 }}/>
+          </div>
+          <div>
+            <div className="label">Meta diaria · leads a trabajar/día</div>
+            <input className="input" type="number" min="0" placeholder="15" value={dailyGoal}
+              onChange={e => setDailyGoal(e.target.value)} style={{ maxWidth:160 }}/>
+          </div>
+        </div>
         {dirty && (
           <div style={{ marginTop:16 }}>
             <button className="btn primary sm" onClick={save}><Icon name="check" size={12}/> Guardar cambios</button>
@@ -486,26 +527,62 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
 };
 
 // ── Fila de lead + panel expandible ──────────────────────────────────
-const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }) => {
+// Cabecera de sección dentro de la ficha del lead
+const _LeadSection = ({ icon, title, right, children }) => (
+  <div style={{ marginTop:16, paddingTop:16, borderTop:"0.5px solid var(--border)" }}>
+    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+      <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", display:"flex", alignItems:"center", gap:6 }}>
+        <Icon name={icon} size={12}/> {title}
+      </div>
+      {right}
+    </div>
+    {children}
+  </div>
+);
+
+const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, today }) => {
+  const toast = useToast();
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-  const KEYS = ["name","company","email","phone","website","linkedin","sector","notes","followUp"];
-  const [f, setF] = useState({});
+  const TEXT_KEYS = ["name","company","email","phone","website","linkedin","sector","audit","subject","draft","whatsapp","notes"];
+  const [f, setF]   = useState({});
+  const [fu, setFu] = useState([]);
   useEffect(() => {
-    if (open) { const o = {}; KEYS.forEach(k => o[k] = l[k] || ""); setF(o); }
+    if (open) {
+      const o = {}; TEXT_KEYS.forEach(k => o[k] = l[k] || ""); setF(o);
+      setFu(Array.isArray(l.followUps) ? l.followUps.map(x => ({ ...x })) : []);
+    }
   }, [open, l.id]);
   const set = (k) => (e) => setF(prev => ({ ...prev, [k]: e.target.value }));
-  const dirty = KEYS.some(k => (f[k] || "") !== (l[k] || ""));
-  const hasCowork = l.audit || l.draft || l.subject;
 
-  const followBadge = l.followUp && l.followUp >= _cToday();
+  const baseFu = Array.isArray(l.followUps) ? l.followUps : [];
+  const fuChanged = JSON.stringify(fu) !== JSON.stringify(baseFu);
+  const dirty = TEXT_KEYS.some(k => (f[k] || "") !== (l[k] || "")) || fuChanged;
+  const save = () => onSave({ ...f, followUps: fu });
+
+  // Seguimientos
+  const addFU  = () => setFu(prev => [...prev, { id:"fu"+Math.random().toString(36).slice(2,8), date:_cAddDays(3), note:"", channel:"email", done:false }]);
+  const updFU  = (i, patch) => setFu(prev => prev.map((s, j) => j === i ? { ...s, ...patch } : s));
+  const rmFU   = (i) => setFu(prev => prev.filter((_, j) => j !== i));
+  const cycleCh = (i) => { const idx = FU_ORDER.indexOf(fu[i].channel); updFU(i, { channel: FU_ORDER[(idx+1) % FU_ORDER.length] }); };
+
+  // Indicadores de la fila plegada
+  const done = { audit: !!l.audit, email: !!l.draft, whatsapp: !!l.whatsapp };
+  const nextDue = _leadNextDue(l);
+  const overdue = nextDue && nextDue < today;
+
+  const copyText = (text, label) => navigator.clipboard.writeText(text || "")
+    .then(() => toast(`${label} copiado`, "success")).catch(() => toast("No se pudo copiar", "warn"));
+
   const field = (label, k, ph, type) => (
     <div>
       <div style={{ fontSize:10.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", marginBottom:5 }}>{label}</div>
       <input className="input" type={type || "text"} placeholder={ph} value={f[k] || ""} onChange={set(k)}
-        onClick={e => e.stopPropagation()}
-        style={{ padding:"8px 11px", fontSize:12.5 }}/>
+        onClick={e => e.stopPropagation()} style={{ padding:"8px 11px", fontSize:12.5 }}/>
     </div>
   );
+  const miniBtn = { fontSize:11.5, padding:"5px 10px" };
+  const emailHref = _mailtoLink(f.email, f.subject, f.draft);
+  const waHref    = _waLink(f.phone, f.whatsapp);
 
   return (
     <>
@@ -521,11 +598,19 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
             {l.linkedin && <a href={l.linkedin} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
               data-tooltip="Ver LinkedIn" style={{ color:"var(--text-subtle)", display:"inline-flex", flexShrink:0 }}>
               <Icon name="external-link" size={11}/></a>}
-            {followBadge && <Icon name="clock" size={11} style={{ color:"var(--accent)", flexShrink:0 }} data-tooltip={`Seguimiento ${_cFmtDay(l.followUp)}`}/>}
+            {nextDue && <Icon name="clock" size={11} style={{ color: overdue ? "var(--red)" : "var(--accent)", flexShrink:0 }}
+              data-tooltip={`${overdue ? "Seguimiento vencido" : "Próximo seguimiento"} · ${_cFmtDay(nextDue)}`}/>}
           </div>
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
             {l.company || "—"}{l.sector ? ` · ${l.sector}` : ""}
           </div>
+        </div>
+        {/* Progreso de gestión: auditoría · email · whatsapp */}
+        <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+          {[["search","audit","Auditoría"],["mail","email","Email"],["msg-circle","whatsapp","WhatsApp"]].map(([ic, k, lab]) => (
+            <Icon key={k} name={ic} size={13} data-tooltip={`${lab}${done[k] ? " ✓" : " pendiente"}`}
+              style={{ color: done[k] ? "var(--accent)" : "rgba(255,255,255,0.13)" }}/>
+          ))}
         </div>
         <div style={{ flex:"1 1 0", minWidth:0, fontSize:12, color:"var(--text-muted)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
           {l.email || l.website || "—"}
@@ -545,11 +630,11 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
           margin:"0 0 14px", padding:"18px 20px",
           background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:14,
         }}>
-          {/* Datos de contacto editables */}
+          {/* 1 · Datos del lead */}
           <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:12, display:"flex", alignItems:"center", gap:6 }}>
             <Icon name="user-cog" size={12}/> Datos del lead
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12, marginBottom:12 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:12 }}>
             {field("Nombre", "name", "Nombre")}
             {field("Empresa", "company", "Empresa")}
             {field("Sector", "sector", "Sector")}
@@ -558,56 +643,105 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
             {field("Web", "website", "empresa.com")}
             {field("LinkedIn", "linkedin", "linkedin.com/in/…")}
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:12, marginBottom:6 }}>
-            <div>
-              <div style={{ fontSize:10.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", marginBottom:5 }}>Notas</div>
-              <textarea className="input" rows={2} placeholder="Notas internas, contexto de la llamada…"
-                value={f.notes || ""} onChange={set("notes")} onClick={e => e.stopPropagation()}
-                style={{ padding:"8px 11px", fontSize:12.5, resize:"vertical", lineHeight:1.5 }}/>
-            </div>
-            {field("Próximo seguimiento", "followUp", "", "date")}
-          </div>
-          {dirty && (
-            <div style={{ display:"flex", justifyContent:"flex-end", marginBottom:8 }}>
-              <button className="btn primary sm" onClick={e => { e.stopPropagation(); onSave(f); }}>
-                <Icon name="check" size={12}/> Guardar cambios
+
+          {/* 2 · Auditoría */}
+          <_LeadSection icon="search" title="Auditoría del ecommerce">
+            <textarea className="input" rows={3} placeholder="Hallazgos: qué le falla a su tienda, oportunidades, ángulo para el mensaje…"
+              value={f.audit || ""} onChange={set("audit")}
+              style={{ padding:"9px 12px", fontSize:13, resize:"vertical", lineHeight:1.6, width:"100%" }}/>
+          </_LeadSection>
+
+          {/* 3 · Email */}
+          <_LeadSection icon="mail" title="Email" right={
+            <div style={{ display:"flex", gap:7 }}>
+              <button className="btn ghost sm" style={miniBtn} onClick={() => copyText((f.subject ? `Asunto: ${f.subject}\n\n` : "") + (f.draft || ""), "Email")}>
+                <Icon name="file" size={11}/> Copiar
               </button>
+              <a className="btn sm" style={{ ...miniBtn, opacity: emailHref ? 1 : 0.4, pointerEvents: emailHref ? "auto":"none" }}
+                href={emailHref || undefined} target="_blank" rel="noopener noreferrer">
+                <Icon name="send" size={11}/> Abrir
+              </a>
             </div>
-          )}
+          }>
+            <input className="input" placeholder="Asunto" value={f.subject || ""} onChange={set("subject")}
+              style={{ padding:"8px 11px", fontSize:12.5, marginBottom:8, width:"100%" }}/>
+            <textarea className="input" rows={4} placeholder="Cuerpo del correo…"
+              value={f.draft || ""} onChange={set("draft")}
+              style={{ padding:"9px 12px", fontSize:13, resize:"vertical", lineHeight:1.6, width:"100%" }}/>
+          </_LeadSection>
 
-          {/* Auditoría + Borrador (de Cowork) */}
-          {hasCowork && (
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:22, marginTop:8, paddingTop:16, borderTop:"0.5px solid var(--border)" }}>
-              <div>
-                <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-                  <Icon name="search" size={11}/> Auditoría
-                </div>
-                <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
-                  {l.audit || "Sin auditoría."}
-                </div>
-              </div>
-              <div>
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                  <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", display:"flex", alignItems:"center", gap:6 }}>
-                    <Icon name="mail" size={11}/> Borrador del mensaje
-                  </div>
-                  <button className="btn ghost sm" onClick={e => { e.stopPropagation(); onCopy(); }}>
-                    <Icon name="file" size={11}/> Copiar
-                  </button>
-                </div>
-                {l.subject && <div style={{ fontSize:13.5, fontWeight:600, color:"var(--text)", marginBottom:8, letterSpacing:"-0.3px" }}>{l.subject}</div>}
-                <div style={{ fontSize:13, lineHeight:1.65, color:"var(--text-muted)", whiteSpace:"pre-wrap" }}>
-                  {l.draft || "Sin borrador."}
-                </div>
-              </div>
+          {/* 4 · WhatsApp */}
+          <_LeadSection icon="msg-circle" title="WhatsApp" right={
+            <div style={{ display:"flex", gap:7 }}>
+              <button className="btn ghost sm" style={miniBtn} onClick={() => copyText(f.whatsapp, "Mensaje")}>
+                <Icon name="file" size={11}/> Copiar
+              </button>
+              <a className="btn sm" style={{ ...miniBtn, opacity: waHref ? 1 : 0.4, pointerEvents: waHref ? "auto":"none" }}
+                href={waHref || undefined} target="_blank" rel="noopener noreferrer"
+                data-tooltip={waHref ? "" : "Añade un teléfono"}>
+                <Icon name="msg-circle" size={11}/> Abrir
+              </a>
             </div>
-          )}
+          }>
+            <textarea className="input" rows={3} placeholder="Mensaje de WhatsApp…"
+              value={f.whatsapp || ""} onChange={set("whatsapp")}
+              style={{ padding:"9px 12px", fontSize:13, resize:"vertical", lineHeight:1.6, width:"100%" }}/>
+          </_LeadSection>
 
-          {/* Pie: eliminar */}
-          <div style={{ display:"flex", justifyContent:"flex-end", marginTop:14, paddingTop:12, borderTop:"0.5px solid var(--border)" }}>
-            <button className="btn ghost sm" onClick={e => { e.stopPropagation(); onDelete(); }}
-              style={{ color:"var(--red)" }}>
+          {/* 5 · Seguimientos */}
+          <_LeadSection icon="clock" title="Seguimientos" right={
+            <button className="btn ghost sm" style={miniBtn} onClick={addFU}><Icon name="plus" size={11}/> Añadir</button>
+          }>
+            {fu.length === 0 ? (
+              <div style={{ fontSize:12.5, color:"var(--text-subtle)", padding:"2px 0 2px" }}>Sin seguimientos programados.</div>
+            ) : (
+              <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
+                {fu.map((s, i) => {
+                  const ch = FU_CH[s.channel] || FU_CH.email;
+                  const isOver = !s.done && s.date && s.date < today;
+                  return (
+                    <div key={s.id || i} style={{ display:"flex", alignItems:"center", gap:9 }}>
+                      <button onClick={() => updFU(i, { done: !s.done })} data-tooltip={s.done ? "Hecho" : "Marcar hecho"}
+                        style={{ width:18, height:18, borderRadius:6, flexShrink:0, cursor:"pointer",
+                          background: s.done ? "var(--accent)" : "transparent",
+                          border: `1.5px solid ${s.done ? "var(--accent)" : "var(--border)"}`,
+                          display:"grid", placeItems:"center", color:"#fff" }}>
+                        {s.done && <Icon name="check" size={11}/>}
+                      </button>
+                      <button onClick={() => cycleCh(i)} data-tooltip={`Canal: ${ch.label} (clic para cambiar)`}
+                        style={{ width:30, height:30, borderRadius:8, flexShrink:0, cursor:"pointer",
+                          background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border)",
+                          display:"grid", placeItems:"center", color:"var(--text-muted)" }}>
+                        <Icon name={ch.icon} size={13}/>
+                      </button>
+                      <input type="date" className="input" value={s.date || ""} onChange={e => updFU(i, { date: e.target.value })}
+                        style={{ padding:"6px 9px", fontSize:12, width:140, flexShrink:0, color: isOver ? "var(--red)" : "var(--text)" }}/>
+                      <input className="input" placeholder="Nota del seguimiento…" value={s.note || ""} onChange={e => updFU(i, { note: e.target.value })}
+                        style={{ padding:"6px 10px", fontSize:12.5, flex:1, textDecoration: s.done ? "line-through" : "none", opacity: s.done ? 0.6 : 1 }}/>
+                      <button className="btn ghost sm" style={{ padding:"5px 8px" }} onClick={() => rmFU(i)} data-tooltip="Quitar">
+                        <Icon name="x" size={12}/>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </_LeadSection>
+
+          {/* 6 · Notas */}
+          <_LeadSection icon="edit" title="Notas internas">
+            <textarea className="input" rows={2} placeholder="Contexto, cargo, ubicación, recordatorios…"
+              value={f.notes || ""} onChange={set("notes")}
+              style={{ padding:"8px 11px", fontSize:12.5, resize:"vertical", lineHeight:1.55, width:"100%" }}/>
+          </_LeadSection>
+
+          {/* Pie: guardar + eliminar */}
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginTop:16, paddingTop:14, borderTop:"0.5px solid var(--border)" }}>
+            <button className="btn ghost sm" onClick={onDelete} style={{ color:"var(--red)" }}>
               <Icon name="trash" size={12}/> Eliminar lead
+            </button>
+            <button className="btn primary sm" onClick={save} disabled={!dirty} style={{ opacity: dirty ? 1 : 0.45 }}>
+              <Icon name="check" size={12}/> Guardar
             </button>
           </div>
         </div>
@@ -808,6 +942,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
   const replied   = nStatus("replied") + nStatus("won");
   const replyPct  = contacted ? Math.round((replied / contacted) * 100) : 0;
+  const dailyGoal = c.dailyGoal || 15;
+  const workedToday = leads.filter(l => l.workedAt === today).length;
 
   const visible = leads.filter(l => {
     if (filter !== "all" && l.status !== filter) return false;
@@ -821,23 +957,36 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
 
   const setStatus = async (l, status) => {
     try {
-      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status });
+      // Avanzar un lead (contactado/respondió/ganado) cuenta como trabajo de hoy
+      const fields = {};
+      if (["contacted","replied","won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
+      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) { toast("Error al guardar", "warn"); }
   };
   const saveLead = async (l, fields) => {
     try {
-      const r = await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, fields });
+      // Escribir la auditoría marca el lead como trabajado hoy (progreso diario)
+      const payload = { ...fields };
+      if ((payload.audit || "").trim() && l.workedAt !== today) payload.workedAt = today;
+      const r = await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, fields: payload });
       const j = await r.json();
       if (!j.ok) { toast(j.error || "No se pudo guardar", "warn"); return; }
       toast("Lead actualizado", "success");
       reload();
     } catch (e) { toast("Error al guardar", "warn"); }
   };
+  // Abrir el siguiente lead sin trabajar (para la sesión diaria)
+  const openNext = () => {
+    const next = leads.slice().reverse().find(l => l.status === "new" && l.workedAt !== today);
+    if (!next) { toast("No quedan leads nuevos por trabajar 🎉", "success"); return; }
+    setFilter("all"); setQuery(""); setOpenId(next.id);
+    setTimeout(() => document.getElementById("lead-" + next.id)?.scrollIntoView({ behavior:"smooth", block:"center" }), 60);
+  };
   const exportCSV = () => {
     if (!leads.length) { toast("No hay leads que exportar", "warn"); return; }
-    const cols = ["name","company","email","phone","website","linkedin","sector","status","date","followUp","notes","subject","draft","audit"];
-    const head = ["Nombre","Empresa","Email","Teléfono","Web","LinkedIn","Sector","Estado","Fecha","Seguimiento","Notas","Asunto","Borrador","Auditoría"];
+    const cols = ["name","company","email","phone","website","linkedin","sector","status","date","notes","subject","draft","whatsapp","audit"];
+    const head = ["Nombre","Empresa","Email","Teléfono","Web","LinkedIn","Sector","Estado","Fecha","Notas","Asunto","Email","WhatsApp","Auditoría"];
     const esc = (v) => { const s = (v == null ? "" : String(v)); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const rows = leads.map(l => cols.map(k => esc(k === "status" ? (LEAD_STATUS[l.status] || {}).label : l[k])).join(","));
     const csv = head.join(",") + "\n" + rows.join("\n");
@@ -929,6 +1078,36 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
           })}
         </div>
 
+        {/* Progreso diario — auditar/contactar X leads al día */}
+        {view === "leads" && leads.length > 0 && (() => {
+          const pct = Math.min(100, Math.round((workedToday / dailyGoal) * 100));
+          const doneDay = workedToday >= dailyGoal;
+          return (
+            <div style={{
+              display:"flex", alignItems:"center", gap:16, marginBottom:12,
+              background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:12, padding:"12px 16px",
+            }}>
+              <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.08em", color: doneDay ? "var(--green)" : "var(--accent)", fontWeight:600, flexShrink:0 }}>
+                Hoy
+              </div>
+              <div style={{ flex:1, minWidth:80 }}>
+                <div style={{ height:7, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+                  <div style={{ width:`${pct}%`, height:"100%", borderRadius:99, transition:"width .3s",
+                    background: doneDay ? "var(--green)" : "var(--accent)" }}/>
+                </div>
+              </div>
+              <div style={{ fontSize:12.5, color:"var(--text-muted)", flexShrink:0, letterSpacing:"-0.2px" }}>
+                <b style={{ color: doneDay ? "var(--green)" : "var(--text)", fontSize:14 }}>{workedToday}</b>
+                <span style={{ opacity:0.6 }}> / {dailyGoal} trabajados</span>
+                {doneDay && <span style={{ color:"var(--green)", marginLeft:8 }}>¡Objetivo del día! 🎉</span>}
+              </div>
+              <button className="btn primary sm" onClick={openNext} style={{ flexShrink:0 }}>
+                <Icon name="arrow" size={12}/> Siguiente
+              </button>
+            </div>
+          );
+        })()}
+
         {/* Filtros + buscador (solo en Leads, con leads) */}
         {view === "leads" && leads.length > 0 && (
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:4, flexWrap:"wrap" }}>
@@ -982,13 +1161,15 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
             Ningún lead coincide con el filtro.
           </div>
         ) : visible.map((l, i) => (
-          <LeadRow key={l.id} l={l} last={i === visible.length - 1}
-            open={openId === l.id}
-            onToggle={() => setOpenId(openId === l.id ? null : l.id)}
-            onStatus={(s) => setStatus(l, s)}
-            onDelete={() => removeLead(l)}
-            onCopy={() => copyDraft(l)}
-            onSave={(fields) => saveLead(l, fields)}/>
+          <div key={l.id} id={"lead-" + l.id}>
+            <LeadRow l={l} last={i === visible.length - 1} today={today}
+              open={openId === l.id}
+              onToggle={() => setOpenId(openId === l.id ? null : l.id)}
+              onStatus={(s) => setStatus(l, s)}
+              onDelete={() => removeLead(l)}
+              onCopy={() => copyDraft(l)}
+              onSave={(fields) => saveLead(l, fields)}/>
+          </div>
         ))}
       </div>
 

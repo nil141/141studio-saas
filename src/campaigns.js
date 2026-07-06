@@ -137,6 +137,34 @@ const _cFmtDay = (ds) => {
   if (ds === _cToday()) return "Hoy";
   return (/* @__PURE__ */ new Date(ds + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 };
+const _cAddDays = (n) => {
+  const d = /* @__PURE__ */ new Date();
+  d.setDate(d.getDate() + n);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+};
+const _digits = (s) => (s || "").replace(/[^\d]/g, "");
+const _waLink = (phone, text) => {
+  const p = _digits(phone);
+  if (!p) return null;
+  return `https://wa.me/${p}${text ? `?text=${encodeURIComponent(text)}` : ""}`;
+};
+const _mailtoLink = (email, subject, body) => {
+  if (!email) return null;
+  const q = [];
+  if (subject) q.push(`subject=${encodeURIComponent(subject)}`);
+  if (body) q.push(`body=${encodeURIComponent(body)}`);
+  return `mailto:${email}${q.length ? "?" + q.join("&") : ""}`;
+};
+const FU_CH = {
+  email: { label: "Email", icon: "mail" },
+  whatsapp: { label: "WhatsApp", icon: "msg-circle" },
+  call: { label: "Llamada", icon: "phone" }
+};
+const FU_ORDER = ["email", "whatsapp", "call"];
+const _leadNextDue = (l) => {
+  const p = (Array.isArray(l.followUps) ? l.followUps : []).filter((s) => !s.done && s.date).map((s) => s.date).sort();
+  return p.length ? p[0] : null;
+};
 const CampMiniStat = ({ label, value, sub, color }) => /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 6 } }, label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 600, fontFamily: "var(--font-display)", letterSpacing: "-0.5px", color: color || "var(--text)" } }, value), sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, sub));
 const LeadStatusPill = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
@@ -342,18 +370,20 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
   const [name, setName] = useState(c.name);
   const [ctype, setCtype] = useState(c.ctype || "cowork");
   const [goal, setGoal] = useState(String(c.goal || ""));
+  const [dailyGoal, setDailyGoal] = useState(String(c.dailyGoal || ""));
   useEffect(() => {
     setName(c.name);
     setCtype(c.ctype || "cowork");
     setGoal(String(c.goal || ""));
+    setDailyGoal(String(c.dailyGoal || ""));
   }, [c.id]);
-  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork") || (parseInt(goal || 0, 10) || 0) !== (c.goal || 0);
+  const dirty = name.trim() !== c.name || ctype !== (c.ctype || "cowork") || (parseInt(goal || 0, 10) || 0) !== (c.goal || 0) || (parseInt(dailyGoal || 0, 10) || 0) !== (c.dailyGoal || 0);
   const save = async () => {
     if (!name.trim()) {
       toast("El nombre no puede quedar vac\xEDo", "warn");
       return;
     }
-    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype, goal: parseInt(goal || 0, 10) || 0 });
+    const r = await window.apiFetch("/api/campaigns/update", { campaignId: c.id, name: name.trim(), ctype, goal: parseInt(goal || 0, 10) || 0, dailyGoal: parseInt(dailyGoal || 0, 10) || 0 });
     const j = await r.json();
     if (!j.ok) {
       toast(j.error || "No se pudo guardar", "warn");
@@ -386,7 +416,7 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
       letterSpacing: "-0.2px",
       transition: "all .12s"
     } }, /* @__PURE__ */ React.createElement(Icon, { name: t.icon, size: 12, strokeWidth: 1.7 }), t.label);
-  })), /* @__PURE__ */ React.createElement("div", { className: "label", style: { marginTop: 16 } }, "Objetivo \xB7 clientes a cerrar ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "(opcional)")), /* @__PURE__ */ React.createElement(
+  })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, flexWrap: "wrap", marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Objetivo \xB7 clientes a cerrar ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "(opcional)")), /* @__PURE__ */ React.createElement(
     "input",
     {
       className: "input",
@@ -397,7 +427,18 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
       onChange: (e) => setGoal(e.target.value),
       style: { maxWidth: 160 }
     }
-  ), dirty && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar cambios"))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Fuentes de leads"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, conns.map((cn, i) => /* @__PURE__ */ React.createElement("div", { key: i, onClick: cn.onClick, className: "task-row", style: {
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Meta diaria \xB7 leads a trabajar/d\xEDa"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "input",
+      type: "number",
+      min: "0",
+      placeholder: "15",
+      value: dailyGoal,
+      onChange: (e) => setDailyGoal(e.target.value),
+      style: { maxWidth: 160 }
+    }
+  ))), dirty && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar cambios"))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Fuentes de leads"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, conns.map((cn, i) => /* @__PURE__ */ React.createElement("div", { key: i, onClick: cn.onClick, className: "task-row", style: {
     display: "flex",
     alignItems: "center",
     gap: 12,
@@ -425,21 +466,37 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
     " Eliminar campa\xF1a"
   ))));
 };
-const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }) => {
+const _LeadSection = ({ icon, title, right, children }) => /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingTop: 16, borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 12 }), " ", title), right), children);
+const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, today }) => {
+  const toast = useToast();
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-  const KEYS = ["name", "company", "email", "phone", "website", "linkedin", "sector", "notes", "followUp"];
+  const TEXT_KEYS = ["name", "company", "email", "phone", "website", "linkedin", "sector", "audit", "subject", "draft", "whatsapp", "notes"];
   const [f, setF] = useState({});
+  const [fu, setFu] = useState([]);
   useEffect(() => {
     if (open) {
       const o = {};
-      KEYS.forEach((k) => o[k] = l[k] || "");
+      TEXT_KEYS.forEach((k) => o[k] = l[k] || "");
       setF(o);
+      setFu(Array.isArray(l.followUps) ? l.followUps.map((x) => ({ ...x })) : []);
     }
   }, [open, l.id]);
   const set = (k) => (e) => setF((prev) => ({ ...prev, [k]: e.target.value }));
-  const dirty = KEYS.some((k) => (f[k] || "") !== (l[k] || ""));
-  const hasCowork = l.audit || l.draft || l.subject;
-  const followBadge = l.followUp && l.followUp >= _cToday();
+  const baseFu = Array.isArray(l.followUps) ? l.followUps : [];
+  const fuChanged = JSON.stringify(fu) !== JSON.stringify(baseFu);
+  const dirty = TEXT_KEYS.some((k) => (f[k] || "") !== (l[k] || "")) || fuChanged;
+  const save = () => onSave({ ...f, followUps: fu });
+  const addFU = () => setFu((prev) => [...prev, { id: "fu" + Math.random().toString(36).slice(2, 8), date: _cAddDays(3), note: "", channel: "email", done: false }]);
+  const updFU = (i, patch) => setFu((prev) => prev.map((s, j) => j === i ? { ...s, ...patch } : s));
+  const rmFU = (i) => setFu((prev) => prev.filter((_, j) => j !== i));
+  const cycleCh = (i) => {
+    const idx = FU_ORDER.indexOf(fu[i].channel);
+    updFU(i, { channel: FU_ORDER[(idx + 1) % FU_ORDER.length] });
+  };
+  const done = { audit: !!l.audit, email: !!l.draft, whatsapp: !!l.whatsapp };
+  const nextDue = _leadNextDue(l);
+  const overdue = nextDue && nextDue < today;
+  const copyText = (text, label) => navigator.clipboard.writeText(text || "").then(() => toast(`${label} copiado`, "success")).catch(() => toast("No se pudo copiar", "warn"));
   const field = (label, k, ph, type) => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", marginBottom: 5 } }, label), /* @__PURE__ */ React.createElement(
     "input",
     {
@@ -452,6 +509,9 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
       style: { padding: "8px 11px", fontSize: 12.5 }
     }
   ));
+  const miniBtn = { fontSize: 11.5, padding: "5px 10px" };
+  const emailHref = _mailtoLink(f.email, f.subject, f.draft);
+  const waHref = _waLink(f.phone, f.whatsapp);
   return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { onClick: onToggle, className: "task-row", style: {
     display: "flex",
     alignItems: "center",
@@ -470,7 +530,24 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
       style: { color: "var(--text-subtle)", display: "inline-flex", flexShrink: 0 }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 11 })
-  ), followBadge && /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 11, style: { color: "var(--accent)", flexShrink: 0 }, "data-tooltip": `Seguimiento ${_cFmtDay(l.followUp)}` })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+  ), nextDue && /* @__PURE__ */ React.createElement(
+    Icon,
+    {
+      name: "clock",
+      size: 11,
+      style: { color: overdue ? "var(--red)" : "var(--accent)", flexShrink: 0 },
+      "data-tooltip": `${overdue ? "Seguimiento vencido" : "Pr\xF3ximo seguimiento"} \xB7 ${_cFmtDay(nextDue)}`
+    }
+  )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 } }, [["search", "audit", "Auditor\xEDa"], ["mail", "email", "Email"], ["msg-circle", "whatsapp", "WhatsApp"]].map(([ic, k, lab]) => /* @__PURE__ */ React.createElement(
+    Icon,
+    {
+      key: k,
+      name: ic,
+      size: 13,
+      "data-tooltip": `${lab}${done[k] ? " \u2713" : " pendiente"}`,
+      style: { color: done[k] ? "var(--accent)" : "rgba(255,255,255,0.13)" }
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
     color: "rgba(255,255,255,0.2)",
     flexShrink: 0,
     transform: open ? "rotate(180deg)" : "none",
@@ -481,36 +558,141 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
     background: "var(--bg-elev-1)",
     border: "0.5px solid var(--border)",
     borderRadius: 14
-  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Web", "website", "empresa.com"), field("LinkedIn", "linkedin", "linkedin.com/in/\u2026")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", marginBottom: 5 } }, "Notas"), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Web", "website", "empresa.com"), field("LinkedIn", "linkedin", "linkedin.com/in/\u2026")), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "search", title: "Auditor\xEDa del ecommerce" }, /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      className: "input",
+      rows: 3,
+      placeholder: "Hallazgos: qu\xE9 le falla a su tienda, oportunidades, \xE1ngulo para el mensaje\u2026",
+      value: f.audit || "",
+      onChange: set("audit"),
+      style: { padding: "9px 12px", fontSize: 13, resize: "vertical", lineHeight: 1.6, width: "100%" }
+    }
+  )), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "mail", title: "Email", right: /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 7 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", style: miniBtn, onClick: () => copyText((f.subject ? `Asunto: ${f.subject}
+
+` : "") + (f.draft || ""), "Email") }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 11 }), " Copiar"), /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      className: "btn sm",
+      style: { ...miniBtn, opacity: emailHref ? 1 : 0.4, pointerEvents: emailHref ? "auto" : "none" },
+      href: emailHref || void 0,
+      target: "_blank",
+      rel: "noopener noreferrer"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 11 }),
+    " Abrir"
+  )) }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "input",
+      placeholder: "Asunto",
+      value: f.subject || "",
+      onChange: set("subject"),
+      style: { padding: "8px 11px", fontSize: 12.5, marginBottom: 8, width: "100%" }
+    }
+  ), /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      className: "input",
+      rows: 4,
+      placeholder: "Cuerpo del correo\u2026",
+      value: f.draft || "",
+      onChange: set("draft"),
+      style: { padding: "9px 12px", fontSize: 13, resize: "vertical", lineHeight: 1.6, width: "100%" }
+    }
+  )), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "msg-circle", title: "WhatsApp", right: /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 7 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", style: miniBtn, onClick: () => copyText(f.whatsapp, "Mensaje") }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 11 }), " Copiar"), /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      className: "btn sm",
+      style: { ...miniBtn, opacity: waHref ? 1 : 0.4, pointerEvents: waHref ? "auto" : "none" },
+      href: waHref || void 0,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      "data-tooltip": waHref ? "" : "A\xF1ade un tel\xE9fono"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "msg-circle", size: 11 }),
+    " Abrir"
+  )) }, /* @__PURE__ */ React.createElement(
+    "textarea",
+    {
+      className: "input",
+      rows: 3,
+      placeholder: "Mensaje de WhatsApp\u2026",
+      value: f.whatsapp || "",
+      onChange: set("whatsapp"),
+      style: { padding: "9px 12px", fontSize: 13, resize: "vertical", lineHeight: 1.6, width: "100%" }
+    }
+  )), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "clock", title: "Seguimientos", right: /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", style: miniBtn, onClick: addFU }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 11 }), " A\xF1adir") }, fu.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "2px 0 2px" } }, "Sin seguimientos programados.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, fu.map((s, i) => {
+    const ch = FU_CH[s.channel] || FU_CH.email;
+    const isOver = !s.done && s.date && s.date < today;
+    return /* @__PURE__ */ React.createElement("div", { key: s.id || i, style: { display: "flex", alignItems: "center", gap: 9 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => updFU(i, { done: !s.done }),
+        "data-tooltip": s.done ? "Hecho" : "Marcar hecho",
+        style: {
+          width: 18,
+          height: 18,
+          borderRadius: 6,
+          flexShrink: 0,
+          cursor: "pointer",
+          background: s.done ? "var(--accent)" : "transparent",
+          border: `1.5px solid ${s.done ? "var(--accent)" : "var(--border)"}`,
+          display: "grid",
+          placeItems: "center",
+          color: "#fff"
+        }
+      },
+      s.done && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11 })
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => cycleCh(i),
+        "data-tooltip": `Canal: ${ch.label} (clic para cambiar)`,
+        style: {
+          width: 30,
+          height: 30,
+          borderRadius: 8,
+          flexShrink: 0,
+          cursor: "pointer",
+          background: "rgba(255,255,255,0.04)",
+          border: "0.5px solid var(--border)",
+          display: "grid",
+          placeItems: "center",
+          color: "var(--text-muted)"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: ch.icon, size: 13 })
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "date",
+        className: "input",
+        value: s.date || "",
+        onChange: (e) => updFU(i, { date: e.target.value }),
+        style: { padding: "6px 9px", fontSize: 12, width: 140, flexShrink: 0, color: isOver ? "var(--red)" : "var(--text)" }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "input",
+        placeholder: "Nota del seguimiento\u2026",
+        value: s.note || "",
+        onChange: (e) => updFU(i, { note: e.target.value }),
+        style: { padding: "6px 10px", fontSize: 12.5, flex: 1, textDecoration: s.done ? "line-through" : "none", opacity: s.done ? 0.6 : 1 }
+      }
+    ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", style: { padding: "5px 8px" }, onClick: () => rmFU(i), "data-tooltip": "Quitar" }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })));
+  }))), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "edit", title: "Notas internas" }, /* @__PURE__ */ React.createElement(
     "textarea",
     {
       className: "input",
       rows: 2,
-      placeholder: "Notas internas, contexto de la llamada\u2026",
+      placeholder: "Contexto, cargo, ubicaci\xF3n, recordatorios\u2026",
       value: f.notes || "",
       onChange: set("notes"),
-      onClick: (e) => e.stopPropagation(),
-      style: { padding: "8px 11px", fontSize: 12.5, resize: "vertical", lineHeight: 1.5 }
+      style: { padding: "8px 11px", fontSize: 12.5, resize: "vertical", lineHeight: 1.55, width: "100%" }
     }
-  )), field("Pr\xF3ximo seguimiento", "followUp", "", "date")), dirty && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: (e) => {
-    e.stopPropagation();
-    onSave(f);
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar cambios")), hasCowork && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22, marginTop: 8, paddingTop: 16, borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 11 }), " Auditor\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.audit || "Sin auditor\xEDa.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 11 }), " Borrador del mensaje"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: (e) => {
-    e.stopPropagation();
-    onCopy();
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 11 }), " Copiar")), l.subject && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", marginBottom: 8, letterSpacing: "-0.3px" } }, l.subject), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.65, color: "var(--text-muted)", whiteSpace: "pre-wrap" } }, l.draft || "Sin borrador."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "flex-end", marginTop: 14, paddingTop: 12, borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      className: "btn ghost sm",
-      onClick: (e) => {
-        e.stopPropagation();
-        onDelete();
-      },
-      style: { color: "var(--red)" }
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 }),
-    " Eliminar lead"
-  ))));
+  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: 16, paddingTop: 14, borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: onDelete, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 }), " Eliminar lead"), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save, disabled: !dirty, style: { opacity: dirty ? 1 : 0.45 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar"))));
 };
 const useCSVImport = (campaignId, onDone) => {
   const toast = useToast();
@@ -687,6 +869,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
   const replied = nStatus("replied") + nStatus("won");
   const replyPct = contacted ? Math.round(replied / contacted * 100) : 0;
+  const dailyGoal = c.dailyGoal || 15;
+  const workedToday = leads.filter((l) => l.workedAt === today).length;
   const visible = leads.filter((l) => {
     if (filter !== "all" && l.status !== filter) return false;
     if (query.trim()) {
@@ -697,7 +881,9 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   });
   const setStatus = async (l, status) => {
     try {
-      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status });
+      const fields = {};
+      if (["contacted", "replied", "won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
+      await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) {
       toast("Error al guardar", "warn");
@@ -705,7 +891,9 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   };
   const saveLead = async (l, fields) => {
     try {
-      const r = await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, fields });
+      const payload = { ...fields };
+      if ((payload.audit || "").trim() && l.workedAt !== today) payload.workedAt = today;
+      const r = await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, fields: payload });
       const j = await r.json();
       if (!j.ok) {
         toast(j.error || "No se pudo guardar", "warn");
@@ -717,13 +905,27 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       toast("Error al guardar", "warn");
     }
   };
+  const openNext = () => {
+    const next = leads.slice().reverse().find((l) => l.status === "new" && l.workedAt !== today);
+    if (!next) {
+      toast("No quedan leads nuevos por trabajar \u{1F389}", "success");
+      return;
+    }
+    setFilter("all");
+    setQuery("");
+    setOpenId(next.id);
+    setTimeout(() => {
+      var _a;
+      return (_a = document.getElementById("lead-" + next.id)) == null ? void 0 : _a.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 60);
+  };
   const exportCSV = () => {
     if (!leads.length) {
       toast("No hay leads que exportar", "warn");
       return;
     }
-    const cols = ["name", "company", "email", "phone", "website", "linkedin", "sector", "status", "date", "followUp", "notes", "subject", "draft", "audit"];
-    const head = ["Nombre", "Empresa", "Email", "Tel\xE9fono", "Web", "LinkedIn", "Sector", "Estado", "Fecha", "Seguimiento", "Notas", "Asunto", "Borrador", "Auditor\xEDa"];
+    const cols = ["name", "company", "email", "phone", "website", "linkedin", "sector", "status", "date", "notes", "subject", "draft", "whatsapp", "audit"];
+    const head = ["Nombre", "Empresa", "Email", "Tel\xE9fono", "Web", "LinkedIn", "Sector", "Estado", "Fecha", "Notas", "Asunto", "Email", "WhatsApp", "Auditor\xEDa"];
     const esc = (v) => {
       const s = v == null ? "" : String(v);
       return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -805,7 +1007,26 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       fontWeight: on ? 500 : 400,
       transition: "all .12s"
     } }, /* @__PURE__ */ React.createElement(Icon, { name: t.icon, size: 13, strokeWidth: 1.7 }), t.label);
-  })), view === "leads" && leads.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" } }, FILTERS.map((f) => {
+  })), view === "leads" && leads.length > 0 && (() => {
+    const pct = Math.min(100, Math.round(workedToday / dailyGoal * 100));
+    const doneDay = workedToday >= dailyGoal;
+    return /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 16,
+      marginBottom: 12,
+      background: "var(--bg-elev-1)",
+      border: "0.5px solid var(--border)",
+      borderRadius: 12,
+      padding: "12px 16px"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.08em", color: doneDay ? "var(--green)" : "var(--accent)", fontWeight: 600, flexShrink: 0 } }, "Hoy"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 80 } }, /* @__PURE__ */ React.createElement("div", { style: { height: 7, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: `${pct}%`,
+      height: "100%",
+      borderRadius: 99,
+      transition: "width .3s",
+      background: doneDay ? "var(--green)" : "var(--accent)"
+    } }))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", flexShrink: 0, letterSpacing: "-0.2px" } }, /* @__PURE__ */ React.createElement("b", { style: { color: doneDay ? "var(--green)" : "var(--text)", fontSize: 14 } }, workedToday), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, " / ", dailyGoal, " trabajados"), doneDay && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--green)", marginLeft: 8 } }, "\xA1Objetivo del d\xEDa! \u{1F389}")), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: openNext, style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }), " Siguiente"));
+  })(), view === "leads" && leads.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" } }, FILTERS.map((f) => {
     const on = filter === f.id;
     return /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFilter(f.id), style: {
       display: "inline-flex",
@@ -861,12 +1082,12 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       onManual: () => setAddingLead(true),
       onCowork: () => setCoworkOpen(true)
     }
-  ) : leads.length === 0 ? /* @__PURE__ */ React.createElement(ConnectPanel, { onCSV: pickCSV, onManual: () => setAddingLead(true), onCowork: () => setCoworkOpen(true) }) : visible.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 13.5, letterSpacing: "-0.3px" } }, "Ning\xFAn lead coincide con el filtro.") : visible.map((l, i) => /* @__PURE__ */ React.createElement(
+  ) : leads.length === 0 ? /* @__PURE__ */ React.createElement(ConnectPanel, { onCSV: pickCSV, onManual: () => setAddingLead(true), onCowork: () => setCoworkOpen(true) }) : visible.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 13.5, letterSpacing: "-0.3px" } }, "Ning\xFAn lead coincide con el filtro.") : visible.map((l, i) => /* @__PURE__ */ React.createElement("div", { key: l.id, id: "lead-" + l.id }, /* @__PURE__ */ React.createElement(
     LeadRow,
     {
-      key: l.id,
       l,
       last: i === visible.length - 1,
+      today,
       open: openId === l.id,
       onToggle: () => setOpenId(openId === l.id ? null : l.id),
       onStatus: (s) => setStatus(l, s),
@@ -874,7 +1095,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       onCopy: () => copyDraft(l),
       onSave: (fields) => saveLead(l, fields)
     }
-  ))), csvInput, /* @__PURE__ */ React.createElement(AddLeadModal, { open: addingLead, onClose: () => setAddingLead(false), campaignId: c.id, onDone: reload }), /* @__PURE__ */ React.createElement(CoworkConnectModal, { open: coworkOpen, onClose: () => setCoworkOpen(false), campaignName: c.name }));
+  )))), csvInput, /* @__PURE__ */ React.createElement(AddLeadModal, { open: addingLead, onClose: () => setAddingLead(false), campaignId: c.id, onDone: reload }), /* @__PURE__ */ React.createElement(CoworkConnectModal, { open: coworkOpen, onClose: () => setCoworkOpen(false), campaignName: c.name }));
 };
 const CampaignSetup = ({ open, onClose, onCreated }) => {
   const toast = useToast();

@@ -539,6 +539,9 @@ def _add_leads(camp, leads_in, source="api"):
             "notes":   (l.get("notes") or "")[:8000],
             "subject": (l.get("subject") or "")[:300],
             "draft":   (l.get("draft") or "")[:8000],
+            "whatsapp":(l.get("whatsapp") or "")[:8000],
+            "followUps": [],
+            "workedAt": "",
             "status":  "new",
             "source":  source,
         })
@@ -626,16 +629,40 @@ def api_campaigns_update(body):
             camp["goal"] = max(0, min(100000, g))
         except (TypeError, ValueError):
             pass
+    if "dailyGoal" in body:
+        try:
+            dg = int(body.get("dailyGoal") or 0)
+            camp["dailyGoal"] = max(0, min(1000, dg))
+        except (TypeError, ValueError):
+            pass
     if "note" in body:
         camp["note"] = (body.get("note") or "")[:2000]
     _campaigns_save(data)
-    return {"ok": True, "campaign": {k: camp[k] for k in ("id", "name", "ctype", "createdAt", "goal", "note") if k in camp}}
+    return {"ok": True, "campaign": {k: camp[k] for k in ("id", "name", "ctype", "createdAt", "goal", "dailyGoal", "note") if k in camp}}
 
 LEAD_EDIT_FIELDS = {
     "name": 200, "company": 200, "email": 200, "phone": 60, "website": 300,
     "linkedin": 300, "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
-    "notes": 8000, "followUp": 10,
+    "whatsapp": 8000, "notes": 8000, "followUp": 10, "workedAt": 10,
 }
+_FU_CHANNELS = ("email", "whatsapp", "call")
+
+def _sanitize_followups(v):
+    """Normaliza la secuencia de seguimientos de un lead (lista de pasos)."""
+    if not isinstance(v, list):
+        return []
+    out = []
+    for it in v[:30]:
+        if not isinstance(it, dict):
+            continue
+        out.append({
+            "id":      str(it.get("id") or secrets.token_hex(4))[:32],
+            "date":    str(it.get("date") or "")[:10],
+            "note":    str(it.get("note") or "")[:300],
+            "channel": it.get("channel") if it.get("channel") in _FU_CHANNELS else "email",
+            "done":    bool(it.get("done")),
+        })
+    return out
 
 def api_campaigns_update_lead(body):
     cid, lid = body.get("campaignId"), body.get("leadId")
@@ -654,6 +681,8 @@ def api_campaigns_update_lead(body):
                 for k, v in fields.items():
                     if k in LEAD_EDIT_FIELDS:
                         l[k] = ("" if v is None else str(v))[:LEAD_EDIT_FIELDS[k]]
+                if "followUps" in fields:
+                    l["followUps"] = _sanitize_followups(fields["followUps"])
                 _campaigns_save(data)
                 return {"ok": True}
     return {"ok": False, "error": "Lead no encontrado"}
