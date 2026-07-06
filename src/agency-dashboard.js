@@ -255,7 +255,7 @@
       color: "var(--text)"
     } }, greeting, ", ", adminName, "."), /* @__PURE__ */ React.createElement("p", { style: {
       margin: 0,
-      fontSize: 16,
+      fontSize: 14,
       color: "var(--text-muted)",
       letterSpacing: "-0.2px",
       lineHeight: 1.4

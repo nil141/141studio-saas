@@ -276,7 +276,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
           }}>{greeting}, {adminName}.</h1>
           <p style={{
-            margin: 0, fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.4,
+            margin: 0, fontSize: 14, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.4,
           }}>
             {dayMessage}
           </p>
