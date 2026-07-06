@@ -102,23 +102,23 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           zIndex: 1,
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "9px 10px",
-          borderRadius: 10,
+          gap: 12,
+          padding: "12px 12px",
+          borderRadius: 16,
           cursor: "pointer",
           background: "transparent",
-          color: isActive ? "#c8c5f2" : hov ? "#cccccc" : "var(--text-muted)",
+          color: isActive ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
           transition: "color .12s",
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: 400,
-          letterSpacing: "-0.96px",
+          letterSpacing: "-0.5px",
           userSelect: "none"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 17, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
       badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
-      isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 13, style: { color: "rgba(158,154,229,0.6)", flexShrink: 0 } }) : null
+      isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { color: "var(--text-muted)", flexShrink: 0 } }) : null
     );
   };
   const FooterItem = ({ icon, label, onClick, kbd, active }) => {
@@ -132,20 +132,20 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         style: {
           display: "flex",
           alignItems: "center",
-          gap: 10,
-          padding: "9px 10px",
-          borderRadius: 10,
+          gap: 12,
+          padding: "12px 12px",
+          borderRadius: 16,
           cursor: "pointer",
-          background: active ? "var(--bg-hover)" : "transparent",
-          color: active || hov ? "#cccccc" : "var(--text-muted)",
+          background: active ? "rgba(255,255,255,0.06)" : "transparent",
+          color: active ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
           transition: "color .12s, background .12s",
-          fontSize: 15,
+          fontSize: 16,
           fontWeight: 400,
-          letterSpacing: "-0.96px",
+          letterSpacing: "-0.5px",
           userSelect: "none"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.6 }),
+      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 17, strokeWidth: 1.6 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
       kbd ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" } }, kbd) : null
     );
@@ -180,8 +180,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     right: 0,
     top: pill.top,
     height: pill.height,
-    background: "rgba(158,154,229,0.13)",
-    borderRadius: 10,
+    background: "rgba(255,255,255,0.06)",
+    borderRadius: 16,
     pointerEvents: "none",
     zIndex: 0,
     opacity: pill.visible ? 1 : 0,
