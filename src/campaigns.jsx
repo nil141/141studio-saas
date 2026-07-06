@@ -1333,6 +1333,19 @@ const CampaignSetup = ({ open, onClose, onCreated }) => {
 const CampaignsPage = ({ navigate }) => {
   const [camps, reload] = useCampaigns();
   const [setupOpen, setSetupOpen] = useState(false);
+  const [hoverId, setHoverId] = useState(null);
+  const confirm = useConfirm();
+  const toast   = useToast();
+
+  const removeCampaign = async (c, e) => {
+    e?.stopPropagation();
+    const n = (c.leads || []).length;
+    const ok = await confirm({ title:"¿Eliminar la campaña?", body:`Se eliminará "${c.name}"${n ? ` con sus ${n} leads` : ""}. No se puede deshacer.`, danger:true, confirmLabel:"Eliminar campaña" });
+    if (!ok) return;
+    await window.apiFetch("/api/campaigns/delete_campaign", { campaignId: c.id });
+    toast("Campaña eliminada", "success");
+    reload();
+  };
 
   const today = _cToday();
   const list = camps || [];
@@ -1368,67 +1381,69 @@ const CampaignsPage = ({ navigate }) => {
       }}>
         {camps === null ? (
           <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:13 }}>Cargando…</div>
-        ) : list.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"70px 0" }}>
-            <div style={{ display:"inline-flex", padding:14, border:"0.5px solid var(--border)", borderRadius:14, marginBottom:14, color:"var(--text-muted)" }}>
-              <Icon name="megaphone" size={22}/>
-            </div>
-            <div style={{ fontSize:14.5, fontWeight:500, color:"var(--text)", letterSpacing:"-0.3px" }}>Sin campañas</div>
-            <div style={{ fontSize:12.5, color:"var(--text-subtle)", marginTop:6, maxWidth:340, margin:"6px auto 0", lineHeight:1.55 }}>
-              Crea una con el botón + o deja que Claude Cowork cree la suya con la primera importación de leads.
-            </div>
-          </div>
-        ) : list.map(c => {
-          const leads = c.leads || [];
-          const ct = _ctype(c);
-          const nToday    = leads.filter(l => l.date === today).length;
-          const contacted = leads.filter(l => ["contacted","replied","won"].includes(l.status)).length;
-          const replied   = leads.filter(l => ["replied","won"].includes(l.status)).length;
-          const won       = leads.filter(l => l.status === "won").length;
-          const pct = leads.length ? (contacted / leads.length) * 100 : 0;
-          return (
-            <div key={c.id} onClick={() => navigate("campaign", { campaignId: c.id })}
-              className="task-row"
-              style={{
-                display:"flex", alignItems:"center", gap:18,
-                padding:"18px 4px", cursor:"pointer",
-                borderBottom:"0.5px solid var(--border)",
-              }}>
-              <div style={{
-                width:40, height:40, borderRadius:12, flexShrink:0,
-                background:"rgba(158,154,229,0.1)", border:"0.5px solid var(--border)",
-                display:"grid", placeItems:"center", color:"var(--accent)",
-              }}>
-                <Icon name={ct.icon} size={17} strokeWidth={1.7}/>
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:14.5, fontWeight:500, letterSpacing:"-0.4px", color:"var(--text)" }}>{c.name}</div>
-                <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>
-                  {ct.label} · {leads.length} {leads.length === 1 ? "lead" : "leads"}
-                  {nToday ? ` · +${nToday} hoy` : ""}
-                </div>
-                {/* Barra de progreso contactados */}
-                <div style={{ width:220, maxWidth:"100%", height:4, borderRadius:99, background:"rgba(255,255,255,0.07)", overflow:"hidden", marginTop:9 }}>
-                  <div style={{ width:`${pct}%`, height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .2s" }}/>
-                </div>
-              </div>
-              <div style={{ display:"flex", gap:26, alignItems:"center", flexShrink:0 }}>
-                {[
-                  { v: leads.length, l:"Leads",       c:"var(--text)" },
-                  { v: contacted,    l:"Contactados", c:"#60a5fa" },
-                  { v: replied,      l:"Respuestas",  c:"var(--green)" },
-                  { v: won,          l:"Ganados",     c:"var(--accent)" },
-                ].map((s, i) => (
-                  <div key={i} style={{ textAlign:"center", minWidth:56 }}>
-                    <div style={{ fontSize:17, fontWeight:600, fontFamily:"var(--font-display)", letterSpacing:"-0.4px", color:s.c }}>{s.v}</div>
-                    <div style={{ fontSize:10, color:"var(--text-subtle)", marginTop:1 }}>{s.l}</div>
+        ) : (
+          <div style={{ display:"flex", flexDirection:"column", width:"100%" }}>
+            {list.map(c => {
+              const leads = c.leads || [];
+              const ct = _ctype(c);
+              const nToday    = leads.filter(l => l.date === today).length;
+              const contacted = leads.filter(l => ["contacted","replied","won"].includes(l.status)).length;
+              const won       = leads.filter(l => l.status === "won").length;
+              const pct = leads.length ? Math.round((contacted / leads.length) * 100) : 0;
+              const col = won > 0 ? "var(--green)" : "var(--accent)";
+              const on = hoverId === c.id;
+              return (
+                <div key={c.id} onClick={() => navigate("campaign", { campaignId: c.id })}
+                  onMouseEnter={() => setHoverId(c.id)} onMouseLeave={() => setHoverId(null)}
+                  style={{ display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor:"pointer",
+                    borderBottom:"0.5px solid var(--border)" }}>
+                  <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:14, minWidth:0 }}>
+                      <Icon name={ct.icon} size={26} strokeWidth={1.6}
+                        style={{ color:"var(--text)", flexShrink:0, transform: on ? "scale(1.06)" : "none", transition:"transform .3s" }}/>
+                      <div style={{ minWidth:0 }}>
+                        <div style={{ fontSize:20, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{c.name}</div>
+                        <div style={{ fontSize:13.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
+                          <span style={{ flexShrink:0 }}>{leads.length} leads</span>
+                          <span style={{ opacity:0.4, fontSize:10 }}>•</span>
+                          <span style={{ flexShrink:0 }}>{contacted} contactados</span>
+                          <span style={{ opacity:0.4, fontSize:10 }}>•</span>
+                          <span style={{ whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{ct.label}{nToday ? ` · +${nToday} hoy` : ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+                      <button className="btn ghost icon-only sm" data-tooltip="Eliminar"
+                        onClick={(e) => removeCampaign(c, e)}
+                        style={{ opacity: on ? 0.65 : 0, transition:"opacity .15s", color:"var(--red)" }}>
+                        <Icon name="trash" size={13}/>
+                      </button>
+                      <Icon name="chevron-right" size={18}
+                        style={{ color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
+                          transition:"all .2s", flexShrink:0 }}/>
+                    </div>
                   </div>
-                ))}
-                <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.18)" }}/>
-              </div>
-            </div>
-          );
-        })}
+                  <div style={{ position:"relative", width:"100%", height:3, background:"rgba(255,255,255,0.05)", borderRadius:99, overflow:"hidden" }}>
+                    <div style={{ position:"absolute", height:"100%", borderRadius:99, background:col, width:`${pct}%`, transition:"width .3s" }}/>
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Añadir campaña — botón discontinuo estilo outdomode */}
+            <button onClick={() => setSetupOpen(true)} style={{
+              marginTop:16, width:"100%", padding:"26px", borderRadius:22,
+              border:"1px dashed var(--border)", background:"transparent", cursor:"pointer",
+              color:"var(--text-muted)", fontSize:15, fontFamily:"inherit", opacity:0.5, transition:"opacity .2s",
+              display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"-0.2px",
+            }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+              {list.length === 0 ? "Crea tu primera campaña" : "Añadir campaña"} <Icon name="plus" size={16}/>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Crear campaña — onboarding por pasos */}
