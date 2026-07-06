@@ -64,11 +64,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const _liveTasks = Object.entries(D.TASKS)
     .filter(([pid]) => pid === "__none__" || _projIds.has(pid))
     .flatMap(([, arr]) => arr);
-  const pendingTasks = _liveTasks.filter(t => t.column !== "done").length;
-  const overdueTasks = _liveTasks.filter(t => {
-    if (!t.deadline || t.column === "done") return false;
-    return new Date(t.deadline + "T00:00:00") < new Date();
-  }).length;
+  const _todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  const _pending  = _liveTasks.filter(t => t.column !== "done");
+  // "Tareas pendientes" del panel = las de HOY: vencen hoy o son atrasadas que
+  // se arrastran (misma lógica que el tablero de Tareas).
+  const pendingTasks = _pending.filter(t => t.deadline && t.deadline <= _todayStr).length;
+  const overdueTasks = _pending.filter(t => t.deadline && t.deadline < _todayStr).length;
+  const backlogTasks = _pending.length;   // todas las incompletas (para la cola de trabajo)
   const pendingInvoices = D.INVOICES.filter(i => i.status !== "paid").length;
   const atRisk = D.PROJECTS.filter(p => p.light === "red").length;
   const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
@@ -249,7 +251,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   // ── Queues ──
   const queues = [
-    { icon:"list-todo", label:"Tareas sin completar",  count:pendingTasks,    action:()=>navigate("projects") },
+    { icon:"list-todo", label:"Tareas sin completar",  count:backlogTasks,    action:()=>navigate("projects") },
     { icon:"clock",     label:"Tareas vencidas",        count:overdueTasks,    action:()=>navigate("projects") },
     { icon:"flag",      label:"Proyectos en riesgo",    count:atRisk,          action:()=>navigate("projects") },
     { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, action:()=>navigate("invoices") },
