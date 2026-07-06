@@ -65,15 +65,21 @@ const CSV_FIELDS = {
   lastName: ["last name", "lastname", "surname", "apellido", "apellidos"],
   name: ["name", "nombre", "contacto", "lead", "persona", "full name", "nombre completo", "contact name"],
   company: ["company", "company name", "empresa", "negocio", "marca", "compa\xF1ia", "compa\xF1\xEDa", "organization", "account name"],
-  email: ["email", "correo", "e-mail", "mail", "email address", "work email", "correo electronico", "correo electr\xF3nico"],
+  email: ["email", "correo", "e-mail", "mail", "email address", "work email", "correo electronico", "correo electr\xF3nico", "personal email"],
   phone: ["phone", "phone number", "telefono", "tel\xE9fono", "tel", "movil", "m\xF3vil", "mobile", "mobile number", "mobile phone", "work direct phone", "corporate phone", "company phone number"],
   website: ["website", "web", "url", "dominio", "sitio", "pagina", "p\xE1gina", "company website", "website url", "site", "domain", "company domain"],
+  linkedin: ["linkedin", "linkedin url", "linkedin profile", "perfil linkedin", "linkedin person"],
   sector: ["sector", "industry", "industria", "categoria", "categor\xEDa", "nicho", "tipo", "vertical"],
   title: ["title", "cargo", "puesto", "job title", "position", "rol"],
   audit: ["audit", "auditoria", "auditor\xEDa", "observaciones"],
   notes: ["notes", "notas", "nota", "comentarios"],
   subject: ["subject", "asunto"],
-  draft: ["draft", "borrador", "mensaje", "cuerpo"]
+  draft: ["draft", "borrador", "mensaje", "cuerpo"],
+  // Campos que no tienen columna propia pero enriquecen las notas del lead
+  _seniority: ["seniority", "nivel", "seniority level"],
+  _city: ["city", "ciudad", "localidad"],
+  _region: ["state", "provincia", "regi\xF3n", "region", "estado"],
+  _country: ["country", "pa\xEDs", "pais"]
 };
 const csvToLeads = (text) => {
   const rows = parseCSV(text);
@@ -104,10 +110,21 @@ const csvToLeads = (text) => {
     }
     delete lead.firstName;
     delete lead.lastName;
-    if (lead.title) {
-      lead.notes = [`Cargo: ${lead.title}`, lead.notes].filter(Boolean).join(" \xB7 ");
-      delete lead.title;
+    if (lead.linkedin && !/^https?:\/\//i.test(lead.linkedin)) {
+      lead.linkedin = "https://" + lead.linkedin.replace(/^\/+/, "");
     }
+    const extra = [];
+    if (lead.title) extra.push(`Cargo: ${lead.title}${lead._seniority ? ` \xB7 ${lead._seniority}` : ""}`);
+    const loc = [lead._city, lead._region, lead._country].filter(Boolean).join(", ");
+    if (loc) extra.push(`\u{1F4CD} ${loc}`);
+    if (lead.notes) extra.push(lead.notes);
+    const merged = extra.filter(Boolean).join(" \xB7 ");
+    if (merged) lead.notes = merged;
+    delete lead.title;
+    delete lead._seniority;
+    delete lead._city;
+    delete lead._region;
+    delete lead._country;
     return lead;
   }).filter((l) => l.name || l.company);
 };
@@ -410,7 +427,7 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
 };
 const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }) => {
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-  const KEYS = ["name", "company", "email", "phone", "website", "sector", "notes", "followUp"];
+  const KEYS = ["name", "company", "email", "phone", "website", "linkedin", "sector", "notes", "followUp"];
   const [f, setF] = useState({});
   useEffect(() => {
     if (open) {
@@ -442,7 +459,18 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
     padding: "13px 4px",
     cursor: "pointer",
     borderBottom: last && !open ? "none" : "0.5px solid var(--border)"
-  } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: st.dot, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: "1.4 1 0", minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.4px", color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: 7 } }, l.name, followBadge && /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 11, style: { color: "var(--accent)", flexShrink: 0 }, "data-tooltip": `Seguimiento ${_cFmtDay(l.followUp)}` })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+  } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: st.dot, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: "1.4 1 0", minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.4px", color: "var(--text)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "flex", alignItems: "center", gap: 7 } }, l.name, l.linkedin && /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: l.linkedin,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      "data-tooltip": "Ver LinkedIn",
+      style: { color: "var(--text-subtle)", display: "inline-flex", flexShrink: 0 }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 11 })
+  ), followBadge && /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 11, style: { color: "var(--accent)", flexShrink: 0 }, "data-tooltip": `Seguimiento ${_cFmtDay(l.followUp)}` })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
     color: "rgba(255,255,255,0.2)",
     flexShrink: 0,
     transform: open ? "rotate(180deg)" : "none",
@@ -453,7 +481,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
     background: "var(--bg-elev-1)",
     border: "0.5px solid var(--border)",
     borderRadius: 14
-  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Web", "website", "empresa.com")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", marginBottom: 5 } }, "Notas"), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Web", "website", "empresa.com"), field("LinkedIn", "linkedin", "linkedin.com/in/\u2026")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", marginBottom: 5 } }, "Notas"), /* @__PURE__ */ React.createElement(
     "textarea",
     {
       className: "input",
@@ -694,8 +722,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       toast("No hay leads que exportar", "warn");
       return;
     }
-    const cols = ["name", "company", "email", "phone", "website", "sector", "status", "date", "followUp", "notes", "subject", "draft", "audit"];
-    const head = ["Nombre", "Empresa", "Email", "Tel\xE9fono", "Web", "Sector", "Estado", "Fecha", "Seguimiento", "Notas", "Asunto", "Borrador", "Auditor\xEDa"];
+    const cols = ["name", "company", "email", "phone", "website", "linkedin", "sector", "status", "date", "followUp", "notes", "subject", "draft", "audit"];
+    const head = ["Nombre", "Empresa", "Email", "Tel\xE9fono", "Web", "LinkedIn", "Sector", "Estado", "Fecha", "Seguimiento", "Notas", "Asunto", "Borrador", "Auditor\xEDa"];
     const esc = (v) => {
       const s = v == null ? "" : String(v);
       return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;

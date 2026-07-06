@@ -67,15 +67,21 @@ const CSV_FIELDS = {
   lastName:  ["last name","lastname","surname","apellido","apellidos"],
   name:      ["name","nombre","contacto","lead","persona","full name","nombre completo","contact name"],
   company:   ["company","company name","empresa","negocio","marca","compañia","compañía","organization","account name"],
-  email:     ["email","correo","e-mail","mail","email address","work email","correo electronico","correo electrónico"],
+  email:     ["email","correo","e-mail","mail","email address","work email","correo electronico","correo electrónico","personal email"],
   phone:     ["phone","phone number","telefono","teléfono","tel","movil","móvil","mobile","mobile number","mobile phone","work direct phone","corporate phone","company phone number"],
   website:   ["website","web","url","dominio","sitio","pagina","página","company website","website url","site","domain","company domain"],
+  linkedin:  ["linkedin","linkedin url","linkedin profile","perfil linkedin","linkedin person"],
   sector:    ["sector","industry","industria","categoria","categoría","nicho","tipo","vertical"],
   title:     ["title","cargo","puesto","job title","position","rol"],
   audit:     ["audit","auditoria","auditoría","observaciones"],
   notes:     ["notes","notas","nota","comentarios"],
   subject:   ["subject","asunto"],
   draft:     ["draft","borrador","mensaje","cuerpo"],
+  // Campos que no tienen columna propia pero enriquecen las notas del lead
+  _seniority:["seniority","nivel","seniority level"],
+  _city:     ["city","ciudad","localidad"],
+  _region:   ["state","provincia","región","region","estado"],
+  _country:  ["country","país","pais"],
 };
 const csvToLeads = (text) => {
   const rows = parseCSV(text);
@@ -105,11 +111,20 @@ const csvToLeads = (text) => {
       lead.name = [lead.firstName, lead.lastName].filter(Boolean).join(" ");
     }
     delete lead.firstName; delete lead.lastName;
-    // El cargo va a las notas (el lead no tiene campo propio para el puesto)
-    if (lead.title) {
-      lead.notes = [`Cargo: ${lead.title}`, lead.notes].filter(Boolean).join(" · ");
-      delete lead.title;
+    // Normaliza la URL de LinkedIn (Apollo la da a veces sin protocolo)
+    if (lead.linkedin && !/^https?:\/\//i.test(lead.linkedin)) {
+      lead.linkedin = "https://" + lead.linkedin.replace(/^\/+/, "");
     }
+    // Cargo, seniority y ubicación se guardan en las notas (no tienen campo propio)
+    const extra = [];
+    if (lead.title) extra.push(`Cargo: ${lead.title}${lead._seniority ? ` · ${lead._seniority}` : ""}`);
+    const loc = [lead._city, lead._region, lead._country].filter(Boolean).join(", ");
+    if (loc) extra.push(`📍 ${loc}`);
+    if (lead.notes) extra.push(lead.notes);
+    const merged = extra.filter(Boolean).join(" · ");
+    if (merged) lead.notes = merged;
+    delete lead.title; delete lead._seniority;
+    delete lead._city; delete lead._region; delete lead._country;
     return lead;
   }).filter(l => l.name || l.company);
 };
@@ -473,7 +488,7 @@ const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) =>
 // ── Fila de lead + panel expandible ──────────────────────────────────
 const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }) => {
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-  const KEYS = ["name","company","email","phone","website","sector","notes","followUp"];
+  const KEYS = ["name","company","email","phone","website","linkedin","sector","notes","followUp"];
   const [f, setF] = useState({});
   useEffect(() => {
     if (open) { const o = {}; KEYS.forEach(k => o[k] = l[k] || ""); setF(o); }
@@ -503,6 +518,9 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
         <div style={{ flex:"1.4 1 0", minWidth:0 }}>
           <div style={{ fontSize:14, letterSpacing:"-0.4px", color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", display:"flex", alignItems:"center", gap:7 }}>
             {l.name}
+            {l.linkedin && <a href={l.linkedin} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              data-tooltip="Ver LinkedIn" style={{ color:"var(--text-subtle)", display:"inline-flex", flexShrink:0 }}>
+              <Icon name="external-link" size={11}/></a>}
             {followBadge && <Icon name="clock" size={11} style={{ color:"var(--accent)", flexShrink:0 }} data-tooltip={`Seguimiento ${_cFmtDay(l.followUp)}`}/>}
           </div>
           <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
@@ -538,6 +556,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave }
             {field("Email", "email", "email@…", "email")}
             {field("Teléfono", "phone", "+34 …")}
             {field("Web", "website", "empresa.com")}
+            {field("LinkedIn", "linkedin", "linkedin.com/in/…")}
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:12, marginBottom:6 }}>
             <div>
@@ -817,8 +836,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   };
   const exportCSV = () => {
     if (!leads.length) { toast("No hay leads que exportar", "warn"); return; }
-    const cols = ["name","company","email","phone","website","sector","status","date","followUp","notes","subject","draft","audit"];
-    const head = ["Nombre","Empresa","Email","Teléfono","Web","Sector","Estado","Fecha","Seguimiento","Notas","Asunto","Borrador","Auditoría"];
+    const cols = ["name","company","email","phone","website","linkedin","sector","status","date","followUp","notes","subject","draft","audit"];
+    const head = ["Nombre","Empresa","Email","Teléfono","Web","LinkedIn","Sector","Estado","Fecha","Seguimiento","Notas","Asunto","Borrador","Auditoría"];
     const esc = (v) => { const s = (v == null ? "" : String(v)); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const rows = leads.map(l => cols.map(k => esc(k === "status" ? (LEAD_STATUS[l.status] || {}).label : l[k])).join(","));
     const csv = head.join(",") + "\n" + rows.join("\n");

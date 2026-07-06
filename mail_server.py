@@ -518,6 +518,7 @@ def _add_leads(camp, leads_in, source="api"):
             "email":   email_addr[:200],
             "phone":   (l.get("phone") or "")[:60],
             "website": (l.get("website") or "")[:300],
+            "linkedin":(l.get("linkedin") or "")[:300],
             "sector":  (l.get("sector") or "")[:120],
             "audit":   (l.get("audit") or "")[:8000],
             "notes":   (l.get("notes") or "")[:8000],
@@ -617,7 +618,7 @@ def api_campaigns_update(body):
 
 LEAD_EDIT_FIELDS = {
     "name": 200, "company": 200, "email": 200, "phone": 60, "website": 300,
-    "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
+    "linkedin": 300, "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
     "notes": 8000, "followUp": 10,
 }
 
