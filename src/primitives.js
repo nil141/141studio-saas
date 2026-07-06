@@ -103,22 +103,23 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "12px 12px",
+          height: 48,
+          padding: "0 12px",
           borderRadius: 16,
           cursor: "pointer",
           background: "transparent",
-          color: isActive ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
-          transition: "color .12s",
+          color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
+          transition: "color .15s",
           fontSize: 16,
           fontWeight: 400,
-          letterSpacing: "-0.5px",
+          letterSpacing: "-0.06em",
           userSelect: "none"
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 17, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
       badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
-      isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { color: "var(--text-muted)", flexShrink: 0 } }) : null
+      isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0 } }) : null
     );
   };
   const FooterItem = ({ icon, label, onClick, kbd, active }) => {
@@ -133,15 +134,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "12px 12px",
+          height: 48,
+          padding: "0 12px",
           borderRadius: 16,
           cursor: "pointer",
-          background: active ? "rgba(255,255,255,0.06)" : "transparent",
-          color: active ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
-          transition: "color .12s, background .12s",
+          background: active ? "rgba(255,255,255,0.07)" : "transparent",
+          color: active ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
+          transition: "color .15s, background .15s",
           fontSize: 16,
           fontWeight: 400,
-          letterSpacing: "-0.5px",
+          letterSpacing: "-0.06em",
           userSelect: "none"
         }
       },
@@ -180,7 +182,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     right: 0,
     top: pill.top,
     height: pill.height,
-    background: "rgba(255,255,255,0.06)",
+    background: "rgba(255,255,255,0.07)",
     borderRadius: 16,
     pointerEvents: "none",
     zIndex: 0,

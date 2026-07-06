@@ -119,11 +119,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         style={{
           position:"relative", zIndex:1,
           display:"flex", alignItems:"center", gap:12,
-          padding:"12px 12px", borderRadius:16, cursor:"pointer",
+          height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
           background:"transparent",
-          color: isActive ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
-          transition:"color .12s",
-          fontSize:16, fontWeight:400, letterSpacing:"-0.5px", userSelect:"none",
+          color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
+          transition:"color .15s",
+          fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
         }}
       >
         <Icon name={icon} size={17} strokeWidth={1.7}/>
@@ -133,7 +133,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {badge}
           </span>
         ) : null}
-        {isActive ? <Icon name="chevron" size={15} style={{color:"var(--text-muted)", flexShrink:0}}/> : null}
+        {isActive ? <Icon name="chevron" size={15} style={{flexShrink:0}}/> : null}
       </div>
     );
   };
@@ -147,11 +147,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseLeave={() => setHov(false)}
         style={{
           display:"flex", alignItems:"center", gap:12,
-          padding:"12px 12px", borderRadius:16, cursor:"pointer",
-          background: active ? "rgba(255,255,255,0.06)" : "transparent",
-          color: active ? "#ffffff" : hov ? "#e5e5e5" : "var(--text-muted)",
-          transition:"color .12s, background .12s",
-          fontSize:16, fontWeight:400, letterSpacing:"-0.5px", userSelect:"none",
+          height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
+          background: active ? "rgba(255,255,255,0.07)" : "transparent",
+          color: active ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
+          transition:"color .15s, background .15s",
+          fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
         }}
       >
         <Icon name={icon} size={17} strokeWidth={1.6}/>
@@ -200,7 +200,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           <div style={{
             position:"absolute", left:0, right:0,
             top: pill.top, height: pill.height,
-            background:"rgba(255,255,255,0.06)",
+            background:"rgba(255,255,255,0.07)",
             borderRadius:16, pointerEvents:"none", zIndex:0,
             opacity: pill.visible ? 1 : 0,
             transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`,
