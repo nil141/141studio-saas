@@ -238,10 +238,17 @@
       textTransform: "uppercase",
       letterSpacing: "0.08em"
     };
-    const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("h1", { style: {
-      fontSize: "clamp(36px, 4vw, 56px)",
+    const Header = /* @__PURE__ */ React.createElement("header", { style: {
+      display: "flex",
+      flexDirection: "column",
+      gap: 20,
+      flexShrink: 0,
+      borderBottom: "0.5px solid var(--border)",
+      paddingBottom: 24
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("h1", { style: {
+      fontSize: 36,
       fontWeight: 400,
-      letterSpacing: "-0.04em",
+      letterSpacing: "-1.2px",
       lineHeight: 1.05,
       margin: 0,
       fontFamily: "var(--font-display)",

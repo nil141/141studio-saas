@@ -267,11 +267,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
   const Header = (
-    <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 }}>
+    <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0,
+      borderBottom: "0.5px solid var(--border)", paddingBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h1 style={{
-            fontSize: "clamp(36px, 4vw, 56px)", fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1.05,
+            fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
             margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
           }}>{greeting}, {adminName}.</h1>
           <p style={{
