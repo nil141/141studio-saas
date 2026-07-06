@@ -489,6 +489,29 @@ const Empty = ({ icon = "inbox", title, sub }) => (
   </div>
 );
 
+// Comparativa estilo outdomode: valor + flecha dentro de un círculo translúcido.
+// pct = variación con signo · goodUp = si subir es bueno (verde) o malo (rojo).
+const TrendDelta = ({ pct, goodUp = true, suffix, size = 14 }) => {
+  if (pct === null || pct === undefined || isNaN(pct)) return null;
+  const up = pct > 0, down = pct < 0, flat = pct === 0;
+  const good  = flat ? null : (up === goodUp);
+  const color = good === null ? "var(--text-subtle)" : good ? "var(--green)" : "var(--red)";
+  const deg   = flat ? 45 : down ? 90 : 0;   // flecha: arriba-dcha · abajo-dcha · horizontal
+  const badge = Math.round(size);
+  return (
+    <span style={{ display:"inline-flex", alignItems:"center", gap:5, lineHeight:1,
+      fontSize:size, color, letterSpacing:"-0.2px", fontVariantNumeric:"tabular-nums" }}>
+      <span style={{ opacity:0.85 }}>{up ? "+" : down ? "−" : ""}{Math.abs(pct)}%</span>
+      <span style={{ width:badge, height:badge, borderRadius:"50%", flexShrink:0,
+        background:"color-mix(in srgb, currentColor 22%, transparent)", display:"grid", placeItems:"center" }}>
+        <Icon name="arrow-up-right" size={Math.round(badge * 0.72)} strokeWidth={3}
+          style={{ transform: deg ? `rotate(${deg}deg)` : "none" }}/>
+      </span>
+      {suffix && <span style={{ fontSize:Math.round(size * 0.78), color:"var(--text-subtle)", letterSpacing:"-0.1px", marginLeft:1 }}>{suffix}</span>}
+    </span>
+  );
+};
+
 // Confirm dialog primitive — promise-based via useConfirm()
 const ConfirmContext = createContext(null);
 const ConfirmProvider = ({ children }) => {

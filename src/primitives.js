@@ -437,6 +437,40 @@ const ActionPill = ({ plusActions, moreActions, plusIcon = "plus" }) => {
   ))));
 };
 const Empty = ({ icon = "inbox", title, sub }) => /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center", color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "inline-flex", padding: 12, border: "0.5px solid var(--border)", borderRadius: 12, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 20 })), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, color: "var(--text)", fontSize: 14 } }, title), sub ? /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4 } }, sub) : null);
+const TrendDelta = ({ pct, goodUp = true, suffix, size = 14 }) => {
+  if (pct === null || pct === void 0 || isNaN(pct)) return null;
+  const up = pct > 0, down = pct < 0, flat = pct === 0;
+  const good = flat ? null : up === goodUp;
+  const color = good === null ? "var(--text-subtle)" : good ? "var(--green)" : "var(--red)";
+  const deg = flat ? 45 : down ? 90 : 0;
+  const badge = Math.round(size);
+  return /* @__PURE__ */ React.createElement("span", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    lineHeight: 1,
+    fontSize: size,
+    color,
+    letterSpacing: "-0.2px",
+    fontVariantNumeric: "tabular-nums"
+  } }, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.85 } }, up ? "+" : down ? "\u2212" : "", Math.abs(pct), "%"), /* @__PURE__ */ React.createElement("span", { style: {
+    width: badge,
+    height: badge,
+    borderRadius: "50%",
+    flexShrink: 0,
+    background: "color-mix(in srgb, currentColor 22%, transparent)",
+    display: "grid",
+    placeItems: "center"
+  } }, /* @__PURE__ */ React.createElement(
+    Icon,
+    {
+      name: "arrow-up-right",
+      size: Math.round(badge * 0.72),
+      strokeWidth: 3,
+      style: { transform: deg ? `rotate(${deg}deg)` : "none" }
+    }
+  )), suffix && /* @__PURE__ */ React.createElement("span", { style: { fontSize: Math.round(size * 0.78), color: "var(--text-subtle)", letterSpacing: "-0.1px", marginLeft: 1 } }, suffix));
+};
 const ConfirmContext = createContext(null);
 const ConfirmProvider = ({ children }) => {
   const [state, setState] = useState(null);
