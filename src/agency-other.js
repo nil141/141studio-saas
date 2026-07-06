@@ -683,7 +683,7 @@
           { icon: "refresh-cw", label: "Actualizar lista", onClick: () => D.reload && D.reload() }
         ]
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", maxWidth: 860 } }, D.PROJECTS.map((p) => {
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, D.PROJECTS.map((p) => {
       const pTasks = D.TASKS[p.id] || [];
       const doneN = pTasks.filter((t) => t.column === "done").length;
       const liveProgress = pTasks.length ? Math.round(doneN / pTasks.length * 100) : 0;

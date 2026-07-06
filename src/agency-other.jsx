@@ -898,7 +898,7 @@ const AgencyProjects = ({ navigate, openModal }) => {
         />
       </div>
 
-      <div style={{ display:"flex", flexDirection:"column", maxWidth:860 }}>
+      <div style={{ display:"flex", flexDirection:"column", width:"100%" }}>
         {D.PROJECTS.map(p => {
           const pTasks = D.TASKS[p.id] || [];
           const doneN = pTasks.filter(t => t.column === "done").length;
