@@ -75,16 +75,18 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   // ── Stripe ──
   const [stripeMonth, setStripeMonth] = useState(null);
+  const [stripePrev, setStripePrev]   = useState(null);   // mes anterior (para la comparativa)
   useEffect(() => {
     const now = new Date();
     const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
+    const prevStart  = Math.floor(new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000);
     window.apiFetch("/api/stripe/invoices", { limit: 100 })
       .then(r => r.json())
       .then(res => {
         if (!res.ok) { setStripeMonth(false); return; }
-        const total = (res.invoices || []).filter(i => i.status==="paid" && i.created>=monthStart)
-          .reduce((a,b) => a+(b.amount_paid??b.amount??0), 0);
-        setStripeMonth(total);
+        const paid = (res.invoices || []).filter(i => i.status === "paid");
+        setStripeMonth(paid.filter(i => i.created >= monthStart).reduce((a,b) => a+(b.amount_paid??b.amount??0), 0));
+        setStripePrev(paid.filter(i => i.created >= prevStart && i.created < monthStart).reduce((a,b) => a+(b.amount_paid??b.amount??0), 0));
       })
       .catch(() => setStripeMonth(false));
   }, []);
@@ -175,52 +177,67 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   };
 
   // ── KPI config ──
-  // Gastos de este mes — mismos datos que la página de Gastos (recurrente + puntual)
-  const monthSpend = (() => {
+  // Gastos por mes — mismos datos que la página de Gastos (recurrente + puntual)
+  const _spendForMonth = (offset = 0) => {
     try {
       const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
       const rec = (fin.subs || []).filter(s => s.active !== false)
         .reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0)), 0);
-      const now = new Date();
+      const base = new Date(); const y = base.getFullYear(), m = base.getMonth() + offset;
+      const ref = new Date(y, m, 1);
       const exp = (fin.expenses || []).filter(e => {
         if (!e.date) return false;
         const d = new Date(e.date);
-        return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+        return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
       }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
       return rec + exp;
     } catch { return 0; }
-  })();
+  };
+  const monthSpend     = _spendForMonth(0);
+  const lastMonthSpend = _spendForMonth(-1);
+  const prevMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("es-ES", { month: "short" });
+  const _pctDelta = (cur, prev) => (prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null);
+  const spendDelta   = _pctDelta(monthSpend, lastMonthSpend);
+  const invoiceDelta = (stripeMonth !== null && stripeMonth !== false && stripePrev !== null)
+    ? _pctDelta(stripeMonth, stripePrev) : null;
+
+  // Comparativa: {text, suffix, dir, tone} para el indicador estilo outdomode
+  const _countDelta = (n, word) => n > 0
+    ? { text: String(n), suffix: word, dir: "down", tone: "bad" }
+    : { text: "0", suffix: word, dir: "flat", tone: "muted" };
+  const _pctToDelta = (pct, goodUp, suffix) => {
+    if (pct === null) return { text: "—", suffix, dir: "flat", tone: "muted" };
+    const up = pct > 0, down = pct < 0;
+    const good = up === goodUp;
+    return {
+      text: `${up ? "+" : down ? "−" : ""}${Math.abs(pct)}%`,
+      suffix, dir: up ? "up" : down ? "down" : "flat",
+      tone: (up || down) ? (good ? "good" : "bad") : "muted",
+    };
+  };
 
   const kpis = [
     {
       label:  "Proyectos activos",
       value:  activeProjects,
-      sub:    activeProjects===0 ? "Crea el primero" : capacityLabel,
-      icon:   "folder",
+      delta:  _countDelta(atRisk, "en riesgo"),
     },
     {
       label:  "Tareas pendientes",
       value:  pendingTasks,
-      sub:    pendingTasks===0 ? "Todo al día" : "en todos los proyectos",
-      icon:   "list-todo",
-    },
-    {
-      label:  "Tareas vencidas",
-      value:  overdueTasks,
-      sub:    overdueTasks===0 ? "Ninguna vencida" : "requieren atención",
-      icon:   "alert-triangle",
+      delta:  _countDelta(overdueTasks, "vencidas"),
     },
     {
       label:  "Gastos este mes",
       value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      sub:    monthSpend === 0 ? "Sin gastos aún" : "recurrente + puntual",
-      icon:   "receipt",
+      delta:  _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
     },
     {
       label:  "Facturado este mes",
       value:  stripeMonth===null?"…":stripeMonth===false?"—":`€${(stripeMonth/100).toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})}`,
-      sub:    stripeMonth===null?"Conectando…":stripeMonth===false?"Sin conexión Stripe":new Date().toLocaleString("es-ES",{month:"long"}),
-      icon:   "receipt",
+      delta:  stripeMonth===false
+                ? { text:"Sin Stripe", dir:"flat", tone:"muted" }
+                : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`),
     },
   ];
 
@@ -436,8 +453,23 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ═══ Opción 3 — Tres columnas iguales ════════════════════════════════════
   const V3 = (
     <>
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, flexShrink: 0 }}>
-        {kpis.map(renderKpiTile)}
+      <section style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
+        borderBottom: "0.5px solid var(--border)", padding: "0 4px 26px", flexShrink: 0,
+      }}>
+        {kpis.map((k, i) => (
+          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            <span style={{ fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{k.label}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+                <span style={{ fontSize: 32, color: "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
+                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums" }}>{k.value}</span>
+                {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+              </div>
+              {k.delta && <MetricDelta {...k.delta}/>}
+            </div>
+          </div>
+        ))}
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 }}>
         <AgendaBlock height="100%" slice={6}/>

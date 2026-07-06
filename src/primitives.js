@@ -471,6 +471,37 @@ const TrendDelta = ({ pct, goodUp = true, suffix, size = 14 }) => {
     }
   )), suffix && /* @__PURE__ */ React.createElement("span", { style: { fontSize: Math.round(size * 0.78), color: "var(--text-subtle)", letterSpacing: "-0.1px", marginLeft: 1 } }, suffix));
 };
+const MetricDelta = ({ text, suffix, dir = "up", tone = "muted", size = 14 }) => {
+  const color = tone === "good" ? "var(--green)" : tone === "bad" ? "var(--red)" : "var(--text-muted)";
+  const deg = dir === "down" ? 90 : dir === "flat" ? 45 : 0;
+  const badge = Math.round(size);
+  return /* @__PURE__ */ React.createElement("span", { style: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    lineHeight: 1,
+    fontSize: size,
+    color,
+    letterSpacing: "-0.1px",
+    fontVariantNumeric: "tabular-nums"
+  } }, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.8 } }, text), /* @__PURE__ */ React.createElement("span", { style: {
+    width: badge,
+    height: badge,
+    borderRadius: "50%",
+    flexShrink: 0,
+    background: "color-mix(in srgb, currentColor 20%, transparent)",
+    display: "grid",
+    placeItems: "center"
+  } }, /* @__PURE__ */ React.createElement(
+    Icon,
+    {
+      name: "arrow-up-right",
+      size: Math.round(badge * 0.72),
+      strokeWidth: 3,
+      style: { transform: deg ? `rotate(${deg}deg)` : "none" }
+    }
+  )), suffix && /* @__PURE__ */ React.createElement("span", { style: { fontSize: Math.round(size * 0.82), color: "var(--text-subtle)", opacity: 1, marginLeft: 0 } }, suffix));
+};
 const ConfirmContext = createContext(null);
 const ConfirmProvider = ({ children }) => {
   const [state, setState] = useState(null);

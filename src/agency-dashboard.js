@@ -1,5 +1,6 @@
 (() => {
-  const parseSpanishDate = (str) => {
+  // src/agency-dashboard.jsx
+  var parseSpanishDate = (str) => {
     if (!str || str === "\u2014") return null;
     const M = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11 };
     const parts = str.trim().toLowerCase().split(/[\s\/\-]+/);
@@ -9,7 +10,7 @@
     if (isNaN(day) || mon === void 0) return null;
     return new Date((/* @__PURE__ */ new Date()).getFullYear(), mon, day);
   };
-  const AgencyDashboard = ({ openModal, navigate, session }) => {
+  var AgencyDashboard = ({ openModal, navigate, session }) => {
     const D = window.Data;
     D.useStore();
     const [now, setNow] = useState(/* @__PURE__ */ new Date());
@@ -48,19 +49,25 @@
     const capacityLabel = activeProjects === 0 ? "Sin proyectos" : activeProjects <= 3 ? "Capacidad c\xF3moda" : activeProjects <= 4 ? "Capacidad media" : "Al l\xEDmite";
     const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}`;
     const [stripeMonth, setStripeMonth] = useState(null);
+    const [stripePrev, setStripePrev] = useState(null);
     useEffect(() => {
       const now2 = /* @__PURE__ */ new Date();
       const monthStart = Math.floor(new Date(now2.getFullYear(), now2.getMonth(), 1).getTime() / 1e3);
+      const prevStart = Math.floor(new Date(now2.getFullYear(), now2.getMonth() - 1, 1).getTime() / 1e3);
       window.apiFetch("/api/stripe/invoices", { limit: 100 }).then((r) => r.json()).then((res) => {
         if (!res.ok) {
           setStripeMonth(false);
           return;
         }
-        const total = (res.invoices || []).filter((i) => i.status === "paid" && i.created >= monthStart).reduce((a, b) => {
+        const paid = (res.invoices || []).filter((i) => i.status === "paid");
+        setStripeMonth(paid.filter((i) => i.created >= monthStart).reduce((a, b) => {
           var _a, _b;
           return a + ((_b = (_a = b.amount_paid) != null ? _a : b.amount) != null ? _b : 0);
-        }, 0);
-        setStripeMonth(total);
+        }, 0));
+        setStripePrev(paid.filter((i) => i.created >= prevStart && i.created < monthStart).reduce((a, b) => {
+          var _a, _b;
+          return a + ((_b = (_a = b.amount_paid) != null ? _a : b.amount) != null ? _b : 0);
+        }, 0));
       }).catch(() => setStripeMonth(false));
     }, []);
     const upcomingEvents = React.useMemo(() => {
@@ -153,51 +160,61 @@
       const meses = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
       return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
     };
-    const monthSpend = (() => {
+    const _spendForMonth = (offset = 0) => {
       try {
         const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
         const rec = (fin.subs || []).filter((s) => s.active !== false).reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0), 0);
-        const now2 = /* @__PURE__ */ new Date();
+        const base = /* @__PURE__ */ new Date();
+        const y = base.getFullYear(), m = base.getMonth() + offset;
+        const ref = new Date(y, m, 1);
         const exp = (fin.expenses || []).filter((e) => {
           if (!e.date) return false;
           const d = new Date(e.date);
-          return d.getFullYear() === now2.getFullYear() && d.getMonth() === now2.getMonth();
+          return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
         }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
         return rec + exp;
       } catch (e) {
         return 0;
       }
-    })();
+    };
+    const monthSpend = _spendForMonth(0);
+    const lastMonthSpend = _spendForMonth(-1);
+    const prevMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("es-ES", { month: "short" });
+    const _pctDelta = (cur, prev) => prev > 0 ? Math.round((cur - prev) / prev * 100) : null;
+    const spendDelta = _pctDelta(monthSpend, lastMonthSpend);
+    const invoiceDelta = stripeMonth !== null && stripeMonth !== false && stripePrev !== null ? _pctDelta(stripeMonth, stripePrev) : null;
+    const _countDelta = (n, word) => n > 0 ? { text: String(n), suffix: word, dir: "down", tone: "bad" } : { text: "0", suffix: word, dir: "flat", tone: "muted" };
+    const _pctToDelta = (pct, goodUp, suffix) => {
+      if (pct === null) return { text: "\u2014", suffix, dir: "flat", tone: "muted" };
+      const up = pct > 0, down = pct < 0;
+      const good = up === goodUp;
+      return {
+        text: `${up ? "+" : down ? "\u2212" : ""}${Math.abs(pct)}%`,
+        suffix,
+        dir: up ? "up" : down ? "down" : "flat",
+        tone: up || down ? good ? "good" : "bad" : "muted"
+      };
+    };
     const kpis = [
       {
         label: "Proyectos activos",
         value: activeProjects,
-        sub: activeProjects === 0 ? "Crea el primero" : capacityLabel,
-        icon: "folder"
+        delta: _countDelta(atRisk, "en riesgo")
       },
       {
         label: "Tareas pendientes",
         value: pendingTasks,
-        sub: pendingTasks === 0 ? "Todo al d\xEDa" : "en todos los proyectos",
-        icon: "list-todo"
-      },
-      {
-        label: "Tareas vencidas",
-        value: overdueTasks,
-        sub: overdueTasks === 0 ? "Ninguna vencida" : "requieren atenci\xF3n",
-        icon: "alert-triangle"
+        delta: _countDelta(overdueTasks, "vencidas")
       },
       {
         label: "Gastos este mes",
         value: `\u20AC${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        sub: monthSpend === 0 ? "Sin gastos a\xFAn" : "recurrente + puntual",
-        icon: "receipt"
+        delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`)
       },
       {
         label: "Facturado este mes",
         value: stripeMonth === null ? "\u2026" : stripeMonth === false ? "\u2014" : `\u20AC${(stripeMonth / 100).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-        sub: stripeMonth === null ? "Conectando\u2026" : stripeMonth === false ? "Sin conexi\xF3n Stripe" : (/* @__PURE__ */ new Date()).toLocaleString("es-ES", { month: "long" }),
-        icon: "receipt"
+        delta: stripeMonth === false ? { text: "Sin Stripe", dir: "flat", tone: "muted" } : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`)
       }
     ];
     const queues = [
@@ -376,7 +393,22 @@
       fontVariantNumeric: "tabular-nums",
       lineHeight: 1.1
     } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
-    const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 14, flexShrink: 0 } }, kpis.map(renderKpiTile)), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
+    const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 32,
+      borderBottom: "0.5px solid var(--border)",
+      padding: "0 4px 26px",
+      flexShrink: 0
+    } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 32,
+      color: "var(--text)",
+      letterSpacing: "-0.08em",
+      lineHeight: 1,
+      fontFamily: "var(--font-display)",
+      fontVariantNumeric: "tabular-nums"
+    } }, k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
@@ -388,7 +420,7 @@
       margin: "0 auto"
     } }, Header, V3);
   };
-  const LINK_BTN = {
+  var LINK_BTN = {
     display: "inline-flex",
     alignItems: "center",
     gap: 4,
@@ -404,7 +436,7 @@
     fontFamily: "inherit",
     letterSpacing: "-0.2px"
   };
-  const EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
+  var EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
     "div",
     {
       onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
@@ -451,7 +483,7 @@
       fontWeight: 500
     } }, ev.type)
   );
-  const QueueRow = ({ q }) => /* @__PURE__ */ React.createElement(
+  var QueueRow = ({ q }) => /* @__PURE__ */ React.createElement(
     "div",
     {
       onClick: q.action,
@@ -488,7 +520,7 @@
       fontFamily: "var(--font-display)"
     } }, q.count)
   );
-  const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+  var ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => openModal("newProject"),
