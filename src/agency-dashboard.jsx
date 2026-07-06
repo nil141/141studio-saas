@@ -269,16 +269,25 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const Header = (
     <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
-        <div>
-          <h1 style={{
-            fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
-            margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
-          }}>{greeting}, {adminName}.</h1>
-          <div style={{
-            marginTop: 10, fontSize: 15, color: "var(--text-muted)", letterSpacing: "-0.3px",
-            lineHeight: 1.5, maxWidth: 520,
-          }}>
-            {dayMessage}
+        <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
+          {/* Marca 141 */}
+          <svg viewBox="0 0 635.81 366.91" fill="currentColor" xmlns="http://www.w3.org/2000/svg"
+            style={{ height: 30, width: "auto", display: "block", color: "var(--text)" }} aria-label="141">
+            <path d="M0,103.79v-31.97c38.11,0,64.88-34.07,82.12-70.76V0h43.55v366.38h-43.55V55.56C63.06,83.34,35.84,103.79,0,103.79Z"/>
+            <path d="M421.64,276.02h-23.86v90.89h-43.46v-90.89h-199.16v-40.94L354.31,0h43.46v235.08h23.86v40.94h.01ZM354.31,235.09V51.89l-154.34,183.19h154.34Z"/>
+            <path d="M440.96,103.79v-31.97c38.11,0,64.88-34.07,82.12-70.76V0h43.55v366.38h-43.55V55.56c-19.05,27.78-46.28,48.22-82.12,48.22h0Z"/>
+            <path d="M635.81,0l-3.54,100.69h-32.21l-3.95-100.69s39.7,0,39.7,0Z"/>
+          </svg>
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <h1 style={{
+              fontSize: 40, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1.05,
+              margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
+            }}>{greeting}, {adminName}.</h1>
+            <p style={{
+              margin: 0, fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.4,
+            }}>
+              {dayMessage}
+            </p>
           </div>
         </div>
 
