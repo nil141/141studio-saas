@@ -27,9 +27,24 @@ ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
 
 PORT = int(os.environ.get("PORT", 8080))
 BASE = os.path.dirname(os.path.abspath(__file__))
-# Si se define STORE_DIR (ej. Railway Volume en /data), los datos se guardan ahí
-_STORE_DIR = os.environ.get("STORE_DIR", BASE)
-os.makedirs(_STORE_DIR, exist_ok=True)
+# Persistencia: los datos (campañas, etc.) se guardan en STORE_DIR. En Railway
+# se debe montar un Volume; su ruta llega en RAILWAY_VOLUME_MOUNT_PATH, así que
+# la usamos automáticamente si no se define STORE_DIR a mano. Si no hay volumen,
+# cae en BASE (disco efímero) y los datos NO sobreviven a un redeploy.
+_STORE_DIR = (os.environ.get("STORE_DIR")
+              or os.environ.get("RAILWAY_VOLUME_MOUNT_PATH")
+              or BASE)
+try:
+    os.makedirs(_STORE_DIR, exist_ok=True)
+except OSError:
+    _STORE_DIR = BASE
+    os.makedirs(_STORE_DIR, exist_ok=True)
+_STORE_EPHEMERAL = os.path.abspath(_STORE_DIR) == os.path.abspath(BASE)
+if _STORE_EPHEMERAL:
+    print("  ⚠️  STORE_DIR no persistente: monta un Volume en Railway "
+          "(los datos se perderán en el próximo deploy).")
+else:
+    print(f"  💾 STORE_DIR persistente: {_STORE_DIR}")
 
 # ── utilidades ─────────────────────────────────────────────────────────────
 
