@@ -238,21 +238,8 @@
       textTransform: "uppercase",
       letterSpacing: "0.08em"
     };
-    const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 22 } }, /* @__PURE__ */ React.createElement(
-      "svg",
-      {
-        viewBox: "0 0 635.81 366.91",
-        fill: "currentColor",
-        xmlns: "http://www.w3.org/2000/svg",
-        style: { height: 30, width: "auto", display: "block", color: "var(--text)" },
-        "aria-label": "141"
-      },
-      /* @__PURE__ */ React.createElement("path", { d: "M0,103.79v-31.97c38.11,0,64.88-34.07,82.12-70.76V0h43.55v366.38h-43.55V55.56C63.06,83.34,35.84,103.79,0,103.79Z" }),
-      /* @__PURE__ */ React.createElement("path", { d: "M421.64,276.02h-23.86v90.89h-43.46v-90.89h-199.16v-40.94L354.31,0h43.46v235.08h23.86v40.94h.01ZM354.31,235.09V51.89l-154.34,183.19h154.34Z" }),
-      /* @__PURE__ */ React.createElement("path", { d: "M440.96,103.79v-31.97c38.11,0,64.88-34.07,82.12-70.76V0h43.55v366.38h-43.55V55.56c-19.05,27.78-46.28,48.22-82.12,48.22h0Z" }),
-      /* @__PURE__ */ React.createElement("path", { d: "M635.81,0l-3.54,100.69h-32.21l-3.95-100.69s39.7,0,39.7,0Z" })
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("h1", { style: {
-      fontSize: 40,
+    const Header = /* @__PURE__ */ React.createElement("header", { style: { display: "flex", flexDirection: "column", gap: 20, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("h1", { style: {
+      fontSize: "clamp(36px, 4vw, 56px)",
       fontWeight: 400,
       letterSpacing: "-0.04em",
       lineHeight: 1.05,
@@ -265,7 +252,7 @@
       color: "var(--text-muted)",
       letterSpacing: "-0.2px",
       lineHeight: 1.4
-    } }, dayMessage))), /* @__PURE__ */ React.createElement(
+    } }, dayMessage)), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: [
