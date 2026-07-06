@@ -149,6 +149,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           display:"flex", alignItems:"center", gap:12,
           height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
           background: active ? "rgba(255,255,255,0.07)" : "transparent",
+          border: active ? "1px solid #232324" : "1px solid transparent",
           color: active ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition:"color .15s, background .15s",
           fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
@@ -199,8 +200,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         {pill && (
           <div style={{
             position:"absolute", left:0, right:0,
-            top: pill.top, height: pill.height,
+            top: pill.top + 3, height: pill.height - 6,
             background:"rgba(255,255,255,0.07)",
+            border:"1px solid #232324",
             borderRadius:16, pointerEvents:"none", zIndex:0,
             opacity: pill.visible ? 1 : 0,
             transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`,
