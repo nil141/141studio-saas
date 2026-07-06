@@ -591,10 +591,24 @@ const useCSVImport = (campaignId, onDone) => {
     const text = await file.text();
     const leads = csvToLeads(text);
     if (!leads.length) { toast("No se encontraron leads en el CSV", "warn"); return; }
-    const r = await window.apiFetch("/api/campaigns/import_leads", { campaignId, leads, source:"csv" });
-    const j = await r.json();
-    if (!j.ok) { toast(j.error || "Error al importar", "warn"); return; }
-    toast(`${j.added} leads importados${j.skipped ? ` · ${j.skipped} duplicados omitidos` : ""}`, "success");
+
+    // Subida por lotes: el servidor acepta 500/petición (y 1 MB de payload),
+    // así que troceamos y agregamos los resultados — CSVs de cualquier tamaño.
+    const CHUNK = 200;
+    let added = 0, skipped = 0;
+    if (leads.length > CHUNK) toast(`Importando ${leads.length} leads…`, "info");
+    for (let i = 0; i < leads.length; i += CHUNK) {
+      const r = await window.apiFetch("/api/campaigns/import_leads",
+        { campaignId, leads: leads.slice(i, i + CHUNK), source:"csv" });
+      const j = await r.json();
+      if (!j.ok) {
+        toast(`${j.error || "Error al importar"}${added ? ` — ${added} ya importados` : ""}`, "warn");
+        if (added) onDone && onDone();
+        return;
+      }
+      added += j.added; skipped += j.skipped;
+    }
+    toast(`${added} leads importados${skipped ? ` · ${skipped} duplicados omitidos` : ""}`, "success");
     onDone && onDone();
   };
   const input = <input ref={inputRef} type="file" accept=".csv,text/csv" onChange={onFile} style={{ display:"none" }}/>;

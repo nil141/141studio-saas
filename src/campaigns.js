@@ -484,13 +484,24 @@ const useCSVImport = (campaignId, onDone) => {
       toast("No se encontraron leads en el CSV", "warn");
       return;
     }
-    const r = await window.apiFetch("/api/campaigns/import_leads", { campaignId, leads, source: "csv" });
-    const j = await r.json();
-    if (!j.ok) {
-      toast(j.error || "Error al importar", "warn");
-      return;
+    const CHUNK = 200;
+    let added = 0, skipped = 0;
+    if (leads.length > CHUNK) toast(`Importando ${leads.length} leads\u2026`, "info");
+    for (let i = 0; i < leads.length; i += CHUNK) {
+      const r = await window.apiFetch(
+        "/api/campaigns/import_leads",
+        { campaignId, leads: leads.slice(i, i + CHUNK), source: "csv" }
+      );
+      const j = await r.json();
+      if (!j.ok) {
+        toast(`${j.error || "Error al importar"}${added ? ` \u2014 ${added} ya importados` : ""}`, "warn");
+        if (added) onDone && onDone();
+        return;
+      }
+      added += j.added;
+      skipped += j.skipped;
     }
-    toast(`${j.added} leads importados${j.skipped ? ` \xB7 ${j.skipped} duplicados omitidos` : ""}`, "success");
+    toast(`${added} leads importados${skipped ? ` \xB7 ${skipped} duplicados omitidos` : ""}`, "success");
     onDone && onDone();
   };
   const input = /* @__PURE__ */ React.createElement("input", { ref: inputRef, type: "file", accept: ".csv,text/csv", onChange: onFile, style: { display: "none" } });
