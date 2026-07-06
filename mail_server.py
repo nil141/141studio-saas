@@ -520,6 +520,7 @@ def _add_leads(camp, leads_in, source="api"):
             "website": (l.get("website") or "")[:300],
             "sector":  (l.get("sector") or "")[:120],
             "audit":   (l.get("audit") or "")[:8000],
+            "notes":   (l.get("notes") or "")[:8000],
             "subject": (l.get("subject") or "")[:300],
             "draft":   (l.get("draft") or "")[:8000],
             "status":  "new",

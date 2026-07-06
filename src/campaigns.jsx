@@ -60,22 +60,27 @@ const parseCSV = (text) => {
   return rows;
 };
 
-// Mapea cabeceras del CSV a campos del lead (ES/EN)
+// Mapea cabeceras del CSV a campos del lead (ES/EN, incluye exports de
+// Apollo/HubSpot: First Name + Last Name, Company Name, Industry, Title…)
 const CSV_FIELDS = {
-  name:    ["name","nombre","contacto","lead","persona"],
-  company: ["company","empresa","negocio","marca","compañia","compañía"],
-  email:   ["email","correo","e-mail","mail"],
-  phone:   ["phone","telefono","teléfono","tel","movil","móvil"],
-  website: ["website","web","url","dominio","sitio","pagina","página"],
-  sector:  ["sector","industria","categoria","categoría","nicho","tipo"],
-  audit:   ["audit","auditoria","auditoría","notas","nota","observaciones"],
-  subject: ["subject","asunto"],
-  draft:   ["draft","borrador","mensaje","cuerpo"],
+  firstName: ["first name","firstname","nombre de pila"],
+  lastName:  ["last name","lastname","surname","apellido","apellidos"],
+  name:      ["name","nombre","contacto","lead","persona","full name","nombre completo","contact name"],
+  company:   ["company","company name","empresa","negocio","marca","compañia","compañía","organization","account name"],
+  email:     ["email","correo","e-mail","mail","email address","work email","correo electronico","correo electrónico"],
+  phone:     ["phone","phone number","telefono","teléfono","tel","movil","móvil","mobile","mobile number","mobile phone","work direct phone","corporate phone","company phone number"],
+  website:   ["website","web","url","dominio","sitio","pagina","página","company website","website url","site","domain","company domain"],
+  sector:    ["sector","industry","industria","categoria","categoría","nicho","tipo","vertical"],
+  title:     ["title","cargo","puesto","job title","position","rol"],
+  audit:     ["audit","auditoria","auditoría","observaciones"],
+  notes:     ["notes","notas","nota","comentarios"],
+  subject:   ["subject","asunto"],
+  draft:     ["draft","borrador","mensaje","cuerpo"],
 };
 const csvToLeads = (text) => {
   const rows = parseCSV(text);
   if (!rows.length) return [];
-  const header = rows[0].map(h => h.trim().toLowerCase());
+  const header = rows[0].map(h => h.replace(/^﻿/, "").trim().toLowerCase());
   const colMap = {};   // índice de columna → campo
   let matched = 0;
   header.forEach((h, i) => {
@@ -90,8 +95,21 @@ const csvToLeads = (text) => {
     const lead = {};
     r.forEach((cell, i) => {
       const field = matched >= 2 ? colMap[i] : defaultOrder[i];
-      if (field && cell && cell.trim()) lead[field] = cell.trim();
+      const v = (cell || "").trim();
+      // La primera columna que llena un campo gana (Website antes que Domain,
+      // Mobile antes que Company Phone…)
+      if (field && v && !lead[field]) lead[field] = v;
     });
+    // First + Last Name → nombre completo (prioridad sobre Full Name)
+    if (lead.firstName || lead.lastName) {
+      lead.name = [lead.firstName, lead.lastName].filter(Boolean).join(" ");
+    }
+    delete lead.firstName; delete lead.lastName;
+    // El cargo va a las notas (el lead no tiene campo propio para el puesto)
+    if (lead.title) {
+      lead.notes = [`Cargo: ${lead.title}`, lead.notes].filter(Boolean).join(" · ");
+      delete lead.title;
+    }
     return lead;
   }).filter(l => l.name || l.company);
 };

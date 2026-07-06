@@ -61,20 +61,24 @@ const parseCSV = (text) => {
   return rows;
 };
 const CSV_FIELDS = {
-  name: ["name", "nombre", "contacto", "lead", "persona"],
-  company: ["company", "empresa", "negocio", "marca", "compa\xF1ia", "compa\xF1\xEDa"],
-  email: ["email", "correo", "e-mail", "mail"],
-  phone: ["phone", "telefono", "tel\xE9fono", "tel", "movil", "m\xF3vil"],
-  website: ["website", "web", "url", "dominio", "sitio", "pagina", "p\xE1gina"],
-  sector: ["sector", "industria", "categoria", "categor\xEDa", "nicho", "tipo"],
-  audit: ["audit", "auditoria", "auditor\xEDa", "notas", "nota", "observaciones"],
+  firstName: ["first name", "firstname", "nombre de pila"],
+  lastName: ["last name", "lastname", "surname", "apellido", "apellidos"],
+  name: ["name", "nombre", "contacto", "lead", "persona", "full name", "nombre completo", "contact name"],
+  company: ["company", "company name", "empresa", "negocio", "marca", "compa\xF1ia", "compa\xF1\xEDa", "organization", "account name"],
+  email: ["email", "correo", "e-mail", "mail", "email address", "work email", "correo electronico", "correo electr\xF3nico"],
+  phone: ["phone", "phone number", "telefono", "tel\xE9fono", "tel", "movil", "m\xF3vil", "mobile", "mobile number", "mobile phone", "work direct phone", "corporate phone", "company phone number"],
+  website: ["website", "web", "url", "dominio", "sitio", "pagina", "p\xE1gina", "company website", "website url", "site", "domain", "company domain"],
+  sector: ["sector", "industry", "industria", "categoria", "categor\xEDa", "nicho", "tipo", "vertical"],
+  title: ["title", "cargo", "puesto", "job title", "position", "rol"],
+  audit: ["audit", "auditoria", "auditor\xEDa", "observaciones"],
+  notes: ["notes", "notas", "nota", "comentarios"],
   subject: ["subject", "asunto"],
   draft: ["draft", "borrador", "mensaje", "cuerpo"]
 };
 const csvToLeads = (text) => {
   const rows = parseCSV(text);
   if (!rows.length) return [];
-  const header = rows[0].map((h) => h.trim().toLowerCase());
+  const header = rows[0].map((h) => h.replace(/^﻿/, "").trim().toLowerCase());
   const colMap = {};
   let matched = 0;
   header.forEach((h, i) => {
@@ -92,8 +96,18 @@ const csvToLeads = (text) => {
     const lead = {};
     r.forEach((cell, i) => {
       const field = matched >= 2 ? colMap[i] : defaultOrder[i];
-      if (field && cell && cell.trim()) lead[field] = cell.trim();
+      const v = (cell || "").trim();
+      if (field && v && !lead[field]) lead[field] = v;
     });
+    if (lead.firstName || lead.lastName) {
+      lead.name = [lead.firstName, lead.lastName].filter(Boolean).join(" ");
+    }
+    delete lead.firstName;
+    delete lead.lastName;
+    if (lead.title) {
+      lead.notes = [`Cargo: ${lead.title}`, lead.notes].filter(Boolean).join(" \xB7 ");
+      delete lead.title;
+    }
     return lead;
   }).filter((l) => l.name || l.company);
 };
