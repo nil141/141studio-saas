@@ -1395,8 +1395,7 @@ const CampaignsPage = ({ navigate }) => {
               return (
                 <div key={c.id} onClick={() => navigate("campaign", { campaignId: c.id })}
                   onMouseEnter={() => setHoverId(c.id)} onMouseLeave={() => setHoverId(null)}
-                  style={{ display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor:"pointer",
-                    borderBottom:"0.5px solid var(--border)" }}>
+                  style={{ display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor:"pointer" }}>
                   <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                     <div style={{ display:"flex", alignItems:"center", gap:14, minWidth:0 }}>
                       <Icon name={ct.icon} size={26} strokeWidth={1.6}

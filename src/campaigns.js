@@ -1321,14 +1321,7 @@ const CampaignsPage = ({ navigate }) => {
         onClick: () => navigate("campaign", { campaignId: c.id }),
         onMouseEnter: () => setHoverId(c.id),
         onMouseLeave: () => setHoverId(null),
-        style: {
-          display: "flex",
-          flexDirection: "column",
-          gap: 12,
-          padding: "18px 6px",
-          cursor: "pointer",
-          borderBottom: "0.5px solid var(--border)"
-        }
+        style: { display: "flex", flexDirection: "column", gap: 12, padding: "18px 6px", cursor: "pointer" }
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, minWidth: 0 } }, /* @__PURE__ */ React.createElement(
         Icon,
