@@ -1391,8 +1391,9 @@ const FIN_INPUT = {
 };
 const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
 
-// Colores de serie del gráfico — validados (CVD/contraste) sobre superficie oscura
-const FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
+// Colores de serie del gráfico — mismo lenguaje que el área de Campañas
+// (primary-600 de outdomode para la serie principal).
+const FIN_SERIES = { rec: "#8277db", pun: "#199e70" };
 
 // Curva suave (Catmull-Rom → Bézier). Los puntos de control se acotan en Y al
 // rango del segmento para evitar el overshoot (la curva hundiéndose bajo un tramo plano).
@@ -1419,6 +1420,8 @@ const FinTrendChart = ({ trend }) => {
   const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
   const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
   const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
+  const baseY = H - PY;
+  const areaOf = (pts) => { const c = _finSmooth(pts); return c ? `${c}L${pts[pts.length-1][0]},${baseY}L${pts[0][0]},${baseY}Z` : ""; };
 
   const onMove = (e) => {
     const r = e.currentTarget.getBoundingClientRect();
@@ -1434,20 +1437,33 @@ const FinTrendChart = ({ trend }) => {
       <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
         style={{ flex:1, minHeight:0, display:"block", cursor:"crosshair" }}
         onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
-        {/* Grid recesivo */}
-        {[0.25, 0.5, 0.75].map(f => (
+        <defs>
+          <linearGradient id="finGradRec" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={FIN_SERIES.rec} stopOpacity="0.3"/>
+            <stop offset="95%" stopColor={FIN_SERIES.rec} stopOpacity="0"/>
+          </linearGradient>
+          <linearGradient id="finGradPun" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={FIN_SERIES.pun} stopOpacity="0.22"/>
+            <stop offset="95%" stopColor={FIN_SERIES.pun} stopOpacity="0"/>
+          </linearGradient>
+        </defs>
+        {/* Líneas de referencia punteadas (como el área de Campañas) */}
+        {[0, 0.25, 0.5, 0.75, 1].map(f => (
           <line key={f} x1={PX} x2={W - PX} y1={PY + f * (H - 2 * PY)} y2={PY + f * (H - 2 * PY)}
-            stroke="rgba(255,255,255,0.05)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+            stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         ))}
         {/* Crosshair */}
         {hov !== null && (
           <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
             stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         )}
-        {/* Series */}
-        <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="2"
+        {/* Áreas rellenas con degradado */}
+        <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
+        <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
+        {/* Curvas */}
+        <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
           strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-        <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2"
+        <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
           strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
         {/* Puntos del mes bajo el cursor (o del último) */}
         {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (

@@ -729,7 +729,7 @@
     return isNaN(d) ? "\u2014" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
   };
   var FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
-  var FIN_SERIES = { rec: "#9085e9", pun: "#199e70" };
+  var FIN_SERIES = { rec: "#8277db", pun: "#199e70" };
   var _finSmooth = (pts) => {
     if (pts.length < 2) return "";
     let d = `M${pts[0][0]},${pts[0][1]}`;
@@ -751,6 +751,11 @@
     const y = (v) => H - PY - v / maxV * (H - 2 * PY);
     const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
     const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
+    const baseY = H - PY;
+    const areaOf = (pts) => {
+      const c = _finSmooth(pts);
+      return c ? `${c}L${pts[pts.length - 1][0]},${baseY}L${pts[0][0]},${baseY}Z` : "";
+    };
     const onMove = (e) => {
       const r = e.currentTarget.getBoundingClientRect();
       const px = e.clientX - r.left, py = e.clientY - r.top;
@@ -776,7 +781,8 @@
         onMouseMove: onMove,
         onMouseLeave: () => setHov(null)
       },
-      [0.25, 0.5, 0.75].map((f) => /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradRec", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.rec, stopOpacity: "0.3" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.rec, stopOpacity: "0" })), /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradPun", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.pun, stopOpacity: "0.22" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.pun, stopOpacity: "0" }))),
+      [0, 0.25, 0.5, 0.75, 1].map((f) => /* @__PURE__ */ React.createElement(
         "line",
         {
           key: f,
@@ -785,6 +791,7 @@
           y1: PY + f * (H - 2 * PY),
           y2: PY + f * (H - 2 * PY),
           stroke: "rgba(255,255,255,0.05)",
+          strokeDasharray: "3 3",
           strokeWidth: "1",
           vectorEffect: "non-scaling-stroke"
         }
@@ -801,13 +808,15 @@
           vectorEffect: "non-scaling-stroke"
         }
       ),
+      /* @__PURE__ */ React.createElement("path", { d: areaOf(punPts), fill: "url(#finGradPun)", stroke: "none" }),
+      /* @__PURE__ */ React.createElement("path", { d: areaOf(recPts), fill: "url(#finGradRec)", stroke: "none" }),
       /* @__PURE__ */ React.createElement(
         "path",
         {
-          d: _finSmooth(recPts),
+          d: _finSmooth(punPts),
           fill: "none",
-          stroke: FIN_SERIES.rec,
-          strokeWidth: "2",
+          stroke: FIN_SERIES.pun,
+          strokeWidth: "2.5",
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
@@ -815,10 +824,10 @@
       /* @__PURE__ */ React.createElement(
         "path",
         {
-          d: _finSmooth(punPts),
+          d: _finSmooth(recPts),
           fill: "none",
-          stroke: FIN_SERIES.pun,
-          strokeWidth: "2",
+          stroke: FIN_SERIES.rec,
+          strokeWidth: "3",
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
