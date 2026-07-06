@@ -199,7 +199,12 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
     el.dataset.init = "1";
   }, [selectedDay]);
 
-  const allTasks = Object.values(D.TASKS).flat();
+  // Solo tareas "vivas": de proyectos existentes + sueltas (__none__).
+  // Excluye huérfanas de proyectos borrados, que inflaban los contadores.
+  const _projIds = new Set(D.PROJECTS.map(p => p.id));
+  const allTasks = Object.entries(D.TASKS)
+    .filter(([pid]) => pid === "__none__" || _projIds.has(pid))
+    .flatMap(([, arr]) => arr);
 
   // Selected day as YYYY-MM-DD string
   const selDateStr = (() => {

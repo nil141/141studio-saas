@@ -491,6 +491,7 @@ const deleteProject = (id) => {
   _store.DELIVERABLES = _store.DELIVERABLES.filter((d) => d.projectId !== id);
   delete _store.TASKS[id];
   _emit();
+  _sb.from("tasks").delete().eq("project_id", id).then();
   _sb.from("projects").delete().eq("id", id).then();
 };
 const addInvoice = (input) => {

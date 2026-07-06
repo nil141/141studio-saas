@@ -39,7 +39,8 @@
       el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";
     }, [selectedDay]);
-    const allTasks = Object.values(D.TASKS).flat();
+    const _projIds = new Set(D.PROJECTS.map((p) => p.id));
+    const allTasks = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([, arr]) => arr);
     const selDateStr = (() => {
       const d = new Date(selectedDay);
       return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;

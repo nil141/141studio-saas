@@ -38,8 +38,10 @@
       return n.charAt(0).toUpperCase() + n.slice(1);
     })();
     const activeProjects = D.PROJECTS.length;
-    const pendingTasks = Object.values(D.TASKS).flat().filter((t) => t.column !== "done").length;
-    const overdueTasks = Object.values(D.TASKS).flat().filter((t) => {
+    const _projIds = new Set(D.PROJECTS.map((p) => p.id));
+    const _liveTasks = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([, arr]) => arr);
+    const pendingTasks = _liveTasks.filter((t) => t.column !== "done").length;
+    const overdueTasks = _liveTasks.filter((t) => {
       if (!t.deadline || t.column === "done") return false;
       return /* @__PURE__ */ new Date(t.deadline + "T00:00:00") < /* @__PURE__ */ new Date();
     }).length;

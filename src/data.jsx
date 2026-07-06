@@ -443,6 +443,9 @@ const deleteProject = (id) => {
   _store.PROJECTS     = _store.PROJECTS.filter(p => p.id !== id);
   _store.DELIVERABLES = _store.DELIVERABLES.filter(d => d.projectId !== id);
   delete _store.TASKS[id]; _emit();
+  // Borra también en Supabase las tareas del proyecto: si no, quedan huérfanas
+  // y siguen contando como pendientes en el panel.
+  _sb.from("tasks").delete().eq("project_id", id).then();
   _sb.from("projects").delete().eq("id", id).then();
 };
 
