@@ -866,6 +866,8 @@ const AgencyProjects = ({ navigate, openModal }) => {
   D.useStore();
   const confirm = useConfirm();
   const toast = useToast();
+  const [hoverId, setHoverId] = useState(null);
+  const _lightColor = (l) => l === "red" ? "var(--red)" : l === "amber" ? "var(--amber)" : l === "green" ? "var(--green)" : "var(--accent)";
   const cap = D.PROJECTS.length;
   const capColor = cap === 0 ? "green" : cap <= 3 ? "green" : cap === 4 ? "amber" : "red";
   const capLabel = cap === 0 ? "Sin proyectos" : cap <= 3 ? "Zona cómoda" : cap === 4 ? "Zona de atención" : "Zona de riesgo";
@@ -896,57 +898,66 @@ const AgencyProjects = ({ navigate, openModal }) => {
         />
       </div>
 
-      <div className="card" style={{marginBottom: 16}}>
-        <div className="card-body" style={{padding: 16, display:"flex", alignItems:"center", gap: 16}}>
-          <div className="metric-label">Capacidad</div>
-          <div className="grow">
-            <div className="row tight">
-              <span style={{fontWeight: 500}}>{cap} {cap === 1 ? "proyecto activo" : "proyectos activos"}</span>
-              <span className={"chip " + capColor}>{capLabel}</span>
-            </div>
-          </div>
-          <div className="muted xsmall" style={{textAlign:"right", lineHeight: 1.5}}>1-3 cómoda · 4 atención · 5+ riesgo</div>
-        </div>
-      </div>
-
-      {D.PROJECTS.length === 0 ? (
-        <div className="card"><div className="card-body" style={{padding: 60}}>
-          <Empty icon="folder" title="Sin proyectos" sub="Crea tu primer proyecto para empezar"/>
-        </div></div>
-      ) : (
-      <div className="rg-projects">
+      <div style={{ display:"flex", flexDirection:"column", maxWidth:860 }}>
         {D.PROJECTS.map(p => {
-          const phase = D.PHASES[p.phase];
           const pTasks = D.TASKS[p.id] || [];
-          const liveProgress = pTasks.length ? Math.round(pTasks.filter(t=>t.column==="done").length/pTasks.length*100) : 0;
+          const doneN = pTasks.filter(t => t.column === "done").length;
+          const liveProgress = pTasks.length ? Math.round(doneN / pTasks.length * 100) : 0;
+          const col = _lightColor(p.light);
+          const on = hoverId === p.id;
           return (
-            <div key={p.id} className="card" style={{cursor:"pointer", position:"relative"}} onClick={() => navigate("project", { projectId: p.id })}>
-              <button className="btn ghost icon-only sm danger" data-tooltip="Eliminar"
-                style={{position:"absolute", top: 10, right: 10, zIndex: 1}}
-                onClick={(e) => removeProject(p, e)}>
-                <Icon name="x" size={12}/>
-              </button>
-              <div className="card-body">
-                <div className="row between">
-                  <div className="row tight"><span className={"dot " + p.light}/><span style={{fontWeight: 500}}>{p.name}</span></div>
-                  <span className="chip" style={{marginRight: 32}}>{phase.label}</span>
+            <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+              onMouseEnter={() => setHoverId(p.id)} onMouseLeave={() => setHoverId(null)}
+              style={{ display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor:"pointer",
+                borderBottom:"0.5px solid var(--border)" }}>
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+                <div style={{ display:"flex", alignItems:"center", gap:14, minWidth:0 }}>
+                  <Icon name="package" size={26} strokeWidth={1.6}
+                    style={{ color:"var(--text)", flexShrink:0, transform: on ? "scale(1.06)" : "none", transition:"transform .3s" }}/>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:20, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{p.name}</div>
+                    <div style={{ fontSize:13.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
+                      <span style={{ flexShrink:0 }}>{pTasks.length} {pTasks.length === 1 ? "tarea" : "tareas"}</span>
+                      <span style={{ opacity:0.4, fontSize:10 }}>•</span>
+                      <span style={{ flexShrink:0 }}>{doneN} hechas</span>
+                      {p.clientName && <>
+                        <span style={{ opacity:0.4, fontSize:10 }}>•</span>
+                        <span style={{ whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{p.clientName}</span>
+                      </>}
+                    </div>
+                  </div>
                 </div>
-                <div className="muted small" style={{marginTop: 6}}>{p.clientName} · {p.service}</div>
-                <div className="muted small" style={{marginTop: 8}}>{p.description}</div>
-                <div style={{marginTop: 14, display:"flex", alignItems:"center", gap: 10}}>
-                  <div className="progress grow"><i style={{width: liveProgress + "%"}}/></div>
-                  <span className="muted small">{liveProgress}%</span>
+                <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
+                  <button className="btn ghost icon-only sm" data-tooltip="Eliminar"
+                    onClick={(e) => removeProject(p, e)}
+                    style={{ opacity: on ? 0.65 : 0, transition:"opacity .15s", color:"var(--red)" }}>
+                    <Icon name="trash" size={13}/>
+                  </button>
+                  <Icon name="chevron-right" size={18}
+                    style={{ color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
+                      transition:"all .2s", flexShrink:0 }}/>
                 </div>
-                <div className="row between" style={{marginTop: 10}}>
-                  <div className="muted xsmall"><Icon name="calendar" size={11}/> {p.deadline}</div>
-                  <div className="xsmall" style={{color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--text-muted)"}}>→ {p.nextMilestone}</div>
-                </div>
+              </div>
+              <div style={{ position:"relative", width:"100%", height:3, background:"rgba(255,255,255,0.05)", borderRadius:99, overflow:"hidden" }}>
+                <div style={{ position:"absolute", height:"100%", borderRadius:99, background:col, width:`${liveProgress}%`, transition:"width .3s" }}/>
               </div>
             </div>
           );
         })}
+
+        {/* Añadir proyecto — botón discontinuo estilo outdomode */}
+        <button onClick={() => openModal("newProject")} style={{
+          marginTop:16, width:"100%", padding:"26px", borderRadius:22,
+          border:"1px dashed var(--border)", background:"transparent", cursor:"pointer",
+          color:"var(--text-muted)", fontSize:15, fontFamily:"inherit", opacity:0.5, transition:"opacity .2s",
+          display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"-0.2px",
+        }}
+          onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+          onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+          {D.PROJECTS.length === 0 ? "Crea tu primer proyecto" : "Añadir proyecto"} <Icon name="plus" size={16}/>
+        </button>
       </div>
-      )}
     </div>
   );
 };

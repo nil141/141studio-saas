@@ -657,6 +657,8 @@
     D.useStore();
     const confirm = useConfirm();
     const toast = useToast();
+    const [hoverId, setHoverId] = useState(null);
+    const _lightColor = (l) => l === "red" ? "var(--red)" : l === "amber" ? "var(--amber)" : l === "green" ? "var(--green)" : "var(--accent)";
     const cap = D.PROJECTS.length;
     const capColor = cap === 0 ? "green" : cap <= 3 ? "green" : cap === 4 ? "amber" : "red";
     const capLabel = cap === 0 ? "Sin proyectos" : cap <= 3 ? "Zona c\xF3moda" : cap === 4 ? "Zona de atenci\xF3n" : "Zona de riesgo";
@@ -681,21 +683,98 @@
           { icon: "refresh-cw", label: "Actualizar lista", onClick: () => D.reload && D.reload() }
         ]
       }
-    )), /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "metric-label" }, "Capacidad"), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 500 } }, cap, " ", cap === 1 ? "proyecto activo" : "proyectos activos"), /* @__PURE__ */ React.createElement("span", { className: "chip " + capColor }, capLabel))), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { textAlign: "right", lineHeight: 1.5 } }, "1-3 c\xF3moda \xB7 4 atenci\xF3n \xB7 5+ riesgo"))), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyectos", sub: "Crea tu primer proyecto para empezar" }))) : /* @__PURE__ */ React.createElement("div", { className: "rg-projects" }, D.PROJECTS.map((p) => {
-      const phase = D.PHASES[p.phase];
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", maxWidth: 860 } }, D.PROJECTS.map((p) => {
       const pTasks = D.TASKS[p.id] || [];
-      const liveProgress = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
-      return /* @__PURE__ */ React.createElement("div", { key: p.id, className: "card", style: { cursor: "pointer", position: "relative" }, onClick: () => navigate("project", { projectId: p.id }) }, /* @__PURE__ */ React.createElement(
-        "button",
+      const doneN = pTasks.filter((t) => t.column === "done").length;
+      const liveProgress = pTasks.length ? Math.round(doneN / pTasks.length * 100) : 0;
+      const col = _lightColor(p.light);
+      const on = hoverId === p.id;
+      return /* @__PURE__ */ React.createElement(
+        "div",
         {
-          className: "btn ghost icon-only sm danger",
-          "data-tooltip": "Eliminar",
-          style: { position: "absolute", top: 10, right: 10, zIndex: 1 },
-          onClick: (e) => removeProject(p, e)
+          key: p.id,
+          onClick: () => navigate("project", { projectId: p.id }),
+          onMouseEnter: () => setHoverId(p.id),
+          onMouseLeave: () => setHoverId(null),
+          style: {
+            display: "flex",
+            flexDirection: "column",
+            gap: 12,
+            padding: "18px 6px",
+            cursor: "pointer",
+            borderBottom: "0.5px solid var(--border)"
+          }
         },
-        /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
-      ), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "row between" }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 500 } }, p.name)), /* @__PURE__ */ React.createElement("span", { className: "chip", style: { marginRight: 32 } }, phase.label)), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 6 } }, p.clientName, " \xB7 ", p.service), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 8 } }, p.description), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "progress grow" }, /* @__PURE__ */ React.createElement("i", { style: { width: liveProgress + "%" } })), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, liveProgress, "%")), /* @__PURE__ */ React.createElement("div", { className: "row between", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "muted xsmall" }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 11 }), " ", p.deadline), /* @__PURE__ */ React.createElement("div", { className: "xsmall", style: { color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--text-muted)" } }, "\u2192 ", p.nextMilestone))));
-    })));
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, minWidth: 0 } }, /* @__PURE__ */ React.createElement(
+          Icon,
+          {
+            name: "package",
+            size: 26,
+            strokeWidth: 1.6,
+            style: { color: "var(--text)", flexShrink: 0, transform: on ? "scale(1.06)" : "none", transition: "transform .3s" }
+          }
+        ), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: 20,
+          color: "var(--text)",
+          letterSpacing: "-0.4px",
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
+        } }, p.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, pTasks.length, " ", pTasks.length === 1 ? "tarea" : "tareas"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, doneN, " hechas"), p.clientName && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, p.clientName))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            className: "btn ghost icon-only sm",
+            "data-tooltip": "Eliminar",
+            onClick: (e) => removeProject(p, e),
+            style: { opacity: on ? 0.65 : 0, transition: "opacity .15s", color: "var(--red)" }
+          },
+          /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })
+        ), /* @__PURE__ */ React.createElement(
+          Icon,
+          {
+            name: "chevron-right",
+            size: 18,
+            style: {
+              color: on ? "var(--text)" : "var(--text-muted)",
+              transform: on ? "translateX(3px)" : "none",
+              transition: "all .2s",
+              flexShrink: 0
+            }
+          }
+        ))),
+        /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: "100%", height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", height: "100%", borderRadius: 99, background: col, width: `${liveProgress}%`, transition: "width .3s" } }))
+      );
+    }), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => openModal("newProject"),
+        style: {
+          marginTop: 16,
+          width: "100%",
+          padding: "26px",
+          borderRadius: 22,
+          border: "1px dashed var(--border)",
+          background: "transparent",
+          cursor: "pointer",
+          color: "var(--text-muted)",
+          fontSize: 15,
+          fontFamily: "inherit",
+          opacity: 0.5,
+          transition: "opacity .2s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          letterSpacing: "-0.2px"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
+      },
+      D.PROJECTS.length === 0 ? "Crea tu primer proyecto" : "A\xF1adir proyecto",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
+    )));
   };
   var FIN_KEY = "141_finance_v1";
   var FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
