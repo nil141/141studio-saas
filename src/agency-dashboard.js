@@ -197,26 +197,31 @@
         tone: up || down ? good ? "good" : "bad" : "muted"
       };
     };
+    const [hoverKpi, setHoverKpi] = useState(null);
     const kpis = [
       {
         label: "Proyectos activos",
         value: activeProjects,
-        delta: _countDelta(atRisk, "en riesgo")
+        delta: _countDelta(atRisk, "en riesgo"),
+        nav: "projects"
       },
       {
         label: "Tareas pendientes",
         value: pendingTasks,
-        delta: _countDelta(overdueTasks, "vencidas")
+        delta: _countDelta(overdueTasks, "vencidas"),
+        nav: "tasks"
       },
       {
         label: "Gastos este mes",
         value: `\u20AC${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-        delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`)
+        delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
+        nav: "billing"
       },
       {
         label: "Facturado este mes",
         value: stripeMonth === null ? "\u2026" : stripeMonth === false ? "\u2014" : `\u20AC${(stripeMonth / 100).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-        delta: stripeMonth === false ? { text: "Sin Stripe", dir: "flat", tone: "muted" } : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`)
+        delta: stripeMonth === false ? { text: "Sin Stripe", dir: "flat", tone: "muted" } : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`),
+        nav: "income"
       }
     ];
     const queues = [
@@ -409,14 +414,30 @@
       borderBottom: "0.5px solid var(--border)",
       padding: "0 4px 26px",
       flexShrink: 0
-    } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 32,
-      color: "var(--text)",
-      letterSpacing: "-0.08em",
-      lineHeight: 1,
-      fontFamily: "var(--font-display)",
-      fontVariantNumeric: "tabular-nums"
-    } }, k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
+    } }, kpis.map((k, i) => {
+      const clickable = !!k.nav;
+      const on = hoverKpi === i;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: i,
+          onClick: clickable ? () => navigate(k.nav) : void 0,
+          onMouseEnter: clickable ? () => setHoverKpi(i) : void 0,
+          onMouseLeave: clickable ? () => setHoverKpi(null) : void 0,
+          style: { display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" } }, k.label),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 32,
+          color: on ? "var(--accent)" : "var(--text)",
+          letterSpacing: "-0.08em",
+          lineHeight: 1,
+          fontFamily: "var(--font-display)",
+          fontVariantNumeric: "tabular-nums",
+          transition: "color .15s"
+        } }, k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))
+      );
+    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",

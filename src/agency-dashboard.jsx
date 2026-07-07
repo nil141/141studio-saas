@@ -224,21 +224,25 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     };
   };
 
+  const [hoverKpi, setHoverKpi] = useState(null);
   const kpis = [
     {
       label:  "Proyectos activos",
       value:  activeProjects,
       delta:  _countDelta(atRisk, "en riesgo"),
+      nav:    "projects",
     },
     {
       label:  "Tareas pendientes",
       value:  pendingTasks,
       delta:  _countDelta(overdueTasks, "vencidas"),
+      nav:    "tasks",
     },
     {
       label:  "Gastos este mes",
       value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       delta:  _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
+      nav:    "billing",
     },
     {
       label:  "Facturado este mes",
@@ -246,6 +250,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       delta:  stripeMonth===false
                 ? { text:"Sin Stripe", dir:"flat", tone:"muted" }
                 : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`),
+      nav:    "income",
     },
   ];
 
@@ -465,19 +470,27 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
         borderBottom: "0.5px solid var(--border)", padding: "0 4px 26px", flexShrink: 0,
       }}>
-        {kpis.map((k, i) => (
-          <div key={i} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-            <span style={{ fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{k.label}</span>
+        {kpis.map((k, i) => {
+          const clickable = !!k.nav;
+          const on = hoverKpi === i;
+          return (
+          <div key={i}
+            onClick={clickable ? () => navigate(k.nav) : undefined}
+            onMouseEnter={clickable ? () => setHoverKpi(i) : undefined}
+            onMouseLeave={clickable ? () => setHoverKpi(null) : undefined}
+            style={{ display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }}>
+            <span style={{ fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" }}>{k.label}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontSize: 32, color: "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums" }}>{k.value}</span>
+                <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
+                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.value}</span>
                 {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
               </div>
               {k.delta && <MetricDelta {...k.delta}/>}
             </div>
           </div>
-        ))}
+          );
+        })}
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 }}>
         <AgendaBlock height="100%" slice={6}/>
