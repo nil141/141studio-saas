@@ -585,8 +585,17 @@ const _userdataGet = async () => {
   try { const r = await window.apiFetch("/api/userdata/get", {}); const j = await r.json(); return (j && j.ok) ? (j.data || {}) : {}; }
   catch (e) { return {}; }
 };
+// Guardado en la nube SERIALIZADO por clave: cada escritura espera a que
+// termine la anterior, así los POST llegan en orden y no se pisan (si no,
+// borrar dos rutinas seguidas podía dejar una "resucitada" en el servidor).
+const _udLatest = {};
+const _udChain  = {};
 const _userdataSet = (key, value) => {
-  try { window.apiFetch("/api/userdata/set", { key, value }); } catch (e) {}
+  _udLatest[key] = value;
+  const send = async () => {
+    try { await window.apiFetch("/api/userdata/set", { key, value: _udLatest[key] }); } catch (e) {}
+  };
+  _udChain[key] = (_udChain[key] || Promise.resolve()).then(send);
 };
 window._userdataSet = _userdataSet;
 
@@ -684,6 +693,14 @@ const deleteRoutine = (id) => {
   const done = { ..._store.ROUTINE_DONE }; delete done[id];
   _store.ROUTINE_DONE = done;
   _userdataSet("routines", _store.ROUTINES); _userdataSet("routineDone", _store.ROUTINE_DONE);
+  _emit();
+};
+
+// Borrar TODAS las rutinas de una vez (un solo guardado, sin carreras)
+const clearRoutines = () => {
+  _store.ROUTINES = [];
+  _store.ROUTINE_DONE = {};
+  _userdataSet("routines", []); _userdataSet("routineDone", {});
   _emit();
 };
 
@@ -849,7 +866,7 @@ window.Data = {
   addDeliverable, deleteDeliverable,
   addLead,
   addTask, moveTask, updateTask, deleteTask,
-  addRoutine, updateRoutine, deleteRoutine,
+  addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
   routineDayComplete, routineStreak,
   saveFinance,

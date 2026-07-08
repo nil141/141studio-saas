@@ -397,8 +397,17 @@ const RoutineCelebration = ({ rId, day, onClose }) => {
 // ── Lista de rutinas del día (se inserta en la vista de Tareas) ──────
 const RoutineDayList = ({ day, onEdit }) => {
   const D = window.Data;
+  const confirm = useConfirm();
+  const toast = useToast();
   D.useStore();
   const routines = D.routinesForDay(day);
+  const totalRoutines = (D.ROUTINES || []).length;
+  const clearAll = async () => {
+    const ok = await confirm({ title:"¿Borrar todas las rutinas?", body:`Se eliminarán las ${totalRoutines} rutinas y su progreso. No se puede deshacer.`, danger:true, confirmLabel:"Borrar todas" });
+    if (!ok) return;
+    D.clearRoutines();
+    toast("Rutinas borradas", "success");
+  };
   if (!routines.length) return null;
   return (
     <div style={{ marginBottom: 32 }}>
@@ -417,6 +426,18 @@ const RoutineDayList = ({ day, onEdit }) => {
         </span>
       </div>
       {routines.map(r => <RoutineCard key={r.id} r={r} day={day} onEdit={onEdit}/>)}
+      {totalRoutines > 0 && (
+        <div style={{ display:"flex", justifyContent:"center", marginTop:4 }}>
+          <button onClick={clearAll} style={{
+            background:"transparent", border:0, cursor:"pointer", fontFamily:"inherit",
+            fontSize:11.5, color:"var(--text-subtle)", letterSpacing:"-0.2px", padding:"4px 8px",
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--red)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+            Borrar todas las rutinas
+          </button>
+        </div>
+      )}
     </div>
   );
 };

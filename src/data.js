@@ -680,11 +680,17 @@ const _userdataGet = async () => {
     return {};
   }
 };
+const _udLatest = {};
+const _udChain = {};
 const _userdataSet = (key, value) => {
-  try {
-    window.apiFetch("/api/userdata/set", { key, value });
-  } catch (e) {
-  }
+  _udLatest[key] = value;
+  const send = async () => {
+    try {
+      await window.apiFetch("/api/userdata/set", { key, value: _udLatest[key] });
+    } catch (e) {
+    }
+  };
+  _udChain[key] = (_udChain[key] || Promise.resolve()).then(send);
 };
 window._userdataSet = _userdataSet;
 _store.ROUTINES = [];
@@ -771,6 +777,13 @@ const deleteRoutine = (id) => {
   _store.ROUTINE_DONE = done;
   _userdataSet("routines", _store.ROUTINES);
   _userdataSet("routineDone", _store.ROUTINE_DONE);
+  _emit();
+};
+const clearRoutines = () => {
+  _store.ROUTINES = [];
+  _store.ROUTINE_DONE = {};
+  _userdataSet("routines", []);
+  _userdataSet("routineDone", {});
   _emit();
 };
 const routineItemDone = (routineId, dateStr, itemId) => {
@@ -968,6 +981,7 @@ window.Data = {
   addRoutine,
   updateRoutine,
   deleteRoutine,
+  clearRoutines,
   routinesForDay,
   routineItemDone,
   toggleRoutineItem,
