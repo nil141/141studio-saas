@@ -76,12 +76,9 @@ struct ContentView: View {
         }
     }
 
-    // Botón "Nueva tarea" — con Liquid Glass oficial en macOS 26.
-    // El #if compiler evita el símbolo .glass al compilar con SDKs antiguos
-    // (p. ej. un runner de CI con Xcode < 26); el #available lo protege en runtime.
+    // Botón "Nueva tarea" — con Liquid Glass oficial en macOS 26
     @ViewBuilder
     private var quickCreateButton: some View {
-        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             Button { web.quickCreate() } label: {
                 Label("Nueva tarea", systemImage: "plus")
@@ -90,19 +87,12 @@ struct ContentView: View {
             .buttonStyle(.glass)
             .controlSize(.large)
         } else {
-            fallbackQuickCreateButton
+            Button { web.quickCreate() } label: {
+                Label("Nueva tarea", systemImage: "plus")
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
         }
-        #else
-        fallbackQuickCreateButton
-        #endif
-    }
-
-    private var fallbackQuickCreateButton: some View {
-        Button { web.quickCreate() } label: {
-            Label("Nueva tarea", systemImage: "plus")
-                .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
     }
 }

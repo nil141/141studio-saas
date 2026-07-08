@@ -16,20 +16,7 @@ que el sidebar nativo controle la SPA.
   basta tu Apple ID gratuito (Personal Team). El programa de pago solo es
   necesario para distribuir (App Store / notarizar para terceros).
 
-## Opción A — compilada en la nube (sin Xcode) · recomendada
-GitHub compila la app en sus Macs con el workflow `Build Mac app`
-(.github/workflows/build-mac-app.yml). Se lanza solo al tocar
-`native/mac/**` en main, o a mano:
-
-1. GitHub → repo `nil141/141studio-saas` → pestaña **Actions** →
-   **Build Mac app** → *Run workflow* (si no hay ya una ejecución verde).
-2. Entra en la ejecución verde → sección **Artifacts** → descarga
-   **141Studio-mac** y descomprímelo.
-3. Arrastra `141Studio.app` a /Aplicaciones.
-4. Primera apertura (va sin notarizar): **clic derecho → Abrir → Abrir**.
-   Si macOS se pone pesado: `xattr -dr com.apple.quarantine /Applications/141Studio.app`
-
-## Opción B — compilar en tu Mac con Xcode
+## Cómo ejecutarla (primera vez, ~3 min)
 1. Instala Xcode y ábrelo una vez (acepta la licencia e instala los
    componentes de macOS que pida).
 2. Haz doble clic en `native/mac/141Studio.xcodeproj`.
@@ -39,8 +26,9 @@ GitHub compila la app en sus Macs con el workflow `Build Mac app`
 5. Pulsa **▶ (Cmd+R)**. Se abre la app con el sidebar de vidrio y tu SaaS
    dentro.
 
-Para tenerla como app normal: Product → **Build** y arrastra `141Studio.app`
-(clic derecho en Products → Show in Finder) a /Aplicaciones.
+Para tenerla como app normal: Product → Archive no hace falta; basta
+Product → **Build** y arrastra `141Studio.app` (clic derecho en Products →
+Show in Finder) a /Aplicaciones.
 
 ## Notas
 - El botón ↻ de la toolbar recarga la web.
