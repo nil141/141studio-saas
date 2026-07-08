@@ -99,7 +99,7 @@
         });
       });
       try {
-        const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+        const fin = window.Data && window.Data.FINANCE || {};
         (fin.subs || []).filter((s) => s.active !== false && s.nextRenewal).forEach((s) => {
           let d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
           if (isNaN(d)) return;
@@ -148,7 +148,7 @@
         const diff = Math.round((dMid - todayMid) / 864e5);
         return diff >= 0 && diff <= 7;
       }).sort((a, b) => a.date - b.date).slice(0, 8);
-    }, [D.PROJECTS, D.INVOICES, D.TASKS]);
+    }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE]);
     const formatEventDate = (d) => {
       const todayMid = /* @__PURE__ */ new Date();
       todayMid.setHours(0, 0, 0, 0);
@@ -164,7 +164,7 @@
     };
     const _spendForMonth = (offset = 0) => {
       try {
-        const fin = JSON.parse(localStorage.getItem("141_finance_v1") || "{}");
+        const fin = window.Data && window.Data.FINANCE || {};
         const rec = (fin.subs || []).filter((s) => s.active !== false).reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0), 0);
         const base = /* @__PURE__ */ new Date();
         const y = base.getFullYear(), m = base.getMonth() + offset;

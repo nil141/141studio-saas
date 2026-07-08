@@ -1388,16 +1388,11 @@ const FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "
 
 const _eur = (n) => "€" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const _finLoad = () => {
-  try {
-    const d = JSON.parse(localStorage.getItem(FIN_KEY));
-    return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
-  } catch { return { subs: [], expenses: [] }; }
+  const d = (window.Data && window.Data.FINANCE) || {};
+  return { subs: d.subs || [], expenses: d.expenses || [] };
 };
-const _finSave = (d) => {
-  try { localStorage.setItem(FIN_KEY, JSON.stringify(d)); } catch {}
-  // Sincroniza con el servidor para verlo en otros dispositivos
-  try { window._userdataSet && window._userdataSet("finance", d); } catch {}
-};
+// Guardar en la nube (sin localStorage): la fuente de verdad es el servidor
+const _finSave = (d) => { try { window.Data.saveFinance(d); } catch (e) {} };
 const _finId = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6));
 const _subMonthly = (s) => (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0));
 const _sameMonth = (iso) => { if (!iso) return false; const d = new Date(iso); const n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); };

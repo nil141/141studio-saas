@@ -590,35 +590,44 @@ const _userdataSet = (key, value) => {
 };
 window._userdataSet = _userdataSet;
 
-// Hidratar en el store (cache local; el servidor manda una vez sincronizado)
-_store.ROUTINES     = _loadLS(_RKEY, []);
-_store.ROUTINE_DONE = _loadLS(_RDKEY, {});
+// Estado en memoria — la nube manda; NO se guarda nada en el navegador.
+_store.ROUTINES     = [];
+_store.ROUTINE_DONE = {};
+_store.FINANCE      = { subs: [], expenses: [] };
 
-// Trae rutinas y finanzas del servidor (y migra lo local la primera vez).
+// Trae rutinas y finanzas del servidor. La primera vez migra los datos que
+// hubiera en localStorage (versiones antiguas) a la nube y BORRA el rastro
+// local, para que no quede nada guardado en el dispositivo.
 const _syncUserData = async () => {
   const blob = await _userdataGet();
-  // Rutinas
-  if (Array.isArray(blob.routines)) {
-    _store.ROUTINES = blob.routines; _saveLS(_RKEY, _store.ROUTINES);
-  } else if ((_store.ROUTINES || []).length) {
-    _userdataSet("routines", _store.ROUTINES);            // migración: subir lo local
+  const _migrate = (lsKey, serverKey, hasData) => {
+    if (blob[serverKey] !== undefined) return null;   // ya está en la nube
+    try {
+      const v = JSON.parse(localStorage.getItem(lsKey) || "null");
+      if (v != null && hasData(v)) { _userdataSet(serverKey, v); return v; }
+    } catch (e) {}
+    return null;
+  };
+  _store.ROUTINES = Array.isArray(blob.routines) ? blob.routines
+    : (_migrate("141_routines", "routines", v => Array.isArray(v) && v.length) || []);
+  _store.ROUTINE_DONE = (blob.routineDone && typeof blob.routineDone === "object") ? blob.routineDone
+    : (_migrate("141_routine_done", "routineDone", v => v && Object.keys(v).length) || {});
+  if (blob.finance && typeof blob.finance === "object") {
+    _store.FINANCE = { subs: blob.finance.subs || [], expenses: blob.finance.expenses || [] };
+  } else {
+    const m = _migrate("141_finance_v1", "finance", v => v && ((v.subs || []).length || (v.expenses || []).length));
+    _store.FINANCE = m ? { subs: m.subs || [], expenses: m.expenses || [] } : { subs: [], expenses: [] };
   }
-  if (blob.routineDone && typeof blob.routineDone === "object") {
-    _store.ROUTINE_DONE = blob.routineDone; _saveLS(_RDKEY, _store.ROUTINE_DONE);
-  } else if (Object.keys(_store.ROUTINE_DONE || {}).length) {
-    _userdataSet("routineDone", _store.ROUTINE_DONE);
-  }
-  // Finanzas (localStorage "141_finance_v1", que lee la página de Gastos)
-  try {
-    const localFin = JSON.parse(localStorage.getItem("141_finance_v1") || "null");
-    if (blob.finance && typeof blob.finance === "object") {
-      localStorage.setItem("141_finance_v1", JSON.stringify(blob.finance));
-    } else if (localFin && ((localFin.subs || []).length || (localFin.expenses || []).length)) {
-      _userdataSet("finance", localFin);
-    }
-  } catch (e) {}
+  // Purga cualquier copia local antigua — a partir de aquí, todo va a la nube.
+  try { ["141_routines", "141_routine_done", "141_finance_v1"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
   _emit();
   window.dispatchEvent(new CustomEvent("141-userdata-synced"));
+};
+
+// Guardar finanzas (suscripciones + gastos) → memoria + nube (sin localStorage)
+const saveFinance = (next) => {
+  _store.FINANCE = { subs: (next && next.subs) || [], expenses: (next && next.expenses) || [] };
+  _userdataSet("finance", _store.FINANCE); _emit();
 };
 
 // ¿esta rutina aplica en la fecha dada? (YYYY-MM-DD)
@@ -651,7 +660,7 @@ const addRoutine = (input) => {
     createdAt: Date.now(),
   };
   _store.ROUTINES = [r, ...(_store.ROUTINES || [])];
-  _saveLS(_RKEY, _store.ROUTINES); _userdataSet("routines", _store.ROUTINES); _emit();
+  _userdataSet("routines", _store.ROUTINES); _emit();
   return r;
 };
 
@@ -667,14 +676,13 @@ const updateRoutine = (id, changes) => {
     }
     return next;
   });
-  _saveLS(_RKEY, _store.ROUTINES); _userdataSet("routines", _store.ROUTINES); _emit();
+  _userdataSet("routines", _store.ROUTINES); _emit();
 };
 
 const deleteRoutine = (id) => {
   _store.ROUTINES = (_store.ROUTINES || []).filter(r => r.id !== id);
   const done = { ..._store.ROUTINE_DONE }; delete done[id];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RKEY, _store.ROUTINES); _saveLS(_RDKEY, _store.ROUTINE_DONE);
   _userdataSet("routines", _store.ROUTINES); _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
 };
@@ -688,7 +696,7 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   done[routineId][dateStr] = { ...(done[routineId][dateStr] || {}) };
   done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RDKEY, _store.ROUTINE_DONE); _userdataSet("routineDone", _store.ROUTINE_DONE); _emit();
+  _userdataSet("routineDone", _store.ROUTINE_DONE); _emit();
 };
 
 // ¿están todos los pasos de la rutina hechos ese día?
@@ -826,6 +834,7 @@ window.Data = {
   get LEADS()        { return _store.LEADS; },
   get TASKS()        { return _store.TASKS; },
   get ROUTINES()     { return _store.ROUTINES; },
+  get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
   // Auth
   authLogin, authSignOut, initAccount,
@@ -843,6 +852,7 @@ window.Data = {
   addRoutine, updateRoutine, deleteRoutine,
   routinesForDay, routineItemDone, toggleRoutineItem,
   routineDayComplete, routineStreak,
+  saveFinance,
   updateSettings,
   createInvite,
   useStore,

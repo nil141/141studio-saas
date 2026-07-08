@@ -687,33 +687,42 @@ const _userdataSet = (key, value) => {
   }
 };
 window._userdataSet = _userdataSet;
-_store.ROUTINES = _loadLS(_RKEY, []);
-_store.ROUTINE_DONE = _loadLS(_RDKEY, {});
+_store.ROUTINES = [];
+_store.ROUTINE_DONE = {};
+_store.FINANCE = { subs: [], expenses: [] };
 const _syncUserData = async () => {
   const blob = await _userdataGet();
-  if (Array.isArray(blob.routines)) {
-    _store.ROUTINES = blob.routines;
-    _saveLS(_RKEY, _store.ROUTINES);
-  } else if ((_store.ROUTINES || []).length) {
-    _userdataSet("routines", _store.ROUTINES);
-  }
-  if (blob.routineDone && typeof blob.routineDone === "object") {
-    _store.ROUTINE_DONE = blob.routineDone;
-    _saveLS(_RDKEY, _store.ROUTINE_DONE);
-  } else if (Object.keys(_store.ROUTINE_DONE || {}).length) {
-    _userdataSet("routineDone", _store.ROUTINE_DONE);
+  const _migrate = (lsKey, serverKey, hasData) => {
+    if (blob[serverKey] !== void 0) return null;
+    try {
+      const v = JSON.parse(localStorage.getItem(lsKey) || "null");
+      if (v != null && hasData(v)) {
+        _userdataSet(serverKey, v);
+        return v;
+      }
+    } catch (e) {
+    }
+    return null;
+  };
+  _store.ROUTINES = Array.isArray(blob.routines) ? blob.routines : _migrate("141_routines", "routines", (v) => Array.isArray(v) && v.length) || [];
+  _store.ROUTINE_DONE = blob.routineDone && typeof blob.routineDone === "object" ? blob.routineDone : _migrate("141_routine_done", "routineDone", (v) => v && Object.keys(v).length) || {};
+  if (blob.finance && typeof blob.finance === "object") {
+    _store.FINANCE = { subs: blob.finance.subs || [], expenses: blob.finance.expenses || [] };
+  } else {
+    const m = _migrate("141_finance_v1", "finance", (v) => v && ((v.subs || []).length || (v.expenses || []).length));
+    _store.FINANCE = m ? { subs: m.subs || [], expenses: m.expenses || [] } : { subs: [], expenses: [] };
   }
   try {
-    const localFin = JSON.parse(localStorage.getItem("141_finance_v1") || "null");
-    if (blob.finance && typeof blob.finance === "object") {
-      localStorage.setItem("141_finance_v1", JSON.stringify(blob.finance));
-    } else if (localFin && ((localFin.subs || []).length || (localFin.expenses || []).length)) {
-      _userdataSet("finance", localFin);
-    }
+    ["141_routines", "141_routine_done", "141_finance_v1"].forEach((k) => localStorage.removeItem(k));
   } catch (e) {
   }
   _emit();
   window.dispatchEvent(new CustomEvent("141-userdata-synced"));
+};
+const saveFinance = (next) => {
+  _store.FINANCE = { subs: next && next.subs || [], expenses: next && next.expenses || [] };
+  _userdataSet("finance", _store.FINANCE);
+  _emit();
 };
 const _routineMatchesDay = (r, dateStr) => {
   const d = /* @__PURE__ */ new Date(dateStr + "T12:00:00");
@@ -739,7 +748,6 @@ const addRoutine = (input) => {
     createdAt: Date.now()
   };
   _store.ROUTINES = [r, ..._store.ROUTINES || []];
-  _saveLS(_RKEY, _store.ROUTINES);
   _userdataSet("routines", _store.ROUTINES);
   _emit();
   return r;
@@ -753,7 +761,6 @@ const updateRoutine = (id, changes) => {
     }
     return next;
   });
-  _saveLS(_RKEY, _store.ROUTINES);
   _userdataSet("routines", _store.ROUTINES);
   _emit();
 };
@@ -762,8 +769,6 @@ const deleteRoutine = (id) => {
   const done = { ..._store.ROUTINE_DONE };
   delete done[id];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RKEY, _store.ROUTINES);
-  _saveLS(_RDKEY, _store.ROUTINE_DONE);
   _userdataSet("routines", _store.ROUTINES);
   _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
@@ -778,7 +783,6 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   done[routineId][dateStr] = { ...done[routineId][dateStr] || {} };
   done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RDKEY, _store.ROUTINE_DONE);
   _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
 };
@@ -930,6 +934,9 @@ window.Data = {
   get ROUTINES() {
     return _store.ROUTINES;
   },
+  get FINANCE() {
+    return _store.FINANCE;
+  },
   get SETTINGS() {
     return _store.SETTINGS;
   },
@@ -966,6 +973,7 @@ window.Data = {
   toggleRoutineItem,
   routineDayComplete,
   routineStreak,
+  saveFinance,
   updateSettings,
   createInvite,
   useStore

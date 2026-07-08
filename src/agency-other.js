@@ -776,24 +776,15 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
     )));
   };
-  var FIN_KEY = "141_finance_v1";
   var FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
   var _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   var _finLoad = () => {
-    try {
-      const d = JSON.parse(localStorage.getItem(FIN_KEY));
-      return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
-    } catch (e) {
-      return { subs: [], expenses: [] };
-    }
+    const d = window.Data && window.Data.FINANCE || {};
+    return { subs: d.subs || [], expenses: d.expenses || [] };
   };
   var _finSave = (d) => {
     try {
-      localStorage.setItem(FIN_KEY, JSON.stringify(d));
-    } catch (e) {
-    }
-    try {
-      window._userdataSet && window._userdataSet("finance", d);
+      window.Data.saveFinance(d);
     } catch (e) {
     }
   };
