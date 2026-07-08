@@ -325,6 +325,7 @@ const initAccount = async (_ignored) => {
     _store._user = session.user;
     await _loadAll();
     _syncUserData();
+    _cleanupOldTasks();
     _setupRealtime();
   } else {
     window.dispatchEvent(new CustomEvent("141-session-expired"));
@@ -868,6 +869,22 @@ const deleteTask = (projectId, taskId) => {
   _store.TASKS[projectId] = _store.TASKS[projectId].filter((t) => t.id !== taskId);
   _emit();
   _sb.from("tasks").delete().eq("id", taskId).then();
+};
+const _cleanupOldTasks = () => {
+  const uid = _uid();
+  if (!uid) return;
+  const cut = /* @__PURE__ */ new Date();
+  cut.setHours(0, 0, 0, 0);
+  cut.setDate(cut.getDate() - 30);
+  const cutStr = `${cut.getFullYear()}-${String(cut.getMonth() + 1).padStart(2, "0")}-${String(cut.getDate()).padStart(2, "0")}`;
+  const cutISO = cut.toISOString();
+  _sb.from("tasks").delete().eq("agency_id", uid).is("project_id", null).lt("deadline", cutStr).then();
+  _sb.from("tasks").delete().eq("agency_id", uid).is("project_id", null).is("deadline", null).lt("created_at", cutISO).then();
+  if (_store.TASKS["__none__"]) {
+    const before = _store.TASKS["__none__"].length;
+    _store.TASKS["__none__"] = _store.TASKS["__none__"].filter((t) => !(t.deadline && t.deadline < cutStr));
+    if (_store.TASKS["__none__"].length !== before) _emit();
+  }
 };
 const updateSettings = (changes) => {
   const uid = _uid();

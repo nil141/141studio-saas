@@ -305,6 +305,7 @@ const initAccount = async (_ignored) => {
     _store._user = session.user;
     await _loadAll();
     _syncUserData();          // rutinas + finanzas desde el servidor (multi-dispositivo)
+    _cleanupOldTasks();       // borra tareas sueltas obsoletas (>30 días) de Supabase
     _setupRealtime();
   } else {
     // Sesión antigua sin Supabase válida → forzar re-login
@@ -789,6 +790,26 @@ const deleteTask = (projectId, taskId) => {
   if (!_store.TASKS[projectId]) return;
   _store.TASKS[projectId] = _store.TASKS[projectId].filter(t => t.id !== taskId); _emit();
   _sb.from("tasks").delete().eq("id", taskId).then();
+};
+
+// Limpieza: borra de Supabase las tareas SUELTAS (sin proyecto) obsoletas —
+// vencidas hace más de 30 días, o sin fecha pero creadas hace más de 30 días.
+// Se ejecuta al iniciar sesión para no acumular filas que ya no se usan.
+const _cleanupOldTasks = () => {
+  const uid = _uid(); if (!uid) return;
+  const cut = new Date(); cut.setHours(0, 0, 0, 0); cut.setDate(cut.getDate() - 30);
+  const cutStr = `${cut.getFullYear()}-${String(cut.getMonth()+1).padStart(2,'0')}-${String(cut.getDate()).padStart(2,'0')}`;
+  const cutISO = cut.toISOString();
+  // 1) Sueltas con fecha límite vencida hace >30 días
+  _sb.from("tasks").delete().eq("agency_id", uid).is("project_id", null).lt("deadline", cutStr).then();
+  // 2) Sueltas sin fecha, creadas hace >30 días
+  _sb.from("tasks").delete().eq("agency_id", uid).is("project_id", null).is("deadline", null).lt("created_at", cutISO).then();
+  // Quita de memoria las de fecha vencida (las sin fecha se limpian al recargar)
+  if (_store.TASKS["__none__"]) {
+    const before = _store.TASKS["__none__"].length;
+    _store.TASKS["__none__"] = _store.TASKS["__none__"].filter(t => !(t.deadline && t.deadline < cutStr));
+    if (_store.TASKS["__none__"].length !== before) _emit();
+  }
 };
 
 // ── SETTINGS ─────────────────────────────────────────────────────────
