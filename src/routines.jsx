@@ -184,84 +184,64 @@ const RoutineCard = ({ r, day, onEdit }) => {
     if (willComplete) setCelebrate(true);
   };
 
-  const prog = total ? Math.round((doneCount / total) * 100) : 0;
-
   return (
-    <>
-      {/* Cabecera — misma fila plana que las tareas (sin caja) */}
-      <div className="task-row" onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
-        style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 4px", cursor:"pointer" }}>
-        {/* Anillo de progreso, igual que las tareas */}
-        {(() => {
-          const sz = 40, rad = 17, circ = 2 * Math.PI * rad;
-          return (
-            <div style={{ width:sz, height:sz, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <svg width={sz} height={sz} style={{ position:"absolute", top:0, left:0 }}>
-                <circle cx={sz/2} cy={sz/2} r={rad} fill="none"
-                  stroke={allDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
-                {!allDone && prog > 0 && (
-                  <circle cx={sz/2} cy={sz/2} r={rad} fill="none"
-                    stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
-                    strokeDasharray={`${(prog/100)*circ} ${circ}`}
-                    transform={`rotate(-90,${sz/2},${sz/2})`}/>
-                )}
-              </svg>
-              <Icon name={allDone ? "check" : "refresh-cw"} size={allDone ? 15 : 13}
-                style={{ color: allDone ? "var(--accent)" : "var(--text-muted)", position:"relative" }}/>
-            </div>
-          );
-        })()}
-        <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{r.title}</div>
-          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
-            {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
-          </div>
-        </div>
-        {/* Racha */}
+    <div style={{ marginBottom: 28 }}>
+      {/* Cabecera de grupo — el nombre de la rutina (como un grupo de cliente) */}
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
+        <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)", flexShrink:0 }}/>
+        <span onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
+          style={{ fontSize:12, fontWeight:400, textTransform:"uppercase", color:"#9e9e9e", cursor:"pointer" }}>
+          {r.title}
+        </span>
+        <span style={{ fontSize:11, color:"var(--text-subtle)" }}>
+          · {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
+        </span>
         {streak > 0 && (
           <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
-            style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0,
+            style={{ display:"flex", alignItems:"center", gap:4, marginLeft:2,
               color: streakPending ? "var(--text-subtle)" : "var(--accent)" }}>
             <span style={{ display:"inline-flex", transformOrigin:"50% 85%",
               animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite" }}>
-              <Icon name="flame" size={14} strokeWidth={1.7}/>
+              <Icon name="flame" size={13} strokeWidth={1.7}/>
             </span>
-            <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px" }}>{streak}</span>
+            <span style={{ fontSize:12, fontWeight:600, letterSpacing:"-0.2px" }}>{streak}</span>
           </div>
         )}
-        <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
       </div>
 
-      {/* Checklist — plano, indentado bajo el título (sin caja) */}
-      {total > 0 && (
-        <div style={{ paddingLeft:54, marginBottom:6 }}>
-          {r.items.map((it) => {
-            const done = D.routineItemDone(r.id, day, it.id);
-            return (
-              <div key={it.id} onClick={() => toggle(it)}
-                style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer", padding:"8px 2px" }}>
-                <div style={{
-                  width:20, height:20, borderRadius:"50%", flexShrink:0, display:"grid", placeItems:"center",
-                  background: done ? "var(--accent)" : "transparent",
-                  border: done ? "none" : "1.5px solid rgba(255,255,255,0.2)", transition:"all .12s",
-                }}>
-                  {done && <Icon name="check" size={12} style={{ color:"#0c0c0c" }}/>}
-                </div>
-                <span style={{
-                  fontSize:13.5, letterSpacing:"-0.3px",
-                  color: done ? "var(--text-subtle)" : "var(--text)",
-                  textDecoration: done ? "line-through" : "none",
-                }}>{it.text}</span>
+      {/* Pasos — cada uno como una fila de tarea (anillo + texto + estado) */}
+      {r.items.map((it, idx) => {
+        const done = D.routineItemDone(r.id, day, it.id);
+        const last = idx === r.items.length - 1;
+        return (
+          <div key={it.id} onClick={() => toggle(it)} className="task-row"
+            style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 4px", cursor:"pointer",
+              borderBottom: last ? "none" : "0.5px solid var(--border)" }}>
+            <div style={{ width:40, height:40, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <svg width="40" height="40" style={{ position:"absolute", top:0, left:0 }}>
+                <circle cx="20" cy="20" r="17" fill="none"
+                  stroke={done ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+              </svg>
+              {done
+                ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
+                : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>}
+            </div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:14, letterSpacing:"-0.5px",
+                color: done ? "var(--text-subtle)" : "var(--text)",
+                textDecoration: done ? "line-through" : "none" }}>{it.text}</div>
+              <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                {done ? "Hecho" : "Por hacer"}
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          </div>
+        );
+      })}
 
       {celebrate && (
         <RoutineCelebration rId={r.id} day={day} onClose={() => setCelebrate(false)}/>
       )}
-    </>
+    </div>
   );
 };
 
@@ -415,12 +395,6 @@ const RoutineDayList = ({ day, onEdit }) => {
           78%      { transform: scale(1.06) rotate(2deg); }
         }
       `}</style>
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-        <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)" }}/>
-        <span style={{ fontSize:12, fontWeight:400, textTransform:"uppercase", letterSpacing:"0.4px", color:"#9e9e9e" }}>
-          Rutinas
-        </span>
-      </div>
       {routines.map(r => <RoutineCard key={r.id} r={r} day={day} onEdit={onEdit}/>)}
       {totalRoutines > 0 && (
         <div style={{ display:"flex", justifyContent:"center", marginTop:4 }}>

@@ -152,98 +152,69 @@
       D.toggleRoutineItem(r.id, day, it.id);
       if (willComplete) setCelebrate(true);
     };
-    const prog = total ? Math.round(doneCount / total * 100) : 0;
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
-      "div",
+    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+      "span",
       {
-        className: "task-row",
         onClick: () => onEdit && onEdit(r),
         "data-tooltip": "Editar rutina",
-        style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", cursor: "pointer" }
+        style: { fontSize: 12, fontWeight: 400, textTransform: "uppercase", color: "#9e9e9e", cursor: "pointer" }
       },
-      (() => {
-        const sz = 40, rad = 17, circ = 2 * Math.PI * rad;
-        return /* @__PURE__ */ React.createElement("div", { style: { width: sz, height: sz, flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement(
-          "circle",
-          {
-            cx: sz / 2,
-            cy: sz / 2,
-            r: rad,
-            fill: "none",
-            stroke: allDone ? "var(--accent)" : "rgba(255,255,255,0.12)",
-            strokeWidth: "2"
-          }
-        ), !allDone && prog > 0 && /* @__PURE__ */ React.createElement(
-          "circle",
-          {
-            cx: sz / 2,
-            cy: sz / 2,
-            r: rad,
-            fill: "none",
-            stroke: "var(--accent)",
-            strokeWidth: "2",
-            strokeLinecap: "round",
-            strokeDasharray: `${prog / 100 * circ} ${circ}`,
-            transform: `rotate(-90,${sz / 2},${sz / 2})`
-          }
-        )), /* @__PURE__ */ React.createElement(
-          Icon,
-          {
-            name: allDone ? "check" : "refresh-cw",
-            size: allDone ? 15 : 13,
-            style: { color: allDone ? "var(--accent)" : "var(--text-muted)", position: "relative" }
-          }
-        ));
-      })(),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")),
-      streak > 0 && /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 4,
-            flexShrink: 0,
-            color: streakPending ? "var(--text-subtle)" : "var(--accent)"
-          }
-        },
-        /* @__PURE__ */ React.createElement("span", { style: {
-          display: "inline-flex",
-          transformOrigin: "50% 85%",
-          animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 })),
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
-      ),
-      /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.15)", flexShrink: 0 } })
-    ), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { paddingLeft: 54, marginBottom: 6 } }, r.items.map((it) => {
+      r.title
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "\xB7 ", R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : ""), streak > 0 && /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
+          marginLeft: 2,
+          color: streakPending ? "var(--text-subtle)" : "var(--accent)"
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { style: {
+        display: "inline-flex",
+        transformOrigin: "50% 85%",
+        animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 13, strokeWidth: 1.7 })),
+      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
+    )), r.items.map((it, idx) => {
       const done = D.routineItemDone(r.id, day, it.id);
+      const last = idx === r.items.length - 1;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
           key: it.id,
           onClick: () => toggle(it),
-          style: { display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "8px 2px" }
+          className: "task-row",
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "12px 4px",
+            cursor: "pointer",
+            borderBottom: last ? "none" : "0.5px solid var(--border)"
+          }
         },
-        /* @__PURE__ */ React.createElement("div", { style: {
-          width: 20,
-          height: 20,
-          borderRadius: "50%",
-          flexShrink: 0,
-          display: "grid",
-          placeItems: "center",
-          background: done ? "var(--accent)" : "transparent",
-          border: done ? "none" : "1.5px solid rgba(255,255,255,0.2)",
-          transition: "all .12s"
-        } }, done && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color: "#0c0c0c" } })),
-        /* @__PURE__ */ React.createElement("span", { style: {
-          fontSize: 13.5,
-          letterSpacing: "-0.3px",
+        /* @__PURE__ */ React.createElement("div", { style: { width: 40, height: 40, flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: "40", height: "40", style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement(
+          "circle",
+          {
+            cx: "20",
+            cy: "20",
+            r: "17",
+            fill: "none",
+            stroke: done ? "var(--accent)" : "rgba(255,255,255,0.12)",
+            strokeWidth: "2"
+          }
+        )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } })),
+        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: 14,
+          letterSpacing: "-0.5px",
           color: done ? "var(--text-subtle)" : "var(--text)",
           textDecoration: done ? "line-through" : "none"
-        } }, it.text)
+        } }, it.text), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, done ? "Hecho" : "Por hacer"))
       );
-    })), celebrate && /* @__PURE__ */ React.createElement(RoutineCelebration, { rId: r.id, day, onClose: () => setCelebrate(false) }));
+    }), celebrate && /* @__PURE__ */ React.createElement(RoutineCelebration, { rId: r.id, day, onClose: () => setCelebrate(false) }));
   };
   var CELEB_MSG = [
     "One day you're gonna be the shit, dude!",
@@ -366,7 +337,7 @@
           52%      { transform: scale(0.94) rotate(-1deg); }
           78%      { transform: scale(1.06) rotate(2deg); }
         }
-      `), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, textTransform: "uppercase", letterSpacing: "0.4px", color: "#9e9e9e" } }, "Rutinas")), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })), totalRoutines > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
+      `), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })), totalRoutines > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: clearAll,
