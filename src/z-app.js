@@ -1,10 +1,9 @@
 (() => {
-  // src/z-app.jsx
-  var { useState: useStateA, useEffect: useEffectA } = React;
-  var _SK = "141_session";
-  var _SEK = "141_session_exp";
-  var _SDK = "141_session_dur";
-  var _saveSession = (sess, days) => {
+  const { useState: useStateA, useEffect: useEffectA } = React;
+  const _SK = "141_session";
+  const _SEK = "141_session_exp";
+  const _SDK = "141_session_dur";
+  const _saveSession = (sess, days) => {
     localStorage.setItem(_SDK, String(days));
     if (!days || days === 0) {
       sessionStorage.setItem(_SK, JSON.stringify(sess));
@@ -17,7 +16,7 @@
       sessionStorage.removeItem(_SK);
     }
   };
-  var _loadSession = () => {
+  const _loadSession = () => {
     try {
       const ls = localStorage.getItem(_SK);
       if (ls) {
@@ -31,17 +30,17 @@
       return null;
     }
   };
-  var _clearSession = () => {
+  const _clearSession = () => {
     sessionStorage.removeItem(_SK);
     localStorage.removeItem(_SK);
     localStorage.removeItem(_SEK);
   };
-  var _sessionInfo = () => ({
+  const _sessionInfo = () => ({
     days: parseInt(localStorage.getItem(_SDK) || "0"),
     exp: localStorage.getItem(_SEK)
   });
   window._sessionUtils = { save: _saveSession, info: _sessionInfo };
-  var App = () => {
+  const App = () => {
     const [session, setSession] = useState(_loadSession);
     const [view, setView] = useState({ name: "dashboard", side: "agency", params: {} });
     const [theme, setTheme] = useState("dark");
@@ -113,13 +112,6 @@
       setModalParams(params);
     };
     const closeModal = () => setModal(null);
-    useEffect(() => {
-      window.__navigate = (name) => navigate(name);
-      window.__quickCreate = () => setQuickCreate(true);
-      if (navigator.userAgent.includes("141NativeApp")) {
-        document.documentElement.classList.add("native-app");
-      }
-    });
     if (!session) {
       return /* @__PURE__ */ React.createElement(AuthGate, { onAuth: (acc, days) => {
         _saveSession(acc, days);
@@ -198,15 +190,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: item.icon, size: 20 }),
       /* @__PURE__ */ React.createElement("span", null, item.label)
-    ))), /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(
-      window.RoutineModal,
-      {
-        open: modal === "newRoutine" || modal === "editRoutine",
-        onClose: closeModal,
-        routine: modal === "editRoutine" ? modalParams.routine : null,
-        date: modalParams.date
-      }
-    ), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(NewInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
+    ))), /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(window.RoutineModal, { open: modal === "newRoutine" || modal === "editRoutine", onClose: closeModal, routine: modal === "editRoutine" ? modalParams.routine : null, date: modalParams.date }), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(NewInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
       setQuickCreate(false);
       setQuickCreateLock(false);
     }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal }));

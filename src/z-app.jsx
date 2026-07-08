@@ -126,17 +126,6 @@ const App = () => {
   };
   const closeModal = () => setModal(null);
 
-  // Puente para la app nativa de Mac (SwiftUI + WKWebView): el sidebar nativo
-  // llama a window.__navigate('tasks') y al quick-create. Si detectamos el UA
-  // de la app, ocultamos el sidebar web (lo pinta SwiftUI con Liquid Glass).
-  useEffect(() => {
-    window.__navigate = (name) => navigate(name);
-    window.__quickCreate = () => setQuickCreate(true);
-    if (navigator.userAgent.includes("141NativeApp")) {
-      document.documentElement.classList.add("native-app");
-    }
-  });
-
   // ── Not logged in: show auth gate
   if (!session) {
     return <AuthGate onAuth={(acc, days) => { _saveSession(acc, days); setSession(acc); }}/>;
