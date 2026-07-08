@@ -187,8 +187,8 @@ const RoutineCard = ({ r, day, onEdit }) => {
   return (
     <div style={{ marginBottom: 28 }}>
       {/* Cabecera de grupo — el nombre de la rutina (como un grupo de cliente) */}
-      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
-        <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)", flexShrink:0, marginRight:-3 }}/>
+      <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+        <div style={{ width:7, height:7, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
         <span onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
           style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e", cursor:"pointer" }}>
           {r.title}
