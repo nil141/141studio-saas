@@ -99,7 +99,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     <div
       style={{
         position:"fixed", inset:0,
-        background:"rgba(0,0,0,0.35)",
+        background:"rgba(0,0,0,0.6)",
+        backdropFilter:"blur(8px)",
         zIndex:200,
         display:"flex", alignItems:"center", justifyContent:"center",
         padding:24,
@@ -111,12 +112,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         onClick={e => e.stopPropagation()}
         style={{
           width:"100%", maxWidth:520,
-          background:"linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.01)), rgba(18,18,22,0.55)",
-          backdropFilter:"blur(28px) saturate(180%)",
-          WebkitBackdropFilter:"blur(28px) saturate(180%)",
-          border:"1px solid rgba(255,255,255,0.12)",
+          background:"#0e0e10",
+          border:"1px solid #232324",
           borderRadius:32,
-          boxShadow:"inset 0 1px 0 rgba(255,255,255,0.12), inset 0 0 24px rgba(255,255,255,0.02), 0 40px 90px rgba(0,0,0,0.6)",
+          boxShadow:"0 40px 90px rgba(0,0,0,0.6)",
           animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
           display:"flex", flexDirection:"column",
           overflow:"hidden",

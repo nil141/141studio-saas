@@ -482,30 +482,23 @@
   /* Modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.35);
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
     z-index: 100;
     display: grid; place-items: center;
     padding: 32px;
     animation: fade .15s ease-out;
   }
   html[data-theme="light"] .modal-overlay { background: rgba(10,10,11,0.30); }
-  /* Modal — liquid glass: translucidez con blur+saturación sobre el contenido,
-     highlight superior y borde luminoso (imitación CSS del vidrio de Apple) */
+  /* Modal — panel estilo outdomode (radius grande, borde gris, sin divisorias) */
   .modal {
-    background:
-      linear-gradient(180deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02) 40%, rgba(255,255,255,0.01)),
-      rgba(18,18,22,0.55);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: #0e0e10;
+    border: 1px solid #232324;
     border-radius: 28px;
     width: 100%; max-width: 560px;
     overflow: hidden;
     animation: pop .2s cubic-bezier(.2,.8,.2,1);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.12),
-      inset 0 0 24px rgba(255,255,255,0.02),
-      0 40px 90px rgba(0,0,0,0.6);
+    box-shadow: 0 40px 90px rgba(0,0,0,0.6);
   }
   .modal.lg { max-width: 760px; }
   .modal-head {
@@ -865,7 +858,7 @@
 <script src="src/data.js?v=15"></script>
 <script src="src/primitives.js?v=15"></script>
 <script src="src/auth.js?v=3"></script>
-<script src="src/z-modals.js?v=7"></script>
+<script src="src/z-modals.js?v=6"></script>
 <script src="src/z-app.js?v=9"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=31"></script>
@@ -881,7 +874,7 @@
 <script src="src/z-modals2.js?v=3"></script>
 <script src="src/agency-agenda.js?v=4"></script>
 <script src="src/agentes.js?v=6"></script>
-<script src="src/quick-create.js?v=7"></script>
+<script src="src/quick-create.js?v=6"></script>
 <script src="src/routines.js?v=18"></script>
 <!-- Todos los componentes cargados — arrancar React ahora -->
 <script>window.__initApp();</script>
