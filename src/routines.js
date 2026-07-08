@@ -152,7 +152,7 @@
       D.toggleRoutineItem(r.id, day, it.id);
       if (willComplete) setCelebrate(true);
     };
-    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)", flexShrink: 0, marginRight: -3 } }), /* @__PURE__ */ React.createElement(
       "span",
       {
         onClick: () => onEdit && onEdit(r),
