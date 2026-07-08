@@ -190,10 +190,10 @@ const RoutineCard = ({ r, day, onEdit }) => {
       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:8 }}>
         <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)", flexShrink:0 }}/>
         <span onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
-          style={{ fontSize:12, fontWeight:400, textTransform:"uppercase", color:"#9e9e9e", cursor:"pointer" }}>
+          style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e", cursor:"pointer" }}>
           {r.title}
         </span>
-        <span style={{ fontSize:11, color:"var(--text-subtle)" }}>
+        <span style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0" }}>
           · {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
         </span>
         {streak > 0 && (

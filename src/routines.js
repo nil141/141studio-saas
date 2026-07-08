@@ -157,10 +157,10 @@
       {
         onClick: () => onEdit && onEdit(r),
         "data-tooltip": "Editar rutina",
-        style: { fontSize: 12, fontWeight: 400, textTransform: "uppercase", color: "#9e9e9e", cursor: "pointer" }
+        style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e", cursor: "pointer" }
       },
       r.title
-    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "\xB7 ", R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : ""), streak > 0 && /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0" } }, "\xB7 ", R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : ""), streak > 0 && /* @__PURE__ */ React.createElement(
       "div",
       {
         "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
