@@ -493,6 +493,57 @@ def _campaigns_save(data):
         json.dump(data, f, ensure_ascii=False, indent=1)
     os.replace(tmp, _CAMPAIGNS_FILE)
 
+# ── Datos por usuario (rutinas, finanzas…) ──────────────────────────────────
+# Blob JSON por usuario (clave = id de Supabase). Antes vivían en localStorage
+# (sólo en un dispositivo); ahora se guardan en el servidor para sincronizarse
+# entre dispositivos. Se persiste en el volumen (STORE_DIR).
+_USERDATA_FILE = os.path.join(_STORE_DIR, "userdata.json")
+_USERDATA_KEYS = {"routines", "routineDone", "finance"}
+_USERDATA_MAX  = 600_000   # bytes por clave
+
+def _userdata_load():
+    try:
+        with open(_USERDATA_FILE, encoding="utf-8") as f:
+            d = json.load(f)
+        if isinstance(d, dict):
+            return d
+    except FileNotFoundError:
+        pass
+    except Exception:
+        traceback.print_exc()
+    return {}
+
+def _userdata_save(data):
+    tmp = _USERDATA_FILE + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False)
+    os.replace(tmp, _USERDATA_FILE)
+
+def api_userdata_get(uid, _body):
+    return {"ok": True, "data": _userdata_load().get(uid, {})}
+
+def api_userdata_set(uid, body):
+    key = body.get("key")
+    if key not in _USERDATA_KEYS:
+        return {"ok": False, "error": "Clave no válida"}
+    value = body.get("value")
+    try:
+        if len(json.dumps(value, ensure_ascii=False)) > _USERDATA_MAX:
+            return {"ok": False, "error": "Datos demasiado grandes"}
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "Datos no válidos"}
+    data = _userdata_load()
+    blob = data.get(uid) or {}
+    blob[key] = value
+    data[uid] = blob
+    _userdata_save(data)
+    return {"ok": True}
+
+USERDATA_HANDLERS = {
+    "get": api_userdata_get,
+    "set": api_userdata_set,
+}
+
 def _today():
     return time.strftime("%Y-%m-%d")
 
@@ -747,7 +798,7 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=BASE, **kwargs)
 
     # Ficheros que el servidor estático nunca debe servir
-    _BLOCKED_NAMES = {"store.json", "campaign_leads.json", "mail_server.py",
+    _BLOCKED_NAMES = {"store.json", "campaign_leads.json", "userdata.json", "mail_server.py",
                       "requirements.txt", "railway.toml", "procfile", "build.sh"}
 
     def _path_blocked(self):
@@ -797,6 +848,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_import()
         elif self.path.startswith("/api/campaigns/"):
             self._handle_api(self.path[len("/api/campaigns/"):], CAMPAIGN_HANDLERS)
+        elif self.path.startswith("/api/userdata/"):
+            self._handle_userdata(self.path[len("/api/userdata/"):])
         elif self.path.startswith(("/api/store/", "/api/invite/", "/api/auth/")):
             self._json(410, {"ok": False, "error": "Endpoint retirado — la app usa Supabase"})
         else:
@@ -832,6 +885,29 @@ class Handler(SimpleHTTPRequestHandler):
         self._cors()
         self.end_headers()
         self.wfile.write(resp)
+
+    def _handle_userdata(self, endpoint):
+        """Datos por usuario (rutinas, finanzas). JWT válido; los datos se
+        guardan bajo el id del usuario, así que se sincronizan entre dispositivos."""
+        auth  = self.headers.get("Authorization", "")
+        token = auth[7:] if auth.startswith("Bearer ") else ""
+        user  = _verify_supabase_token(token)
+        if not user or not user.get("id"):
+            self._json(401, {"ok": False, "error": "No autorizado"})
+            return
+        uid = user["id"]
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 1_000_000:
+                self._json(413, {"ok": False, "error": "Payload demasiado grande"})
+                return
+            body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            fn   = USERDATA_HANDLERS.get(endpoint)
+            result = fn(uid, body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
+        except Exception as e:
+            traceback.print_exc()
+            result = {"ok": False, "error": str(e)}
+        self._json(200, result)
 
     def _handle_api(self, endpoint, handlers):
         # Autenticación obligatoria: JWT de Supabase válido y que no sea un cliente del portal

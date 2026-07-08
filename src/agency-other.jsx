@@ -1393,7 +1393,11 @@ const _finLoad = () => {
     return d && typeof d === "object" ? { subs: d.subs || [], expenses: d.expenses || [] } : { subs: [], expenses: [] };
   } catch { return { subs: [], expenses: [] }; }
 };
-const _finSave = (d) => { try { localStorage.setItem(FIN_KEY, JSON.stringify(d)); } catch {} };
+const _finSave = (d) => {
+  try { localStorage.setItem(FIN_KEY, JSON.stringify(d)); } catch {}
+  // Sincroniza con el servidor para verlo en otros dispositivos
+  try { window._userdataSet && window._userdataSet("finance", d); } catch {}
+};
 const _finId = () => (window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6));
 const _subMonthly = (s) => (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0));
 const _sameMonth = (iso) => { if (!iso) return false; const d = new Date(iso); const n = new Date(); return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth(); };
@@ -1535,6 +1539,13 @@ const AgencyBilling = () => {
   const [expForm, setExpForm] = useState(blankExp);
 
   const persist = (next) => { setData(next); _finSave(next); };
+
+  // Cuando el servidor sincroniza las finanzas (otro dispositivo / primer login), recargar
+  useEffect(() => {
+    const onSync = () => setData(_finLoad());
+    window.addEventListener("141-userdata-synced", onSync);
+    return () => window.removeEventListener("141-userdata-synced", onSync);
+  }, []);
 
   const saveSub = () => {
     if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) { toast("Pon nombre e importe", "error"); return; }

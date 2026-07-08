@@ -792,6 +792,10 @@
       localStorage.setItem(FIN_KEY, JSON.stringify(d));
     } catch (e) {
     }
+    try {
+      window._userdataSet && window._userdataSet("finance", d);
+    } catch (e) {
+    }
   };
   var _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
   var _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
@@ -941,6 +945,11 @@
       setData(next);
       _finSave(next);
     };
+    useEffect(() => {
+      const onSync = () => setData(_finLoad());
+      window.addEventListener("141-userdata-synced", onSync);
+      return () => window.removeEventListener("141-userdata-synced", onSync);
+    }, []);
     const saveSub = () => {
       if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) {
         toast("Pon nombre e importe", "error");

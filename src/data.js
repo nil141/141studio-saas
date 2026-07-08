@@ -324,6 +324,7 @@ const initAccount = async (_ignored) => {
   if (session == null ? void 0 : session.user) {
     _store._user = session.user;
     await _loadAll();
+    _syncUserData();
     _setupRealtime();
   } else {
     window.dispatchEvent(new CustomEvent("141-session-expired"));
@@ -670,8 +671,50 @@ const _saveLS = (k, v) => {
   } catch (e) {
   }
 };
+const _userdataGet = async () => {
+  try {
+    const r = await window.apiFetch("/api/userdata/get", {});
+    const j = await r.json();
+    return j && j.ok ? j.data || {} : {};
+  } catch (e) {
+    return {};
+  }
+};
+const _userdataSet = (key, value) => {
+  try {
+    window.apiFetch("/api/userdata/set", { key, value });
+  } catch (e) {
+  }
+};
+window._userdataSet = _userdataSet;
 _store.ROUTINES = _loadLS(_RKEY, []);
 _store.ROUTINE_DONE = _loadLS(_RDKEY, {});
+const _syncUserData = async () => {
+  const blob = await _userdataGet();
+  if (Array.isArray(blob.routines)) {
+    _store.ROUTINES = blob.routines;
+    _saveLS(_RKEY, _store.ROUTINES);
+  } else if ((_store.ROUTINES || []).length) {
+    _userdataSet("routines", _store.ROUTINES);
+  }
+  if (blob.routineDone && typeof blob.routineDone === "object") {
+    _store.ROUTINE_DONE = blob.routineDone;
+    _saveLS(_RDKEY, _store.ROUTINE_DONE);
+  } else if (Object.keys(_store.ROUTINE_DONE || {}).length) {
+    _userdataSet("routineDone", _store.ROUTINE_DONE);
+  }
+  try {
+    const localFin = JSON.parse(localStorage.getItem("141_finance_v1") || "null");
+    if (blob.finance && typeof blob.finance === "object") {
+      localStorage.setItem("141_finance_v1", JSON.stringify(blob.finance));
+    } else if (localFin && ((localFin.subs || []).length || (localFin.expenses || []).length)) {
+      _userdataSet("finance", localFin);
+    }
+  } catch (e) {
+  }
+  _emit();
+  window.dispatchEvent(new CustomEvent("141-userdata-synced"));
+};
 const _routineMatchesDay = (r, dateStr) => {
   const d = /* @__PURE__ */ new Date(dateStr + "T12:00:00");
   const start = /* @__PURE__ */ new Date((r.startDate || dateStr) + "T12:00:00");
@@ -697,6 +740,7 @@ const addRoutine = (input) => {
   };
   _store.ROUTINES = [r, ..._store.ROUTINES || []];
   _saveLS(_RKEY, _store.ROUTINES);
+  _userdataSet("routines", _store.ROUTINES);
   _emit();
   return r;
 };
@@ -710,6 +754,7 @@ const updateRoutine = (id, changes) => {
     return next;
   });
   _saveLS(_RKEY, _store.ROUTINES);
+  _userdataSet("routines", _store.ROUTINES);
   _emit();
 };
 const deleteRoutine = (id) => {
@@ -719,6 +764,8 @@ const deleteRoutine = (id) => {
   _store.ROUTINE_DONE = done;
   _saveLS(_RKEY, _store.ROUTINES);
   _saveLS(_RDKEY, _store.ROUTINE_DONE);
+  _userdataSet("routines", _store.ROUTINES);
+  _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
 };
 const routineItemDone = (routineId, dateStr, itemId) => {
@@ -732,6 +779,7 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
   _store.ROUTINE_DONE = done;
   _saveLS(_RDKEY, _store.ROUTINE_DONE);
+  _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
 };
 const routineDayComplete = (routineId, dateStr) => {

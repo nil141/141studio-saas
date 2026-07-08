@@ -304,6 +304,7 @@ const initAccount = async (_ignored) => {
   if (session?.user) {
     _store._user = session.user;
     await _loadAll();
+    _syncUserData();          // rutinas + finanzas desde el servidor (multi-dispositivo)
     _setupRealtime();
   } else {
     // Sesión antigua sin Supabase válida → forzar re-login
@@ -578,9 +579,47 @@ const _RDKEY = "141_routine_done";
 const _loadLS = (k, def) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? def : v; } catch (e) { return def; } };
 const _saveLS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 
-// Hidratar en el store (device-local, no depende del login)
+// Sincronización con el servidor (por usuario) → rutinas y finanzas se ven en
+// todos los dispositivos, no sólo donde se crearon.
+const _userdataGet = async () => {
+  try { const r = await window.apiFetch("/api/userdata/get", {}); const j = await r.json(); return (j && j.ok) ? (j.data || {}) : {}; }
+  catch (e) { return {}; }
+};
+const _userdataSet = (key, value) => {
+  try { window.apiFetch("/api/userdata/set", { key, value }); } catch (e) {}
+};
+window._userdataSet = _userdataSet;
+
+// Hidratar en el store (cache local; el servidor manda una vez sincronizado)
 _store.ROUTINES     = _loadLS(_RKEY, []);
 _store.ROUTINE_DONE = _loadLS(_RDKEY, {});
+
+// Trae rutinas y finanzas del servidor (y migra lo local la primera vez).
+const _syncUserData = async () => {
+  const blob = await _userdataGet();
+  // Rutinas
+  if (Array.isArray(blob.routines)) {
+    _store.ROUTINES = blob.routines; _saveLS(_RKEY, _store.ROUTINES);
+  } else if ((_store.ROUTINES || []).length) {
+    _userdataSet("routines", _store.ROUTINES);            // migración: subir lo local
+  }
+  if (blob.routineDone && typeof blob.routineDone === "object") {
+    _store.ROUTINE_DONE = blob.routineDone; _saveLS(_RDKEY, _store.ROUTINE_DONE);
+  } else if (Object.keys(_store.ROUTINE_DONE || {}).length) {
+    _userdataSet("routineDone", _store.ROUTINE_DONE);
+  }
+  // Finanzas (localStorage "141_finance_v1", que lee la página de Gastos)
+  try {
+    const localFin = JSON.parse(localStorage.getItem("141_finance_v1") || "null");
+    if (blob.finance && typeof blob.finance === "object") {
+      localStorage.setItem("141_finance_v1", JSON.stringify(blob.finance));
+    } else if (localFin && ((localFin.subs || []).length || (localFin.expenses || []).length)) {
+      _userdataSet("finance", localFin);
+    }
+  } catch (e) {}
+  _emit();
+  window.dispatchEvent(new CustomEvent("141-userdata-synced"));
+};
 
 // ¿esta rutina aplica en la fecha dada? (YYYY-MM-DD)
 const _routineMatchesDay = (r, dateStr) => {
@@ -612,7 +651,7 @@ const addRoutine = (input) => {
     createdAt: Date.now(),
   };
   _store.ROUTINES = [r, ...(_store.ROUTINES || [])];
-  _saveLS(_RKEY, _store.ROUTINES); _emit();
+  _saveLS(_RKEY, _store.ROUTINES); _userdataSet("routines", _store.ROUTINES); _emit();
   return r;
 };
 
@@ -628,14 +667,16 @@ const updateRoutine = (id, changes) => {
     }
     return next;
   });
-  _saveLS(_RKEY, _store.ROUTINES); _emit();
+  _saveLS(_RKEY, _store.ROUTINES); _userdataSet("routines", _store.ROUTINES); _emit();
 };
 
 const deleteRoutine = (id) => {
   _store.ROUTINES = (_store.ROUTINES || []).filter(r => r.id !== id);
   const done = { ..._store.ROUTINE_DONE }; delete done[id];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RKEY, _store.ROUTINES); _saveLS(_RDKEY, _store.ROUTINE_DONE); _emit();
+  _saveLS(_RKEY, _store.ROUTINES); _saveLS(_RDKEY, _store.ROUTINE_DONE);
+  _userdataSet("routines", _store.ROUTINES); _userdataSet("routineDone", _store.ROUTINE_DONE);
+  _emit();
 };
 
 const routineItemDone = (routineId, dateStr, itemId) =>
@@ -647,7 +688,7 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   done[routineId][dateStr] = { ...(done[routineId][dateStr] || {}) };
   done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
   _store.ROUTINE_DONE = done;
-  _saveLS(_RDKEY, _store.ROUTINE_DONE); _emit();
+  _saveLS(_RDKEY, _store.ROUTINE_DONE); _userdataSet("routineDone", _store.ROUTINE_DONE); _emit();
 };
 
 // ¿están todos los pasos de la rutina hechos ese día?
