@@ -1327,19 +1327,19 @@ const CampaignsPage = ({ navigate }) => {
         Icon,
         {
           name: ct.icon,
-          size: 26,
+          size: 22,
           strokeWidth: 1.6,
           style: { color: "var(--text)", flexShrink: 0, transform: on ? "scale(1.06)" : "none", transition: "transform .3s" }
         }
       ), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        fontSize: 20,
+        fontSize: 17,
         color: "var(--text)",
         letterSpacing: "-0.4px",
         lineHeight: 1.2,
         whiteSpace: "nowrap",
         overflow: "hidden",
         textOverflow: "ellipsis"
-      } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, leads.length, " leads"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, contacted, " contactados"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, ct.label, nToday ? ` \xB7 +${nToday} hoy` : "")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+      } }, c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, leads.length, " leads"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, contacted, " contactados"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, ct.label, nToday ? ` \xB7 +${nToday} hoy` : "")))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
         "button",
         {
           className: "btn ghost icon-only sm",

@@ -119,14 +119,14 @@ const AgencyClientsList = ({ navigate, openModal }) => {
                 style={{ display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor:"pointer" }}>
                 <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:14, minWidth:0 }}>
-                    <Icon name="users" size={26} strokeWidth={1.6}
+                    <Icon name="users" size={22} strokeWidth={1.6}
                       style={{ color:"var(--text)", flexShrink:0, transform: on ? "scale(1.06)" : "none", transition:"transform .3s" }}/>
                     <div style={{ minWidth:0 }}>
-                      <div style={{ fontSize:20, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                      <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
                         whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                         {c.company || c.name || "—"}
                       </div>
-                      <div style={{ fontSize:13.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
+                      <div style={{ fontSize:12.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
                         <span style={{ flexShrink:0 }}>{projs.length} {projs.length === 1 ? "proyecto" : "proyectos"}</span>
                         {c.name && c.company && <>
                           <span style={{ opacity:0.4, fontSize:10 }}>•</span>

@@ -912,12 +912,12 @@ const AgencyProjects = ({ navigate, openModal }) => {
                 borderBottom:"0.5px solid var(--border)" }}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:14, minWidth:0 }}>
-                  <Icon name="package" size={26} strokeWidth={1.6}
+                  <Icon name="package" size={22} strokeWidth={1.6}
                     style={{ color:"var(--text)", flexShrink:0, transform: on ? "scale(1.06)" : "none", transition:"transform .3s" }}/>
                   <div style={{ minWidth:0 }}>
-                    <div style={{ fontSize:20, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                    <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
                       whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{p.name}</div>
-                    <div style={{ fontSize:13.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
+                    <div style={{ fontSize:12.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6, minWidth:0 }}>
                       <span style={{ flexShrink:0 }}>{pTasks.length} {pTasks.length === 1 ? "tarea" : "tareas"}</span>
                       <span style={{ opacity:0.4, fontSize:10 }}>•</span>
                       <span style={{ flexShrink:0 }}>{doneN} hechas</span>
