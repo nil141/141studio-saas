@@ -337,7 +337,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       </div>
 
       {/* Tira horizontal de días (scroll) + progreso */}
-      <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:28, flexShrink:0 }}>
+      <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:0, flexShrink:0 }}>
         <style>{`.day-scroll::-webkit-scrollbar{display:none}`}</style>
 
         {/* Day strip — activity rings con scroll horizontal */}

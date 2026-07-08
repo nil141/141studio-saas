@@ -164,7 +164,7 @@
           ]
         }
       )),
-      /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 28, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
+      /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 0, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
         return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", style: {
           display: "flex",
           alignItems: "stretch",
