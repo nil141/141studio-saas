@@ -1,5 +1,5 @@
 // QuickCreate — modal estilo Outdomode
-// (usa los hooks globales que declara primitives.js — no redeclarar aquí)
+// (usa los hooks globales de primitives.js)
 
 const TYPES = [
   { id: "task",    label: "Tarea",   icon: "list-todo" },
@@ -83,143 +83,249 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
   const accentColor = { task:"var(--accent)", event:"#60a5fa", meeting:"#34d399" }[type];
   const accentHex   = { task:"#9e9ae5",       event:"#60a5fa", meeting:"#34d399" }[type];
-  const submitBg    = { task:"rgb(130,119,219)", event:"#3b82f6", meeting:"#10b981" }[type];
-  const typeName    = { task:"Nueva tarea", event:"Nuevo evento", meeting:"Nueva reunión" }[type];
 
-  // Estilos del panel — misma línea que el resto de modales (outdomode)
-  const OD_INPUT = {
-    width:"100%", padding:"17px 22px", fontSize:16, borderRadius:18,
-    background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)",
-    color:"var(--text)", outline:"none", fontFamily:"inherit", letterSpacing:"-0.3px",
-    transition:"border-color .2s, background .2s",
-  };
-  const OD_LABEL = { fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.3px", marginBottom:12 };
-  const chip = (on) => ({
-    padding:"13px 19px", borderRadius:16, cursor:"pointer", fontFamily:"inherit",
-    fontSize:14, letterSpacing:"-0.3px", transition:"all .15s",
-    background: on ? accentHex + "1f" : "transparent",
-    border: on ? `1px solid ${accentHex}99` : "1px solid rgba(255,255,255,0.1)",
-    color: on ? accentHex : "var(--text-muted)",
-  });
+  // Tab definitions — "cliente" only for task
+  const tabs = [
+    ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users",    hasVal: !!clientId }] : []),
+    { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
+    { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
+    ...(type !== "task" ? [{ id:"date", label:"Fecha", icon:"calendar", hasVal: false }] : []),
+  ];
+
+  const toggleTab = (id) => setActiveTab(prev => prev === id ? null : id);
 
   return (
     <>
-    <div onClick={onClose} style={{
-      position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.6)",
-      backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
-      display:"flex", alignItems:"center", justifyContent:"center", padding:24,
-      animation:"fade .15s ease-out",
-    }}>
-      <style>{`.od-input:focus { border-color: ${accentHex}80 !important; background: ${accentHex}0d !important; }`}</style>
-      <div onClick={e => e.stopPropagation()} style={{
-        width:"100%", maxWidth:620, maxHeight:"90vh", overflowY:"auto",
-        background:"#0e0e10", border:"1px solid #232324", borderRadius:32,
-        padding:"38px 42px 34px", boxShadow:"0 40px 90px rgba(0,0,0,0.6)",
-        animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
-      }}>
-        {/* Cabecera: botón circular + título grande */}
-        <div style={{ display:"flex", alignItems:"center", gap:18, marginBottom: lockType ? 32 : 26 }}>
+    <div
+      style={{
+        position:"fixed", inset:0,
+        background:"rgba(0,0,0,0.6)",
+        backdropFilter:"blur(8px)",
+        zIndex:200,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        padding:24,
+        animation:"fade .15s ease-out",
+      }}
+      onClick={onClose}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:"100%", maxWidth:520,
+          background:"#0e0e10",
+          border:"1px solid #232324",
+          borderRadius:32,
+          boxShadow:"0 40px 90px rgba(0,0,0,0.6)",
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+          display:"flex", flexDirection:"column",
+          overflow:"hidden",
+          minHeight:420,
+        }}
+      >
+        {/* Top bar */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"22px 22px 0" }}>
           <button onClick={onClose} style={{
-            width:44, height:44, borderRadius:"50%", flexShrink:0, cursor:"pointer",
-            background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.06)",
-            display:"grid", placeItems:"center", color:"var(--text-muted)",
+            width:40, height:40, borderRadius:"50%",
+            background:"rgba(255,255,255,0.08)",
+            border:"0.5px solid rgba(255,255,255,0.1)",
+            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+            color:"var(--text-muted)",
           }}>
-            <Icon name="x" size={17}/>
+            <Icon name="x" size={15}/>
           </button>
-          <h1 style={{ fontSize:32, fontWeight:400, letterSpacing:"-0.04em", margin:0 }}>{typeName}</h1>
+
+          {/* Type pills — hidden when lockType */}
+          {lockType
+            ? <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>Crear nuevo</div>
+            : <div style={{ display:"flex", gap:6 }}>
+                {TYPES.map(tp => (
+                  <button key={tp.id} onClick={() => setType(tp.id)} style={{
+                    display:"flex", alignItems:"center", gap:5,
+                    padding:"6px 13px", borderRadius:99,
+                    background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
+                    border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
+                    color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
+                    fontSize:12, letterSpacing:"-0.4px", cursor:"pointer",
+                    fontFamily:"var(--font-sans)", transition:"all .1s",
+                  }}>
+                    <Icon name={tp.icon} size={12} strokeWidth={1.6}/>
+                    {tp.label}
+                  </button>
+                ))}
+              </div>
+          }
+
+          <button onClick={handleSubmit} style={{
+            width:40, height:40, borderRadius:"50%",
+            background: canSubmit ? accentColor : "rgba(255,255,255,0.08)",
+            border:"none", cursor: canSubmit ? "pointer" : "default",
+            display:"flex", alignItems:"center", justifyContent:"center",
+            color:"#fff", transition:"all .15s", opacity: canSubmit ? 1 : 0.4,
+          }}>
+            <Icon name="arrow-up" size={15}/>
+          </button>
         </div>
 
-        {/* Tipo — segmentado, solo si no está bloqueado */}
-        {!lockType && (
-          <div style={{ display:"flex", gap:10, marginBottom:28 }}>
-            {TYPES.map(tp => {
-              const on = type === tp.id;
-              return (
-                <button key={tp.id} onClick={() => setType(tp.id)} style={{
-                  ...chip(on), flex:1, display:"flex", alignItems:"center", justifyContent:"center", gap:8,
-                  padding:"15px 12px",
-                }}>
-                  <Icon name={tp.icon} size={14} strokeWidth={1.6}/>
-                  {tp.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Nombre + descripción */}
-        <div style={{ marginBottom:28 }}>
-          <div style={OD_LABEL}>Nombre</div>
-          <input className="od-input" style={OD_INPUT} autoFocus
-            placeholder={{ task:"Nombre de la tarea", event:"Nombre del evento", meeting:"Nombre de la reunión" }[type]}
-            value={title} onChange={e => setTitle(e.target.value)}
-            onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}/>
-          <input className="od-input" style={{ ...OD_INPUT, marginTop:12, fontSize:15 }}
-            placeholder="Descripción (opcional)" value={desc} onChange={e => setDesc(e.target.value)}/>
+        {/* Title + description inputs */}
+        <div style={{ padding:"28px 28px 8px" }}>
+          <input
+            autoFocus
+            placeholder={{ task:"Nombre de la tarea...", event:"Nombre del evento...", meeting:"Nombre de la reunión..." }[type]}
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}
+            style={{
+              width:"100%", background:"transparent", border:"none", outline:"none",
+              fontSize:28, fontWeight:400, letterSpacing:"-1.4px",
+              color: title ? "var(--text)" : "rgba(255,255,255,0.15)",
+              fontFamily:"var(--font-display)", caretColor: accentColor,
+            }}
+          />
+          <input
+            placeholder="Descripción (opcional)"
+            value={desc}
+            onChange={e => setDesc(e.target.value)}
+            style={{
+              width:"100%", background:"transparent", border:"none", outline:"none",
+              fontSize:14, letterSpacing:"-0.5px", marginTop:8,
+              color: desc ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+              fontFamily:"var(--font-sans)", caretColor: accentColor,
+            }}
+          />
         </div>
 
-        {/* Cliente — solo tareas */}
-        {type === "task" && D.CLIENTS.length > 0 && (
-          <div style={{ marginBottom:28 }}>
-            <div style={OD_LABEL}>Cliente <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap", maxHeight:158, overflowY:"auto" }}>
-              {[...D.CLIENTS].sort((a,b) => (a.company||a.name||"").localeCompare(b.company||b.name||"")).map(c => (
-                <button key={c.id} onClick={() => setClientId(clientId === c.id ? "" : c.id)} style={chip(clientId === c.id)}>
-                  {c.company || c.name}
-                </button>
-              ))}
+        {/* Content area — shows selected tab */}
+        <div style={{ flex:1, padding:"0 28px", minHeight:120, display:"flex", alignItems:"center", justifyContent:"center" }}>
+
+          {/* No tab selected */}
+          {!activeTab && (
+            <div style={{ color:"rgba(255,255,255,0.08)", fontSize:13, letterSpacing:"-0.5px" }}>
+              Selecciona una opción abajo
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Fecha — evento/reunión */}
-        {type !== "task" && (
-          <div style={{ marginBottom:28 }}>
-            <div style={OD_LABEL}>Fecha</div>
-            <input type="date" className="od-input" style={{ ...OD_INPUT, colorScheme:"dark" }}
-              value={date} onChange={e => setDate(e.target.value)}/>
-          </div>
-        )}
+          {/* Cliente */}
+          {activeTab === "client" && (
+            <div style={{ width:"100%", maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
+              {D.CLIENTS.length === 0
+                ? <span style={{ fontSize:13, color:"var(--text-subtle)", textAlign:"center" }}>Sin clientes</span>
+                : [...D.CLIENTS].sort((a,b) => (a.company||a.name||"").localeCompare(b.company||b.name||"")).map(c => (
+                  <button key={c.id} onClick={() => setClientId(clientId === c.id ? "" : c.id)} style={{
+                    padding:"10px 16px", borderRadius:12, fontSize:13, letterSpacing:"-0.5px",
+                    background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.04)",
+                    border: clientId === c.id ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
+                    color: clientId === c.id ? accentHex : "var(--text-muted)",
+                    cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+                    textAlign:"left", width:"100%",
+                  }}>
+                    {c.company || c.name}
+                  </button>
+                ))
+              }
+            </div>
+          )}
 
-        {/* Frecuencia + Hora */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr auto", gap:24, marginBottom:34 }}>
-          <div>
-            <div style={OD_LABEL}>Frecuencia</div>
-            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+          {/* Frecuencia */}
+          {activeTab === "freq" && (
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center" }}>
               {FREQ_OPTS.map(f => (
-                <button key={f.id} onClick={() => setFreq(f.id)} style={chip(freq === f.id)}>
+                <button key={f.id} onClick={() => setFreq(f.id)} style={{
+                  padding:"8px 18px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
+                  background: freq === f.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
+                  border: freq === f.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+                  color: freq === f.id ? accentHex : "var(--text-muted)",
+                  cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+                }}>
                   {f.label}
                 </button>
               ))}
             </div>
-          </div>
-          <div>
-            <div style={OD_LABEL}>Hora <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
-            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-              <button onClick={() => setPickerFor("start")} style={{ ...chip(!!time), fontVariantNumeric:"tabular-nums" }}>
-                {time || "00:00"}
-              </button>
-              {(type === "event" || type === "meeting") && (
-                <>
-                  <span style={{ fontSize:15, color:"var(--text-subtle)" }}>–</span>
-                  <button onClick={() => setPickerFor("end")} style={{ ...chip(!!timeEnd), fontVariantNumeric:"tabular-nums" }}>
-                    {timeEnd || "00:00"}
-                  </button>
-                </>
-              )}
+          )}
+
+          {/* Hora */}
+          {activeTab === "time" && (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:16 }}>
+              <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+                <button onClick={() => setPickerFor("start")} style={{
+                  padding:"10px 22px", borderRadius:14, cursor:"pointer",
+                  background: time ? accentHex + "22" : "rgba(255,255,255,0.07)",
+                  border: time ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+                  color: time ? accentHex : "var(--text-muted)",
+                  fontSize:22, fontWeight:300, letterSpacing:"-1px",
+                  fontFamily:"var(--font-display)", transition:"all .1s",
+                }}>
+                  {time || "00:00"}
+                </button>
+                {(type === "event" || type === "meeting") && (
+                  <>
+                    <span style={{ fontSize:16, color:"var(--text-subtle)" }}>–</span>
+                    <button onClick={() => setPickerFor("end")} style={{
+                      padding:"10px 22px", borderRadius:14, cursor:"pointer",
+                      background: timeEnd ? accentHex + "22" : "rgba(255,255,255,0.07)",
+                      border: timeEnd ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+                      color: timeEnd ? accentHex : "var(--text-muted)",
+                      fontSize:22, fontWeight:300, letterSpacing:"-1px",
+                      fontFamily:"var(--font-display)", transition:"all .1s",
+                    }}>
+                      {timeEnd || "00:00"}
+                    </button>
+                  </>
+                )}
+              </div>
+              <span style={{ fontSize:12, color:"var(--text-subtle)" }}>Toca para cambiar la hora</span>
             </div>
-          </div>
+          )}
+
+          {/* Fecha (evento/reunión) */}
+          {activeTab === "date" && (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)}
+                style={{
+                  background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.14)",
+                  borderRadius:14, color:"var(--text)", fontSize:16, padding:"10px 22px",
+                  fontFamily:"var(--font-sans)", letterSpacing:"-0.5px",
+                }}
+              />
+            </div>
+          )}
+
         </div>
 
-        {/* Confirmar */}
-        <button onClick={handleSubmit} disabled={!canSubmit} style={{
-          width:"100%", height:56, borderRadius:18, border:0, cursor:"pointer",
-          background:submitBg, color:"#fff", fontSize:16, fontFamily:"inherit",
-          letterSpacing:"-0.3px", fontWeight:500, transition:"opacity .2s",
-          opacity: canSubmit ? 1 : 0.35,
-        }}>
-          Crear {{ task:"tarea", event:"evento", meeting:"reunión" }[type]}
-        </button>
+        {/* Divider */}
+        <div style={{ height:"0.5px", background:"rgba(255,255,255,0.07)", margin:"0 0 0 0" }}/>
+
+        {/* Bottom tabs */}
+        <div style={{ display:"flex", gap:8, padding:"16px 22px 22px", flexWrap:"wrap" }}>
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => toggleTab(tab.id)} style={{
+              display:"flex", alignItems:"center", gap:6,
+              padding:"8px 16px", borderRadius:99,
+              background: activeTab === tab.id
+                ? accentHex + "22"
+                : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+              border: activeTab === tab.id
+                ? `0.5px solid ${accentHex}55`
+                : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
+              color: activeTab === tab.id ? accentHex : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
+              fontSize:13, letterSpacing:"-0.5px", cursor:"pointer",
+              fontFamily:"var(--font-sans)", transition:"all .12s",
+            }}>
+              <Icon name={tab.icon} size={13} strokeWidth={1.6}/>
+              {tab.label}
+              {tab.id === "client" && clientId && (
+                <span style={{ width:6, height:6, borderRadius:"50%", background:accentHex, flexShrink:0 }}/>
+              )}
+              {tab.id === "freq" && freq !== "once" && (
+                <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>
+                  {FREQ_OPTS.find(f => f.id === freq)?.label}
+                </span>
+              )}
+              {tab.id === "time" && time && (
+                <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{time}</span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
 
