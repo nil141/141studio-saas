@@ -188,13 +188,10 @@ const RoutineCard = ({ r, day, onEdit }) => {
     <div style={{ marginBottom: 28 }}>
       {/* Cabecera de grupo — el nombre de la rutina (como un grupo de cliente) */}
       <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
-        <div style={{ width:7, height:7, borderRadius:"50%", background:"var(--accent)", flexShrink:0 }}/>
+        <Icon name="refresh-cw" size={12} style={{ color:"var(--accent)", flexShrink:0, marginRight:-3 }}/>
         <span onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
           style={{ fontSize:12, fontWeight:400, letterSpacing:"0", textTransform:"uppercase", color:"#9e9e9e", cursor:"pointer" }}>
           {r.title}
-        </span>
-        <span style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"0" }}>
-          · {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
         </span>
         {streak > 0 && (
           <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}

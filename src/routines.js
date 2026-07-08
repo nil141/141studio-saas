@@ -7,7 +7,6 @@
     { id: "weekly", label: "Cada semana" },
     { id: "monthly", label: "Cada mes" }
   ];
-  var R_FREQ_LABEL = { daily: "Cada d\xEDa", weekdays: "D\xEDas laborables", weekly: "Cada semana", monthly: "Cada mes" };
   var RoutineModal = ({ open, onClose, routine, date }) => {
     const D = window.Data;
     const toast = useToast();
@@ -152,7 +151,7 @@
       D.toggleRoutineItem(r.id, day, it.id);
       if (willComplete) setCelebrate(true);
     };
-    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 12, style: { color: "var(--accent)", flexShrink: 0, marginRight: -3 } }), /* @__PURE__ */ React.createElement(
       "span",
       {
         onClick: () => onEdit && onEdit(r),
@@ -160,7 +159,7 @@
         style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e", cursor: "pointer" }
       },
       r.title
-    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", letterSpacing: "0" } }, "\xB7 ", R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : ""), streak > 0 && /* @__PURE__ */ React.createElement(
+    ), streak > 0 && /* @__PURE__ */ React.createElement(
       "div",
       {
         "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
