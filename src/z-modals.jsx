@@ -596,7 +596,16 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
   const [step, setStep] = useState("form");
   const [data, setData] = useState({ name: "", email: "", phone: "", company: "", sector: "" });
   const [createdId, setCreatedId] = useState(null);
+  const [sectorOpen, setSectorOpen] = useState(false);
   const toast = useToast();
+
+  // Cerrar el desplegable de sector al hacer clic fuera
+  useEffect(() => {
+    if (!sectorOpen) return;
+    const close = () => setSectorOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [sectorOpen]);
 
   const submit = () => {
     if (!data.name.trim()) return toast("El nombre es obligatorio", "warn");
@@ -718,22 +727,59 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
             <input className="od-input" style={FIELD} type="tel" placeholder="+34 600 000 000" value={data.phone}
               onChange={e => setData({ ...data, phone: e.target.value })}/>
           </div>
-          {/* Sector — pastillas como las opciones del quick-create */}
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap", maxHeight:132, overflowY:"auto" }}>
-            {SECTORES.map(s => {
-              const on = data.sector === s;
-              return (
-                <button key={s} onClick={() => setData({ ...data, sector: on ? "" : s })} style={{
-                  padding:"8px 16px", borderRadius:99, fontSize:13, letterSpacing:"-0.5px",
-                  background: on ? "rgba(158,154,229,0.13)" : "rgba(255,255,255,0.05)",
-                  border: on ? "0.5px solid rgba(158,154,229,0.55)" : "0.5px solid rgba(255,255,255,0.08)",
-                  color: on ? "var(--accent)" : "var(--text-subtle)",
-                  cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .12s",
-                }}>
-                  {s}
-                </button>
-              );
-            })}
+          {/* Sector — desplegable */}
+          <div style={{ position:"relative" }} onClick={e => e.stopPropagation()}>
+            <button onClick={() => setSectorOpen(o => !o)} style={{
+              ...FIELD, cursor:"pointer", textAlign:"left",
+              display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
+              color: data.sector ? "var(--text)" : "var(--text-subtle)",
+              borderColor: sectorOpen ? "rgba(158,154,229,0.5)" : "rgba(255,255,255,0.1)",
+            }}>
+              <span style={{ display:"flex", alignItems:"center", gap:8 }}>
+                <Icon name="tag" size={13} style={{ color: data.sector ? "var(--accent)" : "var(--text-subtle)" }}/>
+                {data.sector || "Sector (opcional)"}
+              </span>
+              <Icon name="chevron-down" size={13} style={{
+                opacity:0.5, transform: sectorOpen ? "rotate(180deg)" : "none", transition:"transform .15s",
+              }}/>
+            </button>
+            {sectorOpen && (
+              <div style={{
+                position:"absolute", left:0, right:0, bottom:"calc(100% + 8px)", zIndex:30,
+                background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.1)",
+                borderRadius:14, padding:6, maxHeight:224, overflowY:"auto",
+                boxShadow:"0 12px 40px rgba(0,0,0,0.55)",
+              }}>
+                {data.sector && (
+                  <button onClick={() => { setData({ ...data, sector:"" }); setSectorOpen(false); }} style={{
+                    display:"block", width:"100%", textAlign:"left", padding:"9px 12px",
+                    borderRadius:9, border:0, background:"transparent", cursor:"pointer",
+                    fontSize:13, fontFamily:"inherit", color:"var(--text-subtle)", letterSpacing:"-0.3px",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                    Sin sector
+                  </button>
+                )}
+                {SECTORES.map(s => {
+                  const on = data.sector === s;
+                  return (
+                    <button key={s} onClick={() => { setData({ ...data, sector: s }); setSectorOpen(false); }} style={{
+                      display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%",
+                      textAlign:"left", padding:"9px 12px", borderRadius:9, border:0, cursor:"pointer",
+                      background: on ? "rgba(158,154,229,0.1)" : "transparent",
+                      fontSize:13, fontFamily:"inherit", letterSpacing:"-0.3px",
+                      color: on ? "var(--accent)" : "var(--text)",
+                    }}
+                      onMouseEnter={e => { if (!on) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = on ? "rgba(158,154,229,0.1)" : "transparent"; }}>
+                      {s}
+                      {on && <Icon name="check" size={13}/>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </div>
