@@ -1301,10 +1301,7 @@ const CampaignsPage = ({ navigate }) => {
     overflowY: "auto",
     scrollbarGutter: "stable",
     paddingRight: 10,
-    paddingTop: 22,
-    paddingBottom: 8,
-    WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
-    maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
+    paddingBottom: 24
   } }, camps === null ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 13 } }, "Cargando\u2026") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, list.map((c) => {
     const leads = c.leads || [];
     const ct = _ctype(c);

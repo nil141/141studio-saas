@@ -1375,9 +1375,7 @@ const CampaignsPage = ({ navigate }) => {
 
       <div className="tasks-scroll" style={{
         flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
-        paddingRight:10, paddingTop:22, paddingBottom:8,
-        WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
-        maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
+        paddingRight:10, paddingBottom:24,
       }}>
         {camps === null ? (
           <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:13 }}>Cargando…</div>
