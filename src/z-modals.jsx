@@ -635,47 +635,96 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
 
   const SECTORES = ["Restauración","Moda / Retail","Salud / Bienestar","Tecnología","Educación","Inmobiliaria","Hostelería","Deporte / Fitness","ONG / Social","Consultoría","Arte / Cultura","Construcción","Alimentación","Otro"];
 
+  // Estilos del panel (estructura estilo outdomode: secciones + campos anchos redondeados)
+  const OD_INPUT = {
+    width:"100%", padding:"17px 22px", fontSize:16, borderRadius:18,
+    background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.1)",
+    color:"var(--text)", outline:"none", fontFamily:"inherit", letterSpacing:"-0.3px",
+    transition:"border-color .2s, background .2s",
+  };
+  const OD_LABEL = { fontSize:15, color:"var(--text-muted)", letterSpacing:"-0.3px", marginBottom:12 };
+
   return (
-    <QuickModal
-      open={true}
-      onClose={() => { reset(); onClose(); }}
-      onSubmit={submit}
-      canSubmit={!!data.name.trim()}
-      headerLabel="Nuevo cliente"
-      titlePlaceholder="Nombre del cliente..."
-      titleValue={data.name}
-      onTitleChange={v => setData({ ...data, name: v })}
-      secondPlaceholder="Empresa (opcional)"
-      secondValue={data.company}
-      onSecondChange={v => setData({ ...data, company: v })}
-      tabs={[
-        { id:"email",  label:"Email",    icon:"mail",  hasVal: !!data.email },
-        { id:"phone",  label:"Teléfono", icon:"phone", hasVal: !!data.phone },
-        { id:"sector", label:"Sector",   icon:"tag",   hasVal: !!data.sector, badge: data.sector || null },
-      ]}
-      renderTab={(id) => {
-        if (id === "email") return (
-          <input style={{ ...QUICK_FIELD, width:"100%", maxWidth:320, textAlign:"center" }} type="email"
-            placeholder="ana@empresa.com" value={data.email}
-            onChange={e => setData({ ...data, email: e.target.value })} autoFocus/>
-        );
-        if (id === "phone") return (
-          <input style={{ ...QUICK_FIELD, width:"100%", maxWidth:320, textAlign:"center" }} type="tel"
-            placeholder="+34 600 000 000" value={data.phone}
-            onChange={e => setData({ ...data, phone: e.target.value })} autoFocus/>
-        );
-        if (id === "sector") return (
-          <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", maxHeight:180, overflowY:"auto" }}>
-            {SECTORES.map(s => (
-              <QuickPill key={s} selected={data.sector === s} onClick={() => setData({ ...data, sector: data.sector === s ? "" : s })}>
-                {s}
-              </QuickPill>
-            ))}
+    <div onClick={() => { reset(); onClose(); }} style={{
+      position:"fixed", inset:0, zIndex:120, background:"rgba(0,0,0,0.6)",
+      backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
+      display:"flex", alignItems:"center", justifyContent:"center", padding:24,
+    }}>
+      <style>{`.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`}</style>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:"100%", maxWidth:620, maxHeight:"90vh", overflowY:"auto",
+        background:"#0e0e10", border:"1px solid #232324", borderRadius:32,
+        padding:"38px 42px 34px", boxShadow:"0 40px 90px rgba(0,0,0,0.6)",
+      }}>
+        {/* Cabecera: botón circular + título grande */}
+        <div style={{ display:"flex", alignItems:"center", gap:18, marginBottom:32 }}>
+          <button onClick={() => { reset(); onClose(); }} style={{
+            width:44, height:44, borderRadius:"50%", flexShrink:0, cursor:"pointer",
+            background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.06)",
+            display:"grid", placeItems:"center", color:"var(--text-muted)",
+          }}>
+            <Icon name="x" size={17}/>
+          </button>
+          <h1 style={{ fontSize:32, fontWeight:400, letterSpacing:"-0.04em", margin:0 }}>Nuevo cliente</h1>
+        </div>
+
+        {/* Nombre + Empresa */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14, marginBottom:28 }}>
+          <div>
+            <div style={OD_LABEL}>Nombre</div>
+            <input className="od-input" style={OD_INPUT} placeholder="Ana López" value={data.name}
+              onChange={e => setData({ ...data, name: e.target.value })} autoFocus/>
           </div>
-        );
-        return null;
-      }}
-    />
+          <div>
+            <div style={OD_LABEL}>Empresa <span style={{ color:"var(--text-subtle)" }}>(opcional)</span></div>
+            <input className="od-input" style={OD_INPUT} placeholder="Joyas Alba" value={data.company}
+              onChange={e => setData({ ...data, company: e.target.value })}/>
+          </div>
+        </div>
+
+        {/* Contacto */}
+        <div style={{ marginBottom:28 }}>
+          <div style={OD_LABEL}>Contacto</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:14 }}>
+            <input className="od-input" style={OD_INPUT} type="email" placeholder="ana@empresa.com" value={data.email}
+              onChange={e => setData({ ...data, email: e.target.value })}/>
+            <input className="od-input" style={OD_INPUT} type="tel" placeholder="+34 600 000 000" value={data.phone}
+              onChange={e => setData({ ...data, phone: e.target.value })}/>
+          </div>
+        </div>
+
+        {/* Sector */}
+        <div style={{ marginBottom:34 }}>
+          <div style={OD_LABEL}>Sector</div>
+          <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+            {SECTORES.map(s => {
+              const on = data.sector === s;
+              return (
+                <button key={s} onClick={() => setData({ ...data, sector: on ? "" : s })} style={{
+                  padding:"13px 19px", borderRadius:16, cursor:"pointer", fontFamily:"inherit",
+                  fontSize:14, letterSpacing:"-0.3px", transition:"all .15s",
+                  background: on ? "rgba(158,154,229,0.12)" : "transparent",
+                  border: on ? "1px solid rgba(158,154,229,0.6)" : "1px solid rgba(255,255,255,0.1)",
+                  color: on ? "var(--accent)" : "var(--text-muted)",
+                }}>
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Confirmar */}
+        <button onClick={submit} disabled={!data.name.trim()} style={{
+          width:"100%", height:56, borderRadius:18, border:0, cursor:"pointer",
+          background:"rgb(130,119,219)", color:"#fff", fontSize:16, fontFamily:"inherit",
+          letterSpacing:"-0.3px", fontWeight:500, transition:"opacity .2s",
+          opacity: data.name.trim() ? 1 : 0.35,
+        }}>
+          Crear cliente
+        </button>
+      </div>
+    </div>
   );
 };
 

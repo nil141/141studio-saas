@@ -476,56 +476,126 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " Crear primer proyecto ahora")) }, /* @__PURE__ */ React.createElement("div", { className: "row", style: { gap: 14, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 48, height: 48, borderRadius: 12, background: "var(--green-soft)", color: "var(--green)", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 20 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "\xBFQuieres crear ya un proyecto para ", (data.name || "este cliente").split(" ")[0], "?"), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 4 } }, "Te ahorramos el clic. Si no, podr\xE1s hacerlo desde su ficha."))));
   }
   const SECTORES = ["Restauraci\xF3n", "Moda / Retail", "Salud / Bienestar", "Tecnolog\xEDa", "Educaci\xF3n", "Inmobiliaria", "Hosteler\xEDa", "Deporte / Fitness", "ONG / Social", "Consultor\xEDa", "Arte / Cultura", "Construcci\xF3n", "Alimentaci\xF3n", "Otro"];
-  return /* @__PURE__ */ React.createElement(
-    QuickModal,
+  const OD_INPUT = {
+    width: "100%",
+    padding: "17px 22px",
+    fontSize: 16,
+    borderRadius: 18,
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "var(--text)",
+    outline: "none",
+    fontFamily: "inherit",
+    letterSpacing: "-0.3px",
+    transition: "border-color .2s, background .2s"
+  };
+  const OD_LABEL = { fontSize: 15, color: "var(--text-muted)", letterSpacing: "-0.3px", marginBottom: 12 };
+  return /* @__PURE__ */ React.createElement("div", { onClick: () => {
+    reset();
+    onClose();
+  }, style: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 120,
+    background: "rgba(0,0,0,0.6)",
+    backdropFilter: "blur(8px)",
+    WebkitBackdropFilter: "blur(8px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24
+  } }, /* @__PURE__ */ React.createElement("style", null, `.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`), /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+    width: "100%",
+    maxWidth: 620,
+    maxHeight: "90vh",
+    overflowY: "auto",
+    background: "#0e0e10",
+    border: "1px solid #232324",
+    borderRadius: 32,
+    padding: "38px 42px 34px",
+    boxShadow: "0 40px 90px rgba(0,0,0,0.6)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 32 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    reset();
+    onClose();
+  }, style: {
+    width: 44,
+    height: 44,
+    borderRadius: "50%",
+    flexShrink: 0,
+    cursor: "pointer",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    display: "grid",
+    placeItems: "center",
+    color: "var(--text-muted)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 17 })), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 32, fontWeight: 400, letterSpacing: "-0.04em", margin: 0 } }, "Nuevo cliente")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Nombre"), /* @__PURE__ */ React.createElement(
+    "input",
     {
-      open: true,
-      onClose: () => {
-        reset();
-        onClose();
-      },
-      onSubmit: submit,
-      canSubmit: !!data.name.trim(),
-      headerLabel: "Nuevo cliente",
-      titlePlaceholder: "Nombre del cliente...",
-      titleValue: data.name,
-      onTitleChange: (v) => setData({ ...data, name: v }),
-      secondPlaceholder: "Empresa (opcional)",
-      secondValue: data.company,
-      onSecondChange: (v) => setData({ ...data, company: v }),
-      tabs: [
-        { id: "email", label: "Email", icon: "mail", hasVal: !!data.email },
-        { id: "phone", label: "Tel\xE9fono", icon: "phone", hasVal: !!data.phone },
-        { id: "sector", label: "Sector", icon: "tag", hasVal: !!data.sector, badge: data.sector || null }
-      ],
-      renderTab: (id) => {
-        if (id === "email") return /* @__PURE__ */ React.createElement(
-          "input",
-          {
-            style: { ...QUICK_FIELD, width: "100%", maxWidth: 320, textAlign: "center" },
-            type: "email",
-            placeholder: "ana@empresa.com",
-            value: data.email,
-            onChange: (e) => setData({ ...data, email: e.target.value }),
-            autoFocus: true
-          }
-        );
-        if (id === "phone") return /* @__PURE__ */ React.createElement(
-          "input",
-          {
-            style: { ...QUICK_FIELD, width: "100%", maxWidth: 320, textAlign: "center" },
-            type: "tel",
-            placeholder: "+34 600 000 000",
-            value: data.phone,
-            onChange: (e) => setData({ ...data, phone: e.target.value }),
-            autoFocus: true
-          }
-        );
-        if (id === "sector") return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center", maxHeight: 180, overflowY: "auto" } }, SECTORES.map((s) => /* @__PURE__ */ React.createElement(QuickPill, { key: s, selected: data.sector === s, onClick: () => setData({ ...data, sector: data.sector === s ? "" : s }) }, s)));
-        return null;
-      }
+      className: "od-input",
+      style: OD_INPUT,
+      placeholder: "Ana L\xF3pez",
+      value: data.name,
+      onChange: (e) => setData({ ...data, name: e.target.value }),
+      autoFocus: true
     }
-  );
+  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Empresa ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "(opcional)")), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "od-input",
+      style: OD_INPUT,
+      placeholder: "Joyas Alba",
+      value: data.company,
+      onChange: (e) => setData({ ...data, company: e.target.value })
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Contacto"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "od-input",
+      style: OD_INPUT,
+      type: "email",
+      placeholder: "ana@empresa.com",
+      value: data.email,
+      onChange: (e) => setData({ ...data, email: e.target.value })
+    }
+  ), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "od-input",
+      style: OD_INPUT,
+      type: "tel",
+      placeholder: "+34 600 000 000",
+      value: data.phone,
+      onChange: (e) => setData({ ...data, phone: e.target.value })
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 34 } }, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Sector"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } }, SECTORES.map((s) => {
+    const on = data.sector === s;
+    return /* @__PURE__ */ React.createElement("button", { key: s, onClick: () => setData({ ...data, sector: on ? "" : s }), style: {
+      padding: "13px 19px",
+      borderRadius: 16,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      fontSize: 14,
+      letterSpacing: "-0.3px",
+      transition: "all .15s",
+      background: on ? "rgba(158,154,229,0.12)" : "transparent",
+      border: on ? "1px solid rgba(158,154,229,0.6)" : "1px solid rgba(255,255,255,0.1)",
+      color: on ? "var(--accent)" : "var(--text-muted)"
+    } }, s);
+  }))), /* @__PURE__ */ React.createElement("button", { onClick: submit, disabled: !data.name.trim(), style: {
+    width: "100%",
+    height: 56,
+    borderRadius: 18,
+    border: 0,
+    cursor: "pointer",
+    background: "rgb(130,119,219)",
+    color: "#fff",
+    fontSize: 16,
+    fontFamily: "inherit",
+    letterSpacing: "-0.3px",
+    fontWeight: 500,
+    transition: "opacity .2s",
+    opacity: data.name.trim() ? 1 : 0.35
+  } }, "Crear cliente")));
 };
 const ApproveDeliverableModal = ({ open, onClose, deliverable }) => {
   const [comment, setComment] = useState("");
