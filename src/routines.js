@@ -317,17 +317,8 @@
   };
   var RoutineDayList = ({ day, onEdit }) => {
     const D = window.Data;
-    const confirm = useConfirm();
-    const toast = useToast();
     D.useStore();
     const routines = D.routinesForDay(day);
-    const totalRoutines = (D.ROUTINES || []).length;
-    const clearAll = async () => {
-      const ok = await confirm({ title: "\xBFBorrar todas las rutinas?", body: `Se eliminar\xE1n las ${totalRoutines} rutinas y su progreso. No se puede deshacer.`, danger: true, confirmLabel: "Borrar todas" });
-      if (!ok) return;
-      D.clearRoutines();
-      toast("Rutinas borradas", "success");
-    };
     if (!routines.length) return null;
     return /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 32 } }, /* @__PURE__ */ React.createElement("style", null, `
         @keyframes rtFlicker {
@@ -336,25 +327,7 @@
           52%      { transform: scale(0.94) rotate(-1deg); }
           78%      { transform: scale(1.06) rotate(2deg); }
         }
-      `), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })), totalRoutines > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginTop: 4 } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: clearAll,
-        style: {
-          background: "transparent",
-          border: 0,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          fontSize: 11.5,
-          color: "var(--text-subtle)",
-          letterSpacing: "-0.2px",
-          padding: "4px 8px"
-        },
-        onMouseEnter: (e) => e.currentTarget.style.color = "var(--red)",
-        onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
-      },
-      "Borrar todas las rutinas"
-    )));
+      `), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })));
   };
   window.RoutineModal = RoutineModal;
   window.RoutineDayList = RoutineDayList;
