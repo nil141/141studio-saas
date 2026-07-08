@@ -172,6 +172,10 @@
   /* App layout */
   .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
   .app.client { grid-template-columns: 220px 1fr; }
+  /* Dentro de la app nativa de Mac el sidebar lo pinta SwiftUI (Liquid Glass) */
+  .native-app .sidebar { display: none !important; }
+  .native-app .app, .native-app .app.client { grid-template-columns: 1fr; }
+  .native-app .mobile-nav { display: none !important; }
   .main { min-width: 0; }
   .topbar { display: none; }
   .topbar-hidden {
@@ -859,7 +863,7 @@
 <script src="src/primitives.js?v=15"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=6"></script>
-<script src="src/z-app.js?v=9"></script>
+<script src="src/z-app.js?v=10"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=31"></script>
 <script src="src/agency-clients.js?v=13"></script>
