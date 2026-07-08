@@ -476,82 +476,121 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " Crear primer proyecto ahora")) }, /* @__PURE__ */ React.createElement("div", { className: "row", style: { gap: 14, alignItems: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 48, height: 48, borderRadius: 12, background: "var(--green-soft)", color: "var(--green)", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 20 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "\xBFQuieres crear ya un proyecto para ", (data.name || "este cliente").split(" ")[0], "?"), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 4 } }, "Te ahorramos el clic. Si no, podr\xE1s hacerlo desde su ficha."))));
   }
   const SECTORES = ["Restauraci\xF3n", "Moda / Retail", "Salud / Bienestar", "Tecnolog\xEDa", "Educaci\xF3n", "Inmobiliaria", "Hosteler\xEDa", "Deporte / Fitness", "ONG / Social", "Consultor\xEDa", "Arte / Cultura", "Construcci\xF3n", "Alimentaci\xF3n", "Otro"];
-  const OD_INPUT = {
+  const canSubmit = !!data.name.trim();
+  const FIELD = {
     width: "100%",
-    padding: "17px 22px",
-    fontSize: 16,
-    borderRadius: 18,
-    background: "rgba(255,255,255,0.03)",
-    border: "1px solid rgba(255,255,255,0.1)",
+    padding: "12px 16px",
+    fontSize: 14,
+    borderRadius: 14,
+    background: "rgba(255,255,255,0.04)",
+    border: "0.5px solid rgba(255,255,255,0.1)",
     color: "var(--text)",
     outline: "none",
     fontFamily: "inherit",
     letterSpacing: "-0.3px",
     transition: "border-color .2s, background .2s"
   };
-  const OD_LABEL = { fontSize: 15, color: "var(--text-muted)", letterSpacing: "-0.3px", marginBottom: 12 };
   return /* @__PURE__ */ React.createElement("div", { onClick: () => {
     reset();
     onClose();
   }, style: {
     position: "fixed",
     inset: 0,
-    zIndex: 120,
+    zIndex: 200,
     background: "rgba(0,0,0,0.6)",
     backdropFilter: "blur(8px)",
     WebkitBackdropFilter: "blur(8px)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: 24
+    padding: 24,
+    animation: "fade .15s ease-out"
   } }, /* @__PURE__ */ React.createElement("style", null, `.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`), /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
     width: "100%",
-    maxWidth: 620,
+    maxWidth: 520,
     maxHeight: "90vh",
     overflowY: "auto",
     background: "#0e0e10",
     border: "1px solid #232324",
     borderRadius: 32,
-    padding: "38px 42px 34px",
-    boxShadow: "0 40px 90px rgba(0,0,0,0.6)"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 32 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+    boxShadow: "0 40px 90px rgba(0,0,0,0.6)",
+    animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+    display: "flex",
+    flexDirection: "column"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
     reset();
     onClose();
   }, style: {
-    width: 44,
-    height: 44,
+    width: 40,
+    height: 40,
     borderRadius: "50%",
-    flexShrink: 0,
+    background: "rgba(255,255,255,0.08)",
+    border: "0.5px solid rgba(255,255,255,0.1)",
     cursor: "pointer",
-    background: "rgba(255,255,255,0.06)",
-    border: "1px solid rgba(255,255,255,0.06)",
-    display: "grid",
-    placeItems: "center",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     color: "var(--text-muted)"
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 17 })), /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 32, fontWeight: 400, letterSpacing: "-0.04em", margin: 0 } }, "Nuevo cliente")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Nombre"), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nuevo cliente"), /* @__PURE__ */ React.createElement("button", { onClick: submit, style: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    background: canSubmit ? "var(--accent)" : "rgba(255,255,255,0.08)",
+    border: "none",
+    cursor: canSubmit ? "pointer" : "default",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#fff",
+    transition: "all .15s",
+    opacity: canSubmit ? 1 : 0.4
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
     "input",
     {
-      className: "od-input",
-      style: OD_INPUT,
-      placeholder: "Ana L\xF3pez",
+      autoFocus: true,
+      placeholder: "Nombre del cliente...",
       value: data.name,
       onChange: (e) => setData({ ...data, name: e.target.value }),
-      autoFocus: true
+      onKeyDown: (e) => {
+        if (e.key === "Enter" && canSubmit) submit();
+      },
+      style: {
+        width: "100%",
+        background: "transparent",
+        border: "none",
+        outline: "none",
+        fontSize: 28,
+        fontWeight: 400,
+        letterSpacing: "-1.4px",
+        color: data.name ? "var(--text)" : "rgba(255,255,255,0.15)",
+        fontFamily: "var(--font-display)",
+        caretColor: "var(--accent)"
+      }
     }
-  )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Empresa ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "(opcional)")), /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(
     "input",
     {
-      className: "od-input",
-      style: OD_INPUT,
-      placeholder: "Joyas Alba",
+      placeholder: "Empresa (opcional)",
       value: data.company,
-      onChange: (e) => setData({ ...data, company: e.target.value })
+      onChange: (e) => setData({ ...data, company: e.target.value }),
+      style: {
+        width: "100%",
+        background: "transparent",
+        border: "none",
+        outline: "none",
+        fontSize: 14,
+        letterSpacing: "-0.5px",
+        marginTop: 8,
+        color: data.company ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+        fontFamily: "var(--font-sans)",
+        caretColor: "var(--accent)"
+      }
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 28 } }, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Contacto"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, /* @__PURE__ */ React.createElement(
+  )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
     "input",
     {
       className: "od-input",
-      style: OD_INPUT,
+      style: FIELD,
       type: "email",
       placeholder: "ana@empresa.com",
       value: data.email,
@@ -561,41 +600,27 @@ const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
     "input",
     {
       className: "od-input",
-      style: OD_INPUT,
+      style: FIELD,
       type: "tel",
       placeholder: "+34 600 000 000",
       value: data.phone,
       onChange: (e) => setData({ ...data, phone: e.target.value })
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 34 } }, /* @__PURE__ */ React.createElement("div", { style: OD_LABEL }, "Sector"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } }, SECTORES.map((s) => {
+  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", maxHeight: 132, overflowY: "auto" } }, SECTORES.map((s) => {
     const on = data.sector === s;
     return /* @__PURE__ */ React.createElement("button", { key: s, onClick: () => setData({ ...data, sector: on ? "" : s }), style: {
-      padding: "13px 19px",
-      borderRadius: 16,
+      padding: "8px 16px",
+      borderRadius: 99,
+      fontSize: 13,
+      letterSpacing: "-0.5px",
+      background: on ? "rgba(158,154,229,0.13)" : "rgba(255,255,255,0.05)",
+      border: on ? "0.5px solid rgba(158,154,229,0.55)" : "0.5px solid rgba(255,255,255,0.08)",
+      color: on ? "var(--accent)" : "var(--text-subtle)",
       cursor: "pointer",
-      fontFamily: "inherit",
-      fontSize: 14,
-      letterSpacing: "-0.3px",
-      transition: "all .15s",
-      background: on ? "rgba(158,154,229,0.12)" : "transparent",
-      border: on ? "1px solid rgba(158,154,229,0.6)" : "1px solid rgba(255,255,255,0.1)",
-      color: on ? "var(--accent)" : "var(--text-muted)"
+      fontFamily: "var(--font-sans)",
+      transition: "all .12s"
     } }, s);
-  }))), /* @__PURE__ */ React.createElement("button", { onClick: submit, disabled: !data.name.trim(), style: {
-    width: "100%",
-    height: 56,
-    borderRadius: 18,
-    border: 0,
-    cursor: "pointer",
-    background: "rgb(130,119,219)",
-    color: "#fff",
-    fontSize: 16,
-    fontFamily: "inherit",
-    letterSpacing: "-0.3px",
-    fontWeight: 500,
-    transition: "opacity .2s",
-    opacity: data.name.trim() ? 1 : 0.35
-  } }, "Crear cliente")));
+  })))));
 };
 const ApproveDeliverableModal = ({ open, onClose, deliverable }) => {
   const [comment, setComment] = useState("");
