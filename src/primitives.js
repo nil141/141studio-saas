@@ -281,7 +281,18 @@ const Modal = ({ open, onClose, title, sub, footer, children, size }) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [open]);
   if (!open) return null;
-  return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal" + (size === "lg" ? " lg" : ""), onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, title), sub ? /* @__PURE__ */ React.createElement("div", { className: "modal-sub" }, sub) : null), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: onClose }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body" }, children), footer ? /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, footer) : null));
+  return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal" + (size === "lg" ? " lg" : ""), onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, title), sub ? /* @__PURE__ */ React.createElement("div", { className: "modal-sub" }, sub) : null), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+    width: 40,
+    height: 40,
+    borderRadius: "50%",
+    flexShrink: 0,
+    cursor: "pointer",
+    background: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.06)",
+    display: "grid",
+    placeItems: "center",
+    color: "var(--text-muted)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body" }, children), footer ? /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, footer) : null));
 };
 const ToastContext = createContext(null);
 const ToastProvider = ({ children }) => {

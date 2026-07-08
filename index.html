@@ -490,28 +490,38 @@
     animation: fade .15s ease-out;
   }
   html[data-theme="light"] .modal-overlay { background: rgba(10,10,11,0.30); }
+  /* Modal — panel estilo outdomode (radius grande, borde gris, sin divisorias) */
   .modal {
-    background: #0f0f0f;
-    border: var(--hairline) solid var(--border);
-    border-radius: 20px;
-    width: 100%; max-width: 520px;
+    background: #0e0e10;
+    border: 1px solid #232324;
+    border-radius: 28px;
+    width: 100%; max-width: 560px;
     overflow: hidden;
     animation: pop .2s cubic-bezier(.2,.8,.2,1);
+    box-shadow: 0 40px 90px rgba(0,0,0,0.6);
   }
-  .modal.lg { max-width: 720px; }
+  .modal.lg { max-width: 760px; }
   .modal-head {
-    padding: 18px 20px 14px;
-    border-bottom: var(--hairline) solid var(--border);
-    display: flex; align-items: flex-start; justify-content: space-between;
+    padding: 30px 34px 0;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
   }
-  .modal-title { font-family: var(--font-display); font-size: 16px; font-weight: 500; }
-  .modal-sub { font-size: 12.5px; color: var(--text-muted); margin-top: 2px; }
-  .modal-body { padding: 20px; }
+  .modal-title { font-family: var(--font-display); font-size: 25px; font-weight: 400; letter-spacing: -0.04em; line-height: 1.15; }
+  .modal-sub { font-size: 14px; color: var(--text-muted); margin-top: 8px; letter-spacing: -0.3px; line-height: 1.45; }
+  .modal-body { padding: 24px 34px 8px; }
   .modal-foot {
-    padding: 14px 20px;
-    border-top: var(--hairline) solid var(--border);
-    display: flex; justify-content: flex-end; gap: 8px;
+    padding: 20px 34px 30px;
+    display: flex; justify-content: flex-end; gap: 10px;
   }
+  /* Campos y botones dentro de modales — misma línea que el panel de outdomode */
+  .modal .input, .modal .select, .modal .textarea {
+    padding: 14px 18px; height: auto; font-size: 15px; border-radius: 16px;
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+  }
+  .modal .input:focus, .modal .select:focus, .modal .textarea:focus {
+    border-color: rgba(158,154,229,0.5); background: rgba(158,154,229,0.05); box-shadow: none;
+  }
+  .modal .label { font-size: 13.5px; margin-bottom: 9px; }
+  .modal-foot .btn { height: 46px; border-radius: 15px; padding: 0 20px; font-size: 14.5px; }
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.99); } to { opacity: 1; transform: none; } }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
@@ -674,7 +684,7 @@
     /* Modals → bottom sheet */
     .modal-overlay { padding: 0; align-items: flex-end; }
     .modal {
-      border-radius: 18px 18px 0 0;
+      border-radius: 28px 28px 0 0;
       max-width: 100%;
       max-height: 92vh;
       overflow-y: auto;
@@ -846,7 +856,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=3"></script>
 <script src="src/data.js?v=15"></script>
-<script src="src/primitives.js?v=14"></script>
+<script src="src/primitives.js?v=15"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=4"></script>
 <script src="src/z-app.js?v=9"></script>

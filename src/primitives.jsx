@@ -315,11 +315,15 @@ const Modal = ({ open, onClose, title, sub, footer, children, size }) => {
     <div className="modal-overlay" onClick={onClose}>
       <div className={"modal" + (size === "lg" ? " lg" : "")} onClick={e => e.stopPropagation()}>
         <div className="modal-head">
-          <div>
+          <div style={{ minWidth: 0 }}>
             <div className="modal-title">{title}</div>
             {sub ? <div className="modal-sub">{sub}</div> : null}
           </div>
-          <button className="btn ghost icon-only sm" onClick={onClose}><Icon name="x" size={14}/></button>
+          <button onClick={onClose} style={{
+            width: 40, height: 40, borderRadius: "50%", flexShrink: 0, cursor: "pointer",
+            background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.06)",
+            display: "grid", placeItems: "center", color: "var(--text-muted)",
+          }}><Icon name="x" size={15}/></button>
         </div>
         <div className="modal-body">{children}</div>
         {footer ? <div className="modal-foot">{footer}</div> : null}
