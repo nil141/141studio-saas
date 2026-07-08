@@ -1,5 +1,6 @@
 (() => {
-  const AgencyClientsList = ({ navigate, openModal }) => {
+  // src/agency-clients.jsx
+  var AgencyClientsList = ({ navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -7,8 +8,7 @@
       D.reload && D.reload();
     }, []);
     const clients = D.CLIENTS;
-    const COLS = "1.3fr 1.2fr 1.7fr 1fr";
-    const cell = { fontSize: 14.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
+    const [hoverId, setHoverId] = useState(null);
     const [inviteLink, setInviteLink] = useState("");
     const [inviteCopied, setInviteCopied] = useState(false);
     const [inviteBusy, setInviteBusy] = useState(false);
@@ -105,46 +105,85 @@
       color: "var(--text)",
       fontFamily: "var(--font-mono)",
       fontSize: 12
-    } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => setInviteLink("") }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: copyInvite }, inviteCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }) : null, inviteCopied ? "Copiado" : "Copiar enlace")))), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "card", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 48 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "users", title: "Sin clientes", sub: "A\xF1ade tu primer cliente para empezar." }))) : /* @__PURE__ */ React.createElement("div", { className: "card", style: {
-      padding: 0,
-      overflow: "hidden",
-      display: "flex",
-      flexDirection: "column",
-      flex: 1,
-      minHeight: 0,
-      marginBottom: 24
-    } }, /* @__PURE__ */ React.createElement("div", { style: {
-      display: "grid",
-      gridTemplateColumns: COLS,
-      gap: 24,
-      padding: "16px 26px",
-      borderBottom: "0.5px solid var(--border)",
-      flexShrink: 0
-    } }, ["Nombre", "Empresa", "Email", "Tel\xE9fono"].map((h) => /* @__PURE__ */ React.createElement("div", { key: h, style: { fontSize: 13.5, color: "var(--text-subtle)" } }, h))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", scrollbarGutter: "stable" } }, clients.map((c, i) => /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        key: c.id,
-        onClick: () => navigate("clientDetail", { clientId: c.id }),
-        style: {
-          display: "grid",
-          gridTemplateColumns: COLS,
-          gap: 24,
-          alignItems: "center",
-          padding: "18px 26px",
-          cursor: "pointer",
-          transition: "background .1s",
-          borderBottom: i === clients.length - 1 ? "0" : "0.5px solid var(--border)"
+    } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => setInviteLink("") }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: copyInvite }, inviteCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }) : null, inviteCopied ? "Copiado" : "Copiar enlace")))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: { flex: 1, minHeight: 0, overflowY: "auto", scrollbarGutter: "stable", paddingRight: 10, paddingBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, clients.map((c) => {
+      const projs = D.PROJECTS.filter((p) => p.clientId === c.id);
+      const pTasks = projs.flatMap((p) => D.TASKS[p.id] || []);
+      const doneN = pTasks.filter((t) => t.column === "done").length;
+      const pct = pTasks.length ? Math.round(doneN / pTasks.length * 100) : 0;
+      const col = pTasks.length && doneN === pTasks.length ? "var(--green)" : "var(--accent)";
+      const on = hoverId === c.id;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: c.id,
+          onClick: () => navigate("clientDetail", { clientId: c.id }),
+          onMouseEnter: () => setHoverId(c.id),
+          onMouseLeave: () => setHoverId(null),
+          style: { display: "flex", flexDirection: "column", gap: 12, padding: "18px 6px", cursor: "pointer" }
         },
-        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, minWidth: 0 } }, /* @__PURE__ */ React.createElement(
+          Icon,
+          {
+            name: "users",
+            size: 26,
+            strokeWidth: 1.6,
+            style: { color: "var(--text)", flexShrink: 0, transform: on ? "scale(1.06)" : "none", transition: "transform .3s" }
+          }
+        ), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: 20,
+          color: "var(--text)",
+          letterSpacing: "-0.4px",
+          lineHeight: 1.2,
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis"
+        } }, c.company || c.name || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, projs.length, " ", projs.length === 1 ? "proyecto" : "proyectos"), c.name && c.company && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, c.name)), c.email && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, c.email))))), /* @__PURE__ */ React.createElement(
+          Icon,
+          {
+            name: "chevron-right",
+            size: 18,
+            style: {
+              color: on ? "var(--text)" : "var(--text-muted)",
+              transform: on ? "translateX(3px)" : "none",
+              transition: "all .2s",
+              flexShrink: 0
+            }
+          }
+        )),
+        /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: "100%", height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", height: "100%", borderRadius: 99, background: col, width: `${pct}%`, transition: "width .3s" } }))
+      );
+    }), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => openModal("newClient"),
+        style: {
+          marginTop: 16,
+          width: "100%",
+          padding: "26px",
+          borderRadius: 22,
+          border: "1px dashed var(--border)",
+          background: "transparent",
+          cursor: "pointer",
+          color: "var(--text-muted)",
+          fontSize: 15,
+          fontFamily: "inherit",
+          opacity: 0.5,
+          transition: "opacity .2s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          letterSpacing: "-0.2px"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
       },
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 600, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.name || c.company || "\u2014"),
-      /* @__PURE__ */ React.createElement("div", { style: cell }, c.company || "\u2014"),
-      /* @__PURE__ */ React.createElement("div", { style: cell }, c.email || "\u2014"),
-      /* @__PURE__ */ React.createElement("div", { style: cell }, c.whatsapp || c.phone || "\u2014")
-    )))));
+      clients.length === 0 ? "A\xF1ade tu primer cliente" : "A\xF1adir cliente",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
+    ))));
   };
-  const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
+  var AgencyClientDetail = ({ clientId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const confirm = useConfirm();
