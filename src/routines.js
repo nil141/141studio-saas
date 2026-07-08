@@ -152,66 +152,78 @@
       D.toggleRoutineItem(r.id, day, it.id);
       if (willComplete) setCelebrate(true);
     };
-    return /* @__PURE__ */ React.createElement("div", { style: {
-      background: "var(--bg-elev-1)",
-      border: "0.5px solid var(--border)",
-      borderRadius: 16,
-      padding: "14px 16px",
-      marginBottom: 12
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: total ? 12 : 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 34,
-      height: 34,
-      borderRadius: 10,
-      flexShrink: 0,
-      display: "grid",
-      placeItems: "center",
-      background: allDone ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
-      border: "0.5px solid var(--border)",
-      color: allDone ? "var(--accent)" : "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: allDone ? "check" : "refresh-cw", size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement(
+    const prog = total ? Math.round(doneCount / total * 100) : 0;
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
       "div",
       {
+        className: "task-row",
         onClick: () => onEdit && onEdit(r),
         "data-tooltip": "Editar rutina",
-        style: { flex: 1, minWidth: 0, cursor: "pointer" }
+        style: { display: "flex", alignItems: "center", gap: 14, padding: "12px 4px", cursor: "pointer" }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)" } }, r.title),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")
-    ), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { width: 54, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: `${doneCount / total * 100}%`, height: "100%", background: "var(--accent)", transition: "width .2s" } })), streak > 0 && /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          flexShrink: 0,
-          marginLeft: 2,
-          color: streakPending ? "var(--text-subtle)" : "var(--accent)"
-        }
-      },
-      /* @__PURE__ */ React.createElement("span", { style: {
-        display: "inline-flex",
-        transformOrigin: "50% 85%",
-        animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 })),
-      /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
-    )), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, r.items.map((it, idx) => {
+      (() => {
+        const sz = 40, rad = 17, circ = 2 * Math.PI * rad;
+        return /* @__PURE__ */ React.createElement("div", { style: { width: sz, height: sz, flexShrink: 0, position: "relative", display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement(
+          "circle",
+          {
+            cx: sz / 2,
+            cy: sz / 2,
+            r: rad,
+            fill: "none",
+            stroke: allDone ? "var(--accent)" : "rgba(255,255,255,0.12)",
+            strokeWidth: "2"
+          }
+        ), !allDone && prog > 0 && /* @__PURE__ */ React.createElement(
+          "circle",
+          {
+            cx: sz / 2,
+            cy: sz / 2,
+            r: rad,
+            fill: "none",
+            stroke: "var(--accent)",
+            strokeWidth: "2",
+            strokeLinecap: "round",
+            strokeDasharray: `${prog / 100 * circ} ${circ}`,
+            transform: `rotate(-90,${sz / 2},${sz / 2})`
+          }
+        )), /* @__PURE__ */ React.createElement(
+          Icon,
+          {
+            name: allDone ? "check" : "refresh-cw",
+            size: allDone ? 15 : 13,
+            style: { color: allDone ? "var(--accent)" : "var(--text-muted)", position: "relative" }
+          }
+        ));
+      })(),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, R_FREQ_LABEL[r.frequency] || "Rutina", total ? ` \xB7 ${doneCount}/${total}` : "")),
+      streak > 0 && /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          "data-tooltip": streakPending ? `Racha de ${streak} \u2014 completa hoy para mantenerla` : `${streak} ${streak === 1 ? "d\xEDa" : "d\xEDas"} de racha`,
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            flexShrink: 0,
+            color: streakPending ? "var(--text-subtle)" : "var(--accent)"
+          }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: {
+          display: "inline-flex",
+          transformOrigin: "50% 85%",
+          animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 14, strokeWidth: 1.7 })),
+        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
+      ),
+      /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.15)", flexShrink: 0 } })
+    ), total > 0 && /* @__PURE__ */ React.createElement("div", { style: { paddingLeft: 54, marginBottom: 6 } }, r.items.map((it) => {
       const done = D.routineItemDone(r.id, day, it.id);
-      const last = idx === r.items.length - 1;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
           key: it.id,
           onClick: () => toggle(it),
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            cursor: "pointer",
-            padding: "9px 2px",
-            borderBottom: last ? "none" : "0.5px solid var(--border)"
-          }
+          style: { display: "flex", alignItems: "center", gap: 12, cursor: "pointer", padding: "8px 2px" }
         },
         /* @__PURE__ */ React.createElement("div", { style: {
           width: 20,

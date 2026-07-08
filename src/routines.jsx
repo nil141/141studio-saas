@@ -184,70 +184,66 @@ const RoutineCard = ({ r, day, onEdit }) => {
     if (willComplete) setCelebrate(true);
   };
 
+  const prog = total ? Math.round((doneCount / total) * 100) : 0;
+
   return (
-    <div style={{
-      background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16,
-      padding:"14px 16px", marginBottom:12,
-    }}>
-      {/* Cabecera */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: total ? 12 : 0 }}>
-        <div style={{
-          width:34, height:34, borderRadius:10, flexShrink:0, display:"grid", placeItems:"center",
-          background: allDone ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
-          border:"0.5px solid var(--border)",
-          color: allDone ? "var(--accent)" : "var(--text-muted)",
-        }}>
-          <Icon name={allDone ? "check" : "refresh-cw"} size={15} strokeWidth={1.8}/>
-        </div>
-        <div onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
-          style={{ flex:1, minWidth:0, cursor:"pointer" }}>
-          <div style={{ fontSize:14.5, fontWeight:500, letterSpacing:"-0.4px", color:"var(--text)" }}>{r.title}</div>
-          <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+    <>
+      {/* Cabecera — misma fila plana que las tareas (sin caja) */}
+      <div className="task-row" onClick={() => onEdit && onEdit(r)} data-tooltip="Editar rutina"
+        style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 4px", cursor:"pointer" }}>
+        {/* Anillo de progreso, igual que las tareas */}
+        {(() => {
+          const sz = 40, rad = 17, circ = 2 * Math.PI * rad;
+          return (
+            <div style={{ width:sz, height:sz, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <svg width={sz} height={sz} style={{ position:"absolute", top:0, left:0 }}>
+                <circle cx={sz/2} cy={sz/2} r={rad} fill="none"
+                  stroke={allDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+                {!allDone && prog > 0 && (
+                  <circle cx={sz/2} cy={sz/2} r={rad} fill="none"
+                    stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
+                    strokeDasharray={`${(prog/100)*circ} ${circ}`}
+                    transform={`rotate(-90,${sz/2},${sz/2})`}/>
+                )}
+              </svg>
+              <Icon name={allDone ? "check" : "refresh-cw"} size={allDone ? 15 : 13}
+                style={{ color: allDone ? "var(--accent)" : "var(--text-muted)", position:"relative" }}/>
+            </div>
+          );
+        })()}
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{r.title}</div>
+          <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
             {R_FREQ_LABEL[r.frequency] || "Rutina"}{total ? ` · ${doneCount}/${total}` : ""}
           </div>
         </div>
-        {/* Mini barra de progreso */}
-        {total > 0 && (
-          <div style={{ width:54, height:5, borderRadius:99, background:"rgba(255,255,255,0.08)", overflow:"hidden", flexShrink:0 }}>
-            <div style={{ width:`${(doneCount/total)*100}%`, height:"100%", background:"var(--accent)", transition:"width .2s" }}/>
-          </div>
-        )}
-        {/* Racha — en el sitio del lápiz; la edición es clic en el título */}
+        {/* Racha */}
         {streak > 0 && (
           <div data-tooltip={streakPending ? `Racha de ${streak} — completa hoy para mantenerla` : `${streak} ${streak === 1 ? "día" : "días"} de racha`}
-            style={{
-              display:"flex", alignItems:"center", gap:4, flexShrink:0, marginLeft:2,
-              color: streakPending ? "var(--text-subtle)" : "var(--accent)",
-            }}>
-            <span style={{
-              display:"inline-flex", transformOrigin:"50% 85%",
-              animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite",
-            }}>
+            style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0,
+              color: streakPending ? "var(--text-subtle)" : "var(--accent)" }}>
+            <span style={{ display:"inline-flex", transformOrigin:"50% 85%",
+              animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite" }}>
               <Icon name="flame" size={14} strokeWidth={1.7}/>
             </span>
             <span style={{ fontSize:12.5, fontWeight:600, letterSpacing:"-0.2px" }}>{streak}</span>
           </div>
         )}
+        <Icon name="chevron-right" size={14} style={{ color:"rgba(255,255,255,0.15)", flexShrink:0 }}/>
       </div>
 
-      {/* Checklist */}
+      {/* Checklist — plano, indentado bajo el título (sin caja) */}
       {total > 0 && (
-        <div style={{ display:"flex", flexDirection:"column" }}>
-          {r.items.map((it, idx) => {
+        <div style={{ paddingLeft:54, marginBottom:6 }}>
+          {r.items.map((it) => {
             const done = D.routineItemDone(r.id, day, it.id);
-            const last = idx === r.items.length - 1;
             return (
-              <div key={it.id}
-                onClick={() => toggle(it)}
-                style={{
-                  display:"flex", alignItems:"center", gap:12, cursor:"pointer",
-                  padding:"9px 2px", borderBottom: last ? "none" : "0.5px solid var(--border)",
-                }}>
+              <div key={it.id} onClick={() => toggle(it)}
+                style={{ display:"flex", alignItems:"center", gap:12, cursor:"pointer", padding:"8px 2px" }}>
                 <div style={{
                   width:20, height:20, borderRadius:"50%", flexShrink:0, display:"grid", placeItems:"center",
                   background: done ? "var(--accent)" : "transparent",
-                  border: done ? "none" : "1.5px solid rgba(255,255,255,0.2)",
-                  transition:"all .12s",
+                  border: done ? "none" : "1.5px solid rgba(255,255,255,0.2)", transition:"all .12s",
                 }}>
                   {done && <Icon name="check" size={12} style={{ color:"#0c0c0c" }}/>}
                 </div>
@@ -265,7 +261,7 @@ const RoutineCard = ({ r, day, onEdit }) => {
       {celebrate && (
         <RoutineCelebration rId={r.id} day={day} onClose={() => setCelebrate(false)}/>
       )}
-    </div>
+    </>
   );
 };
 
