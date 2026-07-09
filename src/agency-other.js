@@ -1633,28 +1633,11 @@
     overflow: "hidden",
     textOverflow: "ellipsis"
   } }, sub));
-  var FinBars = ({ items, total }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("span", { style: {
-    fontSize: 12.5,
-    color: "var(--text-muted)",
-    width: 118,
-    flexShrink: 0,
-    letterSpacing: "-0.2px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis"
-  } }, it.label), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: total > 0 ? `${Math.min(100, it.v / total * 100)}%` : 0,
-    height: "100%",
-    background: it.color || "var(--accent)",
-    borderRadius: 99,
-    transition: "width .25s"
-  } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, color: "var(--text)", width: 92, textAlign: "right", flexShrink: 0, fontVariantNumeric: "tabular-nums" } }, _eur(it.v)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", width: 38, textAlign: "right", flexShrink: 0 } }, total > 0 ? Math.round(it.v / total * 100) : 0, "%"))));
   var IncomePage = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
     const [data, setData] = useState(_incLoad);
-    const [view, setView] = useState("cobros");
     const [addOpen, setAddOpen] = useState(false);
     const [incType, setIncType] = useState("rec");
     const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21, irpf: 15 };
@@ -1740,7 +1723,6 @@
       persist({ ...data, recs: [rec, ...data.recs] });
       setRecForm(blankRec);
       setAddOpen(false);
-      setView("recs");
       toast("Mensualidad a\xF1adida", "success");
     };
     const toggleRec = (id) => persist({ ...data, recs: data.recs.map((r) => r.id === id ? { ...r, active: !r.active } : r) });
@@ -1763,7 +1745,6 @@
       persist({ ...data, incomes: [inc, ...data.incomes] });
       setIncForm(blankInc);
       setAddOpen(false);
-      setView("cobros");
       toast("Ingreso a\xF1adido", "success");
     };
     const delInc = (id) => persist({ ...data, incomes: data.incomes.filter((i) => i.id !== id) });
@@ -1808,6 +1789,17 @@
     const manualPunSum = allIncomes.filter((i) => _sameMonth(i.date) && i.source !== "stripe").reduce((a, i) => a + _withVat(i), 0);
     const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "18px 20px" };
     const cardTitle = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 14 };
+    const sectionHead = {
+      fontSize: 11,
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.08em",
+      color: "var(--text-subtle)",
+      display: "flex",
+      alignItems: "center",
+      gap: 8,
+      margin: "28px 4px 6px"
+    };
     return /* @__PURE__ */ React.createElement("div", { style: {
       height: "100vh",
       display: "flex",
@@ -1842,33 +1834,11 @@
         label: "Ingreso manual",
         sub: "Mensualidad o cobro apuntado a mano.",
         onClick: () => {
-          setIncType(view === "recs" ? "rec" : "pun");
+          setIncType("pun");
           setAddOpen(true);
         }
       }
-    ] })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, paddingBottom: 16, borderBottom: "0.5px solid var(--border)" } }, [
-      { id: "cobros", label: "Cobros", icon: "receipt" },
-      { id: "recs", label: "Mensualidades", icon: "refresh-cw" },
-      { id: "stats", label: "Anal\xEDticas", icon: "bar-chart" }
-    ].map((t) => {
-      const on = view === t.id;
-      return /* @__PURE__ */ React.createElement("button", { key: t.id, onClick: () => setView(t.id), style: {
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 7,
-        padding: "7px 15px",
-        borderRadius: 99,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        background: on ? "rgba(255,255,255,0.08)" : "transparent",
-        border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
-        color: on ? "var(--text)" : "var(--text-subtle)",
-        fontSize: 13,
-        letterSpacing: "-0.3px",
-        fontWeight: on ? 500 : 400,
-        transition: "all .12s"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: t.icon, size: 13, strokeWidth: 1.7 }), t.label);
-    })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "18px 2px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(
+    ] })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "18px 2px", borderTop: "0.5px solid var(--border)", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(
       FinKpi,
       {
         label: "Facturado este mes",
@@ -1902,7 +1872,7 @@
       paddingBottom: 8,
       WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
-    } }, view === "recs" && (data.recs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin mensualidades \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardStyle, padding: "16px 18px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 8 } }, "Facturaci\xF3n mensual \xB7 \xFAltimos 6 meses"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { height: 140, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length)), data.recs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 4px", color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin mensualidades \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
       setIncType("rec");
       setAddOpen(true);
     } }, "a\xF1adir una")) : data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
@@ -1923,7 +1893,7 @@
       alignItems: "center",
       justifyContent: "center",
       color: r.active ? FIN_SERIES.rec : "var(--text-subtle)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(_cobro(r)), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _fiscalSub(r))), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), view === "cobros" && /* @__PURE__ */ React.createElement(React.Fragment, null, stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(_cobro(r)), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _fiscalSub(r))), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Cobros", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", stripeOpen.length + sortedInc.length)), stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1996,27 +1966,7 @@
         style: { flexShrink: 0 }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
-    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), view === "stats" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Facturaci\xF3n mensual \xB7 \xFAltimos 6 meses"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement(FinTrendChart, { trend })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por cliente \xB7 este mes"), clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : /* @__PURE__ */ React.createElement(FinBars, { total: monthTotal, items: clients.map(([cli, amt]) => ({ label: cli, v: amt, color: FIN_SERIES.pun })) })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Desglose fiscal \xB7 este mes"), /* @__PURE__ */ React.createElement(FinBars, { total: monthTotal, items: [
-      { label: "Cobras", v: monthTotal - irpfMonth, color: "var(--green)" },
-      { label: "Base imponible", v: baseMonth, color: "rgba(255,255,255,0.35)" },
-      { label: "IVA repercutido", v: ivaMonth, color: "var(--amber)" },
-      { label: "IRPF retenido", v: irpfMonth, color: "var(--red)" }
-    ] }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de la facturaci\xF3n \xB7 este mes"), /* @__PURE__ */ React.createElement(FinBars, { total: monthTotal, items: [
-      { label: "Stripe", v: stripeMonthSum, color: "#9d97ff" },
-      { label: "Mensualidades", v: recurringMo, color: FIN_SERIES.rec },
-      { label: "Manual", v: manualPunSum, color: FIN_SERIES.pun }
-    ] })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Stripe"), !stripeConnected ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px", lineHeight: 1.5 } }, "Sin conexi\xF3n con Stripe. A\xF1ade la clave en el servidor para ver saldo, facturas y cobros autom\xE1ticos.") : [
-      { label: "Saldo disponible", v: stripeMeta && stripeMeta.available || 0 },
-      { label: "En camino al banco", v: stripeMeta && stripeMeta.pending || 0 },
-      { label: "Pendiente de cobro", v: stripeMeta && stripeMeta.openSum || 0, color: stripeOpen.length ? "var(--amber)" : void 0 },
-      { label: "Cobrado este mes", v: stripeMonthSum, color: "var(--green)" }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.label, style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "9px 0",
-      borderTop: i === 0 ? "none" : "0.5px solid var(--border)"
-    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, m.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.3px", color: m.color || "var(--text)" } }, _eur(m.v)))))))), /* @__PURE__ */ React.createElement(
+    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,
