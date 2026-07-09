@@ -238,9 +238,9 @@
       },
       {
         label: "Facturado este mes",
-        value: stripeMonth === null ? "\u2026" : `\u20AC${facturadoCur.toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+        value: stripeMonth === null ? "\u2026" : `\u20AC${facturadoCur.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : {
-          text: `\u20AC${Math.round(facturadoPrev)}`,
+          text: `\u20AC${facturadoPrev.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
           suffix: `vs ${prevMonthLabel}`,
           dir: facturadoCur > facturadoPrev ? "up" : "flat",
           tone: facturadoCur > facturadoPrev ? "good" : "muted"

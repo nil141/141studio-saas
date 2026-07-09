@@ -265,11 +265,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     },
     {
       label:  "Facturado este mes",
-      value:  stripeMonth===null?"…":`€${facturadoCur.toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})}`,
+      value:  stripeMonth===null?"…":`€${facturadoCur.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}`,
       delta:  stripeMonth===null ? { text:"—", dir:"flat", tone:"muted" }
                 : facturadoPrev > 0
                   ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`)
-                  : { text:`€${Math.round(facturadoPrev)}`, suffix:`vs ${prevMonthLabel}`,
+                  : { text:`€${facturadoPrev.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+                      suffix:`vs ${prevMonthLabel}`,
                       dir: facturadoCur > facturadoPrev ? "up" : "flat",
                       tone: facturadoCur > facturadoPrev ? "good" : "muted" },
       nav:    "income",
