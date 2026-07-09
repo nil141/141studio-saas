@@ -2636,12 +2636,11 @@ const IncomePage = () => {
           ]}/>
         </div>
 
-        {/* Tira de KPIs — formato de la tira de analíticas de campañas */}
+        {/* Tira de KPIs — solo lo esencial: facturado, saldo y pendiente */}
         <div style={{ display:"flex", gap:26, padding:"18px 2px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
           <FinKpi label="Facturado este mes" value={_eur(monthTotal)}
             delta={<TrendDelta pct={deltaPct} goodUp={true} size={13}/>}
-            sub={`${_eur(baseMonth)} de base imponible`}/>
-          <FinKpi label="Cobras" value={_eur(monthTotal - irpfMonth)} sub="te entra este mes, tras IRPF"/>
+            sub={`cobras ${_eur(monthTotal - irpfMonth)} · IVA ${_eur(ivaMonth)}`}/>
           <FinKpi label="Saldo Stripe" color="var(--accent)"
             value={stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—"}
             sub={stripeMeta && stripeMeta.available !== undefined
@@ -2653,7 +2652,6 @@ const IncomePage = () => {
             sub={stripeOpen.length
               ? `${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`
               : "sin facturas abiertas"}/>
-          <FinKpi label="IVA a apartar" value={_eur(ivaMonth)} sub="repercutido este mes"/>
         </div>
       </div>
 

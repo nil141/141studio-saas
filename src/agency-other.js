@@ -1917,9 +1917,9 @@
         label: "Facturado este mes",
         value: _eur(monthTotal),
         delta: /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, size: 13 }),
-        sub: `${_eur(baseMonth)} de base imponible`
+        sub: `cobras ${_eur(monthTotal - irpfMonth)} \xB7 IVA ${_eur(ivaMonth)}`
       }
-    ), /* @__PURE__ */ React.createElement(FinKpi, { label: "Cobras", value: _eur(monthTotal - irpfMonth), sub: "te entra este mes, tras IRPF" }), /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement(
       FinKpi,
       {
         label: "Saldo Stripe",
@@ -1935,7 +1935,7 @@
         value: stripeConnected ? _eur(stripeMeta && stripeMeta.openSum || 0) : "\u2014",
         sub: stripeOpen.length ? `${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}` : "sin facturas abiertas"
       }
-    ), /* @__PURE__ */ React.createElement(FinKpi, { label: "IVA a apartar", value: _eur(ivaMonth), sub: "repercutido este mes" }))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    ))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
       flex: 1,
       minHeight: 0,
       overflowY: "auto",
