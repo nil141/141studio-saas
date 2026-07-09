@@ -848,7 +848,7 @@
           best = i;
         }
       });
-      setHov({ i: best, px, py, w: r.width });
+      setHov({ i: best, px, py, w: r.width, h: r.height });
     };
     const dotLeftPct = hov !== null ? x(hov.i) / W * 100 : 0;
     const dotTopPct = hov !== null ? y(trend[hov.i].total) / H * 100 : 0;
@@ -948,20 +948,21 @@
       zIndex: 4
     } }), /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
-      left: flip ? `calc(${dotLeftPct}% - 22px)` : `calc(${dotLeftPct}% + 22px)`,
-      top: `${Math.min(Math.max(dotTopPct, 24), 76)}%`,
-      transform: flip ? "translate(-100%,-50%)" : "translateY(-50%)",
-      background: "rgba(28,28,32,0.72)",
-      backdropFilter: "blur(24px) saturate(160%)",
-      WebkitBackdropFilter: "blur(24px) saturate(160%)",
-      border: "0.5px solid rgba(255,255,255,0.1)",
-      borderRadius: 18,
-      padding: "13px 20px",
+      left: 0,
+      top: 0,
+      transform: `translate(${hov.px + (flip ? -14 : 14)}px, ${Math.max(8, Math.min(hov.py + 14, (hov.h || 150) - 62))}px)` + (flip ? " translateX(-100%)" : ""),
+      transition: "transform 400ms",
+      background: "rgba(40,40,45,0.6)",
+      backdropFilter: "blur(20px) saturate(160%)",
+      WebkitBackdropFilter: "blur(20px) saturate(160%)",
+      border: "0.5px solid rgba(255,255,255,0.08)",
+      borderRadius: 14,
+      padding: "9px 16px",
       pointerEvents: "none",
       zIndex: 5,
-      boxShadow: "0 16px 48px rgba(0,0,0,0.5)",
+      boxShadow: "0 12px 36px rgba(0,0,0,0.45)",
       whiteSpace: "nowrap"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px", marginBottom: 2 } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 500, letterSpacing: "-0.7px", fontVariantNumeric: "tabular-nums", color: "var(--text)" } }, _eur(trend[hov.i].total))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "10px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 12, color: hov && hov.i === i ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.1px", transition: "color .1s" } }, t.label))), !single && hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 600, letterSpacing: "-0.4px", fontVariantNumeric: "tabular-nums", color: "var(--text)", marginTop: 1 } }, _eur(trend[hov.i].total))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "10px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 12, color: hov && hov.i === i ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.1px", transition: "color .1s" } }, t.label))), !single && hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       left: hov.px > (hov.w || 0) - 190 ? hov.px - 16 : hov.px + 16,
       transform: hov.px > (hov.w || 0) - 190 ? "translateX(-100%)" : "none",

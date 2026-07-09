@@ -1445,7 +1445,7 @@ const FinTrendChart = ({ trend, single = false }) => {
     const relX = px / r.width * W;
     let best = 0, bd = Infinity;
     trend.forEach((t, i) => { const d = Math.abs(x(i) - relX); if (d < bd) { bd = d; best = i; } });
-    setHov({ i: best, px, py, w: r.width });
+    setHov({ i: best, px, py, w: r.width, h: r.height });
   };
 
   // Posición del punto activo en % del área del gráfico. El punto y el tooltip
@@ -1517,19 +1517,22 @@ const FinTrendChart = ({ trend, single = false }) => {
               background:FIN_SERIES.rec, border:"3px solid #fff",
               boxShadow:"0 2px 10px rgba(0,0,0,0.45)", pointerEvents:"none", zIndex:4,
             }}/>
+            {/* Tooltip compacto (~50px) anclado al cursor con deslizamiento de 400ms,
+                como el recharts-tooltip-wrapper de outdomode (wrapper-right/bottom) */}
             <div style={{
-              position:"absolute",
-              left: flip ? `calc(${dotLeftPct}% - 22px)` : `calc(${dotLeftPct}% + 22px)`,
-              top: `${Math.min(Math.max(dotTopPct, 24), 76)}%`,
-              transform: flip ? "translate(-100%,-50%)" : "translateY(-50%)",
-              background:"rgba(28,28,32,0.72)",
-              backdropFilter:"blur(24px) saturate(160%)", WebkitBackdropFilter:"blur(24px) saturate(160%)",
-              border:"0.5px solid rgba(255,255,255,0.1)",
-              borderRadius:18, padding:"13px 20px", pointerEvents:"none", zIndex:5,
-              boxShadow:"0 16px 48px rgba(0,0,0,0.5)", whiteSpace:"nowrap",
+              position:"absolute", left:0, top:0,
+              transform:
+                `translate(${hov.px + (flip ? -14 : 14)}px, ${Math.max(8, Math.min(hov.py + 14, (hov.h || 150) - 62))}px)`
+                + (flip ? " translateX(-100%)" : ""),
+              transition:"transform 400ms",
+              background:"rgba(40,40,45,0.6)",
+              backdropFilter:"blur(20px) saturate(160%)", WebkitBackdropFilter:"blur(20px) saturate(160%)",
+              border:"0.5px solid rgba(255,255,255,0.08)",
+              borderRadius:14, padding:"9px 16px", pointerEvents:"none", zIndex:5,
+              boxShadow:"0 12px 36px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
             }}>
-              <div style={{ fontSize:13.5, color:"var(--text-muted)", letterSpacing:"-0.2px", marginBottom:2 }}>{trend[hov.i].full}</div>
-              <div style={{ fontSize:22, fontWeight:500, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", color:"var(--text)" }}>{_eur(trend[hov.i].total)}</div>
+              <div style={{ fontSize:12.5, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{trend[hov.i].full}</div>
+              <div style={{ fontSize:17, fontWeight:600, letterSpacing:"-0.4px", fontVariantNumeric:"tabular-nums", color:"var(--text)", marginTop:1 }}>{_eur(trend[hov.i].total)}</div>
             </div>
           </>
         )}
