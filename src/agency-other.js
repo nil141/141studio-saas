@@ -1667,23 +1667,6 @@
     } catch (e) {
     }
   };
-  var FinKpi = ({ label, value, sub, color, delta }) => /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 6 } }, label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: {
-    fontSize: 22,
-    fontWeight: 600,
-    fontFamily: "var(--font-display)",
-    letterSpacing: "-0.5px",
-    color: color || "var(--text)",
-    fontVariantNumeric: "tabular-nums",
-    whiteSpace: "nowrap"
-  } }, value), delta), sub && /* @__PURE__ */ React.createElement("div", { style: {
-    fontSize: 11.5,
-    color: "var(--text-muted)",
-    marginTop: 3,
-    letterSpacing: "-0.2px",
-    whiteSpace: "nowrap",
-    overflow: "hidden",
-    textOverflow: "ellipsis"
-  } }, sub));
   var IncomePage = () => {
     const D = window.Data;
     D.useStore();
@@ -1911,31 +1894,54 @@
           setAddOpen(true);
         }
       }
-    ] })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "18px 2px", borderTop: "0.5px solid var(--border)", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(
-      FinKpi,
+    ] })), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 32,
+      padding: "20px 4px 24px",
+      borderTop: "0.5px solid var(--border)",
+      borderBottom: "0.5px solid var(--border)"
+    } }, [
       {
         label: "Facturado este mes",
         value: _eur(monthTotal),
-        delta: /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, size: 13 }),
-        sub: `cobras ${_eur(monthTotal - irpfMonth)} \xB7 IVA ${_eur(ivaMonth)}`
-      }
-    ), /* @__PURE__ */ React.createElement(
-      FinKpi,
+        delta: /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${_prevMo.label.toLowerCase()}` })
+      },
       {
         label: "Saldo Stripe",
-        color: "var(--accent)",
         value: stripeMeta && stripeMeta.available !== void 0 ? _eur(stripeMeta.available) : "\u2014",
-        sub: stripeMeta && stripeMeta.available !== void 0 ? `${_eur(stripeMeta.pending || 0)} pendiente de abono` : "conecta Stripe para verlo"
-      }
-    ), /* @__PURE__ */ React.createElement(
-      FinKpi,
+        delta: /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: _eur(stripeMeta && stripeMeta.pending || 0),
+            suffix: "pendiente de abono",
+            dir: (stripeMeta && stripeMeta.pending || 0) > 0 ? "up" : "flat",
+            tone: (stripeMeta && stripeMeta.pending || 0) > 0 ? "good" : "muted"
+          }
+        )
+      },
       {
         label: "Pendiente de cobro",
-        color: stripeOpen.length ? "var(--amber)" : void 0,
         value: stripeConnected ? _eur(stripeMeta && stripeMeta.openSum || 0) : "\u2014",
-        sub: stripeOpen.length ? `${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}` : "sin facturas abiertas"
+        delta: /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: String(stripeOpen.length),
+            suffix: `factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`,
+            dir: stripeOpen.length ? "down" : "flat",
+            tone: stripeOpen.length ? "bad" : "muted"
+          }
+        )
       }
-    ))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    ].map((k) => /* @__PURE__ */ React.createElement("div", { key: k.label, style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 32,
+      color: "var(--text)",
+      letterSpacing: "-0.08em",
+      lineHeight: 1,
+      fontFamily: "var(--font-display)",
+      fontVariantNumeric: "tabular-nums"
+    } }, k.value), k.delta))))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
       flex: 1,
       minHeight: 0,
       overflowY: "auto",

@@ -2421,20 +2421,6 @@ const _incLoad = () => {
 };
 const _incSave = (d) => { try { localStorage.setItem(INC_KEY, JSON.stringify(d)); } catch {} };
 
-// Mini-stat de cabecera — mismo formato que la tira de KPIs de la página de campañas
-const FinKpi = ({ label, value, sub, color, delta }) => (
-  <div style={{ flex:1, minWidth:0 }}>
-    <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:6 }}>{label}</div>
-    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-      <span style={{ fontSize:22, fontWeight:600, fontFamily:"var(--font-display)", letterSpacing:"-0.5px",
-        color: color || "var(--text)", fontVariantNumeric:"tabular-nums", whiteSpace:"nowrap" }}>{value}</span>
-      {delta}
-    </div>
-    {sub && <div style={{ fontSize:11.5, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px",
-      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{sub}</div>}
-  </div>
-);
-
 const IncomePage = () => {
   const D = window.Data;
   D.useStore();
@@ -2636,22 +2622,33 @@ const IncomePage = () => {
           ]}/>
         </div>
 
-        {/* Tira de KPIs — solo lo esencial: facturado, saldo y pendiente */}
-        <div style={{ display:"flex", gap:26, padding:"18px 2px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
-          <FinKpi label="Facturado este mes" value={_eur(monthTotal)}
-            delta={<TrendDelta pct={deltaPct} goodUp={true} size={13}/>}
-            sub={`cobras ${_eur(monthTotal - irpfMonth)} · IVA ${_eur(ivaMonth)}`}/>
-          <FinKpi label="Saldo Stripe" color="var(--accent)"
-            value={stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—"}
-            sub={stripeMeta && stripeMeta.available !== undefined
-              ? `${_eur(stripeMeta.pending || 0)} pendiente de abono`
-              : "conecta Stripe para verlo"}/>
-          <FinKpi label="Pendiente de cobro"
-            color={stripeOpen.length ? "var(--amber)" : undefined}
-            value={stripeConnected ? _eur((stripeMeta && stripeMeta.openSum) || 0) : "—"}
-            sub={stripeOpen.length
-              ? `${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`
-              : "sin facturas abiertas"}/>
+        {/* Tira de KPIs — mismo formato que el hero de Inicio (label 16 · valor 32 · delta con círculo) */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
+          padding:"20px 4px 24px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
+          {[
+            { label:"Facturado este mes", value:_eur(monthTotal),
+              delta:<TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
+            { label:"Saldo Stripe",
+              value: stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—",
+              delta:<MetricDelta text={_eur((stripeMeta && stripeMeta.pending) || 0)} suffix="pendiente de abono"
+                dir={((stripeMeta && stripeMeta.pending) || 0) > 0 ? "up" : "flat"}
+                tone={((stripeMeta && stripeMeta.pending) || 0) > 0 ? "good" : "muted"}/> },
+            { label:"Pendiente de cobro",
+              value: stripeConnected ? _eur((stripeMeta && stripeMeta.openSum) || 0) : "—",
+              delta:<MetricDelta text={String(stripeOpen.length)}
+                suffix={`factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`}
+                dir={stripeOpen.length ? "down" : "flat"}
+                tone={stripeOpen.length ? "bad" : "muted"}/> },
+          ].map(k => (
+            <div key={k.label} style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              <span style={{ fontSize:16, lineHeight:1.3, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{k.label}</span>
+              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                <span style={{ fontSize:32, color:"var(--text)", letterSpacing:"-0.08em", lineHeight:1,
+                  fontFamily:"var(--font-display)", fontVariantNumeric:"tabular-nums" }}>{k.value}</span>
+                {k.delta}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
