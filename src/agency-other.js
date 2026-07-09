@@ -1624,7 +1624,32 @@
     const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "", vat: 21, irpf: 15 };
     const [recForm, setRecForm] = useState(blankRec);
     const [incForm, setIncForm] = useState(blankInc);
-    const stripeConnected = false;
+    const [stripeInc, setStripeInc] = useState(null);
+    useEffect(() => {
+      let alive = true;
+      window.apiFetch("/api/stripe/invoices", { limit: 100 }).then((r) => r.json()).then((res) => {
+        if (!alive || !res.ok) return;
+        const items = (res.invoices || []).filter((inv) => inv.status === "paid" && (inv.amount_paid || 0) > 0).map((inv) => ({
+          id: "stripe-" + (inv.stripe_id || inv.id),
+          date: inv.created ? new Date(inv.created * 1e3).toISOString().slice(0, 10) : _todayISO(),
+          concept: inv.description || `Factura ${inv.id}`,
+          clientName: inv.customer && inv.customer !== "\u2014" ? inv.customer : "",
+          // El importe de Stripe ya es el total cobrado → base=total, sin IVA/IRPF añadidos
+          amount: (inv.amount_paid || 0) / 100,
+          vat: 0,
+          irpf: 0,
+          source: "stripe",
+          hostedUrl: inv.hosted_url || null
+        }));
+        setStripeInc(items);
+      }).catch(() => {
+      });
+      return () => {
+        alive = false;
+      };
+    }, []);
+    const stripeConnected = stripeInc !== null;
+    const allIncomes = stripeInc ? [...data.incomes, ...stripeInc] : data.incomes;
     const persist = (next) => {
       setData(next);
       _incSave(next);
@@ -1690,11 +1715,11 @@
     const delInc = (id) => persist({ ...data, incomes: data.incomes.filter((i) => i.id !== id) });
     const activeRecs = data.recs.filter((r) => r.active);
     const recurringMo = activeRecs.reduce((a, r) => a + _recMoVat(r), 0);
-    const punMonth = data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
+    const punMonth = allIncomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
     const monthTotal = recurringMo + punMonth;
-    const baseMonth = activeRecs.reduce((a, r) => a + _recMoBase(r), 0) + data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+    const baseMonth = activeRecs.reduce((a, r) => a + _recMoBase(r), 0) + allIncomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
     const ivaMonth = monthTotal - baseMonth;
-    const irpfMonth = activeRecs.reduce((a, r) => a + _recMoBase(r) * _irpfOf(r) / 100, 0) + data.incomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0) * _irpfOf(i) / 100, 0);
+    const irpfMonth = activeRecs.reduce((a, r) => a + _recMoBase(r) * _irpfOf(r) / 100, 0) + allIncomes.filter((i) => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0) * _irpfOf(i) / 100, 0);
     const MES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const trend = (() => {
       const now = /* @__PURE__ */ new Date();
@@ -1707,7 +1732,7 @@
       return Array.from({ length: 6 }, (_, k) => {
         const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-        const puntual = data.incomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + _withVat(i), 0);
+        const puntual = allIncomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + _withVat(i), 0);
         const rec = activeRecs.filter((r) => recStartKey(r) <= key).reduce((a, r) => a + _recMoVat(r), 0);
         return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
       });
@@ -1718,13 +1743,13 @@
       const k = r.clientName || "Sin cliente";
       byClient[k] = (byClient[k] || 0) + _recMoVat(r);
     });
-    data.incomes.filter((i) => _sameMonth(i.date)).forEach((i) => {
+    allIncomes.filter((i) => _sameMonth(i.date)).forEach((i) => {
       const k = i.clientName || "Sin cliente";
       byClient[k] = (byClient[k] || 0) + _withVat(i);
     });
     const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const cliMax = clients.length ? clients[0][1] : 1;
-    const sortedInc = [...data.incomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     return /* @__PURE__ */ React.createElement("div", { style: {
       height: "100vh",
       display: "flex",
@@ -1806,7 +1831,26 @@
       alignItems: "center",
       justifyContent: "center",
       color: FIN_SERIES.pun
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, inc.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, "+", _eur(_cobro(inc))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _fiscalSub(inc))), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, inc.concept), inc.source === "stripe" && /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 10,
+      padding: "2px 8px",
+      borderRadius: 99,
+      flexShrink: 0,
+      background: "rgba(99,91,255,0.14)",
+      border: "0.5px solid rgba(99,91,255,0.4)",
+      color: "#9d97ff"
+    } }, "Stripe")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, "+", _eur(_cobro(inc))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, inc.source === "stripe" ? "Cobrado en Stripe" : _fiscalSub(inc))), inc.source === "stripe" ? inc.hostedUrl ? /* @__PURE__ */ React.createElement(
+      "a",
+      {
+        className: "btn ghost icon-only sm",
+        href: inc.hostedUrl,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        title: "Ver factura en Stripe",
+        style: { flexShrink: 0 }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
+    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,

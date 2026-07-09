@@ -2382,8 +2382,35 @@ const IncomePage = () => {
   const [recForm, setRecForm] = useState(blankRec);
   const [incForm, setIncForm] = useState(blankInc);
 
-  // Cuando se conecte Stripe, esto pasará a true y los cobros entrarán como fuente extra
-  const stripeConnected = false;
+  // Stripe como fuente real: las facturas pagadas entran como cobros puntuales.
+  // null = sin conexión (o cargando) · [] = conectado sin cobros aún
+  const [stripeInc, setStripeInc] = useState(null);
+  useEffect(() => {
+    let alive = true;
+    window.apiFetch("/api/stripe/invoices", { limit: 100 })
+      .then(r => r.json())
+      .then(res => {
+        if (!alive || !res.ok) return;
+        const items = (res.invoices || [])
+          .filter(inv => inv.status === "paid" && (inv.amount_paid || 0) > 0)
+          .map(inv => ({
+            id: "stripe-" + (inv.stripe_id || inv.id),
+            date: inv.created ? new Date(inv.created * 1000).toISOString().slice(0, 10) : _todayISO(),
+            concept: inv.description || `Factura ${inv.id}`,
+            clientName: inv.customer && inv.customer !== "—" ? inv.customer : "",
+            // El importe de Stripe ya es el total cobrado → base=total, sin IVA/IRPF añadidos
+            amount: (inv.amount_paid || 0) / 100,
+            vat: 0, irpf: 0,
+            source: "stripe", hostedUrl: inv.hosted_url || null,
+          }));
+        setStripeInc(items);
+      })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+  const stripeConnected = stripeInc !== null;
+  // Ingresos combinados (manuales + Stripe) para totales, gráfico y listas
+  const allIncomes = stripeInc ? [...data.incomes, ...stripeInc] : data.incomes;
 
   const persist = (next) => { setData(next); _incSave(next); };
   const clientName = (id) => { const c = D.CLIENTS.find(c => c.id === id); return c ? (c.company || c.name || "") : ""; };
@@ -2427,13 +2454,13 @@ const IncomePage = () => {
 
   const activeRecs  = data.recs.filter(r => r.active);
   const recurringMo = activeRecs.reduce((a, r) => a + _recMoVat(r), 0);   // facturado recurrente (con IVA)
-  const punMonth    = data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
+  const punMonth    = allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
   const monthTotal  = recurringMo + punMonth;                              // facturado este mes (con IVA)
   const baseMonth   = activeRecs.reduce((a, r) => a + _recMoBase(r), 0)
-                    + data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
+                    + allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
   const ivaMonth    = monthTotal - baseMonth;                              // IVA repercutido, a apartar
   const irpfMonth   = activeRecs.reduce((a, r) => a + _recMoBase(r) * _irpfOf(r) / 100, 0)
-                    + data.incomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0) * _irpfOf(i) / 100, 0);
+                    + allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0) * _irpfOf(i) / 100, 0);
 
   // ── Serie mensual (últimos 6 meses): cada mensualidad cuenta desde su fecha de cobro ──
   const MES_ES = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
@@ -2448,7 +2475,7 @@ const IncomePage = () => {
     return Array.from({ length: 6 }, (_, k) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      const puntual = data.incomes
+      const puntual = allIncomes
         .filter(i => (i.date || "").startsWith(key))
         .reduce((a, i) => a + _withVat(i), 0);
       const rec = activeRecs
@@ -2465,14 +2492,14 @@ const IncomePage = () => {
   // ── Por cliente · este mes (mensualidades activas + puntuales del mes) ──
   const byClient = {};
   activeRecs.forEach(r => { const k = r.clientName || "Sin cliente"; byClient[k] = (byClient[k] || 0) + _recMoVat(r); });
-  data.incomes.filter(i => _sameMonth(i.date)).forEach(i => {
+  allIncomes.filter(i => _sameMonth(i.date)).forEach(i => {
     const k = i.clientName || "Sin cliente";
     byClient[k] = (byClient[k] || 0) + _withVat(i);
   });
   const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const cliMax = clients.length ? clients[0][1] : 1;
 
-  const sortedInc = [...data.incomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   return (
     <div style={{
@@ -2660,7 +2687,15 @@ const IncomePage = () => {
                 <Icon name="trending-up" size={14} strokeWidth={1.7}/>
               </div>
               <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)" }}>{inc.concept}</div>
+                <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{inc.concept}</span>
+                  {inc.source === "stripe" && (
+                    <span style={{ fontSize:10, padding:"2px 8px", borderRadius:99, flexShrink:0,
+                      background:"rgba(99,91,255,0.14)", border:"0.5px solid rgba(99,91,255,0.4)", color:"#9d97ff" }}>
+                      Stripe
+                    </span>
+                  )}
+                </div>
                 <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
                   {_finDate(inc.date)}{inc.clientName ? ` · ${inc.clientName}` : ""}
                 </div>
@@ -2670,12 +2705,21 @@ const IncomePage = () => {
                   +{_eur(_cobro(inc))}
                 </div>
                 <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
-                  {_fiscalSub(inc)}
+                  {inc.source === "stripe" ? "Cobrado en Stripe" : _fiscalSub(inc)}
                 </div>
               </div>
-              <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
-                <Icon name="trash" size={13}/>
-              </button>
+              {inc.source === "stripe" ? (
+                inc.hostedUrl
+                  ? <a className="btn ghost icon-only sm" href={inc.hostedUrl} target="_blank" rel="noopener noreferrer"
+                      title="Ver factura en Stripe" style={{ flexShrink:0 }}>
+                      <Icon name="external-link" size={13}/>
+                    </a>
+                  : <span style={{ width:28, flexShrink:0 }}/>
+              ) : (
+                <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
+                  <Icon name="trash" size={13}/>
+                </button>
+              )}
             </div>
           ))
         )}

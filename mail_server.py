@@ -14,7 +14,9 @@ from email.header  import decode_header as _dh
 from email.mime.text      import MIMEText
 from email.mime.multipart import MIMEMultipart
 
-STRIPE_SK = os.environ.get("STRIPE_SK", "")  # sin fallback: si falta, los endpoints de Stripe fallan con error claro
+# Clave secreta de Stripe: acepta STRIPE_SK o STRIPE_SECRET_KEY (el nombre
+# estándar de Stripe). Si falta, los endpoints fallan con error claro.
+STRIPE_SK = os.environ.get("STRIPE_SK", "") or os.environ.get("STRIPE_SECRET_KEY", "")
 
 # Supabase — para validar los JWT que envía el frontend (la anon key es pública por diseño)
 SB_URL  = os.environ.get("SUPABASE_URL", "https://ofnkazimemuiwovhxepq.supabase.co")
