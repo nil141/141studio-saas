@@ -2627,7 +2627,12 @@ const IncomePage = () => {
           padding:"20px 4px 24px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
           {[
             { label:"Facturado este mes", value:_eur(monthTotal),
-              delta:<TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
+              // Si el mes anterior fue 0 no hay % que calcular: comparativa plana con el importe
+              delta: deltaPct === null
+                ? <MetricDelta text={_eur(_prevMo.total)} suffix={`vs ${_prevMo.label.toLowerCase()}`}
+                    dir={monthTotal > _prevMo.total ? "up" : "flat"}
+                    tone={monthTotal > _prevMo.total ? "good" : "muted"}/>
+                : <TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
             { label:"Saldo Stripe",
               value: stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—",
               delta:<MetricDelta text={_eur((stripeMeta && stripeMeta.pending) || 0)} suffix="pendiente de abono"

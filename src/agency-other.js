@@ -1906,7 +1906,16 @@
       {
         label: "Facturado este mes",
         value: _eur(monthTotal),
-        delta: /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${_prevMo.label.toLowerCase()}` })
+        // Si el mes anterior fue 0 no hay % que calcular: comparativa plana con el importe
+        delta: deltaPct === null ? /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: _eur(_prevMo.total),
+            suffix: `vs ${_prevMo.label.toLowerCase()}`,
+            dir: monthTotal > _prevMo.total ? "up" : "flat",
+            tone: monthTotal > _prevMo.total ? "good" : "muted"
+          }
+        ) : /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${_prevMo.label.toLowerCase()}` })
       },
       {
         label: "Saldo Stripe",
