@@ -2384,14 +2384,17 @@ const IncomePage = () => {
 
   // Stripe como fuente real: las facturas pagadas entran como cobros puntuales.
   // null = sin conexión (o cargando) · [] = conectado sin cobros aún
-  const [stripeInc, setStripeInc] = useState(null);
-  useEffect(() => {
-    let alive = true;
+  const [stripeInc, setStripeInc]   = useState(null);
+  const [stripeMeta, setStripeMeta] = useState(null);   // saldo + facturas abiertas
+  const [stripeInvOpen, setStripeInvOpen] = useState(false);
+  const [payLinkOpen, setPayLinkOpen]     = useState(false);
+
+  const fetchStripe = () => {
     window.apiFetch("/api/stripe/invoices", { limit: 100 })
       .then(r => r.json())
       .then(res => {
-        if (!alive || !res.ok) return;
-        const items = (res.invoices || [])
+        if (!res.ok) return;
+        const paid = (res.invoices || [])
           .filter(inv => inv.status === "paid" && (inv.amount_paid || 0) > 0)
           .map(inv => ({
             id: "stripe-" + (inv.stripe_id || inv.id),
@@ -2403,12 +2406,33 @@ const IncomePage = () => {
             vat: 0, irpf: 0,
             source: "stripe", hostedUrl: inv.hosted_url || null,
           }));
-        setStripeInc(items);
+        setStripeInc(paid);
+        // Facturas emitidas y aún sin pagar → pendientes de cobro
+        const open = (res.invoices || [])
+          .filter(inv => inv.status === "open")
+          .map(inv => ({
+            id: "open-" + (inv.stripe_id || inv.id),
+            concept: inv.description || `Factura ${inv.id}`,
+            clientName: inv.customer && inv.customer !== "—" ? inv.customer : "",
+            amount: (inv.amount || 0) / 100,
+            date: inv.created ? new Date(inv.created * 1000).toISOString().slice(0, 10) : "",
+            due: inv.due_date ? new Date(inv.due_date * 1000).toISOString().slice(0, 10) : "",
+            hostedUrl: inv.hosted_url || null,
+          }));
+        setStripeMeta(m => ({ ...(m || {}), open, openSum: open.reduce((a, i) => a + i.amount, 0) }));
       })
       .catch(() => {});
-    return () => { alive = false; };
-  }, []);
+    window.apiFetch("/api/stripe/balance", {})
+      .then(r => r.json())
+      .then(res => {
+        if (res.ok) setStripeMeta(m => ({ ...(m || {}), available: res.available / 100, pending: res.pending / 100 }));
+      })
+      .catch(() => {});
+  };
+  useEffect(() => { fetchStripe(); }, []);
+
   const stripeConnected = stripeInc !== null;
+  const stripeOpen = (stripeMeta && stripeMeta.open) || [];
   // Ingresos combinados (manuales + Stripe) para totales, gráfico y listas
   const allIncomes = stripeInc ? [...data.incomes, ...stripeInc] : data.incomes;
 
@@ -2514,7 +2538,14 @@ const IncomePage = () => {
             {_eur(monthTotal)} facturado este mes · {activeRecs.length} mensualidad{activeRecs.length === 1 ? "" : "es"} activa{activeRecs.length === 1 ? "" : "s"}
           </div>
         </div>
-        <ActionPill plusActions={() => { setIncType(tab === "oneoff" ? "pun" : "rec"); setAddOpen(true); }}/>
+        <ActionPill plusActions={[
+          { icon:"receipt", label:"Factura Stripe", sub:"Se crea y envía desde Stripe.", accent:true,
+            onClick: () => setStripeInvOpen(true) },
+          { icon:"external-link", label:"Enlace de pago", sub:"Link de cobro de Stripe para compartir.",
+            onClick: () => setPayLinkOpen(true) },
+          { icon:"edit", label:"Ingreso manual", sub:"Mensualidad o cobro apuntado a mano.",
+            onClick: () => { setIncType(tab === "oneoff" ? "pun" : "rec"); setAddOpen(true); } },
+        ]}/>
       </div>
 
       {/* ── Fila de gráficos: tendencia + clientes + stats ── */}
@@ -2587,6 +2618,11 @@ const IncomePage = () => {
             { label: "Cobras",          value: _eur(monthTotal - irpfMonth), sub: "te entra este mes" },
             { label: "Base imponible",  value: _eur(baseMonth),              sub: "tu ingreso real · sin IVA" },
             { label: "IVA repercutido", value: _eur(ivaMonth),               sub: "a apartar para Hacienda" },
+            ...(stripeMeta && stripeMeta.available !== undefined ? [{
+              label: "Saldo Stripe",
+              value: _eur(stripeMeta.available),
+              sub: `${_eur(stripeMeta.pending || 0)} pendiente de abono${stripeOpen.length ? ` · ${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} sin cobrar` : ""}`,
+            }] : []),
           ].map((m, i) => (
             <div key={m.label} style={{
               paddingTop: i === 0 ? 0 : 12,
@@ -2668,7 +2704,48 @@ const IncomePage = () => {
 
         {/* ── Ingresos puntuales ── */}
         {tab === "oneoff" && (
-          sortedInc.length === 0 ? (
+          <>
+          {/* Facturas de Stripe emitidas y pendientes de cobro */}
+          {stripeOpen.map(inv => (
+            <div key={inv.id} className="task-row" style={{
+              display:"flex", alignItems:"center", gap:14,
+              padding:"13px 4px", borderBottom:"0.5px solid var(--border)",
+            }}>
+              <div style={{
+                width:38, height:38, borderRadius:"50%", flexShrink:0,
+                border:"1px solid rgba(238,229,134,0.35)",
+                display:"flex", alignItems:"center", justifyContent:"center",
+                color:"var(--amber)",
+              }}>
+                <Icon name="clock" size={14} strokeWidth={1.7}/>
+              </div>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{inv.concept}</span>
+                  <span style={{ fontSize:10, padding:"2px 8px", borderRadius:99, flexShrink:0,
+                    background:"var(--amber-soft)", border:"0.5px solid rgba(238,229,134,0.4)", color:"var(--amber)" }}>
+                    Abierta
+                  </span>
+                </div>
+                <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                  Emitida {_finDate(inv.date)}{inv.due ? ` · vence ${_finDate(inv.due)}` : ""}{inv.clientName ? ` · ${inv.clientName}` : ""}
+                </div>
+              </div>
+              <div style={{ textAlign:"right", flexShrink:0 }}>
+                <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px", color:"var(--amber)" }}>
+                  {_eur(inv.amount)}
+                </div>
+                <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>pendiente de cobro</div>
+              </div>
+              {inv.hostedUrl
+                ? <a className="btn ghost icon-only sm" href={inv.hostedUrl} target="_blank" rel="noopener noreferrer"
+                    title="Ver / cobrar en Stripe" style={{ flexShrink:0 }}>
+                    <Icon name="external-link" size={13}/>
+                  </a>
+                : <span style={{ width:28, flexShrink:0 }}/>}
+            </div>
+          ))}
+          {sortedInc.length === 0 && stripeOpen.length === 0 ? (
             <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
               Sin ingresos puntuales — <button className="btn ghost sm" onClick={() => { setIncType("pun"); setAddOpen(true); }}>añadir uno</button>
             </div>
@@ -2721,7 +2798,8 @@ const IncomePage = () => {
                 </button>
               )}
             </div>
-          ))
+          ))}
+          </>
         )}
       </div>
 
@@ -2862,7 +2940,76 @@ const IncomePage = () => {
           return null;
         }}
       />
+
+      {/* Funcionalidades de Stripe */}
+      <NewInvoiceModal open={stripeInvOpen} onClose={() => setStripeInvOpen(false)} onCreated={fetchStripe}/>
+      <PaymentLinkModal open={payLinkOpen} onClose={() => setPayLinkOpen(false)}/>
     </div>
+  );
+};
+
+// ── Enlace de pago de Stripe (concepto + importe → URL para compartir) ──
+const PaymentLinkModal = ({ open, onClose }) => {
+  const toast = useToast();
+  const [concept, setConcept] = useState("");
+  const [amount, setAmount]   = useState("");
+  const [busy, setBusy] = useState(false);
+  const [url, setUrl]   = useState("");
+  useEffect(() => { if (open) { setConcept(""); setAmount(""); setUrl(""); setBusy(false); } }, [open]);
+
+  const create = async () => {
+    if (!concept.trim() || !(Number(amount) > 0)) { toast("Pon concepto e importe", "warn"); return; }
+    setBusy(true);
+    try {
+      const res = await _stripeApi("create_payment_link", { name: concept.trim(), amount: Number(amount) });
+      if (res.ok) setUrl(res.url);
+      else toast(res.error || "No se pudo crear el enlace", "warn");
+    } catch (e) { toast("Error de conexión", "warn"); }
+    setBusy(false);
+  };
+  const copy = () => navigator.clipboard.writeText(url)
+    .then(() => toast("Enlace copiado", "success")).catch(() => {});
+
+  return (
+    <Modal open={open} onClose={onClose} title="Enlace de pago"
+      sub="Un link de cobro de Stripe: compártelo por WhatsApp, email o donde quieras."
+      footer={url ? (
+        <>
+          <button className="btn" onClick={onClose}>Cerrar</button>
+          <button className="btn primary" onClick={copy}><Icon name="file" size={12}/> Copiar enlace</button>
+        </>
+      ) : (
+        <>
+          <button className="btn" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" onClick={create} disabled={busy}>
+            {busy ? "Creando…" : <><Icon name="plus" size={12}/> Crear enlace</>}
+          </button>
+        </>
+      )}>
+      {url ? (
+        <div>
+          <div className="label">Tu enlace de pago</div>
+          <input className="input" readOnly value={url} onClick={e => e.target.select()}
+            style={{ fontFamily:"var(--font-mono)", fontSize:12.5 }}/>
+          <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:10, lineHeight:1.5 }}>
+            Cuando alguien pague, el cobro aparecerá automáticamente en esta página.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
+          <div>
+            <div className="label">Concepto</div>
+            <input className="input" placeholder="Ej. Auditoría web" value={concept}
+              onChange={e => setConcept(e.target.value)} autoFocus/>
+          </div>
+          <div>
+            <div className="label">Importe (€)</div>
+            <input className="input" type="number" min="0" step="0.01" placeholder="150"
+              value={amount} onChange={e => setAmount(e.target.value)} style={{ maxWidth:180 }}/>
+          </div>
+        </div>
+      )}
+    </Modal>
   );
 };
 

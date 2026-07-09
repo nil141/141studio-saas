@@ -413,6 +413,25 @@ def api_stripe_revenue(body):
     total = sum(b["amount"] for b in buckets)
     return {"ok": True, "buckets": buckets, "total": total}
 
+def api_stripe_create_payment_link(body):
+    """Crea un enlace de pago de Stripe (producto + precio + payment link)."""
+    name       = (body.get("name") or "Servicio").strip()[:200]
+    amount_eur = float(body.get("amount", 0))
+    amount_cts = int(round(amount_eur * 100))
+    currency   = (body.get("currency") or "eur").lower()
+    if amount_cts <= 0:
+        return {"ok": False, "error": "Importe no válido"}
+    price = _stripe_post("prices", {
+        "unit_amount": str(amount_cts),
+        "currency": currency,
+        "product_data[name]": name,
+    })
+    link = _stripe_post("payment_links", {
+        "line_items[0][price]": price["id"],
+        "line_items[0][quantity]": "1",
+    })
+    return {"ok": True, "url": link.get("url"), "id": link.get("id")}
+
 def api_stripe_create_invoice(body):
     email_addr  = body.get("email", "").strip()
     name        = body.get("name",  "").strip()
@@ -782,6 +801,7 @@ STRIPE_HANDLERS = {
     "charges":         api_stripe_charges,
     "revenue":         api_stripe_revenue,
     "create_invoice":  api_stripe_create_invoice,
+    "create_payment_link": api_stripe_create_payment_link,
 }
 
 # Requieren JWT del usuario (mismo esquema que MAIL/STRIPE)
