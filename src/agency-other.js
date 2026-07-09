@@ -822,14 +822,15 @@
     }
     return d;
   };
-  var FinTrendChart = ({ trend }) => {
+  var FinTrendChart = ({ trend, single = false }) => {
     const [hov, setHov] = useState(null);
     const W = 600, H = 150, PX = 10, PY = 14;
-    const maxV = Math.max(...trend.map((t) => t.rec), ...trend.map((t) => t.puntual), 1) * 1.15;
+    const maxV = Math.max(...single ? trend.map((t) => t.total) : [...trend.map((t) => t.rec), ...trend.map((t) => t.puntual)], 1) * 1.15;
     const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
     const y = (v) => H - PY - v / maxV * (H - 2 * PY);
     const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
     const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
+    const totPts = trend.map((t, i) => [x(i), y(t.total)]);
     const baseY = H - PY;
     const areaOf = (pts) => {
       const c = _finSmooth(pts);
@@ -887,9 +888,17 @@
           vectorEffect: "non-scaling-stroke"
         }
       ),
-      /* @__PURE__ */ React.createElement("path", { d: areaOf(punPts), fill: "url(#finGradPun)", stroke: "none" }),
-      /* @__PURE__ */ React.createElement("path", { d: areaOf(recPts), fill: "url(#finGradRec)", stroke: "none" }),
-      /* @__PURE__ */ React.createElement(
+      single ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: areaOf(totPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
+        "path",
+        {
+          d: _finSmooth(totPts),
+          fill: "none",
+          stroke: FIN_SERIES.rec,
+          strokeWidth: "3",
+          strokeLinecap: "round",
+          vectorEffect: "non-scaling-stroke"
+        }
+      ), hov !== null && /* @__PURE__ */ React.createElement("circle", { cx: x(hov.i), cy: y(trend[hov.i].total), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" })) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: areaOf(punPts), fill: "url(#finGradPun)", stroke: "none" }), /* @__PURE__ */ React.createElement("path", { d: areaOf(recPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
         "path",
         {
           d: _finSmooth(punPts),
@@ -899,8 +908,7 @@
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
-      ),
-      /* @__PURE__ */ React.createElement(
+      ), /* @__PURE__ */ React.createElement(
         "path",
         {
           d: _finSmooth(recPts),
@@ -910,8 +918,7 @@
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
-      ),
-      (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
+      ), (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" }))))
     ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "10px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 12, color: hov && hov.i === i ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.1px", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       left: hov.px + 16,
@@ -924,7 +931,7 @@
       zIndex: 5,
       boxShadow: "0 8px 24px rgba(0,0,0,0.45)",
       whiteSpace: "nowrap"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov.i].full), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].puntual)))));
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginBottom: 5, letterSpacing: "0.04em", textTransform: "uppercase" } }, trend[hov.i].full), single ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Facturado"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].total))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12, marginBottom: 3 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.rec, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Recurrente"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].rec))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: FIN_SERIES.pun, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, "Puntual"), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", marginLeft: "auto", paddingLeft: 10 } }, _eur(trend[hov.i].puntual))))));
   };
   var AgencyBilling = () => {
     const toast = useToast();
@@ -1894,7 +1901,7 @@
       paddingBottom: 8,
       WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 4px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Facturaci\xF3n mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 14 } }, [[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 4px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Facturaci\xF3n mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 14 } }, [[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
       const on = range === n;
       return /* @__PURE__ */ React.createElement("button", { key: n, onClick: () => setRange(n), style: {
         padding: "8px 18px",
@@ -1909,7 +1916,7 @@
         fontWeight: on ? 500 : 400,
         transition: "all .12s"
       } }, lbl);
-    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
+    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,

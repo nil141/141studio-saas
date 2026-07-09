@@ -1427,14 +1427,15 @@ const _finSmooth = (pts) => {
 };
 
 // Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
-const FinTrendChart = ({ trend }) => {
+const FinTrendChart = ({ trend, single = false }) => {
   const [hov, setHov] = useState(null); // { i: índice de mes, px, py: posición del ratón en px }
   const W = 600, H = 150, PX = 10, PY = 14;
-  const maxV = Math.max(...trend.map(t => t.rec), ...trend.map(t => t.puntual), 1) * 1.15;
+  const maxV = Math.max(...(single ? trend.map(t => t.total) : [...trend.map(t => t.rec), ...trend.map(t => t.puntual)]), 1) * 1.15;
   const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
   const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
   const recPts = trend.map((t, i) => [x(i), y(t.rec)]);
   const punPts = trend.map((t, i) => [x(i), y(t.puntual)]);
+  const totPts = trend.map((t, i) => [x(i), y(t.total)]);
   const baseY = H - PY;
   const areaOf = (pts) => { const c = _finSmooth(pts); return c ? `${c}L${pts[pts.length-1][0]},${baseY}L${pts[0][0]},${baseY}Z` : ""; };
 
@@ -1472,21 +1473,32 @@ const FinTrendChart = ({ trend }) => {
           <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
             stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
         )}
-        {/* Áreas rellenas con degradado */}
-        <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
-        <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
-        {/* Curvas */}
-        <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
-          strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-        <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
-          strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-        {/* Puntos del mes bajo el cursor (o del último) */}
-        {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
-          <g key={i}>
-            <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
-            <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
-          </g>
-        ))}
+        {/* Áreas y curvas — en modo single, una sola línea morada (total) como outdomode */}
+        {single ? (
+          <>
+            <path d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
+            <path d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+            {hov !== null && (
+              <circle cx={x(hov.i)} cy={y(trend[hov.i].total)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
+            )}
+          </>
+        ) : (
+          <>
+            <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
+            <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
+            <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
+              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+            <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+            {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
+              <g key={i}>
+                <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
+                <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
+              </g>
+            ))}
+          </>
+        )}
       </svg>
       {/* Etiquetas de mes — 12px text-muted, como el eje de outdomode */}
       <div style={{ display:"flex", justifyContent:"space-between", padding:"10px 2px 0", flexShrink:0 }}>
@@ -1506,16 +1518,26 @@ const FinTrendChart = ({ trend }) => {
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
         }}>
           <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov.i].full}</div>
-          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
-            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
-            <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].rec)}</span>
-          </div>
-          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
-            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
-            <span style={{ color:"var(--text-muted)" }}>Puntual</span>
-            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].puntual)}</span>
-          </div>
+          {single ? (
+            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
+              <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
+              <span style={{ color:"var(--text-muted)" }}>Facturado</span>
+              <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].total)}</span>
+            </div>
+          ) : (
+            <>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
+                <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
+                <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
+                <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].rec)}</span>
+              </div>
+              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
+                <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
+                <span style={{ color:"var(--text-muted)" }}>Puntual</span>
+                <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].puntual)}</span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -2615,17 +2637,7 @@ const IncomePage = () => {
 
         {/* ── Gráfico de tendencia — formato "Daily completion" de outdomode ── */}
         <div style={{ padding:"6px 4px 0" }}>
-          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-            <div style={{ fontSize:16, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>Facturación mensual</div>
-            <div style={{ display:"flex", gap:14 }}>
-              {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
-                <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
-                  <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
-                  {lbl}
-                </span>
-              ))}
-            </div>
-          </div>
+          <div style={{ fontSize:16, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>Facturación mensual</div>
           <div style={{ display:"flex", gap:6, marginTop:14 }}>
             {[[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
               const on = range === n;
@@ -2644,7 +2656,7 @@ const IncomePage = () => {
             })}
           </div>
           <div style={{ height:192, display:"flex", flexDirection:"column", margin:"24px 0 4px" }}>
-            <FinTrendChart trend={trend}/>
+            <FinTrendChart trend={trend} single/>
           </div>
         </div>
 
