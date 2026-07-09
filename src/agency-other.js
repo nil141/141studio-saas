@@ -980,8 +980,8 @@
   var AgencyBilling = () => {
     const toast = useToast();
     const [data, setData] = useState(_finLoad);
-    const [tab, setTab] = useState("subs");
     const [addOpen, setAddOpen] = useState(false);
+    const [range, setRange] = useState(6);
     const [finType, setFinType] = useState("sub");
     const blankSub = { name: "", amount: "", cycle: "monthly", category: "Software", nextRenewal: "" };
     const blankExp = { date: _todayISO(), concept: "", amount: "", category: "Software" };
@@ -1005,7 +1005,6 @@
       persist({ ...data, subs: [sub, ...data.subs] });
       setSubForm(blankSub);
       setAddOpen(false);
-      setTab("subs");
       toast("Suscripci\xF3n a\xF1adida", "success");
     };
     const toggleSub = (id) => persist({ ...data, subs: data.subs.map((s) => s.id === id ? { ...s, active: !s.active } : s) });
@@ -1019,7 +1018,6 @@
       persist({ ...data, expenses: [exp, ...data.expenses] });
       setExpForm(blankExp);
       setAddOpen(false);
-      setTab("expenses");
       toast("Gasto a\xF1adido", "success");
     };
     const delExp = (id) => persist({ ...data, expenses: data.expenses.filter((e) => e.id !== id) });
@@ -1036,24 +1034,37 @@
         const k = s.nextRenewal.slice(0, 7);
         return k < nowKey ? k : nowKey;
       };
-      return Array.from({ length: 6 }, (_, k) => {
-        const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+      return Array.from({ length: range }, (_, k) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (range - 1 - k), 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         const puntual = data.expenses.filter((e) => (e.date || "").startsWith(key)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
         const rec = activeSubs.filter((s) => subStartKey(s) <= key).reduce((a, s) => a + _subMonthly(s), 0);
         return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
       });
     })();
-    const deltaPct = trend[4].total > 0 ? Math.round((trend[5].total - trend[4].total) / trend[4].total * 100) : null;
-    const byCat = {};
-    activeSubs.forEach((s) => {
-      byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s);
-    });
-    data.expenses.filter((e) => _sameMonth(e.date)).forEach((e) => {
-      byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0);
-    });
-    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5);
-    const catMax = cats.length ? cats[0][1] : 1;
+    const _prevMo = trend[trend.length - 2], _curMo = trend[trend.length - 1];
+    const deltaPct = _prevMo.total > 0 ? Math.round((_curMo.total - _prevMo.total) / _prevMo.total * 100) : null;
+    const nExpMonth = data.expenses.filter((e) => _sameMonth(e.date)).length;
+    const sortedExp = [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const dashedBtn = {
+      marginTop: 14,
+      width: "100%",
+      padding: "18px",
+      borderRadius: 18,
+      border: "1px dashed var(--border)",
+      background: "transparent",
+      cursor: "pointer",
+      color: "var(--text-muted)",
+      fontSize: 14,
+      fontFamily: "inherit",
+      opacity: 0.5,
+      transition: "opacity .2s",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      letterSpacing: "-0.2px"
+    };
     return /* @__PURE__ */ React.createElement("div", { style: {
       height: "100vh",
       display: "flex",
@@ -1062,35 +1073,100 @@
       maxWidth: 1400,
       margin: "0 auto",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, _eur(totalMonth), " este mes \xB7 ", activeSubs.length, " suscripci", activeSubs.length === 1 ? "\xF3n" : "ones", " activa", activeSubs.length === 1 ? "" : "s")), /* @__PURE__ */ React.createElement(
-      ActionPill,
+    } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, activeSubs.length, " suscripci", activeSubs.length === 1 ? "\xF3n" : "ones", " activa", activeSubs.length === 1 ? "" : "s", " \xB7 ", _eur(recurringMo), " al mes recurrente")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
+      setFinType("sub");
+      setAddOpen(true);
+    } })), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 32,
+      padding: "20px 4px 24px",
+      borderTop: "0.5px solid var(--border)",
+      borderBottom: "0.5px solid var(--border)"
+    } }, [
       {
-        plusActions: () => {
-          setFinType(tab === "expenses" ? "exp" : "sub");
-          setAddOpen(true);
-        }
+        label: "Gastado este mes",
+        value: _eur(totalMonth),
+        // En gastos subir es malo: rojo al alza, verde a la baja
+        delta: deltaPct === null ? /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: _eur(_prevMo.total),
+            suffix: `vs ${_prevMo.label.toLowerCase()}`,
+            dir: totalMonth > _prevMo.total ? "up" : "flat",
+            tone: totalMonth > _prevMo.total ? "bad" : "muted"
+          }
+        ) : /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: false, suffix: `vs ${_prevMo.label.toLowerCase()}` })
+      },
+      {
+        label: "Suscripciones",
+        value: _eur(recurringMo),
+        delta: /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: String(activeSubs.length),
+            suffix: `activa${activeSubs.length === 1 ? "" : "s"} \xB7 al mes`,
+            dir: "flat",
+            tone: "muted"
+          }
+        )
+      },
+      {
+        label: "Gastos puntuales",
+        value: _eur(expMonth),
+        delta: /* @__PURE__ */ React.createElement(
+          MetricDelta,
+          {
+            text: String(nExpMonth),
+            suffix: `movimiento${nExpMonth === 1 ? "" : "s"} este mes`,
+            dir: "flat",
+            tone: "muted"
+          }
+        )
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.8fr 1fr 0.72fr", gap: 14, marginBottom: 20, flexShrink: 0, height: 248 } }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px 14px", display: "flex", flexDirection: "column", overflow: "visible", position: "relative", zIndex: 2 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 } }, "Gasto mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(totalMonth)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: false, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement(FinTrendChart, { trend })), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14, flexShrink: 0 } }, "Por categor\xEDa \xB7 este mes"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, overflow: "hidden", display: "flex", flexDirection: "column", gap: 13 } }, cats.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa.") : cats.map(([cat, amt]) => /* @__PURE__ */ React.createElement("div", { key: cat }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 5 } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)", letterSpacing: "-0.2px" } }, cat), /* @__PURE__ */ React.createElement("span", { style: { fontVariantNumeric: "tabular-nums", color: "var(--text)" } }, _eur(amt))), /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${Math.max(3, amt / catMax * 100)}%`, background: FIN_SERIES.rec, borderRadius: 99, transition: "width .3s" } })))))), /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 18px", display: "flex", flexDirection: "column", justifyContent: "space-between" } }, [
-      { label: "Recurrente", value: _eur(recurringMo), sub: "al mes" },
-      { label: "Puntual", value: _eur(expMonth), sub: "este mes" },
-      { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo suscripciones" }
-    ].map((m, i) => /* @__PURE__ */ React.createElement("div", { key: m.label, style: {
-      paddingTop: i === 0 ? 0 : 12,
-      borderTop: i === 0 ? "none" : "0.5px solid var(--border)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 } }, m.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 400, letterSpacing: "-0.7px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, m.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 3, letterSpacing: "-0.2px" } }, m.sub))))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 6, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: tab === "subs" ? "active" : "", onClick: () => setTab("subs") }, "Suscripciones"), /* @__PURE__ */ React.createElement("button", { className: tab === "expenses" ? "active" : "", onClick: () => setTab("expenses") }, "Gastos puntuales"))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    ].map((k) => /* @__PURE__ */ React.createElement("div", { key: k.label, style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: {
+      fontSize: 32,
+      color: "var(--text)",
+      letterSpacing: "-0.08em",
+      lineHeight: 1,
+      fontFamily: "var(--font-display)",
+      fontVariantNumeric: "tabular-nums"
+    } }, k.value), k.delta))))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
       flex: 1,
       minHeight: 0,
       overflowY: "auto",
+      overflowX: "hidden",
       scrollbarGutter: "stable",
       paddingRight: 10,
       paddingTop: 16,
       paddingBottom: 8,
       WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
-    } }, tab === "subs" && /* @__PURE__ */ React.createElement(React.Fragment, null, data.subs.length === 0 && !addOpen ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin suscripciones \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
-      setFinType("sub");
-      setAddOpen(true);
-    } }, "a\xF1adir una")) : data.subs.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: s.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 4px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Gasto mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 14 } }, [[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
+      const on = range === n;
+      return /* @__PURE__ */ React.createElement("button", { key: n, onClick: () => setRange(n), style: {
+        padding: "8px 18px",
+        borderRadius: 99,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        background: on ? "rgba(255,255,255,0.08)" : "transparent",
+        border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+        color: on ? "var(--text)" : "var(--text-subtle)",
+        fontSize: 13.5,
+        letterSpacing: "-0.3px",
+        fontWeight: on ? 500 : 400,
+        transition: "all .12s"
+      } }, lbl);
+    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 48,
+      alignItems: "start",
+      borderTop: "0.5px solid var(--border)",
+      marginTop: 30,
+      paddingTop: 26
+    } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Suscripciones"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, activeSubs.length ? `${activeSubs.length} activa${activeSubs.length === 1 ? "" : "s"} \xB7 ${_eur(recurringMo)} al mes` : "Pagos recurrentes"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, data.subs.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: s.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1108,10 +1184,21 @@
       alignItems: "center",
       justifyContent: "center",
       color: s.active ? "var(--accent)" : "var(--text-subtle)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, s.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, s.category, " \xB7 ", s.cycle === "yearly" ? "Anual" : "Mensual", s.nextRenewal ? ` \xB7 Renueva ${_finDate(s.nextRenewal)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(s.amount), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", s.cycle === "yearly" ? "a\xF1o" : "mes")), s.cycle === "yearly" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _eur(_subMonthly(s)), "/mes")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleSub(s.id), style: { color: s.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, s.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delSub(s.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), tab === "expenses" && /* @__PURE__ */ React.createElement(React.Fragment, null, data.expenses.length === 0 && !addOpen ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin gastos puntuales \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
-      setFinType("exp");
-      setAddOpen(true);
-    } }, "a\xF1adir uno")) : [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((e, i, arr) => /* @__PURE__ */ React.createElement("div", { key: e.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, s.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, s.category, " \xB7 ", s.cycle === "yearly" ? "Anual" : "Mensual", s.nextRenewal ? ` \xB7 Renueva ${_finDate(s.nextRenewal)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(s.amount), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", s.cycle === "yearly" ? "a\xF1o" : "mes")), s.cycle === "yearly" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _eur(_subMonthly(s)), "/mes")), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleSub(s.id), style: { color: s.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, s.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delSub(s.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setFinType("sub");
+          setAddOpen(true);
+        },
+        style: dashedBtn,
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
+      },
+      data.subs.length === 0 ? "A\xF1ade tu primera suscripci\xF3n" : "A\xF1adir suscripci\xF3n",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
+    ))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Gastos puntuales"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, sortedExp.length ? `${sortedExp.length} en total${expMonth > 0 ? ` \xB7 ${_eur(expMonth)} este mes` : ""}` : "Pagos sueltos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, sortedExp.map((e, i, arr) => /* @__PURE__ */ React.createElement("div", { key: e.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1127,7 +1214,21 @@
       alignItems: "center",
       justifyContent: "center",
       color: "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, e.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(e.date), " \xB7 ", e.category)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px", flexShrink: 0 } }, _eur(e.amount)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delExp(e.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))))), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, e.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(e.date), " \xB7 ", e.category)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px", flexShrink: 0 } }, _eur(e.amount)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delExp(e.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setFinType("exp");
+          setAddOpen(true);
+        },
+        style: { ...dashedBtn, marginBottom: 24 },
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
+      },
+      sortedExp.length === 0 ? "Apunta tu primer gasto" : "A\xF1adir gasto",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
+    ))))), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,

@@ -1577,8 +1577,8 @@ const FinTrendChart = ({ trend, single = false }) => {
 const AgencyBilling = () => {
   const toast = useToast();
   const [data, setData] = useState(_finLoad);
-  const [tab, setTab]   = useState("subs"); // subs | expenses
   const [addOpen, setAddOpen] = useState(false);
+  const [range, setRange] = useState(6);   // meses del gráfico (6 | 12)
   const [finType, setFinType] = useState("sub"); // "sub" | "exp" — tipo dentro del pop-up
   const blankSub = { name: "", amount: "", cycle: "monthly", category: "Software", nextRenewal: "" };
   const blankExp = { date: _todayISO(), concept: "", amount: "", category: "Software" };
@@ -1598,7 +1598,7 @@ const AgencyBilling = () => {
     if (!subForm.name.trim() || !(Number(subForm.amount) > 0)) { toast("Pon nombre e importe", "error"); return; }
     const sub = { id: _finId(), name: subForm.name.trim(), amount: Number(subForm.amount), cycle: subForm.cycle, category: subForm.category, nextRenewal: subForm.nextRenewal, active: true };
     persist({ ...data, subs: [sub, ...data.subs] });
-    setSubForm(blankSub); setAddOpen(false); setTab("subs"); toast("Suscripción añadida", "success");
+    setSubForm(blankSub); setAddOpen(false); toast("Suscripción añadida", "success");
   };
   const toggleSub = (id) => persist({ ...data, subs: data.subs.map(s => s.id === id ? { ...s, active: !s.active } : s) });
   const delSub = (id) => persist({ ...data, subs: data.subs.filter(s => s.id !== id) });
@@ -1607,7 +1607,7 @@ const AgencyBilling = () => {
     if (!expForm.concept.trim() || !(Number(expForm.amount) > 0)) { toast("Pon concepto e importe", "error"); return; }
     const exp = { id: _finId(), date: expForm.date || _todayISO(), concept: expForm.concept.trim(), amount: Number(expForm.amount), category: expForm.category };
     persist({ ...data, expenses: [exp, ...data.expenses] });
-    setExpForm(blankExp); setAddOpen(false); setTab("expenses"); toast("Gasto añadido", "success");
+    setExpForm(blankExp); setAddOpen(false); toast("Gasto añadido", "success");
   };
   const delExp = (id) => persist({ ...data, expenses: data.expenses.filter(e => e.id !== id) });
 
@@ -1628,8 +1628,8 @@ const AgencyBilling = () => {
       const k = s.nextRenewal.slice(0, 7); // YYYY-MM
       return k < nowKey ? k : nowKey;      // si la renovación es futura, ya se paga ahora
     };
-    return Array.from({ length: 6 }, (_, k) => {
-      const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+    return Array.from({ length: range }, (_, k) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (range - 1 - k), 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const puntual = data.expenses
         .filter(e => (e.date || "").startsWith(key))
@@ -1640,134 +1640,113 @@ const AgencyBilling = () => {
       return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
     });
   })();
-  const deltaPct = trend[4].total > 0
-    ? Math.round(((trend[5].total - trend[4].total) / trend[4].total) * 100)
+  const _prevMo = trend[trend.length - 2], _curMo = trend[trend.length - 1];
+  const deltaPct = _prevMo.total > 0
+    ? Math.round(((_curMo.total - _prevMo.total) / _prevMo.total) * 100)
     : null;
-
-  // ── Desglose por categoría (este mes) ──
-  const byCat = {};
-  activeSubs.forEach(s => { byCat[s.category] = (byCat[s.category] || 0) + _subMonthly(s); });
-  data.expenses.filter(e => _sameMonth(e.date)).forEach(e => { byCat[e.category] = (byCat[e.category] || 0) + (Number(e.amount) || 0); });
-  const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]).slice(0, 5);
-  const catMax = cats.length ? cats[0][1] : 1;
+  const nExpMonth = data.expenses.filter(e => _sameMonth(e.date)).length;
+  const sortedExp = [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  const dashedBtn = {
+    marginTop:14, width:"100%", padding:"18px", borderRadius:18,
+    border:"1px dashed var(--border)", background:"transparent", cursor:"pointer",
+    color:"var(--text-muted)", fontSize:14, fontFamily:"inherit", opacity:0.5, transition:"opacity .2s",
+    display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"-0.2px",
+  };
 
   return (
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
     }}>
-      {/* Header — título + ActionPill (igual que el resto de páginas) */}
-      <div className="page-head" style={{ flexShrink:0 }}>
-        <div>
-          <h1>Gastos</h1>
-          <div className="sub">
-            {_eur(totalMonth)} este mes · {activeSubs.length} suscripci{activeSubs.length === 1 ? "ón" : "ones"} activa{activeSubs.length === 1 ? "" : "s"}
-          </div>
-        </div>
-        <ActionPill
-          plusActions={() => { setFinType(tab === "expenses" ? "exp" : "sub"); setAddOpen(true); }}
-        />
-      </div>
-
-      {/* ── Fila de gráficos: tendencia + categorías + stats ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1.8fr 1fr 0.72fr", gap:14, marginBottom:20, flexShrink:0, height:248 }}>
-
-        {/* Card A — Gasto mensual (líneas). zIndex para que el tooltip pinte sobre las tarjetas vecinas */}
-        <div className="card" style={{ padding:"16px 18px 14px", display:"flex", flexDirection:"column", overflow:"visible", position:"relative", zIndex:2 }}>
-          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10 }}>
-            <div>
-              <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
-                Gasto mensual
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
-                  {_eur(totalMonth)}
-                </span>
-                <TrendDelta pct={deltaPct} goodUp={false} suffix={`vs ${trend[4].label.toLowerCase()}`}/>
-              </div>
-            </div>
-            {/* Leyenda */}
-            <div style={{ display:"flex", gap:14, paddingTop:2 }}>
-              {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
-                <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
-                  <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
-                  {lbl}
-                </span>
-              ))}
+      {/* Cabecera fija: título + hero de KPIs */}
+      <div style={{ flexShrink:0 }}>
+        <div className="page-head" style={{ marginBottom:22 }}>
+          <div>
+            <h1>Gastos</h1>
+            <div className="sub">
+              {activeSubs.length} suscripci{activeSubs.length === 1 ? "ón" : "ones"} activa{activeSubs.length === 1 ? "" : "s"} · {_eur(recurringMo)} al mes recurrente
             </div>
           </div>
-          <FinTrendChart trend={trend}/>
+          <ActionPill plusActions={() => { setFinType("sub"); setAddOpen(true); }}/>
         </div>
 
-        {/* Card B — Por categoría (barras) */}
-        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column" }}>
-          <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:14, flexShrink:0 }}>
-            Por categoría · este mes
-          </div>
-          <div style={{ flex:1, minHeight:0, overflow:"hidden", display:"flex", flexDirection:"column", gap:13 }}>
-            {cats.length === 0 ? (
-              <div style={{ color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px" }}>Sin datos todavía.</div>
-            ) : cats.map(([cat, amt]) => (
-              <div key={cat}>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:5 }}>
-                  <span style={{ color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{cat}</span>
-                  <span style={{ fontVariantNumeric:"tabular-nums", color:"var(--text)" }}>{_eur(amt)}</span>
-                </div>
-                <div style={{ height:4, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
-                  <div style={{ height:"100%", width:`${Math.max(3, (amt / catMax) * 100)}%`, background:FIN_SERIES.rec, borderRadius:99, transition:"width .3s" }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Card C — Mini stats en columna */}
-        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+        {/* Hero de KPIs — mismo formato que Facturación / Inicio */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
+          padding:"20px 4px 24px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
           {[
-            { label: "Recurrente",     value: _eur(recurringMo),      sub: "al mes" },
-            { label: "Puntual",        value: _eur(expMonth),         sub: "este mes" },
-            { label: "Anual estimado", value: _eur(recurringMo * 12), sub: "solo suscripciones" },
-          ].map((m, i) => (
-            <div key={m.label} style={{
-              paddingTop: i === 0 ? 0 : 12,
-              borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
-            }}>
-              <div style={{ fontSize:10.5, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:5 }}>
-                {m.label}
+            { label:"Gastado este mes", value:_eur(totalMonth),
+              // En gastos subir es malo: rojo al alza, verde a la baja
+              delta: deltaPct === null
+                ? <MetricDelta text={_eur(_prevMo.total)} suffix={`vs ${_prevMo.label.toLowerCase()}`}
+                    dir={totalMonth > _prevMo.total ? "up" : "flat"}
+                    tone={totalMonth > _prevMo.total ? "bad" : "muted"}/>
+                : <TrendDelta pct={deltaPct} goodUp={false} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
+            { label:"Suscripciones", value:_eur(recurringMo),
+              delta:<MetricDelta text={String(activeSubs.length)}
+                suffix={`activa${activeSubs.length === 1 ? "" : "s"} · al mes`}
+                dir="flat" tone="muted"/> },
+            { label:"Gastos puntuales", value:_eur(expMonth),
+              delta:<MetricDelta text={String(nExpMonth)}
+                suffix={`movimiento${nExpMonth === 1 ? "" : "s"} este mes`}
+                dir="flat" tone="muted"/> },
+          ].map(k => (
+            <div key={k.label} style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              <span style={{ fontSize:16, lineHeight:1.3, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{k.label}</span>
+              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                <span style={{ fontSize:32, color:"var(--text)", letterSpacing:"-0.08em", lineHeight:1,
+                  fontFamily:"var(--font-display)", fontVariantNumeric:"tabular-nums" }}>{k.value}</span>
+                {k.delta}
               </div>
-              <div style={{ fontSize:18, fontWeight:400, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
-                {m.value}
-              </div>
-              <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>{m.sub}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ marginBottom:6, flexShrink:0 }}>
-        <div className="seg">
-          <button className={tab === "subs" ? "active" : ""} onClick={() => setTab("subs")}>Suscripciones</button>
-          <button className={tab === "expenses" ? "active" : ""} onClick={() => setTab("expenses")}>Gastos puntuales</button>
-        </div>
-      </div>
-
-      {/* Zona scrollable — solo las listas se deslizan */}
+      {/* Zona scrollable — gráfico + listas */}
       <div className="tasks-scroll" style={{
-        flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
+        flex:1, minHeight:0, overflowY:"auto", overflowX:"hidden", scrollbarGutter:"stable",
         paddingRight:10, paddingTop:16, paddingBottom:8,
         WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
         maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       }}>
 
-        {/* ── Suscripciones ── */}
-        {tab === "subs" && (
-          <>
-            {data.subs.length === 0 && !addOpen ? (
-              <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-                Sin suscripciones — <button className="btn ghost sm" onClick={() => { setFinType("sub"); setAddOpen(true); }}>añadir una</button>
-              </div>
-            ) : data.subs.map((s, i) => (
+        {/* ── Gráfico de tendencia — formato "Daily completion" de outdomode ── */}
+        <div style={{ padding:"6px 4px 0" }}>
+          <div style={{ fontSize:16, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>Gasto mensual</div>
+          <div style={{ display:"flex", gap:6, marginTop:14 }}>
+            {[[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
+              const on = range === n;
+              return (
+                <button key={n} onClick={() => setRange(n)} style={{
+                  padding:"8px 18px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
+                  background: on ? "rgba(255,255,255,0.08)" : "transparent",
+                  border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+                  color: on ? "var(--text)" : "var(--text-subtle)",
+                  fontSize:13.5, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
+                  transition:"all .12s",
+                }}>
+                  {lbl}
+                </button>
+              );
+            })}
+          </div>
+          <div style={{ height:192, display:"flex", flexDirection:"column", margin:"24px 0 4px" }}>
+            <FinTrendChart trend={trend} single/>
+          </div>
+        </div>
+
+        {/* ── Suscripciones + Gastos puntuales — dos columnas estilo outdomode ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"start",
+          borderTop:"0.5px solid var(--border)", marginTop:30, paddingTop:26 }}>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Suscripciones</div>
+          <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px" }}>
+            {activeSubs.length
+              ? `${activeSubs.length} activa${activeSubs.length === 1 ? "" : "s"} · ${_eur(recurringMo)} al mes`
+              : "Pagos recurrentes"}
+          </div>
+          <div style={{ marginTop:10 }}>
+            {data.subs.map((s, i) => (
               <div key={s.id} className="task-row" style={{
                 display:"flex", alignItems:"center", gap:14,
                 padding:"13px 4px", opacity: s.active ? 1 : 0.45,
@@ -1809,17 +1788,24 @@ const AgencyBilling = () => {
                 </button>
               </div>
             ))}
-          </>
-        )}
+            <button onClick={() => { setFinType("sub"); setAddOpen(true); }} style={dashedBtn}
+              onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+              {data.subs.length === 0 ? "Añade tu primera suscripción" : "Añadir suscripción"} <Icon name="plus" size={15}/>
+            </button>
+          </div>
+        </div>
 
-        {/* ── Gastos puntuales ── */}
-        {tab === "expenses" && (
-          <>
-            {data.expenses.length === 0 && !addOpen ? (
-              <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-                Sin gastos puntuales — <button className="btn ghost sm" onClick={() => { setFinType("exp"); setAddOpen(true); }}>añadir uno</button>
-              </div>
-            ) : [...data.expenses].sort((a, b) => (b.date || "").localeCompare(a.date || "")).map((e, i, arr) => (
+        {/* Gastos puntuales */}
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Gastos puntuales</div>
+          <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px" }}>
+            {sortedExp.length
+              ? `${sortedExp.length} en total${expMonth > 0 ? ` · ${_eur(expMonth)} este mes` : ""}`
+              : "Pagos sueltos"}
+          </div>
+          <div style={{ marginTop:10 }}>
+            {sortedExp.map((e, i, arr) => (
               <div key={e.id} className="task-row" style={{
                 display:"flex", alignItems:"center", gap:14,
                 padding:"13px 4px",
@@ -1847,8 +1833,14 @@ const AgencyBilling = () => {
                 </button>
               </div>
             ))}
-          </>
-        )}
+            <button onClick={() => { setFinType("exp"); setAddOpen(true); }} style={{ ...dashedBtn, marginBottom:24 }}
+              onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+              onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+              {sortedExp.length === 0 ? "Apunta tu primer gasto" : "Añadir gasto"} <Icon name="plus" size={15}/>
+            </button>
+          </div>
+        </div>
+        </div>
       </div>
 
       {/* ── Pop-up unificado: Suscripción / Gasto puntual — estilo Tareas ── */}
