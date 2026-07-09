@@ -848,7 +848,7 @@
           best = i;
         }
       });
-      setHov({ i: best, px, py });
+      setHov({ i: best, px, py, w: r.width });
     };
     return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(
       "svg",
@@ -921,7 +921,8 @@
       ), (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" }))))
     ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "10px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 12, color: hov && hov.i === i ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.1px", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
-      left: hov.px + 16,
+      left: hov.px > (hov.w || 0) - 190 ? hov.px - 16 : hov.px + 16,
+      transform: hov.px > (hov.w || 0) - 190 ? "translateX(-100%)" : "none",
       top: hov.py,
       background: "#1c1c1f",
       border: "0.5px solid rgba(255,255,255,0.12)",
@@ -1895,6 +1896,7 @@
       flex: 1,
       minHeight: 0,
       overflowY: "auto",
+      overflowX: "hidden",
       scrollbarGutter: "stable",
       paddingRight: 10,
       paddingTop: 16,

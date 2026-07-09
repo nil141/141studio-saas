@@ -1445,7 +1445,7 @@ const FinTrendChart = ({ trend, single = false }) => {
     const relX = px / r.width * W;
     let best = 0, bd = Infinity;
     trend.forEach((t, i) => { const d = Math.abs(x(i) - relX); if (d < bd) { bd = d; best = i; } });
-    setHov({ i: best, px, py });
+    setHov({ i: best, px, py, w: r.width });
   };
 
   return (
@@ -1508,11 +1508,14 @@ const FinTrendChart = ({ trend, single = false }) => {
           </span>
         ))}
       </div>
-      {/* Tooltip — sigue al ratón: a su derecha, con el borde superior a la altura del cursor */}
+      {/* Tooltip — sigue al ratón; cerca del borde derecho se voltea a la izquierda
+          para no desbordar el contenedor (provocaba scroll horizontal) */}
       {hov !== null && (
         <div style={{
           position:"absolute",
-          left: hov.px + 16, top: hov.py,
+          left: hov.px > (hov.w || 0) - 190 ? hov.px - 16 : hov.px + 16,
+          transform: hov.px > (hov.w || 0) - 190 ? "translateX(-100%)" : "none",
+          top: hov.py,
           background:"#1c1c1f", border:"0.5px solid rgba(255,255,255,0.12)",
           borderRadius:10, padding:"8px 11px", pointerEvents:"none", zIndex:5,
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
@@ -2629,7 +2632,7 @@ const IncomePage = () => {
 
       {/* Zona scrollable — solo las listas se deslizan */}
       <div className="tasks-scroll" style={{
-        flex:1, minHeight:0, overflowY:"auto", scrollbarGutter:"stable",
+        flex:1, minHeight:0, overflowY:"auto", overflowX:"hidden", scrollbarGutter:"stable",
         paddingRight:10, paddingTop:16, paddingBottom:8,
         WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
         maskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
