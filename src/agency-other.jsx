@@ -1525,8 +1525,8 @@ const FinTrendChart = ({ trend, single = false }) => {
                 `translate(${hov.px + (flip ? -14 : 14)}px, ${Math.max(8, Math.min(hov.py + 14, (hov.h || 150) - 62))}px)`
                 + (flip ? " translateX(-100%)" : ""),
               transition:"transform 400ms",
-              background:"rgba(40,40,45,0.6)",
-              backdropFilter:"blur(20px) saturate(160%)", WebkitBackdropFilter:"blur(20px) saturate(160%)",
+              background:"rgba(32,32,36,0.85)",
+              backdropFilter:"blur(20px)", WebkitBackdropFilter:"blur(20px)",
               border:"0.5px solid rgba(255,255,255,0.08)",
               borderRadius:14, padding:"9px 16px", pointerEvents:"none", zIndex:5,
               boxShadow:"0 12px 36px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
