@@ -2546,6 +2546,13 @@ const IncomePage = () => {
   const cardTitle = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:14 };
   const sectionHead = { fontSize:11, fontWeight:600, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--text-subtle)",
     display:"flex", alignItems:"center", gap:8, margin:"28px 4px 6px" };
+  const sectionSum = { marginLeft:"auto", fontWeight:400, textTransform:"none", letterSpacing:"-0.2px", fontSize:12, opacity:0.8 };
+  const dashedBtn = {
+    marginTop:14, width:"100%", padding:"18px", borderRadius:18,
+    border:"1px dashed var(--border)", background:"transparent", cursor:"pointer",
+    color:"var(--text-muted)", fontSize:14, fontFamily:"inherit", opacity:0.5, transition:"opacity .2s",
+    display:"flex", alignItems:"center", justifyContent:"center", gap:8, letterSpacing:"-0.2px",
+  };
 
   return (
     <div style={{
@@ -2634,12 +2641,9 @@ const IncomePage = () => {
         <div style={sectionHead}>
           Mensualidades
           <span style={{ opacity:0.55, fontWeight:400 }}>· {data.recs.length}</span>
+          {recurringMo > 0 && <span style={sectionSum}>{_eur(recurringMo)}/mes</span>}
         </div>
-        {data.recs.length === 0 ? (
-            <div style={{ padding:"14px 4px", color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px" }}>
-              Sin mensualidades — <button className="btn ghost sm" onClick={() => { setIncType("rec"); setAddOpen(true); }}>añadir una</button>
-            </div>
-          ) : data.recs.map((r, i) => (
+        {data.recs.map((r, i) => (
             <div key={r.id} className="task-row" style={{
               display:"flex", alignItems:"center", gap:14,
               padding:"13px 4px", opacity: r.active ? 1 : 0.45,
@@ -2676,13 +2680,18 @@ const IncomePage = () => {
                 <Icon name="trash" size={13}/>
               </button>
             </div>
-          ))
-        }
+          ))}
+        <button onClick={() => { setIncType("rec"); setAddOpen(true); }} style={dashedBtn}
+          onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+          onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+          {data.recs.length === 0 ? "Añade tu primera mensualidad" : "Añadir mensualidad"} <Icon name="plus" size={15}/>
+        </button>
 
         {/* ── Cobros: facturas de Stripe + ingresos puntuales ── */}
         <div style={sectionHead}>
           Cobros
           <span style={{ opacity:0.55, fontWeight:400 }}>· {stripeOpen.length + sortedInc.length}</span>
+          {punMonth > 0 && <span style={sectionSum}>{_eur(punMonth)} este mes</span>}
         </div>
           {/* Facturas de Stripe emitidas y pendientes de cobro */}
           {stripeOpen.map(inv => (
@@ -2724,11 +2733,7 @@ const IncomePage = () => {
                 : <span style={{ width:28, flexShrink:0 }}/>}
             </div>
           ))}
-          {sortedInc.length === 0 && stripeOpen.length === 0 ? (
-            <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
-              Sin ingresos puntuales — <button className="btn ghost sm" onClick={() => { setIncType("pun"); setAddOpen(true); }}>añadir uno</button>
-            </div>
-          ) : sortedInc.map((inc, i) => (
+          {sortedInc.map((inc, i) => (
             <div key={inc.id} className="task-row" style={{
               display:"flex", alignItems:"center", gap:14,
               padding:"13px 4px",
@@ -2778,6 +2783,11 @@ const IncomePage = () => {
               )}
             </div>
           ))}
+        <button onClick={() => { setIncType("pun"); setAddOpen(true); }} style={{ ...dashedBtn, marginBottom:24 }}
+          onMouseEnter={e => e.currentTarget.style.opacity = 0.85}
+          onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
+          {stripeOpen.length + sortedInc.length === 0 ? "Registra tu primer cobro" : "Añadir cobro"} <Icon name="plus" size={15}/>
+        </button>
       </div>
 
       {/* ── Pop-up unificado: Mensualidad / Puntual — estilo Tareas ── */}

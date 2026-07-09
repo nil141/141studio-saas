@@ -1800,6 +1800,26 @@
       gap: 8,
       margin: "28px 4px 6px"
     };
+    const sectionSum = { marginLeft: "auto", fontWeight: 400, textTransform: "none", letterSpacing: "-0.2px", fontSize: 12, opacity: 0.8 };
+    const dashedBtn = {
+      marginTop: 14,
+      width: "100%",
+      padding: "18px",
+      borderRadius: 18,
+      border: "1px dashed var(--border)",
+      background: "transparent",
+      cursor: "pointer",
+      color: "var(--text-muted)",
+      fontSize: 14,
+      fontFamily: "inherit",
+      opacity: 0.5,
+      transition: "opacity .2s",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: 8,
+      letterSpacing: "-0.2px"
+    };
     return /* @__PURE__ */ React.createElement("div", { style: {
       height: "100vh",
       display: "flex",
@@ -1872,10 +1892,7 @@
       paddingBottom: 8,
       WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardStyle, padding: "16px 18px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 8 } }, "Facturaci\xF3n mensual \xB7 \xFAltimos 6 meses"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { height: 140, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length)), data.recs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 4px", color: "var(--text-subtle)", fontSize: 13, letterSpacing: "-0.3px" } }, "Sin mensualidades \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
-      setIncType("rec");
-      setAddOpen(true);
-    } }, "a\xF1adir una")) : data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardStyle, padding: "16px 18px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 8 } }, "Facturaci\xF3n mensual \xB7 \xFAltimos 6 meses"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { height: 140, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1893,7 +1910,21 @@
       alignItems: "center",
       justifyContent: "center",
       color: r.active ? FIN_SERIES.rec : "var(--text-subtle)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(_cobro(r)), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _fiscalSub(r))), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Cobros", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", stripeOpen.length + sortedInc.length)), stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)" } }, r.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, r.clientName || "Sin cliente", " \xB7 ", r.cycle === "yearly" ? "Anual" : "Mensual", r.nextCharge ? ` \xB7 Cobro ${_finDate(r.nextCharge)}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, _eur(_cobro(r)), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11.5 } }, "/", r.cycle === "yearly" ? "a\xF1o" : "mes")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, _fiscalSub(r))), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => toggleRec(r.id), style: { color: r.active ? "var(--green)" : "var(--text-subtle)", flexShrink: 0 } }, r.active ? "Activa" : "Pausada"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delRec(r.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setIncType("rec");
+          setAddOpen(true);
+        },
+        style: dashedBtn,
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
+      },
+      data.recs.length === 0 ? "A\xF1ade tu primera mensualidad" : "A\xF1adir mensualidad",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
+    ), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Cobros", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", stripeOpen.length + sortedInc.length), punMonth > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(punMonth), " este mes")), stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1928,10 +1959,7 @@
         style: { flexShrink: 0 }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
-    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }))), sortedInc.length === 0 && stripeOpen.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin ingresos puntuales \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => {
-      setIncType("pun");
-      setAddOpen(true);
-    } }, "a\xF1adir uno")) : sortedInc.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
+    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }))), sortedInc.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -1966,7 +1994,21 @@
         style: { flexShrink: 0 }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
-    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 }))))), /* @__PURE__ */ React.createElement(
+    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setIncType("pun");
+          setAddOpen(true);
+        },
+        style: { ...dashedBtn, marginBottom: 24 },
+        onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
+        onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
+      },
+      stripeOpen.length + sortedInc.length === 0 ? "Registra tu primer cobro" : "A\xF1adir cobro",
+      " ",
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
+    )), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,
