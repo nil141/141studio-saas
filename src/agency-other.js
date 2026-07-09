@@ -912,7 +912,7 @@
         }
       ),
       (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "6px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 10, color: hov && hov.i === i ? "var(--text)" : "var(--text-subtle)", letterSpacing: "0.04em", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", padding: "10px 2px 0", flexShrink: 0 } }, trend.map((t, i) => /* @__PURE__ */ React.createElement("span", { key: t.key, style: { fontSize: 12, color: hov && hov.i === i ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.1px", transition: "color .1s" } }, t.label))), hov !== null && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       left: hov.px + 16,
       top: hov.py,
@@ -1648,6 +1648,7 @@
     const [stripeMeta, setStripeMeta] = useState(null);
     const [stripeInvOpen, setStripeInvOpen] = useState(false);
     const [payLinkOpen, setPayLinkOpen] = useState(false);
+    const [range, setRange] = useState(6);
     const fetchStripe = () => {
       window.apiFetch("/api/stripe/invoices", { limit: 100 }).then((r) => r.json()).then((res) => {
         if (!res.ok) return;
@@ -1764,15 +1765,16 @@
         const k = r.nextCharge.slice(0, 7);
         return k < nowKey ? k : nowKey;
       };
-      return Array.from({ length: 6 }, (_, k) => {
-        const d = new Date(now.getFullYear(), now.getMonth() - (5 - k), 1);
+      return Array.from({ length: range }, (_, k) => {
+        const d = new Date(now.getFullYear(), now.getMonth() - (range - 1 - k), 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
         const puntual = allIncomes.filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + _withVat(i), 0);
         const rec = activeRecs.filter((r) => recStartKey(r) <= key).reduce((a, r) => a + _recMoVat(r), 0);
         return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
       });
     })();
-    const deltaPct = trend[4].total > 0 ? Math.round((trend[5].total - trend[4].total) / trend[4].total * 100) : null;
+    const _prevMo = trend[trend.length - 2], _curMo = trend[trend.length - 1];
+    const deltaPct = _prevMo.total > 0 ? Math.round((_curMo.total - _prevMo.total) / _prevMo.total * 100) : null;
     const byClient = {};
     activeRecs.forEach((r) => {
       const k = r.clientName || "Sin cliente";
@@ -1892,7 +1894,22 @@
       paddingBottom: 8,
       WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",
       maskImage: "linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardStyle, padding: "16px 18px 12px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 8 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 8 } }, "Facturaci\xF3n mensual \xB7 \xFAltimos 6 meses"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 26, fontWeight: 400, letterSpacing: "-1.1px", fontVariantNumeric: "tabular-nums", lineHeight: 1 } }, _eur(monthTotal)), /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${trend[4].label.toLowerCase()}` }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, paddingTop: 2 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { height: 140, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "6px 4px 0" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Facturaci\xF3n mensual"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14 } }, [["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => /* @__PURE__ */ React.createElement("span", { key: lbl, style: { display: "inline-flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: col } }), lbl)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 14 } }, [[6, "6 meses"], [12, "12 meses"]].map(([n, lbl]) => {
+      const on = range === n;
+      return /* @__PURE__ */ React.createElement("button", { key: n, onClick: () => setRange(n), style: {
+        padding: "8px 18px",
+        borderRadius: 99,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        background: on ? "rgba(255,255,255,0.08)" : "transparent",
+        border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+        color: on ? "var(--text)" : "var(--text-subtle)",
+        fontSize: 13.5,
+        letterSpacing: "-0.3px",
+        fontWeight: on ? 500 : 400,
+        transition: "all .12s"
+      } }, lbl);
+    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
