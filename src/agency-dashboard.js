@@ -184,7 +184,26 @@
     const prevMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("es-ES", { month: "short" });
     const _pctDelta = (cur, prev) => prev > 0 ? Math.round((cur - prev) / prev * 100) : null;
     const spendDelta = _pctDelta(monthSpend, lastMonthSpend);
-    const invoiceDelta = stripeMonth !== null && stripeMonth !== false && stripePrev !== null ? _pctDelta(stripeMonth, stripePrev) : null;
+    const _incMonth = (offset = 0) => {
+      try {
+        const d = JSON.parse(localStorage.getItem("141_income_v1")) || {};
+        const vatOf = (x) => x.vat === void 0 || x.vat === null ? 21 : Number(x.vat);
+        const withVat = (x) => (Number(x.amount) || 0) * (1 + vatOf(x) / 100);
+        const ref = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+        const key = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+        const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const pun = (d.incomes || []).filter((i) => (i.date || "").startsWith(key)).reduce((a, i) => a + withVat(i), 0);
+        const rec = (d.recs || []).filter((r) => r.active).filter((r) => {
+          const start = r.nextCharge && r.nextCharge.slice(0, 7) < nowKey ? r.nextCharge.slice(0, 7) : nowKey;
+          return start <= key;
+        }).reduce((a, r) => a + (r.cycle === "yearly" ? withVat(r) / 12 : withVat(r)), 0);
+        return pun + rec;
+      } catch (e) {
+        return 0;
+      }
+    };
+    const facturadoCur = (stripeMonth === null || stripeMonth === false ? 0 : stripeMonth / 100) + _incMonth(0);
+    const facturadoPrev = (stripePrev || 0) / 100 + _incMonth(-1);
     const _countDelta = (n, word) => n > 0 ? { text: String(n), suffix: word, dir: "down", tone: "bad" } : { text: "0", suffix: word, dir: "flat", tone: "muted" };
     const _pctToDelta = (pct, goodUp, suffix) => {
       if (pct === null) return { text: "\u2014", suffix, dir: "flat", tone: "muted" };
@@ -219,8 +238,13 @@
       },
       {
         label: "Facturado este mes",
-        value: stripeMonth === null ? "\u2026" : stripeMonth === false ? "\u2014" : `\u20AC${(stripeMonth / 100).toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-        delta: stripeMonth === false ? { text: "Sin Stripe", dir: "flat", tone: "muted" } : _pctToDelta(invoiceDelta, true, `vs ${prevMonthLabel}`),
+        value: stripeMonth === null ? "\u2026" : `\u20AC${facturadoCur.toLocaleString("es-ES", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+        delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : {
+          text: `\u20AC${Math.round(facturadoPrev)}`,
+          suffix: `vs ${prevMonthLabel}`,
+          dir: facturadoCur > facturadoPrev ? "up" : "flat",
+          tone: facturadoCur > facturadoPrev ? "good" : "muted"
+        },
         nav: "income"
       }
     ];
