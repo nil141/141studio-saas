@@ -1448,58 +1448,92 @@ const FinTrendChart = ({ trend, single = false }) => {
     setHov({ i: best, px, py, w: r.width });
   };
 
+  // Posición del punto activo en % del área del gráfico. El punto y el tooltip
+  // son capas HTML: dentro del SVG estirado el círculo se deformaba en elipse.
+  const dotLeftPct = hov !== null ? (x(hov.i) / W) * 100 : 0;
+  const dotTopPct  = hov !== null ? (y(trend[hov.i].total) / H) * 100 : 0;
+  const flip       = hov !== null && (dotLeftPct / 100) * (hov.w || 600) > (hov.w || 600) - 230;
+
   return (
     <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
-      <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
-        style={{ flex:1, minHeight:0, display:"block", cursor:"crosshair" }}
-        onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
-        <defs>
-          <linearGradient id="finGradRec" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={FIN_SERIES.rec} stopOpacity="0.3"/>
-            <stop offset="95%" stopColor={FIN_SERIES.rec} stopOpacity="0"/>
-          </linearGradient>
-          <linearGradient id="finGradPun" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={FIN_SERIES.pun} stopOpacity="0.22"/>
-            <stop offset="95%" stopColor={FIN_SERIES.pun} stopOpacity="0"/>
-          </linearGradient>
-        </defs>
-        {/* Líneas de referencia punteadas (como el área de Campañas) */}
-        {[0, 0.25, 0.5, 0.75, 1].map(f => (
-          <line key={f} x1={PX} x2={W - PX} y1={PY + f * (H - 2 * PY)} y2={PY + f * (H - 2 * PY)}
-            stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        ))}
-        {/* Crosshair */}
-        {hov !== null && (
-          <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
-            stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
-        )}
-        {/* Áreas y curvas — en modo single, una sola línea morada (total) como outdomode */}
-        {single ? (
+      <div style={{ position:"relative", flex:1, minHeight:0 }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+          style={{ display:"block", cursor:"crosshair" }}
+          onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
+          <defs>
+            <linearGradient id="finGradRec" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={FIN_SERIES.rec} stopOpacity="0.3"/>
+              <stop offset="95%" stopColor={FIN_SERIES.rec} stopOpacity="0"/>
+            </linearGradient>
+            <linearGradient id="finGradPun" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor={FIN_SERIES.pun} stopOpacity="0.22"/>
+              <stop offset="95%" stopColor={FIN_SERIES.pun} stopOpacity="0"/>
+            </linearGradient>
+          </defs>
+          {/* Líneas de referencia punteadas (como el área de Campañas) */}
+          {[0, 0.25, 0.5, 0.75, 1].map(f => (
+            <line key={f} x1={PX} x2={W - PX} y1={PY + f * (H - 2 * PY)} y2={PY + f * (H - 2 * PY)}
+              stroke="rgba(255,255,255,0.05)" strokeDasharray="3 3" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+          ))}
+          {/* Crosshair — en single: línea blanca del punto a la base, como outdomode */}
+          {hov !== null && (single ? (
+            <line x1={x(hov.i)} x2={x(hov.i)} y1={y(trend[hov.i].total)} y2={baseY + 4}
+              stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" vectorEffect="non-scaling-stroke"/>
+          ) : (
+            <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
+              stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
+          ))}
+          {/* Áreas y curvas — en modo single, una sola línea morada (total) como outdomode */}
+          {single ? (
+            <>
+              <path d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+                strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+            </>
+          ) : (
+            <>
+              <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
+              <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
+                strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+              <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+                strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
+              {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
+                <g key={i}>
+                  <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
+                  <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
+                </g>
+              ))}
+            </>
+          )}
+        </svg>
+
+        {/* Punto activo + tooltip estilo outdomode (solo single) */}
+        {single && hov !== null && (
           <>
-            <path d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
-            <path d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
-              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-            {hov !== null && (
-              <circle cx={x(hov.i)} cy={y(trend[hov.i].total)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
-            )}
-          </>
-        ) : (
-          <>
-            <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
-            <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
-            <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
-              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-            <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
-              strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-            {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
-              <g key={i}>
-                <circle cx={x(i)} cy={y(trend[i].rec)} r="3.5" fill={FIN_SERIES.rec} stroke="var(--bg-elev)" strokeWidth="2"/>
-                <circle cx={x(i)} cy={y(trend[i].puntual)} r="3.5" fill={FIN_SERIES.pun} stroke="var(--bg-elev)" strokeWidth="2"/>
-              </g>
-            ))}
+            <div style={{
+              position:"absolute", left:`${dotLeftPct}%`, top:`${dotTopPct}%`,
+              transform:"translate(-50%,-50%)", width:15, height:15, borderRadius:"50%",
+              background:FIN_SERIES.rec, border:"3px solid #fff",
+              boxShadow:"0 2px 10px rgba(0,0,0,0.45)", pointerEvents:"none", zIndex:4,
+            }}/>
+            <div style={{
+              position:"absolute",
+              left: flip ? `calc(${dotLeftPct}% - 22px)` : `calc(${dotLeftPct}% + 22px)`,
+              top: `${Math.min(Math.max(dotTopPct, 24), 76)}%`,
+              transform: flip ? "translate(-100%,-50%)" : "translateY(-50%)",
+              background:"rgba(28,28,32,0.72)",
+              backdropFilter:"blur(24px) saturate(160%)", WebkitBackdropFilter:"blur(24px) saturate(160%)",
+              border:"0.5px solid rgba(255,255,255,0.1)",
+              borderRadius:18, padding:"13px 20px", pointerEvents:"none", zIndex:5,
+              boxShadow:"0 16px 48px rgba(0,0,0,0.5)", whiteSpace:"nowrap",
+            }}>
+              <div style={{ fontSize:13.5, color:"var(--text-muted)", letterSpacing:"-0.2px", marginBottom:2 }}>{trend[hov.i].full}</div>
+              <div style={{ fontSize:22, fontWeight:500, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", color:"var(--text)" }}>{_eur(trend[hov.i].total)}</div>
+            </div>
           </>
         )}
-      </svg>
+      </div>
       {/* Etiquetas de mes — 12px text-muted, como el eje de outdomode */}
       <div style={{ display:"flex", justifyContent:"space-between", padding:"10px 2px 0", flexShrink:0 }}>
         {trend.map((t, i) => (
@@ -1508,9 +1542,8 @@ const FinTrendChart = ({ trend, single = false }) => {
           </span>
         ))}
       </div>
-      {/* Tooltip — sigue al ratón; cerca del borde derecho se voltea a la izquierda
-          para no desbordar el contenedor (provocaba scroll horizontal) */}
-      {hov !== null && (
+      {/* Tooltip clásico de dos series (Gastos) — sigue al ratón */}
+      {!single && hov !== null && (
         <div style={{
           position:"absolute",
           left: hov.px > (hov.w || 0) - 190 ? hov.px - 16 : hov.px + 16,
@@ -1521,26 +1554,16 @@ const FinTrendChart = ({ trend, single = false }) => {
           boxShadow:"0 8px 24px rgba(0,0,0,0.45)", whiteSpace:"nowrap",
         }}>
           <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginBottom:5, letterSpacing:"0.04em", textTransform:"uppercase" }}>{trend[hov.i].full}</div>
-          {single ? (
-            <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
-              <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
-              <span style={{ color:"var(--text-muted)" }}>Facturado</span>
-              <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].total)}</span>
-            </div>
-          ) : (
-            <>
-              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
-                <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
-                <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
-                <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].rec)}</span>
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
-                <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
-                <span style={{ color:"var(--text-muted)" }}>Puntual</span>
-                <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].puntual)}</span>
-              </div>
-            </>
-          )}
+          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, marginBottom:3 }}>
+            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.rec, flexShrink:0 }}/>
+            <span style={{ color:"var(--text-muted)" }}>Recurrente</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].rec)}</span>
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12 }}>
+            <span style={{ width:7, height:7, borderRadius:99, background:FIN_SERIES.pun, flexShrink:0 }}/>
+            <span style={{ color:"var(--text-muted)" }}>Puntual</span>
+            <span style={{ fontVariantNumeric:"tabular-nums", marginLeft:"auto", paddingLeft:10 }}>{_eur(trend[hov.i].puntual)}</span>
+          </div>
         </div>
       )}
     </div>
