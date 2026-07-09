@@ -950,7 +950,7 @@
       position: "absolute",
       left: 0,
       top: 0,
-      transform: `translate(${hov.px + (flip ? -14 : 14)}px, ${Math.max(8, Math.min(hov.py + 14, (hov.h || 150) - 62))}px)` + (flip ? " translateX(-100%)" : ""),
+      transform: `translate(${dotLeftPct / 100 * (hov.w || 0) + (flip ? -12 : 12)}px, ${Math.max(8, Math.min(dotTopPct / 100 * (hov.h || 150) + 18, (hov.h || 150) - 60))}px)` + (flip ? " translateX(-100%)" : ""),
       transition: "transform 400ms",
       background: "rgba(32,32,36,0.85)",
       backdropFilter: "blur(20px)",

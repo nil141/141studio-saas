@@ -1517,12 +1517,13 @@ const FinTrendChart = ({ trend, single = false }) => {
               background:FIN_SERIES.rec, border:"3px solid #fff",
               boxShadow:"0 2px 10px rgba(0,0,0,0.45)", pointerEvents:"none", zIndex:4,
             }}/>
-            {/* Tooltip compacto (~50px) anclado al cursor con deslizamiento de 400ms,
-                como el recharts-tooltip-wrapper de outdomode (wrapper-right/bottom) */}
+            {/* Tooltip compacto (~50px) anclado al punto activo (a ~10px a su derecha,
+                algo por debajo) con deslizamiento de 400ms, como el
+                recharts-tooltip-wrapper de outdomode: translate(x_punto+10, y_punto+…) */}
             <div style={{
               position:"absolute", left:0, top:0,
               transform:
-                `translate(${hov.px + (flip ? -14 : 14)}px, ${Math.max(8, Math.min(hov.py + 14, (hov.h || 150) - 62))}px)`
+                `translate(${(dotLeftPct / 100) * (hov.w || 0) + (flip ? -12 : 12)}px, ${Math.max(8, Math.min((dotTopPct / 100) * (hov.h || 150) + 18, (hov.h || 150) - 60))}px)`
                 + (flip ? " translateX(-100%)" : ""),
               transition:"transform 400ms",
               background:"rgba(32,32,36,0.85)",
