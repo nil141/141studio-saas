@@ -133,25 +133,9 @@
     .auth-container { padding: 0 16px !important; max-width: 100% !important; }
   }
 
-  /* scrollbar */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid var(--bg); }
-  ::-webkit-scrollbar-track { background: transparent; }
-
-  /* scrollbar de la lista de tareas — carril sutil siempre visible + pulgar tipo píldora */
-  .tasks-scroll { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.18) rgba(255,255,255,0.03); }
-  .tasks-scroll::-webkit-scrollbar { width: 8px; }
-  .tasks-scroll::-webkit-scrollbar-track {
-    background: rgba(255,255,255,0.03);
-    border-radius: 99px; margin: 2px 0;
-  }
-  .tasks-scroll::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.16);
-    border-radius: 99px;
-    border: 2px solid transparent; background-clip: padding-box;
-    transition: background .2s;
-  }
-  .tasks-scroll::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.30); background-clip: padding-box; }
+  /* scrollbar — oculta en toda la app (el desplazamiento sigue funcionando) */
+  * { scrollbar-width: none; -ms-overflow-style: none; }
+  *::-webkit-scrollbar { width: 0; height: 0; display: none; }
 
   /* Transición suave al entrar a cada página.
      El wrapper usa display:contents para no crear caja (no rompe layouts de 100vh)
