@@ -2690,12 +2690,17 @@ const IncomePage = () => {
           </div>
         </div>
 
-        {/* ── Mensualidades ── */}
-        <div style={sectionHead}>
-          Mensualidades
-          <span style={{ opacity:0.55, fontWeight:400 }}>· {data.recs.length}</span>
-          {recurringMo > 0 && <span style={sectionSum}>{_eur(recurringMo)}/mes</span>}
-        </div>
+        {/* ── Mensualidades + Cobros — dos columnas, cabecera estilo outdomode (Task Logging) ── */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"start",
+          borderTop:"0.5px solid var(--border)", marginTop:30, paddingTop:26 }}>
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Mensualidades</div>
+          <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px" }}>
+            {activeRecs.length
+              ? `${activeRecs.length} activa${activeRecs.length === 1 ? "" : "s"} · ${_eur(recurringMo)} al mes`
+              : "Ingresos recurrentes"}
+          </div>
+          <div style={{ marginTop:10 }}>
         {data.recs.map((r, i) => (
             <div key={r.id} className="task-row" style={{
               display:"flex", alignItems:"center", gap:14,
@@ -2739,13 +2744,18 @@ const IncomePage = () => {
           onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
           {data.recs.length === 0 ? "Añade tu primera mensualidad" : "Añadir mensualidad"} <Icon name="plus" size={15}/>
         </button>
-
-        {/* ── Cobros: facturas de Stripe + ingresos puntuales ── */}
-        <div style={sectionHead}>
-          Cobros
-          <span style={{ opacity:0.55, fontWeight:400 }}>· {stripeOpen.length + sortedInc.length}</span>
-          {punMonth > 0 && <span style={sectionSum}>{_eur(punMonth)} este mes</span>}
+          </div>
         </div>
+
+        {/* Cobros: facturas de Stripe + ingresos puntuales */}
+        <div style={{ minWidth:0 }}>
+          <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Cobros</div>
+          <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px" }}>
+            {stripeOpen.length + sortedInc.length
+              ? `${stripeOpen.length + sortedInc.length} en total${punMonth > 0 ? ` · ${_eur(punMonth)} este mes` : ""}`
+              : "Facturas y pagos puntuales"}
+          </div>
+          <div style={{ marginTop:10 }}>
           {/* Facturas de Stripe emitidas y pendientes de cobro */}
           {stripeOpen.map(inv => (
             <div key={inv.id} className="task-row" style={{
@@ -2841,6 +2851,9 @@ const IncomePage = () => {
           onMouseLeave={e => e.currentTarget.style.opacity = 0.5}>
           {stripeOpen.length + sortedInc.length === 0 ? "Registra tu primer cobro" : "Añadir cobro"} <Icon name="plus" size={15}/>
         </button>
+          </div>
+        </div>
+        </div>
       </div>
 
       {/* ── Pop-up unificado: Mensualidad / Puntual — estilo Tareas ── */}

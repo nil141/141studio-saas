@@ -1976,7 +1976,15 @@
         fontWeight: on ? 500 : 400,
         transition: "all .12s"
       } }, lbl);
-    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Mensualidades", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", data.recs.length), recurringMo > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(recurringMo), "/mes")), data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
+    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "grid",
+      gridTemplateColumns: "1fr 1fr",
+      gap: 48,
+      alignItems: "start",
+      borderTop: "0.5px solid var(--border)",
+      marginTop: 30,
+      paddingTop: 26
+    } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Mensualidades"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, activeRecs.length ? `${activeRecs.length} activa${activeRecs.length === 1 ? "" : "s"} \xB7 ${_eur(recurringMo)} al mes` : "Ingresos recurrentes"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, data.recs.map((r, i) => /* @__PURE__ */ React.createElement("div", { key: r.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -2008,7 +2016,7 @@
       data.recs.length === 0 ? "A\xF1ade tu primera mensualidad" : "A\xF1adir mensualidad",
       " ",
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
-    ), /* @__PURE__ */ React.createElement("div", { style: sectionHead }, "Cobros", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55, fontWeight: 400 } }, "\xB7 ", stripeOpen.length + sortedInc.length), punMonth > 0 && /* @__PURE__ */ React.createElement("span", { style: sectionSum }, _eur(punMonth), " este mes")), stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
+    ))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Cobros"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, stripeOpen.length + sortedInc.length ? `${stripeOpen.length + sortedInc.length} en total${punMonth > 0 ? ` \xB7 ${_eur(punMonth)} este mes` : ""}` : "Facturas y pagos puntuales"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -2092,7 +2100,7 @@
       stripeOpen.length + sortedInc.length === 0 ? "Registra tu primer cobro" : "A\xF1adir cobro",
       " ",
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
-    )), /* @__PURE__ */ React.createElement(
+    ))))), /* @__PURE__ */ React.createElement(
       QuickModal,
       {
         open: addOpen,
