@@ -2369,12 +2369,46 @@ const _incLoad = () => {
 };
 const _incSave = (d) => { try { localStorage.setItem(INC_KEY, JSON.stringify(d)); } catch {} };
 
+// Mini-stat de cabecera — mismo formato que la tira de KPIs de la página de campañas
+const FinKpi = ({ label, value, sub, color, delta }) => (
+  <div style={{ flex:1, minWidth:0 }}>
+    <div style={{ fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:6 }}>{label}</div>
+    <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+      <span style={{ fontSize:22, fontWeight:600, fontFamily:"var(--font-display)", letterSpacing:"-0.5px",
+        color: color || "var(--text)", fontVariantNumeric:"tabular-nums", whiteSpace:"nowrap" }}>{value}</span>
+      {delta}
+    </div>
+    {sub && <div style={{ fontSize:11.5, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px",
+      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{sub}</div>}
+  </div>
+);
+
+// Barras horizontales con importes — variante en € de las barras de campañas
+const FinBars = ({ items, total }) => (
+  <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+    {items.map((it, i) => (
+      <div key={i} style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <span style={{ fontSize:12.5, color:"var(--text-muted)", width:118, flexShrink:0, letterSpacing:"-0.2px",
+          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{it.label}</span>
+        <div style={{ flex:1, height:6, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+          <div style={{ width: total > 0 ? `${Math.min(100, (it.v / total) * 100)}%` : 0, height:"100%",
+            background: it.color || "var(--accent)", borderRadius:99, transition:"width .25s" }}/>
+        </div>
+        <span style={{ fontSize:12.5, fontWeight:600, color:"var(--text)", width:92, textAlign:"right", flexShrink:0, fontVariantNumeric:"tabular-nums" }}>{_eur(it.v)}</span>
+        <span style={{ fontSize:11, color:"var(--text-subtle)", width:38, textAlign:"right", flexShrink:0 }}>
+          {total > 0 ? Math.round((it.v / total) * 100) : 0}%
+        </span>
+      </div>
+    ))}
+  </div>
+);
+
 const IncomePage = () => {
   const D = window.Data;
   D.useStore();
   const toast = useToast();
   const [data, setData] = useState(_incLoad);
-  const [tab, setTab]   = useState("recs"); // recs | oneoff
+  const [view, setView] = useState("cobros"); // cobros | recs | stats
   const [addOpen, setAddOpen] = useState(false);
   const [incType, setIncType] = useState("rec"); // "rec" | "pun" — tipo dentro del pop-up
   const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21, irpf: 15 };
@@ -2458,7 +2492,7 @@ const IncomePage = () => {
       nextCharge: recForm.nextCharge, vat: Number(recForm.vat) || 0, irpf: Number(recForm.irpf) || 0, active: true,
     };
     persist({ ...data, recs: [rec, ...data.recs] });
-    setRecForm(blankRec); setAddOpen(false); setTab("recs"); toast("Mensualidad añadida", "success");
+    setRecForm(blankRec); setAddOpen(false); setView("recs"); toast("Mensualidad añadida", "success");
   };
   const toggleRec = (id) => persist({ ...data, recs: data.recs.map(r => r.id === id ? { ...r, active: !r.active } : r) });
   const delRec = (id) => persist({ ...data, recs: data.recs.filter(r => r.id !== id) });
@@ -2472,7 +2506,7 @@ const IncomePage = () => {
       vat: Number(incForm.vat) || 0, irpf: Number(incForm.irpf) || 0,
     };
     persist({ ...data, incomes: [inc, ...data.incomes] });
-    setIncForm(blankInc); setAddOpen(false); setTab("oneoff"); toast("Ingreso añadido", "success");
+    setIncForm(blankInc); setAddOpen(false); setView("cobros"); toast("Ingreso añadido", "success");
   };
   const delInc = (id) => persist({ ...data, incomes: data.incomes.filter(i => i.id !== id) });
 
@@ -2525,126 +2559,84 @@ const IncomePage = () => {
 
   const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
+  // Origen de la facturación de este mes (para Analíticas)
+  const stripeMonthSum = allIncomes.filter(i => _sameMonth(i.date) && i.source === "stripe").reduce((a, i) => a + _withVat(i), 0);
+  const manualPunSum   = allIncomes.filter(i => _sameMonth(i.date) && i.source !== "stripe").reduce((a, i) => a + _withVat(i), 0);
+
+  const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"18px 20px" };
+  const cardTitle = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:14 };
+
   return (
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
     }}>
-      {/* Header */}
-      <div className="page-head" style={{ flexShrink:0 }}>
-        <div>
-          <h1>Facturación</h1>
-          <div className="sub">
-            {_eur(monthTotal)} facturado este mes · {activeRecs.length} mensualidad{activeRecs.length === 1 ? "" : "es"} activa{activeRecs.length === 1 ? "" : "s"}
-          </div>
-        </div>
-        <ActionPill plusActions={[
-          { icon:"receipt", label:"Factura Stripe", sub:"Se crea y envía desde Stripe.", accent:true,
-            onClick: () => setStripeInvOpen(true) },
-          { icon:"external-link", label:"Enlace de pago", sub:"Link de cobro de Stripe para compartir.",
-            onClick: () => setPayLinkOpen(true) },
-          { icon:"edit", label:"Ingreso manual", sub:"Mensualidad o cobro apuntado a mano.",
-            onClick: () => { setIncType(tab === "oneoff" ? "pun" : "rec"); setAddOpen(true); } },
-        ]}/>
-      </div>
-
-      {/* ── Fila de gráficos: tendencia + clientes + stats ── */}
-      <div style={{ display:"grid", gridTemplateColumns:"1.8fr 1fr 0.72fr", gap:14, marginBottom:20, flexShrink:0, height:248 }}>
-
-        {/* Card A — Ingreso mensual (recurrente vs puntual, mismo gráfico que Gastos) */}
-        <div className="card" style={{ padding:"16px 18px 14px", display:"flex", flexDirection:"column", overflow:"visible", position:"relative", zIndex:2 }}>
-          <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:10 }}>
-            <div>
-              <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:8 }}>
-                Facturación mensual
-              </div>
-              <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-                <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
-                  {_eur(monthTotal)}
-                </span>
-                <TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${trend[4].label.toLowerCase()}`}/>
-              </div>
-            </div>
-            <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-              {/* Leyenda */}
-              <div style={{ display:"flex", gap:14, paddingTop:2 }}>
-                {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
-                  <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
-                    <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
-                    {lbl}
-                  </span>
-                ))}
-              </div>
-              {/* Estado de Stripe */}
-              <span style={{
-                display:"inline-flex", alignItems:"center", gap:6,
-                padding:"4px 11px", borderRadius:99, fontSize:11, fontWeight:500,
-                background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.08)",
-                color:"var(--text-subtle)", letterSpacing:"-0.2px", whiteSpace:"nowrap",
-              }}>
-                <span style={{ width:6, height:6, borderRadius:99, background: stripeConnected ? "var(--green)" : "var(--text-subtle)" }}/>
-                Stripe {stripeConnected ? "conectado" : "sin conectar"}
-              </span>
+      {/* Cabecera fija: título + secciones + tira de KPIs */}
+      <div style={{ flexShrink:0 }}>
+        <div className="page-head" style={{ marginBottom:22 }}>
+          <div>
+            <h1>Facturación</h1>
+            <div className="sub" style={{ display:"flex", alignItems:"center", gap:7 }}>
+              <span style={{ width:6, height:6, borderRadius:99, flexShrink:0,
+                background: stripeConnected ? "var(--green)" : "var(--text-subtle)", display:"inline-block" }}/>
+              Stripe {stripeConnected ? "conectado" : "sin conectar"}
+              {` · ${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"}`}
+              {stripeOpen.length ? ` · ${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} sin cobrar` : ""}
             </div>
           </div>
-          <FinTrendChart trend={trend}/>
+          <ActionPill plusActions={[
+            { icon:"receipt", label:"Factura Stripe", sub:"Se crea y envía desde Stripe.", accent:true,
+              onClick: () => setStripeInvOpen(true) },
+            { icon:"external-link", label:"Enlace de pago", sub:"Link de cobro de Stripe para compartir.",
+              onClick: () => setPayLinkOpen(true) },
+            { icon:"edit", label:"Ingreso manual", sub:"Mensualidad o cobro apuntado a mano.",
+              onClick: () => { setIncType(view === "recs" ? "rec" : "pun"); setAddOpen(true); } },
+          ]}/>
         </div>
 
-        {/* Card B — Por cliente */}
-        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column" }}>
-          <div style={{ fontSize:11, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:14, flexShrink:0 }}>
-            Por cliente · este mes
-          </div>
-          <div style={{ flex:1, minHeight:0, overflow:"hidden", display:"flex", flexDirection:"column", gap:13 }}>
-            {clients.length === 0 ? (
-              <div style={{ color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px" }}>Sin datos todavía.</div>
-            ) : clients.map(([cli, amt]) => (
-              <div key={cli}>
-                <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:5 }}>
-                  <span style={{ color:"var(--text-muted)", letterSpacing:"-0.2px", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{cli}</span>
-                  <span style={{ fontVariantNumeric:"tabular-nums", color:"var(--text)", flexShrink:0, paddingLeft:8 }}>{_eur(amt)}</span>
-                </div>
-                <div style={{ height:4, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
-                  <div style={{ height:"100%", width:`${Math.max(3, (amt / cliMax) * 100)}%`, background:FIN_SERIES.pun, borderRadius:99, transition:"width .3s" }}/>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Card C — Mini stats */}
-        <div className="card" style={{ padding:"16px 18px", display:"flex", flexDirection:"column", justifyContent:"space-between" }}>
+        {/* Secciones — mismas píldoras que la página de campañas */}
+        <div style={{ display:"flex", alignItems:"center", gap:6, paddingBottom:16, borderBottom:"0.5px solid var(--border)" }}>
           {[
-            { label: "Cobras",          value: _eur(monthTotal - irpfMonth), sub: "te entra este mes" },
-            { label: "Base imponible",  value: _eur(baseMonth),              sub: "tu ingreso real · sin IVA" },
-            { label: "IVA repercutido", value: _eur(ivaMonth),               sub: "a apartar para Hacienda" },
-            ...(stripeMeta && stripeMeta.available !== undefined ? [{
-              label: "Saldo Stripe",
-              value: _eur(stripeMeta.available),
-              sub: `${_eur(stripeMeta.pending || 0)} pendiente de abono${stripeOpen.length ? ` · ${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} sin cobrar` : ""}`,
-            }] : []),
-          ].map((m, i) => (
-            <div key={m.label} style={{
-              paddingTop: i === 0 ? 0 : 12,
-              borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
-            }}>
-              <div style={{ fontSize:10.5, fontWeight:600, color:"var(--text-subtle)", textTransform:"uppercase", letterSpacing:"0.08em", marginBottom:5 }}>
-                {m.label}
-              </div>
-              <div style={{ fontSize:18, fontWeight:400, letterSpacing:"-0.7px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
-                {m.value}
-              </div>
-              <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:3, letterSpacing:"-0.2px" }}>{m.sub}</div>
-            </div>
-          ))}
+            { id:"cobros", label:"Cobros",        icon:"receipt" },
+            { id:"recs",   label:"Mensualidades", icon:"refresh-cw" },
+            { id:"stats",  label:"Analíticas",    icon:"bar-chart" },
+          ].map(t => {
+            const on = view === t.id;
+            return (
+              <button key={t.id} onClick={() => setView(t.id)} style={{
+                display:"inline-flex", alignItems:"center", gap:7,
+                padding:"7px 15px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
+                background: on ? "rgba(255,255,255,0.08)" : "transparent",
+                border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+                color: on ? "var(--text)" : "var(--text-subtle)",
+                fontSize:13, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
+                transition:"all .12s",
+              }}>
+                <Icon name={t.icon} size={13} strokeWidth={1.7}/>
+                {t.label}
+              </button>
+            );
+          })}
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div style={{ marginBottom:6, flexShrink:0 }}>
-        <div className="seg">
-          <button className={tab === "recs" ? "active" : ""} onClick={() => setTab("recs")}>Mensualidades</button>
-          <button className={tab === "oneoff" ? "active" : ""} onClick={() => setTab("oneoff")}>Ingresos puntuales</button>
+        {/* Tira de KPIs — formato de la tira de analíticas de campañas */}
+        <div style={{ display:"flex", gap:26, padding:"18px 2px", borderBottom:"0.5px solid var(--border)" }}>
+          <FinKpi label="Facturado este mes" value={_eur(monthTotal)}
+            delta={<TrendDelta pct={deltaPct} goodUp={true} size={13}/>}
+            sub={`${_eur(baseMonth)} de base imponible`}/>
+          <FinKpi label="Cobras" value={_eur(monthTotal - irpfMonth)} sub="te entra este mes, tras IRPF"/>
+          <FinKpi label="Saldo Stripe" color="var(--accent)"
+            value={stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—"}
+            sub={stripeMeta && stripeMeta.available !== undefined
+              ? `${_eur(stripeMeta.pending || 0)} pendiente de abono`
+              : "conecta Stripe para verlo"}/>
+          <FinKpi label="Pendiente de cobro"
+            color={stripeOpen.length ? "var(--amber)" : undefined}
+            value={stripeConnected ? _eur((stripeMeta && stripeMeta.openSum) || 0) : "—"}
+            sub={stripeOpen.length
+              ? `${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`
+              : "sin facturas abiertas"}/>
+          <FinKpi label="IVA a apartar" value={_eur(ivaMonth)} sub="repercutido este mes"/>
         </div>
       </div>
 
@@ -2657,7 +2649,7 @@ const IncomePage = () => {
       }}>
 
         {/* ── Mensualidades ── */}
-        {tab === "recs" && (
+        {view === "recs" && (
           data.recs.length === 0 ? (
             <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
               Sin mensualidades — <button className="btn ghost sm" onClick={() => { setIncType("rec"); setAddOpen(true); }}>añadir una</button>
@@ -2702,8 +2694,8 @@ const IncomePage = () => {
           ))
         )}
 
-        {/* ── Ingresos puntuales ── */}
-        {tab === "oneoff" && (
+        {/* ── Cobros: facturas de Stripe + ingresos puntuales ── */}
+        {view === "cobros" && (
           <>
           {/* Facturas de Stripe emitidas y pendientes de cobro */}
           {stripeOpen.map(inv => (
@@ -2800,6 +2792,92 @@ const IncomePage = () => {
             </div>
           ))}
           </>
+        )}
+
+        {/* ── Analíticas — mismo formato que las analíticas de campañas ── */}
+        {view === "stats" && (
+          <div style={{ display:"flex", flexDirection:"column", gap:16, paddingBottom:24 }}>
+
+            {/* Tendencia 6 meses */}
+            <div style={cardStyle}>
+              <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between" }}>
+                <div>
+                  <div style={cardTitle}>Facturación mensual · últimos 6 meses</div>
+                  <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:6 }}>
+                    <span style={{ fontSize:26, fontWeight:400, letterSpacing:"-1.1px", fontVariantNumeric:"tabular-nums", lineHeight:1 }}>
+                      {_eur(monthTotal)}
+                    </span>
+                    <TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${trend[4].label.toLowerCase()}`}/>
+                  </div>
+                </div>
+                <div style={{ display:"flex", gap:14, paddingTop:2 }}>
+                  {[["Recurrente", FIN_SERIES.rec], ["Puntual", FIN_SERIES.pun]].map(([lbl, col]) => (
+                    <span key={lbl} style={{ display:"inline-flex", alignItems:"center", gap:5, fontSize:11, color:"var(--text-muted)" }}>
+                      <span style={{ width:7, height:7, borderRadius:99, background:col }}/>
+                      {lbl}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <FinTrendChart trend={trend}/>
+            </div>
+
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+              {/* Por cliente */}
+              <div style={cardStyle}>
+                <div style={cardTitle}>Por cliente · este mes</div>
+                {clients.length === 0
+                  ? <div style={{ color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px" }}>Sin datos todavía.</div>
+                  : <FinBars total={monthTotal} items={clients.map(([cli, amt]) => ({ label: cli, v: amt, color: FIN_SERIES.pun }))}/>}
+              </div>
+              {/* Desglose fiscal */}
+              <div style={cardStyle}>
+                <div style={cardTitle}>Desglose fiscal · este mes</div>
+                <FinBars total={monthTotal} items={[
+                  { label:"Cobras",          v: monthTotal - irpfMonth, color:"var(--green)" },
+                  { label:"Base imponible",  v: baseMonth,              color:"rgba(255,255,255,0.35)" },
+                  { label:"IVA repercutido", v: ivaMonth,               color:"var(--amber)" },
+                  { label:"IRPF retenido",   v: irpfMonth,              color:"var(--red)" },
+                ]}/>
+              </div>
+            </div>
+
+            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+              {/* Origen de la facturación */}
+              <div style={cardStyle}>
+                <div style={cardTitle}>Origen de la facturación · este mes</div>
+                <FinBars total={monthTotal} items={[
+                  { label:"Stripe",        v: stripeMonthSum, color:"#9d97ff" },
+                  { label:"Mensualidades", v: recurringMo,    color:FIN_SERIES.rec },
+                  { label:"Manual",        v: manualPunSum,   color:FIN_SERIES.pun },
+                ]}/>
+              </div>
+              {/* Estado de Stripe */}
+              <div style={cardStyle}>
+                <div style={cardTitle}>Stripe</div>
+                {!stripeConnected ? (
+                  <div style={{ color:"var(--text-subtle)", fontSize:13, letterSpacing:"-0.3px", lineHeight:1.5 }}>
+                    Sin conexión con Stripe. Añade la clave en el servidor para ver saldo, facturas y cobros automáticos.
+                  </div>
+                ) : [
+                  { label:"Saldo disponible",   v: (stripeMeta && stripeMeta.available) || 0 },
+                  { label:"En camino al banco", v: (stripeMeta && stripeMeta.pending) || 0 },
+                  { label:"Pendiente de cobro", v: (stripeMeta && stripeMeta.openSum) || 0, color: stripeOpen.length ? "var(--amber)" : undefined },
+                  { label:"Cobrado este mes",   v: stripeMonthSum, color:"var(--green)" },
+                ].map((m, i) => (
+                  <div key={m.label} style={{
+                    display:"flex", alignItems:"center", justifyContent:"space-between",
+                    padding:"9px 0", borderTop: i === 0 ? "none" : "0.5px solid var(--border)",
+                  }}>
+                    <span style={{ fontSize:12.5, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{m.label}</span>
+                    <span style={{ fontSize:13.5, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.3px", color: m.color || "var(--text)" }}>
+                      {_eur(m.v)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
