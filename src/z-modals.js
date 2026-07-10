@@ -84,6 +84,7 @@ const PROJECT_SERVICES = [
     "Informe mensual"
   ] }
 ];
+window.PROJECT_SERVICES = PROJECT_SERVICES;
 const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const D = window.Data;
   D.useStore && D.useStore();
@@ -97,6 +98,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const [searching, setSearching] = useState(false);
   const [cq, setCq] = useState("");
   const [services, setServices] = useState([]);
+  const [creating, setCreating] = useState(false);
   useEffect(() => {
     if (!open) return;
     setStep(0);
@@ -104,6 +106,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     setSearching(false);
     setCq("");
     setServices([]);
+    setCreating(false);
   }, [open]);
   const set = (k, v) => setA((p) => ({ ...p, [k]: v }));
   const toggleService = (id) => setServices((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
@@ -119,22 +122,30 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     true
     // los servicios son opcionales: se puede crear un proyecto vacío
   ];
-  const submit = () => {
-    const p = D.addProject({
+  const submit = async () => {
+    if (creating) return;
+    setCreating(true);
+    const p = await D.addProjectAsync({
       name: a.name.trim(),
       clientId: a.clientId,
       deadline: a.deadline,
       template: selectedServices.map((sv) => sv.label).join(", ") || "libre"
     });
-    selectedServices.forEach(
-      (sv) => sv.tasks.forEach(
-        (title) => D.addTask({ projectId: p.id, title, column: "todo", assignee: "T\xFA", phase: sv.label })
-      )
-    );
+    if (!p) {
+      setCreating(false);
+      toast("No se pudo crear el proyecto", "error");
+      return;
+    }
+    if (selectedServices.length) {
+      const items = [];
+      selectedServices.forEach((sv) => sv.tasks.forEach((title) => items.push({ title, column: "todo", assignee: "T\xFA", phase: sv.label })));
+      await D.addTasksBulk(p.id, items);
+    }
     toast(
       selectedServices.length ? `Proyecto "${p.name}" creado con ${totalTasks} tarea${totalTasks === 1 ? "" : "s"}` : `Proyecto "${p.name}" creado`,
       "success"
     );
+    setCreating(false);
     onClose();
     onCreate && onCreate(p);
   };
@@ -201,7 +212,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   } }, "El proyecto se crear\xE1 con ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, selectedServices.length, " fase", selectedServices.length === 1 ? "" : "s"), " y ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, totalTasks, " tarea", totalTasks === 1 ? "" : "s"), " listas para empezar."));
   const steps = [renderStep0, renderStep1];
   if (!open) return null;
-  return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal lg", style: { maxWidth: 600 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, "Nuevo proyecto"), /* @__PURE__ */ React.createElement("div", { className: "modal-sub" }, STEP_LABELS[step], " \xB7 ", step + 1, " / ", TOTAL_STEPS)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: onClose }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px" } }, /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "var(--border)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${step / (TOTAL_STEPS - 1) * 100}%`, background: "var(--accent)", borderRadius: 99, transition: "width .25s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body", style: { minHeight: 200, maxHeight: "58vh", overflowY: "auto", scrollbarWidth: "none" } }, steps[step]()), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => step === 0 ? onClose() : setStep((s) => s - 1) }, step === 0 ? "Cancelar" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Atr\xE1s")), step < TOTAL_STEPS - 1 ? /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step], onClick: () => setStep((s) => s + 1) }, "Siguiente ", /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12 })) : /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step], onClick: submit }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Crear proyecto"))));
+  return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal lg", style: { maxWidth: 600 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, "Nuevo proyecto"), /* @__PURE__ */ React.createElement("div", { className: "modal-sub" }, STEP_LABELS[step], " \xB7 ", step + 1, " / ", TOTAL_STEPS)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: onClose }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px" } }, /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "var(--border)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${step / (TOTAL_STEPS - 1) * 100}%`, background: "var(--accent)", borderRadius: 99, transition: "width .25s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body", style: { minHeight: 200, maxHeight: "58vh", overflowY: "auto", scrollbarWidth: "none" } }, steps[step]()), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => step === 0 ? onClose() : setStep((s) => s - 1) }, step === 0 ? "Cancelar" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Atr\xE1s")), step < TOTAL_STEPS - 1 ? /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step], onClick: () => setStep((s) => s + 1) }, "Siguiente ", /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12 })) : /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step] || creating, onClick: submit }, creating ? "Creando\u2026" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Crear proyecto")))));
 };
 const NewClientModal = ({ open, onClose, onCreated, onCreateProject }) => {
   const D = window.Data;

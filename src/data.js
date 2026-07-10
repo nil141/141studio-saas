@@ -486,6 +486,101 @@ const addProject = (input) => {
   }
   return p;
 };
+const addProjectAsync = async (input) => {
+  const uid = _uid();
+  if (!uid) return null;
+  const client = _store.CLIENTS.find((c) => c.id === input.clientId);
+  const deadline = (() => {
+    if (!input.deadline || input.deadline === "\u2014") return "\u2014";
+    if (/^\d{4}-\d{2}-\d{2}$/.test(input.deadline)) {
+      const d = /* @__PURE__ */ new Date(input.deadline + "T12:00:00");
+      const M = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      return `${d.getDate()} ${M[d.getMonth()]}`;
+    }
+    return input.deadline;
+  })();
+  const p = {
+    id: _id(),
+    name: input.name || "Proyecto sin nombre",
+    clientId: input.clientId,
+    clientName: (client == null ? void 0 : client.company) || "\u2014",
+    service: input.template || "\u2014",
+    light: "green",
+    phase: 0,
+    week: 1,
+    progress: 0,
+    budget: 0,
+    deadline,
+    nextMilestone: "Kickoff",
+    revisionsUsed: 0,
+    description: input.description || ""
+  };
+  _store.PROJECTS = [p, ..._store.PROJECTS];
+  if (client) _store.CLIENTS = _store.CLIENTS.map((c) => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
+  _emit();
+  const { error } = await _sb.from("projects").insert({
+    id: p.id,
+    agency_id: uid,
+    client_id: p.clientId,
+    client_name: p.clientName,
+    name: p.name,
+    service: p.service,
+    light: p.light,
+    phase: p.phase,
+    week: p.week,
+    progress: p.progress,
+    budget: p.budget,
+    deadline: p.deadline,
+    next_milestone: p.nextMilestone,
+    revisions_used: 0,
+    description: p.description
+  });
+  if (error) {
+    console.error("[addProjectAsync] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+    _store.PROJECTS = _store.PROJECTS.filter((x) => x.id !== p.id);
+    _emit();
+    return null;
+  }
+  if (client) _sb.from("clients").update({ projects_count: client.projects + 1 }).eq("id", client.id).then();
+  return p;
+};
+const addTasksBulk = async (projectId, items) => {
+  const uid = _uid();
+  if (!uid || !items || !items.length) return;
+  const pid = projectId || "__none__";
+  if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
+  const tasks = items.map((it) => ({
+    id: _id(),
+    title: it.title || "Tarea",
+    column: it.column || "todo",
+    assignee: it.assignee || "T\xFA",
+    clientId: null,
+    clientName: null,
+    phase: it.phase || null,
+    done: false,
+    deadline: null
+  }));
+  _store.TASKS[pid] = [...tasks, ..._store.TASKS[pid] || []];
+  _emit();
+  const { error } = await _sb.from("tasks").insert(tasks.map((t) => ({
+    id: t.id,
+    agency_id: uid,
+    project_id: pid === "__none__" ? null : pid,
+    title: t.title,
+    col: t.column,
+    assignee: t.assignee,
+    client_id: null,
+    client_name: null,
+    deadline: null,
+    done: false
+  })));
+  if (error) {
+    console.error("[addTasksBulk] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
+    const ids = new Set(tasks.map((t) => t.id));
+    _store.TASKS[pid] = (_store.TASKS[pid] || []).filter((x) => !ids.has(x.id));
+    _emit();
+  }
+};
 const deleteProject = (id) => {
   const uid = _uid();
   if (!uid) return;
@@ -985,6 +1080,8 @@ window.Data = {
   updateClient,
   deleteClient,
   addProject,
+  addProjectAsync,
+  addTasksBulk,
   deleteProject,
   addInvoice,
   deleteInvoice,

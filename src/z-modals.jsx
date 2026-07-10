@@ -66,6 +66,9 @@ const PROJECT_SERVICES = [
   { id:"maintenance", label:"Mantenimiento",   icon:"refresh-cw",  tasks:[
     "Copias de seguridad", "Actualizaciones", "Monitorización", "Informe mensual" ] },
 ];
+// Disponible globalmente para reconstruir las fases desde el campo service del
+// proyecto (persistido en la nube), sin copias locales.
+window.PROJECT_SERVICES = PROJECT_SERVICES;
 
 const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const D = window.Data;
@@ -79,10 +82,11 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const [searching, setSearching] = useState(false);
   const [cq, setCq]               = useState("");
   const [services, setServices]   = useState([]);   // ids de servicios marcados
+  const [creating, setCreating]   = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setStep(0); setA(blank()); setSearching(false); setCq(""); setServices([]);
+    setStep(0); setA(blank()); setSearching(false); setCq(""); setServices([]); setCreating(false);
   }, [open]);
 
   const set = (k, v) => setA(p => ({ ...p, [k]: v }));
@@ -103,24 +107,31 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     true,   // los servicios son opcionales: se puede crear un proyecto vacío
   ];
 
-  const submit = () => {
-    const p = D.addProject({
+  const submit = async () => {
+    if (creating) return;
+    setCreating(true);
+    // 1) Crear el proyecto y ESPERAR a que se confirme en la nube antes de las
+    //    tareas: evita que el realtime lo borre y satisface la FK de las tareas.
+    const p = await D.addProjectAsync({
       name: a.name.trim(), clientId: a.clientId, deadline: a.deadline,
       template: selectedServices.map(sv => sv.label).join(", ") || "libre",
     });
-    // Cada servicio marcado se convierte en una fase con sus tareas (en la nube,
-    // vía addTask con el campo phase). Sin IA ni copias locales.
-    selectedServices.forEach(sv =>
-      sv.tasks.forEach(title =>
-        D.addTask({ projectId: p.id, title, column: "todo", assignee: "Tú", phase: sv.label })
-      )
-    );
+    if (!p) { setCreating(false); toast("No se pudo crear el proyecto", "error"); return; }
+    // 2) Todas las tareas del setup en una sola inserción. La fase de cada tarea
+    //    se reconstruye luego desde el campo service del proyecto.
+    if (selectedServices.length) {
+      const items = [];
+      selectedServices.forEach(sv => sv.tasks.forEach(title =>
+        items.push({ title, column: "todo", assignee: "Tú", phase: sv.label })));
+      await D.addTasksBulk(p.id, items);
+    }
     toast(
       selectedServices.length
         ? `Proyecto "${p.name}" creado con ${totalTasks} tarea${totalTasks === 1 ? "" : "s"}`
         : `Proyecto "${p.name}" creado`,
       "success"
     );
+    setCreating(false);
     onClose(); onCreate && onCreate(p);
   };
 
@@ -255,8 +266,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
               Siguiente <Icon name="chevron" size={12}/>
             </button>
           ) : (
-            <button className="btn primary" disabled={!canNext[step]} onClick={submit}>
-              <Icon name="check" size={12}/> Crear proyecto
+            <button className="btn primary" disabled={!canNext[step] || creating} onClick={submit}>
+              {creating ? "Creando…" : <><Icon name="check" size={12}/> Crear proyecto</>}
             </button>
           )}
         </div>

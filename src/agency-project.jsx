@@ -40,13 +40,27 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
     return () => window.removeEventListener("click", close);
   }, [!!ctxMenu]);
 
-  // Fases del proyecto: se derivan de las tareas (campo phase) que están en la
-  // nube, en el orden en que aparecen. Sin copias locales.
+  // Fases del proyecto: se reconstruyen desde el campo service (los servicios
+  // marcados al crear el proyecto), que sí persiste en la nube. Cada servicio
+  // aporta su fase con sus tareas. Sin copias locales.
   const aiPhases = React.useMemo(() => {
-    const seen = [];
-    (D.TASKS[p.id] || []).forEach(t => { if (t.phase && !seen.includes(t.phase)) seen.push(t.phase); });
-    return seen.length ? seen.map(name => ({ name })) : null;
-  }, [p.id, D.TASKS]);
+    const cat = window.PROJECT_SERVICES || [];
+    const labels = (p.service || "").split(",").map(s => s.trim()).filter(Boolean);
+    const phases = labels.map(lbl => cat.find(sv => sv.label === lbl)).filter(Boolean)
+      .map(sv => ({ name: sv.label, tasks: sv.tasks }));
+    return phases.length ? phases : null;
+  }, [p.id, p.service]);
+
+  // Mapa título → fase, para agrupar cada tarea en su fase también tras recargar
+  // (cuando el campo phase en memoria ya no está).
+  const phaseOfTitle = React.useMemo(() => {
+    const m = {};
+    (aiPhases || []).forEach(ph => (ph.tasks || []).forEach(t => {
+      m[(typeof t === "string" ? t : t.title)] = ph.name;
+    }));
+    return m;
+  }, [aiPhases]);
+  const taskPhase = (t) => t.phase || phaseOfTitle[t.title] || null;
 
   // Default to first phase when phases available
   React.useEffect(() => {
@@ -225,7 +239,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           {tab === "tasks" && (() => {
             // Filter tasks for current phase tab
             const visibleTasks = aiPhases && phaseTab
-              ? projectTasks.filter(t => t.phase === phaseTab)
+              ? projectTasks.filter(t => taskPhase(t) === phaseTab)
               : projectTasks;
             const vByCol = {
               todo:   visibleTasks.filter(t=>t.column==="todo"),
@@ -239,8 +253,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                 {aiPhases && (
                   <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:14}}>
                     {aiPhases.map((ph, i) => {
-                      const count = projectTasks.filter(t=>t.phase===ph.name).length;
-                      const done = projectTasks.filter(t=>t.phase===ph.name&&t.column==="done").length;
+                      const count = projectTasks.filter(t=>taskPhase(t)===ph.name).length;
+                      const done = projectTasks.filter(t=>taskPhase(t)===ph.name&&t.column==="done").length;
                       const isActive = phaseTab === ph.name;
                       return (
                         <button key={i} onClick={() => setPhaseTab(ph.name)}
@@ -296,7 +310,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                                 <Icon name="calendar" size={10}/>{t.deadline}
                               </div>
                             )}
-                            {t.phase && !phaseTab && <div className="muted xsmall" style={{marginTop:3}}>· {t.phase}</div>}
+                            {taskPhase(t) && !phaseTab && <div className="muted xsmall" style={{marginTop:3}}>· {taskPhase(t)}</div>}
                             {t.assignee && t.assignee !== "Tú" && <div className="muted xsmall">· {t.assignee}</div>}
                           </div>
                         ))}

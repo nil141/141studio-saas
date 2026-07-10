@@ -27,12 +27,19 @@
       return () => window.removeEventListener("click", close);
     }, [!!ctxMenu]);
     const aiPhases = React.useMemo(() => {
-      const seen = [];
-      (D.TASKS[p.id] || []).forEach((t) => {
-        if (t.phase && !seen.includes(t.phase)) seen.push(t.phase);
-      });
-      return seen.length ? seen.map((name) => ({ name })) : null;
-    }, [p.id, D.TASKS]);
+      const cat = window.PROJECT_SERVICES || [];
+      const labels = (p.service || "").split(",").map((s) => s.trim()).filter(Boolean);
+      const phases = labels.map((lbl) => cat.find((sv) => sv.label === lbl)).filter(Boolean).map((sv) => ({ name: sv.label, tasks: sv.tasks }));
+      return phases.length ? phases : null;
+    }, [p.id, p.service]);
+    const phaseOfTitle = React.useMemo(() => {
+      const m = {};
+      (aiPhases || []).forEach((ph) => (ph.tasks || []).forEach((t) => {
+        m[typeof t === "string" ? t : t.title] = ph.name;
+      }));
+      return m;
+    }, [aiPhases]);
+    const taskPhase = (t) => t.phase || phaseOfTitle[t.title] || null;
     React.useEffect(() => {
       if ((aiPhases == null ? void 0 : aiPhases.length) > 0) {
         setPhaseTab((ph) => ph === null ? aiPhases[0].name : ph);
@@ -141,7 +148,7 @@
         } }, title), isActive && /* @__PURE__ */ React.createElement("span", { className: "chip green", style: { fontSize: 10, padding: "1px 7px" } }, "En curso"), isReview && /* @__PURE__ */ React.createElement("span", { className: "chip amber", style: { fontSize: 10, padding: "1px 7px" } }, "Revisi\xF3n"));
       })));
     })))) : /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Plan del proyecto"), /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Sin roadmap generado", sub: "Crea el pr\xF3ximo proyecto con Nora para generar un plan autom\xE1tico." })))), tab === "tasks" && (() => {
-      const visibleTasks = aiPhases && phaseTab ? projectTasks.filter((t) => t.phase === phaseTab) : projectTasks;
+      const visibleTasks = aiPhases && phaseTab ? projectTasks.filter((t) => taskPhase(t) === phaseTab) : projectTasks;
       const vByCol = {
         todo: visibleTasks.filter((t) => t.column === "todo"),
         doing: visibleTasks.filter((t) => t.column === "doing"),
@@ -149,8 +156,8 @@
         done: visibleTasks.filter((t) => t.column === "done")
       };
       return /* @__PURE__ */ React.createElement("div", null, aiPhases && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 } }, aiPhases.map((ph, i) => {
-        const count = projectTasks.filter((t) => t.phase === ph.name).length;
-        const done = projectTasks.filter((t) => t.phase === ph.name && t.column === "done").length;
+        const count = projectTasks.filter((t) => taskPhase(t) === ph.name).length;
+        const done = projectTasks.filter((t) => taskPhase(t) === ph.name && t.column === "done").length;
         const isActive = phaseTab === ph.name;
         return /* @__PURE__ */ React.createElement(
           "button",
@@ -230,7 +237,7 @@
             }
           ),
           t.deadline && datePicking !== t.id && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 3, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 10 }), t.deadline),
-          t.phase && !phaseTab && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 3 } }, "\xB7 ", t.phase),
+          taskPhase(t) && !phaseTab && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 3 } }, "\xB7 ", taskPhase(t)),
           t.assignee && t.assignee !== "T\xFA" && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall" }, "\xB7 ", t.assignee)
         )), adding === c.id && /* @__PURE__ */ React.createElement("div", { className: "kanban-card", style: { padding: 8 } }, /* @__PURE__ */ React.createElement(
           "input",
