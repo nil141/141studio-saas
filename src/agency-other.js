@@ -2384,18 +2384,6 @@
     };
     const copy = () => navigator.clipboard.writeText(done.hosted_url || "").then(() => toast("Enlace copiado", "success")).catch(() => {
     });
-    const pill = (on) => ({
-      padding: "7px 14px",
-      borderRadius: 99,
-      cursor: "pointer",
-      fontFamily: "inherit",
-      background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
-      border: on ? "0.5px solid rgba(158,154,229,0.45)" : "0.5px solid var(--border)",
-      color: on ? "var(--accent)" : "var(--text-muted)",
-      fontSize: 12.5,
-      letterSpacing: "-0.2px",
-      transition: "all .12s"
-    });
     return /* @__PURE__ */ React.createElement(
       Modal,
       {
@@ -2425,7 +2413,7 @@
           onClick: (e) => e.target.select(),
           style: { fontFamily: "var(--font-mono)", fontSize: 12.5 }
         }
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en esta p\xE1gina, y como cobro cuando el cliente pague.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap" } }, D.CLIENTS.map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => pickClient(c.id), style: pill(clientId === c.id) }, c.company || c.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email del cliente"), /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en esta p\xE1gina, y como cobro cuando el cliente pague.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("select", { className: "select", value: clientId, onChange: (e) => pickClient(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 Elegir cliente \u2014"), [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("option", { key: c.id, value: c.id }, c.company || c.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email del cliente"), /* @__PURE__ */ React.createElement(
         "input",
         {
           className: "input",
@@ -2461,7 +2449,7 @@
           value: amount,
           onChange: (e) => setAmount(e.target.value)
         }
-      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Vencimiento"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, [7, 15, 30].map((d) => /* @__PURE__ */ React.createElement("button", { key: d, onClick: () => setDueDays(d), style: pill(dueDays === d) }, d, " d\xEDas"))))), /* @__PURE__ */ React.createElement("label", { style: {
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Vencimiento"), /* @__PURE__ */ React.createElement("select", { className: "select", value: dueDays, onChange: (e) => setDueDays(Number(e.target.value)) }, [7, 15, 30, 45, 60].map((d) => /* @__PURE__ */ React.createElement("option", { key: d, value: d }, d, " d\xEDas"))))), /* @__PURE__ */ React.createElement("label", { style: {
         display: "flex",
         alignItems: "center",
         gap: 10,

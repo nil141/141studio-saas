@@ -3045,14 +3045,6 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
   const copy = () => navigator.clipboard.writeText(done.hosted_url || "")
     .then(() => toast("Enlace copiado", "success")).catch(() => {});
 
-  const pill = (on) => ({
-    padding:"7px 14px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
-    background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
-    border: on ? "0.5px solid rgba(158,154,229,0.45)" : "0.5px solid var(--border)",
-    color: on ? "var(--accent)" : "var(--text-muted)",
-    fontSize:12.5, letterSpacing:"-0.2px", transition:"all .12s",
-  });
-
   return (
     <Modal open={open} onClose={onClose} title="Factura Stripe"
       sub="Se crea en tu cuenta de Stripe; el cliente recibe un email con el enlace para pagarla."
@@ -3102,13 +3094,12 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
           {D.CLIENTS.length > 0 && (
             <div>
               <div className="label">Cliente</div>
-              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                {D.CLIENTS.map(c => (
-                  <button key={c.id} onClick={() => pickClient(c.id)} style={pill(clientId === c.id)}>
-                    {c.company || c.name}
-                  </button>
+              <select className="select" value={clientId} onChange={e => pickClient(e.target.value)}>
+                <option value="">— Elegir cliente —</option>
+                {[...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map(c => (
+                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
                 ))}
-              </div>
+              </select>
             </div>
           )}
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
@@ -3136,11 +3127,11 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
             </div>
             <div>
               <div className="label">Vencimiento</div>
-              <div style={{ display:"flex", gap:8 }}>
-                {[7, 15, 30].map(d => (
-                  <button key={d} onClick={() => setDueDays(d)} style={pill(dueDays === d)}>{d} días</button>
+              <select className="select" value={dueDays} onChange={e => setDueDays(Number(e.target.value))}>
+                {[7, 15, 30, 45, 60].map(d => (
+                  <option key={d} value={d}>{d} días</option>
                 ))}
-              </div>
+              </select>
             </div>
           </div>
           <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer",
