@@ -1672,7 +1672,7 @@ const AgencyBilling = () => {
 
         {/* Hero de KPIs — mismo formato que Facturación / Inicio */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
-          padding:"20px 4px 24px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
+          padding:"20px 4px 24px" }}>
           {[
             { label:"Gastado este mes", value:_eur(totalMonth),
               // En gastos subir es malo: rojo al alza, verde a la baja
@@ -2616,7 +2616,7 @@ const IncomePage = () => {
 
         {/* Tira de KPIs — mismo formato que el hero de Inicio (label 16 · valor 32 · delta con círculo) */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
-          padding:"20px 4px 24px", borderTop:"0.5px solid var(--border)", borderBottom:"0.5px solid var(--border)" }}>
+          padding:"20px 4px 24px" }}>
           {[
             { label:"Facturado este mes", value:_eur(monthTotal),
               // Si el mes anterior fue 0 no hay % que calcular: comparativa plana con el importe

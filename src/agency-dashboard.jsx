@@ -304,7 +304,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
   const Header = (
     <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0,
-      borderBottom: "0.5px solid var(--border)", paddingBottom: 24 }}>
+      paddingBottom: 24 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h1 style={{
@@ -491,7 +491,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     <>
       <section style={{
         display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
-        borderBottom: "0.5px solid var(--border)", padding: "0 4px 26px", flexShrink: 0,
+        padding: "0 4px 26px", flexShrink: 0,
       }}>
         {kpis.map((k, i) => {
           const clickable = !!k.nav;

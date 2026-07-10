@@ -1081,9 +1081,7 @@
       alignItems: "center",
       justifyContent: "space-between",
       gap: 32,
-      padding: "20px 4px 24px",
-      borderTop: "0.5px solid var(--border)",
-      borderBottom: "0.5px solid var(--border)"
+      padding: "20px 4px 24px"
     } }, [
       {
         label: "Gastado este mes",
@@ -2000,9 +1998,7 @@
       alignItems: "center",
       justifyContent: "space-between",
       gap: 32,
-      padding: "20px 4px 24px",
-      borderTop: "0.5px solid var(--border)",
-      borderBottom: "0.5px solid var(--border)"
+      padding: "20px 4px 24px"
     } }, [
       {
         label: "Facturado este mes",

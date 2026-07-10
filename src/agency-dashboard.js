@@ -274,7 +274,6 @@
       flexDirection: "column",
       gap: 20,
       flexShrink: 0,
-      borderBottom: "0.5px solid var(--border)",
       paddingBottom: 24
     } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("h1", { style: {
       fontSize: 36,
@@ -435,7 +434,6 @@
       alignItems: "center",
       justifyContent: "space-between",
       gap: 32,
-      borderBottom: "0.5px solid var(--border)",
       padding: "0 4px 26px",
       flexShrink: 0
     } }, kpis.map((k, i) => {
