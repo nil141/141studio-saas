@@ -1024,7 +1024,30 @@
     const activeSubs = data.subs.filter((s) => s.active);
     const recurringMo = activeSubs.reduce((a, s) => a + _subMonthly(s), 0);
     const expMonth = data.expenses.filter((e) => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
-    const totalMonth = recurringMo + expMonth;
+    const _subChargedThisMonth = (s) => {
+      const now = /* @__PURE__ */ new Date(), today = now.getDate();
+      if (s.cycle === "yearly") {
+        if (!s.nextRenewal) return 0;
+        const d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
+        if (isNaN(d)) return 0;
+        return d.getMonth() === now.getMonth() && d.getDate() <= today ? Number(s.amount) || 0 : 0;
+      }
+      const day = s.nextRenewal ? (/* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00")).getDate() : 1;
+      return day <= today ? Number(s.amount) || 0 : 0;
+    };
+    const spentSubs = activeSubs.reduce((a, s) => a + _subChargedThisMonth(s), 0);
+    const totalMonth = spentSubs + expMonth;
+    const _subDueThisMonth = (s) => {
+      const now = /* @__PURE__ */ new Date();
+      if (s.cycle === "yearly") {
+        if (!s.nextRenewal) return 0;
+        const d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
+        return !isNaN(d) && d.getMonth() === now.getMonth() ? Number(s.amount) || 0 : 0;
+      }
+      return Number(s.amount) || 0;
+    };
+    const dueSubs = activeSubs.reduce((a, s) => a + _subDueThisMonth(s), 0);
+    const pendingMonth = Math.max(0, dueSubs - spentSubs);
     const MES_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const trend = (() => {
       const now = /* @__PURE__ */ new Date();
@@ -1086,16 +1109,8 @@
       {
         label: "Gastado este mes",
         value: _eur(totalMonth),
-        // En gastos subir es malo: rojo al alza, verde a la baja
-        delta: deltaPct === null ? /* @__PURE__ */ React.createElement(
-          MetricDelta,
-          {
-            text: _eur(_prevMo.total),
-            suffix: `vs ${_prevMo.label.toLowerCase()}`,
-            dir: totalMonth > _prevMo.total ? "up" : "flat",
-            tone: totalMonth > _prevMo.total ? "bad" : "muted"
-          }
-        ) : /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: false, suffix: `vs ${_prevMo.label.toLowerCase()}` })
+        // Lo cobrado hasta hoy; el subtítulo indica lo que aún queda por cobrar este mes
+        delta: pendingMonth > 0 ? /* @__PURE__ */ React.createElement(MetricDelta, { text: _eur(pendingMonth), suffix: "pendiente este mes", dir: "flat", tone: "muted" }) : /* @__PURE__ */ React.createElement(MetricDelta, { text: "Todo pagado", dir: "flat", tone: "muted" })
       },
       {
         label: "Suscripciones",

@@ -1614,7 +1614,38 @@ const AgencyBilling = () => {
   const activeSubs  = data.subs.filter(s => s.active);
   const recurringMo = activeSubs.reduce((a, s) => a + _subMonthly(s), 0);
   const expMonth    = data.expenses.filter(e => _sameMonth(e.date)).reduce((a, e) => a + (Number(e.amount) || 0), 0);
-  const totalMonth  = recurringMo + expMonth;
+
+  // "Gastado este mes" = lo realmente cobrado hasta hoy: una suscripción cuenta
+  // solo si su día de renovación de este mes ya ha llegado (≤ hoy).
+  const _subChargedThisMonth = (s) => {
+    const now = new Date(), today = now.getDate();
+    if (s.cycle === "yearly") {
+      // anual: cuenta el importe completo solo si renueva este mes y el día ya pasó
+      if (!s.nextRenewal) return 0;
+      const d = new Date(s.nextRenewal + "T00:00:00");
+      if (isNaN(d)) return 0;
+      return (d.getMonth() === now.getMonth() && d.getDate() <= today) ? (Number(s.amount) || 0) : 0;
+    }
+    // mensual: cuenta si el día de cobro ya pasó este mes; sin fecha → se asume cobrada
+    const day = s.nextRenewal ? new Date(s.nextRenewal + "T00:00:00").getDate() : 1;
+    return day <= today ? (Number(s.amount) || 0) : 0;
+  };
+  const spentSubs  = activeSubs.reduce((a, s) => a + _subChargedThisMonth(s), 0);
+  const totalMonth = spentSubs + expMonth;   // gastado real hasta hoy
+
+  // Lo que aún se cobrará este mes: suscripciones que vencen este mes pero cuyo día
+  // todavía no ha llegado (mensuales siempre vencen; anuales solo en su mes).
+  const _subDueThisMonth = (s) => {
+    const now = new Date();
+    if (s.cycle === "yearly") {
+      if (!s.nextRenewal) return 0;
+      const d = new Date(s.nextRenewal + "T00:00:00");
+      return (!isNaN(d) && d.getMonth() === now.getMonth()) ? (Number(s.amount) || 0) : 0;
+    }
+    return Number(s.amount) || 0;
+  };
+  const dueSubs      = activeSubs.reduce((a, s) => a + _subDueThisMonth(s), 0);
+  const pendingMonth = Math.max(0, dueSubs - spentSubs);
 
   // ── Serie mensual (últimos 6 meses) para el gráfico ──
   // El recurrente se calcula por mes: cada suscripción cuenta desde su fecha de
@@ -1675,12 +1706,10 @@ const AgencyBilling = () => {
           padding:"20px 4px 24px" }}>
           {[
             { label:"Gastado este mes", value:_eur(totalMonth),
-              // En gastos subir es malo: rojo al alza, verde a la baja
-              delta: deltaPct === null
-                ? <MetricDelta text={_eur(_prevMo.total)} suffix={`vs ${_prevMo.label.toLowerCase()}`}
-                    dir={totalMonth > _prevMo.total ? "up" : "flat"}
-                    tone={totalMonth > _prevMo.total ? "bad" : "muted"}/>
-                : <TrendDelta pct={deltaPct} goodUp={false} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
+              // Lo cobrado hasta hoy; el subtítulo indica lo que aún queda por cobrar este mes
+              delta: pendingMonth > 0
+                ? <MetricDelta text={_eur(pendingMonth)} suffix="pendiente este mes" dir="flat" tone="muted"/>
+                : <MetricDelta text="Todo pagado" dir="flat" tone="muted"/> },
             { label:"Suscripciones", value:_eur(recurringMo),
               delta:<MetricDelta text={String(activeSubs.length)}
                 suffix={`activa${activeSubs.length === 1 ? "" : "s"} · al mes`}
