@@ -1781,6 +1781,7 @@
     const [stripeMeta, setStripeMeta] = useState(null);
     const [stripeInvOpen, setStripeInvOpen] = useState(false);
     const [payLinkOpen, setPayLinkOpen] = useState(false);
+    const [subLinkOpen, setSubLinkOpen] = useState(false);
     const [range, setRange] = useState(6);
     const fetchStripe = () => {
       window.apiFetch("/api/stripe/invoices", { limit: 100 }).then((r) => r.json()).then((res) => {
@@ -1983,6 +1984,12 @@
         label: "Enlace de pago",
         sub: "Link de cobro de Stripe para compartir.",
         onClick: () => setPayLinkOpen(true)
+      },
+      {
+        icon: "refresh-cw",
+        label: "Suscripci\xF3n",
+        sub: "El cliente se suscribe con un enlace y se cobra solo.",
+        onClick: () => setSubLinkOpen(true)
       },
       {
         icon: "edit",
@@ -2313,7 +2320,181 @@
           return null;
         }
       }
-    ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }));
+    ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }), /* @__PURE__ */ React.createElement(StripeSubscriptionModal, { open: subLinkOpen, onClose: () => setSubLinkOpen(false) }));
+  };
+  var StripeSubscriptionModal = ({ open, onClose }) => {
+    const toast = useToast();
+    const [concept, setConcept] = useState("");
+    const [amount, setAmount] = useState("");
+    const [interval, setItv] = useState("month");
+    const [busy, setBusy] = useState(false);
+    const [url, setUrl] = useState("");
+    useEffect(() => {
+      if (open) {
+        setConcept("");
+        setAmount("");
+        setItv("month");
+        setBusy(false);
+        setUrl("");
+      }
+    }, [open]);
+    const create = async () => {
+      if (!concept.trim() || !(Number(amount) > 0) || busy) return;
+      setBusy(true);
+      try {
+        const res = await _stripeApi("create_payment_link", {
+          name: concept.trim(),
+          amount: Number(amount),
+          interval
+        });
+        if (res.ok) {
+          setUrl(res.url);
+          toast("Enlace de suscripci\xF3n creado", "success");
+        } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
+      } catch (e) {
+        toast("Error de conexi\xF3n", "warn");
+      }
+      setBusy(false);
+    };
+    const copy = () => navigator.clipboard.writeText(url).then(() => toast("Enlace copiado", "success")).catch(() => {
+    });
+    const canSubmit = !!concept.trim() && Number(amount) > 0 && !busy;
+    const FIELD = {
+      width: "100%",
+      padding: "12px 16px",
+      fontSize: 14,
+      borderRadius: 14,
+      background: "rgba(255,255,255,0.04)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      color: "var(--text)",
+      outline: "none",
+      fontFamily: "inherit",
+      letterSpacing: "-0.3px",
+      transition: "border-color .2s, background .2s"
+    };
+    if (!open) return null;
+    return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 200,
+      background: "rgba(0,0,0,0.6)",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      animation: "fade .15s ease-out"
+    } }, /* @__PURE__ */ React.createElement("style", null, `.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`), /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+      width: "100%",
+      maxWidth: 520,
+      maxHeight: "90vh",
+      overflowY: "auto",
+      background: "#0e0e10",
+      border: "1px solid #232324",
+      borderRadius: 32,
+      boxShadow: "0 40px 90px rgba(0,0,0,0.6)",
+      animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+      display: "flex",
+      flexDirection: "column"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.08)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--text-muted)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nueva suscripci\xF3n"), url ? /* @__PURE__ */ React.createElement("div", { style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: "var(--green-soft)",
+      border: "0.5px solid var(--green)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--green)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15 })) : /* @__PURE__ */ React.createElement("button", { onClick: create, style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: canSubmit ? "var(--accent)" : "rgba(255,255,255,0.08)",
+      border: "none",
+      cursor: canSubmit ? "pointer" : "default",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#fff",
+      transition: "all .15s",
+      opacity: canSubmit ? 1 : 0.4
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: busy ? "refresh-cw" : "arrow-up", size: 15 }))), url ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)" } }, "Enlace de suscripci\xF3n listo"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 6, letterSpacing: "-0.3px" } }, _eur(amount), " cada ", interval === "year" ? "a\xF1o" : "mes", " \xB7 ", concept.trim()), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        readOnly: true,
+        value: url,
+        onClick: (e) => e.target.select(),
+        style: { ...FIELD, flex: 1, fontFamily: "var(--font-mono)", fontSize: 12 }
+      }
+    ), /* @__PURE__ */ React.createElement("button", { onClick: copy, style: {
+      ...FIELD,
+      width: "auto",
+      cursor: "pointer",
+      flexShrink: 0,
+      background: "var(--accent-soft)",
+      border: "0.5px solid var(--accent)",
+      color: "var(--accent)"
+    } }, "Copiar")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 14, lineHeight: 1.5 } }, "Cuando el cliente pague quedar\xE1 suscrito y Stripe le cobrar\xE1 autom\xE1ticamente cada ", interval === "year" ? "a\xF1o" : "mes", ". Los cobros aparecer\xE1n en esta p\xE1gina.")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        autoFocus: true,
+        placeholder: "Nombre de la suscripci\xF3n...",
+        value: concept,
+        onChange: (e) => setConcept(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter" && canSubmit) create();
+        },
+        style: {
+          width: "100%",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          fontSize: 28,
+          fontWeight: 400,
+          letterSpacing: "-1.4px",
+          color: concept ? "var(--text)" : "rgba(255,255,255,0.15)",
+          fontFamily: "var(--font-display)",
+          caretColor: "var(--accent)"
+        }
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        type: "number",
+        min: "0",
+        step: "0.01",
+        placeholder: "Importe (\u20AC)",
+        value: amount,
+        onChange: (e) => setAmount(e.target.value)
+      }
+    ), /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: interval,
+        placeholder: "Frecuencia",
+        icon: "refresh-cw",
+        onChange: setItv,
+        options: [
+          { value: "month", label: "Cada mes" },
+          { value: "year", label: "Cada a\xF1o" }
+        ]
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", lineHeight: 1.5, padding: "0 2px" } }, "Se crea un enlace de Stripe: el cliente lo abre, paga con su tarjeta y queda suscrito con cobro autom\xE1tico.")))));
   };
   var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
     const [open, setOpen] = useState(false);

@@ -424,18 +424,24 @@ def api_stripe_revenue(body):
     return {"ok": True, "buckets": buckets, "total": total}
 
 def api_stripe_create_payment_link(body):
-    """Crea un enlace de pago de Stripe (producto + precio + payment link)."""
+    """Crea un enlace de pago de Stripe (producto + precio + payment link).
+    Con interval=month|year el precio es recurrente: el cliente que pague por
+    el enlace queda suscrito y Stripe le cobra automáticamente cada ciclo."""
     name       = (body.get("name") or "Servicio").strip()[:200]
     amount_eur = float(body.get("amount", 0))
     amount_cts = int(round(amount_eur * 100))
     currency   = (body.get("currency") or "eur").lower()
+    interval   = (body.get("interval") or "").lower()
     if amount_cts <= 0:
         return {"ok": False, "error": "Importe no válido"}
-    price = _stripe_post("prices", {
+    price_data = {
         "unit_amount": str(amount_cts),
         "currency": currency,
         "product_data[name]": name,
-    })
+    }
+    if interval in ("month", "year"):
+        price_data["recurring[interval]"] = interval
+    price = _stripe_post("prices", price_data)
     link = _stripe_post("payment_links", {
         "line_items[0][price]": price["id"],
         "line_items[0][quantity]": "1",
