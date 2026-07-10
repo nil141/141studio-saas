@@ -2336,7 +2336,6 @@
     const [trialDays, setTrial] = useState(0);
     const [dueDays, setDueDays] = useState(15);
     const [vat, setVat] = useState(21);
-    const [irpf, setIrpf] = useState(15);
     const [busy, setBusy] = useState(false);
     const [done, setDone] = useState(null);
     useEffect(() => {
@@ -2351,7 +2350,6 @@
         setTrial(0);
         setDueDays(15);
         setVat(21);
-        setIrpf(15);
         setBusy(false);
         setDone(null);
       }
@@ -2394,8 +2392,7 @@
             interval,
             trial_days: trialDays,
             due_days: dueDays,
-            vat,
-            irpf: mode === "invoice" ? irpf : 0
+            vat
           });
           if (res.ok) {
             setDone(res);
@@ -2625,25 +2622,10 @@
           { value: 0, label: "Sin IVA" }
         ]
       }
-    ), mode === "invoice" ? /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: irpf,
-        placeholder: "IRPF",
-        icon: "minus",
-        up: true,
-        onChange: setIrpf,
-        options: [
-          { value: 15, label: "IRPF 15% (empresas)" },
-          { value: 7, label: "IRPF 7% (nuevos aut\xF3nomos)" },
-          { value: 0, label: "Sin IRPF (particulares)" }
-        ]
-      }
-    ) : /* @__PURE__ */ React.createElement("div", { style: { ...FIELD, display: "flex", alignItems: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "IRPF solo en modo factura")), Number(amount) > 0 && (() => {
+    ), /* @__PURE__ */ React.createElement("div", { style: { ...FIELD, display: "flex", alignItems: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "IRPF no disponible en suscripciones")), Number(amount) > 0 && (() => {
       const base = Number(amount);
       const iva = base * vat / 100;
-      const ret = mode === "invoice" ? base * irpf / 100 : 0;
-      return /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px", padding: "0 2px" } }, "Base ", _eur(base), vat ? ` + IVA ${_eur(iva)}` : "", ret ? ` \u2212 IRPF ${_eur(ret)}` : "", " \u2192 el cliente paga ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, _eur(base + iva - ret)), " cada ", itvWord);
+      return /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px", padding: "0 2px" } }, "Base ", _eur(base), vat ? ` + IVA ${_eur(iva)}` : "", " \u2192 el cliente paga ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, _eur(base + iva)), " cada ", itvWord);
     })(), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", lineHeight: 1.5, padding: "0 2px" } }, mode === "card" ? "Se crea un enlace de Stripe con el IVA incluido en el precio: el cliente lo abre, paga y queda suscrito con cobro autom\xE1tico." : "Se crea la suscripci\xF3n sobre el cliente en Stripe y le llega una factura por email cada ciclo, con IVA e IRPF desglosados.")))));
   };
   var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {

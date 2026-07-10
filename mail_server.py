@@ -524,16 +524,11 @@ def api_stripe_create_subscription(body):
     }
     if trial_days > 0:
         sub_data["trial_period_days"] = str(trial_days)
-    # Base imponible + IVA − IRPF en cada factura del ciclo
-    vat_pct  = float(body.get("vat", 0) or 0)
-    irpf_pct = float(body.get("irpf", 0) or 0)
-    tax_ids = []
+    # Base imponible + IVA en cada factura del ciclo. El IRPF no se aplica en
+    # suscripciones: Stripe no admite líneas negativas recurrentes.
+    vat_pct = float(body.get("vat", 0) or 0)
     if vat_pct > 0:
-        tax_ids.append(_ensure_tax_rate(vat_pct, "IVA"))
-    if irpf_pct > 0:
-        tax_ids.append(_ensure_tax_rate(-irpf_pct, "IRPF"))
-    for k, tid in enumerate(tax_ids):
-        sub_data[f"default_tax_rates[{k}]"] = tid
+        sub_data["default_tax_rates[0]"] = _ensure_tax_rate(vat_pct, "IVA")
     sub = _stripe_post("subscriptions", sub_data)
 
     # Primera factura: finalizar y enviar ya (sin prueba, se genera al crear)
@@ -582,8 +577,8 @@ def api_stripe_create_invoice(body):
     inv_id = inv["id"]
 
     # 2. Add line item directly to this invoice (avoids any pending-item race)
-    #    El importe es la base imponible; IVA (+) e IRPF (−, retención) van como
-    #    tipos impositivos exclusivos y salen desglosados en la factura.
+    #    El importe es la base imponible. El IVA va como tipo impositivo; el
+    #    IRPF como línea negativa (Stripe no admite porcentajes negativos).
     item_data = {
         "customer":    cid,
         "invoice":     inv_id,
@@ -593,14 +588,18 @@ def api_stripe_create_invoice(body):
     }
     vat_pct  = float(body.get("vat", 0) or 0)
     irpf_pct = float(body.get("irpf", 0) or 0)
-    tax_ids = []
     if vat_pct > 0:
-        tax_ids.append(_ensure_tax_rate(vat_pct, "IVA"))
-    if irpf_pct > 0:
-        tax_ids.append(_ensure_tax_rate(-irpf_pct, "IRPF"))
-    for k, tid in enumerate(tax_ids):
-        item_data[f"tax_rates[{k}]"] = tid
+        item_data["tax_rates[0]"] = _ensure_tax_rate(vat_pct, "IVA")
     _stripe_post("invoiceitems", item_data)
+    if irpf_pct > 0:
+        ret_cts = int(round(amount_cts * irpf_pct / 100))
+        _stripe_post("invoiceitems", {
+            "customer":    cid,
+            "invoice":     inv_id,
+            "amount":      str(-ret_cts),
+            "currency":    currency,
+            "description": f"Retención IRPF {irpf_pct:g}%",
+        })
 
     # 3. Finalize
     inv = _stripe_post(f"invoices/{inv_id}/finalize", {})

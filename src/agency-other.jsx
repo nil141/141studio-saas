@@ -3013,7 +3013,6 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
   const [trialDays, setTrial]   = useState(0);
   const [dueDays, setDueDays]   = useState(15);
   const [vat, setVat]           = useState(21);
-  const [irpf, setIrpf]         = useState(15);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);   // { url } (card) · { id, status, hosted_url } (invoice)
 
@@ -3021,7 +3020,7 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
     if (open) {
       setClientId(""); setEmail(""); setName(""); setConcept(""); setAmount("");
       setItv("month"); setMode("card"); setTrial(0); setDueDays(15);
-      setVat(21); setIrpf(15); setBusy(false); setDone(null);
+      setVat(21); setBusy(false); setDone(null);
     }
   }, [open]);
 
@@ -3051,8 +3050,7 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
         const res = await _stripeApi("create_subscription", {
           email: email.trim(), name: name.trim() || email.trim(),
           concept: concept.trim(), amount: Number(amount), interval,
-          trial_days: trialDays, due_days: dueDays,
-          vat, irpf: mode === "invoice" ? irpf : 0,
+          trial_days: trialDays, due_days: dueDays, vat,
         });
         if (res.ok) {
           setDone(res);
@@ -3230,27 +3228,16 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
                     { value:10, label:"IVA 10%" },
                     { value:0,  label:"Sin IVA" },
                   ]}/>
-                {mode === "invoice" ? (
-                  <FieldSelect value={irpf} placeholder="IRPF" icon="minus" up
-                    onChange={setIrpf}
-                    options={[
-                      { value:15, label:"IRPF 15% (empresas)" },
-                      { value:7,  label:"IRPF 7% (nuevos autónomos)" },
-                      { value:0,  label:"Sin IRPF (particulares)" },
-                    ]}/>
-                ) : (
-                  <div style={{ ...FIELD, display:"flex", alignItems:"center", color:"var(--text-subtle)", fontSize:12.5 }}>
-                    IRPF solo en modo factura
-                  </div>
-                )}
+                <div style={{ ...FIELD, display:"flex", alignItems:"center", color:"var(--text-subtle)", fontSize:12.5 }}>
+                  IRPF no disponible en suscripciones
+                </div>
               </div>
               {Number(amount) > 0 && (() => {
                 const base = Number(amount);
                 const iva  = base * vat / 100;
-                const ret  = mode === "invoice" ? base * irpf / 100 : 0;
                 return (
                   <div style={{ fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px", padding:"0 2px" }}>
-                    Base {_eur(base)}{vat ? ` + IVA ${_eur(iva)}` : ""}{ret ? ` − IRPF ${_eur(ret)}` : ""} → el cliente paga <b style={{ color:"var(--text)" }}>{_eur(base + iva - ret)}</b> cada {itvWord}
+                    Base {_eur(base)}{vat ? ` + IVA ${_eur(iva)}` : ""} → el cliente paga <b style={{ color:"var(--text)" }}>{_eur(base + iva)}</b> cada {itvWord}
                   </div>
                 );
               })()}
