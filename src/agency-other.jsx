@@ -3012,6 +3012,8 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
   const [mode, setMode]         = useState("card");   // card = enlace con tarjeta · invoice = factura por email
   const [trialDays, setTrial]   = useState(0);
   const [dueDays, setDueDays]   = useState(15);
+  const [vat, setVat]           = useState(21);
+  const [irpf, setIrpf]         = useState(15);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);   // { url } (card) · { id, status, hosted_url } (invoice)
 
@@ -3019,7 +3021,7 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
     if (open) {
       setClientId(""); setEmail(""); setName(""); setConcept(""); setAmount("");
       setItv("month"); setMode("card"); setTrial(0); setDueDays(15);
-      setBusy(false); setDone(null);
+      setVat(21); setIrpf(15); setBusy(false); setDone(null);
     }
   }, [open]);
 
@@ -3041,7 +3043,7 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
     try {
       if (mode === "card") {
         const res = await _stripeApi("create_payment_link", {
-          name: concept.trim(), amount: Number(amount), interval, trial_days: trialDays,
+          name: concept.trim(), amount: Number(amount), interval, trial_days: trialDays, vat,
         });
         if (res.ok) { setDone({ url: res.url }); toast("Enlace de suscripción creado", "success"); }
         else toast(res.error || "No se pudo crear la suscripción", "warn");
@@ -3050,6 +3052,7 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
           email: email.trim(), name: name.trim() || email.trim(),
           concept: concept.trim(), amount: Number(amount), interval,
           trial_days: trialDays, due_days: dueDays,
+          vat, irpf: mode === "invoice" ? irpf : 0,
         });
         if (res.ok) {
           setDone(res);
@@ -3219,10 +3222,42 @@ const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
                   </div>
                 )}
               </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FieldSelect value={vat} placeholder="IVA" icon="tag" up
+                  onChange={setVat}
+                  options={[
+                    { value:21, label:"IVA 21%" },
+                    { value:10, label:"IVA 10%" },
+                    { value:0,  label:"Sin IVA" },
+                  ]}/>
+                {mode === "invoice" ? (
+                  <FieldSelect value={irpf} placeholder="IRPF" icon="minus" up
+                    onChange={setIrpf}
+                    options={[
+                      { value:15, label:"IRPF 15% (empresas)" },
+                      { value:7,  label:"IRPF 7% (nuevos autónomos)" },
+                      { value:0,  label:"Sin IRPF (particulares)" },
+                    ]}/>
+                ) : (
+                  <div style={{ ...FIELD, display:"flex", alignItems:"center", color:"var(--text-subtle)", fontSize:12.5 }}>
+                    IRPF solo en modo factura
+                  </div>
+                )}
+              </div>
+              {Number(amount) > 0 && (() => {
+                const base = Number(amount);
+                const iva  = base * vat / 100;
+                const ret  = mode === "invoice" ? base * irpf / 100 : 0;
+                return (
+                  <div style={{ fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px", padding:"0 2px" }}>
+                    Base {_eur(base)}{vat ? ` + IVA ${_eur(iva)}` : ""}{ret ? ` − IRPF ${_eur(ret)}` : ""} → el cliente paga <b style={{ color:"var(--text)" }}>{_eur(base + iva - ret)}</b> cada {itvWord}
+                  </div>
+                );
+              })()}
               <div style={{ fontSize:12, color:"var(--text-subtle)", lineHeight:1.5, padding:"0 2px" }}>
                 {mode === "card"
-                  ? "Se crea un enlace de Stripe: el cliente lo abre, paga y queda suscrito con cobro automático."
-                  : "Se crea la suscripción sobre el cliente en Stripe y le llega una factura por email cada ciclo."}
+                  ? "Se crea un enlace de Stripe con el IVA incluido en el precio: el cliente lo abre, paga y queda suscrito con cobro automático."
+                  : "Se crea la suscripción sobre el cliente en Stripe y le llega una factura por email cada ciclo, con IVA e IRPF desglosados."}
               </div>
             </div>
           </>
@@ -3307,13 +3342,15 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
   const [amount, setAmount]     = useState("");
   const [dueDays, setDueDays]   = useState(15);
   const [sendNow, setSendNow]   = useState(true);
+  const [vat, setVat]           = useState(21);
+  const [irpf, setIrpf]         = useState(15);
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(null);   // respuesta de Stripe: number, hosted_url…
 
   useEffect(() => {
     if (open) {
       setClientId(""); setEmail(""); setName(""); setConcept(""); setAmount("");
-      setDueDays(15); setSendNow(true); setBusy(false); setDone(null);
+      setDueDays(15); setSendNow(true); setVat(21); setIrpf(15); setBusy(false); setDone(null);
     }
   }, [open]);
 
@@ -3332,7 +3369,7 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
       const res = await _stripeApi("create_invoice", {
         email: email.trim(), name: name.trim() || email.trim(),
         amount: Number(amount), description: concept.trim(),
-        due_days: dueDays, send_now: sendNow,
+        due_days: dueDays, send_now: sendNow, vat, irpf,
       });
       if (res.ok) {
         setDone(res);
@@ -3468,6 +3505,32 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
                   onChange={setDueDays}
                   options={[7, 15, 30, 45, 60].map(d => ({ value: d, label: `Vence en ${d} días` }))}/>
               </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FieldSelect value={vat} placeholder="IVA" icon="tag" up
+                  onChange={setVat}
+                  options={[
+                    { value:21, label:"IVA 21%" },
+                    { value:10, label:"IVA 10%" },
+                    { value:0,  label:"Sin IVA" },
+                  ]}/>
+                <FieldSelect value={irpf} placeholder="IRPF" icon="minus" up
+                  onChange={setIrpf}
+                  options={[
+                    { value:15, label:"IRPF 15% (empresas)" },
+                    { value:7,  label:"IRPF 7% (nuevos autónomos)" },
+                    { value:0,  label:"Sin IRPF (particulares)" },
+                  ]}/>
+              </div>
+              {Number(amount) > 0 && (() => {
+                const base = Number(amount);
+                const iva  = base * vat / 100;
+                const ret  = base * irpf / 100;
+                return (
+                  <div style={{ fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px", padding:"0 2px" }}>
+                    Base {_eur(base)}{vat ? ` + IVA ${_eur(iva)}` : ""}{irpf ? ` − IRPF ${_eur(ret)}` : ""} → el cliente paga <b style={{ color:"var(--text)" }}>{_eur(base + iva - ret)}</b>
+                  </div>
+                );
+              })()}
               <label style={{ ...FIELD, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
                 <input type="checkbox" checked={sendNow} onChange={e => setSendNow(e.target.checked)}
                   style={{ accentColor:"var(--accent)", width:15, height:15 }}/>
@@ -3487,15 +3550,16 @@ const PaymentLinkModal = ({ open, onClose }) => {
   const toast = useToast();
   const [concept, setConcept] = useState("");
   const [amount, setAmount]   = useState("");
+  const [vat, setVat]         = useState(21);
   const [busy, setBusy] = useState(false);
   const [url, setUrl]   = useState("");
-  useEffect(() => { if (open) { setConcept(""); setAmount(""); setUrl(""); setBusy(false); } }, [open]);
+  useEffect(() => { if (open) { setConcept(""); setAmount(""); setVat(21); setUrl(""); setBusy(false); } }, [open]);
 
   const create = async () => {
     if (!concept.trim() || !(Number(amount) > 0)) { toast("Pon concepto e importe", "warn"); return; }
     setBusy(true);
     try {
-      const res = await _stripeApi("create_payment_link", { name: concept.trim(), amount: Number(amount) });
+      const res = await _stripeApi("create_payment_link", { name: concept.trim(), amount: Number(amount), vat });
       if (res.ok) setUrl(res.url);
       else toast(res.error || "No se pudo crear el enlace", "warn");
     } catch (e) { toast("Error de conexión", "warn"); }
@@ -3536,11 +3600,28 @@ const PaymentLinkModal = ({ open, onClose }) => {
             <input className="input" placeholder="Ej. Auditoría web" value={concept}
               onChange={e => setConcept(e.target.value)} autoFocus/>
           </div>
-          <div>
-            <div className="label">Importe (€)</div>
-            <input className="input" type="number" min="0" step="0.01" placeholder="150"
-              value={amount} onChange={e => setAmount(e.target.value)} style={{ maxWidth:180 }}/>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
+            <div>
+              <div className="label">Importe base (€)</div>
+              <input className="input" type="number" min="0" step="0.01" placeholder="150"
+                value={amount} onChange={e => setAmount(e.target.value)}/>
+            </div>
+            <div>
+              <div className="label">IVA</div>
+              <FieldSelect value={vat} placeholder="IVA" icon="tag"
+                onChange={setVat}
+                options={[
+                  { value:21, label:"IVA 21%" },
+                  { value:10, label:"IVA 10%" },
+                  { value:0,  label:"Sin IVA" },
+                ]}/>
+            </div>
           </div>
+          {Number(amount) > 0 && (
+            <div style={{ fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
+              El cliente pagará <b style={{ color:"var(--text)" }}>{_eur(Number(amount) * (1 + vat / 100))}</b>{vat ? " (IVA incluido)" : ""}
+            </div>
+          )}
         </div>
       )}
     </Modal>

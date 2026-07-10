@@ -345,6 +345,31 @@ def _stripe_post(path, data):
         body = json.loads(e.read().decode())
         raise Exception(_stripe_err(body, str(e)))
 
+_TAX_RATE_CACHE = {}
+
+def _ensure_tax_rate(pct, name):
+    """Devuelve el id de un tipo impositivo exclusivo con ese % (lo crea si no
+    existe). pct puede ser negativo: retenciones tipo IRPF en facturas."""
+    key = f"{name}:{pct}"
+    if key in _TAX_RATE_CACHE:
+        return _TAX_RATE_CACHE[key]
+    rates = _stripe("tax_rates", {"active": "true", "limit": "100"})
+    for r in rates.get("data", []):
+        try:
+            if abs(float(r.get("percentage", 0)) - pct) < 0.001 and not r.get("inclusive"):
+                _TAX_RATE_CACHE[key] = r["id"]
+                return r["id"]
+        except Exception:
+            continue
+    r = _stripe_post("tax_rates", {
+        "display_name": name,
+        "percentage": str(pct),
+        "inclusive": "false",
+        "country": "ES",
+    })
+    _TAX_RATE_CACHE[key] = r["id"]
+    return r["id"]
+
 def api_stripe_balance(_body):
     data = _stripe("balance")
     avail   = sum(f["amount"] for f in data.get("available", []) if f["currency"] == "eur")
@@ -434,6 +459,11 @@ def api_stripe_create_payment_link(body):
     interval   = (body.get("interval") or "").lower()
     if amount_cts <= 0:
         return {"ok": False, "error": "Importe no válido"}
+    # El importe llega como base imponible: en enlaces el IVA va incluido en el
+    # precio (los payment links no admiten tipos impositivos manuales).
+    vat_pct = float(body.get("vat", 0) or 0)
+    if vat_pct > 0:
+        amount_cts = int(round(amount_cts * (1 + vat_pct / 100)))
     price_data = {
         "unit_amount": str(amount_cts),
         "currency": currency,
@@ -494,6 +524,16 @@ def api_stripe_create_subscription(body):
     }
     if trial_days > 0:
         sub_data["trial_period_days"] = str(trial_days)
+    # Base imponible + IVA − IRPF en cada factura del ciclo
+    vat_pct  = float(body.get("vat", 0) or 0)
+    irpf_pct = float(body.get("irpf", 0) or 0)
+    tax_ids = []
+    if vat_pct > 0:
+        tax_ids.append(_ensure_tax_rate(vat_pct, "IVA"))
+    if irpf_pct > 0:
+        tax_ids.append(_ensure_tax_rate(-irpf_pct, "IRPF"))
+    for k, tid in enumerate(tax_ids):
+        sub_data[f"default_tax_rates[{k}]"] = tid
     sub = _stripe_post("subscriptions", sub_data)
 
     # Primera factura: finalizar y enviar ya (sin prueba, se genera al crear)
@@ -542,13 +582,25 @@ def api_stripe_create_invoice(body):
     inv_id = inv["id"]
 
     # 2. Add line item directly to this invoice (avoids any pending-item race)
-    _stripe_post("invoiceitems", {
+    #    El importe es la base imponible; IVA (+) e IRPF (−, retención) van como
+    #    tipos impositivos exclusivos y salen desglosados en la factura.
+    item_data = {
         "customer":    cid,
         "invoice":     inv_id,
         "amount":      str(amount_cts),
         "currency":    currency,
         "description": description,
-    })
+    }
+    vat_pct  = float(body.get("vat", 0) or 0)
+    irpf_pct = float(body.get("irpf", 0) or 0)
+    tax_ids = []
+    if vat_pct > 0:
+        tax_ids.append(_ensure_tax_rate(vat_pct, "IVA"))
+    if irpf_pct > 0:
+        tax_ids.append(_ensure_tax_rate(-irpf_pct, "IRPF"))
+    for k, tid in enumerate(tax_ids):
+        item_data[f"tax_rates[{k}]"] = tid
+    _stripe_post("invoiceitems", item_data)
 
     # 3. Finalize
     inv = _stripe_post(f"invoices/{inv_id}/finalize", {})
