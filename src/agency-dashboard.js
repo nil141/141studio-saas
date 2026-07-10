@@ -296,7 +296,7 @@
           { icon: "plus", label: "Nueva tarea", sub: "A\xF1ade una tarea r\xE1pida.", accent: true, onClick: () => openModal("newTask") },
           { icon: "folder", label: "Nuevo proyecto", sub: "Crea un proyecto.", onClick: () => openModal("newProject") },
           { icon: "users", label: "Nuevo cliente", sub: "A\xF1ade una ficha o portal.", onClick: () => openModal("newClient") },
-          { icon: "receipt", label: "Nueva factura", sub: "Registra una factura.", onClick: () => navigate("billing") }
+          { icon: "receipt", label: "Nueva factura", sub: "Se crea y env\xEDa desde Stripe.", onClick: () => openModal("newInvoice") }
         ]
       }
     )));

@@ -222,7 +222,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       <window.RoutineModal open={modal === "newRoutine" || modal === "editRoutine"} onClose={closeModal}
         routine={modal === "editRoutine" ? modalParams.routine : null} date={modalParams.date}/>
       <NewLeadModal open={modal === "newLead"} onClose={closeModal}/>
-      <NewInvoiceModal open={modal === "newInvoice"} onClose={closeModal}/>
+      <window.StripeInvoiceModal open={modal === "newInvoice"} onClose={closeModal}/>
       <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
       <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>

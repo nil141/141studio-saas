@@ -323,7 +323,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
             { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
             { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
-            { icon: "receipt", label: "Nueva factura",  sub: "Registra una factura.",    onClick: () => navigate("billing") },
+            { icon: "receipt", label: "Nueva factura",  sub: "Se crea y envía desde Stripe.", onClick: () => openModal("newInvoice") },
           ]}
         />
       </div>

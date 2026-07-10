@@ -3267,4 +3267,4 @@ const PaymentLinkModal = ({ open, onClose }) => {
   );
 };
 
-Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow });
+Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow, StripeInvoiceModal });
