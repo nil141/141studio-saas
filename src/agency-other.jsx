@@ -2992,46 +2992,84 @@ const IncomePage = () => {
       {/* Funcionalidades de Stripe */}
       <StripeInvoiceModal open={stripeInvOpen} onClose={() => setStripeInvOpen(false)} onCreated={fetchStripe}/>
       <PaymentLinkModal open={payLinkOpen} onClose={() => setPayLinkOpen(false)}/>
-      <StripeSubscriptionModal open={subLinkOpen} onClose={() => setSubLinkOpen(false)}/>
+      <StripeSubscriptionModal open={subLinkOpen} onClose={() => setSubLinkOpen(false)} onCreated={fetchStripe}/>
     </div>
   );
 };
 
-// ── Suscripción de Stripe: enlace recurrente — el cliente paga una vez y
-//    queda suscrito; Stripe le cobra automáticamente cada mes o año ──
-const StripeSubscriptionModal = ({ open, onClose }) => {
+// ── Suscripción de Stripe: cliente + importe + frecuencia, con dos modos de
+//    cobro — enlace con tarjeta (cargo automático) o factura por email por ciclo ──
+const StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
+  const D = window.Data;
+  D.useStore();
   const toast = useToast();
+  const [clientId, setClientId] = useState("");
+  const [email, setEmail]       = useState("");
+  const [name, setName]         = useState("");
   const [concept, setConcept]   = useState("");
   const [amount, setAmount]     = useState("");
   const [interval, setItv]      = useState("month");
+  const [mode, setMode]         = useState("card");   // card = enlace con tarjeta · invoice = factura por email
+  const [trialDays, setTrial]   = useState(0);
+  const [dueDays, setDueDays]   = useState(15);
   const [busy, setBusy] = useState(false);
-  const [url, setUrl]   = useState("");
+  const [done, setDone] = useState(null);   // { url } (card) · { id, status, hosted_url } (invoice)
+
   useEffect(() => {
-    if (open) { setConcept(""); setAmount(""); setItv("month"); setBusy(false); setUrl(""); }
+    if (open) {
+      setClientId(""); setEmail(""); setName(""); setConcept(""); setAmount("");
+      setItv("month"); setMode("card"); setTrial(0); setDueDays(15);
+      setBusy(false); setDone(null);
+    }
   }, [open]);
 
+  const pickClient = (id) => {
+    setClientId(id);
+    const c = D.CLIENTS.find(c => c.id === id);
+    if (c) { setEmail(c.email || ""); setName(c.company || c.name || ""); }
+  };
+
+  const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+  const canSubmit = !!concept.trim() && Number(amount) > 0 && (mode === "card" || emailOk) && !busy;
+
   const create = async () => {
-    if (!concept.trim() || !(Number(amount) > 0) || busy) return;
+    if (!canSubmit) {
+      if (mode === "invoice" && !emailOk) toast("Pon el email del cliente (ahí llegan las facturas)", "warn");
+      return;
+    }
     setBusy(true);
     try {
-      const res = await _stripeApi("create_payment_link", {
-        name: concept.trim(), amount: Number(amount), interval,
-      });
-      if (res.ok) { setUrl(res.url); toast("Enlace de suscripción creado", "success"); }
-      else toast(res.error || "No se pudo crear la suscripción", "warn");
+      if (mode === "card") {
+        const res = await _stripeApi("create_payment_link", {
+          name: concept.trim(), amount: Number(amount), interval, trial_days: trialDays,
+        });
+        if (res.ok) { setDone({ url: res.url }); toast("Enlace de suscripción creado", "success"); }
+        else toast(res.error || "No se pudo crear la suscripción", "warn");
+      } else {
+        const res = await _stripeApi("create_subscription", {
+          email: email.trim(), name: name.trim() || email.trim(),
+          concept: concept.trim(), amount: Number(amount), interval,
+          trial_days: trialDays, due_days: dueDays,
+        });
+        if (res.ok) {
+          setDone(res);
+          onCreated && onCreated();
+          toast("Suscripción creada en Stripe", "success");
+        } else toast(res.error || "No se pudo crear la suscripción", "warn");
+      }
     } catch (e) { toast("Error de conexión", "warn"); }
     setBusy(false);
   };
-  const copy = () => navigator.clipboard.writeText(url)
+  const copy = (v) => navigator.clipboard.writeText(v)
     .then(() => toast("Enlace copiado", "success")).catch(() => {});
 
-  const canSubmit = !!concept.trim() && Number(amount) > 0 && !busy;
   const FIELD = {
     width:"100%", padding:"12px 16px", fontSize:14, borderRadius:14,
     background:"rgba(255,255,255,0.04)", border:"0.5px solid rgba(255,255,255,0.1)",
     color:"var(--text)", outline:"none", fontFamily:"inherit", letterSpacing:"-0.3px",
     transition:"border-color .2s, background .2s",
   };
+  const itvWord = interval === "year" ? "año" : "mes";
 
   if (!open) return null;
 
@@ -3061,7 +3099,7 @@ const StripeSubscriptionModal = ({ open, onClose }) => {
             <Icon name="x" size={15}/>
           </button>
           <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>Nueva suscripción</div>
-          {url ? (
+          {done ? (
             <div style={{
               width:40, height:40, borderRadius:"50%",
               background:"var(--green-soft)", border:"0.5px solid var(--green)",
@@ -3082,31 +3120,36 @@ const StripeSubscriptionModal = ({ open, onClose }) => {
           )}
         </div>
 
-        {url ? (
+        {done ? (
           <div style={{ padding:"28px" }}>
             <div style={{ fontSize:24, fontWeight:400, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}>
-              Enlace de suscripción listo
+              {done.url ? "Enlace de suscripción listo" : "Suscripción creada"}
             </div>
             <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:6, letterSpacing:"-0.3px" }}>
-              {_eur(amount)} cada {interval === "year" ? "año" : "mes"} · {concept.trim()}
+              {_eur(amount)} cada {itvWord} · {concept.trim()}
+              {trialDays > 0 ? ` · ${trialDays} días de prueba` : ""}
             </div>
-            <div style={{ display:"flex", gap:8, marginTop:18 }}>
-              <input readOnly value={url} onClick={e => e.target.select()}
-                style={{ ...FIELD, flex:1, fontFamily:"var(--font-mono)", fontSize:12 }}/>
-              <button onClick={copy} style={{
-                ...FIELD, width:"auto", cursor:"pointer", flexShrink:0,
-                background:"var(--accent-soft)", border:"0.5px solid var(--accent)", color:"var(--accent)",
-              }}>
-                Copiar
-              </button>
-            </div>
+            {(done.url || done.hosted_url) && (
+              <div style={{ display:"flex", gap:8, marginTop:18 }}>
+                <input readOnly value={done.url || done.hosted_url} onClick={e => e.target.select()}
+                  style={{ ...FIELD, flex:1, fontFamily:"var(--font-mono)", fontSize:12 }}/>
+                <button onClick={() => copy(done.url || done.hosted_url)} style={{
+                  ...FIELD, width:"auto", cursor:"pointer", flexShrink:0,
+                  background:"var(--accent-soft)", border:"0.5px solid var(--accent)", color:"var(--accent)",
+                }}>
+                  Copiar
+                </button>
+              </div>
+            )}
             <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:14, lineHeight:1.5 }}>
-              Cuando el cliente pague quedará suscrito y Stripe le cobrará automáticamente cada {interval === "year" ? "año" : "mes"}. Los cobros aparecerán en esta página.
+              {done.url
+                ? `Compártelo con el cliente: pone su tarjeta una vez y Stripe le cobra automáticamente cada ${itvWord}.`
+                : `Stripe enviará una factura a ${email.trim()} cada ${itvWord}${done.hosted_url ? "; arriba tienes la primera" : ""}. La suscripción está en Stripe → Suscripciones.`}
             </div>
           </div>
         ) : (
           <>
-            {/* Concepto gigante */}
+            {/* Nombre gigante */}
             <div style={{ padding:"28px 28px 8px" }}>
               <input
                 autoFocus
@@ -3122,7 +3165,23 @@ const StripeSubscriptionModal = ({ open, onClose }) => {
                 }}
               />
             </div>
+
             <div style={{ padding:"20px 28px 26px", display:"flex", flexDirection:"column", gap:14 }}>
+              {/* Cliente */}
+              {D.CLIENTS.length > 0 && (
+                <FieldSelect value={clientId} placeholder="Elegir cliente" icon="users"
+                  onChange={pickClient}
+                  options={[...D.CLIENTS]
+                    .sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || ""))
+                    .map(c => ({ value: c.id, label: c.company || c.name }))}/>
+              )}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <input className="od-input" style={FIELD} type="email" placeholder="Email del cliente" value={email}
+                  onChange={e => setEmail(e.target.value)}/>
+                <input className="od-input" style={FIELD} placeholder="Nombre / empresa" value={name}
+                  onChange={e => setName(e.target.value)}/>
+              </div>
+              {/* Importe + frecuencia */}
               <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
                 <input className="od-input" style={FIELD} type="number" min="0" step="0.01" placeholder="Importe (€)"
                   value={amount} onChange={e => setAmount(e.target.value)}/>
@@ -3133,8 +3192,37 @@ const StripeSubscriptionModal = ({ open, onClose }) => {
                     { value:"year",  label:"Cada año" },
                   ]}/>
               </div>
+              {/* Modo de cobro */}
+              <FieldSelect value={mode} placeholder="Cómo se cobra" icon="receipt"
+                onChange={setMode}
+                options={[
+                  { value:"card",    label:"Cobro automático — el cliente pone su tarjeta con un enlace" },
+                  { value:"invoice", label:"Factura por email cada ciclo — la paga manualmente" },
+                ]}/>
+              {/* Prueba + vencimiento */}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <FieldSelect value={trialDays} placeholder="Prueba gratuita" icon="clock" up
+                  onChange={setTrial}
+                  options={[
+                    { value:0,  label:"Sin prueba" },
+                    { value:7,  label:"7 días de prueba" },
+                    { value:14, label:"14 días de prueba" },
+                    { value:30, label:"30 días de prueba" },
+                  ]}/>
+                {mode === "invoice" ? (
+                  <FieldSelect value={dueDays} placeholder="Vencimiento" icon="calendar" up
+                    onChange={setDueDays}
+                    options={[7, 15, 30, 45, 60].map(d => ({ value: d, label: `Vence en ${d} días` }))}/>
+                ) : (
+                  <div style={{ ...FIELD, display:"flex", alignItems:"center", color:"var(--text-subtle)", fontSize:12.5 }}>
+                    Se cobra solo con la tarjeta
+                  </div>
+                )}
+              </div>
               <div style={{ fontSize:12, color:"var(--text-subtle)", lineHeight:1.5, padding:"0 2px" }}>
-                Se crea un enlace de Stripe: el cliente lo abre, paga con su tarjeta y queda suscrito con cobro automático.
+                {mode === "card"
+                  ? "Se crea un enlace de Stripe: el cliente lo abre, paga y queda suscrito con cobro automático."
+                  : "Se crea la suscripción sobre el cliente en Stripe y le llega una factura por email cada ciclo."}
               </div>
             </div>
           </>

@@ -2320,45 +2320,89 @@
           return null;
         }
       }
-    ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }), /* @__PURE__ */ React.createElement(StripeSubscriptionModal, { open: subLinkOpen, onClose: () => setSubLinkOpen(false) }));
+    ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }), /* @__PURE__ */ React.createElement(StripeSubscriptionModal, { open: subLinkOpen, onClose: () => setSubLinkOpen(false), onCreated: fetchStripe }));
   };
-  var StripeSubscriptionModal = ({ open, onClose }) => {
+  var StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
+    const D = window.Data;
+    D.useStore();
     const toast = useToast();
+    const [clientId, setClientId] = useState("");
+    const [email, setEmail] = useState("");
+    const [name, setName] = useState("");
     const [concept, setConcept] = useState("");
     const [amount, setAmount] = useState("");
     const [interval, setItv] = useState("month");
+    const [mode, setMode] = useState("card");
+    const [trialDays, setTrial] = useState(0);
+    const [dueDays, setDueDays] = useState(15);
     const [busy, setBusy] = useState(false);
-    const [url, setUrl] = useState("");
+    const [done, setDone] = useState(null);
     useEffect(() => {
       if (open) {
+        setClientId("");
+        setEmail("");
+        setName("");
         setConcept("");
         setAmount("");
         setItv("month");
+        setMode("card");
+        setTrial(0);
+        setDueDays(15);
         setBusy(false);
-        setUrl("");
+        setDone(null);
       }
     }, [open]);
+    const pickClient = (id) => {
+      setClientId(id);
+      const c = D.CLIENTS.find((c2) => c2.id === id);
+      if (c) {
+        setEmail(c.email || "");
+        setName(c.company || c.name || "");
+      }
+    };
+    const emailOk = /\S+@\S+\.\S+/.test(email.trim());
+    const canSubmit = !!concept.trim() && Number(amount) > 0 && (mode === "card" || emailOk) && !busy;
     const create = async () => {
-      if (!concept.trim() || !(Number(amount) > 0) || busy) return;
+      if (!canSubmit) {
+        if (mode === "invoice" && !emailOk) toast("Pon el email del cliente (ah\xED llegan las facturas)", "warn");
+        return;
+      }
       setBusy(true);
       try {
-        const res = await _stripeApi("create_payment_link", {
-          name: concept.trim(),
-          amount: Number(amount),
-          interval
-        });
-        if (res.ok) {
-          setUrl(res.url);
-          toast("Enlace de suscripci\xF3n creado", "success");
-        } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
+        if (mode === "card") {
+          const res = await _stripeApi("create_payment_link", {
+            name: concept.trim(),
+            amount: Number(amount),
+            interval,
+            trial_days: trialDays
+          });
+          if (res.ok) {
+            setDone({ url: res.url });
+            toast("Enlace de suscripci\xF3n creado", "success");
+          } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
+        } else {
+          const res = await _stripeApi("create_subscription", {
+            email: email.trim(),
+            name: name.trim() || email.trim(),
+            concept: concept.trim(),
+            amount: Number(amount),
+            interval,
+            trial_days: trialDays,
+            due_days: dueDays
+          });
+          if (res.ok) {
+            setDone(res);
+            onCreated && onCreated();
+            toast("Suscripci\xF3n creada en Stripe", "success");
+          } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
+        }
       } catch (e) {
         toast("Error de conexi\xF3n", "warn");
       }
       setBusy(false);
     };
-    const copy = () => navigator.clipboard.writeText(url).then(() => toast("Enlace copiado", "success")).catch(() => {
+    const copy = (v) => navigator.clipboard.writeText(v).then(() => toast("Enlace copiado", "success")).catch(() => {
     });
-    const canSubmit = !!concept.trim() && Number(amount) > 0 && !busy;
     const FIELD = {
       width: "100%",
       padding: "12px 16px",
@@ -2372,6 +2416,7 @@
       letterSpacing: "-0.3px",
       transition: "border-color .2s, background .2s"
     };
+    const itvWord = interval === "year" ? "a\xF1o" : "mes";
     if (!open) return null;
     return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
       position: "fixed",
@@ -2408,7 +2453,7 @@
       alignItems: "center",
       justifyContent: "center",
       color: "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nueva suscripci\xF3n"), url ? /* @__PURE__ */ React.createElement("div", { style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nueva suscripci\xF3n"), done ? /* @__PURE__ */ React.createElement("div", { style: {
       width: 40,
       height: 40,
       borderRadius: "50%",
@@ -2431,15 +2476,15 @@
       color: "#fff",
       transition: "all .15s",
       opacity: canSubmit ? 1 : 0.4
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: busy ? "refresh-cw" : "arrow-up", size: 15 }))), url ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)" } }, "Enlace de suscripci\xF3n listo"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 6, letterSpacing: "-0.3px" } }, _eur(amount), " cada ", interval === "year" ? "a\xF1o" : "mes", " \xB7 ", concept.trim()), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: busy ? "refresh-cw" : "arrow-up", size: 15 }))), done ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)" } }, done.url ? "Enlace de suscripci\xF3n listo" : "Suscripci\xF3n creada"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 6, letterSpacing: "-0.3px" } }, _eur(amount), " cada ", itvWord, " \xB7 ", concept.trim(), trialDays > 0 ? ` \xB7 ${trialDays} d\xEDas de prueba` : ""), (done.url || done.hosted_url) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         readOnly: true,
-        value: url,
+        value: done.url || done.hosted_url,
         onClick: (e) => e.target.select(),
         style: { ...FIELD, flex: 1, fontFamily: "var(--font-mono)", fontSize: 12 }
       }
-    ), /* @__PURE__ */ React.createElement("button", { onClick: copy, style: {
+    ), /* @__PURE__ */ React.createElement("button", { onClick: () => copy(done.url || done.hosted_url), style: {
       ...FIELD,
       width: "auto",
       cursor: "pointer",
@@ -2447,7 +2492,7 @@
       background: "var(--accent-soft)",
       border: "0.5px solid var(--accent)",
       color: "var(--accent)"
-    } }, "Copiar")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 14, lineHeight: 1.5 } }, "Cuando el cliente pague quedar\xE1 suscrito y Stripe le cobrar\xE1 autom\xE1ticamente cada ", interval === "year" ? "a\xF1o" : "mes", ". Los cobros aparecer\xE1n en esta p\xE1gina.")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+    } }, "Copiar")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 14, lineHeight: 1.5 } }, done.url ? `Comp\xE1rtelo con el cliente: pone su tarjeta una vez y Stripe le cobra autom\xE1ticamente cada ${itvWord}.` : `Stripe enviar\xE1 una factura a ${email.trim()} cada ${itvWord}${done.hosted_url ? "; arriba tienes la primera" : ""}. La suscripci\xF3n est\xE1 en Stripe \u2192 Suscripciones.`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         autoFocus: true,
@@ -2470,7 +2515,35 @@
           caretColor: "var(--accent)"
         }
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: clientId,
+        placeholder: "Elegir cliente",
+        icon: "users",
+        onChange: pickClient,
+        options: [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => ({ value: c.id, label: c.company || c.name }))
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        type: "email",
+        placeholder: "Email del cliente",
+        value: email,
+        onChange: (e) => setEmail(e.target.value)
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        placeholder: "Nombre / empresa",
+        value: name,
+        onChange: (e) => setName(e.target.value)
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         className: "od-input",
@@ -2494,7 +2567,44 @@
           { value: "year", label: "Cada a\xF1o" }
         ]
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", lineHeight: 1.5, padding: "0 2px" } }, "Se crea un enlace de Stripe: el cliente lo abre, paga con su tarjeta y queda suscrito con cobro autom\xE1tico.")))));
+    )), /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: mode,
+        placeholder: "C\xF3mo se cobra",
+        icon: "receipt",
+        onChange: setMode,
+        options: [
+          { value: "card", label: "Cobro autom\xE1tico \u2014 el cliente pone su tarjeta con un enlace" },
+          { value: "invoice", label: "Factura por email cada ciclo \u2014 la paga manualmente" }
+        ]
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: trialDays,
+        placeholder: "Prueba gratuita",
+        icon: "clock",
+        up: true,
+        onChange: setTrial,
+        options: [
+          { value: 0, label: "Sin prueba" },
+          { value: 7, label: "7 d\xEDas de prueba" },
+          { value: 14, label: "14 d\xEDas de prueba" },
+          { value: 30, label: "30 d\xEDas de prueba" }
+        ]
+      }
+    ), mode === "invoice" ? /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: dueDays,
+        placeholder: "Vencimiento",
+        icon: "calendar",
+        up: true,
+        onChange: setDueDays,
+        options: [7, 15, 30, 45, 60].map((d) => ({ value: d, label: `Vence en ${d} d\xEDas` }))
+      }
+    ) : /* @__PURE__ */ React.createElement("div", { style: { ...FIELD, display: "flex", alignItems: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Se cobra solo con la tarjeta")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", lineHeight: 1.5, padding: "0 2px" } }, mode === "card" ? "Se crea un enlace de Stripe: el cliente lo abre, paga y queda suscrito con cobro autom\xE1tico." : "Se crea la suscripci\xF3n sobre el cliente en Stripe y le llega una factura por email cada ciclo.")))));
   };
   var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
     const [open, setOpen] = useState(false);

@@ -442,11 +442,76 @@ def api_stripe_create_payment_link(body):
     if interval in ("month", "year"):
         price_data["recurring[interval]"] = interval
     price = _stripe_post("prices", price_data)
-    link = _stripe_post("payment_links", {
+    link_data = {
         "line_items[0][price]": price["id"],
         "line_items[0][quantity]": "1",
-    })
+    }
+    trial_days = int(body.get("trial_days", 0) or 0)
+    if interval in ("month", "year") and trial_days > 0:
+        link_data["subscription_data[trial_period_days]"] = str(trial_days)
+    link = _stripe_post("payment_links", link_data)
     return {"ok": True, "url": link.get("url"), "id": link.get("id")}
+
+def api_stripe_create_subscription(body):
+    """Crea una suscripción real sobre un cliente, con facturas por email
+    (collection_method=send_invoice): Stripe le manda la factura cada ciclo
+    y el cliente la paga; no hace falta tarjeta guardada."""
+    email_addr = body.get("email", "").strip()
+    name       = body.get("name",  "").strip()
+    concept    = (body.get("concept") or "Suscripción").strip()[:200]
+    amount_eur = float(body.get("amount", 0))
+    amount_cts = int(round(amount_eur * 100))
+    currency   = (body.get("currency") or "eur").lower()
+    interval   = (body.get("interval") or "month").lower()
+    trial_days = int(body.get("trial_days", 0) or 0)
+    due_days   = int(body.get("due_days", 15) or 15)
+    if amount_cts <= 0:
+        return {"ok": False, "error": "Importe no válido"}
+    if not email_addr:
+        return {"ok": False, "error": "Falta el email del cliente"}
+    if interval not in ("month", "year"):
+        interval = "month"
+
+    # Cliente: buscar o crear
+    custs = _stripe("customers", {"email": email_addr, "limit": "1"})
+    if custs.get("data"):
+        cid = custs["data"][0]["id"]
+    else:
+        cid = _stripe_post("customers", {"email": email_addr, "name": name})["id"]
+
+    price = _stripe_post("prices", {
+        "unit_amount": str(amount_cts),
+        "currency": currency,
+        "recurring[interval]": interval,
+        "product_data[name]": concept,
+    })
+    sub_data = {
+        "customer":           cid,
+        "items[0][price]":    price["id"],
+        "collection_method":  "send_invoice",
+        "days_until_due":     str(due_days),
+        "description":        concept,
+    }
+    if trial_days > 0:
+        sub_data["trial_period_days"] = str(trial_days)
+    sub = _stripe_post("subscriptions", sub_data)
+
+    # Primera factura: finalizar y enviar ya (sin prueba, se genera al crear)
+    hosted = None
+    inv_id = sub.get("latest_invoice")
+    if inv_id:
+        try:
+            _stripe_post(f"invoices/{inv_id}/finalize", {})
+        except Exception:
+            pass
+        try:
+            inv = _stripe_post(f"invoices/{inv_id}/send", {})
+        except Exception:
+            try: inv = _stripe(f"invoices/{inv_id}")
+            except Exception: inv = {}
+        hosted = inv.get("hosted_invoice_url")
+
+    return {"ok": True, "id": sub.get("id"), "status": sub.get("status"), "hosted_url": hosted}
 
 def api_stripe_create_invoice(body):
     email_addr  = body.get("email", "").strip()
@@ -818,6 +883,7 @@ STRIPE_HANDLERS = {
     "revenue":         api_stripe_revenue,
     "create_invoice":  api_stripe_create_invoice,
     "create_payment_link": api_stripe_create_payment_link,
+    "create_subscription": api_stripe_create_subscription,
 }
 
 # Requieren JWT del usuario (mismo esquema que MAIL/STRIPE)
