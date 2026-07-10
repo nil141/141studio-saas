@@ -40,13 +40,15 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
     return () => window.removeEventListener("click", close);
   }, [!!ctxMenu]);
 
-  // AI phases saved during project creation
+  // Fases del proyecto: se derivan de las tareas (campo phase) que están en la
+  // nube, en el orden en que aparecen. Sin copias locales.
   const aiPhases = React.useMemo(() => {
-    try { return JSON.parse(localStorage.getItem("141_phases_" + p.id) || "null"); }
-    catch { return null; }
-  }, [p.id]);
+    const seen = [];
+    (D.TASKS[p.id] || []).forEach(t => { if (t.phase && !seen.includes(t.phase)) seen.push(t.phase); });
+    return seen.length ? seen.map(name => ({ name })) : null;
+  }, [p.id, D.TASKS]);
 
-  // Default to first phase when aiPhases available
+  // Default to first phase when phases available
   React.useEffect(() => {
     if (aiPhases?.length > 0) {
       setPhaseTab(ph => ph === null ? aiPhases[0].name : ph);
