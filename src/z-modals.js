@@ -125,15 +125,16 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const submit = async () => {
     if (creating) return;
     setCreating(true);
-    const p = await D.addProjectAsync({
+    const res = await D.addProjectAsync({
       name: a.name.trim(),
       clientId: a.clientId,
       deadline: a.deadline,
       template: selectedServices.map((sv) => sv.label).join(", ") || "libre"
     });
+    const p = res && res.project;
     if (!p) {
       setCreating(false);
-      toast("No se pudo crear el proyecto", "error");
+      toast(res && res.error ? res.error : "No se pudo crear el proyecto", "error");
       return;
     }
     if (selectedServices.length) {

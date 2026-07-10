@@ -112,11 +112,16 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     setCreating(true);
     // 1) Crear el proyecto y ESPERAR a que se confirme en la nube antes de las
     //    tareas: evita que el realtime lo borre y satisface la FK de las tareas.
-    const p = await D.addProjectAsync({
+    const res = await D.addProjectAsync({
       name: a.name.trim(), clientId: a.clientId, deadline: a.deadline,
       template: selectedServices.map(sv => sv.label).join(", ") || "libre",
     });
-    if (!p) { setCreating(false); toast("No se pudo crear el proyecto", "error"); return; }
+    const p = res && res.project;
+    if (!p) {
+      setCreating(false);
+      toast((res && res.error) ? res.error : "No se pudo crear el proyecto", "error");
+      return;
+    }
     // 2) Todas las tareas del setup en una sola inserción. La fase de cada tarea
     //    se reconstruye luego desde el campo service del proyecto.
     if (selectedServices.length) {

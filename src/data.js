@@ -539,10 +539,10 @@ const addProjectAsync = async (input) => {
     console.error("[addProjectAsync] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
     _store.PROJECTS = _store.PROJECTS.filter((x) => x.id !== p.id);
     _emit();
-    return null;
+    return { error: error.message || "Error desconocido de Supabase", code: error.code };
   }
   if (client) _sb.from("clients").update({ projects_count: client.projects + 1 }).eq("id", client.id).then();
-  return p;
+  return { project: p };
 };
 const addTasksBulk = async (projectId, items) => {
   const uid = _uid();
