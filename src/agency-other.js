@@ -2324,16 +2324,23 @@
       return () => document.removeEventListener("click", close);
     }, [open]);
     const sel = options.find((o) => o.value === value);
-    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "input", onClick: () => setOpen((o) => !o), style: {
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { onClick: () => setOpen((o) => !o), style: {
+      width: "100%",
+      padding: "12px 16px",
+      fontSize: 14,
+      borderRadius: 14,
+      background: "rgba(255,255,255,0.04)",
+      border: `0.5px solid ${open ? "rgba(158,154,229,0.5)" : "rgba(255,255,255,0.1)"}`,
+      fontFamily: "inherit",
+      letterSpacing: "-0.3px",
       cursor: "pointer",
       textAlign: "left",
-      width: "100%",
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       gap: 10,
       color: sel ? "var(--text)" : "var(--text-subtle)",
-      borderColor: open ? "rgba(158,154,229,0.5)" : void 0
+      transition: "border-color .2s, background .2s"
     } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0 } }, icon && /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 13, style: { color: sel ? "var(--accent)" : "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, sel ? sel.label : placeholder)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
       opacity: 0.5,
       flexShrink: 0,
@@ -2459,109 +2466,180 @@
     };
     const copy = () => navigator.clipboard.writeText(done.hosted_url || "").then(() => toast("Enlace copiado", "success")).catch(() => {
     });
-    return /* @__PURE__ */ React.createElement(
-      Modal,
-      {
-        open,
-        onClose,
-        title: "Factura Stripe",
-        sub: "Se crea en tu cuenta de Stripe; el cliente recibe un email con el enlace para pagarla.",
-        footer: done ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cerrar"), done.hosted_url && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: copy }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 12 }), " Copiar enlace")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: create, disabled: busy }, busy ? "Creando\u2026" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 12 }), " Crear factura")))
-      },
-      done ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14 } }, /* @__PURE__ */ React.createElement("span", { style: {
-        width: 34,
-        height: 34,
-        borderRadius: "50%",
-        background: "var(--green-soft)",
-        border: "0.5px solid var(--green)",
-        color: "var(--green)",
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14.5, letterSpacing: "-0.3px" } }, "Factura ", done.number || "", " creada"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2 } }, sendNow ? `Stripe se la ha enviado a ${email.trim()}.` : "Guardada en tu Stripe, sin enviar."))), done.hosted_url && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Enlace de la factura"), /* @__PURE__ */ React.createElement(
+    const canSubmit = /\S+@\S+\.\S+/.test(email.trim()) && !!concept.trim() && Number(amount) > 0 && !busy;
+    const FIELD = {
+      width: "100%",
+      padding: "12px 16px",
+      fontSize: 14,
+      borderRadius: 14,
+      background: "rgba(255,255,255,0.04)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      color: "var(--text)",
+      outline: "none",
+      fontFamily: "inherit",
+      letterSpacing: "-0.3px",
+      transition: "border-color .2s, background .2s"
+    };
+    if (!open) return null;
+    return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+      position: "fixed",
+      inset: 0,
+      zIndex: 200,
+      background: "rgba(0,0,0,0.6)",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 24,
+      animation: "fade .15s ease-out"
+    } }, /* @__PURE__ */ React.createElement("style", null, `.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`), /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+      width: "100%",
+      maxWidth: 520,
+      maxHeight: "90vh",
+      overflowY: "auto",
+      background: "#0e0e10",
+      border: "1px solid #232324",
+      borderRadius: 32,
+      boxShadow: "0 40px 90px rgba(0,0,0,0.6)",
+      animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+      display: "flex",
+      flexDirection: "column"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: "rgba(255,255,255,0.08)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      cursor: "pointer",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--text-muted)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nueva factura"), done ? /* @__PURE__ */ React.createElement("div", { style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: "var(--green-soft)",
+      border: "0.5px solid var(--green)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--green)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15 })) : /* @__PURE__ */ React.createElement("button", { onClick: create, style: {
+      width: 40,
+      height: 40,
+      borderRadius: "50%",
+      background: canSubmit ? "var(--accent)" : "rgba(255,255,255,0.08)",
+      border: "none",
+      cursor: canSubmit ? "pointer" : "default",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "#fff",
+      transition: "all .15s",
+      opacity: canSubmit ? 1 : 0.4
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: busy ? "refresh-cw" : "arrow-up", size: 15 }))), done ? (
+      /* Éxito: número + enlace de pago copiable */
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "28px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)" } }, "Factura ", done.number || "", " creada"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 6, letterSpacing: "-0.3px" } }, sendNow ? `Stripe se la ha enviado a ${email.trim()}.` : "Guardada en tu Stripe, sin enviar."), done.hosted_url && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
         "input",
         {
-          className: "input",
           readOnly: true,
           value: done.hosted_url,
           onClick: (e) => e.target.select(),
-          style: { fontFamily: "var(--font-mono)", fontSize: 12.5 }
+          style: { ...FIELD, flex: 1, fontFamily: "var(--font-mono)", fontSize: 12 }
         }
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en esta p\xE1gina, y como cobro cuando el cliente pague.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement(
-        FieldSelect,
-        {
-          value: clientId,
-          placeholder: "Elegir cliente",
-          icon: "users",
-          onChange: pickClient,
-          options: [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => ({ value: c.id, label: c.company || c.name }))
-        }
-      )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email del cliente"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          type: "email",
-          placeholder: "cliente@empresa.com",
-          value: email,
-          onChange: (e) => setEmail(e.target.value)
-        }
-      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre / empresa"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          placeholder: "Empresa S.L.",
-          value: name,
-          onChange: (e) => setName(e.target.value)
-        }
-      ))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Concepto"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          placeholder: "Ej. Dise\xF1o web \xB7 50% inicial",
-          value: concept,
-          onChange: (e) => setConcept(e.target.value)
-        }
-      )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Importe (\u20AC)"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          type: "number",
-          min: "0",
-          step: "0.01",
-          placeholder: "750",
-          value: amount,
-          onChange: (e) => setAmount(e.target.value)
-        }
-      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Vencimiento"), /* @__PURE__ */ React.createElement(
-        FieldSelect,
-        {
-          value: dueDays,
-          placeholder: "Vencimiento",
-          icon: "calendar",
-          up: true,
-          onChange: setDueDays,
-          options: [7, 15, 30, 45, 60].map((d) => ({ value: d, label: `${d} d\xEDas` }))
-        }
-      ))), /* @__PURE__ */ React.createElement("label", { style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
+      ), /* @__PURE__ */ React.createElement("button", { onClick: copy, style: {
+        ...FIELD,
+        width: "auto",
         cursor: "pointer",
-        padding: "11px 14px",
-        borderRadius: 14,
-        background: "rgba(255,255,255,0.03)",
-        border: "0.5px solid var(--border)"
-      } }, /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          type: "checkbox",
-          checked: sendNow,
-          onChange: (e) => setSendNow(e.target.checked),
-          style: { accentColor: "var(--accent)", width: 15, height: 15 }
+        flexShrink: 0,
+        background: "var(--accent-soft)",
+        border: "0.5px solid var(--accent)",
+        color: "var(--accent)"
+      } }, "Copiar")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 14, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en Facturaci\xF3n, y como cobro cuando el cliente pague."))
+    ) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        autoFocus: true,
+        placeholder: "Concepto de la factura...",
+        value: concept,
+        onChange: (e) => setConcept(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter" && canSubmit) create();
+        },
+        style: {
+          width: "100%",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          fontSize: 28,
+          fontWeight: 400,
+          letterSpacing: "-1.4px",
+          color: concept ? "var(--text)" : "rgba(255,255,255,0.15)",
+          fontFamily: "var(--font-display)",
+          caretColor: "var(--accent)"
         }
-      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Enviar ahora por email desde Stripe")))
-    );
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: clientId,
+        placeholder: "Elegir cliente",
+        icon: "users",
+        onChange: pickClient,
+        options: [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => ({ value: c.id, label: c.company || c.name }))
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        type: "email",
+        placeholder: "Email del cliente",
+        value: email,
+        onChange: (e) => setEmail(e.target.value)
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        placeholder: "Nombre / empresa",
+        value: name,
+        onChange: (e) => setName(e.target.value)
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "od-input",
+        style: FIELD,
+        type: "number",
+        min: "0",
+        step: "0.01",
+        placeholder: "Importe (\u20AC)",
+        value: amount,
+        onChange: (e) => setAmount(e.target.value)
+      }
+    ), /* @__PURE__ */ React.createElement(
+      FieldSelect,
+      {
+        value: dueDays,
+        placeholder: "Vencimiento",
+        icon: "calendar",
+        up: true,
+        onChange: setDueDays,
+        options: [7, 15, 30, 45, 60].map((d) => ({ value: d, label: `Vence en ${d} d\xEDas` }))
+      }
+    )), /* @__PURE__ */ React.createElement("label", { style: { ...FIELD, display: "flex", alignItems: "center", gap: 10, cursor: "pointer" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        type: "checkbox",
+        checked: sendNow,
+        onChange: (e) => setSendNow(e.target.checked),
+        style: { accentColor: "var(--accent)", width: 15, height: 15 }
+      }
+    ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Enviar ahora por email desde Stripe"))))));
   };
   var PaymentLinkModal = ({ open, onClose }) => {
     const toast = useToast();

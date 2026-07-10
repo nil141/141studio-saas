@@ -3007,11 +3007,15 @@ const FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }
   const sel = options.find(o => o.value === value);
   return (
     <div style={{ position:"relative" }} onClick={e => e.stopPropagation()}>
-      <button className="input" onClick={() => setOpen(o => !o)} style={{
-        cursor:"pointer", textAlign:"left", width:"100%",
+      <button onClick={() => setOpen(o => !o)} style={{
+        width:"100%", padding:"12px 16px", fontSize:14, borderRadius:14,
+        background:"rgba(255,255,255,0.04)",
+        border: `0.5px solid ${open ? "rgba(158,154,229,0.5)" : "rgba(255,255,255,0.1)"}`,
+        fontFamily:"inherit", letterSpacing:"-0.3px",
+        cursor:"pointer", textAlign:"left",
         display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
         color: sel ? "var(--text)" : "var(--text-subtle)",
-        borderColor: open ? "rgba(158,154,229,0.5)" : undefined,
+        transition:"border-color .2s, background .2s",
       }}>
         <span style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
           {icon && <Icon name={icon} size={13} style={{ color: sel ? "var(--accent)" : "var(--text-subtle)", flexShrink:0 }}/>}
@@ -3102,104 +3106,141 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
   const copy = () => navigator.clipboard.writeText(done.hosted_url || "")
     .then(() => toast("Enlace copiado", "success")).catch(() => {});
 
+  const canSubmit = /\S+@\S+\.\S+/.test(email.trim()) && !!concept.trim() && Number(amount) > 0 && !busy;
+  const FIELD = {
+    width:"100%", padding:"12px 16px", fontSize:14, borderRadius:14,
+    background:"rgba(255,255,255,0.04)", border:"0.5px solid rgba(255,255,255,0.1)",
+    color:"var(--text)", outline:"none", fontFamily:"inherit", letterSpacing:"-0.3px",
+    transition:"border-color .2s, background .2s",
+  };
+
+  if (!open) return null;
+
   return (
-    <Modal open={open} onClose={onClose} title="Factura Stripe"
-      sub="Se crea en tu cuenta de Stripe; el cliente recibe un email con el enlace para pagarla."
-      footer={done ? (
-        <>
-          <button className="btn" onClick={onClose}>Cerrar</button>
-          {done.hosted_url && (
-            <button className="btn primary" onClick={copy}><Icon name="file" size={12}/> Copiar enlace</button>
-          )}
-        </>
-      ) : (
-        <>
-          <button className="btn" onClick={onClose}>Cancelar</button>
-          <button className="btn primary" onClick={create} disabled={busy}>
-            {busy ? "Creando…" : <><Icon name="receipt" size={12}/> Crear factura</>}
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,0.6)",
+      backdropFilter:"blur(8px)", WebkitBackdropFilter:"blur(8px)",
+      display:"flex", alignItems:"center", justifyContent:"center", padding:24,
+      animation:"fade .15s ease-out",
+    }}>
+      <style>{`.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`}</style>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:"100%", maxWidth:520, maxHeight:"90vh", overflowY:"auto",
+        background:"#0e0e10", border:"1px solid #232324", borderRadius:32,
+        boxShadow:"0 40px 90px rgba(0,0,0,0.6)",
+        animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+        display:"flex", flexDirection:"column",
+      }}>
+        {/* Barra superior: × · etiqueta · ↑ (enviar) */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"22px 22px 0" }}>
+          <button onClick={onClose} style={{
+            width:40, height:40, borderRadius:"50%",
+            background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.1)",
+            cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+            color:"var(--text-muted)",
+          }}>
+            <Icon name="x" size={15}/>
           </button>
-        </>
-      )}>
-      {done ? (
-        <div>
-          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
-            <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--green-soft)",
-              border:"0.5px solid var(--green)", color:"var(--green)",
-              display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+          <div style={{ fontSize:13, color:"var(--text-subtle)", letterSpacing:"-0.5px" }}>Nueva factura</div>
+          {done ? (
+            <div style={{
+              width:40, height:40, borderRadius:"50%",
+              background:"var(--green-soft)", border:"0.5px solid var(--green)",
+              display:"flex", alignItems:"center", justifyContent:"center", color:"var(--green)",
+            }}>
               <Icon name="check" size={15}/>
-            </span>
-            <div>
-              <div style={{ fontSize:14.5, letterSpacing:"-0.3px" }}>Factura {done.number || ""} creada</div>
-              <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:2 }}>
-                {sendNow ? `Stripe se la ha enviado a ${email.trim()}.` : "Guardada en tu Stripe, sin enviar."}
+            </div>
+          ) : (
+            <button onClick={create} style={{
+              width:40, height:40, borderRadius:"50%",
+              background: canSubmit ? "var(--accent)" : "rgba(255,255,255,0.08)",
+              border:"none", cursor: canSubmit ? "pointer" : "default",
+              display:"flex", alignItems:"center", justifyContent:"center",
+              color:"#fff", transition:"all .15s", opacity: canSubmit ? 1 : 0.4,
+            }}>
+              <Icon name={busy ? "refresh-cw" : "arrow-up"} size={15}/>
+            </button>
+          )}
+        </div>
+
+        {done ? (
+          /* Éxito: número + enlace de pago copiable */
+          <div style={{ padding:"28px" }}>
+            <div style={{ fontSize:24, fontWeight:400, letterSpacing:"-1px", fontFamily:"var(--font-display)" }}>
+              Factura {done.number || ""} creada
+            </div>
+            <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:6, letterSpacing:"-0.3px" }}>
+              {sendNow ? `Stripe se la ha enviado a ${email.trim()}.` : "Guardada en tu Stripe, sin enviar."}
+            </div>
+            {done.hosted_url && (
+              <div style={{ display:"flex", gap:8, marginTop:18 }}>
+                <input readOnly value={done.hosted_url} onClick={e => e.target.select()}
+                  style={{ ...FIELD, flex:1, fontFamily:"var(--font-mono)", fontSize:12 }}/>
+                <button onClick={copy} style={{
+                  ...FIELD, width:"auto", cursor:"pointer", flexShrink:0,
+                  background:"var(--accent-soft)", border:"0.5px solid var(--accent)", color:"var(--accent)",
+                }}>
+                  Copiar
+                </button>
               </div>
+            )}
+            <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:14, lineHeight:1.5 }}>
+              Aparecerá como pendiente de cobro en Facturación, y como cobro cuando el cliente pague.
             </div>
           </div>
-          {done.hosted_url && (
-            <>
-              <div className="label">Enlace de la factura</div>
-              <input className="input" readOnly value={done.hosted_url} onClick={e => e.target.select()}
-                style={{ fontFamily:"var(--font-mono)", fontSize:12.5 }}/>
-            </>
-          )}
-          <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:10, lineHeight:1.5 }}>
-            Aparecerá como pendiente de cobro en esta página, y como cobro cuando el cliente pague.
-          </div>
-        </div>
-      ) : (
-        <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
-          {D.CLIENTS.length > 0 && (
-            <div>
-              <div className="label">Cliente</div>
-              <FieldSelect value={clientId} placeholder="Elegir cliente" icon="users"
-                onChange={pickClient}
-                options={[...D.CLIENTS]
-                  .sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || ""))
-                  .map(c => ({ value: c.id, label: c.company || c.name }))}/>
+        ) : (
+          <>
+            {/* Concepto gigante, como el título de la base quick-create */}
+            <div style={{ padding:"28px 28px 8px" }}>
+              <input
+                autoFocus
+                placeholder="Concepto de la factura..."
+                value={concept}
+                onChange={e => setConcept(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && canSubmit) create(); }}
+                style={{
+                  width:"100%", background:"transparent", border:"none", outline:"none",
+                  fontSize:28, fontWeight:400, letterSpacing:"-1.4px",
+                  color: concept ? "var(--text)" : "rgba(255,255,255,0.15)",
+                  fontFamily:"var(--font-display)", caretColor:"var(--accent)",
+                }}
+              />
             </div>
-          )}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
-            <div>
-              <div className="label">Email del cliente</div>
-              <input className="input" type="email" placeholder="cliente@empresa.com" value={email}
-                onChange={e => setEmail(e.target.value)}/>
+
+            {/* Entradas en columnas */}
+            <div style={{ padding:"20px 28px 26px", display:"flex", flexDirection:"column", gap:14 }}>
+              {D.CLIENTS.length > 0 && (
+                <FieldSelect value={clientId} placeholder="Elegir cliente" icon="users"
+                  onChange={pickClient}
+                  options={[...D.CLIENTS]
+                    .sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || ""))
+                    .map(c => ({ value: c.id, label: c.company || c.name }))}/>
+              )}
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <input className="od-input" style={FIELD} type="email" placeholder="Email del cliente" value={email}
+                  onChange={e => setEmail(e.target.value)}/>
+                <input className="od-input" style={FIELD} placeholder="Nombre / empresa" value={name}
+                  onChange={e => setName(e.target.value)}/>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+                <input className="od-input" style={FIELD} type="number" min="0" step="0.01" placeholder="Importe (€)"
+                  value={amount} onChange={e => setAmount(e.target.value)}/>
+                <FieldSelect value={dueDays} placeholder="Vencimiento" icon="calendar" up
+                  onChange={setDueDays}
+                  options={[7, 15, 30, 45, 60].map(d => ({ value: d, label: `Vence en ${d} días` }))}/>
+              </div>
+              <label style={{ ...FIELD, display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}>
+                <input type="checkbox" checked={sendNow} onChange={e => setSendNow(e.target.checked)}
+                  style={{ accentColor:"var(--accent)", width:15, height:15 }}/>
+                <span style={{ fontSize:13.5, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
+                  Enviar ahora por email desde Stripe
+                </span>
+              </label>
             </div>
-            <div>
-              <div className="label">Nombre / empresa</div>
-              <input className="input" placeholder="Empresa S.L." value={name}
-                onChange={e => setName(e.target.value)}/>
-            </div>
-          </div>
-          <div>
-            <div className="label">Concepto</div>
-            <input className="input" placeholder="Ej. Diseño web · 50% inicial" value={concept}
-              onChange={e => setConcept(e.target.value)}/>
-          </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
-            <div>
-              <div className="label">Importe (€)</div>
-              <input className="input" type="number" min="0" step="0.01" placeholder="750"
-                value={amount} onChange={e => setAmount(e.target.value)}/>
-            </div>
-            <div>
-              <div className="label">Vencimiento</div>
-              <FieldSelect value={dueDays} placeholder="Vencimiento" icon="calendar" up
-                onChange={setDueDays}
-                options={[7, 15, 30, 45, 60].map(d => ({ value: d, label: `${d} días` }))}/>
-            </div>
-          </div>
-          <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer",
-            padding:"11px 14px", borderRadius:14, background:"rgba(255,255,255,0.03)",
-            border:"0.5px solid var(--border)" }}>
-            <input type="checkbox" checked={sendNow} onChange={e => setSendNow(e.target.checked)}
-              style={{ accentColor:"var(--accent)", width:15, height:15 }}/>
-            <span style={{ fontSize:13, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
-              Enviar ahora por email desde Stripe
-            </span>
-          </label>
-        </div>
-      )}
-    </Modal>
+          </>
+        )}
+      </div>
+    </div>
   );
 };
 
