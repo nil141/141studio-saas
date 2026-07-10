@@ -2315,6 +2315,81 @@
       }
     ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }));
   };
+  var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
+    const [open, setOpen] = useState(false);
+    useEffect(() => {
+      if (!open) return;
+      const close = () => setOpen(false);
+      document.addEventListener("click", close);
+      return () => document.removeEventListener("click", close);
+    }, [open]);
+    const sel = options.find((o) => o.value === value);
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "input", onClick: () => setOpen((o) => !o), style: {
+      cursor: "pointer",
+      textAlign: "left",
+      width: "100%",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 10,
+      color: sel ? "var(--text)" : "var(--text-subtle)",
+      borderColor: open ? "rgba(158,154,229,0.5)" : void 0
+    } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, minWidth: 0 } }, icon && /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 13, style: { color: sel ? "var(--accent)" : "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, sel ? sel.label : placeholder)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+      opacity: 0.5,
+      flexShrink: 0,
+      transform: open ? "rotate(180deg)" : "none",
+      transition: "transform .15s"
+    } })), open && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      zIndex: 30,
+      [up ? "bottom" : "top"]: "calc(100% + 8px)",
+      background: "#1a1a1c",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      borderRadius: 14,
+      padding: 6,
+      maxHeight: 224,
+      overflowY: "auto",
+      boxShadow: "0 12px 40px rgba(0,0,0,0.55)"
+    } }, options.map((o) => {
+      const on = o.value === value;
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: o.value,
+          onClick: () => {
+            onChange(o.value);
+            setOpen(false);
+          },
+          style: {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            width: "100%",
+            textAlign: "left",
+            padding: "9px 12px",
+            borderRadius: 9,
+            border: 0,
+            cursor: "pointer",
+            background: on ? "rgba(158,154,229,0.1)" : "transparent",
+            fontSize: 13,
+            fontFamily: "inherit",
+            letterSpacing: "-0.3px",
+            color: on ? "var(--accent)" : "var(--text)"
+          },
+          onMouseEnter: (e) => {
+            if (!on) e.currentTarget.style.background = "var(--bg-hover)";
+          },
+          onMouseLeave: (e) => {
+            e.currentTarget.style.background = on ? "rgba(158,154,229,0.1)" : "transparent";
+          }
+        },
+        o.label,
+        on && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
+      );
+    })));
+  };
   var StripeInvoiceModal = ({ open, onClose, onCreated }) => {
     const D = window.Data;
     D.useStore();
@@ -2413,7 +2488,16 @@
           onClick: (e) => e.target.select(),
           style: { fontFamily: "var(--font-mono)", fontSize: 12.5 }
         }
-      )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en esta p\xE1gina, y como cobro cuando el cliente pague.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("select", { className: "select", value: clientId, onChange: (e) => pickClient(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "\u2014 Elegir cliente \u2014"), [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("option", { key: c.id, value: c.id }, c.company || c.name)))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email del cliente"), /* @__PURE__ */ React.createElement(
+      )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Aparecer\xE1 como pendiente de cobro en esta p\xE1gina, y como cobro cuando el cliente pague.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement(
+        FieldSelect,
+        {
+          value: clientId,
+          placeholder: "Elegir cliente",
+          icon: "users",
+          onChange: pickClient,
+          options: [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => ({ value: c.id, label: c.company || c.name }))
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Email del cliente"), /* @__PURE__ */ React.createElement(
         "input",
         {
           className: "input",
@@ -2449,7 +2533,17 @@
           value: amount,
           onChange: (e) => setAmount(e.target.value)
         }
-      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Vencimiento"), /* @__PURE__ */ React.createElement("select", { className: "select", value: dueDays, onChange: (e) => setDueDays(Number(e.target.value)) }, [7, 15, 30, 45, 60].map((d) => /* @__PURE__ */ React.createElement("option", { key: d, value: d }, d, " d\xEDas"))))), /* @__PURE__ */ React.createElement("label", { style: {
+      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Vencimiento"), /* @__PURE__ */ React.createElement(
+        FieldSelect,
+        {
+          value: dueDays,
+          placeholder: "Vencimiento",
+          icon: "calendar",
+          up: true,
+          onChange: setDueDays,
+          options: [7, 15, 30, 45, 60].map((d) => ({ value: d, label: `${d} d\xEDas` }))
+        }
+      ))), /* @__PURE__ */ React.createElement("label", { style: {
         display: "flex",
         alignItems: "center",
         gap: 10,

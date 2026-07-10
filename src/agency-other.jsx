@@ -2994,6 +2994,63 @@ const IncomePage = () => {
 };
 
 // ── Enlace de pago de Stripe (concepto + importe → URL para compartir) ──
+// Desplegable con el estilo de campo de los modales (mismo patrón que el
+// selector de sector de "Nuevo cliente"): botón-campo + menú flotante con check.
+const FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [open]);
+  const sel = options.find(o => o.value === value);
+  return (
+    <div style={{ position:"relative" }} onClick={e => e.stopPropagation()}>
+      <button className="input" onClick={() => setOpen(o => !o)} style={{
+        cursor:"pointer", textAlign:"left", width:"100%",
+        display:"flex", alignItems:"center", justifyContent:"space-between", gap:10,
+        color: sel ? "var(--text)" : "var(--text-subtle)",
+        borderColor: open ? "rgba(158,154,229,0.5)" : undefined,
+      }}>
+        <span style={{ display:"flex", alignItems:"center", gap:8, minWidth:0 }}>
+          {icon && <Icon name={icon} size={13} style={{ color: sel ? "var(--accent)" : "var(--text-subtle)", flexShrink:0 }}/>}
+          <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{sel ? sel.label : placeholder}</span>
+        </span>
+        <Icon name="chevron-down" size={13} style={{ opacity:0.5, flexShrink:0,
+          transform: open ? "rotate(180deg)" : "none", transition:"transform .15s" }}/>
+      </button>
+      {open && (
+        <div style={{
+          position:"absolute", left:0, right:0, zIndex:30,
+          [up ? "bottom" : "top"]: "calc(100% + 8px)",
+          background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.1)",
+          borderRadius:14, padding:6, maxHeight:224, overflowY:"auto",
+          boxShadow:"0 12px 40px rgba(0,0,0,0.55)",
+        }}>
+          {options.map(o => {
+            const on = o.value === value;
+            return (
+              <button key={o.value} onClick={() => { onChange(o.value); setOpen(false); }} style={{
+                display:"flex", alignItems:"center", justifyContent:"space-between", width:"100%",
+                textAlign:"left", padding:"9px 12px", borderRadius:9, border:0, cursor:"pointer",
+                background: on ? "rgba(158,154,229,0.1)" : "transparent",
+                fontSize:13, fontFamily:"inherit", letterSpacing:"-0.3px",
+                color: on ? "var(--accent)" : "var(--text)",
+              }}
+                onMouseEnter={e => { if (!on) e.currentTarget.style.background = "var(--bg-hover)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = on ? "rgba(158,154,229,0.1)" : "transparent"; }}>
+                {o.label}
+                {on && <Icon name="check" size={13}/>}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 // ── Factura real de Stripe: se crea en la cuenta, se finaliza y (opcional)
 //    Stripe se la envía al cliente por email con el enlace de pago ──
 const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
@@ -3094,12 +3151,11 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
           {D.CLIENTS.length > 0 && (
             <div>
               <div className="label">Cliente</div>
-              <select className="select" value={clientId} onChange={e => pickClient(e.target.value)}>
-                <option value="">— Elegir cliente —</option>
-                {[...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map(c => (
-                  <option key={c.id} value={c.id}>{c.company || c.name}</option>
-                ))}
-              </select>
+              <FieldSelect value={clientId} placeholder="Elegir cliente" icon="users"
+                onChange={pickClient}
+                options={[...D.CLIENTS]
+                  .sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || ""))
+                  .map(c => ({ value: c.id, label: c.company || c.name }))}/>
             </div>
           )}
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
@@ -3127,11 +3183,9 @@ const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
             </div>
             <div>
               <div className="label">Vencimiento</div>
-              <select className="select" value={dueDays} onChange={e => setDueDays(Number(e.target.value))}>
-                {[7, 15, 30, 45, 60].map(d => (
-                  <option key={d} value={d}>{d} días</option>
-                ))}
-              </select>
+              <FieldSelect value={dueDays} placeholder="Vencimiento" icon="calendar" up
+                onChange={setDueDays}
+                options={[7, 15, 30, 45, 60].map(d => ({ value: d, label: `${d} días` }))}/>
             </div>
           </div>
           <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer",
