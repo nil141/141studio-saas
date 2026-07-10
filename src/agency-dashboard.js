@@ -165,8 +165,18 @@
     const _spendForMonth = (offset = 0) => {
       try {
         const fin = window.Data && window.Data.FINANCE || {};
-        const rec = (fin.subs || []).filter((s) => s.active !== false).reduce((a, s) => a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0), 0);
-        const base = /* @__PURE__ */ new Date();
+        const base = /* @__PURE__ */ new Date(), today = base.getDate();
+        const isCurrent = offset === 0;
+        const rec = (fin.subs || []).filter((s) => s.active !== false).reduce((a, s) => {
+          if (!isCurrent) return a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0);
+          if (s.cycle === "yearly") {
+            if (!s.nextRenewal) return a;
+            const d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
+            return a + (!isNaN(d) && d.getMonth() === base.getMonth() && d.getDate() <= today ? Number(s.amount) || 0 : 0);
+          }
+          const day = s.nextRenewal ? (/* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00")).getDate() : 1;
+          return a + (day <= today ? Number(s.amount) || 0 : 0);
+        }, 0);
         const y = base.getFullYear(), m = base.getMonth() + offset;
         const ref = new Date(y, m, 1);
         const exp = (fin.expenses || []).filter((e) => {
@@ -231,7 +241,7 @@
         nav: "tasks"
       },
       {
-        label: "Gastos este mes",
+        label: "Gastado este mes",
         value: `\u20AC${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
         nav: "billing"
