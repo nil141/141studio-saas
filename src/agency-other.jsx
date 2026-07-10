@@ -1670,8 +1670,8 @@ const AgencyBilling = () => {
           <ActionPill plusActions={() => { setFinType("sub"); setAddOpen(true); }}/>
         </div>
 
-        {/* Hero de KPIs — mismo formato que Facturación / Inicio */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
+        {/* Hero de KPIs — rejilla de 3 columnas fijas: misma posición que Facturación */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", alignItems:"center", gap:32,
           padding:"20px 4px 24px" }}>
           {[
             { label:"Gastado este mes", value:_eur(totalMonth),
@@ -2617,8 +2617,8 @@ const IncomePage = () => {
           ]}/>
         </div>
 
-        {/* Tira de KPIs — mismo formato que el hero de Inicio (label 16 · valor 32 · delta con círculo) */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:32,
+        {/* Tira de KPIs — rejilla de 3 columnas fijas: misma posición que Gastos */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", alignItems:"center", gap:32,
           padding:"20px 4px 24px" }}>
           {[
             { label:"Facturado este mes", value:_eur(monthTotal),

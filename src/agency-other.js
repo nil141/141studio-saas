@@ -1077,9 +1077,9 @@
       setFinType("sub");
       setAddOpen(true);
     } })), /* @__PURE__ */ React.createElement("div", { style: {
-      display: "flex",
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 1fr)",
       alignItems: "center",
-      justifyContent: "space-between",
       gap: 32,
       padding: "20px 4px 24px"
     } }, [
@@ -2001,9 +2001,9 @@
         }
       }
     ] })), /* @__PURE__ */ React.createElement("div", { style: {
-      display: "flex",
+      display: "grid",
+      gridTemplateColumns: "repeat(3, 1fr)",
       alignItems: "center",
-      justifyContent: "space-between",
       gap: 32,
       padding: "20px 4px 24px"
     } }, [
