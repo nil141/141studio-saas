@@ -307,6 +307,16 @@ def _stripe_auth():
         raise Exception("Stripe no configurado (falta la variable STRIPE_SK)")
     return base64.b64encode(f"{STRIPE_SK}:".encode()).decode()
 
+def _stripe_err(body, fallback):
+    """Convierte errores de Stripe en mensajes claros (los de permisos, en español)."""
+    msg = body.get("error", {}).get("message", fallback)
+    if "Permission denied" in msg or "does not have the required permissions" in msg:
+        return ("La clave de Stripe configurada es restringida y no tiene permisos "
+                "suficientes. En Stripe → Desarrolladores → Claves API usa la clave "
+                "secreta estándar (sk_live_...), o edita la clave restringida y activa "
+                "escritura en Products, Prices, Payment Links, Customers e Invoices.")
+    return msg
+
 def _stripe(path, params=None):
     url = "https://api.stripe.com/v1/" + path
     if params:
@@ -319,7 +329,7 @@ def _stripe(path, params=None):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         body = json.loads(e.read().decode())
-        raise Exception(body.get("error", {}).get("message", str(e)))
+        raise Exception(_stripe_err(body, str(e)))
 
 def _stripe_post(path, data):
     url = "https://api.stripe.com/v1/" + path
@@ -333,7 +343,7 @@ def _stripe_post(path, data):
             return json.loads(r.read().decode())
     except urllib.error.HTTPError as e:
         body = json.loads(e.read().decode())
-        raise Exception(body.get("error", {}).get("message", str(e)))
+        raise Exception(_stripe_err(body, str(e)))
 
 def api_stripe_balance(_body):
     data = _stripe("balance")
