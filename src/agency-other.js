@@ -1179,13 +1179,17 @@
       borderTop: "0.5px solid var(--border)",
       marginTop: 30,
       paddingTop: 26
-    } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Suscripciones"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, activeSubs.length ? `${activeSubs.length} activa${activeSubs.length === 1 ? "" : "s"} \xB7 ${_eur(recurringMo)} al mes` : "Pagos recurrentes"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, data.subs.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: s.id, className: "task-row", style: {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Suscripciones"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, activeSubs.length ? `${activeSubs.length} activa${activeSubs.length === 1 ? "" : "s"} \xB7 ${_eur(recurringMo)} al mes` : "Pagos recurrentes"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, [...data.subs].sort((a, b) => {
+      const da = a.nextRenewal ? (/* @__PURE__ */ new Date(a.nextRenewal + "T00:00:00")).getDate() : 99;
+      const db = b.nextRenewal ? (/* @__PURE__ */ new Date(b.nextRenewal + "T00:00:00")).getDate() : 99;
+      return da - db;
+    }).map((s, i, arr) => /* @__PURE__ */ React.createElement("div", { key: s.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
       padding: "13px 4px",
       opacity: s.active ? 1 : 0.45,
-      borderBottom: i === data.subs.length - 1 ? "none" : "0.5px solid var(--border)",
+      borderBottom: i === arr.length - 1 ? "none" : "0.5px solid var(--border)",
       transition: "opacity .15s"
     } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: 38,

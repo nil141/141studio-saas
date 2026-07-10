@@ -1775,11 +1775,17 @@ const AgencyBilling = () => {
               : "Pagos recurrentes"}
           </div>
           <div style={{ marginTop:10 }}>
-            {data.subs.map((s, i) => (
+            {[...data.subs].sort((a, b) => {
+              // Orden cronológico: por día de renovación del mes (la del día 1 arriba);
+              // las que no tienen fecha, al final.
+              const da = a.nextRenewal ? new Date(a.nextRenewal + "T00:00:00").getDate() : 99;
+              const db = b.nextRenewal ? new Date(b.nextRenewal + "T00:00:00").getDate() : 99;
+              return da - db;
+            }).map((s, i, arr) => (
               <div key={s.id} className="task-row" style={{
                 display:"flex", alignItems:"center", gap:14,
                 padding:"13px 4px", opacity: s.active ? 1 : 0.45,
-                borderBottom: i === data.subs.length - 1 ? "none" : "0.5px solid var(--border)",
+                borderBottom: i === arr.length - 1 ? "none" : "0.5px solid var(--border)",
                 transition:"opacity .15s",
               }}>
                 {/* Icono */}
