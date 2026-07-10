@@ -2987,13 +2987,177 @@ const IncomePage = () => {
       />
 
       {/* Funcionalidades de Stripe */}
-      <NewInvoiceModal open={stripeInvOpen} onClose={() => setStripeInvOpen(false)} onCreated={fetchStripe}/>
+      <StripeInvoiceModal open={stripeInvOpen} onClose={() => setStripeInvOpen(false)} onCreated={fetchStripe}/>
       <PaymentLinkModal open={payLinkOpen} onClose={() => setPayLinkOpen(false)}/>
     </div>
   );
 };
 
 // ── Enlace de pago de Stripe (concepto + importe → URL para compartir) ──
+// ── Factura real de Stripe: se crea en la cuenta, se finaliza y (opcional)
+//    Stripe se la envía al cliente por email con el enlace de pago ──
+const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
+  const D = window.Data;
+  D.useStore();
+  const toast = useToast();
+  const [clientId, setClientId] = useState("");
+  const [email, setEmail]       = useState("");
+  const [name, setName]         = useState("");
+  const [concept, setConcept]   = useState("");
+  const [amount, setAmount]     = useState("");
+  const [dueDays, setDueDays]   = useState(15);
+  const [sendNow, setSendNow]   = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [done, setDone] = useState(null);   // respuesta de Stripe: number, hosted_url…
+
+  useEffect(() => {
+    if (open) {
+      setClientId(""); setEmail(""); setName(""); setConcept(""); setAmount("");
+      setDueDays(15); setSendNow(true); setBusy(false); setDone(null);
+    }
+  }, [open]);
+
+  const pickClient = (id) => {
+    setClientId(id);
+    const c = D.CLIENTS.find(c => c.id === id);
+    if (c) { setEmail(c.email || ""); setName(c.company || c.name || ""); }
+  };
+
+  const create = async () => {
+    if (!/\S+@\S+\.\S+/.test(email.trim())) { toast("Pon el email del cliente (ahí llega la factura)", "warn"); return; }
+    if (!concept.trim()) { toast("Pon un concepto", "warn"); return; }
+    if (!(Number(amount) > 0)) { toast("Importe no válido", "warn"); return; }
+    setBusy(true);
+    try {
+      const res = await _stripeApi("create_invoice", {
+        email: email.trim(), name: name.trim() || email.trim(),
+        amount: Number(amount), description: concept.trim(),
+        due_days: dueDays, send_now: sendNow,
+      });
+      if (res.ok) {
+        setDone(res);
+        onCreated && onCreated();
+        toast(sendNow ? "Factura creada y enviada por Stripe" : "Factura creada en Stripe", "success");
+      } else toast(res.error || "No se pudo crear la factura", "warn");
+    } catch (e) { toast("Error de conexión", "warn"); }
+    setBusy(false);
+  };
+  const copy = () => navigator.clipboard.writeText(done.hosted_url || "")
+    .then(() => toast("Enlace copiado", "success")).catch(() => {});
+
+  const pill = (on) => ({
+    padding:"7px 14px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
+    background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.04)",
+    border: on ? "0.5px solid rgba(158,154,229,0.45)" : "0.5px solid var(--border)",
+    color: on ? "var(--accent)" : "var(--text-muted)",
+    fontSize:12.5, letterSpacing:"-0.2px", transition:"all .12s",
+  });
+
+  return (
+    <Modal open={open} onClose={onClose} title="Factura Stripe"
+      sub="Se crea en tu cuenta de Stripe; el cliente recibe un email con el enlace para pagarla."
+      footer={done ? (
+        <>
+          <button className="btn" onClick={onClose}>Cerrar</button>
+          {done.hosted_url && (
+            <button className="btn primary" onClick={copy}><Icon name="file" size={12}/> Copiar enlace</button>
+          )}
+        </>
+      ) : (
+        <>
+          <button className="btn" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" onClick={create} disabled={busy}>
+            {busy ? "Creando…" : <><Icon name="receipt" size={12}/> Crear factura</>}
+          </button>
+        </>
+      )}>
+      {done ? (
+        <div>
+          <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:14 }}>
+            <span style={{ width:34, height:34, borderRadius:"50%", background:"var(--green-soft)",
+              border:"0.5px solid var(--green)", color:"var(--green)",
+              display:"inline-flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
+              <Icon name="check" size={15}/>
+            </span>
+            <div>
+              <div style={{ fontSize:14.5, letterSpacing:"-0.3px" }}>Factura {done.number || ""} creada</div>
+              <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:2 }}>
+                {sendNow ? `Stripe se la ha enviado a ${email.trim()}.` : "Guardada en tu Stripe, sin enviar."}
+              </div>
+            </div>
+          </div>
+          {done.hosted_url && (
+            <>
+              <div className="label">Enlace de la factura</div>
+              <input className="input" readOnly value={done.hosted_url} onClick={e => e.target.select()}
+                style={{ fontFamily:"var(--font-mono)", fontSize:12.5 }}/>
+            </>
+          )}
+          <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:10, lineHeight:1.5 }}>
+            Aparecerá como pendiente de cobro en esta página, y como cobro cuando el cliente pague.
+          </div>
+        </div>
+      ) : (
+        <div style={{ display:"flex", flexDirection:"column", gap:13 }}>
+          {D.CLIENTS.length > 0 && (
+            <div>
+              <div className="label">Cliente</div>
+              <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+                {D.CLIENTS.map(c => (
+                  <button key={c.id} onClick={() => pickClient(c.id)} style={pill(clientId === c.id)}>
+                    {c.company || c.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
+            <div>
+              <div className="label">Email del cliente</div>
+              <input className="input" type="email" placeholder="cliente@empresa.com" value={email}
+                onChange={e => setEmail(e.target.value)}/>
+            </div>
+            <div>
+              <div className="label">Nombre / empresa</div>
+              <input className="input" placeholder="Empresa S.L." value={name}
+                onChange={e => setName(e.target.value)}/>
+            </div>
+          </div>
+          <div>
+            <div className="label">Concepto</div>
+            <input className="input" placeholder="Ej. Diseño web · 50% inicial" value={concept}
+              onChange={e => setConcept(e.target.value)}/>
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:13 }}>
+            <div>
+              <div className="label">Importe (€)</div>
+              <input className="input" type="number" min="0" step="0.01" placeholder="750"
+                value={amount} onChange={e => setAmount(e.target.value)}/>
+            </div>
+            <div>
+              <div className="label">Vencimiento</div>
+              <div style={{ display:"flex", gap:8 }}>
+                {[7, 15, 30].map(d => (
+                  <button key={d} onClick={() => setDueDays(d)} style={pill(dueDays === d)}>{d} días</button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <label style={{ display:"flex", alignItems:"center", gap:10, cursor:"pointer",
+            padding:"11px 14px", borderRadius:14, background:"rgba(255,255,255,0.03)",
+            border:"0.5px solid var(--border)" }}>
+            <input type="checkbox" checked={sendNow} onChange={e => setSendNow(e.target.checked)}
+              style={{ accentColor:"var(--accent)", width:15, height:15 }}/>
+            <span style={{ fontSize:13, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
+              Enviar ahora por email desde Stripe
+            </span>
+          </label>
+        </div>
+      )}
+    </Modal>
+  );
+};
+
 const PaymentLinkModal = ({ open, onClose }) => {
   const toast = useToast();
   const [concept, setConcept] = useState("");
