@@ -867,7 +867,7 @@ const AgencyProjects = ({ navigate, openModal }) => {
   const confirm = useConfirm();
   const toast = useToast();
   const [hoverId, setHoverId] = useState(null);
-  const _lightColor = (l) => l === "red" ? "var(--red)" : l === "amber" ? "var(--amber)" : l === "green" ? "var(--green)" : "var(--accent)";
+  const _lightColor = (l) => l === "red" ? "var(--red)" : l === "amber" ? "var(--amber)" : "var(--accent)";
   const cap = D.PROJECTS.length;
   const capColor = cap === 0 ? "green" : cap <= 3 ? "green" : cap === 4 ? "amber" : "red";
   const capLabel = cap === 0 ? "Sin proyectos" : cap <= 3 ? "Zona cómoda" : cap === 4 ? "Zona de atención" : "Zona de riesgo";
