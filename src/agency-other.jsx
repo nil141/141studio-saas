@@ -929,11 +929,6 @@ const AgencyProjects = ({ navigate, openModal }) => {
                   </div>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:4, flexShrink:0 }}>
-                  <button className="btn ghost icon-only sm" data-tooltip="Eliminar"
-                    onClick={(e) => removeProject(p, e)}
-                    style={{ opacity: on ? 0.65 : 0, transition:"opacity .15s", color:"var(--red)" }}>
-                    <Icon name="trash" size={13}/>
-                  </button>
                   <Icon name="chevron-right" size={18}
                     style={{ color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
                       transition:"all .2s", flexShrink:0 }}/>

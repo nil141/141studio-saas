@@ -722,15 +722,6 @@
           overflow: "hidden",
           textOverflow: "ellipsis"
         } }, p.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, pTasks.length, " ", pTasks.length === 1 ? "tarea" : "tareas"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0 } }, doneN, " hechas"), p.clientName && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", { style: { whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, p.clientName))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            className: "btn ghost icon-only sm",
-            "data-tooltip": "Eliminar",
-            onClick: (e) => removeProject(p, e),
-            style: { opacity: on ? 0.65 : 0, transition: "opacity .15s", color: "var(--red)" }
-          },
-          /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })
-        ), /* @__PURE__ */ React.createElement(
           Icon,
           {
             name: "chevron-right",
