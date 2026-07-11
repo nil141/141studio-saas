@@ -143,7 +143,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
       <div style={{display:"flex", alignItems:"center", gap:14, marginBottom:22}}>
         <div style={{flex:1, height:6, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden"}}>
           <div style={{width: liveProgress + "%", height:"100%", borderRadius:99,
-            background: liveProgress === 100 ? "var(--green)" : "var(--accent)", transition:"width .4s ease"}}/>
+            background: "var(--accent)", transition:"width .4s ease"}}/>
         </div>
         <div style={{flexShrink:0, fontSize:13, color:"var(--text-muted)"}}>
           <span style={{color:"var(--text)", fontWeight:600}}>{liveProgress}%</span>
