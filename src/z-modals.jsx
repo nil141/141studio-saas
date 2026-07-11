@@ -75,7 +75,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   D.useStore && D.useStore();
   const toast = useToast();
 
-  const blank = () => ({ name: "", clientId: prefilledClientId || D.CLIENTS[0]?.id || "", deadline: "" });
+  const blank = () => ({ name: "", clientId: prefilledClientId || D.CLIENTS[0]?.id || "", deadline: "", recurring: false });
 
   const [step, setStep]           = useState(0);
   const [a, setA]                 = useState(blank);
@@ -113,7 +113,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const selClient = D.CLIENTS.find(c => c.id === a.clientId);
 
   const canNext = [
-    !!(a.name.trim() && a.clientId && a.deadline && hasClients),
+    // Puntual necesita fecha; recurrente no (es mensual, sin fecha fija)
+    !!(a.name.trim() && a.clientId && hasClients && (a.recurring || a.deadline)),
     true,   // las fases son opcionales: se puede crear un proyecto vacío
   ];
 
@@ -123,7 +124,9 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     // Crear el proyecto con sus fases (nombres libres). Sin tareas: las creas tú
     // dentro de cada fase. Las fases se guardan en el campo service del proyecto.
     const res = await D.addProjectAsync({
-      name: a.name.trim(), clientId: a.clientId, deadline: a.deadline,
+      name: a.name.trim(), clientId: a.clientId,
+      deadline: a.recurring ? "" : a.deadline,
+      recurring: a.recurring,
       template: phases.join(", ") || "libre",
     });
     const p = res && res.project;
@@ -152,6 +155,35 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
           <Icon name="info" size={14}/> <span>Crea primero un cliente antes de añadir proyectos.</span>
         </div>
       )}
+      <div>
+        <div className="label">Tipo de proyecto</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          {[
+            { id:false, title:"Puntual", sub:"Trabajo con entrega", icon:"flag" },
+            { id:true,  title:"Recurrente", sub:"Mensual (ej. redes)", icon:"refresh-cw" },
+          ].map(opt => {
+            const on = a.recurring === opt.id;
+            return (
+              <button key={String(opt.id)} onClick={() => set("recurring", opt.id)} style={{
+                display:"flex", alignItems:"center", gap:10, textAlign:"left",
+                padding:"11px 13px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
+                background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+                border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+                transition:"all .12s",
+              }}>
+                <div style={{ width:30, height:30, borderRadius:9, flexShrink:0, display:"flex", alignItems:"center", justifyContent:"center",
+                  background: on ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.05)", color: on ? "var(--accent)" : "var(--text-subtle)" }}>
+                  <Icon name={opt.icon} size={15} strokeWidth={1.7}/>
+                </div>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13.5, letterSpacing:"-0.3px", color: on ? "var(--text)" : "var(--text-muted)" }}>{opt.title}</div>
+                  <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:1 }}>{opt.sub}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div>
         <div className="label">Nombre del proyecto</div>
         <input className="input" placeholder="Ej. Rediseño web 2026" value={a.name} onChange={e => set("name", e.target.value)} autoFocus/>
@@ -185,10 +217,18 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
           </div>
         )}
       </div>
-      <div>
-        <div className="label">Fecha de entrega</div>
-        <input className="input" type="date" value={a.deadline} onChange={e => set("deadline", e.target.value)}/>
-      </div>
+      {a.recurring ? (
+        <div style={{ display:"flex", alignItems:"center", gap:10, padding:"11px 13px", borderRadius:10,
+          background:"rgba(158,154,229,0.08)", border:"0.5px solid rgba(158,154,229,0.25)", fontSize:12.5, color:"var(--text-muted)" }}>
+          <Icon name="refresh-cw" size={14} style={{ color:"var(--accent)" }}/>
+          <span>Servicio mensual: se renueva cada mes, sin fecha de entrega fija.</span>
+        </div>
+      ) : (
+        <div>
+          <div className="label">Fecha de entrega</div>
+          <input className="input" type="date" value={a.deadline} onChange={e => set("deadline", e.target.value)}/>
+        </div>
+      )}
     </div>
   );
 

@@ -109,7 +109,7 @@ const _mc = (r) => r && {
   // no existe en DB
 };
 const _mp = (r) => {
-  var _a, _b, _c, _d, _e;
+  var _a, _b, _c, _d, _e, _f;
   return r && {
     id: r.id,
     name: r.name,
@@ -124,7 +124,8 @@ const _mp = (r) => {
     deadline: r.deadline,
     nextMilestone: r.next_milestone,
     revisionsUsed: (_e = r.revisions_used) != null ? _e : 0,
-    description: r.description
+    description: r.description,
+    recurring: (_f = r.recurring) != null ? _f : false
   };
 };
 const _mt = (r) => r && {
@@ -541,7 +542,8 @@ const addProjectAsync = async (input) => {
     deadline,
     nextMilestone: "Kickoff",
     revisionsUsed: 0,
-    description: input.description || ""
+    description: input.description || "",
+    recurring: !!input.recurring
   };
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map((c) => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
@@ -561,7 +563,8 @@ const addProjectAsync = async (input) => {
     deadline: p.deadline,
     next_milestone: p.nextMilestone,
     revisions_used: 0,
-    description: p.description
+    description: p.description,
+    recurring: p.recurring
   });
   if (error) {
     console.error("[addProjectAsync] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);

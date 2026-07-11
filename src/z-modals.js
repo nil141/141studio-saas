@@ -91,7 +91,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const toast = useToast();
   const blank = () => {
     var _a;
-    return { name: "", clientId: prefilledClientId || ((_a = D.CLIENTS[0]) == null ? void 0 : _a.id) || "", deadline: "" };
+    return { name: "", clientId: prefilledClientId || ((_a = D.CLIENTS[0]) == null ? void 0 : _a.id) || "", deadline: "", recurring: false };
   };
   const [step, setStep] = useState(0);
   const [a, setA] = useState(blank);
@@ -130,7 +130,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   );
   const selClient = D.CLIENTS.find((c) => c.id === a.clientId);
   const canNext = [
-    !!(a.name.trim() && a.clientId && a.deadline && hasClients),
+    // Puntual necesita fecha; recurrente no (es mensual, sin fecha fija)
+    !!(a.name.trim() && a.clientId && hasClients && (a.recurring || a.deadline)),
     true
     // las fases son opcionales: se puede crear un proyecto vacío
   ];
@@ -140,7 +141,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     const res = await D.addProjectAsync({
       name: a.name.trim(),
       clientId: a.clientId,
-      deadline: a.deadline,
+      deadline: a.recurring ? "" : a.deadline,
+      recurring: a.recurring,
       template: phases.join(", ") || "libre"
     });
     const p = res && res.project;
@@ -158,7 +160,35 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     onCreate && onCreate(p);
   };
   const STEP_LABELS = ["B\xE1sicos", "Fases"];
-  const renderStep0 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, !hasClients && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "var(--amber-soft)", border: "0.5px solid var(--amber)", borderRadius: 10, color: "var(--amber)", fontSize: 13, display: "flex", gap: 10, alignItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "info", size: 14 }), " ", /* @__PURE__ */ React.createElement("span", null, "Crea primero un cliente antes de a\xF1adir proyectos.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Redise\xF1o web 2026", value: a.name, onChange: (e) => set("name", e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setSearching((s) => !s) }, selClient ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: selClient.name, initials: selClient.initials, color: selClient.color }), /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left" } }, selClient.name, " \xB7 ", selClient.company), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })) : /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Selecciona un cliente")), searching && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "var(--bg-elev-2)", border: "0.5px solid var(--border-strong)", borderRadius: 10, zIndex: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: 8, borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13 }), /* @__PURE__ */ React.createElement("input", { autoFocus: true, placeholder: "Buscar\u2026", value: cq, onChange: (e) => setCq(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 160, overflowY: "auto" } }, filtered.map((c) => /* @__PURE__ */ React.createElement(
+  const renderStep0 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, !hasClients && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "var(--amber-soft)", border: "0.5px solid var(--amber)", borderRadius: 10, color: "var(--amber)", fontSize: 13, display: "flex", gap: 10, alignItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "info", size: 14 }), " ", /* @__PURE__ */ React.createElement("span", null, "Crea primero un cliente antes de a\xF1adir proyectos.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tipo de proyecto"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, [
+    { id: false, title: "Puntual", sub: "Trabajo con entrega", icon: "flag" },
+    { id: true, title: "Recurrente", sub: "Mensual (ej. redes)", icon: "refresh-cw" }
+  ].map((opt) => {
+    const on = a.recurring === opt.id;
+    return /* @__PURE__ */ React.createElement("button", { key: String(opt.id), onClick: () => set("recurring", opt.id), style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      textAlign: "left",
+      padding: "11px 13px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+      border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+      transition: "all .12s"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 30,
+      height: 30,
+      borderRadius: 9,
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: on ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.05)",
+      color: on ? "var(--accent)" : "var(--text-subtle)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: opt.icon, size: 15, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, letterSpacing: "-0.3px", color: on ? "var(--text)" : "var(--text-muted)" } }, opt.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, opt.sub)));
+  }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Redise\xF1o web 2026", value: a.name, onChange: (e) => set("name", e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setSearching((s) => !s) }, selClient ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: selClient.name, initials: selClient.initials, color: selClient.color }), /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left" } }, selClient.name, " \xB7 ", selClient.company), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })) : /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Selecciona un cliente")), searching && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "var(--bg-elev-2)", border: "0.5px solid var(--border-strong)", borderRadius: 10, zIndex: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: 8, borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13 }), /* @__PURE__ */ React.createElement("input", { autoFocus: true, placeholder: "Buscar\u2026", value: cq, onChange: (e) => setCq(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 160, overflowY: "auto" } }, filtered.map((c) => /* @__PURE__ */ React.createElement(
     "div",
     {
       key: c.id,
@@ -173,7 +203,17 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: c.name, initials: c.initials, color: c.color }),
     /* @__PURE__ */ React.createElement("span", { className: "grow small" }, c.name, " \xB7 ", c.company),
     c.id === a.clientId && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
-  ))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: a.deadline, onChange: (e) => set("deadline", e.target.value) })));
+  ))))), a.recurring ? /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    padding: "11px 13px",
+    borderRadius: 10,
+    background: "rgba(158,154,229,0.08)",
+    border: "0.5px solid rgba(158,154,229,0.25)",
+    fontSize: 12.5,
+    color: "var(--text-muted)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "Servicio mensual: se renueva cada mes, sin fecha de entrega fija.")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: a.deadline, onChange: (e) => set("deadline", e.target.value) })));
   const renderStep1 = () => {
     const available = SUGGESTED_PHASES.filter((s) => !phases.includes(s));
     return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, "A\xF1ade las fases del proyecto. Las tareas de cada fase las creas t\xFA luego dentro del proyecto. Puedes crearlo sin fases y organizarlo despu\xE9s."), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(

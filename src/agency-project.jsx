@@ -122,6 +122,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           <div className="row tight" style={{marginBottom: 6}}>
             <span className={"dot " + p.light}/>
             <span className="muted small">{p.clientName}</span>
+            {p.recurring && <><span className="vdiv"/><span className="chip" style={{fontSize:11, color:"var(--accent)"}}><Icon name="refresh-cw" size={10}/> Mensual</span></>}
             {aiPhases && <><span className="vdiv"/><span className="muted small">{aiPhases.length} fase{aiPhases.length===1?"":"s"}</span></>}
           </div>
           <h1>{p.name}</h1>
@@ -459,8 +460,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               <span className="small" style={{fontWeight:500}}>{p.clientName || "—"}</span>
             </div>
             <div className="row between" style={{padding:"6px 0", borderTop:"0.5px solid var(--border)"}}>
-              <span className="muted small">Entrega</span>
-              <span className="small" style={{fontWeight:500}}>{p.deadline || "—"}</span>
+              <span className="muted small">{p.recurring ? "Tipo" : "Entrega"}</span>
+              <span className="small" style={{fontWeight:500}}>{p.recurring ? "Mensual" : (p.deadline && p.deadline !== "—" ? p.deadline : "—")}</span>
             </div>
             {aiPhases && aiPhases.length > 0 && (
               <div style={{padding:"8px 0 2px", borderTop:"0.5px solid var(--border)"}}>

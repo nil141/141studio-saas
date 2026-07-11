@@ -115,7 +115,7 @@ const _mp = r => r && ({
   service: r.service, light: r.light || "green", phase: r.phase ?? 0, week: r.week ?? 1,
   progress: r.progress ?? 0, budget: r.budget ?? 0, deadline: r.deadline,
   nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used ?? 0,
-  description: r.description,
+  description: r.description, recurring: r.recurring ?? false,
 });
 const _mt = r => r && ({
   id: r.id, title: r.title, column: r.col, assignee: r.assignee,
@@ -484,6 +484,7 @@ const addProjectAsync = async (input) => {
     service: input.template || "—", light: "green", phase: 0, week: 1,
     progress: 0, budget: 0, deadline,
     nextMilestone: "Kickoff", revisionsUsed: 0, description: input.description || "",
+    recurring: !!input.recurring,
   };
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map(c => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
@@ -493,6 +494,7 @@ const addProjectAsync = async (input) => {
     name: p.name, service: p.service, light: p.light, phase: p.phase, week: p.week,
     progress: p.progress, budget: p.budget, deadline: p.deadline,
     next_milestone: p.nextMilestone, revisions_used: 0, description: p.description,
+    recurring: p.recurring,
   });
   if (error) {
     console.error("[addProjectAsync] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
