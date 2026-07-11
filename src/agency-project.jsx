@@ -227,10 +227,9 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                             <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
                               <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
                                 <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
-                                  fontSize:12, fontWeight:600,
-                                  background: gPct===100 ? "var(--accent)" : "transparent",
-                                  color: gPct===100 ? "#fff" : "var(--text-muted)",
-                                  border: gPct===100 ? "none" : "1.5px solid var(--border-strong)"}}>
+                                  fontSize:12, fontWeight:600, background:"transparent",
+                                  color: gPct===100 ? "var(--accent)" : "var(--text-muted)",
+                                  border: "1.5px solid " + (gPct===100 ? "var(--accent)" : "var(--border-strong)")}}>
                                   {gPct===100 ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
                                 </span>
                                 <div style={{minWidth:0}}>
