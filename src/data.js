@@ -135,7 +135,8 @@ const _mt = (r) => r && {
   clientId: r.client_id,
   clientName: r.client_name,
   done: r.done,
-  deadline: r.deadline
+  deadline: r.deadline,
+  phase: r.phase || null
 };
 const _mi = (r) => r && {
   id: r.id,
@@ -599,7 +600,8 @@ const addTasksBulk = async (projectId, items) => {
     client_id: null,
     client_name: null,
     deadline: null,
-    done: false
+    done: false,
+    phase: t.phase || null
   })));
   if (error) {
     console.error("[addTasksBulk] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
@@ -754,7 +756,7 @@ const addTask = (input) => {
   };
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]];
   _emit();
-  _sb.from("tasks").insert({
+  _insertAdaptive("tasks", {
     id: t.id,
     agency_id: uid,
     project_id: pid === "__none__" ? null : pid,
@@ -764,6 +766,7 @@ const addTask = (input) => {
     client_id: t.clientId || null,
     client_name: t.clientName || null,
     deadline: t.deadline || null,
+    phase: t.phase || null,
     done: false
   }).then(({ error }) => {
     if (error) {
