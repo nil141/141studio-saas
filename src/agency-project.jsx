@@ -36,6 +36,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   const [driveTick, setDriveTick] = useState(0);
   const [driveEditing, setDriveEditing] = useState(false);
   const [driveDraft, setDriveDraft] = useState("");
+  const [hoverId, setHoverId] = useState(null); // fase resaltada en el Plan
 
   // Close context menu on outside click
   React.useEffect(() => {
@@ -192,77 +193,91 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               return { label:"Sin empezar", cls:"" };
             };
 
+            const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:4 };
             return (
-              <div style={{display:"flex", flexDirection:"column", gap:16}}>
-                {/* Fases (solo seguimiento) */}
-                <div className="card"><div className="card-body">
-                  <div className="card-title" style={{marginBottom:14}}>Fases del proyecto</div>
+              <div style={{display:"flex", flexDirection:"column", gap:34}}>
+                {/* Fases del proyecto — lista plana estilo del resto del SaaS */}
+                <div>
+                  <div style={secLabel}>Fases del proyecto</div>
                   {planGroups.length === 0 ? (
                     <Empty icon="list-todo" title="Sin fases" sub="Este proyecto no tiene fases. Añade tareas desde el Tablero."/>
                   ) : (
-                    <div style={{display:"flex", flexDirection:"column", gap:10}}>
+                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
                       {planGroups.map((g, i) => {
                         const gDone = g.tasks.filter(t => t.column === "done").length;
                         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
                         const st = phaseStatus(gDone, g.tasks.length);
                         const isReal = g.name !== "__otras__";
+                        const col = gPct === 100 ? "var(--green)" : "var(--accent)";
+                        const on = hoverId === g.name;
                         return (
                           <div key={g.name}
                             onClick={() => { if (isReal) { setTab("tasks"); setPhaseTab(g.name); } }}
-                            style={{border:"0.5px solid var(--border)", borderRadius:12, padding:"14px 16px",
-                              cursor: isReal ? "pointer" : "default", transition:"background .12s"}}
-                            onMouseEnter={e => { if(isReal) e.currentTarget.style.background = "var(--bg-elev-2)"; }}
-                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                            <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
-                              <span style={{width:22, height:22, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
-                                fontSize:11, fontWeight:600,
-                                background: gPct===100 ? "var(--green)" : "var(--bg-elev-2)",
-                                color: gPct===100 ? "#000" : "var(--text-subtle)",
-                                border: gPct===100 ? "none" : "0.5px solid var(--border-strong)"}}>
-                                {gPct===100 ? <Icon name="check" size={12}/> : (isReal ? i+1 : "·")}
-                              </span>
-                              <div style={{flex:1, fontWeight:600, fontSize:14.5}}>{g.label}</div>
-                              <span className={"chip" + (st.cls ? " "+st.cls : "")} style={{fontSize:11}}>{st.label}</span>
-                              {isReal && <Icon name="chevron" size={13} style={{color:"var(--text-subtle)", flexShrink:0}}/>}
-                            </div>
-                            <div style={{display:"flex", alignItems:"center", gap:12}}>
-                              <div style={{flex:1, height:6, borderRadius:99, background:"var(--border)", overflow:"hidden"}}>
-                                <div style={{width:gPct+"%", height:"100%", background: gPct===100 ? "var(--green)" : "var(--primary-600, #8277db)", borderRadius:99, transition:"width .3s"}}/>
+                            onMouseEnter={() => setHoverId(g.name)} onMouseLeave={() => setHoverId(null)}
+                            style={{display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor: isReal ? "pointer" : "default"}}>
+                            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
+                              <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
+                                <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
+                                  fontSize:12, fontWeight:600,
+                                  background: gPct===100 ? "var(--green)" : "transparent",
+                                  color: gPct===100 ? "#000" : "var(--text-muted)",
+                                  border: gPct===100 ? "none" : "1.5px solid var(--border-strong)"}}>
+                                  {gPct===100 ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
+                                </span>
+                                <div style={{minWidth:0}}>
+                                  <div style={{fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                                    whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{g.label}</div>
+                                  <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6}}>
+                                    <span style={{color: st.cls==="green" ? "var(--green)" : st.cls==="blue" ? "var(--accent)" : "var(--text-muted)"}}>{st.label}</span>
+                                    <span style={{opacity:0.4, fontSize:10}}>•</span>
+                                    <span>{gDone}/{g.tasks.length} tareas</span>
+                                    <span style={{opacity:0.4, fontSize:10}}>•</span>
+                                    <span>{gPct}%</span>
+                                  </div>
+                                </div>
                               </div>
-                              <span className="muted xsmall" style={{flexShrink:0, width:64, textAlign:"right"}}>{gDone}/{g.tasks.length} · {gPct}%</span>
+                              {isReal && (
+                                <Icon name="chevron-right" size={18}
+                                  style={{color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
+                                    transition:"all .2s", flexShrink:0}}/>
+                              )}
+                            </div>
+                            <div style={{position:"relative", width:"100%", height:3, background:"rgba(255,255,255,0.05)", borderRadius:99, overflow:"hidden"}}>
+                              <div style={{position:"absolute", height:"100%", borderRadius:99, background:col, width:`${gPct}%`, transition:"width .3s"}}/>
                             </div>
                           </div>
                         );
                       })}
                     </div>
                   )}
-                </div></div>
+                </div>
 
-                {/* Próximos vencimientos */}
-                <div className="card"><div className="card-body">
-                  <div className="card-title" style={{marginBottom:12}}>Próximos vencimientos</div>
+                {/* Próximos vencimientos — lista plana */}
+                <div>
+                  <div style={secLabel}>Próximos vencimientos</div>
                   {upcoming.length === 0 ? (
-                    <div className="muted small" style={{padding:"6px 0"}}>
-                      No hay tareas con fecha pendientes. Añade fechas a las tareas desde el Tablero (menú de cada tarea).
+                    <div className="muted small" style={{padding:"14px 6px", color:"var(--text-subtle)"}}>
+                      No hay tareas con fecha pendientes. Añade fechas a las tareas desde el Tablero (clic derecho en la tarjeta).
                     </div>
                   ) : (
-                    <div style={{display:"flex", flexDirection:"column"}}>
+                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
                       {upcoming.map(({t, info}, i) => (
-                        <div key={t.id} className="row tight" style={{padding:"10px 0", borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
-                          <span style={{width:8, height:8, borderRadius:99, background:info.color, flexShrink:0}}/>
-                          <div className="grow" style={{minWidth:0}}>
-                            <div className="small truncate">{t.title}</div>
-                            {taskPhase(t) && <div className="subtle xsmall">{taskPhase(t)}</div>}
+                        <div key={t.id} style={{display:"flex", alignItems:"center", gap:14, padding:"16px 6px",
+                          borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
+                          <span style={{width:9, height:9, borderRadius:99, background:info.color, flexShrink:0}}/>
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontSize:15, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
+                            {taskPhase(t) && <div style={{fontSize:12, color:"var(--text-muted)", marginTop:2}}>{taskPhase(t)}</div>}
                           </div>
                           <div style={{textAlign:"right", flexShrink:0}}>
-                            <div className="small" style={{fontWeight:500}}>{info.label}</div>
-                            {info.tag && <div className="xsmall" style={{color:info.color}}>{info.tag}</div>}
+                            <div style={{fontSize:14, fontWeight:500}}>{info.label}</div>
+                            {info.tag && <div style={{fontSize:11.5, color:info.color, marginTop:1}}>{info.tag}</div>}
                           </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </div></div>
+                </div>
               </div>
             );
           })()}
