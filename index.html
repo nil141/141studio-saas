@@ -616,6 +616,10 @@
   .task-del { opacity: 0; transition: opacity .12s ease; }
   .task-row:hover .task-del { opacity: 1; }
   @media (hover: none) { .task-del { opacity: 1; } }
+  @media (max-width: 900px) {
+    .project-grid { grid-template-columns: 1fr !important; }
+    .project-rail { position: static !important; }
+  }
 
   /* ── RESPONSIVE ─────────────────────────────────────────── */
   @media (max-width: 768px) {
@@ -852,7 +856,7 @@
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=36"></script>
 <script src="src/agency-clients.js?v=13"></script>
-<script src="src/agency-project.js?v=6"></script>
+<script src="src/agency-project.js?v=7"></script>
 <script src="src/agency-other.js?v=93"></script>
 <script src="src/agency-pipeline.js?v=2"></script>
 <script src="src/campaigns.js?v=20"></script>
