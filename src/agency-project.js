@@ -199,7 +199,7 @@
               }
             }
           )),
-          /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: "100%", height: 3, background: "rgba(255,255,255,0.05)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", height: "100%", borderRadius: 99, background: col, width: `${gPct}%`, transition: "width .3s" } }))
+          /* @__PURE__ */ React.createElement("div", { style: { height: 1, width: "100%", background: "var(--border)" } })
         );
       }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Pr\xF3ximos vencimientos"), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { padding: "14px 6px", color: "var(--text-subtle)" } }, "No hay tareas con fecha pendientes. A\xF1ade fechas a las tareas desde el Tablero (clic derecho en la tarjeta).") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, upcoming.map(({ t, info }, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: {
         display: "flex",

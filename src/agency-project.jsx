@@ -252,9 +252,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                                     transition:"all .2s", flexShrink:0}}/>
                               )}
                             </div>
-                            <div style={{position:"relative", width:"100%", height:3, background:"rgba(255,255,255,0.05)", borderRadius:99, overflow:"hidden"}}>
-                              <div style={{position:"absolute", height:"100%", borderRadius:99, background:col, width:`${gPct}%`, transition:"width .3s"}}/>
-                            </div>
+                            <div style={{height:1, width:"100%", background:"var(--border)"}}/>
                           </div>
                         );
                       })}
