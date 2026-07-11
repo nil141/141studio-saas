@@ -110,7 +110,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
 
   return (
     <>
-    <div className="page wide" style={{maxWidth: 1500}}>
+    <div className="page">
       <div style={{marginBottom: 16}}>
         <button className="btn ghost sm" onClick={() => navigate("projects")}>
           <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Proyectos
@@ -153,8 +153,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         ))}
       </div>
 
-      <div style={{display:"grid", gridTemplateColumns:"1fr 280px", gap: 16}}>
-        <div>
+      <div>
           {tab === "plan" && (() => {
             // ── Vista de SEGUIMIENTO (solo lectura) ──────────────────
             const phaseNames = (aiPhases || []).map(ph => ph.name);
@@ -439,68 +438,6 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
             );
           })()}
 
-        </div>
-
-        {/* Panel derecho — datos reales del proyecto */}
-        <div style={{display:"flex", flexDirection:"column", gap: 14}}>
-          {/* Progreso */}
-          <div className="card"><div className="card-body">
-            <div style={{display:"flex", alignItems:"baseline", justifyContent:"space-between", marginBottom: 10}}>
-              <div className="card-title">Progreso</div>
-              <div style={{fontSize:22, fontWeight:600}}>{liveProgress}<span style={{fontSize:14, color:"var(--text-subtle)"}}>%</span></div>
-            </div>
-            <div style={{height:6, borderRadius:99, background:"var(--border)", overflow:"hidden"}}>
-              <div style={{width: liveProgress + "%", height:"100%", background:"var(--green)", borderRadius:99, transition:"width .3s"}}/>
-            </div>
-            <div className="muted xsmall" style={{marginTop: 8}}>{tasksByCol.done.length} de {projectTasks.length} tareas completadas</div>
-            {aiPhases && (() => {
-              const total = aiPhases.length;
-              const done = aiPhases.filter(ph => {
-                const ts = projectTasks.filter(t => taskPhase(t) === ph.name);
-                return ts.length > 0 && ts.every(t => t.column === "done");
-              }).length;
-              return <div className="muted xsmall" style={{marginTop: 3}}>{done} de {total} fases completadas</div>;
-            })()}
-          </div></div>
-
-          {/* Resumen por estado */}
-          <div className="card"><div className="card-body">
-            <div className="card-title" style={{marginBottom: 10}}>Resumen de tareas</div>
-            {[
-              {id:"todo",   label:"Por hacer", dot:"var(--border-strong)"},
-              {id:"doing",  label:"En curso",  dot:"var(--green)"},
-              {id:"review", label:"Revisión",  dot:"var(--amber)"},
-              {id:"done",   label:"Hecho",     dot:"var(--green)"},
-            ].map((s, i) => (
-              <div key={s.id} className="row tight" style={{padding:"7px 0", borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
-                <span style={{width:8, height:8, borderRadius:99, background:s.dot, flexShrink:0}}/>
-                <div className="grow small">{s.label}</div>
-                <span className="muted small">{tasksByCol[s.id].length}</span>
-              </div>
-            ))}
-          </div></div>
-
-          {/* Detalles */}
-          <div className="card"><div className="card-body">
-            <div className="card-title" style={{marginBottom: 10}}>Detalles</div>
-            <div className="row between" style={{padding:"6px 0"}}>
-              <span className="muted small">Cliente</span>
-              <span className="small" style={{fontWeight:500}}>{p.clientName || "—"}</span>
-            </div>
-            <div className="row between" style={{padding:"6px 0", borderTop:"0.5px solid var(--border)"}}>
-              <span className="muted small">{p.recurring ? "Tipo" : "Entrega"}</span>
-              <span className="small" style={{fontWeight:500}}>{p.recurring ? "Mensual" : (p.deadline && p.deadline !== "—" ? p.deadline : "—")}</span>
-            </div>
-            {aiPhases && aiPhases.length > 0 && (
-              <div style={{padding:"8px 0 2px", borderTop:"0.5px solid var(--border)"}}>
-                <div className="muted small" style={{marginBottom: 8}}>Servicios</div>
-                <div className="row tight" style={{flexWrap:"wrap", gap: 6}}>
-                  {aiPhases.map(ph => <span key={ph.name} className="chip" style={{fontSize:11}}>{ph.name}</span>)}
-                </div>
-              </div>
-            )}
-          </div></div>
-        </div>
       </div>
     </div>
 
