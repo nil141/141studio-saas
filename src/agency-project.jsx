@@ -218,7 +218,6 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
                         const st = phaseStatus(gDone, g.tasks.length);
                         const isReal = g.name !== "__otras__";
-                        const col = gPct === 100 ? "var(--green)" : "var(--accent)";
                         const on = hoverId === g.name;
                         return (
                           <div key={g.name}
@@ -229,8 +228,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                               <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
                                 <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
                                   fontSize:12, fontWeight:600,
-                                  background: gPct===100 ? "var(--green)" : "transparent",
-                                  color: gPct===100 ? "#000" : "var(--text-muted)",
+                                  background: gPct===100 ? "var(--accent)" : "transparent",
+                                  color: gPct===100 ? "#fff" : "var(--text-muted)",
                                   border: gPct===100 ? "none" : "1.5px solid var(--border-strong)"}}>
                                   {gPct===100 ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
                                 </span>
@@ -238,7 +237,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                                   <div style={{fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
                                     whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{g.label}</div>
                                   <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6}}>
-                                    <span style={{color: st.cls==="green" ? "var(--green)" : st.cls==="blue" ? "var(--accent)" : "var(--text-muted)"}}>{st.label}</span>
+                                    <span style={{color: (st.cls==="green" || st.cls==="blue") ? "var(--accent)" : "var(--text-muted)"}}>{st.label}</span>
                                     <span style={{opacity:0.4, fontSize:10}}>•</span>
                                     <span>{gDone}/{g.tasks.length} tareas</span>
                                     <span style={{opacity:0.4, fontSize:10}}>•</span>

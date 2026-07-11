@@ -150,7 +150,6 @@
         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
         const st = phaseStatus(gDone, g.tasks.length);
         const isReal = g.name !== "__otras__";
-        const col = gPct === 100 ? "var(--green)" : "var(--accent)";
         const on = hoverId === g.name;
         return /* @__PURE__ */ React.createElement(
           "div",
@@ -175,8 +174,8 @@
             placeItems: "center",
             fontSize: 12,
             fontWeight: 600,
-            background: gPct === 100 ? "var(--green)" : "transparent",
-            color: gPct === 100 ? "#000" : "var(--text-muted)",
+            background: gPct === 100 ? "var(--accent)" : "transparent",
+            color: gPct === 100 ? "#fff" : "var(--text-muted)",
             border: gPct === 100 ? "none" : "1.5px solid var(--border-strong)"
           } }, gPct === 100 ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }) : isReal ? i + 1 : "\xB7"), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
             fontSize: 17,
@@ -186,7 +185,7 @@
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis"
-          } }, g.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: st.cls === "green" ? "var(--green)" : st.cls === "blue" ? "var(--accent)" : "var(--text-muted)" } }, st.label), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", null, gDone, "/", g.tasks.length, " tareas"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", null, gPct, "%")))), isReal && /* @__PURE__ */ React.createElement(
+          } }, g.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { color: st.cls === "green" || st.cls === "blue" ? "var(--accent)" : "var(--text-muted)" } }, st.label), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", null, gDone, "/", g.tasks.length, " tareas"), /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.4, fontSize: 10 } }, "\u2022"), /* @__PURE__ */ React.createElement("span", null, gPct, "%")))), isReal && /* @__PURE__ */ React.createElement(
             Icon,
             {
               name: "chevron-right",
