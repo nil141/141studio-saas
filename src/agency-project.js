@@ -99,7 +99,8 @@
       return parts.join(" \xB7 ");
     })())), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
       setTab("tasks");
-      setAdding("todo");
+      setAdding("list");
+      setDraft("");
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Eliminar proyecto", onClick: removeProjectFromHere, style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 14 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: liveProgress + "%",
       height: "100%",
@@ -209,13 +210,30 @@
       } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 9, borderRadius: 99, background: info.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, t.title), taskPhase(t) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, taskPhase(t))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500 } }, info.label), info.tag && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: info.color, marginTop: 1 } }, info.tag)))))));
     })(), tab === "tasks" && (() => {
       const visibleTasks = aiPhases && phaseTab ? projectTasks.filter((t) => taskPhase(t) === phaseTab) : projectTasks;
-      const vByCol = {
-        todo: visibleTasks.filter((t) => t.column === "todo"),
-        doing: visibleTasks.filter((t) => t.column === "doing"),
-        review: visibleTasks.filter((t) => t.column === "review"),
-        done: visibleTasks.filter((t) => t.column === "done")
+      const ORDER = { todo: 0, doing: 1, review: 2, done: 3 };
+      const STATE = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n", done: "Hecho" };
+      const ARC = { todo: 0, doing: 0.34, review: 0.7, done: 1 };
+      const sorted = [...visibleTasks].sort((a, b) => ORDER[a.column] - ORDER[b.column]);
+      const cycle = (t) => {
+        const seq = ["todo", "doing", "review", "done"];
+        D.moveTask(p.id, t.id, seq[(seq.indexOf(t.column) + 1) % 4]);
       };
-      return /* @__PURE__ */ React.createElement("div", null, aiPhases && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 14 } }, aiPhases.map((ph, i) => {
+      const addHere = () => {
+        if (!draft.trim()) {
+          setAdding(null);
+          setDraft("");
+          return;
+        }
+        D.addTask({
+          projectId: p.id,
+          title: draft.trim(),
+          column: "todo",
+          phase: aiPhases && phaseTab ? phaseTab : null
+        });
+        setDraft("");
+        setAdding(null);
+      };
+      return /* @__PURE__ */ React.createElement("div", null, aiPhases && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 } }, aiPhases.map((ph, i) => {
         const count = projectTasks.filter((t) => taskPhase(t) === ph.name).length;
         const done = projectTasks.filter((t) => taskPhase(t) === ph.name && t.column === "done").length;
         const isActive = phaseTab === ph.name;
@@ -233,34 +251,72 @@
           "/",
           count
         );
-      })), /* @__PURE__ */ React.createElement("div", { className: "kanban" }, [{ id: "todo", label: "Por hacer" }, { id: "doing", label: "En curso" }, { id: "review", label: "Revisi\xF3n" }, { id: "done", label: "Hecho" }].map((c) => /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: c.id,
-          className: "kanban-col" + (dragOver === c.id ? " drop" : ""),
-          onDragOver: (e) => onDragOver(e, c.id),
-          onDrop: (e) => onDrop(e, c.id),
-          onDragLeave: () => setDragOver(null)
-        },
-        /* @__PURE__ */ React.createElement("div", { className: "kanban-head" }, /* @__PURE__ */ React.createElement("span", null, c.label), /* @__PURE__ */ React.createElement("span", { className: "row tight" }, /* @__PURE__ */ React.createElement("span", { className: "muted xsmall" }, vByCol[c.id].length), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => {
-          setAdding(c.id);
-          setDraft("");
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 11 })))),
-        /* @__PURE__ */ React.createElement("div", { className: "kanban-body" }, vByCol[c.id].map((t) => /* @__PURE__ */ React.createElement(
+      })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, sorted.map((t, idx) => {
+        const isDone = t.column === "done";
+        const sz = 38, r = 16, circ = 2 * Math.PI * r;
+        const frac = ARC[t.column] || 0;
+        return /* @__PURE__ */ React.createElement(
           "div",
           {
             key: t.id,
-            className: "kanban-card",
-            draggable: true,
-            onDragStart: () => onDragStart(t.id),
-            onDragEnd,
-            style: { cursor: "grab" },
+            className: "task-row",
             onContextMenu: (e) => {
               e.preventDefault();
               setCtxMenu({ x: e.clientX, y: e.clientY, taskId: t.id });
+            },
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 13,
+              padding: "12px 4px",
+              borderBottom: idx === sorted.length - 1 ? "none" : "0.5px solid var(--border)"
             }
           },
-          editingId === t.id ? /* @__PURE__ */ React.createElement(
+          /* @__PURE__ */ React.createElement(
+            "button",
+            {
+              onClick: () => cycle(t),
+              title: "Estado: " + STATE[t.column] + " (clic para avanzar)",
+              style: {
+                width: sz,
+                height: sz,
+                flexShrink: 0,
+                position: "relative",
+                display: "grid",
+                placeItems: "center",
+                background: "none",
+                border: "none",
+                padding: 0,
+                cursor: "pointer"
+              }
+            },
+            /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement(
+              "circle",
+              {
+                cx: sz / 2,
+                cy: sz / 2,
+                r,
+                fill: "none",
+                stroke: isDone ? "var(--accent)" : "rgba(255,255,255,0.12)",
+                strokeWidth: "2"
+              }
+            ), !isDone && frac > 0 && /* @__PURE__ */ React.createElement(
+              "circle",
+              {
+                cx: sz / 2,
+                cy: sz / 2,
+                r,
+                fill: "none",
+                stroke: "var(--accent)",
+                strokeWidth: "2",
+                strokeLinecap: "round",
+                strokeDasharray: `${frac * circ} ${circ}`,
+                transform: `rotate(-90,${sz / 2},${sz / 2})`
+              }
+            )),
+            isDone ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "rgba(255,255,255,0.25)", position: "relative" } })
+          ),
+          /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, editingId === t.id ? /* @__PURE__ */ React.createElement(
             "input",
             {
               autoFocus: true,
@@ -269,7 +325,7 @@
               onChange: (e) => setEditDraft(e.target.value),
               onKeyDown: (e) => {
                 if (e.key === "Enter") {
-                  D.updateTask(p.id, t.id, { title: editDraft.trim() || t.title });
+                  if (editDraft.trim()) D.updateTask(p.id, t.id, { title: editDraft.trim() });
                   setEditingId(null);
                 }
                 if (e.key === "Escape") setEditingId(null);
@@ -278,9 +334,47 @@
                 if (editDraft.trim()) D.updateTask(p.id, t.id, { title: editDraft.trim() });
                 setEditingId(null);
               },
-              style: { padding: "4px 6px", fontSize: 13, width: "100%" }
+              style: { padding: "4px 6px", fontSize: 14 }
             }
-          ) : /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, t.title),
+          ) : /* @__PURE__ */ React.createElement(
+            "div",
+            {
+              onClick: () => {
+                setEditingId(t.id);
+                setEditDraft(t.title);
+              },
+              style: {
+                fontSize: 14,
+                letterSpacing: "-0.3px",
+                cursor: "text",
+                color: isDone ? "var(--text-subtle)" : "var(--text)",
+                textDecoration: isDone ? "line-through" : "none",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }
+            },
+            t.title
+          ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2 } }, STATE[t.column], t.deadline ? " \xB7 " + t.deadline : "")),
+          /* @__PURE__ */ React.createElement(
+            "button",
+            {
+              className: "task-del btn ghost icon-only sm",
+              "data-tooltip": "Fecha",
+              onClick: () => setDatePicking(datePicking === t.id ? null : t.id),
+              style: { flexShrink: 0, color: "var(--text-subtle)" }
+            },
+            /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 13 })
+          ),
+          /* @__PURE__ */ React.createElement(
+            "button",
+            {
+              className: "task-del btn ghost icon-only sm",
+              onClick: () => D.deleteTask(p.id, t.id),
+              style: { flexShrink: 0, color: "var(--text-subtle)" }
+            },
+            /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
+          ),
           datePicking === t.id && /* @__PURE__ */ React.createElement(
             "input",
             {
@@ -293,44 +387,42 @@
                 setDatePicking(null);
               },
               onBlur: () => setDatePicking(null),
-              style: { marginTop: 5, fontSize: 12, padding: "3px 6px" }
+              style: { flexShrink: 0, fontSize: 12, padding: "3px 6px", width: 140 }
             }
-          ),
-          t.deadline && datePicking !== t.id && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 3, display: "flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 10 }), t.deadline),
-          taskPhase(t) && !phaseTab && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 3 } }, "\xB7 ", taskPhase(t)),
-          t.assignee && t.assignee !== "T\xFA" && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall" }, "\xB7 ", t.assignee)
-        )), adding === c.id && /* @__PURE__ */ React.createElement("div", { className: "kanban-card", style: { padding: 8 } }, /* @__PURE__ */ React.createElement(
-          "input",
-          {
-            autoFocus: true,
-            className: "input",
-            placeholder: "Nombre de la tarea\u2026",
-            value: draft,
-            onChange: (e) => setDraft(e.target.value),
-            onKeyDown: (e) => {
-              if (e.key === "Enter") addTaskInline(c.id);
-              if (e.key === "Escape") {
-                setAdding(null);
-                setDraft("");
-              }
-            },
-            onBlur: () => addTaskInline(c.id),
-            style: { padding: "6px 8px", fontSize: 13 }
-          }
-        )), vByCol[c.id].length === 0 && adding !== c.id && /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            className: "btn ghost sm full",
-            style: { justifyContent: "center", color: "var(--text-subtle)", border: "0.5px dashed var(--border-strong)" },
-            onClick: () => {
-              setAdding(c.id);
+          )
+        );
+      }), adding === "list" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", borderTop: sorted.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 20, height: 20, borderRadius: 99, border: "1.5px dashed var(--border-strong)" } })), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          className: "input",
+          placeholder: "Nombre de la tarea\u2026",
+          value: draft,
+          onChange: (e) => setDraft(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") addHere();
+            if (e.key === "Escape") {
+              setAdding(null);
               setDraft("");
             }
           },
-          /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 11 }),
-          " A\xF1adir tarea"
-        ))
-      ))));
+          onBlur: addHere,
+          style: { flex: 1, padding: "5px 8px", fontSize: 14 }
+        }
+      )) : /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          className: "btn ghost sm",
+          onClick: () => {
+            setAdding("list");
+            setDraft("");
+          },
+          style: { justifyContent: "flex-start", color: "var(--text-subtle)", marginTop: sorted.length ? 8 : 0, padding: "9px 4px" }
+        },
+        /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }),
+        " A\xF1adir tarea",
+        aiPhases && phaseTab ? " a " + phaseTab : ""
+      )));
     })(), tab === "files" && (() => {
       const driveKey = "proj_drive_" + p.id;
       const driveUrl = typeof localStorage !== "undefined" && localStorage.getItem(driveKey) || "";

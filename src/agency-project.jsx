@@ -132,7 +132,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           </div>
         </div>
         <div className="row tight">
-          <button className="btn primary" onClick={() => { setTab("tasks"); setAdding("todo"); }}><Icon name="plus" size={13}/> Tarea</button>
+          <button className="btn primary" onClick={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}><Icon name="plus" size={13}/> Tarea</button>
           <button className="btn ghost icon-only" data-tooltip="Eliminar proyecto" onClick={removeProjectFromHere} style={{color:"var(--text-subtle)"}}>
             <Icon name="trash" size={14}/>
           </button>
@@ -289,21 +289,29 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           })()}
 
           {tab === "tasks" && (() => {
-            // Filter tasks for current phase tab
+            // Tareas de la fase activa (o todas), como lista plana estilo del SaaS
             const visibleTasks = aiPhases && phaseTab
               ? projectTasks.filter(t => taskPhase(t) === phaseTab)
               : projectTasks;
-            const vByCol = {
-              todo:   visibleTasks.filter(t=>t.column==="todo"),
-              doing:  visibleTasks.filter(t=>t.column==="doing"),
-              review: visibleTasks.filter(t=>t.column==="review"),
-              done:   visibleTasks.filter(t=>t.column==="done"),
+            const ORDER = { todo:0, doing:1, review:2, done:3 };
+            const STATE = { todo:"Por hacer", doing:"En curso", review:"Revisión", done:"Hecho" };
+            const ARC   = { todo:0, doing:0.34, review:0.7, done:1 };
+            const sorted = [...visibleTasks].sort((a,b) => ORDER[a.column] - ORDER[b.column]);
+            const cycle = (t) => {
+              const seq = ["todo","doing","review","done"];
+              D.moveTask(p.id, t.id, seq[(seq.indexOf(t.column) + 1) % 4]);
+            };
+            const addHere = () => {
+              if (!draft.trim()) { setAdding(null); setDraft(""); return; }
+              D.addTask({ projectId: p.id, title: draft.trim(), column: "todo",
+                phase: (aiPhases && phaseTab) ? phaseTab : null });
+              setDraft(""); setAdding(null);
             };
             return (
               <div>
-                {/* Phase tabs */}
+                {/* Filtro de fases */}
                 {aiPhases && (
-                  <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:14}}>
+                  <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:18}}>
                     {aiPhases.map((ph, i) => {
                       const count = projectTasks.filter(t=>taskPhase(t)===ph.name).length;
                       const done = projectTasks.filter(t=>taskPhase(t)===ph.name&&t.column==="done").length;
@@ -318,72 +326,94 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                     })}
                   </div>
                 )}
-                <div className="kanban">
-                  {[{id:"todo",label:"Por hacer"},{id:"doing",label:"En curso"},{id:"review",label:"Revisión"},{id:"done",label:"Hecho"}].map(c => (
-                    <div key={c.id}
-                      className={"kanban-col" + (dragOver === c.id ? " drop" : "")}
-                      onDragOver={e => onDragOver(e, c.id)}
-                      onDrop={e => onDrop(e, c.id)}
-                      onDragLeave={() => setDragOver(null)}>
-                      <div className="kanban-head">
-                        <span>{c.label}</span>
-                        <span className="row tight">
-                          <span className="muted xsmall">{vByCol[c.id].length}</span>
-                          <button className="btn ghost icon-only sm" onClick={() => { setAdding(c.id); setDraft(""); }}><Icon name="plus" size={11}/></button>
-                        </span>
-                      </div>
-                      <div className="kanban-body">
-                        {vByCol[c.id].map(t => (
-                          <div key={t.id} className="kanban-card"
-                            draggable onDragStart={() => onDragStart(t.id)} onDragEnd={onDragEnd}
-                            style={{cursor:"grab"}}
-                            onContextMenu={e => { e.preventDefault(); setCtxMenu({x:e.clientX, y:e.clientY, taskId:t.id}); }}>
-                            {editingId === t.id ? (
-                              <input autoFocus className="input" value={editDraft}
-                                onChange={e => setEditDraft(e.target.value)}
-                                onKeyDown={e => {
-                                  if(e.key==="Enter"){ D.updateTask(p.id, t.id, {title:editDraft.trim()||t.title}); setEditingId(null); }
-                                  if(e.key==="Escape") setEditingId(null);
-                                }}
-                                onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
-                                style={{padding:"4px 6px", fontSize:13, width:"100%"}}/>
-                            ) : (
-                              <div style={{fontWeight:500}}>{t.title}</div>
+
+                {/* Lista de tareas */}
+                <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
+                  {sorted.map((t, idx) => {
+                    const isDone = t.column === "done";
+                    const sz = 38, r = 16, circ = 2 * Math.PI * r;
+                    const frac = ARC[t.column] || 0;
+                    return (
+                      <div key={t.id} className="task-row"
+                        onContextMenu={e => { e.preventDefault(); setCtxMenu({x:e.clientX, y:e.clientY, taskId:t.id}); }}
+                        style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px",
+                          borderBottom: idx === sorted.length-1 ? "none" : "0.5px solid var(--border)"}}>
+                        {/* Aro de estado (clic avanza) */}
+                        <button onClick={() => cycle(t)} title={"Estado: " + STATE[t.column] + " (clic para avanzar)"}
+                          style={{width:sz, height:sz, flexShrink:0, position:"relative", display:"grid", placeItems:"center",
+                            background:"none", border:"none", padding:0, cursor:"pointer"}}>
+                          <svg width={sz} height={sz} style={{position:"absolute", top:0, left:0}}>
+                            <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                              stroke={isDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+                            {!isDone && frac > 0 && (
+                              <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
+                                strokeDasharray={`${frac*circ} ${circ}`} transform={`rotate(-90,${sz/2},${sz/2})`}/>
                             )}
-                            {datePicking === t.id && (
-                              <input type="date" autoFocus className="input"
-                                defaultValue={t.deadline||""}
-                                onChange={e => { D.updateTask(p.id, t.id, {deadline:e.target.value}); setDatePicking(null); }}
-                                onBlur={() => setDatePicking(null)}
-                                style={{marginTop:5, fontSize:12, padding:"3px 6px"}}/>
-                            )}
-                            {t.deadline && datePicking !== t.id && (
-                              <div style={{fontSize:11, color:"var(--text-subtle)", marginTop:3, display:"flex", alignItems:"center", gap:4}}>
-                                <Icon name="calendar" size={10}/>{t.deadline}
-                              </div>
-                            )}
-                            {taskPhase(t) && !phaseTab && <div className="muted xsmall" style={{marginTop:3}}>· {taskPhase(t)}</div>}
-                            {t.assignee && t.assignee !== "Tú" && <div className="muted xsmall">· {t.assignee}</div>}
+                          </svg>
+                          {isDone
+                            ? <Icon name="check" size={15} style={{color:"var(--accent)", position:"relative"}}/>
+                            : <span style={{width:5, height:5, borderRadius:99, background:"rgba(255,255,255,0.25)", position:"relative"}}/>}
+                        </button>
+                        {/* Título + estado/fecha */}
+                        <div style={{flex:1, minWidth:0}}>
+                          {editingId === t.id ? (
+                            <input autoFocus className="input" value={editDraft}
+                              onChange={e => setEditDraft(e.target.value)}
+                              onKeyDown={e => {
+                                if(e.key==="Enter"){ if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }
+                                if(e.key==="Escape") setEditingId(null);
+                              }}
+                              onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
+                              style={{padding:"4px 6px", fontSize:14}}/>
+                          ) : (
+                            <div onClick={() => { setEditingId(t.id); setEditDraft(t.title); }}
+                              style={{fontSize:14, letterSpacing:"-0.3px", cursor:"text",
+                                color: isDone ? "var(--text-subtle)" : "var(--text)",
+                                textDecoration: isDone ? "line-through" : "none",
+                                whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
+                          )}
+                          <div style={{fontSize:11.5, color:"var(--text-subtle)", marginTop:2}}>
+                            {STATE[t.column]}{t.deadline ? " · " + t.deadline : ""}
                           </div>
-                        ))}
-                        {adding === c.id && (
-                          <div className="kanban-card" style={{padding:8}}>
-                            <input autoFocus className="input" placeholder="Nombre de la tarea…"
-                              value={draft} onChange={e => setDraft(e.target.value)}
-                              onKeyDown={e => { if(e.key==="Enter") addTaskInline(c.id); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
-                              onBlur={() => addTaskInline(c.id)}
-                              style={{padding:"6px 8px", fontSize:13}}/>
-                          </div>
-                        )}
-                        {vByCol[c.id].length === 0 && adding !== c.id && (
-                          <button className="btn ghost sm full" style={{justifyContent:"center", color:"var(--text-subtle)", border:"0.5px dashed var(--border-strong)"}}
-                            onClick={() => { setAdding(c.id); setDraft(""); }}>
-                            <Icon name="plus" size={11}/> Añadir tarea
-                          </button>
+                        </div>
+                        {/* Fecha + borrar (al pasar por encima) */}
+                        <button className="task-del btn ghost icon-only sm" data-tooltip="Fecha"
+                          onClick={() => setDatePicking(datePicking === t.id ? null : t.id)}
+                          style={{flexShrink:0, color:"var(--text-subtle)"}}>
+                          <Icon name="calendar" size={13}/>
+                        </button>
+                        <button className="task-del btn ghost icon-only sm"
+                          onClick={() => D.deleteTask(p.id, t.id)}
+                          style={{flexShrink:0, color:"var(--text-subtle)"}}>
+                          <Icon name="x" size={12}/>
+                        </button>
+                        {datePicking === t.id && (
+                          <input type="date" autoFocus className="input" defaultValue={t.deadline||""}
+                            onChange={e => { D.updateTask(p.id, t.id, {deadline:e.target.value}); setDatePicking(null); }}
+                            onBlur={() => setDatePicking(null)}
+                            style={{flexShrink:0, fontSize:12, padding:"3px 6px", width:140}}/>
                         )}
                       </div>
+                    );
+                  })}
+
+                  {/* Añadir tarea */}
+                  {adding === "list" ? (
+                    <div style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px", borderTop: sorted.length ? "0.5px solid var(--border)" : "none"}}>
+                      <span style={{width:38, height:38, flexShrink:0, display:"grid", placeItems:"center"}}>
+                        <span style={{width:20, height:20, borderRadius:99, border:"1.5px dashed var(--border-strong)"}}/>
+                      </span>
+                      <input autoFocus className="input" placeholder="Nombre de la tarea…"
+                        value={draft} onChange={e => setDraft(e.target.value)}
+                        onKeyDown={e => { if(e.key==="Enter") addHere(); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
+                        onBlur={addHere} style={{flex:1, padding:"5px 8px", fontSize:14}}/>
                     </div>
-                  ))}
+                  ) : (
+                    <button className="btn ghost sm" onClick={() => { setAdding("list"); setDraft(""); }}
+                      style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: sorted.length ? 8 : 0, padding:"9px 4px"}}>
+                      <Icon name="plus" size={13}/> Añadir tarea{aiPhases && phaseTab ? " a " + phaseTab : ""}
+                    </button>
+                  )}
                 </div>
               </div>
             );
