@@ -31,6 +31,11 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState("");
   const [datePicking, setDatePicking] = useState(null); // taskId
+  // Carpeta de Drive del proyecto (por ahora guardada localmente; la creación
+  // automática llegará al conectar Google Drive).
+  const [driveTick, setDriveTick] = useState(0);
+  const [driveEditing, setDriveEditing] = useState(false);
+  const [driveDraft, setDriveDraft] = useState("");
 
   // Close context menu on outside click
   React.useEffect(() => {
@@ -40,27 +45,17 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
     return () => window.removeEventListener("click", close);
   }, [!!ctxMenu]);
 
-  // Fases del proyecto: se reconstruyen desde el campo service (los servicios
-  // marcados al crear el proyecto), que sí persiste en la nube. Cada servicio
-  // aporta su fase con sus tareas. Sin copias locales.
+  // Fases del proyecto: nombres libres que se guardan en el campo service
+  // (persiste en la nube). Cada fase es solo un nombre; las tareas las crea el
+  // usuario dentro de cada fase.
   const aiPhases = React.useMemo(() => {
-    const cat = window.PROJECT_SERVICES || [];
-    const labels = (p.service || "").split(",").map(s => s.trim()).filter(Boolean);
-    const phases = labels.map(lbl => cat.find(sv => sv.label === lbl)).filter(Boolean)
-      .map(sv => ({ name: sv.label, tasks: sv.tasks }));
-    return phases.length ? phases : null;
+    const names = (p.service || "").split(",").map(s => s.trim())
+      .filter(n => n && n !== "libre" && n !== "—");
+    return names.length ? names.map(n => ({ name: n })) : null;
   }, [p.id, p.service]);
 
-  // Mapa título → fase, para agrupar cada tarea en su fase también tras recargar
-  // (cuando el campo phase en memoria ya no está).
-  const phaseOfTitle = React.useMemo(() => {
-    const m = {};
-    (aiPhases || []).forEach(ph => (ph.tasks || []).forEach(t => {
-      m[(typeof t === "string" ? t : t.title)] = ph.name;
-    }));
-    return m;
-  }, [aiPhases]);
-  const taskPhase = (t) => t.phase || phaseOfTitle[t.title] || null;
+  // La fase de una tarea es la que ella misma guarda (persistida en la nube).
+  const taskPhase = (t) => t.phase || null;
 
   // Default to first phase when phases available
   React.useEffect(() => {
@@ -127,17 +122,12 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           <div className="row tight" style={{marginBottom: 6}}>
             <span className={"dot " + p.light}/>
             <span className="muted small">{p.clientName}</span>
-            <span className="vdiv"/>
-            <span className="chip">{p.service}</span>
-            <span className="vdiv"/>
-            <span className="chip">{phase.label} · {phase.weeks}</span>
+            {aiPhases && <><span className="vdiv"/><span className="muted small">{aiPhases.length} fase{aiPhases.length===1?"":"s"}</span></>}
           </div>
           <h1>{p.name}</h1>
           <div className="row tight" style={{marginTop: 8, color:"var(--text-muted)", fontSize: 13}}>
-            <span><Icon name="calendar" size={12}/> Entrega {p.deadline}</span>
-            <span className="vdiv"/>
-            <span>Revisiones {p.revisionsUsed}/2</span>
-            <span className="vdiv"/>
+            {p.deadline && p.deadline !== "—" && <span><Icon name="calendar" size={12}/> Entrega {p.deadline}</span>}
+            {p.deadline && p.deadline !== "—" && <span className="vdiv"/>}
             <span style={{display:"inline-flex", alignItems:"center", gap: 6}}>
               <span style={{width: 80}}><div className="progress"><i style={{width: liveProgress + "%"}}/></div></span>
               {liveProgress}%
@@ -154,6 +144,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         {[
           {id:"plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan"},
           {id:"tasks", label:"Tablero"},
+          {id:"files", label:"Archivos"},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
@@ -163,73 +154,98 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
 
       <div style={{display:"grid", gridTemplateColumns:"1fr 280px", gap: 16}}>
         <div>
-          {tab === "plan" && (
-            aiPhases ? (
-              <div className="card"><div className="card-body">
-                <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:16}}>
-                  <div className="card-title">Roadmap · {aiPhases.reduce((n,ph)=>n+(ph.tasks?.length||0),0)} tareas</div>
-                  <div className="row tight">
-                    {aiPhases.map((ph,i) => {
-                      const titles = (ph.tasks||[]).map(t => typeof t==="string"?t:t.title);
-                      const done = projectTasks.filter(t=>titles.includes(t.title)&&t.column==="done").length;
-                      const total = titles.length;
-                      return <span key={i} className="chip" style={{fontSize:11}}>{ph.name} {done}/{total}</span>;
-                    })}
-                  </div>
-                </div>
-                <div style={{display:"flex", flexDirection:"column", gap:10}}>
-                  {aiPhases.map((ph, pi) => {
-                    const titles = (ph.tasks||[]).map(t=>typeof t==="string"?t:t.title);
-                    const pTasks = projectTasks.filter(t=>titles.includes(t.title));
-                    const done = pTasks.filter(t=>t.column==="done").length;
-                    const pct = titles.length ? Math.round(done/titles.length*100) : 0;
-                    return (
-                      <div key={pi} style={{border:"0.5px solid var(--border)", borderRadius:12, overflow:"hidden"}}>
-                        <div style={{padding:"11px 16px", background:"var(--bg-elev-2)", display:"flex", alignItems:"center", gap:12}}>
-                          <div style={{flex:1}}>
-                            <div style={{fontWeight:600, fontSize:14}}>{ph.name}</div>
-                            {ph.description && <div style={{fontSize:12, color:"var(--text-subtle)", marginTop:1}}>{ph.description}</div>}
-                          </div>
-                          <div style={{fontSize:12, color:"var(--text-subtle)", flexShrink:0}}>{done}/{titles.length}</div>
-                          <div style={{width:72, height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", flexShrink:0}}>
-                            <div style={{width:pct+"%", height:"100%", background:"var(--green)", borderRadius:99, transition:"width .3s"}}/>
-                          </div>
-                        </div>
-                        <div style={{padding:"8px 12px", display:"flex", flexDirection:"column", gap:3}}>
-                          {(ph.tasks||[]).map((task, ti) => {
-                            const title = typeof task==="string"?task:task.title;
-                            const matched = projectTasks.find(t=>t.title===title);
-                            const isDone = matched?.column==="done";
-                            const isActive = matched?.column==="doing";
-                            const isReview = matched?.column==="review";
-                            return (
-                              <div key={ti} style={{display:"flex", alignItems:"center", gap:10, padding:"6px 8px", borderRadius:8, fontSize:13,
-                                background: isActive ? "rgba(74,222,128,0.06)" : "transparent"}}>
-                                <div style={{width:16, height:16, borderRadius:5, flexShrink:0, display:"grid", placeItems:"center",
-                                  background: isDone ? "var(--green)" : "transparent",
-                                  border: isDone ? "none" : "1.5px solid var(--border-strong)"}}>
-                                  {isDone && <Icon name="check" size={10} style={{color:"#000"}}/>}
-                                </div>
-                                <span style={{flex:1, textDecoration: isDone ? "line-through" : "none",
-                                  color: isDone ? "var(--text-subtle)" : "var(--text)"}}>{title}</span>
-                                {isActive && <span className="chip green" style={{fontSize:10, padding:"1px 7px"}}>En curso</span>}
-                                {isReview && <span className="chip amber" style={{fontSize:10, padding:"1px 7px"}}>Revisión</span>}
-                              </div>
-                            );
-                          })}
+          {tab === "plan" && (() => {
+            // Fases del proyecto + "Otras tareas" para lo que no tenga fase
+            const phaseNames = (aiPhases || []).map(ph => ph.name);
+            const planGroups = phaseNames.map(name => ({
+              name, label: name,
+              tasks: projectTasks.filter(t => taskPhase(t) === name),
+            }));
+            const otras = projectTasks.filter(t => !phaseNames.includes(taskPhase(t)));
+            if (otras.length || !phaseNames.length) {
+              planGroups.push({ name: "__otras__", label: phaseNames.length ? "Otras tareas" : "Tareas", tasks: otras });
+            }
+            const toggleDone = (t) => D.moveTask(p.id, t.id, t.column === "done" ? "todo" : "done");
+            const addPlanTask = (phaseName) => {
+              if (!draft.trim()) { setAdding(null); setDraft(""); return; }
+              D.addTask({ projectId: p.id, title: draft.trim(), column: "todo",
+                phase: phaseName === "__otras__" ? null : phaseName });
+              setDraft(""); setAdding(null);
+            };
+            return (
+              <div style={{display:"flex", flexDirection:"column", gap:12}}>
+                {planGroups.map(g => {
+                  const gDone = g.tasks.filter(t => t.column === "done").length;
+                  const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
+                  const key = "plan:" + g.name;
+                  const isAdding = adding === key;
+                  return (
+                    <div key={g.name} className="card"><div className="card-body">
+                      <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:12}}>
+                        <div style={{flex:1, fontWeight:600, fontSize:15}}>{g.label}</div>
+                        <div className="muted xsmall" style={{flexShrink:0}}>{gDone}/{g.tasks.length}</div>
+                        <div style={{width:64, height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", flexShrink:0}}>
+                          <div style={{width:gPct+"%", height:"100%", background:"var(--green)", borderRadius:99, transition:"width .3s"}}/>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </div></div>
-            ) : (
-              <div className="card"><div className="card-body">
-                <div className="card-title" style={{marginBottom: 14}}>Plan del proyecto</div>
-                <Empty icon="list-todo" title="Sin roadmap generado" sub="Crea el próximo proyecto con Nora para generar un plan automático."/>
-              </div></div>
-            )
-          )}
+                      <div style={{display:"flex", flexDirection:"column"}}>
+                        {g.tasks.map(t => {
+                          const isDone = t.column === "done";
+                          return (
+                            <div key={t.id} className="task-row"
+                              style={{display:"flex", alignItems:"center", gap:11, padding:"9px 4px", borderTop:"0.5px solid var(--border)"}}>
+                              <button onClick={() => toggleDone(t)} title={isDone ? "Marcar sin hacer" : "Marcar hecho"}
+                                style={{flexShrink:0, width:19, height:19, borderRadius:6, cursor:"pointer", padding:0, display:"grid", placeItems:"center",
+                                  background: isDone ? "var(--green)" : "transparent",
+                                  border: isDone ? "none" : "1.5px solid var(--border-strong)"}}>
+                                {isDone && <Icon name="check" size={11} style={{color:"#000"}}/>}
+                              </button>
+                              {editingId === t.id ? (
+                                <input autoFocus className="input" value={editDraft}
+                                  onChange={e => setEditDraft(e.target.value)}
+                                  onKeyDown={e => {
+                                    if(e.key==="Enter"){ if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }
+                                    if(e.key==="Escape") setEditingId(null);
+                                  }}
+                                  onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
+                                  style={{flex:1, padding:"4px 6px", fontSize:14}}/>
+                              ) : (
+                                <span onClick={() => { setEditingId(t.id); setEditDraft(t.title); }}
+                                  style={{flex:1, fontSize:14, cursor:"text",
+                                    textDecoration: isDone ? "line-through" : "none",
+                                    color: isDone ? "var(--text-subtle)" : "var(--text)"}}>{t.title}</span>
+                              )}
+                              <button className="task-del btn ghost icon-only sm"
+                                onClick={() => D.deleteTask(p.id, t.id)}
+                                style={{flexShrink:0, color:"var(--text-subtle)"}}>
+                                <Icon name="x" size={12}/>
+                              </button>
+                            </div>
+                          );
+                        })}
+                        {isAdding ? (
+                          <div style={{display:"flex", alignItems:"center", gap:11, padding:"9px 4px", borderTop: g.tasks.length ? "0.5px solid var(--border)" : "none"}}>
+                            <span style={{flexShrink:0, width:19, height:19, borderRadius:6, border:"1.5px dashed var(--border-strong)"}}/>
+                            <input autoFocus className="input" placeholder="Nombre de la tarea…"
+                              value={draft} onChange={e => setDraft(e.target.value)}
+                              onKeyDown={e => { if(e.key==="Enter") addPlanTask(g.name); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
+                              onBlur={() => addPlanTask(g.name)}
+                              style={{flex:1, padding:"5px 8px", fontSize:14}}/>
+                          </div>
+                        ) : (
+                          <button className="btn ghost sm"
+                            onClick={() => { setAdding(key); setDraft(""); }}
+                            style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: g.tasks.length ? 6 : 0, padding:"7px 4px"}}>
+                            <Icon name="plus" size={12}/> Añadir tarea
+                          </button>
+                        )}
+                      </div>
+                    </div></div>
+                  );
+                })}
+              </div>
+            );
+          })()}
 
           {tab === "tasks" && (() => {
             // Filter tasks for current phase tab
@@ -329,6 +345,76 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                   ))}
                 </div>
               </div>
+            );
+          })()}
+
+          {tab === "files" && (() => {
+            const driveKey = "proj_drive_" + p.id;
+            const driveUrl = (typeof localStorage !== "undefined" && localStorage.getItem(driveKey)) || "";
+            const saveDrive = (url) => {
+              const v = (url || "").trim();
+              if (v) localStorage.setItem(driveKey, v); else localStorage.removeItem(driveKey);
+              setDriveEditing(false); setDriveDraft(""); setDriveTick(x => x + 1);
+            };
+            return (
+              <div className="card"><div className="card-body">
+                <div className="row between" style={{marginBottom: 4}}>
+                  <div className="card-title">Carpeta del proyecto</div>
+                  {driveUrl && !driveEditing && (
+                    <button className="btn ghost sm" onClick={() => { setDriveDraft(driveUrl); setDriveEditing(true); }}>
+                      <Icon name="edit" size={12}/> Editar
+                    </button>
+                  )}
+                </div>
+
+                {driveUrl && !driveEditing ? (
+                  <div style={{display:"flex", flexDirection:"column", gap:12, marginTop:8}}>
+                    <div style={{display:"flex", alignItems:"center", gap:12, padding:"14px 16px", borderRadius:12,
+                      background:"var(--bg-elev-2)", border:"0.5px solid var(--border)"}}>
+                      <div style={{width:38, height:38, borderRadius:10, flexShrink:0, display:"grid", placeItems:"center",
+                        background:"rgba(158,154,229,0.14)", color:"var(--accent)"}}>
+                        <Icon name="folder" size={18}/>
+                      </div>
+                      <div style={{flex:1, minWidth:0}}>
+                        <div style={{fontWeight:500, fontSize:14}}>Carpeta de Drive</div>
+                        <div className="subtle xsmall truncate">{driveUrl}</div>
+                      </div>
+                    </div>
+                    <div className="row tight">
+                      <a className="btn primary" href={driveUrl} target="_blank" rel="noreferrer">
+                        <Icon name="external-link" size={13}/> Abrir carpeta
+                      </a>
+                      <button className="btn" onClick={() => {
+                        try { navigator.clipboard.writeText(driveUrl); toast("Enlace copiado para el cliente", "success"); }
+                        catch { toast("No se pudo copiar", "error"); }
+                      }}>
+                        <Icon name="paperclip" size={13}/> Copiar enlace para el cliente
+                      </button>
+                    </div>
+                    <div className="muted xsmall">El cliente puede acceder a la carpeta con este enlace.</div>
+                  </div>
+                ) : driveEditing ? (
+                  <div style={{display:"flex", flexDirection:"column", gap:10, marginTop:10}}>
+                    <input autoFocus className="input" placeholder="Pega el enlace de la carpeta de Drive…"
+                      value={driveDraft} onChange={e => setDriveDraft(e.target.value)}
+                      onKeyDown={e => { if(e.key==="Enter") saveDrive(driveDraft); if(e.key==="Escape") setDriveEditing(false); }}/>
+                    <div className="row tight">
+                      <button className="btn primary" onClick={() => saveDrive(driveDraft)}><Icon name="check" size={12}/> Guardar</button>
+                      <button className="btn" onClick={() => setDriveEditing(false)}>Cancelar</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{marginTop:8}}>
+                    <Empty icon="folder" title="Sin carpeta todavía"
+                      sub="Pega el enlace de la carpeta de Drive del proyecto para compartirla con el cliente."/>
+                    <div className="row" style={{justifyContent:"center", marginTop:12}}>
+                      <button className="btn primary" onClick={() => { setDriveDraft(""); setDriveEditing(true); }}>
+                        <Icon name="plus" size={13}/> Añadir carpeta de Drive
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div></div>
             );
           })()}
 

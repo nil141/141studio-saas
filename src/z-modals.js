@@ -97,7 +97,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const [a, setA] = useState(blank);
   const [searching, setSearching] = useState(false);
   const [cq, setCq] = useState("");
-  const [services, setServices] = useState([]);
+  const [phases, setPhases] = useState([]);
+  const [phaseInput, setPhaseInput] = useState("");
   const [creating, setCreating] = useState(false);
   useEffect(() => {
     if (!open) return;
@@ -105,22 +106,33 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     setA(blank());
     setSearching(false);
     setCq("");
-    setServices([]);
+    setPhases([]);
+    setPhaseInput("");
     setCreating(false);
   }, [open]);
   const set = (k, v) => setA((p) => ({ ...p, [k]: v }));
-  const toggleService = (id) => setServices((s) => s.includes(id) ? s.filter((x) => x !== id) : [...s, id]);
+  const addPhase = (name) => {
+    const v = (name || "").trim();
+    if (!v) return;
+    setPhases((ps) => ps.includes(v) ? ps : [...ps, v]);
+    setPhaseInput("");
+  };
+  const removePhase = (name) => setPhases((ps) => ps.filter((x) => x !== name));
+  const SUGGESTED_PHASES = [
+    "Onboarding y estrategia",
+    "Auditor\xEDa y diagn\xF3stico",
+    "Dise\xF1o y producci\xF3n",
+    "Lanzamiento y optimizaci\xF3n"
+  ];
   const hasClients = D.CLIENTS.length > 0;
   const filtered = D.CLIENTS.filter(
     (c) => c.name.toLowerCase().includes(cq.toLowerCase()) || c.company.toLowerCase().includes(cq.toLowerCase())
   );
   const selClient = D.CLIENTS.find((c) => c.id === a.clientId);
-  const selectedServices = PROJECT_SERVICES.filter((sv) => services.includes(sv.id));
-  const totalTasks = selectedServices.reduce((n, sv) => n + sv.tasks.length, 0);
   const canNext = [
     !!(a.name.trim() && a.clientId && a.deadline && hasClients),
     true
-    // los servicios son opcionales: se puede crear un proyecto vacío
+    // las fases son opcionales: se puede crear un proyecto vacío
   ];
   const submit = async () => {
     if (creating) return;
@@ -129,7 +141,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
       name: a.name.trim(),
       clientId: a.clientId,
       deadline: a.deadline,
-      template: selectedServices.map((sv) => sv.label).join(", ") || "libre"
+      template: phases.join(", ") || "libre"
     });
     const p = res && res.project;
     if (!p) {
@@ -137,20 +149,15 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
       toast(res && res.error ? res.error : "No se pudo crear el proyecto", "error");
       return;
     }
-    if (selectedServices.length) {
-      const items = [];
-      selectedServices.forEach((sv) => sv.tasks.forEach((title) => items.push({ title, column: "todo", assignee: "T\xFA", phase: sv.label })));
-      await D.addTasksBulk(p.id, items);
-    }
     toast(
-      selectedServices.length ? `Proyecto "${p.name}" creado con ${totalTasks} tarea${totalTasks === 1 ? "" : "s"}` : `Proyecto "${p.name}" creado`,
+      phases.length ? `Proyecto "${p.name}" creado con ${phases.length} fase${phases.length === 1 ? "" : "s"}` : `Proyecto "${p.name}" creado`,
       "success"
     );
     setCreating(false);
     onClose();
     onCreate && onCreate(p);
   };
-  const STEP_LABELS = ["B\xE1sicos", "Servicios"];
+  const STEP_LABELS = ["B\xE1sicos", "Fases"];
   const renderStep0 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, !hasClients && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "var(--amber-soft)", border: "0.5px solid var(--amber)", borderRadius: 10, color: "var(--amber)", fontSize: 13, display: "flex", gap: 10, alignItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "info", size: 14 }), " ", /* @__PURE__ */ React.createElement("span", null, "Crea primero un cliente antes de a\xF1adir proyectos.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Redise\xF1o web 2026", value: a.name, onChange: (e) => set("name", e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setSearching((s) => !s) }, selClient ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: selClient.name, initials: selClient.initials, color: selClient.color }), /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left" } }, selClient.name, " \xB7 ", selClient.company), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })) : /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Selecciona un cliente")), searching && /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", top: "100%", left: 0, right: 0, marginTop: 4, background: "var(--bg-elev-2)", border: "0.5px solid var(--border-strong)", borderRadius: 10, zIndex: 10, overflow: "hidden", boxShadow: "0 8px 24px rgba(0,0,0,0.2)" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: 8, borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13 }), /* @__PURE__ */ React.createElement("input", { autoFocus: true, placeholder: "Buscar\u2026", value: cq, onChange: (e) => setCq(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 160, overflowY: "auto" } }, filtered.map((c) => /* @__PURE__ */ React.createElement(
     "div",
     {
@@ -167,50 +174,44 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     /* @__PURE__ */ React.createElement("span", { className: "grow small" }, c.name, " \xB7 ", c.company),
     c.id === a.clientId && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
   ))))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: a.deadline, onChange: (e) => set("deadline", e.target.value) })));
-  const renderStep1 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, "Marca los servicios que incluye el proyecto. Cada uno a\xF1ade su fase con las tareas ya preparadas. Puedes crear el proyecto sin marcar nada y organizarlo t\xFA."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, PROJECT_SERVICES.map((sv) => {
-    const on = services.includes(sv.id);
-    return /* @__PURE__ */ React.createElement("button", { key: sv.id, onClick: () => toggleService(sv.id), style: {
+  const renderStep1 = () => {
+    const available = SUGGESTED_PHASES.filter((s) => !phases.includes(s));
+    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, "A\xF1ade las fases del proyecto. Las tareas de cada fase las creas t\xFA luego dentro del proyecto. Puedes crearlo sin fases y organizarlo despu\xE9s."), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        className: "input",
+        placeholder: "Nombre de la fase\u2026",
+        value: phaseInput,
+        onChange: (e) => setPhaseInput(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            addPhase(phaseInput);
+          }
+        },
+        style: { flex: 1 }
+      }
+    ), /* @__PURE__ */ React.createElement("button", { className: "btn", disabled: !phaseInput.trim(), onClick: () => addPhase(phaseInput) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir")), available.length > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 7 } }, "Tu metodolog\xEDa (toca para a\xF1adir)"), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { flexWrap: "wrap", gap: 6 } }, available.map((s) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: s,
+        onClick: () => addPhase(s),
+        className: "chip",
+        style: { cursor: "pointer", fontSize: 12, padding: "5px 11px" }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 11 }),
+      " ",
+      s
+    )))), phases.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, phases.map((n, i) => /* @__PURE__ */ React.createElement("div", { key: n, style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
-      textAlign: "left",
-      padding: "11px 13px",
-      borderRadius: 12,
-      cursor: "pointer",
-      fontFamily: "inherit",
-      background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
-      border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
-      transition: "all .12s"
-    } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 30,
-      height: 30,
-      borderRadius: 9,
-      flexShrink: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: on ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.05)",
-      color: on ? "var(--accent)" : "var(--text-subtle)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: sv.icon, size: 15, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, letterSpacing: "-0.3px", color: on ? "var(--text)" : "var(--text-muted)" } }, sv.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, sv.tasks.length, " tareas")), /* @__PURE__ */ React.createElement("div", { style: {
-      width: 18,
-      height: 18,
-      borderRadius: 6,
-      flexShrink: 0,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      background: on ? "var(--accent)" : "transparent",
-      border: on ? "none" : "1.5px solid var(--border-strong)"
-    } }, on && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color: "#fff" } })));
-  })), selectedServices.length > 0 && /* @__PURE__ */ React.createElement("div", { style: {
-    fontSize: 12.5,
-    color: "var(--text-muted)",
-    letterSpacing: "-0.2px",
-    padding: "10px 13px",
-    borderRadius: 10,
-    background: "rgba(158,154,229,0.08)",
-    border: "0.5px solid rgba(158,154,229,0.25)"
-  } }, "El proyecto se crear\xE1 con ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, selectedServices.length, " fase", selectedServices.length === 1 ? "" : "s"), " y ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, totalTasks, " tarea", totalTasks === 1 ? "" : "s"), " listas para empezar."));
+      padding: "10px 13px",
+      borderRadius: 10,
+      background: "rgba(255,255,255,0.03)",
+      border: "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", width: 16, flexShrink: 0 } }, i + 1), /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontSize: 13.5 } }, n), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => removePhase(n), style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 }))))));
+  };
   const steps = [renderStep0, renderStep1];
   if (!open) return null;
   return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal lg", style: { maxWidth: 600 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, "Nuevo proyecto"), /* @__PURE__ */ React.createElement("div", { className: "modal-sub" }, STEP_LABELS[step], " \xB7 ", step + 1, " / ", TOTAL_STEPS)), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: onClose }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px" } }, /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "var(--border)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${step / (TOTAL_STEPS - 1) * 100}%`, background: "var(--accent)", borderRadius: 99, transition: "width .25s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body", style: { minHeight: 200, maxHeight: "58vh", overflowY: "auto", scrollbarWidth: "none" } }, steps[step]()), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => step === 0 ? onClose() : setStep((s) => s - 1) }, step === 0 ? "Cancelar" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Atr\xE1s")), step < TOTAL_STEPS - 1 ? /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step], onClick: () => setStep((s) => s + 1) }, "Siguiente ", /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12 })) : /* @__PURE__ */ React.createElement("button", { className: "btn primary", disabled: !canNext[step] || creating, onClick: submit }, creating ? "Creando\u2026" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Crear proyecto")))));

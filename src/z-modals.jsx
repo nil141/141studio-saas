@@ -81,16 +81,29 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const [a, setA]                 = useState(blank);
   const [searching, setSearching] = useState(false);
   const [cq, setCq]               = useState("");
-  const [services, setServices]   = useState([]);   // ids de servicios marcados
+  const [phases, setPhases]       = useState([]);   // nombres de fases (libres)
+  const [phaseInput, setPhaseInput] = useState(""); // fase que se está escribiendo
   const [creating, setCreating]   = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setStep(0); setA(blank()); setSearching(false); setCq(""); setServices([]); setCreating(false);
+    setStep(0); setA(blank()); setSearching(false); setCq(""); setPhases([]); setPhaseInput(""); setCreating(false);
   }, [open]);
 
   const set = (k, v) => setA(p => ({ ...p, [k]: v }));
-  const toggleService = (id) => setServices(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
+  const addPhase = (name) => {
+    const v = (name || "").trim();
+    if (!v) return;
+    setPhases(ps => ps.includes(v) ? ps : [...ps, v]);
+    setPhaseInput("");
+  };
+  const removePhase = (name) => setPhases(ps => ps.filter(x => x !== name));
+
+  // Accesos rápidos: las 4 fases de la metodología de la agencia
+  const SUGGESTED_PHASES = [
+    "Onboarding y estrategia", "Auditoría y diagnóstico",
+    "Diseño y producción", "Lanzamiento y optimización",
+  ];
 
   const hasClients = D.CLIENTS.length > 0;
   const filtered = D.CLIENTS.filter(c =>
@@ -99,22 +112,19 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   );
   const selClient = D.CLIENTS.find(c => c.id === a.clientId);
 
-  const selectedServices = PROJECT_SERVICES.filter(sv => services.includes(sv.id));
-  const totalTasks = selectedServices.reduce((n, sv) => n + sv.tasks.length, 0);
-
   const canNext = [
     !!(a.name.trim() && a.clientId && a.deadline && hasClients),
-    true,   // los servicios son opcionales: se puede crear un proyecto vacío
+    true,   // las fases son opcionales: se puede crear un proyecto vacío
   ];
 
   const submit = async () => {
     if (creating) return;
     setCreating(true);
-    // 1) Crear el proyecto y ESPERAR a que se confirme en la nube antes de las
-    //    tareas: evita que el realtime lo borre y satisface la FK de las tareas.
+    // Crear el proyecto con sus fases (nombres libres). Sin tareas: las creas tú
+    // dentro de cada fase. Las fases se guardan en el campo service del proyecto.
     const res = await D.addProjectAsync({
       name: a.name.trim(), clientId: a.clientId, deadline: a.deadline,
-      template: selectedServices.map(sv => sv.label).join(", ") || "libre",
+      template: phases.join(", ") || "libre",
     });
     const p = res && res.project;
     if (!p) {
@@ -122,17 +132,9 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
       toast((res && res.error) ? res.error : "No se pudo crear el proyecto", "error");
       return;
     }
-    // 2) Todas las tareas del setup en una sola inserción. La fase de cada tarea
-    //    se reconstruye luego desde el campo service del proyecto.
-    if (selectedServices.length) {
-      const items = [];
-      selectedServices.forEach(sv => sv.tasks.forEach(title =>
-        items.push({ title, column: "todo", assignee: "Tú", phase: sv.label })));
-      await D.addTasksBulk(p.id, items);
-    }
     toast(
-      selectedServices.length
-        ? `Proyecto "${p.name}" creado con ${totalTasks} tarea${totalTasks === 1 ? "" : "s"}`
+      phases.length
+        ? `Proyecto "${p.name}" creado con ${phases.length} fase${phases.length === 1 ? "" : "s"}`
         : `Proyecto "${p.name}" creado`,
       "success"
     );
@@ -140,7 +142,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     onClose(); onCreate && onCreate(p);
   };
 
-  const STEP_LABELS = ["Básicos", "Servicios"];
+  const STEP_LABELS = ["Básicos", "Fases"];
 
   // ── Paso 0: Básicos ──────────────────────────────────────────
   const renderStep0 = () => (
@@ -190,56 +192,60 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     </div>
   );
 
-  // ── Paso 1: Servicios (multi-select) ─────────────────────────
-  const renderStep1 = () => (
-    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-      <div style={{ fontSize:12.5, color:"var(--text-muted)", letterSpacing:"-0.2px", lineHeight:1.5 }}>
-        Marca los servicios que incluye el proyecto. Cada uno añade su fase con las tareas ya preparadas.
-        Puedes crear el proyecto sin marcar nada y organizarlo tú.
-      </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
-        {PROJECT_SERVICES.map(sv => {
-          const on = services.includes(sv.id);
-          return (
-            <button key={sv.id} onClick={() => toggleService(sv.id)} style={{
-              display:"flex", alignItems:"center", gap:10, textAlign:"left",
-              padding:"11px 13px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
-              background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
-              border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
-              transition:"all .12s",
-            }}>
-              <div style={{
-                width:30, height:30, borderRadius:9, flexShrink:0,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                background: on ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.05)",
-                color: on ? "var(--accent)" : "var(--text-subtle)",
-              }}>
-                <Icon name={sv.icon} size={15} strokeWidth={1.7}/>
-              </div>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontSize:13.5, letterSpacing:"-0.3px", color: on ? "var(--text)" : "var(--text-muted)" }}>{sv.label}</div>
-                <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:1 }}>{sv.tasks.length} tareas</div>
-              </div>
-              <div style={{
-                width:18, height:18, borderRadius:6, flexShrink:0,
-                display:"flex", alignItems:"center", justifyContent:"center",
-                background: on ? "var(--accent)" : "transparent",
-                border: on ? "none" : "1.5px solid var(--border-strong)",
-              }}>
-                {on && <Icon name="check" size={12} style={{ color:"#fff" }}/>}
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      {selectedServices.length > 0 && (
-        <div style={{ fontSize:12.5, color:"var(--text-muted)", letterSpacing:"-0.2px",
-          padding:"10px 13px", borderRadius:10, background:"rgba(158,154,229,0.08)", border:"0.5px solid rgba(158,154,229,0.25)" }}>
-          El proyecto se creará con <b style={{ color:"var(--text)" }}>{selectedServices.length} fase{selectedServices.length === 1 ? "" : "s"}</b> y <b style={{ color:"var(--text)" }}>{totalTasks} tarea{totalTasks === 1 ? "" : "s"}</b> listas para empezar.
+  // ── Paso 1: Fases (nombres libres) ───────────────────────────
+  const renderStep1 = () => {
+    const available = SUGGESTED_PHASES.filter(s => !phases.includes(s));
+    return (
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        <div style={{ fontSize:12.5, color:"var(--text-muted)", letterSpacing:"-0.2px", lineHeight:1.5 }}>
+          Añade las fases del proyecto. Las tareas de cada fase las creas tú luego dentro del proyecto.
+          Puedes crearlo sin fases y organizarlo después.
         </div>
-      )}
-    </div>
-  );
+
+        {/* Input para escribir una fase */}
+        <div className="row tight">
+          <input className="input" placeholder="Nombre de la fase…" value={phaseInput}
+            onChange={e => setPhaseInput(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addPhase(phaseInput); } }}
+            style={{ flex:1 }}/>
+          <button className="btn" disabled={!phaseInput.trim()} onClick={() => addPhase(phaseInput)}>
+            <Icon name="plus" size={13}/> Añadir
+          </button>
+        </div>
+
+        {/* Accesos rápidos a la metodología */}
+        {available.length > 0 && (
+          <div>
+            <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginBottom:7 }}>Tu metodología (toca para añadir)</div>
+            <div className="row tight" style={{ flexWrap:"wrap", gap:6 }}>
+              {available.map(s => (
+                <button key={s} onClick={() => addPhase(s)} className="chip"
+                  style={{ cursor:"pointer", fontSize:12, padding:"5px 11px" }}>
+                  <Icon name="plus" size={11}/> {s}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Fases añadidas */}
+        {phases.length > 0 && (
+          <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+            {phases.map((n, i) => (
+              <div key={n} style={{ display:"flex", alignItems:"center", gap:10,
+                padding:"10px 13px", borderRadius:10, background:"rgba(255,255,255,0.03)", border:"0.5px solid var(--border)" }}>
+                <span style={{ fontSize:11, color:"var(--text-subtle)", width:16, flexShrink:0 }}>{i + 1}</span>
+                <span style={{ flex:1, fontSize:13.5 }}>{n}</span>
+                <button className="btn ghost icon-only sm" onClick={() => removePhase(n)} style={{ color:"var(--text-subtle)" }}>
+                  <Icon name="x" size={12}/>
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const steps = [renderStep0, renderStep1];
 
