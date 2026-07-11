@@ -108,21 +108,24 @@ const _mc = (r) => r && {
   since: "\u2014"
   // no existe en DB
 };
-const _mp = (r) => r && {
-  id: r.id,
-  name: r.name,
-  clientId: r.client_id,
-  clientName: r.client_name,
-  service: r.service,
-  light: r.light,
-  phase: r.phase,
-  week: r.week,
-  progress: r.progress,
-  budget: r.budget,
-  deadline: r.deadline,
-  nextMilestone: r.next_milestone,
-  revisionsUsed: r.revisions_used,
-  description: r.description
+const _mp = (r) => {
+  var _a, _b, _c, _d, _e;
+  return r && {
+    id: r.id,
+    name: r.name,
+    clientId: r.client_id,
+    clientName: r.client_name,
+    service: r.service,
+    light: r.light || "green",
+    phase: (_a = r.phase) != null ? _a : 0,
+    week: (_b = r.week) != null ? _b : 1,
+    progress: (_c = r.progress) != null ? _c : 0,
+    budget: (_d = r.budget) != null ? _d : 0,
+    deadline: r.deadline,
+    nextMilestone: r.next_milestone,
+    revisionsUsed: (_e = r.revisions_used) != null ? _e : 0,
+    description: r.description
+  };
 };
 const _mt = (r) => r && {
   id: r.id,
@@ -486,6 +489,30 @@ const addProject = (input) => {
   }
   return p;
 };
+const _insertAdaptive = async (table, rows) => {
+  const isArr = Array.isArray(rows);
+  let payload = isArr ? rows.map((r) => ({ ...r })) : { ...rows };
+  for (let i = 0; i < 15; i++) {
+    const { error } = await _sb.from(table).insert(payload);
+    if (!error) return { error: null };
+    const m = /Could not find the '(\w+)' column/.exec(error.message || "");
+    if (m) {
+      const col = m[1];
+      if (isArr) payload = payload.map((r) => {
+        const c = { ...r };
+        delete c[col];
+        return c;
+      });
+      else {
+        if (!(col in payload)) return { error };
+        delete payload[col];
+      }
+      continue;
+    }
+    return { error };
+  }
+  return { error: { message: "Esquema incompatible (demasiadas columnas ausentes)" } };
+};
 const addProjectAsync = async (input) => {
   const uid = _uid();
   if (!uid) return null;
@@ -518,7 +545,7 @@ const addProjectAsync = async (input) => {
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map((c) => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
   _emit();
-  const { error } = await _sb.from("projects").insert({
+  const { error } = await _insertAdaptive("projects", {
     id: p.id,
     agency_id: uid,
     client_id: p.clientId,
@@ -562,7 +589,7 @@ const addTasksBulk = async (projectId, items) => {
   }));
   _store.TASKS[pid] = [...tasks, ..._store.TASKS[pid] || []];
   _emit();
-  const { error } = await _sb.from("tasks").insert(tasks.map((t) => ({
+  const { error } = await _insertAdaptive("tasks", tasks.map((t) => ({
     id: t.id,
     agency_id: uid,
     project_id: pid === "__none__" ? null : pid,

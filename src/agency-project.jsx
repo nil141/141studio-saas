@@ -19,7 +19,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
       </div>
     );
   }
-  const phase = D.PHASES[p.phase];
+  const phase = D.PHASES[p.phase] || D.PHASES[0] || { label: "", weeks: "" };
   const [tab, setTab]         = useState("plan");
   const [phaseTab, setPhaseTab] = useState(null);
   const [adding, setAdding]   = useState(null);

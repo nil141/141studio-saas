@@ -112,9 +112,9 @@ const _mc = r => r && ({
 });
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
-  service: r.service, light: r.light, phase: r.phase, week: r.week,
-  progress: r.progress, budget: r.budget, deadline: r.deadline,
-  nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used,
+  service: r.service, light: r.light || "green", phase: r.phase ?? 0, week: r.week ?? 1,
+  progress: r.progress ?? 0, budget: r.budget ?? 0, deadline: r.deadline,
+  nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used ?? 0,
   description: r.description,
 });
 const _mt = r => r && ({
@@ -440,6 +440,28 @@ const addProject = (input) => {
   return p;
 };
 
+// Insert que se adapta al esquema real: si Supabase responde "Could not find
+// the 'X' column", quita esa columna del payload y reintenta. Así funciona aunque
+// la tabla tenga menos columnas que el modelo del front (p. ej. sin budget/week).
+// Acepta un objeto o un array de filas.
+const _insertAdaptive = async (table, rows) => {
+  const isArr = Array.isArray(rows);
+  let payload = isArr ? rows.map(r => ({ ...r })) : { ...rows };
+  for (let i = 0; i < 15; i++) {
+    const { error } = await _sb.from(table).insert(payload);
+    if (!error) return { error: null };
+    const m = /Could not find the '(\w+)' column/.exec(error.message || "");
+    if (m) {
+      const col = m[1];
+      if (isArr) payload = payload.map(r => { const c = { ...r }; delete c[col]; return c; });
+      else { if (!(col in payload)) return { error }; delete payload[col]; }
+      continue;
+    }
+    return { error };
+  }
+  return { error: { message: "Esquema incompatible (demasiadas columnas ausentes)" } };
+};
+
 // Igual que addProject pero espera a que la inserción en Supabase se confirme
 // antes de resolver. Así se pueden crear las tareas del setup DESPUÉS de que el
 // proyecto exista (evita que el realtime recargue y "borre" el proyecto recién
@@ -466,7 +488,7 @@ const addProjectAsync = async (input) => {
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map(c => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
   _emit();
-  const { error } = await _sb.from("projects").insert({
+  const { error } = await _insertAdaptive("projects", {
     id: p.id, agency_id: uid, client_id: p.clientId, client_name: p.clientName,
     name: p.name, service: p.service, light: p.light, phase: p.phase, week: p.week,
     progress: p.progress, budget: p.budget, deadline: p.deadline,
@@ -495,7 +517,7 @@ const addTasksBulk = async (projectId, items) => {
   }));
   _store.TASKS[pid] = [...tasks, ...(_store.TASKS[pid] || [])];
   _emit();
-  const { error } = await _sb.from("tasks").insert(tasks.map(t => ({
+  const { error } = await _insertAdaptive("tasks", tasks.map(t => ({
     id: t.id, agency_id: uid, project_id: pid === "__none__" ? null : pid,
     title: t.title, col: t.column, assignee: t.assignee,
     client_id: null, client_name: null, deadline: null, done: false,
