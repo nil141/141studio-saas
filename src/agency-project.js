@@ -91,17 +91,22 @@
         navigate("projects");
       }
     };
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos")), /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos")), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
       const parts = [p.clientName];
       if (p.recurring) parts.push("Mensual");
       else if (p.deadline && p.deadline !== "\u2014") parts.push("Entrega " + p.deadline);
       if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
-      parts.push(liveProgress + "% completado");
       return parts.join(" \xB7 ");
     })())), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
       setTab("tasks");
       setAdding("todo");
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Eliminar proyecto", onClick: removeProjectFromHere, style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 14 })))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Eliminar proyecto", onClick: removeProjectFromHere, style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 14 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: liveProgress + "%",
+      height: "100%",
+      borderRadius: 99,
+      background: liveProgress === 100 ? "var(--green)" : "var(--accent)",
+      transition: "width .4s ease"
+    } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan" },
       { id: "tasks", label: "Tablero" },
       { id: "files", label: "Archivos" }

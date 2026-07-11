@@ -118,7 +118,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         </button>
       </div>
 
-      <div className="page-head">
+      <div className="page-head" style={{marginBottom: 14}}>
         <div>
           <h1>{p.name}</h1>
           <div className="sub">
@@ -127,7 +127,6 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               if (p.recurring) parts.push("Mensual");
               else if (p.deadline && p.deadline !== "—") parts.push("Entrega " + p.deadline);
               if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
-              parts.push(liveProgress + "% completado");
               return parts.join(" · ");
             })()}
           </div>
@@ -137,6 +136,19 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           <button className="btn ghost icon-only" data-tooltip="Eliminar proyecto" onClick={removeProjectFromHere} style={{color:"var(--text-subtle)"}}>
             <Icon name="trash" size={14}/>
           </button>
+        </div>
+      </div>
+
+      {/* Barra de progreso del proyecto */}
+      <div style={{display:"flex", alignItems:"center", gap:14, marginBottom:22}}>
+        <div style={{flex:1, height:6, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden"}}>
+          <div style={{width: liveProgress + "%", height:"100%", borderRadius:99,
+            background: liveProgress === 100 ? "var(--green)" : "var(--accent)", transition:"width .4s ease"}}/>
+        </div>
+        <div style={{flexShrink:0, fontSize:13, color:"var(--text-muted)"}}>
+          <span style={{color:"var(--text)", fontWeight:600}}>{liveProgress}%</span>
+          <span style={{margin:"0 6px", opacity:0.4}}>·</span>
+          {tasksByCol.done.length}/{projectTasks.length} tareas
         </div>
       </div>
 
