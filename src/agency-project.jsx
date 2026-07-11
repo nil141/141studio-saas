@@ -156,94 +156,114 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
       <div style={{display:"grid", gridTemplateColumns:"1fr 280px", gap: 16}}>
         <div>
           {tab === "plan" && (() => {
-            // Fases del proyecto + "Otras tareas" para lo que no tenga fase
+            // ── Vista de SEGUIMIENTO (solo lectura) ──────────────────
             const phaseNames = (aiPhases || []).map(ph => ph.name);
             const planGroups = phaseNames.map(name => ({
               name, label: name,
               tasks: projectTasks.filter(t => taskPhase(t) === name),
             }));
             const otras = projectTasks.filter(t => !phaseNames.includes(taskPhase(t)));
-            if (otras.length || !phaseNames.length) {
-              planGroups.push({ name: "__otras__", label: phaseNames.length ? "Otras tareas" : "Tareas", tasks: otras });
-            }
-            const toggleDone = (t) => D.moveTask(p.id, t.id, t.column === "done" ? "todo" : "done");
-            const addPlanTask = (phaseName) => {
-              if (!draft.trim()) { setAdding(null); setDraft(""); return; }
-              D.addTask({ projectId: p.id, title: draft.trim(), column: "todo",
-                phase: phaseName === "__otras__" ? null : phaseName });
-              setDraft(""); setAdding(null);
+            if (otras.length) planGroups.push({ name: "__otras__", label: "Otras tareas", tasks: otras });
+
+            // Estado de fecha respecto a hoy
+            const today = new Date(); today.setHours(0,0,0,0);
+            const MES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+            const parseD = (s) => { if(!s) return null; const d = new Date(s + "T12:00:00"); return isNaN(d.getTime()) ? null : d; };
+            const dateInfo = (s) => {
+              const d = parseD(s); if(!d) return null;
+              const diff = Math.round((d - today) / 86400000);
+              const label = `${d.getDate()} ${MES[d.getMonth()]}`;
+              if (diff < 0)  return { label, tag:`Vencida (${-diff}d)`, color:"var(--red)" };
+              if (diff === 0) return { label, tag:"Hoy", color:"var(--amber)" };
+              if (diff <= 7) return { label, tag:`En ${diff}d`, color:"var(--amber)" };
+              return { label, tag:"", color:"var(--text-subtle)" };
             };
+
+            // Próximos vencimientos: tareas con fecha, no hechas, ordenadas
+            const upcoming = projectTasks
+              .filter(t => t.deadline && t.column !== "done")
+              .map(t => ({ t, info: dateInfo(t.deadline) }))
+              .filter(x => x.info)
+              .sort((a,b) => parseD(a.t.deadline) - parseD(b.t.deadline));
+
+            const phaseStatus = (done, total) => {
+              if (total === 0) return { label:"Sin tareas", cls:"" };
+              if (done === total) return { label:"Completada", cls:"green" };
+              if (done > 0) return { label:"En curso", cls:"blue" };
+              return { label:"Sin empezar", cls:"" };
+            };
+
             return (
-              <div style={{display:"flex", flexDirection:"column", gap:12}}>
-                {planGroups.map(g => {
-                  const gDone = g.tasks.filter(t => t.column === "done").length;
-                  const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
-                  const key = "plan:" + g.name;
-                  const isAdding = adding === key;
-                  return (
-                    <div key={g.name} className="card"><div className="card-body">
-                      <div style={{display:"flex", alignItems:"center", gap:12, marginBottom:12}}>
-                        <div style={{flex:1, fontWeight:600, fontSize:15}}>{g.label}</div>
-                        <div className="muted xsmall" style={{flexShrink:0}}>{gDone}/{g.tasks.length}</div>
-                        <div style={{width:64, height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", flexShrink:0}}>
-                          <div style={{width:gPct+"%", height:"100%", background:"var(--green)", borderRadius:99, transition:"width .3s"}}/>
-                        </div>
-                      </div>
-                      <div style={{display:"flex", flexDirection:"column"}}>
-                        {g.tasks.map(t => {
-                          const isDone = t.column === "done";
-                          return (
-                            <div key={t.id} className="task-row"
-                              style={{display:"flex", alignItems:"center", gap:11, padding:"9px 4px", borderTop:"0.5px solid var(--border)"}}>
-                              <button onClick={() => toggleDone(t)} title={isDone ? "Marcar sin hacer" : "Marcar hecho"}
-                                style={{flexShrink:0, width:19, height:19, borderRadius:6, cursor:"pointer", padding:0, display:"grid", placeItems:"center",
-                                  background: isDone ? "var(--green)" : "transparent",
-                                  border: isDone ? "none" : "1.5px solid var(--border-strong)"}}>
-                                {isDone && <Icon name="check" size={11} style={{color:"#000"}}/>}
-                              </button>
-                              {editingId === t.id ? (
-                                <input autoFocus className="input" value={editDraft}
-                                  onChange={e => setEditDraft(e.target.value)}
-                                  onKeyDown={e => {
-                                    if(e.key==="Enter"){ if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }
-                                    if(e.key==="Escape") setEditingId(null);
-                                  }}
-                                  onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
-                                  style={{flex:1, padding:"4px 6px", fontSize:14}}/>
-                              ) : (
-                                <span onClick={() => { setEditingId(t.id); setEditDraft(t.title); }}
-                                  style={{flex:1, fontSize:14, cursor:"text",
-                                    textDecoration: isDone ? "line-through" : "none",
-                                    color: isDone ? "var(--text-subtle)" : "var(--text)"}}>{t.title}</span>
-                              )}
-                              <button className="task-del btn ghost icon-only sm"
-                                onClick={() => D.deleteTask(p.id, t.id)}
-                                style={{flexShrink:0, color:"var(--text-subtle)"}}>
-                                <Icon name="x" size={12}/>
-                              </button>
+              <div style={{display:"flex", flexDirection:"column", gap:16}}>
+                {/* Fases (solo seguimiento) */}
+                <div className="card"><div className="card-body">
+                  <div className="card-title" style={{marginBottom:14}}>Fases del proyecto</div>
+                  {planGroups.length === 0 ? (
+                    <Empty icon="list-todo" title="Sin fases" sub="Este proyecto no tiene fases. Añade tareas desde el Tablero."/>
+                  ) : (
+                    <div style={{display:"flex", flexDirection:"column", gap:10}}>
+                      {planGroups.map((g, i) => {
+                        const gDone = g.tasks.filter(t => t.column === "done").length;
+                        const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
+                        const st = phaseStatus(gDone, g.tasks.length);
+                        const isReal = g.name !== "__otras__";
+                        return (
+                          <div key={g.name}
+                            onClick={() => { if (isReal) { setTab("tasks"); setPhaseTab(g.name); } }}
+                            style={{border:"0.5px solid var(--border)", borderRadius:12, padding:"14px 16px",
+                              cursor: isReal ? "pointer" : "default", transition:"background .12s"}}
+                            onMouseEnter={e => { if(isReal) e.currentTarget.style.background = "var(--bg-elev-2)"; }}
+                            onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                            <div style={{display:"flex", alignItems:"center", gap:10, marginBottom:10}}>
+                              <span style={{width:22, height:22, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
+                                fontSize:11, fontWeight:600,
+                                background: gPct===100 ? "var(--green)" : "var(--bg-elev-2)",
+                                color: gPct===100 ? "#000" : "var(--text-subtle)",
+                                border: gPct===100 ? "none" : "0.5px solid var(--border-strong)"}}>
+                                {gPct===100 ? <Icon name="check" size={12}/> : (isReal ? i+1 : "·")}
+                              </span>
+                              <div style={{flex:1, fontWeight:600, fontSize:14.5}}>{g.label}</div>
+                              <span className={"chip" + (st.cls ? " "+st.cls : "")} style={{fontSize:11}}>{st.label}</span>
+                              {isReal && <Icon name="chevron" size={13} style={{color:"var(--text-subtle)", flexShrink:0}}/>}
                             </div>
-                          );
-                        })}
-                        {isAdding ? (
-                          <div style={{display:"flex", alignItems:"center", gap:11, padding:"9px 4px", borderTop: g.tasks.length ? "0.5px solid var(--border)" : "none"}}>
-                            <span style={{flexShrink:0, width:19, height:19, borderRadius:6, border:"1.5px dashed var(--border-strong)"}}/>
-                            <input autoFocus className="input" placeholder="Nombre de la tarea…"
-                              value={draft} onChange={e => setDraft(e.target.value)}
-                              onKeyDown={e => { if(e.key==="Enter") addPlanTask(g.name); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
-                              onBlur={() => addPlanTask(g.name)}
-                              style={{flex:1, padding:"5px 8px", fontSize:14}}/>
+                            <div style={{display:"flex", alignItems:"center", gap:12}}>
+                              <div style={{flex:1, height:6, borderRadius:99, background:"var(--border)", overflow:"hidden"}}>
+                                <div style={{width:gPct+"%", height:"100%", background: gPct===100 ? "var(--green)" : "var(--primary-600, #8277db)", borderRadius:99, transition:"width .3s"}}/>
+                              </div>
+                              <span className="muted xsmall" style={{flexShrink:0, width:64, textAlign:"right"}}>{gDone}/{g.tasks.length} · {gPct}%</span>
+                            </div>
                           </div>
-                        ) : (
-                          <button className="btn ghost sm"
-                            onClick={() => { setAdding(key); setDraft(""); }}
-                            style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: g.tasks.length ? 6 : 0, padding:"7px 4px"}}>
-                            <Icon name="plus" size={12}/> Añadir tarea
-                          </button>
-                        )}
-                      </div>
-                    </div></div>
-                  );
-                })}
+                        );
+                      })}
+                    </div>
+                  )}
+                </div></div>
+
+                {/* Próximos vencimientos */}
+                <div className="card"><div className="card-body">
+                  <div className="card-title" style={{marginBottom:12}}>Próximos vencimientos</div>
+                  {upcoming.length === 0 ? (
+                    <div className="muted small" style={{padding:"6px 0"}}>
+                      No hay tareas con fecha pendientes. Añade fechas a las tareas desde el Tablero (menú de cada tarea).
+                    </div>
+                  ) : (
+                    <div style={{display:"flex", flexDirection:"column"}}>
+                      {upcoming.map(({t, info}, i) => (
+                        <div key={t.id} className="row tight" style={{padding:"10px 0", borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
+                          <span style={{width:8, height:8, borderRadius:99, background:info.color, flexShrink:0}}/>
+                          <div className="grow" style={{minWidth:0}}>
+                            <div className="small truncate">{t.title}</div>
+                            {taskPhase(t) && <div className="subtle xsmall">{taskPhase(t)}</div>}
+                          </div>
+                          <div style={{textAlign:"right", flexShrink:0}}>
+                            <div className="small" style={{fontWeight:500}}>{info.label}</div>
+                            {info.tag && <div className="xsmall" style={{color:info.color}}>{info.tag}</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div></div>
               </div>
             );
           })()}
@@ -433,6 +453,14 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               <div style={{width: liveProgress + "%", height:"100%", background:"var(--green)", borderRadius:99, transition:"width .3s"}}/>
             </div>
             <div className="muted xsmall" style={{marginTop: 8}}>{tasksByCol.done.length} de {projectTasks.length} tareas completadas</div>
+            {aiPhases && (() => {
+              const total = aiPhases.length;
+              const done = aiPhases.filter(ph => {
+                const ts = projectTasks.filter(t => taskPhase(t) === ph.name);
+                return ts.length > 0 && ts.every(t => t.column === "done");
+              }).length;
+              return <div className="muted xsmall" style={{marginTop: 3}}>{done} de {total} fases completadas</div>;
+            })()}
           </div></div>
 
           {/* Resumen por estado */}

@@ -105,138 +105,75 @@
         tasks: projectTasks.filter((t) => taskPhase(t) === name)
       }));
       const otras = projectTasks.filter((t) => !phaseNames.includes(taskPhase(t)));
-      if (otras.length || !phaseNames.length) {
-        planGroups.push({ name: "__otras__", label: phaseNames.length ? "Otras tareas" : "Tareas", tasks: otras });
-      }
-      const toggleDone = (t) => D.moveTask(p.id, t.id, t.column === "done" ? "todo" : "done");
-      const addPlanTask = (phaseName) => {
-        if (!draft.trim()) {
-          setAdding(null);
-          setDraft("");
-          return;
-        }
-        D.addTask({
-          projectId: p.id,
-          title: draft.trim(),
-          column: "todo",
-          phase: phaseName === "__otras__" ? null : phaseName
-        });
-        setDraft("");
-        setAdding(null);
+      if (otras.length) planGroups.push({ name: "__otras__", label: "Otras tareas", tasks: otras });
+      const today = /* @__PURE__ */ new Date();
+      today.setHours(0, 0, 0, 0);
+      const MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      const parseD = (s) => {
+        if (!s) return null;
+        const d = /* @__PURE__ */ new Date(s + "T12:00:00");
+        return isNaN(d.getTime()) ? null : d;
       };
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, planGroups.map((g) => {
+      const dateInfo = (s) => {
+        const d = parseD(s);
+        if (!d) return null;
+        const diff = Math.round((d - today) / 864e5);
+        const label = `${d.getDate()} ${MES[d.getMonth()]}`;
+        if (diff < 0) return { label, tag: `Vencida (${-diff}d)`, color: "var(--red)" };
+        if (diff === 0) return { label, tag: "Hoy", color: "var(--amber)" };
+        if (diff <= 7) return { label, tag: `En ${diff}d`, color: "var(--amber)" };
+        return { label, tag: "", color: "var(--text-subtle)" };
+      };
+      const upcoming = projectTasks.filter((t) => t.deadline && t.column !== "done").map((t) => ({ t, info: dateInfo(t.deadline) })).filter((x) => x.info).sort((a, b) => parseD(a.t.deadline) - parseD(b.t.deadline));
+      const phaseStatus = (done, total) => {
+        if (total === 0) return { label: "Sin tareas", cls: "" };
+        if (done === total) return { label: "Completada", cls: "green" };
+        if (done > 0) return { label: "En curso", cls: "blue" };
+        return { label: "Sin empezar", cls: "" };
+      };
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 14 } }, "Fases del proyecto"), planGroups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Sin fases", sub: "Este proyecto no tiene fases. A\xF1ade tareas desde el Tablero." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, planGroups.map((g, i) => {
         const gDone = g.tasks.filter((t) => t.column === "done").length;
         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
-        const key = "plan:" + g.name;
-        const isAdding = adding === key;
-        return /* @__PURE__ */ React.createElement("div", { key: g.name, className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, fontWeight: 600, fontSize: 15 } }, g.label), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { flexShrink: 0 } }, gDone, "/", g.tasks.length), /* @__PURE__ */ React.createElement("div", { style: { width: 64, height: 4, borderRadius: 99, background: "var(--border)", overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { width: gPct + "%", height: "100%", background: "var(--green)", borderRadius: 99, transition: "width .3s" } }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, g.tasks.map((t) => {
-          const isDone = t.column === "done";
-          return /* @__PURE__ */ React.createElement(
-            "div",
-            {
-              key: t.id,
-              className: "task-row",
-              style: { display: "flex", alignItems: "center", gap: 11, padding: "9px 4px", borderTop: "0.5px solid var(--border)" }
-            },
-            /* @__PURE__ */ React.createElement(
-              "button",
-              {
-                onClick: () => toggleDone(t),
-                title: isDone ? "Marcar sin hacer" : "Marcar hecho",
-                style: {
-                  flexShrink: 0,
-                  width: 19,
-                  height: 19,
-                  borderRadius: 6,
-                  cursor: "pointer",
-                  padding: 0,
-                  display: "grid",
-                  placeItems: "center",
-                  background: isDone ? "var(--green)" : "transparent",
-                  border: isDone ? "none" : "1.5px solid var(--border-strong)"
-                }
-              },
-              isDone && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })
-            ),
-            editingId === t.id ? /* @__PURE__ */ React.createElement(
-              "input",
-              {
-                autoFocus: true,
-                className: "input",
-                value: editDraft,
-                onChange: (e) => setEditDraft(e.target.value),
-                onKeyDown: (e) => {
-                  if (e.key === "Enter") {
-                    if (editDraft.trim()) D.updateTask(p.id, t.id, { title: editDraft.trim() });
-                    setEditingId(null);
-                  }
-                  if (e.key === "Escape") setEditingId(null);
-                },
-                onBlur: () => {
-                  if (editDraft.trim()) D.updateTask(p.id, t.id, { title: editDraft.trim() });
-                  setEditingId(null);
-                },
-                style: { flex: 1, padding: "4px 6px", fontSize: 14 }
-              }
-            ) : /* @__PURE__ */ React.createElement(
-              "span",
-              {
-                onClick: () => {
-                  setEditingId(t.id);
-                  setEditDraft(t.title);
-                },
-                style: {
-                  flex: 1,
-                  fontSize: 14,
-                  cursor: "text",
-                  textDecoration: isDone ? "line-through" : "none",
-                  color: isDone ? "var(--text-subtle)" : "var(--text)"
-                }
-              },
-              t.title
-            ),
-            /* @__PURE__ */ React.createElement(
-              "button",
-              {
-                className: "task-del btn ghost icon-only sm",
-                onClick: () => D.deleteTask(p.id, t.id),
-                style: { flexShrink: 0, color: "var(--text-subtle)" }
-              },
-              /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
-            )
-          );
-        }), isAdding ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "9px 4px", borderTop: g.tasks.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { flexShrink: 0, width: 19, height: 19, borderRadius: 6, border: "1.5px dashed var(--border-strong)" } }), /* @__PURE__ */ React.createElement(
-          "input",
+        const st = phaseStatus(gDone, g.tasks.length);
+        const isReal = g.name !== "__otras__";
+        return /* @__PURE__ */ React.createElement(
+          "div",
           {
-            autoFocus: true,
-            className: "input",
-            placeholder: "Nombre de la tarea\u2026",
-            value: draft,
-            onChange: (e) => setDraft(e.target.value),
-            onKeyDown: (e) => {
-              if (e.key === "Enter") addPlanTask(g.name);
-              if (e.key === "Escape") {
-                setAdding(null);
-                setDraft("");
-              }
-            },
-            onBlur: () => addPlanTask(g.name),
-            style: { flex: 1, padding: "5px 8px", fontSize: 14 }
-          }
-        )) : /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            className: "btn ghost sm",
+            key: g.name,
             onClick: () => {
-              setAdding(key);
-              setDraft("");
+              if (isReal) {
+                setTab("tasks");
+                setPhaseTab(g.name);
+              }
             },
-            style: { justifyContent: "flex-start", color: "var(--text-subtle)", marginTop: g.tasks.length ? 6 : 0, padding: "7px 4px" }
+            style: {
+              border: "0.5px solid var(--border)",
+              borderRadius: 12,
+              padding: "14px 16px",
+              cursor: isReal ? "pointer" : "default",
+              transition: "background .12s"
+            },
+            onMouseEnter: (e) => {
+              if (isReal) e.currentTarget.style.background = "var(--bg-elev-2)";
+            },
+            onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
           },
-          /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }),
-          " A\xF1adir tarea"
-        ))));
-      }));
+          /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("span", { style: {
+            width: 22,
+            height: 22,
+            borderRadius: 99,
+            flexShrink: 0,
+            display: "grid",
+            placeItems: "center",
+            fontSize: 11,
+            fontWeight: 600,
+            background: gPct === 100 ? "var(--green)" : "var(--bg-elev-2)",
+            color: gPct === 100 ? "#000" : "var(--text-subtle)",
+            border: gPct === 100 ? "none" : "0.5px solid var(--border-strong)"
+          } }, gPct === 100 ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }) : isReal ? i + 1 : "\xB7"), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, fontWeight: 600, fontSize: 14.5 } }, g.label), /* @__PURE__ */ React.createElement("span", { className: "chip" + (st.cls ? " " + st.cls : ""), style: { fontSize: 11 } }, st.label), isReal && /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 13, style: { color: "var(--text-subtle)", flexShrink: 0 } })),
+          /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: gPct + "%", height: "100%", background: gPct === 100 ? "var(--green)" : "var(--primary-600, #8277db)", borderRadius: 99, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("span", { className: "muted xsmall", style: { flexShrink: 0, width: 64, textAlign: "right" } }, gDone, "/", g.tasks.length, " \xB7 ", gPct, "%"))
+        );
+      })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 12 } }, "Pr\xF3ximos vencimientos"), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { padding: "6px 0" } }, "No hay tareas con fecha pendientes. A\xF1ade fechas a las tareas desde el Tablero (men\xFA de cada tarea).") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column" } }, upcoming.map(({ t, info }, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "row tight", style: { padding: "10px 0", borderTop: i === 0 ? "none" : "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 99, background: info.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { className: "grow", style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "small truncate" }, t.title), taskPhase(t) && /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, taskPhase(t))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "small", style: { fontWeight: 500 } }, info.label), info.tag && /* @__PURE__ */ React.createElement("div", { className: "xsmall", style: { color: info.color } }, info.tag))))))));
     })(), tab === "tasks" && (() => {
       const visibleTasks = aiPhases && phaseTab ? projectTasks.filter((t) => taskPhase(t) === phaseTab) : projectTasks;
       const vByCol = {
@@ -423,7 +360,14 @@
         setDriveDraft("");
         setDriveEditing(true);
       } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir carpeta de Drive")))));
-    })()), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Progreso"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 600 } }, liveProgress, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, color: "var(--text-subtle)" } }, "%"))), /* @__PURE__ */ React.createElement("div", { style: { height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: liveProgress + "%", height: "100%", background: "var(--green)", borderRadius: 99, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 8 } }, tasksByCol.done.length, " de ", projectTasks.length, " tareas completadas"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 10 } }, "Resumen de tareas"), [
+    })()), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Progreso"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 600 } }, liveProgress, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, color: "var(--text-subtle)" } }, "%"))), /* @__PURE__ */ React.createElement("div", { style: { height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: liveProgress + "%", height: "100%", background: "var(--green)", borderRadius: 99, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 8 } }, tasksByCol.done.length, " de ", projectTasks.length, " tareas completadas"), aiPhases && (() => {
+      const total = aiPhases.length;
+      const done = aiPhases.filter((ph) => {
+        const ts = projectTasks.filter((t) => taskPhase(t) === ph.name);
+        return ts.length > 0 && ts.every((t) => t.column === "done");
+      }).length;
+      return /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 3 } }, done, " de ", total, " fases completadas");
+    })())), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 10 } }, "Resumen de tareas"), [
       { id: "todo", label: "Por hacer", dot: "var(--border-strong)" },
       { id: "doing", label: "En curso", dot: "var(--green)" },
       { id: "review", label: "Revisi\xF3n", dot: "var(--amber)" },
