@@ -118,59 +118,27 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         </button>
       </div>
 
-      {(() => {
-        const ringColor = liveProgress === 100 ? "var(--green)" : "var(--accent)";
-        const RR = 24, CC = 2 * Math.PI * RR;
-        // Meta separada por · sin separadores huérfanos
-        const meta = [];
-        meta.push(
-          <span key="cli" style={{display:"inline-flex", alignItems:"center", gap:6}}>
-            <span className={"dot " + p.light}/>{p.clientName}
-          </span>
-        );
-        if (p.recurring) {
-          meta.push(<span key="rec" style={{display:"inline-flex", alignItems:"center", gap:5, color:"var(--accent)"}}><Icon name="refresh-cw" size={11}/> Mensual</span>);
-        } else if (p.deadline && p.deadline !== "—") {
-          meta.push(<span key="due" style={{display:"inline-flex", alignItems:"center", gap:5}}><Icon name="calendar" size={12}/> Entrega {p.deadline}</span>);
-        }
-        meta.push(<span key="ph">{aiPhases ? aiPhases.length : 0} fase{(aiPhases ? aiPhases.length : 0) === 1 ? "" : "s"}</span>);
-        return (
-          <div style={{display:"flex", alignItems:"center", gap:18, marginBottom:26}}>
-            {/* Anillo de progreso */}
-            <div style={{position:"relative", width:58, height:58, flexShrink:0}}>
-              <svg width="58" height="58" viewBox="0 0 58 58">
-                <circle cx="29" cy="29" r={RR} fill="none" stroke="var(--border)" strokeWidth="4"/>
-                <circle cx="29" cy="29" r={RR} fill="none" stroke={ringColor} strokeWidth="4"
-                  strokeLinecap="round" strokeDasharray={CC} strokeDashoffset={CC * (1 - liveProgress/100)}
-                  transform="rotate(-90 29 29)" style={{transition:"stroke-dashoffset .45s ease"}}/>
-              </svg>
-              <div style={{position:"absolute", inset:0, display:"grid", placeItems:"center", fontSize:14, fontWeight:600, letterSpacing:"-0.5px"}}>
-                {liveProgress}<span style={{fontSize:9, color:"var(--text-subtle)"}}>%</span>
-              </div>
-            </div>
-            {/* Nombre + meta */}
-            <div style={{flex:1, minWidth:0}}>
-              <h1 style={{margin:0, fontSize:26, letterSpacing:"-0.6px", lineHeight:1.15,
-                whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{p.name}</h1>
-              <div style={{marginTop:6, color:"var(--text-muted)", fontSize:13, display:"flex", alignItems:"center", flexWrap:"wrap", gap:0}}>
-                {meta.map((m, i) => (
-                  <React.Fragment key={i}>
-                    {i > 0 && <span className="vdiv"/>}
-                    {m}
-                  </React.Fragment>
-                ))}
-              </div>
-            </div>
-            {/* Acciones */}
-            <div className="row tight" style={{flexShrink:0}}>
-              <button className="btn primary" onClick={() => { setTab("tasks"); setAdding("todo"); }}><Icon name="plus" size={13}/> Tarea</button>
-              <button className="btn ghost icon-only" data-tooltip="Eliminar proyecto" onClick={removeProjectFromHere} style={{color:"var(--text-subtle)"}}>
-                <Icon name="trash" size={14}/>
-              </button>
-            </div>
+      <div className="page-head">
+        <div>
+          <h1>{p.name}</h1>
+          <div className="sub">
+            {(() => {
+              const parts = [p.clientName];
+              if (p.recurring) parts.push("Mensual");
+              else if (p.deadline && p.deadline !== "—") parts.push("Entrega " + p.deadline);
+              if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
+              parts.push(liveProgress + "% completado");
+              return parts.join(" · ");
+            })()}
           </div>
-        );
-      })()}
+        </div>
+        <div className="row tight">
+          <button className="btn primary" onClick={() => { setTab("tasks"); setAdding("todo"); }}><Icon name="plus" size={13}/> Tarea</button>
+          <button className="btn ghost icon-only" data-tooltip="Eliminar proyecto" onClick={removeProjectFromHere} style={{color:"var(--text-subtle)"}}>
+            <Icon name="trash" size={14}/>
+          </button>
+        </div>
+      </div>
 
       <div className="tabs">
         {[
