@@ -91,10 +91,47 @@
         navigate("projects");
       }
     };
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos")), /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, p.clientName), p.recurring && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "vdiv" }), /* @__PURE__ */ React.createElement("span", { className: "chip", style: { fontSize: 11, color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 10 }), " Mensual")), aiPhases && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "vdiv" }), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, aiPhases.length, " fase", aiPhases.length === 1 ? "" : "s"))), /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginTop: 8, color: "var(--text-muted)", fontSize: 13 } }, p.deadline && p.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12 }), " Entrega ", p.deadline), p.deadline && p.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("span", { className: "vdiv" }), /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 80 } }, /* @__PURE__ */ React.createElement("div", { className: "progress" }, /* @__PURE__ */ React.createElement("i", { style: { width: liveProgress + "%" } }))), liveProgress, "%"))), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
-      setTab("tasks");
-      setAdding("todo");
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn danger", onClick: removeProjectFromHere }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 }), " Eliminar"))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos")), (() => {
+      const ringColor = liveProgress === 100 ? "var(--green)" : "var(--accent)";
+      const RR = 24, CC = 2 * Math.PI * RR;
+      const meta = [];
+      meta.push(
+        /* @__PURE__ */ React.createElement("span", { key: "cli", style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }), p.clientName)
+      );
+      if (p.recurring) {
+        meta.push(/* @__PURE__ */ React.createElement("span", { key: "rec", style: { display: "inline-flex", alignItems: "center", gap: 5, color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 11 }), " Mensual"));
+      } else if (p.deadline && p.deadline !== "\u2014") {
+        meta.push(/* @__PURE__ */ React.createElement("span", { key: "due", style: { display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12 }), " Entrega ", p.deadline));
+      }
+      meta.push(/* @__PURE__ */ React.createElement("span", { key: "ph" }, aiPhases ? aiPhases.length : 0, " fase", (aiPhases ? aiPhases.length : 0) === 1 ? "" : "s"));
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: 58, height: 58, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("svg", { width: "58", height: "58", viewBox: "0 0 58 58" }, /* @__PURE__ */ React.createElement("circle", { cx: "29", cy: "29", r: RR, fill: "none", stroke: "var(--border)", strokeWidth: "4" }), /* @__PURE__ */ React.createElement(
+        "circle",
+        {
+          cx: "29",
+          cy: "29",
+          r: RR,
+          fill: "none",
+          stroke: ringColor,
+          strokeWidth: "4",
+          strokeLinecap: "round",
+          strokeDasharray: CC,
+          strokeDashoffset: CC * (1 - liveProgress / 100),
+          transform: "rotate(-90 29 29)",
+          style: { transition: "stroke-dashoffset .45s ease" }
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, display: "grid", placeItems: "center", fontSize: 14, fontWeight: 600, letterSpacing: "-0.5px" } }, liveProgress, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 9, color: "var(--text-subtle)" } }, "%"))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("h1", { style: {
+        margin: 0,
+        fontSize: 26,
+        letterSpacing: "-0.6px",
+        lineHeight: 1.15,
+        whiteSpace: "nowrap",
+        overflow: "hidden",
+        textOverflow: "ellipsis"
+      } }, p.name), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, color: "var(--text-muted)", fontSize: 13, display: "flex", alignItems: "center", flexWrap: "wrap", gap: 0 } }, meta.map((m, i) => /* @__PURE__ */ React.createElement(React.Fragment, { key: i }, i > 0 && /* @__PURE__ */ React.createElement("span", { className: "vdiv" }), m)))), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+        setTab("tasks");
+        setAdding("todo");
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Eliminar proyecto", onClick: removeProjectFromHere, style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 14 }))));
+    })(), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan" },
       { id: "tasks", label: "Tablero" },
       { id: "files", label: "Archivos" }
