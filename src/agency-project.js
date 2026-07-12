@@ -91,13 +91,7 @@
         navigate("projects");
       }
     };
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos")), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
-      const parts = [p.clientName];
-      if (p.recurring) parts.push("Mensual");
-      else if (p.deadline && p.deadline !== "\u2014") parts.push("Entrega " + p.deadline);
-      if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
-      return parts.join(" \xB7 ");
-    })())), /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("projects") }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(180deg)" } }), " Proyectos"), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: () => {
@@ -109,7 +103,13 @@
           { icon: "trash", label: "Eliminar proyecto", sub: "Borra el proyecto y sus tareas.", onClick: removeProjectFromHere }
         ]
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    )), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
+      const parts = [p.clientName];
+      if (p.recurring) parts.push("Mensual");
+      else if (p.deadline && p.deadline !== "\u2014") parts.push("Entrega " + p.deadline);
+      if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
+      return parts.join(" \xB7 ");
+    })()))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: liveProgress + "%",
       height: "100%",
       borderRadius: 99,

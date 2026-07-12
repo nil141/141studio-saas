@@ -112,10 +112,16 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   return (
     <>
     <div className="page">
-      <div style={{marginBottom: 16}}>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: 16}}>
         <button className="btn ghost sm" onClick={() => navigate("projects")}>
           <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Proyectos
         </button>
+        <ActionPill
+          plusActions={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}
+          moreActions={[
+            { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
+          ]}
+        />
       </div>
 
       <div className="page-head" style={{marginBottom: 14}}>
@@ -131,12 +137,6 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
             })()}
           </div>
         </div>
-        <ActionPill
-          plusActions={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}
-          moreActions={[
-            { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
-          ]}
-        />
       </div>
 
       {/* Barra de progreso del proyecto */}
