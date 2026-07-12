@@ -96,7 +96,7 @@
       {
         plusActions: () => {
           setTab("tasks");
-          setAdding("list");
+          setAdding("add:" + (aiPhases && aiPhases[0] ? aiPhases[0].name : "__otras__"));
           setDraft("");
         },
         moreActions: [
@@ -217,16 +217,18 @@
         borderTop: i === 0 ? "none" : "0.5px solid var(--border)"
       } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 9, borderRadius: 99, background: info.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, t.title), taskPhase(t) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, taskPhase(t))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500 } }, info.label), info.tag && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: info.color, marginTop: 1 } }, info.tag)))))));
     })(), tab === "tasks" && (() => {
-      const visibleTasks = aiPhases && phaseTab ? projectTasks.filter((t) => taskPhase(t) === phaseTab) : projectTasks;
       const ORDER = { todo: 0, doing: 1, review: 2, done: 3 };
       const STATE = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n", done: "Hecho" };
       const ARC = { todo: 0, doing: 0.34, review: 0.7, done: 1 };
-      const sorted = [...visibleTasks].sort((a, b) => ORDER[a.column] - ORDER[b.column]);
       const cycle = (t) => {
         const seq = ["todo", "doing", "review", "done"];
         D.moveTask(p.id, t.id, seq[(seq.indexOf(t.column) + 1) % 4]);
       };
-      const addHere = () => {
+      const phaseNames = (aiPhases || []).map((ph) => ph.name);
+      const groups = phaseNames.map((name) => ({ name, label: name, tasks: projectTasks.filter((t) => taskPhase(t) === name) }));
+      const otras = projectTasks.filter((t) => !phaseNames.includes(taskPhase(t)));
+      if (otras.length || !phaseNames.length) groups.push({ name: "__otras__", label: "Otras tareas", tasks: otras });
+      const addTo = (phaseName) => {
         if (!draft.trim()) {
           setAdding(null);
           setDraft("");
@@ -236,30 +238,12 @@
           projectId: p.id,
           title: draft.trim(),
           column: "todo",
-          phase: aiPhases && phaseTab ? phaseTab : null
+          phase: phaseName === "__otras__" ? null : phaseName
         });
         setDraft("");
         setAdding(null);
       };
-      return /* @__PURE__ */ React.createElement("div", null, aiPhases && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", marginBottom: 18 } }, aiPhases.map((ph, i) => {
-        const count = projectTasks.filter((t) => taskPhase(t) === ph.name).length;
-        const done = projectTasks.filter((t) => taskPhase(t) === ph.name && t.column === "done").length;
-        const isActive = phaseTab === ph.name;
-        return /* @__PURE__ */ React.createElement(
-          "button",
-          {
-            key: i,
-            onClick: () => setPhaseTab(ph.name),
-            className: "chip" + (isActive ? " blue" : ""),
-            style: { cursor: "pointer", padding: "5px 12px", fontWeight: isActive ? 600 : 400 }
-          },
-          ph.name,
-          " \xB7 ",
-          done,
-          "/",
-          count
-        );
-      })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, sorted.map((t, idx) => {
+      const renderRow = (t, last) => {
         const isDone = t.column === "done";
         const sz = 38, r = 16, circ = 2 * Math.PI * r;
         const frac = ARC[t.column] || 0;
@@ -277,7 +261,7 @@
               alignItems: "center",
               gap: 13,
               padding: "12px 4px",
-              borderBottom: idx === sorted.length - 1 ? "none" : "0.5px solid var(--border)"
+              borderBottom: last ? "none" : "0.5px solid var(--border)"
             }
           },
           /* @__PURE__ */ React.createElement(
@@ -399,38 +383,51 @@
             }
           )
         );
-      }), adding === "list" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", borderTop: sorted.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 20, height: 20, borderRadius: 99, border: "1.5px dashed var(--border-strong)" } })), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          autoFocus: true,
-          className: "input",
-          placeholder: "Nombre de la tarea\u2026",
-          value: draft,
-          onChange: (e) => setDraft(e.target.value),
-          onKeyDown: (e) => {
-            if (e.key === "Enter") addHere();
-            if (e.key === "Escape") {
-              setAdding(null);
+      };
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, groups.map((g, gi) => {
+        const gTasks = [...g.tasks].sort((a, b) => ORDER[a.column] - ORDER[b.column]);
+        const gDone = g.tasks.filter((t) => t.column === "done").length;
+        const addKey = "add:" + g.name;
+        const isAdding = adding === addKey;
+        return /* @__PURE__ */ React.createElement("div", { key: g.name, style: { marginTop: gi === 0 ? 0 : 26 } }, /* @__PURE__ */ React.createElement("div", { style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 2,
+          paddingBottom: 8,
+          borderBottom: "0.5px solid var(--border)"
+        } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", fontWeight: 600 } }, g.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", opacity: 0.7 } }, gDone, "/", g.tasks.length)), gTasks.map((t) => renderRow(t, false)), isAdding ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 20, height: 20, borderRadius: 99, border: "1.5px dashed var(--border-strong)" } })), /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            autoFocus: true,
+            className: "input",
+            placeholder: "Nombre de la tarea\u2026",
+            value: draft,
+            onChange: (e) => setDraft(e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter") addTo(g.name);
+              if (e.key === "Escape") {
+                setAdding(null);
+                setDraft("");
+              }
+            },
+            onBlur: () => addTo(g.name),
+            style: { flex: 1, padding: "5px 8px", fontSize: 14 }
+          }
+        )) : /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            className: "btn ghost sm",
+            onClick: () => {
+              setAdding(addKey);
               setDraft("");
-            }
+            },
+            style: { justifyContent: "flex-start", color: "var(--text-subtle)", marginTop: 4, padding: "9px 4px" }
           },
-          onBlur: addHere,
-          style: { flex: 1, padding: "5px 8px", fontSize: 14 }
-        }
-      )) : /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          className: "btn ghost sm",
-          onClick: () => {
-            setAdding("list");
-            setDraft("");
-          },
-          style: { justifyContent: "flex-start", color: "var(--text-subtle)", marginTop: sorted.length ? 8 : 0, padding: "9px 4px" }
-        },
-        /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }),
-        " A\xF1adir tarea",
-        aiPhases && phaseTab ? " a " + phaseTab : ""
-      )));
+          /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }),
+          " A\xF1adir tarea"
+        ));
+      }));
     })(), tab === "files" && (() => {
       const driveKey = "proj_drive_" + p.id;
       const driveUrl = typeof localStorage !== "undefined" && localStorage.getItem(driveKey) || "";

@@ -117,7 +117,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Proyectos
         </button>
         <ActionPill
-          plusActions={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}
+          plusActions={() => { setTab("tasks"); setAdding("add:" + ((aiPhases && aiPhases[0]) ? aiPhases[0].name : "__otras__")); setDraft(""); }}
           moreActions={[
             { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
           ]}
@@ -289,132 +289,126 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           })()}
 
           {tab === "tasks" && (() => {
-            // Tareas de la fase activa (o todas), como lista plana estilo del SaaS
-            const visibleTasks = aiPhases && phaseTab
-              ? projectTasks.filter(t => taskPhase(t) === phaseTab)
-              : projectTasks;
             const ORDER = { todo:0, doing:1, review:2, done:3 };
             const STATE = { todo:"Por hacer", doing:"En curso", review:"Revisión", done:"Hecho" };
             const ARC   = { todo:0, doing:0.34, review:0.7, done:1 };
-            const sorted = [...visibleTasks].sort((a,b) => ORDER[a.column] - ORDER[b.column]);
             const cycle = (t) => {
               const seq = ["todo","doing","review","done"];
               D.moveTask(p.id, t.id, seq[(seq.indexOf(t.column) + 1) % 4]);
             };
-            const addHere = () => {
+            // Grupos por fase + "Otras tareas"
+            const phaseNames = (aiPhases || []).map(ph => ph.name);
+            const groups = phaseNames.map(name => ({ name, label:name, tasks: projectTasks.filter(t => taskPhase(t) === name) }));
+            const otras = projectTasks.filter(t => !phaseNames.includes(taskPhase(t)));
+            if (otras.length || !phaseNames.length) groups.push({ name:"__otras__", label:"Otras tareas", tasks: otras });
+            const addTo = (phaseName) => {
               if (!draft.trim()) { setAdding(null); setDraft(""); return; }
               D.addTask({ projectId: p.id, title: draft.trim(), column: "todo",
-                phase: (aiPhases && phaseTab) ? phaseTab : null });
+                phase: phaseName === "__otras__" ? null : phaseName });
               setDraft(""); setAdding(null);
             };
-            return (
-              <div>
-                {/* Filtro de fases */}
-                {aiPhases && (
-                  <div style={{display:"flex", gap:6, flexWrap:"wrap", marginBottom:18}}>
-                    {aiPhases.map((ph, i) => {
-                      const count = projectTasks.filter(t=>taskPhase(t)===ph.name).length;
-                      const done = projectTasks.filter(t=>taskPhase(t)===ph.name&&t.column==="done").length;
-                      const isActive = phaseTab === ph.name;
-                      return (
-                        <button key={i} onClick={() => setPhaseTab(ph.name)}
-                          className={"chip" + (isActive ? " blue" : "")}
-                          style={{cursor:"pointer", padding:"5px 12px", fontWeight: isActive ? 600 : 400}}>
-                          {ph.name} · {done}/{count}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-
-                {/* Lista de tareas */}
-                <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
-                  {sorted.map((t, idx) => {
-                    const isDone = t.column === "done";
-                    const sz = 38, r = 16, circ = 2 * Math.PI * r;
-                    const frac = ARC[t.column] || 0;
-                    return (
-                      <div key={t.id} className="task-row"
-                        onContextMenu={e => { e.preventDefault(); setCtxMenu({x:e.clientX, y:e.clientY, taskId:t.id}); }}
-                        style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px",
-                          borderBottom: idx === sorted.length-1 ? "none" : "0.5px solid var(--border)"}}>
-                        {/* Aro de estado (clic avanza) */}
-                        <button onClick={() => cycle(t)} title={"Estado: " + STATE[t.column] + " (clic para avanzar)"}
-                          style={{width:sz, height:sz, flexShrink:0, position:"relative", display:"grid", placeItems:"center",
-                            background:"none", border:"none", padding:0, cursor:"pointer"}}>
-                          <svg width={sz} height={sz} style={{position:"absolute", top:0, left:0}}>
-                            <circle cx={sz/2} cy={sz/2} r={r} fill="none"
-                              stroke={isDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
-                            {!isDone && frac > 0 && (
-                              <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
-                                strokeDasharray={`${frac*circ} ${circ}`} transform={`rotate(-90,${sz/2},${sz/2})`}/>
-                            )}
-                          </svg>
-                          {isDone
-                            ? <Icon name="check" size={15} style={{color:"var(--accent)", position:"relative"}}/>
-                            : <span style={{width:5, height:5, borderRadius:99, background:"rgba(255,255,255,0.25)", position:"relative"}}/>}
-                        </button>
-                        {/* Título + estado/fecha */}
-                        <div style={{flex:1, minWidth:0}}>
-                          {editingId === t.id ? (
-                            <input autoFocus className="input" value={editDraft}
-                              onChange={e => setEditDraft(e.target.value)}
-                              onKeyDown={e => {
-                                if(e.key==="Enter"){ if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }
-                                if(e.key==="Escape") setEditingId(null);
-                              }}
-                              onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
-                              style={{padding:"4px 6px", fontSize:14}}/>
-                          ) : (
-                            <div onClick={() => { setEditingId(t.id); setEditDraft(t.title); }}
-                              style={{fontSize:14, letterSpacing:"-0.3px", cursor:"text",
-                                color: isDone ? "var(--text-subtle)" : "var(--text)",
-                                textDecoration: isDone ? "line-through" : "none",
-                                whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
-                          )}
-                          <div style={{fontSize:11.5, color:"var(--text-subtle)", marginTop:2}}>
-                            {STATE[t.column]}{t.deadline ? " · " + t.deadline : ""}
-                          </div>
-                        </div>
-                        {/* Fecha + borrar (al pasar por encima) */}
-                        <button className="task-del btn ghost icon-only sm" data-tooltip="Fecha"
-                          onClick={() => setDatePicking(datePicking === t.id ? null : t.id)}
-                          style={{flexShrink:0, color:"var(--text-subtle)"}}>
-                          <Icon name="calendar" size={13}/>
-                        </button>
-                        <button className="task-del btn ghost icon-only sm"
-                          onClick={() => D.deleteTask(p.id, t.id)}
-                          style={{flexShrink:0, color:"var(--text-subtle)"}}>
-                          <Icon name="x" size={12}/>
-                        </button>
-                        {datePicking === t.id && (
-                          <input type="date" autoFocus className="input" defaultValue={t.deadline||""}
-                            onChange={e => { D.updateTask(p.id, t.id, {deadline:e.target.value}); setDatePicking(null); }}
-                            onBlur={() => setDatePicking(null)}
-                            style={{flexShrink:0, fontSize:12, padding:"3px 6px", width:140}}/>
-                        )}
-                      </div>
-                    );
-                  })}
-
-                  {/* Añadir tarea */}
-                  {adding === "list" ? (
-                    <div style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px", borderTop: sorted.length ? "0.5px solid var(--border)" : "none"}}>
-                      <span style={{width:38, height:38, flexShrink:0, display:"grid", placeItems:"center"}}>
-                        <span style={{width:20, height:20, borderRadius:99, border:"1.5px dashed var(--border-strong)"}}/>
-                      </span>
-                      <input autoFocus className="input" placeholder="Nombre de la tarea…"
-                        value={draft} onChange={e => setDraft(e.target.value)}
-                        onKeyDown={e => { if(e.key==="Enter") addHere(); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
-                        onBlur={addHere} style={{flex:1, padding:"5px 8px", fontSize:14}}/>
+            // Una fila de tarea (reutilizable)
+            const renderRow = (t, last) => {
+              const isDone = t.column === "done";
+              const sz = 38, r = 16, circ = 2 * Math.PI * r;
+              const frac = ARC[t.column] || 0;
+              return (
+                <div key={t.id} className="task-row"
+                  onContextMenu={e => { e.preventDefault(); setCtxMenu({x:e.clientX, y:e.clientY, taskId:t.id}); }}
+                  style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px",
+                    borderBottom: last ? "none" : "0.5px solid var(--border)"}}>
+                  <button onClick={() => cycle(t)} title={"Estado: " + STATE[t.column] + " (clic para avanzar)"}
+                    style={{width:sz, height:sz, flexShrink:0, position:"relative", display:"grid", placeItems:"center",
+                      background:"none", border:"none", padding:0, cursor:"pointer"}}>
+                    <svg width={sz} height={sz} style={{position:"absolute", top:0, left:0}}>
+                      <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                        stroke={isDone ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+                      {!isDone && frac > 0 && (
+                        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
+                          strokeDasharray={`${frac*circ} ${circ}`} transform={`rotate(-90,${sz/2},${sz/2})`}/>
+                      )}
+                    </svg>
+                    {isDone
+                      ? <Icon name="check" size={15} style={{color:"var(--accent)", position:"relative"}}/>
+                      : <span style={{width:5, height:5, borderRadius:99, background:"rgba(255,255,255,0.25)", position:"relative"}}/>}
+                  </button>
+                  <div style={{flex:1, minWidth:0}}>
+                    {editingId === t.id ? (
+                      <input autoFocus className="input" value={editDraft}
+                        onChange={e => setEditDraft(e.target.value)}
+                        onKeyDown={e => {
+                          if(e.key==="Enter"){ if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }
+                          if(e.key==="Escape") setEditingId(null);
+                        }}
+                        onBlur={() => { if(editDraft.trim()) D.updateTask(p.id, t.id, {title:editDraft.trim()}); setEditingId(null); }}
+                        style={{padding:"4px 6px", fontSize:14}}/>
+                    ) : (
+                      <div onClick={() => { setEditingId(t.id); setEditDraft(t.title); }}
+                        style={{fontSize:14, letterSpacing:"-0.3px", cursor:"text",
+                          color: isDone ? "var(--text-subtle)" : "var(--text)",
+                          textDecoration: isDone ? "line-through" : "none",
+                          whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
+                    )}
+                    <div style={{fontSize:11.5, color:"var(--text-subtle)", marginTop:2}}>
+                      {STATE[t.column]}{t.deadline ? " · " + t.deadline : ""}
                     </div>
-                  ) : (
-                    <button className="btn ghost sm" onClick={() => { setAdding("list"); setDraft(""); }}
-                      style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: sorted.length ? 8 : 0, padding:"9px 4px"}}>
-                      <Icon name="plus" size={13}/> Añadir tarea{aiPhases && phaseTab ? " a " + phaseTab : ""}
-                    </button>
+                  </div>
+                  <button className="task-del btn ghost icon-only sm" data-tooltip="Fecha"
+                    onClick={() => setDatePicking(datePicking === t.id ? null : t.id)}
+                    style={{flexShrink:0, color:"var(--text-subtle)"}}>
+                    <Icon name="calendar" size={13}/>
+                  </button>
+                  <button className="task-del btn ghost icon-only sm"
+                    onClick={() => D.deleteTask(p.id, t.id)}
+                    style={{flexShrink:0, color:"var(--text-subtle)"}}>
+                    <Icon name="x" size={12}/>
+                  </button>
+                  {datePicking === t.id && (
+                    <input type="date" autoFocus className="input" defaultValue={t.deadline||""}
+                      onChange={e => { D.updateTask(p.id, t.id, {deadline:e.target.value}); setDatePicking(null); }}
+                      onBlur={() => setDatePicking(null)}
+                      style={{flexShrink:0, fontSize:12, padding:"3px 6px", width:140}}/>
                   )}
                 </div>
+              );
+            };
+            return (
+              <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
+                {groups.map((g, gi) => {
+                  const gTasks = [...g.tasks].sort((a,b) => ORDER[a.column] - ORDER[b.column]);
+                  const gDone = g.tasks.filter(t => t.column === "done").length;
+                  const addKey = "add:" + g.name;
+                  const isAdding = adding === addKey;
+                  return (
+                    <div key={g.name} style={{marginTop: gi === 0 ? 0 : 26}}>
+                      {/* Encabezado de fase */}
+                      <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:2,
+                        paddingBottom:8, borderBottom:"0.5px solid var(--border)"}}>
+                        <span style={{fontSize:11.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", fontWeight:600}}>{g.label}</span>
+                        <span style={{fontSize:11, color:"var(--text-subtle)", opacity:0.7}}>{gDone}/{g.tasks.length}</span>
+                      </div>
+                      {/* Tareas de la fase */}
+                      {gTasks.map(t => renderRow(t, false))}
+                      {/* Añadir tarea a la fase */}
+                      {isAdding ? (
+                        <div style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none"}}>
+                          <span style={{width:38, height:38, flexShrink:0, display:"grid", placeItems:"center"}}>
+                            <span style={{width:20, height:20, borderRadius:99, border:"1.5px dashed var(--border-strong)"}}/>
+                          </span>
+                          <input autoFocus className="input" placeholder="Nombre de la tarea…"
+                            value={draft} onChange={e => setDraft(e.target.value)}
+                            onKeyDown={e => { if(e.key==="Enter") addTo(g.name); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
+                            onBlur={() => addTo(g.name)} style={{flex:1, padding:"5px 8px", fontSize:14}}/>
+                        </div>
+                      ) : (
+                        <button className="btn ghost sm" onClick={() => { setAdding(addKey); setDraft(""); }}
+                          style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: 4, padding:"9px 4px"}}>
+                          <Icon name="plus" size={13}/> Añadir tarea
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
