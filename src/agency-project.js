@@ -97,11 +97,19 @@
       else if (p.deadline && p.deadline !== "\u2014") parts.push("Entrega " + p.deadline);
       if (aiPhases) parts.push(aiPhases.length + " fase" + (aiPhases.length === 1 ? "" : "s"));
       return parts.join(" \xB7 ");
-    })())), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
-      setTab("tasks");
-      setAdding("list");
-      setDraft("");
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Tarea"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Eliminar proyecto", onClick: removeProjectFromHere, style: { color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 14 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    })())), /* @__PURE__ */ React.createElement(
+      ActionPill,
+      {
+        plusActions: () => {
+          setTab("tasks");
+          setAdding("list");
+          setDraft("");
+        },
+        moreActions: [
+          { icon: "trash", label: "Eliminar proyecto", sub: "Borra el proyecto y sus tareas.", onClick: removeProjectFromHere }
+        ]
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 6, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: liveProgress + "%",
       height: "100%",
       borderRadius: 99,

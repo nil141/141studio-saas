@@ -131,12 +131,12 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
             })()}
           </div>
         </div>
-        <div className="row tight">
-          <button className="btn primary" onClick={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}><Icon name="plus" size={13}/> Tarea</button>
-          <button className="btn ghost icon-only" data-tooltip="Eliminar proyecto" onClick={removeProjectFromHere} style={{color:"var(--text-subtle)"}}>
-            <Icon name="trash" size={14}/>
-          </button>
-        </div>
+        <ActionPill
+          plusActions={() => { setTab("tasks"); setAdding("list"); setDraft(""); }}
+          moreActions={[
+            { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
+          ]}
+        />
       </div>
 
       {/* Barra de progreso del proyecto */}
