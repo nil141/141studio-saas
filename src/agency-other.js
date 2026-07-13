@@ -51,13 +51,13 @@
     const matchesDay = (t) => t.deadline === selDateStr || isToday && t.deadline && t.deadline < selDateStr && (t.column !== "done" || t.doneAt === todayStr);
     const dayTasks = allTasks.filter(matchesDay);
     const dayRoutines = D.routinesForDay ? D.routinesForDay(selDateStr) : [];
-    let routineTotal = 0, routineDone = 0;
+    let routineTotal = 0, routineProgress = 0;
     dayRoutines.forEach((r) => (r.items || []).forEach((it) => {
       routineTotal += 1;
-      if (D.routineItemDone(r.id, selDateStr, it.id)) routineDone += 1;
+      routineProgress += D.routineItemProgress ? D.routineItemProgress(r.id, selDateStr, it.id) : D.routineItemDone(r.id, selDateStr, it.id) ? 100 : 0;
     }));
     const progressUnits = dayTasks.length + routineTotal;
-    const donePct = progressUnits ? Math.round((dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : t.progress || 0), 0) + routineDone * 100) / progressUnits) : 0;
+    const donePct = progressUnits ? Math.round((dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : t.progress || 0), 0) + routineProgress) / progressUnits) : 0;
     const clientColorMap = {};
     D.CLIENTS.forEach((c, i) => {
       clientColorMap[c.id] = C_DOTS[i % C_DOTS.length];
@@ -353,7 +353,7 @@
                 strokeDasharray: `${prog / 100 * circ} ${circ}`,
                 transform: `rotate(-90,${sz / 2},${sz / 2})`
               }
-            )), isDone ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } }));
+            )), isDone ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : prog > 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontWeight: 600, color: "var(--accent)", position: "relative", letterSpacing: "-0.5px" } }, prog) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } }));
           })(),
           /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" } }, t.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, project ? project.name : isDone ? "Completada" : colLabel || "Por hacer", t.deadline ? ` \xB7 ${(/* @__PURE__ */ new Date(t.deadline + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}` : "", isOverdue ? " \xB7 Vencida" : "")),
           /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.15)", flexShrink: 0 } })

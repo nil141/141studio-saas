@@ -230,16 +230,17 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
   // Los pasos de las rutinas del día también cuentan para el Daily Progress
   const dayRoutines = (D.routinesForDay ? D.routinesForDay(selDateStr) : []);
-  let routineTotal = 0, routineDone = 0;
+  let routineTotal = 0, routineProgress = 0;
   dayRoutines.forEach(r => (r.items || []).forEach(it => {
     routineTotal += 1;
-    if (D.routineItemDone(r.id, selDateStr, it.id)) routineDone += 1;
+    routineProgress += (D.routineItemProgress ? D.routineItemProgress(r.id, selDateStr, it.id)
+                        : (D.routineItemDone(r.id, selDateStr, it.id) ? 100 : 0));
   }));
 
   const progressUnits = dayTasks.length + routineTotal;
   const donePct = progressUnits
     ? Math.round((dayTasks.reduce((s, t) => s + (t.column === "done" ? 100 : (t.progress || 0)), 0)
-                  + routineDone * 100) / progressUnits)
+                  + routineProgress) / progressUnits)
     : 0;
 
   // Build groups: client → [projects + tasks]  — only with tasks for selected day
@@ -539,7 +540,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                         </svg>
                         {isDone
                           ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
-                          : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>
+                          : prog > 0
+                            ? <span style={{ fontSize:11, fontWeight:600, color:"var(--accent)", position:"relative", letterSpacing:"-0.5px" }}>{prog}</span>
+                            : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>
                         }
                       </div>
                     );

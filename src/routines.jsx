@@ -227,14 +227,16 @@ const RoutineCard = ({ r, day, onEdit, onStep }) => {
               </svg>
               {done
                 ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
-                : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>}
+                : pct > 0
+                  ? <span style={{ fontSize:11, fontWeight:600, color:"var(--accent)", position:"relative", letterSpacing:"-0.5px" }}>{pct}</span>
+                  : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
               <div style={{ fontSize:14, letterSpacing:"-0.5px",
                 color: done ? "var(--text-subtle)" : "var(--text)",
                 textDecoration: done ? "line-through" : "none" }}>{it.text}</div>
               <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
-                {done ? "Hecho" : pct > 0 ? `${pct}%` : "Por hacer"}
+                {done ? "Hecho" : pct > 0 ? "En curso" : "Por hacer"}
               </div>
             </div>
           </div>
