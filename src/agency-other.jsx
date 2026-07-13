@@ -160,7 +160,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const D = window.Data;
   D.useStore();
 
-  const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : new Date());
+  const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : (D.todayDate ? D.todayDate() : new Date()));
 
   const [taskModal,      setTaskModal]      = useState(null); // { task, pid }
   const [routineModal,   setRoutineModal]   = useState(null); // { r, it }
@@ -174,14 +174,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   // Tira de días con scroll: se ven 7 (una semana) y se desliza para ver más.
   // Rango: 30 días atrás → 60 adelante (respecto a hoy).
   const stripDays = (() => {
-    const base = new Date(); base.setHours(12, 0, 0, 0);
+    const base = D.todayDate ? D.todayDate() : new Date(); base.setHours(12, 0, 0, 0);
     return Array.from({ length: 91 }, (_, i) => {
       const d = new Date(base); d.setDate(base.getDate() - 30 + i); return d;
     });
   })();
   const stripRef = useRef(null);
 
-  const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+  const todayMid = D.todayDate ? D.todayDate() : (() => { const n = new Date(); n.setHours(0,0,0,0); return n; })();
   const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
 
   // Alinear la tira al LUNES de la semana del día seleccionado
@@ -317,7 +317,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
       {/* Header — title + ActionPill (igual que el resto de páginas) */}
       <div className="page-head" style={{ flexShrink:0 }}>
-        <div onClick={() => { if (!isToday) setSelectedDay(new Date()); }}
+        <div onClick={() => { if (!isToday) setSelectedDay(D.todayDate ? D.todayDate() : new Date()); }}
           data-tooltip={!isToday ? "Volver a hoy" : undefined}
           style={{ cursor: isToday ? "default" : "pointer" }}>
           <h1>Tareas</h1>

@@ -61,7 +61,7 @@
     const activeProjects = D.PROJECTS.length;
     const _projIds = new Set(D.PROJECTS.map((p) => p.id));
     const _liveTasks = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([, arr]) => arr);
-    const _todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const _todayStr = D.today ? D.today() : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const _pending = _liveTasks.filter((t) => t.column !== "done");
     const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
       (n, r) => n + (r.items || []).filter((it) => !D.routineItemDone(r.id, _todayStr, it.id)).length,

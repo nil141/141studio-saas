@@ -799,9 +799,20 @@ const addTask = (input) => {
   });
   return t;
 };
-const _todayStr = () => {
+const DAY_CUTOFF_HOUR = 3;
+const _logicalNow = () => {
   const n = /* @__PURE__ */ new Date();
+  if (n.getHours() < DAY_CUTOFF_HOUR) n.setDate(n.getDate() - 1);
+  return n;
+};
+const _todayStr = () => {
+  const n = _logicalNow();
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+};
+const _todayDate = () => {
+  const n = _logicalNow();
+  n.setHours(0, 0, 0, 0);
+  return n;
 };
 const _RKEY = "141_routines";
 const _RDKEY = "141_routine_done";
@@ -1166,6 +1177,8 @@ window.Data = {
   toggleRoutineItem,
   routineItemProgress,
   setRoutineItemProgress,
+  today: _todayStr,
+  todayDate: _todayDate,
   routineDayComplete,
   routineStreak,
   saveFinance,

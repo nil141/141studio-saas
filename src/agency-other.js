@@ -3,7 +3,7 @@
   var TasksBoard = ({ navigate, openModal, initialDate }) => {
     const D = window.Data;
     D.useStore();
-    const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : /* @__PURE__ */ new Date());
+    const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : D.todayDate ? D.todayDate() : /* @__PURE__ */ new Date());
     const [taskModal, setTaskModal] = useState(null);
     const [routineModal, setRoutineModal] = useState(null);
     const [hideCompleted, setHideCompleted] = useState(false);
@@ -12,7 +12,7 @@
     const MON_ES = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
     const C_DOTS = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
     const stripDays = (() => {
-      const base = /* @__PURE__ */ new Date();
+      const base = D.todayDate ? D.todayDate() : /* @__PURE__ */ new Date();
       base.setHours(12, 0, 0, 0);
       return Array.from({ length: 91 }, (_, i) => {
         const d = new Date(base);
@@ -21,8 +21,11 @@
       });
     })();
     const stripRef = useRef(null);
-    const todayMid = /* @__PURE__ */ new Date();
-    todayMid.setHours(0, 0, 0, 0);
+    const todayMid = D.todayDate ? D.todayDate() : (() => {
+      const n = /* @__PURE__ */ new Date();
+      n.setHours(0, 0, 0, 0);
+      return n;
+    })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
     useEffect(() => {
@@ -131,7 +134,7 @@
         "div",
         {
           onClick: () => {
-            if (!isToday) setSelectedDay(/* @__PURE__ */ new Date());
+            if (!isToday) setSelectedDay(D.todayDate ? D.todayDate() : /* @__PURE__ */ new Date());
           },
           "data-tooltip": !isToday ? "Volver a hoy" : void 0,
           style: { cursor: isToday ? "default" : "pointer" }

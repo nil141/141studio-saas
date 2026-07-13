@@ -670,10 +670,21 @@ const addTask = (input) => {
   return t;
 };
 
-const _todayStr = () => {
+// El "día" del panel de tareas cambia a las 3am, no a medianoche: hasta las
+// 3am se considera que sigue siendo el día anterior (las tareas no vencidas no
+// se pasan de día). El resto de la app (relojes, fechas de facturas) usa new Date().
+const DAY_CUTOFF_HOUR = 3;
+const _logicalNow = () => {
   const n = new Date();
+  if (n.getHours() < DAY_CUTOFF_HOUR) n.setDate(n.getDate() - 1);
+  return n;
+};
+const _todayStr = () => {
+  const n = _logicalNow();
   return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
 };
+// Date a medianoche del día lógico (para la vista de Tareas y el selector).
+const _todayDate = () => { const n = _logicalNow(); n.setHours(0,0,0,0); return n; };
 
 // ── ROUTINES (checklists recurrentes) ────────────────────────────────
 // Una rutina es una plantilla que se repite (ej. "Rutina mañanera") y que
@@ -1016,6 +1027,7 @@ window.Data = {
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
   routineItemProgress, setRoutineItemProgress,
+  today: _todayStr, todayDate: _todayDate,
   routineDayComplete, routineStreak,
   saveFinance,
   updateSettings,

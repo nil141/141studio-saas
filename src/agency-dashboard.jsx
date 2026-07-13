@@ -88,7 +88,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const _liveTasks = Object.entries(D.TASKS)
     .filter(([pid]) => pid === "__none__" || _projIds.has(pid))
     .flatMap(([, arr]) => arr);
-  const _todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  const _todayStr = D.today ? D.today()
+    : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
   const _pending  = _liveTasks.filter(t => t.column !== "done");
   // "Tareas pendientes" del panel = las de HOY: vencen hoy o son atrasadas que
   // se arrastran (misma lógica que el tablero de Tareas) + pasos de rutina de
