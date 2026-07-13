@@ -108,6 +108,9 @@
       color: "var(--text-subtle)",
       projects: [{ project: null, tasks: generalTasks }]
     });
+    const visibleGroups = groups.filter(
+      (g) => g.projects.some((pr) => pr.tasks.some((t) => !hideCompleted || t.column !== "done"))
+    );
     const toggleDone = (pid, t) => D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
     return /* @__PURE__ */ React.createElement(
       "div",
@@ -295,7 +298,7 @@
         paddingBottom: 8,
         WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
         maskImage: "linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)"
-      } }, /* @__PURE__ */ React.createElement(window.RoutineDayList, { day: selDateStr, onEdit: (r) => openModal("editRoutine", { routine: r }) }), groups.length === 0 && D.routinesForDay(selDateStr).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), groups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: gIdx === groups.length - 1 ? 0 : 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
+      } }, /* @__PURE__ */ React.createElement(window.RoutineDayList, { day: selDateStr, onEdit: (r) => openModal("editRoutine", { routine: r }) }), visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), visibleGroups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: gIdx === visibleGroups.length - 1 ? 0 : 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
         const pid = (project == null ? void 0 : project.id) || "__none__";
         const isDone = t.column === "done";
         const colLabel = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n" }[t.column];
@@ -347,7 +350,7 @@
           /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" } }, t.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, project ? project.name : isDone ? "Completada" : colLabel || "Por hacer", t.deadline ? ` \xB7 ${(/* @__PURE__ */ new Date(t.deadline + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" })}` : "", isOverdue ? " \xB7 Vencida" : "")),
           /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.15)", flexShrink: 0 } })
         );
-      })), gIdx !== groups.length - 1 && /* @__PURE__ */ React.createElement("div", { className: "client-divider", style: { height: "0.5px", background: "var(--border)", marginTop: 4 } })))),
+      })), gIdx !== visibleGroups.length - 1 && /* @__PURE__ */ React.createElement("div", { className: "client-divider", style: { height: "0.5px", background: "var(--border)", marginTop: 4 } })))),
       taskModal && /* @__PURE__ */ React.createElement(
         TaskProgressModal,
         {

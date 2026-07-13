@@ -293,6 +293,11 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
     color:"var(--text-subtle)", projects:[{ project:null, tasks:generalTasks }],
   });
 
+  // Solo grupos con tareas visibles ese día (si no, no mostramos su encabezado)
+  const visibleGroups = groups.filter(g =>
+    g.projects.some(pr => pr.tasks.some(t => !hideCompleted || t.column !== "done"))
+  );
+
   const toggleDone = (pid, t) =>
     D.moveTask(pid, t.id, t.column === "done" ? "todo" : "done");
 
@@ -482,14 +487,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
 
       <window.RoutineDayList day={selDateStr} onEdit={(r) => openModal("editRoutine", { routine: r })}/>
 
-      {groups.length === 0 && D.routinesForDay(selDateStr).length === 0 && (
+      {visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && (
         <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
           Sin tareas para este día — <button className="btn ghost sm" onClick={() => openModal("newTask", { date: selDateStr })}>crear una</button>
         </div>
       )}
 
-      {groups.map((group, gIdx) => (
-        <div key={group.clientId} style={{ marginBottom: gIdx === groups.length - 1 ? 0 : 32 }}>
+      {visibleGroups.map((group, gIdx) => (
+        <div key={group.clientId} style={{ marginBottom: gIdx === visibleGroups.length - 1 ? 0 : 32 }}>
           {/* Client header */}
           <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
             <div style={{ width:7, height:7, borderRadius:"50%", background:group.color, flexShrink:0 }}/>
@@ -553,7 +558,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
               );
             }))}
 
-          {gIdx !== groups.length - 1 && (
+          {gIdx !== visibleGroups.length - 1 && (
             <div className="client-divider" style={{ height:"0.5px", background:"var(--border)", marginTop:4 }}/>
           )}
         </div>
