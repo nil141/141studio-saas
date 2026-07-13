@@ -228,7 +228,7 @@ const RoutineCard = ({ r, day, onEdit, onStep }) => {
               {done
                 ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
                 : pct > 0
-                  ? <span style={{ fontSize:11, fontWeight:600, color:"var(--accent)", position:"relative", letterSpacing:"-0.5px" }}>{pct}</span>
+                  ? <span style={{ fontSize:12, fontWeight:400, color:"var(--text-muted)", position:"relative", letterSpacing:"-0.5px" }}>{pct}</span>
                   : <Icon name="x" size={11} style={{ color:"rgba(255,255,255,0.22)", position:"relative" }}/>}
             </div>
             <div style={{ flex:1, minWidth:0 }}>
