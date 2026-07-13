@@ -172,40 +172,42 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     );
   };
 
-  // Lista de items con píldora deslizante (anima al cambiar de item activo)
-  const PaneNav = ({ items }) => {
-    const cRef = useRef(null);
-    const rRefs = useRef({});
-    const [pill, setPill] = React.useState(null);
-    const first = useRef(true);
-    const activeKey = (items.find(it => it.active) || {}).key;
-    useEffect(() => {
-      const c = cRef.current;
-      const el = activeKey != null ? rRefs.current[activeKey] : null;
-      if (!el || !c) { setPill(prev => prev ? { ...prev, visible:false } : null); return; }
-      const eR = el.getBoundingClientRect(), cR = c.getBoundingClientRect();
-      const top = eR.top - cR.top + c.scrollTop;
-      const animated = !first.current; first.current = false;
-      setPill({ top, height: eR.height, animated, visible:true });
-    }, [activeKey]);
-    return (
-      <div ref={cRef} style={{position:"relative", overflowY:"auto", scrollbarWidth:"none", height:"100%"}}>
-        {pill && (
-          <div style={{
-            position:"absolute", left:0, right:0, top: pill.top + 3, height: pill.height - 6,
-            background:"rgba(255,255,255,0.07)", border:"1px solid #232324", borderRadius:16,
-            pointerEvents:"none", zIndex:0, opacity: pill.visible ? 1 : 0,
-            transition:`top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity .3s ease`,
-          }}/>
-        )}
-        {items.map(it => (
-          <NavItem key={it.key} rowRef={el => { rRefs.current[it.key] = el; }} bare
-            id={it.id} icon={it.icon} label={it.label} badge={it.badge}
-            onClick={it.onClick} chevron={it.chevron} active={it.active}/>
-        ))}
-      </div>
-    );
-  };
+  // Píldoras deslizantes por panel (nivel 1 y nivel 2) — a nivel de Sidebar
+  // para que no se reinicien en cada render.
+  const rootPaneRef = useRef(null), detailPaneRef = useRef(null);
+  const rootRefs = useRef({}), detailRefs = useRef({});
+  const [rootPill, setRootPill] = React.useState(null);
+  const [detailPill, setDetailPill] = React.useState(null);
+  const firstRoot = useRef(true);
+  const lastDetailCat = useRef(null);
+
+  const _activeId = current === "campaign" ? "campaigns" : current;
+  const _rootActiveKey = current === "dashboard" ? "dashboard"
+    : (sectionOfItem[_activeId] ? "__cat_" + sectionOfItem[_activeId] : null);
+  const _detailActiveKey = detailSection && detailSection.items.some(it => it.id === _activeId) ? _activeId : null;
+
+  useEffect(() => {
+    const place = (paneEl, refs, key, setPill, animated) => {
+      const el = key != null ? refs.current[key] : null;
+      if (!el || !paneEl) { setPill(prev => prev ? { ...prev, visible:false } : null); return; }
+      const eR = el.getBoundingClientRect(), cR = paneEl.getBoundingClientRect();
+      setPill({ top: eR.top - cR.top + paneEl.scrollTop, height: eR.height, animated, visible:true });
+    };
+    place(rootPaneRef.current, rootRefs, _rootActiveKey, setRootPill, !firstRoot.current);
+    firstRoot.current = false;
+    // misma categoría → deslizar; categoría distinta → saltar (sin animación)
+    place(detailPaneRef.current, detailRefs, _detailActiveKey, setDetailPill, lastDetailCat.current === detailCat);
+    lastDetailCat.current = detailCat;
+  }, [_rootActiveKey, _detailActiveKey, detailCat, openCat]);
+
+  const renderPill = (pill) => pill ? (
+    <div style={{
+      position:"absolute", left:0, right:0, top: pill.top + 3, height: pill.height - 6,
+      background:"rgba(255,255,255,0.07)", border:"1px solid #232324", borderRadius:16,
+      pointerEvents:"none", zIndex:0, opacity: pill.visible ? 1 : 0,
+      transition:`top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity .3s ease`,
+    }}/>
+  ) : null;
 
   const FooterItem = ({ icon, label, onClick, kbd, active }) => {
     const [hov, setHov] = React.useState(false);
@@ -272,17 +274,19 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             transition:"transform .3s cubic-bezier(0.4,0,0.2,1)",
           }}>
             {/* ── Nivel 1: Inicio + categorías en cajas ── */}
-            <div style={{width:"50%", flexShrink:0, paddingRight:2, height:"100%"}}>
-              <PaneNav items={[
-                { key: topItem.id, id: topItem.id, icon: topItem.icon, label: topItem.label,
-                  active: (current === "dashboard") },
-                ...sections.map(section => ({
-                  key: "__cat_" + section.title, id: "__cat_" + section.title,
-                  icon: SECTION_ICONS[section.title] || "grid", label: section.title,
-                  onClick: () => openCategory(section.title), chevron: true,
-                  active: section.items.some(it => it.id === (current === "campaign" ? "campaigns" : current)),
-                })),
-              ]}/>
+            <div ref={rootPaneRef} style={{width:"50%", flexShrink:0, paddingRight:2, height:"100%",
+              position:"relative", overflowY:"auto", scrollbarWidth:"none"}}>
+              {renderPill(rootPill)}
+              <NavItem bare rowRef={el => { rootRefs.current["dashboard"] = el; }}
+                id={topItem.id} icon={topItem.icon} label={topItem.label} active={current === "dashboard"}/>
+              {sections.map(section => {
+                const inHere = section.items.some(it => it.id === _activeId);
+                return (
+                  <NavItem bare key={section.title} rowRef={el => { rootRefs.current["__cat_" + section.title] = el; }}
+                    id={"__cat_" + section.title} icon={SECTION_ICONS[section.title] || "grid"} label={section.title}
+                    onClick={() => openCategory(section.title)} chevron active={inHere}/>
+                );
+              })}
             </div>
 
             {/* ── Nivel 2: items de la categoría abierta ── */}
@@ -300,11 +304,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
                 <span>{detailSection.title}</span>
               </div>
               <div style={{height:6, flexShrink:0}}/>
-              <div style={{flex:1, minHeight:0}}>
-                <PaneNav key={detailCat} items={detailSection.items.map(it => ({
-                  key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge,
-                  active: (it.id === (current === "campaign" ? "campaigns" : current)),
-                }))}/>
+              <div ref={detailPaneRef} style={{flex:1, minHeight:0, position:"relative", overflowY:"auto", scrollbarWidth:"none"}}>
+                {renderPill(detailPill)}
+                {detailSection.items.map(it => (
+                  <NavItem bare key={it.id} rowRef={el => { detailRefs.current[it.id] = el; }}
+                    id={it.id} icon={it.icon} label={it.label} badge={it.badge}
+                    active={it.id === _activeId}/>
+                ))}
               </div>
             </div>
           </div>
