@@ -68,9 +68,17 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   ];
 
   const sections = kind === "client" ? clientSections : agencySections;
-  const collapsible = kind === "agency";
+  const drilldown = kind === "agency";
   const sectionOfItem = {};
   sections.forEach(s => s.items.forEach(it => { sectionOfItem[it.id] = s.title; }));
+  const SECTION_ICONS = { "Trabajo": "layers", "Finanzas": "trending-up", "Comunicación": "msg-circle" };
+
+  // Menú de dos niveles: raíz (categorías en cajas) → detalle (items de una categoría)
+  const _activeSection = sectionOfItem[current === "campaign" ? "campaigns" : current] || null;
+  const [openCat, setOpenCat] = React.useState(_activeSection);
+  const [detailCat, setDetailCat] = React.useState(_activeSection);
+  const openCategory = (title) => { setDetailCat(title); setOpenCat(title); };
+  const detailSection = sections.find(s => s.title === detailCat) || sections[0];
 
   const cleanName = (raw, fallback) => {
     if (!raw) return fallback;
@@ -131,22 +139,21 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     return () => clearTimeout(t);
   }, [current, collapsed]);
 
-  const NavItem = ({ id, icon, label, badge }) => {
+  const NavItem = ({ id, icon, label, badge, onClick, chevron, active }) => {
     const [hov, setHov] = React.useState(false);
-    const isActive = current === id || (id === "campaigns" && current === "campaign");
+    const isActive = active != null ? active : (current === id || (id === "campaigns" && current === "campaign"));
     return (
       <div
-        ref={el => { itemRefs.current[id] = el; }}
-        onClick={() => onNavigate(id)}
+        onClick={onClick || (() => onNavigate(id))}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          position:"relative", zIndex:1,
           display:"flex", alignItems:"center", gap:12,
           height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
-          background:"transparent",
+          background: isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          border: isActive ? "1px solid #232324" : "1px solid transparent",
           color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
-          transition:"color .15s",
+          transition:"color .15s, background .15s",
           fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
         }}
       >
@@ -157,7 +164,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {badge}
           </span>
         ) : null}
-        {isActive ? <Icon name="chevron" size={15} style={{flexShrink:0}}/> : null}
+        {chevron ? <Icon name="chevron" size={15} style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/>
+          : (isActive ? <Icon name="chevron" size={15} style={{flexShrink:0}}/> : null)}
       </div>
     );
   };
@@ -219,69 +227,64 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       </div>
 
       {/* Nav con secciones */}
-      <div ref={navContainerRef} style={{flex:1, overflowY:"auto", scrollbarWidth:"none", msOverflowStyle:"none", position:"relative"}}>
-        {/* Sliding pill */}
-        {pill && (
+      <div ref={navContainerRef} style={{flex:1, overflow:"hidden", position:"relative"}}>
+        {drilldown ? (
           <div style={{
-            position:"absolute", left:0, right:0,
-            top: pill.top + 3, height: pill.height - 6,
-            background:"rgba(255,255,255,0.07)",
-            border:"1px solid #232324",
-            borderRadius:16, pointerEvents:"none", zIndex:0,
-            opacity: pill.visible ? 1 : 0,
-            transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`,
-          }}/>
-        )}
-        {/* Inicio fijo arriba (agencia) */}
-        {collapsible && (
-          <div style={{marginBottom: 18}}>
-            <NavItem id={topItem.id} icon={topItem.icon} label={topItem.label}/>
+            display:"flex", width:"200%", height:"100%",
+            transform: openCat != null ? "translateX(-50%)" : "translateX(0)",
+            transition:"transform .3s cubic-bezier(0.4,0,0.2,1)",
+          }}>
+            {/* ── Nivel 1: Inicio + categorías en cajas ── */}
+            <div style={{width:"50%", flexShrink:0, paddingRight:2, overflowY:"auto", scrollbarWidth:"none"}}>
+              <NavItem id={topItem.id} icon={topItem.icon} label={topItem.label}/>
+              <div style={{height:14}}/>
+              {sections.map((section, si) => {
+                const inHere = section.items.some(it => it.id === (current === "campaign" ? "campaigns" : current));
+                return (
+                  <NavItem key={si} id={"__cat_" + section.title}
+                    icon={SECTION_ICONS[section.title] || "grid"} label={section.title}
+                    onClick={() => openCategory(section.title)} chevron active={inHere}
+                  />
+                );
+              })}
+            </div>
+
+            {/* ── Nivel 2: items de la categoría abierta ── */}
+            <div style={{width:"50%", flexShrink:0, paddingLeft:2, overflowY:"auto", scrollbarWidth:"none"}}>
+              <div
+                onClick={() => setOpenCat(null)}
+                onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+                style={{
+                  display:"flex", alignItems:"center", gap:8, height:44, padding:"0 10px",
+                  cursor:"pointer", color:"var(--text-muted)", transition:"color .15s",
+                  fontSize:12, fontWeight:500, letterSpacing:"0.04em", textTransform:"uppercase",
+                }}>
+                <Icon name="chevron" size={14} style={{transform:"rotate(180deg)", flexShrink:0}}/>
+                <span>{detailSection.title}</span>
+              </div>
+              <div style={{height:6}}/>
+              {detailSection.items.map(it => (
+                <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+              ))}
+            </div>
           </div>
-        )}
-        {sections.map((section, si) => {
-          const isCollapsed = collapsible && collapsed.has(section.title);
-          return (
-            <div key={si} style={{marginBottom: 6}}>
-              {collapsible ? (
-                <button
-                  onClick={() => toggleSection(section.title)}
-                  style={{
-                    display: "flex", alignItems: "center", gap: 6, width: "100%",
-                    fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
-                    letterSpacing: "0.06em", textTransform: "uppercase",
-                    padding: "6px 12px", marginBottom: 2, background: "none", border: "none",
-                    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-muted)"}
-                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}
-                >
-                  <Icon name="chevron" size={11} strokeWidth={2.2}
-                    style={{ transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .2s ease", flexShrink: 0, opacity: 0.6 }}/>
-                  <span style={{flex:1}}>{section.title}</span>
-                </button>
-              ) : (
+        ) : (
+          <div style={{overflowY:"auto", scrollbarWidth:"none", height:"100%"}}>
+            {sections.map((section, si) => (
+              <div key={si} style={{marginBottom: 20}}>
                 <div style={{
                   fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
                   letterSpacing: "0.06em", textTransform: "uppercase",
                   padding: "0 12px", marginBottom: 2,
                 }}>{section.title}</div>
-              )}
-              {/* Contenedor con animación suave de altura */}
-              <div style={{
-                display: "grid",
-                gridTemplateRows: isCollapsed ? "0fr" : "1fr",
-                transition: "grid-template-rows .24s cubic-bezier(0.4,0,0.2,1)",
-              }}>
-                <div style={{overflow: "hidden", minHeight: 0,
-                  opacity: isCollapsed ? 0 : 1, transition: "opacity .18s ease"}}>
-                  {section.items.map(it => (
-                    <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
-                  ))}
-                </div>
+                {section.items.map(it => (
+                  <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+                ))}
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Footer */}
