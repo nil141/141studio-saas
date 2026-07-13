@@ -61,7 +61,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     sectionOfItem[it.id] = s.title;
   }));
   const SECTION_ICONS = { "Trabajo": "layers", "Finanzas": "trending-up", "Comunicaci\xF3n": "msg-circle" };
-  const _mapNav = (c) => c === "campaign" ? "campaigns" : c === "project" ? "projects" : c;
+  const _mapNav = (c) => c === "campaign" ? "campaigns" : c === "project" ? "projects" : c === "clientDetail" ? "clients" : c;
   const curNav = _mapNav(current);
   const _activeSection = sectionOfItem[curNav] || null;
   const [openCat, setOpenCat] = React.useState(_activeSection);

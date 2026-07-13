@@ -75,7 +75,10 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
   // Las páginas de detalle mapean a su item de menú (para que el sidebar no
   // salga de la categoría): un proyecto → Proyectos, una campaña → Campañas.
-  const _mapNav = (c) => c === "campaign" ? "campaigns" : c === "project" ? "projects" : c;
+  const _mapNav = (c) =>
+    c === "campaign" ? "campaigns" :
+    c === "project" ? "projects" :
+    c === "clientDetail" ? "clients" : c;
   const curNav = _mapNav(current);
 
   // Menú de dos niveles: raíz (categorías en cajas) → detalle (items de una categoría)
