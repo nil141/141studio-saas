@@ -128,16 +128,20 @@ const _mp = (r) => {
     recurring: (_f = r.recurring) != null ? _f : false
   };
 };
-const _mt = (r) => r && {
-  id: r.id,
-  title: r.title,
-  column: r.col,
-  assignee: r.assignee,
-  clientId: r.client_id,
-  clientName: r.client_name,
-  done: r.done,
-  deadline: r.deadline,
-  phase: r.phase || null
+const _mt = (r) => {
+  var _a;
+  return r && {
+    id: r.id,
+    title: r.title,
+    column: r.col,
+    assignee: r.assignee,
+    clientId: r.client_id,
+    clientName: r.client_name,
+    done: r.done,
+    deadline: r.deadline,
+    phase: r.phase || null,
+    progress: (_a = r.progress) != null ? _a : 0
+  };
 };
 const _mi = (r) => r && {
   id: r.id,
@@ -509,6 +513,21 @@ const _insertAdaptive = async (table, rows) => {
         if (!(col in payload)) return { error };
         delete payload[col];
       }
+      continue;
+    }
+    return { error };
+  }
+  return { error: { message: "Esquema incompatible (demasiadas columnas ausentes)" } };
+};
+const _updateAdaptive = async (table, id, changes) => {
+  let payload = { ...changes };
+  for (let i = 0; i < 15; i++) {
+    if (!Object.keys(payload).length) return { error: null };
+    const { error } = await _sb.from(table).update(payload).eq("id", id);
+    if (!error) return { error: null };
+    const m = /Could not find the '(\w+)' column/.exec(error.message || "");
+    if (m && m[1] in payload) {
+      delete payload[m[1]];
       continue;
     }
     return { error };
@@ -997,7 +1016,11 @@ const updateTask = (projectId, taskId, changes) => {
   if (eff.done !== void 0) dbChanges.done = eff.done;
   if (eff.title !== void 0) dbChanges.title = eff.title;
   if (eff.deadline !== void 0) dbChanges.deadline = eff.deadline || null;
-  _sb.from("tasks").update(dbChanges).eq("id", taskId).then();
+  if (eff.progress !== void 0) dbChanges.progress = eff.progress;
+  if (eff.phase !== void 0) dbChanges.phase = eff.phase || null;
+  _updateAdaptive("tasks", taskId, dbChanges).then(({ error }) => {
+    if (error) console.error("[updateTask] Supabase error:", error.message);
+  });
 };
 const deleteTask = (projectId, taskId) => {
   const uid = _uid();
