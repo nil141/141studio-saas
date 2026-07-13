@@ -73,8 +73,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   sections.forEach(s => s.items.forEach(it => { sectionOfItem[it.id] = s.title; }));
   const SECTION_ICONS = { "Trabajo": "layers", "Finanzas": "trending-up", "Comunicación": "msg-circle" };
 
+  // Las páginas de detalle mapean a su item de menú (para que el sidebar no
+  // salga de la categoría): un proyecto → Proyectos, una campaña → Campañas.
+  const _mapNav = (c) => c === "campaign" ? "campaigns" : c === "project" ? "projects" : c;
+  const curNav = _mapNav(current);
+
   // Menú de dos niveles: raíz (categorías en cajas) → detalle (items de una categoría)
-  const _activeSection = sectionOfItem[current === "campaign" ? "campaigns" : current] || null;
+  const _activeSection = sectionOfItem[curNav] || null;
   const [openCat, setOpenCat] = React.useState(_activeSection);
   const [detailCat, setDetailCat] = React.useState(_activeSection);
   const openCategory = (title) => { setDetailCat(title); setOpenCat(title); };
@@ -87,7 +92,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   useEffect(() => {
     if (!drilldown || prevCurrent.current === current) return;
     prevCurrent.current = current;
-    const sec = sectionOfItem[current === "campaign" ? "campaigns" : current];
+    const sec = sectionOfItem[_mapNav(current)];
     if (sec) { setDetailCat(sec); setOpenCat(sec); }
     else setOpenCat(null);
   }, [current]);
@@ -153,7 +158,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
   const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef }) => {
     const [hov, setHov] = React.useState(false);
-    const isActive = active != null ? active : (current === id || (id === "campaigns" && current === "campaign"));
+    const isActive = active != null ? active : (curNav === id);
     return (
       <div
         ref={rowRef}
@@ -193,7 +198,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const firstRoot = useRef(true);
   const lastDetailCat = useRef(null);
 
-  const _activeId = current === "campaign" ? "campaigns" : current;
+  const _activeId = curNav;
   const _rootActiveKey = current === "dashboard" ? "dashboard"
     : (sectionOfItem[_activeId] ? "__cat_" + sectionOfItem[_activeId] : null);
   const _detailActiveKey = detailSection && detailSection.items.some(it => it.id === _activeId) ? _activeId : null;
