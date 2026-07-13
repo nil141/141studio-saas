@@ -81,6 +81,21 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   // ── Sliding pill refs ──────────────────────────────────────────────
   const [logoutOpen, setLogoutOpen] = React.useState(false);
 
+  // Secciones plegables del menú (se recuerda en el navegador)
+  const COLLAPSE_KEY = "sidebar_collapsed_v1";
+  const [collapsed, setCollapsed] = React.useState(() => {
+    try { return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "[]")); }
+    catch { return new Set(); }
+  });
+  const toggleSection = (title) => {
+    setCollapsed(prev => {
+      const next = new Set(prev);
+      next.has(title) ? next.delete(title) : next.add(title);
+      try { localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...next])); } catch (e) {}
+      return next;
+    });
+  };
+
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null); // { top, height, animated, visible }
@@ -104,7 +119,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     } else {
       setPill({ top, height: eR.height, animated: true, visible: true });
     }
-  }, [current]);
+  }, [current, collapsed]);
 
   const NavItem = ({ id, icon, label, badge }) => {
     const [hov, setHov] = React.useState(false);
@@ -207,20 +222,32 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`,
           }}/>
         )}
-        {sections.map((section, si) => (
-          <div key={si} style={{marginBottom: 20}}>
-            <div style={{
-              fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
-              letterSpacing: "0.06em", textTransform: "uppercase",
-              padding: "0 12px", marginBottom: 2,
-            }}>
-              {section.title}
+        {sections.map((section, si) => {
+          const isCollapsed = collapsed.has(section.title);
+          return (
+            <div key={si} style={{marginBottom: isCollapsed ? 6 : 20}}>
+              <button
+                onClick={() => toggleSection(section.title)}
+                style={{
+                  display: "flex", alignItems: "center", gap: 6, width: "100%",
+                  fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
+                  letterSpacing: "0.06em", textTransform: "uppercase",
+                  padding: "6px 12px", marginBottom: 2, background: "none", border: "none",
+                  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = "var(--text-muted)"}
+                onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}
+              >
+                <Icon name="chevron" size={11} strokeWidth={2.2}
+                  style={{ transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .18s ease", flexShrink: 0, opacity: 0.7 }}/>
+                <span style={{flex:1}}>{section.title}</span>
+              </button>
+              {!isCollapsed && section.items.map(it => (
+                <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+              ))}
             </div>
-            {section.items.map(it => (
-              <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
-            ))}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Footer */}

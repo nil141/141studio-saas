@@ -62,6 +62,25 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   };
   const me = session ? kind === "agency" ? { name: cleanName(session.name || session.email, "Nil"), initials: cleanName(session.name || session.email, "N")[0].toUpperCase(), email: session.email || "" } : { name: cleanName(session.name || session.email, "Cliente"), initials: cleanName(session.name || session.email, "C")[0].toUpperCase(), email: session.email || "" } : { name: "Nil", initials: "N", email: "nil@141agency.com" };
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const COLLAPSE_KEY = "sidebar_collapsed_v1";
+  const [collapsed, setCollapsed] = React.useState(() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "[]"));
+    } catch (e) {
+      return /* @__PURE__ */ new Set();
+    }
+  });
+  const toggleSection = (title) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(title) ? next.delete(title) : next.add(title);
+      try {
+        localStorage.setItem(COLLAPSE_KEY, JSON.stringify([...next]));
+      } catch (e) {
+      }
+      return next;
+    });
+  };
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null);
@@ -83,7 +102,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     } else {
       setPill({ top, height: eR.height, animated: true, visible: true });
     }
-  }, [current]);
+  }, [current, collapsed]);
   const NavItem = ({ id, icon, label, badge }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = current === id || id === "campaigns" && current === "campaign";
@@ -189,15 +208,45 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     zIndex: 0,
     opacity: pill.visible ? 1 : 0,
     transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`
-  } }), sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
-    fontSize: 11,
-    fontWeight: 500,
-    color: "var(--text-subtle)",
-    letterSpacing: "0.06em",
-    textTransform: "uppercase",
-    padding: "0 12px",
-    marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge }))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
+  } }), sections.map((section, si) => {
+    const isCollapsed = collapsed.has(section.title);
+    return /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: isCollapsed ? 6 : 20 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => toggleSection(section.title),
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          width: "100%",
+          fontSize: 11,
+          fontWeight: 500,
+          color: "var(--text-subtle)",
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          padding: "6px 12px",
+          marginBottom: 2,
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          textAlign: "left"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.color = "var(--text-muted)",
+        onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
+      },
+      /* @__PURE__ */ React.createElement(
+        Icon,
+        {
+          name: "chevron",
+          size: 11,
+          strokeWidth: 2.2,
+          style: { transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .18s ease", flexShrink: 0, opacity: 0.7 }
+        }
+      ),
+      /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, section.title)
+    ), !isCollapsed && section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })));
+  })), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
