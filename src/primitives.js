@@ -120,16 +120,19 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     const t = setTimeout(measurePill, 280);
     return () => clearTimeout(t);
   }, [current, collapsed]);
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active }) => {
+  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = active != null ? active : current === id || id === "campaigns" && current === "campaign";
     return /* @__PURE__ */ React.createElement(
       "div",
       {
+        ref: rowRef,
         onClick: onClick || (() => onNavigate(id)),
         onMouseEnter: () => setHov(true),
         onMouseLeave: () => setHov(false),
         style: {
+          position: "relative",
+          zIndex: 1,
           display: "flex",
           alignItems: "center",
           gap: 12,
@@ -137,8 +140,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           padding: "0 12px",
           borderRadius: 16,
           cursor: "pointer",
-          background: isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
-          border: isActive ? "1px solid #232324" : "1px solid transparent",
+          background: bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          border: bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
           color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition: "color .15s, background .15s",
           fontSize: 16,
@@ -152,6 +155,56 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
       chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0 } }) : null
     );
+  };
+  const PaneNav = ({ items }) => {
+    const cRef = useRef(null);
+    const rRefs = useRef({});
+    const [pill2, setPill2] = React.useState(null);
+    const first = useRef(true);
+    const activeKey = (items.find((it) => it.active) || {}).key;
+    useEffect(() => {
+      const c = cRef.current;
+      const el = activeKey != null ? rRefs.current[activeKey] : null;
+      if (!el || !c) {
+        setPill2((prev) => prev ? { ...prev, visible: false } : null);
+        return;
+      }
+      const eR = el.getBoundingClientRect(), cR = c.getBoundingClientRect();
+      const top = eR.top - cR.top + c.scrollTop;
+      const animated = !first.current;
+      first.current = false;
+      setPill2({ top, height: eR.height, animated, visible: true });
+    }, [activeKey]);
+    return /* @__PURE__ */ React.createElement("div", { ref: cRef, style: { position: "relative", overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, pill2 && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: pill2.top + 3,
+      height: pill2.height - 6,
+      background: "rgba(255,255,255,0.07)",
+      border: "1px solid #232324",
+      borderRadius: 16,
+      pointerEvents: "none",
+      zIndex: 0,
+      opacity: pill2.visible ? 1 : 0,
+      transition: `top ${pill2.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity .3s ease`
+    } }), items.map((it) => /* @__PURE__ */ React.createElement(
+      NavItem,
+      {
+        key: it.key,
+        rowRef: (el) => {
+          rRefs.current[it.key] = el;
+        },
+        bare: true,
+        id: it.id,
+        icon: it.icon,
+        label: it.label,
+        badge: it.badge,
+        onClick: it.onClick,
+        chevron: it.chevron,
+        active: it.active
+      }
+    )));
   };
   const FooterItem = ({ icon, label, onClick, kbd, active }) => {
     const [hov, setHov] = React.useState(false);
@@ -214,21 +267,24 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     height: "100%",
     transform: openCat != null ? "translateX(-50%)" : "translateX(0)",
     transition: "transform .3s cubic-bezier(0.4,0,0.2,1)"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { width: "50%", flexShrink: 0, paddingRight: 2, overflowY: "auto", scrollbarWidth: "none" } }, /* @__PURE__ */ React.createElement(NavItem, { id: topItem.id, icon: topItem.icon, label: topItem.label }), /* @__PURE__ */ React.createElement("div", { style: { height: 14 } }), sections.map((section, si) => {
-    const inHere = section.items.some((it) => it.id === (current === "campaign" ? "campaigns" : current));
-    return /* @__PURE__ */ React.createElement(
-      NavItem,
-      {
-        key: si,
-        id: "__cat_" + section.title,
-        icon: SECTION_ICONS[section.title] || "grid",
-        label: section.title,
-        onClick: () => openCategory(section.title),
-        chevron: true,
-        active: inHere
-      }
-    );
-  })), /* @__PURE__ */ React.createElement("div", { style: { width: "50%", flexShrink: 0, paddingLeft: 2, overflowY: "auto", scrollbarWidth: "none" } }, /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", { style: { width: "50%", flexShrink: 0, paddingRight: 2, height: "100%" } }, /* @__PURE__ */ React.createElement(PaneNav, { items: [
+    {
+      key: topItem.id,
+      id: topItem.id,
+      icon: topItem.icon,
+      label: topItem.label,
+      active: current === "dashboard"
+    },
+    ...sections.map((section) => ({
+      key: "__cat_" + section.title,
+      id: "__cat_" + section.title,
+      icon: SECTION_ICONS[section.title] || "grid",
+      label: section.title,
+      onClick: () => openCategory(section.title),
+      chevron: true,
+      active: section.items.some((it) => it.id === (current === "campaign" ? "campaigns" : current))
+    }))
+  ] })), /* @__PURE__ */ React.createElement("div", { style: { width: "50%", flexShrink: 0, paddingLeft: 2, height: "100%", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(
     "div",
     {
       onClick: () => setOpenCat(null),
@@ -240,6 +296,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         gap: 8,
         height: 44,
         padding: "0 10px",
+        flexShrink: 0,
         cursor: "pointer",
         color: "var(--text-muted)",
         transition: "color .15s",
@@ -251,7 +308,14 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { transform: "rotate(180deg)", flexShrink: 0 } }),
     /* @__PURE__ */ React.createElement("span", null, detailSection.title)
-  ), /* @__PURE__ */ React.createElement("div", { style: { height: 6 } }), detailSection.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ), /* @__PURE__ */ React.createElement("div", { style: { height: 6, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(PaneNav, { key: detailCat, items: detailSection.items.map((it) => ({
+    key: it.id,
+    id: it.id,
+    icon: it.icon,
+    label: it.label,
+    badge: it.badge,
+    active: it.id === (current === "campaign" ? "campaigns" : current)
+  })) })))) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
     fontSize: 11,
     fontWeight: 500,
     color: "var(--text-subtle)",
