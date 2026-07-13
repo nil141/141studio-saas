@@ -915,18 +915,27 @@ const clearRoutines = () => {
   _userdataSet("routineDone", {});
   _emit();
 };
-const routineItemDone = (routineId, dateStr, itemId) => {
+const _routineVal = (routineId, dateStr, itemId) => {
   var _a, _b, _c;
-  return !!((_c = (_b = (_a = _store.ROUTINE_DONE) == null ? void 0 : _a[routineId]) == null ? void 0 : _b[dateStr]) == null ? void 0 : _c[itemId]);
+  const v = (_c = (_b = (_a = _store.ROUTINE_DONE) == null ? void 0 : _a[routineId]) == null ? void 0 : _b[dateStr]) == null ? void 0 : _c[itemId];
+  if (v === true) return 100;
+  if (typeof v === "number") return Math.max(0, Math.min(100, v));
+  return 0;
 };
-const toggleRoutineItem = (routineId, dateStr, itemId) => {
+const routineItemProgress = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId);
+const routineItemDone = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId) >= 100;
+const setRoutineItemProgress = (routineId, dateStr, itemId, pct) => {
+  const val = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
   const done = { ..._store.ROUTINE_DONE };
   done[routineId] = { ...done[routineId] || {} };
   done[routineId][dateStr] = { ...done[routineId][dateStr] || {} };
-  done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
+  done[routineId][dateStr][itemId] = val;
   _store.ROUTINE_DONE = done;
   _userdataSet("routineDone", _store.ROUTINE_DONE);
   _emit();
+};
+const toggleRoutineItem = (routineId, dateStr, itemId) => {
+  setRoutineItemProgress(routineId, dateStr, itemId, routineItemDone(routineId, dateStr, itemId) ? 0 : 100);
 };
 const routineDayComplete = (routineId, dateStr) => {
   const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
@@ -1132,6 +1141,8 @@ window.Data = {
   routinesForDay,
   routineItemDone,
   toggleRoutineItem,
+  routineItemProgress,
+  setRoutineItemProgress,
   routineDayComplete,
   routineStreak,
   saveFinance,

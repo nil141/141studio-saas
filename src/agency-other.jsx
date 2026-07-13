@@ -163,6 +163,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const [selectedDay, setSelectedDay] = useState(initialDate ? new Date(initialDate + "T12:00:00") : new Date());
 
   const [taskModal,      setTaskModal]      = useState(null); // { task, pid }
+  const [routineModal,   setRoutineModal]   = useState(null); // { r, it }
   const [hideCompleted,  setHideCompleted]  = useState(false);
   const [optionsOpen,    setOptionsOpen]    = useState(false);
 
@@ -485,7 +486,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         maskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
       }}>
 
-      <window.RoutineDayList day={selDateStr} onEdit={(r) => openModal("editRoutine", { routine: r })}/>
+      <window.RoutineDayList day={selDateStr} onEdit={(r) => openModal("editRoutine", { routine: r })}
+        onStep={(r, it) => setRoutineModal({ r, it })}/>
 
       {visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && (
         <div style={{ textAlign:"center", padding:"60px 0", color:"var(--text-subtle)", fontSize:14, letterSpacing:"-0.5px" }}>
@@ -578,6 +580,25 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           }}
           onUpdate={changes => {
             window.Data.updateTask(taskModal.pid, taskModal.task.id, changes);
+          }}
+        />
+      )}
+
+      {routineModal && (
+        <TaskProgressModal
+          routineMode
+          open={true}
+          task={{
+            id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
+            title: routineModal.it.text,
+            progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
+            deadline: "",
+            column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo",
+          }}
+          onClose={() => setRoutineModal(null)}
+          onUpdate={changes => {
+            if (changes.progress != null)
+              D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
           }}
         />
       )}
@@ -2108,7 +2129,7 @@ const SettingsPage = () => {
 };
 
 // ── TaskProgressModal — arc progress picker ──────────────────
-const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate }) => {
+const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, routineMode }) => {
   const [progress,     setProgress]     = useState(0);
   const [dotsOpen,     setDotsOpen]     = useState(false);
   const [dragging,     setDragging]     = useState(false);
@@ -2221,6 +2242,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
   const statusLabel = progress === 100 ? "COMPLETADA" : progress === 0 ? "PENDIENTE" : "EN CURSO";
 
   const confirmProgress = () => {
+    if (routineMode) { onUpdate({ progress }); onClose(); return; }
     const updates = { progress };
     if (progress === 100) {
       updates.column = "done";
@@ -2292,8 +2314,8 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate 
             color:"var(--text-muted)", flexShrink:0,
           }}><Icon name="x" size={15}/></button>
 
-          {/* Right pill: ↗ + ··· */}
-          <div style={{ position:"relative" }}>
+          {/* Right pill: ↗ + ··· (no aplica a rutinas) */}
+          <div style={{ position:"relative", visibility: routineMode ? "hidden" : "visible" }}>
             <div style={{ display:"flex", alignItems:"center", background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
               <button onClick={() => setMode("edit")} style={{
                 width:46, height:40, background:"transparent", border:"none",

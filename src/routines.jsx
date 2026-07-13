@@ -157,7 +157,7 @@ const RoutineModal = ({ open, onClose, routine, date }) => {
 };
 
 // ── Tarjeta de una rutina para un día ────────────────────────────────
-const RoutineCard = ({ r, day, onEdit }) => {
+const RoutineCard = ({ r, day, onEdit, onStep }) => {
   const D = window.Data;
   const [celebrate, setCelebrate] = useState(false);
   const total = (r.items || []).length;
@@ -208,16 +208,22 @@ const RoutineCard = ({ r, day, onEdit }) => {
 
       {/* Pasos — cada uno como una fila de tarea (anillo + texto + estado) */}
       {r.items.map((it, idx) => {
-        const done = D.routineItemDone(r.id, day, it.id);
+        const pct = D.routineItemProgress ? D.routineItemProgress(r.id, day, it.id) : (D.routineItemDone(r.id, day, it.id) ? 100 : 0);
+        const done = pct >= 100;
         const last = idx === r.items.length - 1;
+        const circ = 2 * Math.PI * 17;
         return (
-          <div key={it.id} onClick={() => toggle(it)} className="task-row"
+          <div key={it.id} onClick={() => onStep ? onStep(r, it) : toggle(it)} className="task-row"
             style={{ display:"flex", alignItems:"center", gap:14, padding:"12px 4px", cursor:"pointer",
               borderBottom: last ? "none" : "0.5px solid var(--border)" }}>
             <div style={{ width:40, height:40, flexShrink:0, position:"relative", display:"flex", alignItems:"center", justifyContent:"center" }}>
               <svg width="40" height="40" style={{ position:"absolute", top:0, left:0 }}>
                 <circle cx="20" cy="20" r="17" fill="none"
                   stroke={done ? "var(--accent)" : "rgba(255,255,255,0.12)"} strokeWidth="2"/>
+                {!done && pct > 0 && (
+                  <circle cx="20" cy="20" r="17" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round"
+                    strokeDasharray={`${(pct/100)*circ} ${circ}`} transform="rotate(-90,20,20)"/>
+                )}
               </svg>
               {done
                 ? <Icon name="check" size={15} style={{ color:"var(--accent)", position:"relative" }}/>
@@ -228,7 +234,7 @@ const RoutineCard = ({ r, day, onEdit }) => {
                 color: done ? "var(--text-subtle)" : "var(--text)",
                 textDecoration: done ? "line-through" : "none" }}>{it.text}</div>
               <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
-                {done ? "Hecho" : "Por hacer"}
+                {done ? "Hecho" : pct > 0 ? `${pct}%` : "Por hacer"}
               </div>
             </div>
           </div>
@@ -368,7 +374,7 @@ const RoutineCelebration = ({ rId, day, onClose }) => {
 };
 
 // ── Lista de rutinas del día (se inserta en la vista de Tareas) ──────
-const RoutineDayList = ({ day, onEdit }) => {
+const RoutineDayList = ({ day, onEdit, onStep }) => {
   const D = window.Data;
   D.useStore();
   const routines = D.routinesForDay(day);
@@ -383,7 +389,7 @@ const RoutineDayList = ({ day, onEdit }) => {
           78%      { transform: scale(1.06) rotate(2deg); }
         }
       `}</style>
-      {routines.map(r => <RoutineCard key={r.id} r={r} day={day} onEdit={onEdit}/>)}
+      {routines.map(r => <RoutineCard key={r.id} r={r} day={day} onEdit={onEdit} onStep={onStep}/>)}
     </div>
   );
 };

@@ -799,16 +799,28 @@ const clearRoutines = () => {
   _emit();
 };
 
-const routineItemDone = (routineId, dateStr, itemId) =>
-  !!(_store.ROUTINE_DONE?.[routineId]?.[dateStr]?.[itemId]);
+// El valor guardado por paso/día puede ser booleano (legacy) o un número 0-100.
+const _routineVal = (routineId, dateStr, itemId) => {
+  const v = _store.ROUTINE_DONE?.[routineId]?.[dateStr]?.[itemId];
+  if (v === true) return 100;
+  if (typeof v === "number") return Math.max(0, Math.min(100, v));
+  return 0;
+};
+const routineItemProgress = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId);
+const routineItemDone = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId) >= 100;
 
-const toggleRoutineItem = (routineId, dateStr, itemId) => {
+const setRoutineItemProgress = (routineId, dateStr, itemId, pct) => {
+  const val = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
   const done = { ..._store.ROUTINE_DONE };
   done[routineId] = { ...(done[routineId] || {}) };
   done[routineId][dateStr] = { ...(done[routineId][dateStr] || {}) };
-  done[routineId][dateStr][itemId] = !done[routineId][dateStr][itemId];
+  done[routineId][dateStr][itemId] = val;
   _store.ROUTINE_DONE = done;
   _userdataSet("routineDone", _store.ROUTINE_DONE); _emit();
+};
+
+const toggleRoutineItem = (routineId, dateStr, itemId) => {
+  setRoutineItemProgress(routineId, dateStr, itemId, routineItemDone(routineId, dateStr, itemId) ? 0 : 100);
 };
 
 // ¿están todos los pasos de la rutina hechos ese día?
@@ -983,6 +995,7 @@ window.Data = {
   addTask, moveTask, updateTask, deleteTask,
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
+  routineItemProgress, setRoutineItemProgress,
   routineDayComplete, routineStreak,
   saveFinance,
   updateSettings,

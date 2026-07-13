@@ -127,7 +127,7 @@
       ), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: addItem, style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir"))))
     );
   };
-  var RoutineCard = ({ r, day, onEdit }) => {
+  var RoutineCard = ({ r, day, onEdit, onStep }) => {
     const D = window.Data;
     const [celebrate, setCelebrate] = useState(false);
     const total = (r.items || []).length;
@@ -178,13 +178,15 @@
       } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 13, strokeWidth: 1.7 })),
       /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
     )), r.items.map((it, idx) => {
-      const done = D.routineItemDone(r.id, day, it.id);
+      const pct = D.routineItemProgress ? D.routineItemProgress(r.id, day, it.id) : D.routineItemDone(r.id, day, it.id) ? 100 : 0;
+      const done = pct >= 100;
       const last = idx === r.items.length - 1;
+      const circ = 2 * Math.PI * 17;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
           key: it.id,
-          onClick: () => toggle(it),
+          onClick: () => onStep ? onStep(r, it) : toggle(it),
           className: "task-row",
           style: {
             display: "flex",
@@ -205,13 +207,26 @@
             stroke: done ? "var(--accent)" : "rgba(255,255,255,0.12)",
             strokeWidth: "2"
           }
+        ), !done && pct > 0 && /* @__PURE__ */ React.createElement(
+          "circle",
+          {
+            cx: "20",
+            cy: "20",
+            r: "17",
+            fill: "none",
+            stroke: "var(--accent)",
+            strokeWidth: "2",
+            strokeLinecap: "round",
+            strokeDasharray: `${pct / 100 * circ} ${circ}`,
+            transform: "rotate(-90,20,20)"
+          }
         )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } })),
         /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
           fontSize: 14,
           letterSpacing: "-0.5px",
           color: done ? "var(--text-subtle)" : "var(--text)",
           textDecoration: done ? "line-through" : "none"
-        } }, it.text), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, done ? "Hecho" : "Por hacer"))
+        } }, it.text), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, done ? "Hecho" : pct > 0 ? `${pct}%` : "Por hacer"))
       );
     }), celebrate && /* @__PURE__ */ React.createElement(RoutineCelebration, { rId: r.id, day, onClose: () => setCelebrate(false) }));
   };
@@ -315,7 +330,7 @@
       document.body
     );
   };
-  var RoutineDayList = ({ day, onEdit }) => {
+  var RoutineDayList = ({ day, onEdit, onStep }) => {
     const D = window.Data;
     D.useStore();
     const routines = D.routinesForDay(day);
@@ -327,7 +342,7 @@
           52%      { transform: scale(0.94) rotate(-1deg); }
           78%      { transform: scale(1.06) rotate(2deg); }
         }
-      `), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit })));
+      `), routines.map((r) => /* @__PURE__ */ React.createElement(RoutineCard, { key: r.id, r, day, onEdit, onStep })));
   };
   window.RoutineModal = RoutineModal;
   window.RoutineDayList = RoutineDayList;

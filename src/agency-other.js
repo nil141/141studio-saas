@@ -5,6 +5,7 @@
     D.useStore();
     const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : /* @__PURE__ */ new Date());
     const [taskModal, setTaskModal] = useState(null);
+    const [routineModal, setRoutineModal] = useState(null);
     const [hideCompleted, setHideCompleted] = useState(false);
     const [optionsOpen, setOptionsOpen] = useState(false);
     const DAY_ES = ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"];
@@ -298,7 +299,14 @@
         paddingBottom: 8,
         WebkitMaskImage: "linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
         maskImage: "linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)"
-      } }, /* @__PURE__ */ React.createElement(window.RoutineDayList, { day: selDateStr, onEdit: (r) => openModal("editRoutine", { routine: r }) }), visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), visibleGroups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: gIdx === visibleGroups.length - 1 ? 0 : 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
+      } }, /* @__PURE__ */ React.createElement(
+        window.RoutineDayList,
+        {
+          day: selDateStr,
+          onEdit: (r) => openModal("editRoutine", { routine: r }),
+          onStep: (r, it) => setRoutineModal({ r, it })
+        }
+      ), visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), visibleGroups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: gIdx === visibleGroups.length - 1 ? 0 : 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
         const pid = (project == null ? void 0 : project.id) || "__none__";
         const isDone = t.column === "done";
         const colLabel = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n" }[t.column];
@@ -364,6 +372,25 @@
           },
           onUpdate: (changes) => {
             window.Data.updateTask(taskModal.pid, taskModal.task.id, changes);
+          }
+        }
+      ),
+      routineModal && /* @__PURE__ */ React.createElement(
+        TaskProgressModal,
+        {
+          routineMode: true,
+          open: true,
+          task: {
+            id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
+            title: routineModal.it.text,
+            progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
+            deadline: "",
+            column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo"
+          },
+          onClose: () => setRoutineModal(null),
+          onUpdate: (changes) => {
+            if (changes.progress != null)
+              D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
           }
         }
       )
@@ -1399,7 +1426,7 @@
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Informaci\xF3n de la agencia y preferencias generales")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar cambios")), /* @__PURE__ */ React.createElement("div", { className: "rg-settings" }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Informaci\xF3n de la agencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Nombre de la agencia"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("name"), placeholder: "141'STUDIO" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tagline"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("tagline"), placeholder: "Agencia digital" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Email de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "email", ...field("email"), placeholder: "hello@tuagencia.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tel\xE9fono / WhatsApp"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("phone"), placeholder: "+34 600 000 000" })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Web"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("website"), placeholder: "https://tuagencia.com" })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Credenciales de acceso")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Las credenciales de acceso se gestionan directamente en el c\xF3digo fuente por seguridad."), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" } }, "Email: nil@141agency.com"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Apariencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "El tema claro/oscuro se controla con el bot\xF3n en la barra superior derecha."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "var(--accent-soft)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12 }), " Pr\xF3ximamente: colores de acento personalizables, logo de la agencia y dominio del portal cliente."))), /* @__PURE__ */ React.createElement(SessionCard, null)));
   };
-  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate }) => {
+  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, routineMode }) => {
     const [progress, setProgress] = useState(0);
     const [dotsOpen, setDotsOpen] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -1504,6 +1531,11 @@
     const TICKS = [0, 25, 50, 75, 100];
     const statusLabel = progress === 100 ? "COMPLETADA" : progress === 0 ? "PENDIENTE" : "EN CURSO";
     const confirmProgress = () => {
+      if (routineMode) {
+        onUpdate({ progress });
+        onClose();
+        return;
+      }
       const updates = { progress };
       if (progress === 100) {
         updates.column = "done";
@@ -1588,7 +1620,7 @@
             justifyContent: "center",
             color: "var(--text-muted)",
             flexShrink: 0
-          } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMode("edit"), style: {
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", visibility: routineMode ? "hidden" : "visible" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMode("edit"), style: {
             width: 46,
             height: 40,
             background: "transparent",
