@@ -1,5 +1,26 @@
 (() => {
   // src/agency-dashboard.jsx
+  var AnimatedValue = ({ num, fmt }) => {
+    const [disp, setDisp] = React.useState(0);
+    const raf = React.useRef();
+    useEffect(() => {
+      cancelAnimationFrame(raf.current);
+      const to = Number(num) || 0;
+      const dur = 700;
+      const ease = (t) => 1 - Math.pow(1 - t, 3);
+      let start = null;
+      const step = (ts) => {
+        if (start == null) start = ts;
+        const p = Math.min(1, (ts - start) / dur);
+        setDisp(to * ease(p));
+        if (p < 1) raf.current = requestAnimationFrame(step);
+        else setDisp(to);
+      };
+      raf.current = requestAnimationFrame(step);
+      return () => cancelAnimationFrame(raf.current);
+    }, [num]);
+    return fmt ? fmt(disp) : Math.round(disp);
+  };
   var parseSpanishDate = (str) => {
     if (!str || str === "\u2014") return null;
     const M = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11 };
@@ -231,28 +252,38 @@
       };
     };
     const [hoverKpi, setHoverKpi] = useState(null);
+    const _eur = (n) => `\u20AC${(Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    const _int = (n) => String(Math.round(Number(n) || 0));
     const kpis = [
       {
         label: "Proyectos activos",
         value: activeProjects,
+        num: activeProjects,
+        fmt: _int,
         delta: _countDelta(atRisk, "en riesgo"),
         nav: "projects"
       },
       {
         label: "Tareas pendientes",
         value: pendingTasks,
+        num: pendingTasks,
+        fmt: _int,
         delta: _countDelta(overdueTasks, "vencidas"),
         nav: "tasks"
       },
       {
         label: "Gastado este mes",
         value: `\u20AC${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        num: monthSpend,
+        fmt: _eur,
         delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
         nav: "billing"
       },
       {
         label: "Facturado este mes",
         value: stripeMonth === null ? "\u2026" : `\u20AC${facturadoCur.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        num: stripeMonth === null ? null : facturadoCur,
+        fmt: _eur,
         delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : {
           text: `\u20AC${facturadoPrev.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
           suffix: `vs ${prevMonthLabel}`,
@@ -338,7 +369,7 @@
       fontVariantNumeric: "tabular-nums",
       fontFamily: "var(--font-display)",
       color: "var(--text)"
-    } }, k.value), /* @__PURE__ */ React.createElement("div", { style: {
+    } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), /* @__PURE__ */ React.createElement("div", { style: {
       marginTop: 8,
       fontSize: 12,
       color: "var(--text-muted)",
@@ -357,7 +388,7 @@
       fontFamily: "var(--font-display)",
       fontVariantNumeric: "tabular-nums",
       lineHeight: 1
-    } }, k.value));
+    } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value));
     const AgendaBlock = ({ height = 360, slice = 8 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height } }, /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
@@ -442,7 +473,7 @@
       fontFamily: "var(--font-display)",
       fontVariantNumeric: "tabular-nums",
       lineHeight: 1.1
-    } }, k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
+    } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
     const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: {
       display: "flex",
       alignItems: "center",
@@ -471,7 +502,7 @@
           fontFamily: "var(--font-display)",
           fontVariantNumeric: "tabular-nums",
           transition: "color .15s"
-        } }, k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))
+        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))
       );
     })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {

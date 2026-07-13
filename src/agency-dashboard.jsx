@@ -1,5 +1,29 @@
 // Agency Dashboard — 141'STUDIO MVP
 
+// ── Número con animación de conteo (0 → valor, easeOutCubic) ──
+// A nivel de módulo para que no se reinicie en cada render del componente.
+const AnimatedValue = ({ num, fmt }) => {
+  const [disp, setDisp] = React.useState(0);
+  const raf = React.useRef();
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    const to = Number(num) || 0;
+    const dur = 700;
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    let start = null;
+    const step = (ts) => {
+      if (start == null) start = ts;
+      const p = Math.min(1, (ts - start) / dur);
+      setDisp(to * ease(p));
+      if (p < 1) raf.current = requestAnimationFrame(step);
+      else setDisp(to);
+    };
+    raf.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf.current);
+  }, [num]);
+  return fmt ? fmt(disp) : Math.round(disp);
+};
+
 // ── Date helpers ─────────────────────────────────────────────
 const parseSpanishDate = (str) => {
   if (!str || str === "—") return null;
@@ -261,28 +285,34 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   };
 
   const [hoverKpi, setHoverKpi] = useState(null);
+  const _eur = n => `€${(Number(n)||0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const _int = n => String(Math.round(Number(n)||0));
   const kpis = [
     {
       label:  "Proyectos activos",
       value:  activeProjects,
+      num:    activeProjects, fmt: _int,
       delta:  _countDelta(atRisk, "en riesgo"),
       nav:    "projects",
     },
     {
       label:  "Tareas pendientes",
       value:  pendingTasks,
+      num:    pendingTasks, fmt: _int,
       delta:  _countDelta(overdueTasks, "vencidas"),
       nav:    "tasks",
     },
     {
       label:  "Gastado este mes",
       value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      num:    monthSpend, fmt: _eur,
       delta:  _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
       nav:    "billing",
     },
     {
       label:  "Facturado este mes",
       value:  stripeMonth===null?"…":`€${facturadoCur.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+      num:    stripeMonth===null ? null : facturadoCur, fmt: _eur,
       delta:  stripeMonth===null ? { text:"—", dir:"flat", tone:"muted" }
                 : facturadoPrev > 0
                   ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`)
@@ -376,7 +406,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           fontWeight: 400, lineHeight: 1, letterSpacing: "-1.1px",
           fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
           color: "var(--text)",
-        }}>{k.value}</div>
+        }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
         <div style={{
           marginTop: 8, fontSize: 12, color: "var(--text-muted)",
           fontWeight: 500, letterSpacing: "-0.3px",
@@ -399,7 +429,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 18 : 22,
         fontWeight: 400, letterSpacing: "-0.8px", fontFamily: "var(--font-display)",
         fontVariantNumeric: "tabular-nums", lineHeight: 1,
-      }}>{k.value}</div>
+      }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
     </div>
   );
 
@@ -496,7 +526,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 26,
             fontWeight: 400, letterSpacing: "-0.9px", fontFamily: "var(--font-display)",
             fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
-          }}>{k.value}</div>
+          }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
           <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{k.sub}</div>
         </div>
       ))}
@@ -523,7 +553,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.value}</span>
+                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
                 {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
               </div>
               {k.delta && <MetricDelta {...k.delta}/>}
