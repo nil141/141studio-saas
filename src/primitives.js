@@ -17,11 +17,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const D = window.Data;
   D.useStore();
   const pendingTasks = Object.values(D.TASKS).flat().filter((t) => t.column !== "done").length || null;
+  const topItem = { id: "dashboard", label: "Inicio", icon: "home" };
   const agencySections = [
     {
       title: "Trabajo",
       items: [
-        { id: "dashboard", label: "Inicio", icon: "home" },
         { id: "projects", label: "Proyectos", icon: "folder" },
         { id: "tasks", label: "Tareas", icon: "list-todo" },
         { id: "clients", label: "Clientes", icon: "users" },
@@ -55,6 +55,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     }
   ];
   const sections = kind === "client" ? clientSections : agencySections;
+  const collapsible = kind === "agency";
+  const sectionOfItem = {};
+  sections.forEach((s) => s.items.forEach((it) => {
+    sectionOfItem[it.id] = s.title;
+  }));
   const cleanName = (raw, fallback) => {
     if (!raw) return fallback;
     const n = raw.includes("@") ? raw.split("@")[0] : raw;
@@ -85,23 +90,26 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null);
   const firstPill = useRef(true);
-  useEffect(() => {
+  const measurePill = () => {
     const activeId = current === "campaign" ? "campaigns" : current;
     const el = itemRefs.current[activeId];
     const container = navContainerRef.current;
-    if (!el || !container) {
+    const secTitle = sectionOfItem[activeId];
+    if (!el || !container || secTitle && collapsed.has(secTitle)) {
       setPill((prev) => prev ? { ...prev, visible: false } : null);
       return;
     }
     const eR = el.getBoundingClientRect();
     const cR = container.getBoundingClientRect();
     const top = eR.top - cR.top + container.scrollTop;
-    if (firstPill.current) {
-      firstPill.current = false;
-      setPill({ top, height: eR.height, animated: false, visible: true });
-    } else {
-      setPill({ top, height: eR.height, animated: true, visible: true });
-    }
+    const animated = !firstPill.current;
+    firstPill.current = false;
+    setPill({ top, height: eR.height, animated, visible: true });
+  };
+  useEffect(() => {
+    measurePill();
+    const t = setTimeout(measurePill, 280);
+    return () => clearTimeout(t);
   }, [current, collapsed]);
   const NavItem = ({ id, icon, label, badge }) => {
     const [hov, setHov] = React.useState(false);
@@ -208,9 +216,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     zIndex: 0,
     opacity: pill.visible ? 1 : 0,
     transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`
-  } }), sections.map((section, si) => {
-    const isCollapsed = collapsed.has(section.title);
-    return /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: isCollapsed ? 6 : 20 } }, /* @__PURE__ */ React.createElement(
+  } }), collapsible && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement(NavItem, { id: topItem.id, icon: topItem.icon, label: topItem.label })), sections.map((section, si) => {
+    const isCollapsed = collapsible && collapsed.has(section.title);
+    return /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 6 } }, collapsible ? /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => toggleSection(section.title),
@@ -241,11 +249,28 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           name: "chevron",
           size: 11,
           strokeWidth: 2.2,
-          style: { transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .18s ease", flexShrink: 0, opacity: 0.7 }
+          style: { transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .2s ease", flexShrink: 0, opacity: 0.6 }
         }
       ),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, section.title)
-    ), !isCollapsed && section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })));
+    ) : /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 11,
+      fontWeight: 500,
+      color: "var(--text-subtle)",
+      letterSpacing: "0.06em",
+      textTransform: "uppercase",
+      padding: "0 12px",
+      marginBottom: 2
+    } }, section.title), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "grid",
+      gridTemplateRows: isCollapsed ? "0fr" : "1fr",
+      transition: "grid-template-rows .24s cubic-bezier(0.4,0,0.2,1)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      overflow: "hidden",
+      minHeight: 0,
+      opacity: isCollapsed ? 0 : 1,
+      transition: "opacity .18s ease"
+    } }, section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))));
   })), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",

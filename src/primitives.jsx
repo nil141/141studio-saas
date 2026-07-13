@@ -26,11 +26,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
   const pendingTasks = Object.values(D.TASKS).flat().filter(t => t.column !== "done").length || null;
 
+  // "Inicio" va fijo arriba, fuera de las categorías plegables
+  const topItem = { id: "dashboard", label: "Inicio", icon: "home" };
+
   const agencySections = [
     {
       title: "Trabajo",
       items: [
-        { id: "dashboard",  label: "Inicio",      icon: "home" },
         { id: "projects",   label: "Proyectos",   icon: "folder" },
         { id: "tasks",      label: "Tareas",      icon: "list-todo" },
         { id: "clients",    label: "Clientes",    icon: "users" },
@@ -66,6 +68,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   ];
 
   const sections = kind === "client" ? clientSections : agencySections;
+  const collapsible = kind === "agency";
+  const sectionOfItem = {};
+  sections.forEach(s => s.items.forEach(it => { sectionOfItem[it.id] = s.title; }));
 
   const cleanName = (raw, fallback) => {
     if (!raw) return fallback;
@@ -101,24 +106,29 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const [pill, setPill] = React.useState(null); // { top, height, animated, visible }
   const firstPill = useRef(true);
 
-  useEffect(() => {
+  const measurePill = () => {
     const activeId = current === "campaign" ? "campaigns" : current;
     const el = itemRefs.current[activeId];
     const container = navContainerRef.current;
-    if (!el || !container) {
-      // Footer page: fade out the pill
+    const secTitle = sectionOfItem[activeId];
+    if (!el || !container || (secTitle && collapsed.has(secTitle))) {
+      // Página de footer o sección plegada: se oculta la píldora
       setPill(prev => prev ? { ...prev, visible: false } : null);
       return;
     }
     const eR = el.getBoundingClientRect();
     const cR = container.getBoundingClientRect();
     const top = eR.top - cR.top + container.scrollTop;
-    if (firstPill.current) {
-      firstPill.current = false;
-      setPill({ top, height: eR.height, animated: false, visible: true });
-    } else {
-      setPill({ top, height: eR.height, animated: true, visible: true });
-    }
+    const animated = !firstPill.current;
+    firstPill.current = false;
+    setPill({ top, height: eR.height, animated, visible: true });
+  };
+
+  useEffect(() => {
+    measurePill();
+    // Recolocar tras la animación de plegado/desplegado
+    const t = setTimeout(measurePill, 280);
+    return () => clearTimeout(t);
   }, [current, collapsed]);
 
   const NavItem = ({ id, icon, label, badge }) => {
@@ -222,29 +232,53 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             transition: `top ${pill.animated ? "0.22s cubic-bezier(0.4,0,0.2,1)" : "0s"}, opacity 0.45s ease`,
           }}/>
         )}
+        {/* Inicio fijo arriba (agencia) */}
+        {collapsible && (
+          <div style={{marginBottom: 18}}>
+            <NavItem id={topItem.id} icon={topItem.icon} label={topItem.label}/>
+          </div>
+        )}
         {sections.map((section, si) => {
-          const isCollapsed = collapsed.has(section.title);
+          const isCollapsed = collapsible && collapsed.has(section.title);
           return (
-            <div key={si} style={{marginBottom: isCollapsed ? 6 : 20}}>
-              <button
-                onClick={() => toggleSection(section.title)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 6, width: "100%",
+            <div key={si} style={{marginBottom: 6}}>
+              {collapsible ? (
+                <button
+                  onClick={() => toggleSection(section.title)}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 6, width: "100%",
+                    fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
+                    letterSpacing: "0.06em", textTransform: "uppercase",
+                    padding: "6px 12px", marginBottom: 2, background: "none", border: "none",
+                    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.color = "var(--text-muted)"}
+                  onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}
+                >
+                  <Icon name="chevron" size={11} strokeWidth={2.2}
+                    style={{ transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .2s ease", flexShrink: 0, opacity: 0.6 }}/>
+                  <span style={{flex:1}}>{section.title}</span>
+                </button>
+              ) : (
+                <div style={{
                   fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
                   letterSpacing: "0.06em", textTransform: "uppercase",
-                  padding: "6px 12px", marginBottom: 2, background: "none", border: "none",
-                  cursor: "pointer", fontFamily: "inherit", textAlign: "left",
-                }}
-                onMouseEnter={e => e.currentTarget.style.color = "var(--text-muted)"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}
-              >
-                <Icon name="chevron" size={11} strokeWidth={2.2}
-                  style={{ transform: isCollapsed ? "rotate(0deg)" : "rotate(90deg)", transition: "transform .18s ease", flexShrink: 0, opacity: 0.7 }}/>
-                <span style={{flex:1}}>{section.title}</span>
-              </button>
-              {!isCollapsed && section.items.map(it => (
-                <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
-              ))}
+                  padding: "0 12px", marginBottom: 2,
+                }}>{section.title}</div>
+              )}
+              {/* Contenedor con animación suave de altura */}
+              <div style={{
+                display: "grid",
+                gridTemplateRows: isCollapsed ? "0fr" : "1fr",
+                transition: "grid-template-rows .24s cubic-bezier(0.4,0,0.2,1)",
+              }}>
+                <div style={{overflow: "hidden", minHeight: 0,
+                  opacity: isCollapsed ? 0 : 1, transition: "opacity .18s ease"}}>
+                  {section.items.map(it => (
+                    <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} badge={it.badge}/>
+                  ))}
+                </div>
+              </div>
             </div>
           );
         })}
