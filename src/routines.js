@@ -220,7 +220,7 @@
             strokeDasharray: `${pct / 100 * circ} ${circ}`,
             transform: "rotate(-90,20,20)"
           }
-        )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : pct > 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.5px" } }, pct) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } })),
+        )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15, style: { color: "var(--accent)", position: "relative" } }) : pct > 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.5px" } }, pct, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 7.5 } }, "%")) : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11, style: { color: "rgba(255,255,255,0.22)", position: "relative" } })),
         /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
           fontSize: 14,
           letterSpacing: "-0.5px",
