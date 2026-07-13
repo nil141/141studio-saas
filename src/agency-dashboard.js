@@ -42,7 +42,11 @@
     const _liveTasks = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([, arr]) => arr);
     const _todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const _pending = _liveTasks.filter((t) => t.column !== "done");
-    const pendingTasks = _pending.filter((t) => t.deadline && t.deadline <= _todayStr).length;
+    const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
+      (n, r) => n + (r.items || []).filter((it) => !D.routineItemDone(r.id, _todayStr, it.id)).length,
+      0
+    );
+    const pendingTasks = _pending.filter((t) => t.deadline && t.deadline <= _todayStr).length + _routinePending;
     const overdueTasks = _pending.filter((t) => t.deadline && t.deadline < _todayStr).length;
     const backlogTasks = _pending.length;
     const pendingInvoices = D.INVOICES.filter((i) => i.status !== "paid").length;

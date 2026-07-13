@@ -67,8 +67,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const _todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
   const _pending  = _liveTasks.filter(t => t.column !== "done");
   // "Tareas pendientes" del panel = las de HOY: vencen hoy o son atrasadas que
-  // se arrastran (misma lógica que el tablero de Tareas).
-  const pendingTasks = _pending.filter(t => t.deadline && t.deadline <= _todayStr).length;
+  // se arrastran (misma lógica que el tablero de Tareas) + pasos de rutina de
+  // hoy que aún no están hechos.
+  const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
+    (n, r) => n + (r.items || []).filter(it => !D.routineItemDone(r.id, _todayStr, it.id)).length, 0
+  );
+  const pendingTasks = _pending.filter(t => t.deadline && t.deadline <= _todayStr).length + _routinePending;
   const overdueTasks = _pending.filter(t => t.deadline && t.deadline < _todayStr).length;
   const backlogTasks = _pending.length;   // todas las incompletas (para la cola de trabajo)
   const pendingInvoices = D.INVOICES.filter(i => i.status !== "paid").length;
