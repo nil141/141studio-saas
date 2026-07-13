@@ -80,6 +80,18 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const openCategory = (title) => { setDetailCat(title); setOpenCat(title); };
   const detailSection = sections.find(s => s.title === detailCat) || sections[0];
 
+  // Al NAVEGAR a una página dentro de una categoría (p. ej. desde un KPI de
+  // Inicio), abrimos su nivel 2 automáticamente. Solo al cambiar de página,
+  // para no impedir volver al nivel 1 manualmente.
+  const prevCurrent = useRef(current);
+  useEffect(() => {
+    if (!drilldown || prevCurrent.current === current) return;
+    prevCurrent.current = current;
+    const sec = sectionOfItem[current === "campaign" ? "campaigns" : current];
+    if (sec) { setDetailCat(sec); setOpenCat(sec); }
+    else setOpenCat(null);
+  }, [current]);
+
   const cleanName = (raw, fallback) => {
     if (!raw) return fallback;
     const n = raw.includes("@") ? raw.split("@")[0] : raw;
