@@ -28,6 +28,8 @@
     })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
+    const mondayIdxs = stripDays.map((d, i) => d.getDay() === 1 ? i : -1).filter((i) => i >= 0 && i + 6 < stripDays.length);
+    const weekIdxRef = useRef(-1);
     const snapTimer = useRef(null);
     const onStripScroll = () => {
       const el = stripRef.current;
@@ -36,18 +38,21 @@
       snapTimer.current = setTimeout(() => {
         const dayW = el.clientWidth / 7;
         if (!dayW) return;
-        const curIdx = el.scrollLeft / dayW;
-        let best = null;
-        stripDays.forEach((d, i) => {
-          if (d.getDay() !== 1) return;
-          if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
-        });
-        if (best === null) return;
-        const target = Math.max(0, Math.round(best * dayW));
+        const anchor = weekIdxRef.current >= 0 ? weekIdxRef.current : Math.round(el.scrollLeft / dayW);
+        const delta = el.scrollLeft - anchor * dayW;
+        const THRESH = dayW * 0.12;
+        let mIdx = anchor;
+        if (delta > THRESH) mIdx = anchor + 7;
+        else if (delta < -THRESH) mIdx = anchor - 7;
+        if (mondayIdxs.length) {
+          mIdx = Math.max(mondayIdxs[0], Math.min(mIdx, mondayIdxs[mondayIdxs.length - 1]));
+          if (!mondayIdxs.includes(mIdx)) mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
+        }
+        weekIdxRef.current = mIdx;
+        const target = Math.max(0, Math.round(mIdx * dayW));
         if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
-      }, 130);
+      }, 80);
     };
-    const weekIdxRef = useRef(-1);
     useEffect(() => {
       const el = stripRef.current;
       if (!el) return;

@@ -191,26 +191,35 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   // Snap semana a semana SOLO al hacer scroll manual (no al cambiar de día),
   // para que no tiemble al seleccionar. Al terminar de desplazar, encaja al
   // lunes más cercano.
-  // Al terminar de desplazar la tira, encaja al lunes más cercano.
+  // Lunes válidos (que tengan la semana completa visible).
+  const mondayIdxs = stripDays.map((d, i) => (d.getDay() === 1 ? i : -1)).filter(i => i >= 0 && i + 6 < stripDays.length);
+  const weekIdxRef = useRef(-1); // índice del lunes de la semana mostrada
+
+  // Paginado por semana: a la mínima que desplaces, salta a la semana entera
+  // siguiente/anterior (no hay que arrastrar media semana).
   const snapTimer = useRef(null);
   const onStripScroll = () => {
     const el = stripRef.current; if (!el) return;
     clearTimeout(snapTimer.current);
     snapTimer.current = setTimeout(() => {
       const dayW = el.clientWidth / 7; if (!dayW) return;
-      const curIdx = el.scrollLeft / dayW;
-      let best = null;
-      stripDays.forEach((d, i) => {
-        if (d.getDay() !== 1) return; // solo lunes
-        if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
-      });
-      if (best === null) return;
-      const target = Math.max(0, Math.round(best * dayW));
+      const anchor = weekIdxRef.current >= 0 ? weekIdxRef.current : Math.round(el.scrollLeft / dayW);
+      const delta  = el.scrollLeft - anchor * dayW;
+      const THRESH = dayW * 0.12;        // basta un empujón mínimo
+      let mIdx = anchor;
+      if (delta > THRESH) mIdx = anchor + 7;        // semana siguiente
+      else if (delta < -THRESH) mIdx = anchor - 7;  // semana anterior
+      // Encajar a un lunes válido dentro del rango
+      if (mondayIdxs.length) {
+        mIdx = Math.max(mondayIdxs[0], Math.min(mIdx, mondayIdxs[mondayIdxs.length - 1]));
+        if (!mondayIdxs.includes(mIdx)) mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
+      }
+      weekIdxRef.current = mIdx;
+      const target = Math.max(0, Math.round(mIdx * dayW));
       if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
-    }, 130);
+    }, 80);
   };
 
-  const weekIdxRef = useRef(-1);
   useEffect(() => {
     const el = stripRef.current; if (!el) return;
     const monday = new Date(selMid);
