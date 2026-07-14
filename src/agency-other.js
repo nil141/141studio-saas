@@ -213,9 +213,7 @@
             padding: "6px 0",
             scrollSnapAlign: d.getDay() === 1 ? "start" : "none",
             // encaja por lunes
-            scrollSnapStop: d.getDay() === 1 ? "always" : "normal",
-            transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
-            transform: isSel ? "scale(1.04)" : "scale(1)"
+            scrollSnapStop: d.getDay() === 1 ? "always" : "normal"
           } }, /* @__PURE__ */ React.createElement("span", { style: {
             fontSize: 10,
             fontWeight: 600,
@@ -229,7 +227,9 @@
             height: sz,
             display: "flex",
             alignItems: "center",
-            justifyContent: "center"
+            justifyContent: "center",
+            transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
+            transform: isSel ? "scale(1.06)" : "scale(1)"
           } }, /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement(
             "circle",
             {

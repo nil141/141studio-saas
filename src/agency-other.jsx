@@ -391,8 +391,6 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                     gap:8, padding:"6px 0",
                     scrollSnapAlign: d.getDay() === 1 ? "start" : "none",  // encaja por lunes
                     scrollSnapStop: d.getDay() === 1 ? "always" : "normal",
-                    transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
-                    transform: isSel ? "scale(1.04)" : "scale(1)",
                   }}>
                     {/* Eyebrow */}
                     <span style={{
@@ -404,11 +402,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                       {["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"][d.getDay()]}
                     </span>
 
-                    {/* Ring + número */}
+                    {/* Ring + número (el "crecer" al seleccionar va aquí, no en el
+                        botón, para no mover el punto de anclaje del scroll) */}
                     <div style={{
                       position:"relative",
                       width:sz, height:sz,
                       display:"flex", alignItems:"center", justifyContent:"center",
+                      transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
+                      transform: isSel ? "scale(1.06)" : "scale(1)",
                     }}>
                       <svg width={sz} height={sz} style={{ position:"absolute", inset:0, transform:"rotate(-90deg)" }}>
                         {/* Track completo */}
