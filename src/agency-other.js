@@ -180,8 +180,7 @@
           padding: "4px 0",
           overflowX: "auto",
           scrollbarWidth: "none",
-          msOverflowStyle: "none",
-          scrollSnapType: "x mandatory"
+          msOverflowStyle: "none"
         } }, stripDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);

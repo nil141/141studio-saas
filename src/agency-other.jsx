@@ -357,7 +357,6 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
             <div ref={stripRef} className="day-scroll" style={{
               display:"flex", alignItems:"stretch", padding:"4px 0",
               overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
-              scrollSnapType:"x mandatory",
             }}>
               {stripDays.map((d, i) => {
                 const dMid = new Date(d); dMid.setHours(0,0,0,0);
