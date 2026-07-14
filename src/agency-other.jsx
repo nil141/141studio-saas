@@ -185,41 +185,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
 
   // Alinear la tira al LUNES de la semana del día seleccionado
-  // (así se ve lunes→domingo; el ancho de día = 1/7 del contenedor visible).
-  // Solo re-alinea cuando cambia la SEMANA: cambiar de día dentro de la misma
-  // semana no debe mover la tira.
-  // Snap semana a semana SOLO al hacer scroll manual (no al cambiar de día),
-  // para que no tiemble al seleccionar. Al terminar de desplazar, encaja al
-  // lunes más cercano.
-  // Lunes válidos (que tengan la semana completa visible).
-  const mondayIdxs = stripDays.map((d, i) => (d.getDay() === 1 ? i : -1)).filter(i => i >= 0 && i + 6 < stripDays.length);
-  const weekIdxRef = useRef(-1); // índice del lunes de la semana mostrada
-
-  // Paginado por semana: a la mínima que desplaces, salta a la semana entera
-  // siguiente/anterior (no hay que arrastrar media semana).
-  const snapTimer = useRef(null);
-  const onStripScroll = () => {
-    const el = stripRef.current; if (!el) return;
-    clearTimeout(snapTimer.current);
-    snapTimer.current = setTimeout(() => {
-      const dayW = el.clientWidth / 7; if (!dayW) return;
-      const anchor = weekIdxRef.current >= 0 ? weekIdxRef.current : Math.round(el.scrollLeft / dayW);
-      const delta  = el.scrollLeft - anchor * dayW;
-      const THRESH = dayW * 0.12;        // basta un empujón mínimo
-      let mIdx = anchor;
-      if (delta > THRESH) mIdx = anchor + 7;        // semana siguiente
-      else if (delta < -THRESH) mIdx = anchor - 7;  // semana anterior
-      // Encajar a un lunes válido dentro del rango
-      if (mondayIdxs.length) {
-        mIdx = Math.max(mondayIdxs[0], Math.min(mIdx, mondayIdxs[mondayIdxs.length - 1]));
-        if (!mondayIdxs.includes(mIdx)) mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
-      }
-      weekIdxRef.current = mIdx;
-      const target = Math.max(0, Math.round(mIdx * dayW));
-      if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "auto" });
-    }, 45);
-  };
-
+  // (así se ve lunes→domingo; el ancho de día = 1/7 del contenedor visible)
   useEffect(() => {
     const el = stripRef.current; if (!el) return;
     const monday = new Date(selMid);
@@ -228,8 +194,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       const m = new Date(d); m.setHours(0,0,0,0);
       return m.getTime() === monday.getTime();
     });
-    if (idx < 0 || idx === weekIdxRef.current) return; // misma semana → no mover
-    weekIdxRef.current = idx;
+    if (idx < 0) return;
     const dayW = el.clientWidth / 7;
     el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
     el.dataset.init = "1";
@@ -385,9 +350,10 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         {/* Day strip — activity rings con scroll horizontal */}
         {(() => {
           return (
-            <div ref={stripRef} className="day-scroll" onScroll={onStripScroll} style={{
+            <div ref={stripRef} className="day-scroll" style={{
               display:"flex", alignItems:"stretch", padding:"4px 0",
               overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
+              scrollSnapType:"x mandatory",
             }}>
               {stripDays.map((d, i) => {
                 const dMid = new Date(d); dMid.setHours(0,0,0,0);

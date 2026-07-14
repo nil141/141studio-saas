@@ -28,31 +28,6 @@
     })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
-    const mondayIdxs = stripDays.map((d, i) => d.getDay() === 1 ? i : -1).filter((i) => i >= 0 && i + 6 < stripDays.length);
-    const weekIdxRef = useRef(-1);
-    const snapTimer = useRef(null);
-    const onStripScroll = () => {
-      const el = stripRef.current;
-      if (!el) return;
-      clearTimeout(snapTimer.current);
-      snapTimer.current = setTimeout(() => {
-        const dayW = el.clientWidth / 7;
-        if (!dayW) return;
-        const anchor = weekIdxRef.current >= 0 ? weekIdxRef.current : Math.round(el.scrollLeft / dayW);
-        const delta = el.scrollLeft - anchor * dayW;
-        const THRESH = dayW * 0.12;
-        let mIdx = anchor;
-        if (delta > THRESH) mIdx = anchor + 7;
-        else if (delta < -THRESH) mIdx = anchor - 7;
-        if (mondayIdxs.length) {
-          mIdx = Math.max(mondayIdxs[0], Math.min(mIdx, mondayIdxs[mondayIdxs.length - 1]));
-          if (!mondayIdxs.includes(mIdx)) mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
-        }
-        weekIdxRef.current = mIdx;
-        const target = Math.max(0, Math.round(mIdx * dayW));
-        if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "auto" });
-      }, 45);
-    };
     useEffect(() => {
       const el = stripRef.current;
       if (!el) return;
@@ -63,8 +38,7 @@
         m.setHours(0, 0, 0, 0);
         return m.getTime() === monday.getTime();
       });
-      if (idx < 0 || idx === weekIdxRef.current) return;
-      weekIdxRef.current = idx;
+      if (idx < 0) return;
       const dayW = el.clientWidth / 7;
       el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";
@@ -198,13 +172,14 @@
         }
       )),
       /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 0, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
-        return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", onScroll: onStripScroll, style: {
+        return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", style: {
           display: "flex",
           alignItems: "stretch",
           padding: "4px 0",
           overflowX: "auto",
           scrollbarWidth: "none",
-          msOverflowStyle: "none"
+          msOverflowStyle: "none",
+          scrollSnapType: "x mandatory"
         } }, stripDays.map((d, i) => {
           const dMid = new Date(d);
           dMid.setHours(0, 0, 0, 0);
