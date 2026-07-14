@@ -191,22 +191,29 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   // Snap semana a semana SOLO al hacer scroll manual (no al cambiar de día),
   // para que no tiemble al seleccionar. Al terminar de desplazar, encaja al
   // lunes más cercano.
+  // Índices de la tira que caen en lunes (inicios de semana válidos).
+  const mondayIdxs = stripDays.map((d, i) => (d.getDay() === 1 ? i : -1)).filter(i => i >= 0 && i + 6 < stripDays.length);
+  const weekLeftRef = useRef(0);   // px del inicio de la semana actual
   const snapTimer = useRef(null);
   const onStripScroll = () => {
     const el = stripRef.current; if (!el) return;
     clearTimeout(snapTimer.current);
     snapTimer.current = setTimeout(() => {
       const dayW = el.clientWidth / 7; if (!dayW) return;
-      const curIdx = el.scrollLeft / dayW;
-      let best = null;
-      stripDays.forEach((d, i) => {
-        if (d.getDay() !== 1) return; // solo lunes
-        if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
-      });
-      if (best === null) return;
-      const target = Math.max(0, Math.round(best * dayW));
+      const anchor = weekLeftRef.current;
+      const delta  = el.scrollLeft - anchor;
+      const THRESH = dayW * 0.25;   // basta un scroll pequeño para pasar de semana
+      let mIdx = Math.round(anchor / dayW);
+      if (delta > THRESH) mIdx += 7;        // avanza una semana
+      else if (delta < -THRESH) mIdx -= 7;  // retrocede una semana
+      // Encajar a un lunes válido
+      if (!mondayIdxs.includes(mIdx)) {
+        mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
+      }
+      const target = Math.max(0, Math.round(mIdx * dayW));
+      weekLeftRef.current = target;
       if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
-    }, 130);
+    }, 90);
   };
 
   const weekIdxRef = useRef(-1);
@@ -221,7 +228,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
     if (idx < 0 || idx === weekIdxRef.current) return; // misma semana → no mover
     weekIdxRef.current = idx;
     const dayW = el.clientWidth / 7;
-    el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
+    const left = Math.max(0, idx * dayW);
+    weekLeftRef.current = left;
+    el.scrollTo({ left, behavior: el.dataset.init ? "smooth" : "auto" });
     el.dataset.init = "1";
   }, [selectedDay]);
 
