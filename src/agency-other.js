@@ -28,8 +28,6 @@
     })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
-    const mondayIdxs = stripDays.map((d, i) => d.getDay() === 1 ? i : -1).filter((i) => i >= 0 && i + 6 < stripDays.length);
-    const weekLeftRef = useRef(0);
     const snapTimer = useRef(null);
     const onStripScroll = () => {
       const el = stripRef.current;
@@ -38,19 +36,16 @@
       snapTimer.current = setTimeout(() => {
         const dayW = el.clientWidth / 7;
         if (!dayW) return;
-        const anchor = weekLeftRef.current;
-        const delta = el.scrollLeft - anchor;
-        const THRESH = dayW * 0.25;
-        let mIdx = Math.round(anchor / dayW);
-        if (delta > THRESH) mIdx += 7;
-        else if (delta < -THRESH) mIdx -= 7;
-        if (!mondayIdxs.includes(mIdx)) {
-          mIdx = mondayIdxs.reduce((b, x) => Math.abs(x - mIdx) < Math.abs(b - mIdx) ? x : b, mondayIdxs[0]);
-        }
-        const target = Math.max(0, Math.round(mIdx * dayW));
-        weekLeftRef.current = target;
+        const curIdx = el.scrollLeft / dayW;
+        let best = null;
+        stripDays.forEach((d, i) => {
+          if (d.getDay() !== 1) return;
+          if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
+        });
+        if (best === null) return;
+        const target = Math.max(0, Math.round(best * dayW));
         if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
-      }, 90);
+      }, 130);
     };
     const weekIdxRef = useRef(-1);
     useEffect(() => {
@@ -66,9 +61,7 @@
       if (idx < 0 || idx === weekIdxRef.current) return;
       weekIdxRef.current = idx;
       const dayW = el.clientWidth / 7;
-      const left = Math.max(0, idx * dayW);
-      weekLeftRef.current = left;
-      el.scrollTo({ left, behavior: el.dataset.init ? "smooth" : "auto" });
+      el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";
     }, [selectedDay]);
     const _projIds = new Set(D.PROJECTS.map((p) => p.id));
