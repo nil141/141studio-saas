@@ -28,6 +28,7 @@
     })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
+    const weekIdxRef = useRef(-1);
     useEffect(() => {
       const el = stripRef.current;
       if (!el) return;
@@ -38,7 +39,8 @@
         m.setHours(0, 0, 0, 0);
         return m.getTime() === monday.getTime();
       });
-      if (idx < 0) return;
+      if (idx < 0 || idx === weekIdxRef.current) return;
+      weekIdxRef.current = idx;
       const dayW = el.clientWidth / 7;
       el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
       el.dataset.init = "1";

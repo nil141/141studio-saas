@@ -185,7 +185,10 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const selMid   = new Date(selectedDay); selMid.setHours(0,0,0,0);
 
   // Alinear la tira al LUNES de la semana del día seleccionado
-  // (así se ve lunes→domingo; el ancho de día = 1/7 del contenedor visible)
+  // (así se ve lunes→domingo; el ancho de día = 1/7 del contenedor visible).
+  // Solo re-alinea cuando cambia la SEMANA: cambiar de día dentro de la misma
+  // semana no debe mover la tira.
+  const weekIdxRef = useRef(-1);
   useEffect(() => {
     const el = stripRef.current; if (!el) return;
     const monday = new Date(selMid);
@@ -194,7 +197,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       const m = new Date(d); m.setHours(0,0,0,0);
       return m.getTime() === monday.getTime();
     });
-    if (idx < 0) return;
+    if (idx < 0 || idx === weekIdxRef.current) return; // misma semana → no mover
+    weekIdxRef.current = idx;
     const dayW = el.clientWidth / 7;
     el.scrollTo({ left: Math.max(0, idx * dayW), behavior: el.dataset.init ? "smooth" : "auto" });
     el.dataset.init = "1";
