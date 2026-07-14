@@ -28,6 +28,25 @@
     })();
     const selMid = new Date(selectedDay);
     selMid.setHours(0, 0, 0, 0);
+    const snapTimer = useRef(null);
+    const onStripScroll = () => {
+      const el = stripRef.current;
+      if (!el) return;
+      clearTimeout(snapTimer.current);
+      snapTimer.current = setTimeout(() => {
+        const dayW = el.clientWidth / 7;
+        if (!dayW) return;
+        const curIdx = el.scrollLeft / dayW;
+        let best = null;
+        stripDays.forEach((d, i) => {
+          if (d.getDay() !== 1) return;
+          if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
+        });
+        if (best === null) return;
+        const target = Math.max(0, Math.round(best * dayW));
+        if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
+      }, 130);
+    };
     const weekIdxRef = useRef(-1);
     useEffect(() => {
       const el = stripRef.current;
@@ -174,7 +193,7 @@
         }
       )),
       /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 0, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
-        return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", style: {
+        return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", onScroll: onStripScroll, style: {
           display: "flex",
           alignItems: "stretch",
           padding: "4px 0",

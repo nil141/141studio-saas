@@ -188,6 +188,27 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   // (así se ve lunes→domingo; el ancho de día = 1/7 del contenedor visible).
   // Solo re-alinea cuando cambia la SEMANA: cambiar de día dentro de la misma
   // semana no debe mover la tira.
+  // Snap semana a semana SOLO al hacer scroll manual (no al cambiar de día),
+  // para que no tiemble al seleccionar. Al terminar de desplazar, encaja al
+  // lunes más cercano.
+  const snapTimer = useRef(null);
+  const onStripScroll = () => {
+    const el = stripRef.current; if (!el) return;
+    clearTimeout(snapTimer.current);
+    snapTimer.current = setTimeout(() => {
+      const dayW = el.clientWidth / 7; if (!dayW) return;
+      const curIdx = el.scrollLeft / dayW;
+      let best = null;
+      stripDays.forEach((d, i) => {
+        if (d.getDay() !== 1) return; // solo lunes
+        if (best === null || Math.abs(i - curIdx) < Math.abs(best - curIdx)) best = i;
+      });
+      if (best === null) return;
+      const target = Math.max(0, Math.round(best * dayW));
+      if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
+    }, 130);
+  };
+
   const weekIdxRef = useRef(-1);
   useEffect(() => {
     const el = stripRef.current; if (!el) return;
@@ -354,7 +375,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         {/* Day strip — activity rings con scroll horizontal */}
         {(() => {
           return (
-            <div ref={stripRef} className="day-scroll" style={{
+            <div ref={stripRef} className="day-scroll" onScroll={onStripScroll} style={{
               display:"flex", alignItems:"stretch", padding:"4px 0",
               overflowX:"auto", scrollbarWidth:"none", msOverflowStyle:"none",
             }}>
