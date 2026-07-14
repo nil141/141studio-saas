@@ -216,8 +216,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       }
       weekIdxRef.current = mIdx;
       const target = Math.max(0, Math.round(mIdx * dayW));
-      if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "smooth" });
-    }, 80);
+      if (Math.abs(target - el.scrollLeft) > 1) el.scrollTo({ left: target, behavior: "auto" });
+    }, 45);
   };
 
   useEffect(() => {
