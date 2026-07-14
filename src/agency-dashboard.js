@@ -251,6 +251,22 @@
         tone: up || down ? good ? "good" : "bad" : "muted"
       };
     };
+    const _dayCompletion = (dateStr) => {
+      const tks = _liveTasks.filter((t) => t.deadline === dateStr);
+      let done = tks.filter((t) => t.column === "done").length;
+      let total = tks.length;
+      (D.routinesForDay ? D.routinesForDay(dateStr) : []).forEach((r) => (r.items || []).forEach((it) => {
+        total += 1;
+        if (D.routineItemDone(r.id, dateStr, it.id)) done += 1;
+      }));
+      return total ? Math.round(done / total * 100) : 0;
+    };
+    const _yestStr = (() => {
+      const d = /* @__PURE__ */ new Date(_todayStr + "T12:00:00");
+      d.setDate(d.getDate() - 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    })();
+    const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr);
     const [hoverKpi, setHoverKpi] = useState(null);
     const _eur = (n) => `\u20AC${(Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const _int = (n) => String(Math.round(Number(n) || 0));
@@ -268,7 +284,7 @@
         value: pendingTasks,
         num: pendingTasks,
         fmt: _int,
-        delta: _countDelta(overdueTasks, "vencidas"),
+        delta: _pctToDelta(_tasksDayDelta, true, "vs ayer"),
         nav: "tasks"
       },
       {
