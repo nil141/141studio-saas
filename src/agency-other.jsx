@@ -2583,9 +2583,9 @@ const IncomePage = () => {
   const delInc = (id) => persist({ ...data, incomes: data.incomes.filter(i => i.id !== id) });
 
   const activeRecs  = data.recs.filter(r => r.active);
-  const recurringMo = activeRecs.reduce((a, r) => a + _recMoVat(r), 0);   // facturado recurrente (con IVA)
-  const punMonth    = allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + _withVat(i), 0);
-  const monthTotal  = recurringMo + punMonth;                              // facturado este mes (con IVA)
+  const recurringMo = activeRecs.reduce((a, r) => a + _recMoCobro(r), 0);  // neto/mes recurrente (base+IVA−IRPF)
+  const punMonth    = allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + _cobro(i), 0);
+  const monthTotal  = recurringMo + punMonth;                              // lo que recibes este mes (IRPF restado)
   const baseMonth   = activeRecs.reduce((a, r) => a + _recMoBase(r), 0)
                     + allIncomes.filter(i => _sameMonth(i.date)).reduce((a, i) => a + (Number(i.amount) || 0), 0);
   const ivaMonth    = monthTotal - baseMonth;                              // IVA repercutido, a apartar
@@ -2607,10 +2607,10 @@ const IncomePage = () => {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       const puntual = allIncomes
         .filter(i => (i.date || "").startsWith(key))
-        .reduce((a, i) => a + _withVat(i), 0);
+        .reduce((a, i) => a + _cobro(i), 0);
       const rec = activeRecs
         .filter(r => recStartKey(r) <= key)
-        .reduce((a, r) => a + _recMoVat(r), 0);
+        .reduce((a, r) => a + _recMoCobro(r), 0);
       return { key, label: MES_ES[d.getMonth()], full: `${MES_ES[d.getMonth()]} ${d.getFullYear()}`, puntual, rec, total: puntual + rec };
     });
   })();
@@ -2622,10 +2622,10 @@ const IncomePage = () => {
 
   // ── Por cliente · este mes (mensualidades activas + puntuales del mes) ──
   const byClient = {};
-  activeRecs.forEach(r => { const k = r.clientName || "Sin cliente"; byClient[k] = (byClient[k] || 0) + _recMoVat(r); });
+  activeRecs.forEach(r => { const k = r.clientName || "Sin cliente"; byClient[k] = (byClient[k] || 0) + _recMoCobro(r); });
   allIncomes.filter(i => _sameMonth(i.date)).forEach(i => {
     const k = i.clientName || "Sin cliente";
-    byClient[k] = (byClient[k] || 0) + _withVat(i);
+    byClient[k] = (byClient[k] || 0) + _cobro(i);
   });
   const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
   const cliMax = clients.length ? clients[0][1] : 1;
