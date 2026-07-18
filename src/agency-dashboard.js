@@ -223,7 +223,8 @@
       try {
         const d = JSON.parse(localStorage.getItem("141_income_v1")) || {};
         const vatOf = (x) => x.vat === void 0 || x.vat === null ? 21 : Number(x.vat);
-        const withVat = (x) => (Number(x.amount) || 0) * (1 + vatOf(x) / 100);
+        const irpfOf = (x) => x.irpf === void 0 || x.irpf === null ? 0 : Number(x.irpf);
+        const withVat = (x) => (Number(x.amount) || 0) * (1 + vatOf(x) / 100 - irpfOf(x) / 100);
         const ref = new Date(now.getFullYear(), now.getMonth() + offset, 1);
         const key = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
         const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
