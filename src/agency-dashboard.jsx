@@ -336,8 +336,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                 : facturadoPrev > 0
                   ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`)
                   : facturadoCur > 0
-                    ? { text:"nuevo", suffix:`sin ingresos en ${prevMonthLabel}`, dir:"flat", tone:"muted" }
-                    : { text:"—", suffix:`vs ${prevMonthLabel}`, dir:"flat", tone:"muted" },
+                    ? { text:"+100%", suffix:`vs ${prevMonthLabel}`, dir:"up", tone:"good" }
+                    : { text:"0%", suffix:`vs ${prevMonthLabel}`, dir:"flat", tone:"muted" },
       nav:    "income",
     },
   ];

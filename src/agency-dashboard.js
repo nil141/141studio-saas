@@ -301,7 +301,7 @@
         value: stripeMonth === null ? "\u2026" : `\u20AC${facturadoCur.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         num: stripeMonth === null ? null : facturadoCur,
         fmt: _eur,
-        delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : facturadoCur > 0 ? { text: "nuevo", suffix: `sin ingresos en ${prevMonthLabel}`, dir: "flat", tone: "muted" } : { text: "\u2014", suffix: `vs ${prevMonthLabel}`, dir: "flat", tone: "muted" },
+        delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : facturadoCur > 0 ? { text: "+100%", suffix: `vs ${prevMonthLabel}`, dir: "up", tone: "good" } : { text: "0%", suffix: `vs ${prevMonthLabel}`, dir: "flat", tone: "muted" },
         nav: "income"
       }
     ];
