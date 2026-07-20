@@ -134,8 +134,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       style: {
         position: "fixed",
         inset: 0,
-        background: "rgba(0,0,0,0.6)",
-        backdropFilter: "blur(8px)",
+        background: "rgba(0,0,0,0.78)",
+        backdropFilter: "blur(18px)",
         zIndex: 200,
         display: "flex",
         alignItems: "center",
@@ -151,11 +151,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         onClick: (e) => e.stopPropagation(),
         style: {
           width: "100%",
-          maxWidth: 520,
-          background: "#0e0e10",
-          border: "1px solid #232324",
+          maxWidth: 540,
+          background: "#111111",
+          border: "0.5px solid rgba(255,255,255,0.08)",
           borderRadius: 32,
-          boxShadow: "0 40px 90px rgba(0,0,0,0.6)",
           animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
           display: "flex",
           flexDirection: "column",
@@ -163,7 +162,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           minHeight: 420
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
         width: 40,
         height: 40,
         borderRadius: "50%",
