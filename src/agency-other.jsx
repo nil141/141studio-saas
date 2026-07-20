@@ -2149,7 +2149,9 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate,
   const taskId = task ? task.id : null;
   useEffect(() => {
     if (open && task) {
-      const init = Math.round((task.progress || 0) / 25) * 25;
+      const init = (!routineMode && task.column === "done")
+        ? 100
+        : Math.round((task.progress || 0) / 25) * 25;
       setProgress(init); setDisplayProgress(init);
       setMode("progress"); setDotsOpen(false);
       setEditTitle(task.title || ""); setEditDeadline(task.deadline || "");
