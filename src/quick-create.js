@@ -26,6 +26,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [freq, setFreq] = useState("once");
   const [activeTab, setActiveTab] = useState(null);
   const [pickerFor, setPickerFor] = useState(null);
+  const [datePicker, setDatePicker] = useState(false);
   useEffect(() => {
     if (open) {
       setTitle("");
@@ -38,6 +39,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       setType(defaultType);
       setActiveTab(null);
       setPickerFor(null);
+      setDatePicker(false);
     }
   }, [open, defaultType, defaultDate]);
   useEffect(() => {
@@ -54,7 +56,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     if (!canSubmit) return;
     const t = title.trim();
     if (type === "task") {
-      const deadline = defaultDate || null;
+      const deadline = date || defaultDate || null;
       if (clientId) {
         const client = D.CLIENTS.find((c) => c.id === clientId);
         const proj = D.PROJECTS.find((p) => p.clientId === clientId);
@@ -89,11 +91,18 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   };
   const accentColor = { task: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
   const accentHex = { task: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
+  const _MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const fmtDate = (ds) => {
+    if (!ds) return "";
+    const [y, m, d] = ds.split("-").map(Number);
+    return `${d} ${_MESES[m - 1]}`;
+  };
+  const dateChanged = date && date !== (defaultDate || today());
   const tabs = [
     ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
     { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
     { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
-    ...type !== "task" ? [{ id: "date", label: "Fecha", icon: "calendar", hasVal: false }] : []
+    { id: "date", label: "Fecha", icon: "calendar", hasVal: dateChanged }
   ];
   const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
   return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
@@ -261,28 +270,11 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         letterSpacing: "-1px",
         fontFamily: "var(--font-display)",
         transition: "all .1s"
-      } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora")), activeTab === "date" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          type: "date",
-          value: date,
-          onChange: (e) => setDate(e.target.value),
-          style: {
-            background: "rgba(255,255,255,0.07)",
-            border: "0.5px solid rgba(255,255,255,0.14)",
-            borderRadius: 14,
-            color: "var(--text)",
-            fontSize: 16,
-            padding: "10px 22px",
-            fontFamily: "var(--font-sans)",
-            letterSpacing: "-0.5px"
-          }
-        }
-      ))),
+      } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora"))),
       /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => {
         var _a;
-        return /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => toggleTab(tab.id), style: {
+        return /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -296,7 +288,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           cursor: "pointer",
           fontFamily: "var(--font-sans)",
           transition: "all .12s"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time));
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
       }))
     )
   ), pickerFor && /* @__PURE__ */ React.createElement(
@@ -305,6 +297,14 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       value: pickerFor === "start" ? time : timeEnd,
       onChange: (v) => pickerFor === "start" ? setTime(v) : setTimeEnd(v),
       onClose: () => setPickerFor(null)
+    }
+  ), datePicker && /* @__PURE__ */ React.createElement(
+    DatePicker,
+    {
+      value: date,
+      onChange: setDate,
+      onClose: () => setDatePicker(false),
+      accent: accentHex
     }
   ));
 };

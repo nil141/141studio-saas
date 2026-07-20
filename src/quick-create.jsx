@@ -31,14 +31,15 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [time,      setTime]      = useState("");
   const [timeEnd,   setTimeEnd]   = useState("");
   const [freq,      setFreq]      = useState("once");
-  const [activeTab, setActiveTab] = useState(null); // null | "client" | "freq" | "time"
+  const [activeTab, setActiveTab] = useState(null); // null | "client" | "freq" | "time" | "date"
   const [pickerFor, setPickerFor] = useState(null);
+  const [datePicker, setDatePicker] = useState(false);
 
   useEffect(() => {
     if (open) {
       setTitle(""); setDesc(""); setClientId(""); setDate(defaultDate || today());
       setTime(""); setTimeEnd(""); setFreq("once");
-      setType(defaultType); setActiveTab(null); setPickerFor(null);
+      setType(defaultType); setActiveTab(null); setPickerFor(null); setDatePicker(false);
     }
   }, [open, defaultType, defaultDate]);
 
@@ -57,7 +58,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     if (!canSubmit) return;
     const t = title.trim();
     if (type === "task") {
-      const deadline = defaultDate || null;
+      const deadline = date || defaultDate || null;
       if (clientId) {
         const client = D.CLIENTS.find(c => c.id === clientId);
         const proj   = D.PROJECTS.find(p => p.clientId === clientId);
@@ -84,12 +85,21 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const accentColor = { task:"var(--accent)", event:"#60a5fa", meeting:"#34d399" }[type];
   const accentHex   = { task:"#9e9ae5",       event:"#60a5fa", meeting:"#34d399" }[type];
 
+  // Fecha en formato corto "20 jul"
+  const _MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+  const fmtDate = (ds) => {
+    if (!ds) return "";
+    const [y,m,d] = ds.split("-").map(Number);
+    return `${d} ${_MESES[m-1]}`;
+  };
+  const dateChanged = date && date !== (defaultDate || today());
+
   // Tab definitions — "cliente" only for task
   const tabs = [
     ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users",    hasVal: !!clientId }] : []),
     { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
     { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
-    ...(type !== "task" ? [{ id:"date", label:"Fecha", icon:"calendar", hasVal: false }] : []),
+    { id:"date", label:"Fecha",      icon:"calendar",   hasVal: dateChanged },
   ];
 
   const toggleTab = (id) => setActiveTab(prev => prev === id ? null : id);
@@ -276,19 +286,6 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
             </div>
           )}
 
-          {/* Fecha (evento/reunión) */}
-          {activeTab === "date" && (
-            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
-              <input type="date" value={date} onChange={e => setDate(e.target.value)}
-                style={{
-                  background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.14)",
-                  borderRadius:14, color:"var(--text)", fontSize:16, padding:"10px 22px",
-                  fontFamily:"var(--font-sans)", letterSpacing:"-0.5px",
-                }}
-              />
-            </div>
-          )}
-
         </div>
 
         {/* Divider */}
@@ -297,7 +294,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         {/* Bottom tabs */}
         <div style={{ display:"flex", gap:8, padding:"16px 22px 22px", flexWrap:"wrap" }}>
           {tabs.map(tab => (
-            <button key={tab.id} onClick={() => toggleTab(tab.id)} style={{
+            <button key={tab.id} onClick={() => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id)} style={{
               display:"flex", alignItems:"center", gap:6,
               padding:"8px 16px", borderRadius:99,
               background: activeTab === tab.id
@@ -323,6 +320,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               {tab.id === "time" && time && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{time}</span>
               )}
+              {tab.id === "date" && dateChanged && (
+                <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{fmtDate(date)}</span>
+              )}
             </button>
           ))}
         </div>
@@ -334,6 +334,14 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         value={pickerFor === "start" ? time : timeEnd}
         onChange={v => pickerFor === "start" ? setTime(v) : setTimeEnd(v)}
         onClose={() => setPickerFor(null)}
+      />
+    )}
+    {datePicker && (
+      <DatePicker
+        value={date}
+        onChange={setDate}
+        onClose={() => setDatePicker(false)}
+        accent={accentHex}
       />
     )}
   </>

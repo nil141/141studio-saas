@@ -915,6 +915,129 @@ const TimePicker = ({ value, onChange, onClose }) => {
   );
 };
 
+// ── DatePicker — calendario mensual (estilo Outdomode) ──────────────────────
+//   value: "YYYY-MM-DD" | "" · onChange(dateStr) · onClose()
+const _DP_MONTHS = ["enero","febrero","marzo","abril","mayo","junio","julio",
+  "agosto","septiembre","octubre","noviembre","diciembre"];
+const _DP_DOW = ["Lu","Ma","Mi","Ju","Vi","Sa","Do"];
+const _dpPad = n => String(n).padStart(2, "0");
+const _dpStr = (y, m, d) => `${y}-${_dpPad(m + 1)}-${_dpPad(d)}`;
+
+const DatePicker = ({ value, onChange, onClose, accent = "#9e9ae5" }) => {
+  const now = new Date();
+  const parsed = value ? value.split("-").map(Number) : null;
+  const [view, setView] = useState(
+    parsed ? { y: parsed[0], m: parsed[1] - 1 } : { y: now.getFullYear(), m: now.getMonth() }
+  );
+  const overlayDown = useRef(false);
+
+  const todayStr = _dpStr(now.getFullYear(), now.getMonth(), now.getDate());
+  const first    = new Date(view.y, view.m, 1);
+  const lead     = (first.getDay() + 6) % 7; // lunes primero
+  const daysIn   = new Date(view.y, view.m + 1, 0).getDate();
+  const cells    = [];
+  for (let i = 0; i < lead; i++) cells.push(null);
+  for (let d = 1; d <= daysIn; d++) cells.push(d);
+
+  const shift = (delta) => setView(v => {
+    let m = v.m + delta, y = v.y;
+    if (m < 0)  { m = 11; y--; }
+    if (m > 11) { m = 0;  y++; }
+    return { y, m };
+  });
+
+  const NavBtn = ({ icon, onClick }) => (
+    <button onClick={onClick} style={{
+      width:30, height:30, borderRadius:"50%", flexShrink:0,
+      background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.1)",
+      cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
+      color:"var(--text-muted)", transition:"background .1s",
+    }}
+    onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.11)"}
+    onMouseLeave={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}>
+      <Icon name={icon} size={15}/>
+    </button>
+  );
+
+  return (
+    <div
+      style={{
+        position:"fixed", inset:0, zIndex:400,
+        background:"rgba(0,0,0,0.65)", backdropFilter:"blur(12px)",
+        display:"flex", alignItems:"center", justifyContent:"center",
+        animation:"fade .15s ease-out",
+      }}
+      onMouseDown={e => { overlayDown.current = e.target === e.currentTarget; }}
+      onClick={e => { if (overlayDown.current && e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          width:360, background:"#0f0f13",
+          border:"0.5px solid rgba(255,255,255,0.1)",
+          borderRadius:28, overflow:"hidden", padding:"24px 24px 20px",
+          animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+          boxShadow:"0 32px 80px rgba(0,0,0,0.7)",
+        }}
+      >
+        {/* Header */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:18 }}>
+          <div style={{
+            fontSize:19, fontWeight:400, letterSpacing:"-0.8px", color:"var(--text)",
+            textTransform:"capitalize", fontFamily:"var(--font-display)",
+          }}>
+            {_DP_MONTHS[view.m]} {view.y}
+          </div>
+          <div style={{ display:"flex", gap:8 }}>
+            <NavBtn icon="chevron-left"  onClick={() => shift(-1)}/>
+            <NavBtn icon="chevron-right" onClick={() => shift(1)}/>
+          </div>
+        </div>
+
+        {/* Weekday row */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", marginBottom:6 }}>
+          {_DP_DOW.map((d, i) => (
+            <div key={i} style={{
+              textAlign:"center", fontSize:12, color:"var(--text-subtle)",
+              letterSpacing:"-0.3px", padding:"4px 0",
+            }}>{d}</div>
+          ))}
+        </div>
+
+        {/* Days grid */}
+        <div style={{ display:"grid", gridTemplateColumns:"repeat(7, 1fr)", rowGap:4 }}>
+          {cells.map((d, i) => {
+            if (d === null) return <div key={i}/>;
+            const ds      = _dpStr(view.y, view.m, d);
+            const isSel   = value === ds;
+            const isToday = todayStr === ds;
+            return (
+              <div key={i} style={{ display:"flex", justifyContent:"center", padding:"2px 0" }}>
+                <button
+                  onClick={() => { onChange(ds); onClose(); }}
+                  style={{
+                    width:38, height:38, borderRadius:"50%", cursor:"pointer",
+                    display:"flex", alignItems:"center", justifyContent:"center",
+                    fontSize:15, letterSpacing:"-0.5px", fontFamily:"var(--font-sans)",
+                    background: isSel ? accent : "transparent",
+                    border: isToday && !isSel ? `1px solid ${accent}77` : "1px solid transparent",
+                    color: isSel ? "#fff" : "var(--text)",
+                    transition:"background .1s, border-color .1s",
+                  }}
+                  onMouseEnter={e => { if (!isSel) e.currentTarget.style.background="rgba(255,255,255,0.07)"; }}
+                  onMouseLeave={e => { if (!isSel) e.currentTarget.style.background="transparent"; }}
+                >
+                  {d}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── QuickModal — shell de creación estilo Tareas (overlay blur, card redondeada,
 //    X + flecha de envío, input grande sin bordes, tabs pill abajo) ─────────────
 // Uso:
@@ -1108,4 +1231,4 @@ const QuickModal = ({
   );
 };
 
-Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker, ActionPill, QuickModal, QuickPill, QUICK_FIELD });
+Object.assign(window, { Avatar, Switch, Sidebar, Topbar, Modal, ToastProvider, useToast, StatusChip, Empty, ConfirmProvider, useConfirm, TimePicker, DatePicker, ActionPill, QuickModal, QuickPill, QUICK_FIELD });
