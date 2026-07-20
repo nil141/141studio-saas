@@ -13,7 +13,7 @@ const today = () => {
   const n = /* @__PURE__ */ new Date();
   return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
 };
-const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", lockType = false, openModal }) => {
+const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", lockType = false, openModal, editTask = null }) => {
   const D = window.Data;
   D.useStore();
   const [type, setType] = useState(defaultType);
@@ -29,19 +29,31 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [datePicker, setDatePicker] = useState(false);
   useEffect(() => {
     if (open) {
-      setTitle("");
-      setDesc("");
-      setClientId("");
-      setDate(defaultDate || today());
-      setTime("");
-      setTimeEnd("");
-      setFreq("once");
-      setType(defaultType);
+      if (editTask && editTask.task) {
+        const tk = editTask.task;
+        setTitle(tk.title || "");
+        setDesc(tk.notes || "");
+        setClientId(tk.clientId || "");
+        setDate(tk.deadline || defaultDate || today());
+        setTime(tk.time || "");
+        setTimeEnd("");
+        setFreq(tk.frequency || "once");
+        setType("task");
+      } else {
+        setTitle("");
+        setDesc("");
+        setClientId("");
+        setDate(defaultDate || today());
+        setTime("");
+        setTimeEnd("");
+        setFreq("once");
+        setType(defaultType);
+      }
       setActiveTab(null);
       setPickerFor(null);
       setDatePicker(false);
     }
-  }, [open, defaultType, defaultDate]);
+  }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
   useEffect(() => {
     if (!open) return;
     const fn = (e) => {
@@ -55,6 +67,17 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const handleSubmit = () => {
     if (!canSubmit) return;
     const t = title.trim();
+    if (editTask && editTask.task) {
+      D.updateTask(editTask.pid, editTask.task.id, {
+        title: t,
+        notes: desc || null,
+        deadline: date || null,
+        time: time || null,
+        frequency: freq
+      });
+      onClose();
+      return;
+    }
     if (type === "task") {
       const deadline = date || defaultDate || null;
       if (clientId) {
@@ -151,7 +174,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         alignItems: "center",
         justifyContent: "center",
         color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Crear nuevo") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, editTask ? "Editar tarea" : "Crear nuevo") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
         display: "flex",
         alignItems: "center",
         gap: 5,

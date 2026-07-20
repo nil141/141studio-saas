@@ -52,6 +52,7 @@
     const [quickCreateType, setQuickCreateType] = useState("task");
     const [quickCreateDate, setQuickCreateDate] = useState("");
     const [quickCreateLock, setQuickCreateLock] = useState(false);
+    const [quickCreateEdit, setQuickCreateEdit] = useState(null);
     useEffect(() => {
       document.documentElement.setAttribute("data-theme", theme);
     }, [theme]);
@@ -103,8 +104,17 @@
     };
     const openModal = (name, params = {}) => {
       if (name === "newTask") {
+        setQuickCreateEdit(null);
         setQuickCreateType("task");
         setQuickCreateDate(params.date || "");
+        setQuickCreateLock(true);
+        setQuickCreate(true);
+        return;
+      }
+      if (name === "editTask") {
+        setQuickCreateEdit({ task: params.task, pid: params.pid });
+        setQuickCreateType("task");
+        setQuickCreateDate("");
         setQuickCreateLock(true);
         setQuickCreate(true);
         return;
@@ -200,7 +210,8 @@
     ), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(window.StripeInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
       setQuickCreate(false);
       setQuickCreateLock(false);
-    }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal }));
+      setQuickCreateEdit(null);
+    }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal, editTask: quickCreateEdit }));
   };
   window.__initApp = () => {
     var _a;

@@ -375,7 +375,8 @@
           },
           onUpdate: (changes) => {
             window.Data.updateTask(taskModal.pid, taskModal.task.id, changes);
-          }
+          },
+          onEdit: () => openModal("editTask", { task: taskModal.task, pid: taskModal.pid })
         }
       ),
       routineModal && /* @__PURE__ */ React.createElement(
@@ -1429,7 +1430,7 @@
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Informaci\xF3n de la agencia y preferencias generales")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar cambios")), /* @__PURE__ */ React.createElement("div", { className: "rg-settings" }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Informaci\xF3n de la agencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Nombre de la agencia"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("name"), placeholder: "141'STUDIO" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tagline"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("tagline"), placeholder: "Agencia digital" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Email de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "email", ...field("email"), placeholder: "hello@tuagencia.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tel\xE9fono / WhatsApp"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("phone"), placeholder: "+34 600 000 000" })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Web"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("website"), placeholder: "https://tuagencia.com" })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Credenciales de acceso")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Las credenciales de acceso se gestionan directamente en el c\xF3digo fuente por seguridad."), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" } }, "Email: nil@141agency.com"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Apariencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "El tema claro/oscuro se controla con el bot\xF3n en la barra superior derecha."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "var(--accent-soft)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12 }), " Pr\xF3ximamente: colores de acento personalizables, logo de la agencia y dominio del portal cliente."))), /* @__PURE__ */ React.createElement(SessionCard, null)));
   };
-  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, routineMode }) => {
+  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, onEdit, routineMode }) => {
     const [progress, setProgress] = useState(0);
     const [dotsOpen, setDotsOpen] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -1623,7 +1624,12 @@
             justifyContent: "center",
             color: "var(--text-muted)",
             flexShrink: 0
-          } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", visibility: routineMode ? "hidden" : "visible" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setMode("edit"), style: {
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", visibility: routineMode ? "hidden" : "visible" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", background: "rgba(255,255,255,0.08)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+            if (onEdit) {
+              onClose();
+              onEdit();
+            } else setMode("edit");
+          }, style: {
             width: 46,
             height: 40,
             background: "transparent",

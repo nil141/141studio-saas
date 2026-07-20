@@ -585,6 +585,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
           onUpdate={changes => {
             window.Data.updateTask(taskModal.pid, taskModal.task.id, changes);
           }}
+          onEdit={() => openModal("editTask", { task: taskModal.task, pid: taskModal.pid })}
         />
       )}
 
@@ -2133,7 +2134,7 @@ const SettingsPage = () => {
 };
 
 // ── TaskProgressModal — arc progress picker ──────────────────
-const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, routineMode }) => {
+const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, onEdit, routineMode }) => {
   const [progress,     setProgress]     = useState(0);
   const [dotsOpen,     setDotsOpen]     = useState(false);
   const [dragging,     setDragging]     = useState(false);
@@ -2323,7 +2324,7 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate,
           {/* Right pill: ↗ + ··· (no aplica a rutinas) */}
           <div style={{ position:"relative", visibility: routineMode ? "hidden" : "visible" }}>
             <div style={{ display:"flex", alignItems:"center", background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:99 }}>
-              <button onClick={() => setMode("edit")} style={{
+              <button onClick={() => { if (onEdit) { onClose(); onEdit(); } else setMode("edit"); }} style={{
                 width:46, height:40, background:"transparent", border:"none",
                 borderRight:"0.5px solid rgba(255,255,255,0.1)",
                 cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center",
