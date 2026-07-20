@@ -1669,21 +1669,6 @@
               {
                 onClick: () => {
                   setDotsOpen(false);
-                  setMode("edit");
-                },
-                style: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "12px 16px", border: 0, background: "transparent", color: "var(--text)", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textAlign: "left" },
-                onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)",
-                onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
-              },
-              /* @__PURE__ */ React.createElement(Icon, { name: "edit-2", size: 13 }),
-              " Editar tarea"
-            ),
-            /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.08)" } }),
-            /* @__PURE__ */ React.createElement(
-              "button",
-              {
-                onClick: () => {
-                  setDotsOpen(false);
                   onClose();
                   onDelete();
                 },

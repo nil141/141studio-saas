@@ -2346,15 +2346,6 @@ const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate,
                 }}
               >
                 <button
-                  onClick={() => { setDotsOpen(false); setMode("edit"); }}
-                  style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 16px", border:0, background:"transparent", color:"var(--text)", fontSize:13, cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}
-                  onMouseEnter={e => e.currentTarget.style.background="rgba(255,255,255,0.06)"}
-                  onMouseLeave={e => e.currentTarget.style.background="transparent"}
-                >
-                  <Icon name="edit-2" size={13}/> Editar tarea
-                </button>
-                <div style={{ height:"0.5px", background:"rgba(255,255,255,0.08)" }}/>
-                <button
                   onClick={() => { setDotsOpen(false); onClose(); onDelete(); }}
                   style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"12px 16px", border:0, background:"transparent", color:"var(--red)", fontSize:13, cursor:"pointer", fontFamily:"inherit", textAlign:"left" }}
                   onMouseEnter={e => e.currentTarget.style.background="rgba(220,91,93,0.08)"}
