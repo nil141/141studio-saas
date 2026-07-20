@@ -141,7 +141,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        animation: "fade .15s ease-out"
+        animation: editTask ? "none" : "fade .15s ease-out"
       },
       onClick: onClose
     },
@@ -155,7 +155,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           background: "#111111",
           border: "0.5px solid rgba(255,255,255,0.08)",
           borderRadius: 32,
-          animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+          animation: editTask ? "none" : "pop .2s cubic-bezier(.2,.8,.2,1)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
