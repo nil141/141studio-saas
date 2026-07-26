@@ -2218,11 +2218,18 @@ const WeightLogModal = ({ routineId, day, itemId, onClose }) => {
 };
 
 const _MACROS = [
-  { key:"kcal",    label:"Calorías",      unit:"kcal" },
-  { key:"protein", label:"Proteína",      unit:"g" },
-  { key:"fat",     label:"Grasas",        unit:"g" },
-  { key:"carbs",   label:"Carbohidratos", unit:"g" },
+  { key:"kcal",    label:"Calorías",      unit:"kcal", goal:2500 },
+  { key:"protein", label:"Proteína",      unit:"g",    goal:140 },
+  { key:"fat",     label:"Grasas",        unit:"g",    goal:70 },
+  { key:"carbs",   label:"Carbohidratos", unit:"g",    goal:330 },
 ];
+// Progreso (0-100) según cercanía a los objetivos diarios. Cada macro aporta
+// su ratio (tope 100%); llegar a los 4 objetivos = 100%.
+const _macrosProgress = (data) => {
+  let sum = 0;
+  _MACROS.forEach(m => { const v = Number(data[m.key]) || 0; sum += Math.min(1, v / m.goal); });
+  return Math.round((sum / _MACROS.length) * 100);
+};
 const MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
   const D = window.Data;
   const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
@@ -2235,30 +2242,42 @@ const MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
   const save = () => {
     const data = {};
     _MACROS.forEach(m => { const n = _numParse(vals[m.key]); if (vals[m.key] !== "" && isFinite(n) && n >= 0) data[m.key] = n; });
-    D.setRoutineItemLog(routineId, day, itemId, Object.keys(data).length ? data : null);
+    const has = Object.keys(data).length > 0;
+    D.setRoutineItemLog(routineId, day, itemId, has ? data : null);
+    if (has) D.setRoutineItemProgress(routineId, day, itemId, _macrosProgress(data));
     onClose();
   };
   const clear = () => { D.setRoutineItemLog(routineId, day, itemId, null); onClose(); };
+  const liveData = {};
+  _MACROS.forEach(m => { const n = _numParse(vals[m.key]); if (vals[m.key] !== "" && isFinite(n)) liveData[m.key] = n; });
+  const liveProg = _macrosProgress(liveData);
   return (
-    <_LogModalShell title="Macronutrientes" subtitle="Registro de hoy" onClose={onClose} onConfirm={save}
+    <_LogModalShell title="Macronutrientes" subtitle={`Objetivos diarios · ${liveProg}%`} onClose={onClose} onConfirm={save}
       canClear={!!existing} onClear={clear}>
       <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-        {_MACROS.map(m => (
+        {_MACROS.map(m => {
+          const n = _numParse(vals[m.key]);
+          const reached = vals[m.key] !== "" && isFinite(n) && n >= m.goal;
+          return (
           <div key={m.key} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
-            background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"10px 18px" }}>
-            <span style={{ fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.4px" }}>{m.label}</span>
+            background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"9px 18px" }}>
+            <div style={{ display:"flex", flexDirection:"column", gap:1 }}>
+              <span style={{ fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.4px" }}>{m.label}</span>
+              <span style={{ fontSize:11, color:"var(--text-subtle)", letterSpacing:"-0.2px" }}>Objetivo {m.goal} {m.unit}</span>
+            </div>
             <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
               <input type="text" inputMode="decimal" value={vals[m.key]}
                 onChange={e => setVal(m.key, e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter") save(); }}
                 placeholder="0"
                 style={{ width:72, textAlign:"right", background:"transparent", border:"none", outline:"none",
-                  color: vals[m.key] ? "var(--text)" : "rgba(255,255,255,0.18)", fontSize:19, fontWeight:400,
-                  fontFamily:"var(--font-display)", caretColor:"var(--accent)" }}/>
+                  color: vals[m.key] ? (reached ? "var(--accent)" : "var(--text)") : "rgba(255,255,255,0.18)",
+                  fontSize:19, fontWeight:400, fontFamily:"var(--font-display)", caretColor:"var(--accent)" }}/>
               <span style={{ fontSize:12, color:"var(--text-subtle)", width:34 }}>{m.unit}</span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
     </_LogModalShell>
   );
