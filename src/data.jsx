@@ -834,8 +834,32 @@ const _routineVal = (routineId, dateStr, itemId) => {
   if (typeof v === "number") return Math.max(0, Math.min(100, v));
   return 0;
 };
-const routineItemProgress = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId);
-const routineItemDone = (routineId, dateStr, itemId) => _routineVal(routineId, dateStr, itemId) >= 100;
+// Pasos con registro de datos (peso / macros): su progreso NO se guarda como
+// un número suelto, se DERIVA del registro, para que "hecho" y el dato nunca
+// se desincronicen (si no hay registro → 0%, aunque hubiera un valor viejo).
+const _MACRO_GOALS = { kcal: 2500, protein: 140, fat: 70, carbs: 330 };
+const _itemMetric = (routineId, itemId) => {
+  const r  = (_store.ROUTINES || []).find(x => x.id === routineId);
+  const it = r && (r.items || []).find(i => i.id === itemId);
+  const t  = ((it && it.text) || "").toLowerCase();
+  if (t.includes("peso"))  return "weight";
+  if (t.includes("macro")) return "macros";
+  return null;
+};
+const routineItemProgress = (routineId, dateStr, itemId) => {
+  const metric = _itemMetric(routineId, itemId);
+  if (metric) {
+    const log = routineItemLog(routineId, dateStr, itemId);
+    if (!log) return 0;
+    if (metric === "weight") return log.weight != null ? 100 : 0;
+    const keys = Object.keys(_MACRO_GOALS);
+    let sum = 0;
+    keys.forEach(k => { const v = Number(log[k]) || 0; sum += Math.min(1, v / _MACRO_GOALS[k]); });
+    return Math.round((sum / keys.length) * 100);
+  }
+  return _routineVal(routineId, dateStr, itemId);
+};
+const routineItemDone = (routineId, dateStr, itemId) => routineItemProgress(routineId, dateStr, itemId) >= 100;
 
 const setRoutineItemProgress = (routineId, dateStr, itemId, pct) => {
   const val = Math.max(0, Math.min(100, Math.round(Number(pct) || 0)));
@@ -866,7 +890,10 @@ const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
   else logs[routineId][dateStr][itemId] = data;
   _store.ROUTINE_LOGS = logs;
   _userdataSet("routineLogs", _store.ROUTINE_LOGS);
-  setRoutineItemProgress(routineId, dateStr, itemId, empty ? 0 : 100); // emite
+  // El progreso de estos pasos se deriva del registro (routineItemProgress),
+  // así que aquí solo refrescamos la UI — no guardamos un progreso suelto que
+  // pudiera quedar desincronizado del dato.
+  _emit();
 };
 
 // ¿están todos los pasos de la rutina hechos ese día?

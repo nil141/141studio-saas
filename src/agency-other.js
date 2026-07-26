@@ -1607,7 +1607,6 @@
       });
       const has = Object.keys(data).length > 0;
       D.setRoutineItemLog(routineId, day, itemId, has ? data : null);
-      if (has) D.setRoutineItemProgress(routineId, day, itemId, _macrosProgress(data));
       onClose();
     };
     const clear = () => {

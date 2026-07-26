@@ -2244,7 +2244,6 @@ const MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
     _MACROS.forEach(m => { const n = _numParse(vals[m.key]); if (vals[m.key] !== "" && isFinite(n) && n >= 0) data[m.key] = n; });
     const has = Object.keys(data).length > 0;
     D.setRoutineItemLog(routineId, day, itemId, has ? data : null);
-    if (has) D.setRoutineItemProgress(routineId, day, itemId, _macrosProgress(data));
     onClose();
   };
   const clear = () => { D.setRoutineItemLog(routineId, day, itemId, null); onClose(); };
