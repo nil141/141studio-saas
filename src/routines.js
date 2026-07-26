@@ -127,6 +127,26 @@
       ), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: addItem, style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir"))))
     );
   };
+  var _fmtNum = (x) => String(Math.round(Number(x) * 10) / 10).replace(".", ",");
+  var _weeklyLogAvg = (D, rId, dayStr, itId, field) => {
+    if (!D.routineItemLog) return null;
+    const base = /* @__PURE__ */ new Date(dayStr + "T12:00:00");
+    const dow = (base.getDay() + 6) % 7;
+    const mon = new Date(base);
+    mon.setDate(base.getDate() - dow);
+    let sum = 0, n = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(mon);
+      d.setDate(mon.getDate() + i);
+      const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const l = D.routineItemLog(rId, ds, itId);
+      if (l && l[field] != null) {
+        sum += Number(l[field]);
+        n++;
+      }
+    }
+    return n ? sum / n : null;
+  };
   var RoutineCard = ({ r, day, onEdit, onStep }) => {
     const D = window.Data;
     const [celebrate, setCelebrate] = useState(false);
@@ -187,7 +207,9 @@
       let sub = done ? "Hecho" : pct > 0 ? "En curso" : "Por hacer";
       if (log) {
         if (lt.includes("peso") && log.weight != null) {
-          sub = `${String(log.weight).replace(".", ",")} kg`;
+          sub = `${_fmtNum(log.weight)} kg`;
+          const avg = _weeklyLogAvg(D, r.id, day, it.id, "weight");
+          if (avg != null) sub += ` (media ${_fmtNum(avg)} kg)`;
         } else if (lt.includes("macro")) {
           const parts = [];
           if (log.kcal != null) parts.push(`${log.kcal} kcal`);

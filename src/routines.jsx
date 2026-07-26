@@ -156,6 +156,25 @@ const RoutineModal = ({ open, onClose, routine, date }) => {
   );
 };
 
+// Formatea un número con coma decimal y hasta 1 decimal ("70", "71,2")
+const _fmtNum = (x) => String(Math.round(Number(x) * 10) / 10).replace(".", ",");
+
+// Media de un campo del registro (p.ej. peso) en la semana Lu–Do de `dayStr`
+const _weeklyLogAvg = (D, rId, dayStr, itId, field) => {
+  if (!D.routineItemLog) return null;
+  const base = new Date(dayStr + "T12:00:00");
+  const dow  = (base.getDay() + 6) % 7;               // 0 = lunes
+  const mon  = new Date(base); mon.setDate(base.getDate() - dow);
+  let sum = 0, n = 0;
+  for (let i = 0; i < 7; i++) {
+    const d  = new Date(mon); d.setDate(mon.getDate() + i);
+    const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const l  = D.routineItemLog(rId, ds, itId);
+    if (l && l[field] != null) { sum += Number(l[field]); n++; }
+  }
+  return n ? sum / n : null;
+};
+
 // ── Tarjeta de una rutina para un día ────────────────────────────────
 const RoutineCard = ({ r, day, onEdit, onStep }) => {
   const D = window.Data;
@@ -218,7 +237,9 @@ const RoutineCard = ({ r, day, onEdit, onStep }) => {
         let sub = done ? "Hecho" : pct > 0 ? "En curso" : "Por hacer";
         if (log) {
           if (lt.includes("peso") && log.weight != null) {
-            sub = `${String(log.weight).replace(".", ",")} kg`;
+            sub = `${_fmtNum(log.weight)} kg`;
+            const avg = _weeklyLogAvg(D, r.id, day, it.id, "weight");
+            if (avg != null) sub += ` (media ${_fmtNum(avg)} kg)`;
           } else if (lt.includes("macro")) {
             const parts = [];
             if (log.kcal    != null) parts.push(`${log.kcal} kcal`);
