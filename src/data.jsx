@@ -743,6 +743,7 @@ const _syncUserData = async () => {
     : (_migrate("141_routines", "routines", v => Array.isArray(v) && v.length) || []);
   _store.ROUTINE_DONE = (blob.routineDone && typeof blob.routineDone === "object") ? blob.routineDone
     : (_migrate("141_routine_done", "routineDone", v => v && Object.keys(v).length) || {});
+  _store.ROUTINE_LOGS = (blob.routineLogs && typeof blob.routineLogs === "object") ? blob.routineLogs : {};
   if (blob.finance && typeof blob.finance === "object") {
     _store.FINANCE = { subs: blob.finance.subs || [], expenses: blob.finance.expenses || [] };
   } else {
@@ -848,6 +849,24 @@ const setRoutineItemProgress = (routineId, dateStr, itemId, pct) => {
 
 const toggleRoutineItem = (routineId, dateStr, itemId) => {
   setRoutineItemProgress(routineId, dateStr, itemId, routineItemDone(routineId, dateStr, itemId) ? 0 : 100);
+};
+
+// Registros con datos (peso, macros, …) por paso/día. Guardar un registro
+// marca el paso como hecho (100%); borrarlo lo devuelve a 0%.
+const routineItemLog = (routineId, dateStr, itemId) => {
+  const v = _store.ROUTINE_LOGS?.[routineId]?.[dateStr]?.[itemId];
+  return (v && typeof v === "object") ? v : null;
+};
+const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
+  const logs = { ..._store.ROUTINE_LOGS };
+  logs[routineId] = { ...(logs[routineId] || {}) };
+  logs[routineId][dateStr] = { ...(logs[routineId][dateStr] || {}) };
+  const empty = !data || Object.keys(data).length === 0;
+  if (empty) delete logs[routineId][dateStr][itemId];
+  else logs[routineId][dateStr][itemId] = data;
+  _store.ROUTINE_LOGS = logs;
+  _userdataSet("routineLogs", _store.ROUTINE_LOGS);
+  setRoutineItemProgress(routineId, dateStr, itemId, empty ? 0 : 100); // emite
 };
 
 // ¿están todos los pasos de la rutina hechos ese día?
@@ -1027,6 +1046,7 @@ window.Data = {
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
   routineItemProgress, setRoutineItemProgress,
+  routineItemLog, setRoutineItemLog,
   today: _todayStr, todayDate: _todayDate,
   routineDayComplete, routineStreak,
   saveFinance,

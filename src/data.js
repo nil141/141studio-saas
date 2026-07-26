@@ -871,6 +871,7 @@ const _syncUserData = async () => {
   };
   _store.ROUTINES = Array.isArray(blob.routines) ? blob.routines : _migrate("141_routines", "routines", (v) => Array.isArray(v) && v.length) || [];
   _store.ROUTINE_DONE = blob.routineDone && typeof blob.routineDone === "object" ? blob.routineDone : _migrate("141_routine_done", "routineDone", (v) => v && Object.keys(v).length) || {};
+  _store.ROUTINE_LOGS = blob.routineLogs && typeof blob.routineLogs === "object" ? blob.routineLogs : {};
   if (blob.finance && typeof blob.finance === "object") {
     _store.FINANCE = { subs: blob.finance.subs || [], expenses: blob.finance.expenses || [] };
   } else {
@@ -966,6 +967,22 @@ const setRoutineItemProgress = (routineId, dateStr, itemId, pct) => {
 };
 const toggleRoutineItem = (routineId, dateStr, itemId) => {
   setRoutineItemProgress(routineId, dateStr, itemId, routineItemDone(routineId, dateStr, itemId) ? 0 : 100);
+};
+const routineItemLog = (routineId, dateStr, itemId) => {
+  var _a, _b, _c;
+  const v = (_c = (_b = (_a = _store.ROUTINE_LOGS) == null ? void 0 : _a[routineId]) == null ? void 0 : _b[dateStr]) == null ? void 0 : _c[itemId];
+  return v && typeof v === "object" ? v : null;
+};
+const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
+  const logs = { ..._store.ROUTINE_LOGS };
+  logs[routineId] = { ...logs[routineId] || {} };
+  logs[routineId][dateStr] = { ...logs[routineId][dateStr] || {} };
+  const empty = !data || Object.keys(data).length === 0;
+  if (empty) delete logs[routineId][dateStr][itemId];
+  else logs[routineId][dateStr][itemId] = data;
+  _store.ROUTINE_LOGS = logs;
+  _userdataSet("routineLogs", _store.ROUTINE_LOGS);
+  setRoutineItemProgress(routineId, dateStr, itemId, empty ? 0 : 100);
 };
 const routineDayComplete = (routineId, dateStr) => {
   const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
@@ -1177,6 +1194,8 @@ window.Data = {
   toggleRoutineItem,
   routineItemProgress,
   setRoutineItemProgress,
+  routineItemLog,
+  setRoutineItemLog,
   today: _todayStr,
   todayDate: _todayDate,
   routineDayComplete,

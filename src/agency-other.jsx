@@ -589,24 +589,30 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         />
       )}
 
-      {routineModal && (
-        <TaskProgressModal
-          routineMode
-          open={true}
-          task={{
-            id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
-            title: routineModal.it.text,
-            progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
-            deadline: "",
-            column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo",
-          }}
-          onClose={() => setRoutineModal(null)}
-          onUpdate={changes => {
-            if (changes.progress != null)
-              D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
-          }}
-        />
-      )}
+      {routineModal && (() => {
+        const metric = _routineMetric(routineModal.it.text);
+        const common = { routineId: routineModal.r.id, day: selDateStr, itemId: routineModal.it.id, onClose: () => setRoutineModal(null) };
+        if (metric === "weight") return <WeightLogModal {...common}/>;
+        if (metric === "macros") return <MacrosLogModal {...common}/>;
+        return (
+          <TaskProgressModal
+            routineMode
+            open={true}
+            task={{
+              id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
+              title: routineModal.it.text,
+              progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
+              deadline: "",
+              column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo",
+            }}
+            onClose={() => setRoutineModal(null)}
+            onUpdate={changes => {
+              if (changes.progress != null)
+                D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
+            }}
+          />
+        );
+      })()}
     </div>
   );
 };
@@ -2130,6 +2136,131 @@ const SettingsPage = () => {
         <SessionCard/>
       </div>
     </div>
+  );
+};
+
+// ── Pasos de rutina con registro de datos (peso / macros) ────────────
+const _routineMetric = (text) => {
+  const t = (text || "").toLowerCase();
+  if (t.includes("peso")) return "weight";
+  if (t.includes("macro")) return "macros";
+  return null;
+};
+
+// Shell compartido — mismo lenguaje visual que el modal de progreso
+const _LogModalShell = ({ title, subtitle, onClose, onConfirm, onClear, canClear, children }) =>
+  ReactDOM.createPortal(
+    <div
+      style={{ position:"fixed", inset:0, zIndex:500, background:"rgba(0,0,0,0.78)", backdropFilter:"blur(18px)",
+        display:"flex", alignItems:"center", justifyContent:"center", animation:"fade .15s ease-out", padding:24 }}
+      onClick={onClose}
+    >
+      <div onClick={e => e.stopPropagation()}
+        style={{ width:"100%", maxWidth:460, background:"#111111", border:"0.5px solid rgba(255,255,255,0.08)",
+          borderRadius:32, overflow:"hidden", animation:"pop .2s cubic-bezier(.2,.8,.2,1)", display:"flex", flexDirection:"column" }}>
+        <div style={{ display:"flex", justifyContent:"center", paddingTop:12 }}>
+          <div style={{ width:36, height:4, borderRadius:99, background:"rgba(255,255,255,0.18)" }}/>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 20px 0" }}>
+          <button onClick={onClose} style={{ width:40, height:40, borderRadius:"50%", background:"rgba(255,255,255,0.08)",
+            border:"0.5px solid rgba(255,255,255,0.1)", cursor:"pointer", display:"flex", alignItems:"center",
+            justifyContent:"center", color:"var(--text-muted)" }}><Icon name="x" size={15}/></button>
+          {canClear
+            ? <button onClick={onClear} style={{ padding:"8px 14px", borderRadius:99, background:"transparent",
+                border:"0.5px solid rgba(255,255,255,0.12)", color:"var(--text-subtle)", fontSize:12, cursor:"pointer",
+                fontFamily:"var(--font-sans)", letterSpacing:"-0.3px" }}>Borrar</button>
+            : <span style={{ width:40 }}/>}
+        </div>
+        <div style={{ padding:"18px 28px 4px", textAlign:"center" }}>
+          <div style={{ fontSize:20, letterSpacing:"-0.8px", color:"var(--text)", fontFamily:"var(--font-display)" }}>{title}</div>
+          {subtitle && <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:4, letterSpacing:"-0.3px" }}>{subtitle}</div>}
+        </div>
+        <div style={{ padding:"16px 28px 4px" }}>{children}</div>
+        <div style={{ padding:"14px 20px 28px", display:"flex", justifyContent:"center" }}>
+          <button onClick={onConfirm} style={{ padding:"13px 52px", background:"var(--accent-soft)",
+            border:"0.5px solid var(--accent)", borderRadius:99, color:"var(--accent)", fontSize:14,
+            letterSpacing:"-0.5px", cursor:"pointer", fontFamily:"var(--font-sans)" }}>Guardar</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+
+const _numClean = (s) => String(s).replace(/[^0-9.,]/g, "");
+const _numParse = (s) => parseFloat(String(s).replace(",", "."));
+
+const WeightLogModal = ({ routineId, day, itemId, onClose }) => {
+  const D = window.Data;
+  const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
+  const [w, setW] = useState(existing && existing.weight != null ? String(existing.weight).replace(".", ",") : "");
+  const save = () => {
+    const n = _numParse(w);
+    if (!isFinite(n) || n <= 0) { onClose(); return; }
+    D.setRoutineItemLog(routineId, day, itemId, { weight: n });
+    onClose();
+  };
+  const clear = () => { D.setRoutineItemLog(routineId, day, itemId, null); onClose(); };
+  return (
+    <_LogModalShell title="Registrar peso" subtitle="Tu peso de hoy" onClose={onClose} onConfirm={save}
+      canClear={!!existing} onClear={clear}>
+      <div style={{ display:"flex", alignItems:"baseline", justifyContent:"center", gap:8 }}>
+        <input autoFocus type="text" inputMode="decimal" value={w}
+          onChange={e => setW(_numClean(e.target.value))}
+          onKeyDown={e => { if (e.key === "Enter") save(); }}
+          placeholder="00,0"
+          style={{ width:170, textAlign:"center", background:"transparent", border:"none", outline:"none",
+            color: w ? "var(--text)" : "rgba(255,255,255,0.15)", fontSize:56, fontWeight:300, letterSpacing:"-2px",
+            fontFamily:"var(--font-display)", caretColor:"var(--accent)" }}/>
+        <span style={{ fontSize:22, color:"var(--text-subtle)" }}>kg</span>
+      </div>
+    </_LogModalShell>
+  );
+};
+
+const _MACROS = [
+  { key:"kcal",    label:"Calorías",      unit:"kcal" },
+  { key:"protein", label:"Proteína",      unit:"g" },
+  { key:"fat",     label:"Grasas",        unit:"g" },
+  { key:"carbs",   label:"Carbohidratos", unit:"g" },
+];
+const MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
+  const D = window.Data;
+  const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
+  const [vals, setVals] = useState(() => {
+    const o = {};
+    _MACROS.forEach(m => { o[m.key] = existing && existing[m.key] != null ? String(existing[m.key]) : ""; });
+    return o;
+  });
+  const setVal = (k, v) => setVals(p => ({ ...p, [k]: _numClean(v) }));
+  const save = () => {
+    const data = {};
+    _MACROS.forEach(m => { const n = _numParse(vals[m.key]); if (vals[m.key] !== "" && isFinite(n) && n >= 0) data[m.key] = n; });
+    D.setRoutineItemLog(routineId, day, itemId, Object.keys(data).length ? data : null);
+    onClose();
+  };
+  const clear = () => { D.setRoutineItemLog(routineId, day, itemId, null); onClose(); };
+  return (
+    <_LogModalShell title="Macronutrientes" subtitle="Registro de hoy" onClose={onClose} onConfirm={save}
+      canClear={!!existing} onClear={clear}>
+      <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+        {_MACROS.map(m => (
+          <div key={m.key} style={{ display:"flex", alignItems:"center", justifyContent:"space-between",
+            background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:14, padding:"10px 18px" }}>
+            <span style={{ fontSize:14, color:"var(--text-muted)", letterSpacing:"-0.4px" }}>{m.label}</span>
+            <div style={{ display:"flex", alignItems:"baseline", gap:6 }}>
+              <input type="text" inputMode="decimal" value={vals[m.key]}
+                onChange={e => setVal(m.key, e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") save(); }}
+                placeholder="0"
+                style={{ width:72, textAlign:"right", background:"transparent", border:"none", outline:"none",
+                  color: vals[m.key] ? "var(--text)" : "rgba(255,255,255,0.18)", fontSize:19, fontWeight:400,
+                  fontFamily:"var(--font-display)", caretColor:"var(--accent)" }}/>
+              <span style={{ fontSize:12, color:"var(--text-subtle)", width:34 }}>{m.unit}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </_LogModalShell>
   );
 };
 

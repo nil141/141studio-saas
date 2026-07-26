@@ -379,25 +379,31 @@
           onEdit: () => openModal("editTask", { task: taskModal.task, pid: taskModal.pid })
         }
       ),
-      routineModal && /* @__PURE__ */ React.createElement(
-        TaskProgressModal,
-        {
-          routineMode: true,
-          open: true,
-          task: {
-            id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
-            title: routineModal.it.text,
-            progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
-            deadline: "",
-            column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo"
-          },
-          onClose: () => setRoutineModal(null),
-          onUpdate: (changes) => {
-            if (changes.progress != null)
-              D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
+      routineModal && (() => {
+        const metric = _routineMetric(routineModal.it.text);
+        const common = { routineId: routineModal.r.id, day: selDateStr, itemId: routineModal.it.id, onClose: () => setRoutineModal(null) };
+        if (metric === "weight") return /* @__PURE__ */ React.createElement(WeightLogModal, { ...common });
+        if (metric === "macros") return /* @__PURE__ */ React.createElement(MacrosLogModal, { ...common });
+        return /* @__PURE__ */ React.createElement(
+          TaskProgressModal,
+          {
+            routineMode: true,
+            open: true,
+            task: {
+              id: "rt:" + routineModal.r.id + ":" + routineModal.it.id,
+              title: routineModal.it.text,
+              progress: D.routineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id),
+              deadline: "",
+              column: D.routineItemDone(routineModal.r.id, selDateStr, routineModal.it.id) ? "done" : "todo"
+            },
+            onClose: () => setRoutineModal(null),
+            onUpdate: (changes) => {
+              if (changes.progress != null)
+                D.setRoutineItemProgress(routineModal.r.id, selDateStr, routineModal.it.id, changes.progress);
+            }
           }
-        }
-      )
+        );
+      })()
     );
   };
   var ProjectTaskColumn = ({ project: p, navigate, toast }) => {
@@ -1429,6 +1435,219 @@
       toast("Ajustes guardados", "success");
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Informaci\xF3n de la agencia y preferencias generales")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar cambios")), /* @__PURE__ */ React.createElement("div", { className: "rg-settings" }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Informaci\xF3n de la agencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Nombre de la agencia"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("name"), placeholder: "141'STUDIO" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tagline"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("tagline"), placeholder: "Agencia digital" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Email de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "email", ...field("email"), placeholder: "hello@tuagencia.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tel\xE9fono / WhatsApp"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("phone"), placeholder: "+34 600 000 000" })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Web"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("website"), placeholder: "https://tuagencia.com" })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Credenciales de acceso")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Las credenciales de acceso se gestionan directamente en el c\xF3digo fuente por seguridad."), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" } }, "Email: nil@141agency.com"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Apariencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "El tema claro/oscuro se controla con el bot\xF3n en la barra superior derecha."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "var(--accent-soft)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12 }), " Pr\xF3ximamente: colores de acento personalizables, logo de la agencia y dominio del portal cliente."))), /* @__PURE__ */ React.createElement(SessionCard, null)));
+  };
+  var _routineMetric = (text) => {
+    const t = (text || "").toLowerCase();
+    if (t.includes("peso")) return "weight";
+    if (t.includes("macro")) return "macros";
+    return null;
+  };
+  var _LogModalShell = ({ title, subtitle, onClose, onConfirm, onClear, canClear, children }) => ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        style: {
+          position: "fixed",
+          inset: 0,
+          zIndex: 500,
+          background: "rgba(0,0,0,0.78)",
+          backdropFilter: "blur(18px)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          animation: "fade .15s ease-out",
+          padding: 24
+        },
+        onClick: onClose
+      },
+      /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          onClick: (e) => e.stopPropagation(),
+          style: {
+            width: "100%",
+            maxWidth: 460,
+            background: "#111111",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            borderRadius: 32,
+            overflow: "hidden",
+            animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
+            display: "flex",
+            flexDirection: "column"
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 20px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.08)",
+          border: "0.5px solid rgba(255,255,255,0.1)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--text-muted)"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), canClear ? /* @__PURE__ */ React.createElement("button", { onClick: onClear, style: {
+          padding: "8px 14px",
+          borderRadius: 99,
+          background: "transparent",
+          border: "0.5px solid rgba(255,255,255,0.12)",
+          color: "var(--text-subtle)",
+          fontSize: 12,
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+          letterSpacing: "-0.3px"
+        } }, "Borrar") : /* @__PURE__ */ React.createElement("span", { style: { width: 40 } })),
+        /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 28px 4px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, letterSpacing: "-0.8px", color: "var(--text)", fontFamily: "var(--font-display)" } }, title), subtitle && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 4, letterSpacing: "-0.3px" } }, subtitle)),
+        /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 28px 4px" } }, children),
+        /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 20px 28px", display: "flex", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("button", { onClick: onConfirm, style: {
+          padding: "13px 52px",
+          background: "var(--accent-soft)",
+          border: "0.5px solid var(--accent)",
+          borderRadius: 99,
+          color: "var(--accent)",
+          fontSize: 14,
+          letterSpacing: "-0.5px",
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)"
+        } }, "Guardar"))
+      )
+    ),
+    document.body
+  );
+  var _numClean = (s) => String(s).replace(/[^0-9.,]/g, "");
+  var _numParse = (s) => parseFloat(String(s).replace(",", "."));
+  var WeightLogModal = ({ routineId, day, itemId, onClose }) => {
+    const D = window.Data;
+    const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
+    const [w, setW] = useState(existing && existing.weight != null ? String(existing.weight).replace(".", ",") : "");
+    const save = () => {
+      const n = _numParse(w);
+      if (!isFinite(n) || n <= 0) {
+        onClose();
+        return;
+      }
+      D.setRoutineItemLog(routineId, day, itemId, { weight: n });
+      onClose();
+    };
+    const clear = () => {
+      D.setRoutineItemLog(routineId, day, itemId, null);
+      onClose();
+    };
+    return /* @__PURE__ */ React.createElement(
+      _LogModalShell,
+      {
+        title: "Registrar peso",
+        subtitle: "Tu peso de hoy",
+        onClose,
+        onConfirm: save,
+        canClear: !!existing,
+        onClear: clear
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          type: "text",
+          inputMode: "decimal",
+          value: w,
+          onChange: (e) => setW(_numClean(e.target.value)),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") save();
+          },
+          placeholder: "00,0",
+          style: {
+            width: 170,
+            textAlign: "center",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: w ? "var(--text)" : "rgba(255,255,255,0.15)",
+            fontSize: 56,
+            fontWeight: 300,
+            letterSpacing: "-2px",
+            fontFamily: "var(--font-display)",
+            caretColor: "var(--accent)"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 22, color: "var(--text-subtle)" } }, "kg"))
+    );
+  };
+  var _MACROS = [
+    { key: "kcal", label: "Calor\xEDas", unit: "kcal" },
+    { key: "protein", label: "Prote\xEDna", unit: "g" },
+    { key: "fat", label: "Grasas", unit: "g" },
+    { key: "carbs", label: "Carbohidratos", unit: "g" }
+  ];
+  var MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
+    const D = window.Data;
+    const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
+    const [vals, setVals] = useState(() => {
+      const o = {};
+      _MACROS.forEach((m) => {
+        o[m.key] = existing && existing[m.key] != null ? String(existing[m.key]) : "";
+      });
+      return o;
+    });
+    const setVal = (k, v) => setVals((p) => ({ ...p, [k]: _numClean(v) }));
+    const save = () => {
+      const data = {};
+      _MACROS.forEach((m) => {
+        const n = _numParse(vals[m.key]);
+        if (vals[m.key] !== "" && isFinite(n) && n >= 0) data[m.key] = n;
+      });
+      D.setRoutineItemLog(routineId, day, itemId, Object.keys(data).length ? data : null);
+      onClose();
+    };
+    const clear = () => {
+      D.setRoutineItemLog(routineId, day, itemId, null);
+      onClose();
+    };
+    return /* @__PURE__ */ React.createElement(
+      _LogModalShell,
+      {
+        title: "Macronutrientes",
+        subtitle: "Registro de hoy",
+        onClose,
+        onConfirm: save,
+        canClear: !!existing,
+        onClear: clear
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, _MACROS.map((m) => /* @__PURE__ */ React.createElement("div", { key: m.key, style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "rgba(255,255,255,0.05)",
+        border: "0.5px solid rgba(255,255,255,0.1)",
+        borderRadius: 14,
+        padding: "10px 18px"
+      } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, color: "var(--text-muted)", letterSpacing: "-0.4px" } }, m.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 6 } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "text",
+          inputMode: "decimal",
+          value: vals[m.key],
+          onChange: (e) => setVal(m.key, e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") save();
+          },
+          placeholder: "0",
+          style: {
+            width: 72,
+            textAlign: "right",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: vals[m.key] ? "var(--text)" : "rgba(255,255,255,0.18)",
+            fontSize: 19,
+            fontWeight: 400,
+            fontFamily: "var(--font-display)",
+            caretColor: "var(--accent)"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", width: 34 } }, m.unit)))))
+    );
   };
   var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, onEdit, routineMode }) => {
     const [progress, setProgress] = useState(0);

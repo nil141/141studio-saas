@@ -182,6 +182,21 @@
       const done = pct >= 100;
       const last = idx === r.items.length - 1;
       const circ = 2 * Math.PI * 17;
+      const log = D.routineItemLog ? D.routineItemLog(r.id, day, it.id) : null;
+      const lt = (it.text || "").toLowerCase();
+      let sub = done ? "Hecho" : pct > 0 ? "En curso" : "Por hacer";
+      if (log) {
+        if (lt.includes("peso") && log.weight != null) {
+          sub = `${String(log.weight).replace(".", ",")} kg`;
+        } else if (lt.includes("macro")) {
+          const parts = [];
+          if (log.kcal != null) parts.push(`${log.kcal} kcal`);
+          if (log.protein != null) parts.push(`${log.protein}P`);
+          if (log.fat != null) parts.push(`${log.fat}G`);
+          if (log.carbs != null) parts.push(`${log.carbs}C`);
+          if (parts.length) sub = parts.join(" \xB7 ");
+        }
+      }
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -226,7 +241,7 @@
           letterSpacing: "-0.5px",
           color: done ? "var(--text-subtle)" : "var(--text)",
           textDecoration: done ? "line-through" : "none"
-        } }, it.text), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, done ? "Hecho" : pct > 0 ? "En curso" : "Por hacer"))
+        } }, it.text), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: log && done ? "var(--accent)" : "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, sub))
       );
     }), celebrate && /* @__PURE__ */ React.createElement(RoutineCelebration, { rId: r.id, day, onClose: () => setCelebrate(false) }));
   };
