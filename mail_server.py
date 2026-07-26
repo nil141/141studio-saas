@@ -651,7 +651,7 @@ def _campaigns_save(data):
 # (sólo en un dispositivo); ahora se guardan en el servidor para sincronizarse
 # entre dispositivos. Se persiste en el volumen (STORE_DIR).
 _USERDATA_FILE = os.path.join(_STORE_DIR, "userdata.json")
-_USERDATA_KEYS = {"routines", "routineDone", "finance"}
+_USERDATA_KEYS = {"routines", "routineDone", "routineLogs", "finance"}
 _USERDATA_MAX  = 600_000   # bytes por clave
 
 def _userdata_load():
