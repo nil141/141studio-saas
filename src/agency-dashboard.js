@@ -269,6 +269,21 @@
     })();
     const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr);
     const [hoverKpi, setHoverKpi] = useState(null);
+    const [hideMoney, setHideMoney] = useState(() => {
+      try {
+        return localStorage.getItem("141_hide_money") === "1";
+      } catch (e) {
+        return false;
+      }
+    });
+    const toggleMoney = () => setHideMoney((v) => {
+      const n = !v;
+      try {
+        localStorage.setItem("141_hide_money", n ? "1" : "0");
+      } catch (e) {
+      }
+      return n;
+    });
     const _eur = (n) => `\u20AC${(Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const _int = (n) => String(Math.round(Number(n) || 0));
     const kpis = [
@@ -294,7 +309,8 @@
         num: monthSpend,
         fmt: _eur,
         delta: _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
-        nav: "billing"
+        nav: "billing",
+        money: true
       },
       {
         label: "Facturado este mes",
@@ -302,7 +318,8 @@
         num: stripeMonth === null ? null : facturadoCur,
         fmt: _eur,
         delta: stripeMonth === null ? { text: "\u2014", dir: "flat", tone: "muted" } : facturadoPrev > 0 ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`) : facturadoCur > 0 ? { text: "+100%", suffix: `vs ${prevMonthLabel}`, dir: "up", tone: "good" } : { text: "0%", suffix: `vs ${prevMonthLabel}`, dir: "flat", tone: "muted" },
-        nav: "income"
+        nav: "income",
+        money: true
       }
     ];
     const queues = [
@@ -346,7 +363,36 @@
       color: "var(--text-muted)",
       letterSpacing: "-0.2px",
       lineHeight: 1.4
-    } }, dayMessage)), /* @__PURE__ */ React.createElement(
+    } }, dayMessage)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      padding: "3px 4px",
+      background: "rgba(255,255,255,0.07)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      borderRadius: 99
+    } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: toggleMoney,
+        title: hideMoney ? "Mostrar importes" : "Ocultar importes",
+        style: {
+          width: 34,
+          height: 34,
+          borderRadius: "50%",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: hideMoney ? "var(--accent)" : "var(--text-muted)",
+          transition: "background .12s"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: hideMoney ? "eye-off" : "eye", size: 16 })
+    )), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: [
@@ -356,7 +402,7 @@
           { icon: "receipt", label: "Nueva factura", sub: "Se crea y env\xEDa desde Stripe.", onClick: () => openModal("newInvoice") }
         ]
       }
-    )));
+    ))));
     const EYEBROW = (txt) => /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, txt);
     const recentActivity = [
       ...D.PROJECTS.slice(0, 2).map((p) => ({ icon: "folder", text: p.name, sub: "Proyecto en curso" })),
@@ -496,6 +542,7 @@
     } }, kpis.map((k, i) => {
       const clickable = !!k.nav;
       const on = hoverKpi === i;
+      const masked = k.money && hideMoney;
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -514,7 +561,7 @@
           fontFamily: "var(--font-display)",
           fontVariantNumeric: "tabular-nums",
           transition: "color .15s"
-        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }))
+        } }, masked ? "\u20AC \u2022\u2022\u2022\u2022" : k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && !masked && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.2px" } }, "Oculto"))
       );
     })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {

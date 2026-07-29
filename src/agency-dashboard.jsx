@@ -304,6 +304,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr); // puntos %
 
   const [hoverKpi, setHoverKpi] = useState(null);
+  const [hideMoney, setHideMoney] = useState(() => {
+    try { return localStorage.getItem("141_hide_money") === "1"; } catch { return false; }
+  });
+  const toggleMoney = () => setHideMoney(v => {
+    const n = !v;
+    try { localStorage.setItem("141_hide_money", n ? "1" : "0"); } catch {}
+    return n;
+  });
   const _eur = n => `€${(Number(n)||0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const _int = n => String(Math.round(Number(n)||0));
   const kpis = [
@@ -326,7 +334,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
       num:    monthSpend, fmt: _eur,
       delta:  _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
-      nav:    "billing",
+      nav:    "billing", money: true,
     },
     {
       label:  "Facturado este mes",
@@ -338,7 +346,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
                   : facturadoCur > 0
                     ? { text:"+100%", suffix:`vs ${prevMonthLabel}`, dir:"up", tone:"good" }
                     : { text:"0%", suffix:`vs ${prevMonthLabel}`, dir:"flat", tone:"muted" },
-      nav:    "income",
+      nav:    "income", money: true,
     },
   ];
 
@@ -383,14 +391,32 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           </p>
         </div>
 
-        <ActionPill
-          plusActions={[
-            { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
-            { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
-            { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
-            { icon: "receipt", label: "Nueva factura",  sub: "Se crea y envía desde Stripe.", onClick: () => openModal("newInvoice") },
-          ]}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Ocultar / mostrar importes */}
+          <div style={{ display: "flex", alignItems: "center", padding: "3px 4px",
+            background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
+            <button
+              onClick={toggleMoney}
+              title={hideMoney ? "Mostrar importes" : "Ocultar importes"}
+              style={{ width: 34, height: 34, borderRadius: "50%", background: "transparent", border: "none",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                color: hideMoney ? "var(--accent)" : "var(--text-muted)", transition: "background .12s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              <Icon name={hideMoney ? "eye-off" : "eye"} size={16}/>
+            </button>
+          </div>
+
+          <ActionPill
+            plusActions={[
+              { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
+              { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
+              { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
+              { icon: "receipt", label: "Nueva factura",  sub: "Se crea y envía desde Stripe.", onClick: () => openModal("newInvoice") },
+            ]}
+          />
+        </div>
       </div>
     </header>
   );
@@ -561,6 +587,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {kpis.map((k, i) => {
           const clickable = !!k.nav;
           const on = hoverKpi === i;
+          const masked = k.money && hideMoney;
           return (
           <div key={i}
             onClick={clickable ? () => navigate(k.nav) : undefined}
@@ -571,10 +598,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
-                {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>
+                  {masked ? "€ ••••" : (k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value)}
+                </span>
+                {k.unit && !masked && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
               </div>
-              {k.delta && <MetricDelta {...k.delta}/>}
+              {k.delta && !masked && <MetricDelta {...k.delta}/>}
+              {masked && <span style={{ fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.2px" }}>Oculto</span>}
             </div>
           </div>
           );
