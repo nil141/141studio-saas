@@ -598,13 +598,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
               <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
                 <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>
-                  {masked ? "€ ••••" : (k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value)}
-                </span>
-                {k.unit && !masked && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums",
+                  transition: "color .15s, filter .2s",
+                  filter: masked ? "blur(9px)" : "none",
+                  userSelect: masked ? "none" : "auto" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
+                {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
               </div>
-              {k.delta && !masked && <MetricDelta {...k.delta}/>}
-              {masked && <span style={{ fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.2px" }}>Oculto</span>}
+              {k.delta && <span style={{ display: "inline-flex", transition: "filter .2s",
+                filter: masked ? "blur(6px)" : "none", userSelect: masked ? "none" : "auto" }}><MetricDelta {...k.delta}/></span>}
             </div>
           </div>
           );
