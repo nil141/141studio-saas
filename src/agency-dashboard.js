@@ -553,22 +553,28 @@
           style: { display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }
         },
         /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" } }, k.label),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 4 } }, /* @__PURE__ */ React.createElement("span", { style: {
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 4, height: 32 } }, masked ? /* @__PURE__ */ React.createElement("span", { style: {
+          display: "inline-block",
+          width: 116,
+          height: 20,
+          borderRadius: 999,
+          background: "linear-gradient(90deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))",
+          alignSelf: "center"
+        } }) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: {
           fontSize: 32,
           color: on ? "var(--accent)" : "var(--text)",
           letterSpacing: "-0.08em",
           lineHeight: 1,
           fontFamily: "var(--font-display)",
           fontVariantNumeric: "tabular-nums",
-          transition: "color .15s, filter .2s",
-          filter: masked ? "blur(9px)" : "none",
-          userSelect: masked ? "none" : "auto"
-        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit)), k.delta && /* @__PURE__ */ React.createElement("span", { style: {
-          display: "inline-flex",
-          transition: "filter .2s",
-          filter: masked ? "blur(6px)" : "none",
-          userSelect: masked ? "none" : "auto"
-        } }, /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta })))
+          transition: "color .15s"
+        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit))), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: {
+          display: "inline-block",
+          width: 64,
+          height: 11,
+          borderRadius: 999,
+          background: "rgba(255,255,255,0.06)"
+        } }))
       );
     })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {

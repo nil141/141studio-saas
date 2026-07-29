@@ -596,16 +596,20 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
             style={{ display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }}>
             <span style={{ fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" }}>{k.label}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
-                <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                  fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums",
-                  transition: "color .15s, filter .2s",
-                  filter: masked ? "blur(9px)" : "none",
-                  userSelect: masked ? "none" : "auto" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
-                {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, height: 32 }}>
+                {masked
+                  ? <span style={{ display: "inline-block", width: 116, height: 20, borderRadius: 999,
+                      background: "linear-gradient(90deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))",
+                      alignSelf: "center" }}/>
+                  : <>
+                      <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
+                        fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
+                      {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+                    </>}
               </div>
-              {k.delta && <span style={{ display: "inline-flex", transition: "filter .2s",
-                filter: masked ? "blur(6px)" : "none", userSelect: masked ? "none" : "auto" }}><MetricDelta {...k.delta}/></span>}
+              {k.delta && !masked && <MetricDelta {...k.delta}/>}
+              {masked && <span style={{ display: "inline-block", width: 64, height: 11, borderRadius: 999,
+                background: "rgba(255,255,255,0.06)" }}/>}
             </div>
           </div>
           );
