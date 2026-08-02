@@ -1287,17 +1287,18 @@ const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
 const _BILL_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 // Categoría de la suscripción → icono + color. Primer match gana; si nada
 // coincide se usa una categoría genérica.
+// Iconos de categoría = Phosphor Icons (via PhIcon)
 const _CATS = [
-  [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkles", "#9e9ae5"], // IA
-  [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "image", "#e879a6"],                                             // Diseño
-  [/netflix|spotify|youtube|twitch|disney|\bhbo\b|prime|movistar|dazn|apple\s?music|music/, "play", "#dc5b5d"],                              // Entretenimiento
-  [/mailchimp|hubspot|semrush|ahrefs|\bads\b|marketing|\bseo\b|meta|facebook|instagram|linkedin|tiktok|twitter|\bx\b/, "megaphone", "#eec06a"], // Marketing / redes
-  [/gmail|correo|zoho|proton|outlook/, "mail", "#60a5fa"],                                                                                    // Email
-  [/dropbox|icloud|drive|storage|backup|almacen/, "folder", "#60a5fa"],                                                                       // Almacenamiento
-  [/github|gitlab/, "command", "#9e9ae5"],                                                                                                    // Dev
-  [/railway|ionos|vercel|\baws\b|amazon|cloudflare|hostinger|godaddy|namecheap|supabase|digitalocean|heroku|hosting|dominio|domain|\bvps\b|servidor|server/, "command", "#60a5fa"], // Hosting / infra
-  [/notion|slack|workspace|gsuite|microsoft|office|365|airtable|linear|zapier|trello|asana|monday|google/, "grid", "#9e9ae5"],               // Productividad
-  [/cuota|autonom|aut[oó]nom|irpf|gestor|stripe|paypal|impuesto|seguro|banco|\biva\b|n[oó]mina/, "receipt", "#9e9ae5"],                        // Finanzas / impuestos
+  [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkle", "#9e9ae5"], // IA
+  [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "palette", "#e879a6"],                                           // Diseño
+  [/netflix|spotify|youtube|twitch|disney|\bhbo\b|prime|movistar|dazn|apple\s?music|music/, "monitor-play", "#dc5b5d"],                       // Entretenimiento
+  [/mailchimp|hubspot|semrush|ahrefs|\bads\b|marketing|\bseo\b|meta|facebook|instagram|linkedin|tiktok|twitter|\bx\b/, "megaphone-simple", "#eec06a"], // Marketing / redes
+  [/gmail|correo|zoho|proton|outlook/, "envelope-simple", "#60a5fa"],                                                                          // Email
+  [/dropbox|icloud|drive|storage|backup|almacen/, "folder-simple", "#60a5fa"],                                                                 // Almacenamiento
+  [/github|gitlab/, "code", "#9e9ae5"],                                                                                                         // Dev
+  [/railway|ionos|vercel|\baws\b|amazon|cloudflare|hostinger|godaddy|namecheap|supabase|digitalocean|heroku|hosting|dominio|domain|\bvps\b|servidor|server/, "cloud", "#60a5fa"], // Hosting / infra
+  [/notion|slack|workspace|gsuite|microsoft|office|365|airtable|linear|zapier|trello|asana|monday|google/, "squares-four", "#9e9ae5"],        // Productividad
+  [/cuota|autonom|aut[oó]nom|irpf|gestor|stripe|paypal|impuesto|seguro|banco|\biva\b|n[oó]mina/, "receipt", "#9e9ae5"],                         // Finanzas / impuestos
 ];
 const _catFor = (name) => { const t = (name || "").toLowerCase(); for (const [re, ic, co] of _CATS) if (re.test(t)) return { icon: ic, color: co }; return { icon: "package", color: "#9e9ae5" }; };
 const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
@@ -1314,7 +1315,7 @@ const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
       <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
         background: cat.color + "22", border: `0.5px solid ${cat.color}33`, color: cat.color }}>
-        <Icon name={cat.icon} size={16} strokeWidth={1.7}/>
+        <PhIcon name={cat.icon} size={19}/>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",

@@ -1123,23 +1123,23 @@
   };
   var _BILL_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   var _CATS = [
-    [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkles", "#9e9ae5"],
+    [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkle", "#9e9ae5"],
     // IA
-    [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "image", "#e879a6"],
+    [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "palette", "#e879a6"],
     // Diseño
-    [/netflix|spotify|youtube|twitch|disney|\bhbo\b|prime|movistar|dazn|apple\s?music|music/, "play", "#dc5b5d"],
+    [/netflix|spotify|youtube|twitch|disney|\bhbo\b|prime|movistar|dazn|apple\s?music|music/, "monitor-play", "#dc5b5d"],
     // Entretenimiento
-    [/mailchimp|hubspot|semrush|ahrefs|\bads\b|marketing|\bseo\b|meta|facebook|instagram|linkedin|tiktok|twitter|\bx\b/, "megaphone", "#eec06a"],
+    [/mailchimp|hubspot|semrush|ahrefs|\bads\b|marketing|\bseo\b|meta|facebook|instagram|linkedin|tiktok|twitter|\bx\b/, "megaphone-simple", "#eec06a"],
     // Marketing / redes
-    [/gmail|correo|zoho|proton|outlook/, "mail", "#60a5fa"],
+    [/gmail|correo|zoho|proton|outlook/, "envelope-simple", "#60a5fa"],
     // Email
-    [/dropbox|icloud|drive|storage|backup|almacen/, "folder", "#60a5fa"],
+    [/dropbox|icloud|drive|storage|backup|almacen/, "folder-simple", "#60a5fa"],
     // Almacenamiento
-    [/github|gitlab/, "command", "#9e9ae5"],
+    [/github|gitlab/, "code", "#9e9ae5"],
     // Dev
-    [/railway|ionos|vercel|\baws\b|amazon|cloudflare|hostinger|godaddy|namecheap|supabase|digitalocean|heroku|hosting|dominio|domain|\bvps\b|servidor|server/, "command", "#60a5fa"],
+    [/railway|ionos|vercel|\baws\b|amazon|cloudflare|hostinger|godaddy|namecheap|supabase|digitalocean|heroku|hosting|dominio|domain|\bvps\b|servidor|server/, "cloud", "#60a5fa"],
     // Hosting / infra
-    [/notion|slack|workspace|gsuite|microsoft|office|365|airtable|linear|zapier|trello|asana|monday|google/, "grid", "#9e9ae5"],
+    [/notion|slack|workspace|gsuite|microsoft|office|365|airtable|linear|zapier|trello|asana|monday|google/, "squares-four", "#9e9ae5"],
     // Productividad
     [/cuota|autonom|aut[oó]nom|irpf|gestor|stripe|paypal|impuesto|seguro|banco|\biva\b|n[oó]mina/, "receipt", "#9e9ae5"]
     // Finanzas / impuestos
@@ -1181,7 +1181,7 @@
         background: cat.color + "22",
         border: `0.5px solid ${cat.color}33`,
         color: cat.color
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: cat.icon, size: 16, strokeWidth: 1.7 })),
+      } }, /* @__PURE__ */ React.createElement(PhIcon, { name: cat.icon, size: 19 })),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 13.5,
         fontWeight: 500,
