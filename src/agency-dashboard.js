@@ -1149,10 +1149,55 @@
     for (const [re, ic, co] of _CATS) if (re.test(t)) return { icon: ic, color: co };
     return { icon: "package", color: "#9e9ae5" };
   };
+  var _SLUGS = [
+    [/claude|anthropic/, "claude"],
+    [/railway/, "railway"],
+    [/ionos/, "ionos"],
+    [/gmail/, "google"],
+    [/google|workspace|gsuite/, "google"],
+    [/netflix/, "netflix"],
+    [/spotify/, "spotify"],
+    [/figma/, "figma"],
+    [/notion/, "notion"],
+    [/vercel/, "vercel"],
+    [/github/, "github"],
+    [/gitlab/, "gitlab"],
+    [/shopify/, "shopify"],
+    [/stripe/, "stripe"],
+    [/dropbox/, "dropbox"],
+    [/discord/, "discord"],
+    [/cloudflare/, "cloudflare"],
+    [/hostinger/, "hostinger"],
+    [/godaddy/, "godaddy"],
+    [/namecheap/, "namecheap"],
+    [/wordpress/, "wordpress"],
+    [/mailchimp/, "mailchimp"],
+    [/hubspot/, "hubspot"],
+    [/zapier/, "zapier"],
+    [/airtable/, "airtable"],
+    [/linear/, "linear"],
+    [/supabase/, "supabase"],
+    [/digitalocean/, "digitalocean"],
+    [/twitch/, "twitch"],
+    [/youtube/, "youtube"],
+    [/instagram/, "instagram"],
+    [/meta|facebook/, "meta"],
+    [/dribbble/, "dribbble"],
+    [/behance/, "behance"],
+    [/semrush/, "semrush"],
+    [/eleven\s?labs/, "elevenlabs"],
+    [/perplexity/, "perplexity"]
+  ];
+  var _slugFor = (name) => {
+    const t = (name || "").toLowerCase();
+    for (const [re, s] of _SLUGS) if (re.test(t)) return s;
+    return null;
+  };
   var BillRow = ({ b, hideMoney, eur, onClick, last }) => {
     const d = b.date;
     const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
     const cat = b.kind === "invoice" ? { icon: "receipt", color: "#9e9ae5" } : _catFor(b.name);
+    const slug = b.kind === "invoice" ? null : _slugFor(b.name);
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -1181,7 +1226,7 @@
         background: "rgba(255,255,255,0.05)",
         border: "0.5px solid rgba(255,255,255,0.09)",
         color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(PhIcon, { name: cat.icon, size: 19 })),
+      } }, slug ? /* @__PURE__ */ React.createElement(SiIcon, { name: slug, size: 18 }) : /* @__PURE__ */ React.createElement(PhIcon, { name: cat.icon, size: 19 })),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 13.5,
         fontWeight: 500,
