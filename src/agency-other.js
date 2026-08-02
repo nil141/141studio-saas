@@ -853,46 +853,36 @@
     }
     return d;
   };
+  var _finChartSeq = 0;
   var FinTrendChart = ({ trend, single = false }) => {
     const [hov, setHov] = useState(null);
-    const drawRef = useRef(null);
+    const W = 600, H = 150, PX = 10, PY = 14;
     const drawnRef = useRef(false);
+    const revealRef = useRef(null);
+    const clipRef = useRef(null);
+    if (!clipRef.current) clipRef.current = "finrev-" + _finChartSeq++;
+    const clipId = clipRef.current;
     useEffect(() => {
       if (drawnRef.current) return;
-      const svg = drawRef.current;
-      if (!svg) return;
       drawnRef.current = true;
-      svg.querySelectorAll("path.fin-line").forEach((p) => {
-        let L;
-        try {
-          L = p.getTotalLength();
-        } catch (e) {
-          return;
-        }
-        p.style.transition = "none";
-        p.style.strokeDasharray = L + " " + L;
-        p.style.strokeDashoffset = String(L);
-        p.getBoundingClientRect();
-        p.style.transition = "stroke-dashoffset 1.15s cubic-bezier(.45,0,.25,1)";
-        p.style.strokeDashoffset = "0";
-      });
-      svg.querySelectorAll("path.fin-area").forEach((a) => {
-        a.style.transition = "none";
-        a.style.opacity = "0";
-        a.getBoundingClientRect();
-        a.style.transition = "opacity .9s ease .25s";
-        a.style.opacity = "1";
-      });
-      const clear = setTimeout(() => {
-        svg.querySelectorAll("path.fin-line").forEach((p) => {
-          p.style.transition = "none";
-          p.style.strokeDasharray = "none";
-          p.style.strokeDashoffset = "0";
-        });
-      }, 1400);
-      return () => clearTimeout(clear);
+      const rect = revealRef.current;
+      if (!rect) return;
+      if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        rect.setAttribute("width", String(W + 12));
+        return;
+      }
+      let start = null, raf;
+      const dur = 1050, ease = (t) => 1 - Math.pow(1 - t, 3);
+      const step = (ts) => {
+        if (start == null) start = ts;
+        const t = Math.min(1, (ts - start) / dur);
+        rect.setAttribute("width", String((W + 12) * ease(t)));
+        if (t < 1) raf = requestAnimationFrame(step);
+      };
+      rect.setAttribute("width", "0");
+      raf = requestAnimationFrame(step);
+      return () => cancelAnimationFrame(raf);
     }, []);
-    const W = 600, H = 150, PX = 10, PY = 14;
     const maxV = Math.max(...single ? trend.map((t) => t.total) : [...trend.map((t) => t.rec), ...trend.map((t) => t.puntual)], 1) * 1.15;
     const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
     const y = (v) => H - PY - v / maxV * (H - 2 * PY);
@@ -924,7 +914,6 @@
     return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flex: 1, minHeight: 0, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(
       "svg",
       {
-        ref: drawRef,
         width: "100%",
         height: "100%",
         viewBox: `0 0 ${W} ${H}`,
@@ -933,7 +922,7 @@
         onMouseMove: onMove,
         onMouseLeave: () => setHov(null)
       },
-      /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradRec", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.rec, stopOpacity: "0.3" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.rec, stopOpacity: "0" })), /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradPun", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.pun, stopOpacity: "0.22" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.pun, stopOpacity: "0" }))),
+      /* @__PURE__ */ React.createElement("defs", null, /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradRec", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.rec, stopOpacity: "0.3" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.rec, stopOpacity: "0" })), /* @__PURE__ */ React.createElement("linearGradient", { id: "finGradPun", x1: "0", y1: "0", x2: "0", y2: "1" }, /* @__PURE__ */ React.createElement("stop", { offset: "5%", stopColor: FIN_SERIES.pun, stopOpacity: "0.22" }), /* @__PURE__ */ React.createElement("stop", { offset: "95%", stopColor: FIN_SERIES.pun, stopOpacity: "0" })), /* @__PURE__ */ React.createElement("clipPath", { id: clipId }, /* @__PURE__ */ React.createElement("rect", { ref: revealRef, x: PX - 6, y: -40, height: H + 80 }))),
       [0, 0.25, 0.5, 0.75, 1].map((f) => /* @__PURE__ */ React.createElement(
         "line",
         {
@@ -971,10 +960,9 @@
           vectorEffect: "non-scaling-stroke"
         }
       )),
-      single ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { className: "fin-area", d: areaOf(totPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("g", { clipPath: `url(#${clipId})` }, single ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: areaOf(totPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
         "path",
         {
-          className: "fin-line",
           d: _finSmooth(totPts),
           fill: "none",
           stroke: FIN_SERIES.rec,
@@ -982,10 +970,9 @@
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
-      )) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { className: "fin-area", d: areaOf(punPts), fill: "url(#finGradPun)", stroke: "none" }), /* @__PURE__ */ React.createElement("path", { className: "fin-area", d: areaOf(recPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
+      )) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("path", { d: areaOf(punPts), fill: "url(#finGradPun)", stroke: "none" }), /* @__PURE__ */ React.createElement("path", { d: areaOf(recPts), fill: "url(#finGradRec)", stroke: "none" }), /* @__PURE__ */ React.createElement(
         "path",
         {
-          className: "fin-line",
           d: _finSmooth(punPts),
           fill: "none",
           stroke: FIN_SERIES.pun,
@@ -996,7 +983,6 @@
       ), /* @__PURE__ */ React.createElement(
         "path",
         {
-          className: "fin-line",
           d: _finSmooth(recPts),
           fill: "none",
           stroke: FIN_SERIES.rec,
@@ -1004,7 +990,7 @@
           strokeLinecap: "round",
           vectorEffect: "non-scaling-stroke"
         }
-      ), (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" }))))
+      ), (hov !== null ? [hov.i] : [trend.length - 1]).map((i) => /* @__PURE__ */ React.createElement("g", { key: i }, /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].rec), r: "3.5", fill: FIN_SERIES.rec, stroke: "var(--bg-elev)", strokeWidth: "2" }), /* @__PURE__ */ React.createElement("circle", { cx: x(i), cy: y(trend[i].puntual), r: "3.5", fill: FIN_SERIES.pun, stroke: "var(--bg-elev)", strokeWidth: "2" })))))
     ), single && hov !== null && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       left: `${dotLeftPct}%`,

@@ -1459,41 +1459,37 @@ const _finSmooth = (pts) => {
 };
 
 // Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
+let _finChartSeq = 0;
 const FinTrendChart = ({ trend, single = false }) => {
   const [hov, setHov] = useState(null); // { i: índice de mes, px, py: posición del ratón en px }
-  // Animación de entrada: la(s) línea(s) se "dibujan" y el área hace fade.
-  const drawRef = useRef(null);
+  const W = 600, H = 150, PX = 10, PY = 14;
+  // Animación de entrada: barrido de izquierda a derecha que revela línea + área
+  // (el "resplandor") a la vez, mediante un clip que crece. Sin dasharray, así
+  // no hay saltos al final.
   const drawnRef = useRef(false);
+  const revealRef = useRef(null);
+  const clipRef = useRef(null);
+  if (!clipRef.current) clipRef.current = "finrev-" + (_finChartSeq++);
+  const clipId = clipRef.current;
   useEffect(() => {
     if (drawnRef.current) return;
-    const svg = drawRef.current; if (!svg) return;
     drawnRef.current = true;
-    svg.querySelectorAll("path.fin-line").forEach(p => {
-      let L; try { L = p.getTotalLength(); } catch (e) { return; }
-      p.style.transition = "none";
-      p.style.strokeDasharray = L + " " + L;
-      p.style.strokeDashoffset = String(L);
-      p.getBoundingClientRect(); // reflow para fijar el estado inicial
-      p.style.transition = "stroke-dashoffset 1.15s cubic-bezier(.45,0,.25,1)";
-      p.style.strokeDashoffset = "0";
-    });
-    svg.querySelectorAll("path.fin-area").forEach(a => {
-      a.style.transition = "none";
-      a.style.opacity = "0";
-      a.getBoundingClientRect();
-      a.style.transition = "opacity .9s ease .25s";
-      a.style.opacity = "1";
-    });
-    // Al terminar, quitar el dasharray para que futuros cambios de datos no
-    // recorten la línea.
-    const clear = setTimeout(() => {
-      svg.querySelectorAll("path.fin-line").forEach(p => {
-        p.style.transition = "none"; p.style.strokeDasharray = "none"; p.style.strokeDashoffset = "0";
-      });
-    }, 1400);
-    return () => clearTimeout(clear);
+    const rect = revealRef.current; if (!rect) return;
+    if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      rect.setAttribute("width", String(W + 12)); return;
+    }
+    let start = null, raf;
+    const dur = 1050, ease = t => 1 - Math.pow(1 - t, 3);
+    const step = (ts) => {
+      if (start == null) start = ts;
+      const t = Math.min(1, (ts - start) / dur);
+      rect.setAttribute("width", String((W + 12) * ease(t)));
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    rect.setAttribute("width", "0");
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, []);
-  const W = 600, H = 150, PX = 10, PY = 14;
   const maxV = Math.max(...(single ? trend.map(t => t.total) : [...trend.map(t => t.rec), ...trend.map(t => t.puntual)]), 1) * 1.15;
   const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
   const y = (v) => H - PY - (v / maxV) * (H - 2 * PY);
@@ -1521,7 +1517,7 @@ const FinTrendChart = ({ trend, single = false }) => {
   return (
     <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
       <div style={{ position:"relative", flex:1, minHeight:0 }}>
-        <svg ref={drawRef} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
           style={{ display:"block", cursor:"crosshair" }}
           onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
           <defs>
@@ -1533,6 +1529,9 @@ const FinTrendChart = ({ trend, single = false }) => {
               <stop offset="5%" stopColor={FIN_SERIES.pun} stopOpacity="0.22"/>
               <stop offset="95%" stopColor={FIN_SERIES.pun} stopOpacity="0"/>
             </linearGradient>
+            <clipPath id={clipId}>
+              <rect ref={revealRef} x={PX - 6} y={-40} height={H + 80}/>
+            </clipPath>
           </defs>
           {/* Líneas de referencia punteadas (como el área de Campañas) */}
           {[0, 0.25, 0.5, 0.75, 1].map(f => (
@@ -1547,20 +1546,21 @@ const FinTrendChart = ({ trend, single = false }) => {
             <line x1={x(hov.i)} x2={x(hov.i)} y1={PY - 4} y2={H - PY + 4}
               stroke="rgba(255,255,255,0.18)" strokeWidth="1" vectorEffect="non-scaling-stroke"/>
           ))}
-          {/* Áreas y curvas — en modo single, una sola línea morada (total) como outdomode */}
+          {/* Áreas y curvas — reveladas con el clip que crece de izquierda a derecha */}
+          <g clipPath={`url(#${clipId})`}>
           {single ? (
             <>
-              <path className="fin-area" d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
-              <path className="fin-line" d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              <path d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
             </>
           ) : (
             <>
-              <path className="fin-area" d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
-              <path className="fin-area" d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
-              <path className="fin-line" d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
+              <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
+              <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-              <path className="fin-line" d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
               {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
                 <g key={i}>
@@ -1570,6 +1570,7 @@ const FinTrendChart = ({ trend, single = false }) => {
               ))}
             </>
           )}
+          </g>
         </svg>
 
         {/* Punto activo + tooltip estilo outdomode (solo single) */}
