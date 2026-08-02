@@ -436,13 +436,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ───────────────────────────────────────────────────────────────────────────
   // Apple HIG style — tokens locales (vibrancy / continuous radius / SF system)
   // ───────────────────────────────────────────────────────────────────────────
+  // Sin "cajitas": las secciones van directas sobre el fondo, como en las
+  // páginas de Facturación/Proyectos/Tareas. Un separador fino bajo el título.
   const APPLE_CARD = {
-    background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
-    border: "0.5px solid rgba(255,255,255,0.08)",
-    borderRadius: 18,
-    backdropFilter: "blur(40px) saturate(180%)",
-    WebkitBackdropFilter: "blur(40px) saturate(180%)",
-    boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)",
+    background: "transparent",
+    border: "none",
+    borderRadius: 0,
+    boxShadow: "none",
   };
   const APPLE_SECTION = {
     fontSize: 11, fontWeight: 600, color: "var(--text-subtle)",
@@ -467,20 +467,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Selector de diseño del Inicio */}
-          <div style={{ display: "flex", alignItems: "center", gap: 2, padding: "3px",
-            background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
-            {LAYOUTS.map(l => (
-              <button key={l.id} onClick={() => setLayoutSaved(l.id)}
-                style={{ padding: "6px 13px", borderRadius: 99, border: "none", cursor: "pointer",
-                  fontSize: 12, fontFamily: "inherit", letterSpacing: "-0.2px", transition: "all .12s",
-                  background: layout === l.id ? "rgba(255,255,255,0.12)" : "transparent",
-                  color: layout === l.id ? "var(--text)" : "var(--text-subtle)" }}>
-                {l.label}
-              </button>
-            ))}
-          </div>
-
           {/* Ocultar / mostrar importes */}
           <div style={{ display: "flex", alignItems: "center", padding: "3px 4px",
             background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
@@ -630,14 +616,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         </div>
         <button onClick={() => navigate("billing")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "6px 14px" }}>
         {upcomingBills.length === 0 ? (
           <div style={{ padding: 30, textAlign: "center" }}>
             <Empty icon="check" title="Sin pagos próximos" sub="No hay cobros ni facturas pendientes."/>
           </div>
-        ) : upcomingBills.map(b => (
+        ) : upcomingBills.map((b, i) => (
           <BillRow key={b.id} b={b} hideMoney={hideMoney} eur={_eur}
-            onClick={() => navigate("billing")}/>
+            last={i === upcomingBills.length - 1} onClick={() => navigate("billing")}/>
         ))}
       </div>
     </div>
@@ -1003,7 +989,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </>
   );
 
-  const renderLayout = () => layout === "minimal" ? LayoutMinimal : layout === "focus" ? LayoutFocus : LayoutBento;
+  const renderLayout = () => LayoutBento;
 
   return (
     <div style={{
@@ -1029,10 +1015,7 @@ const LINK_BTN = {
 //    propio, que NO pueden vivir dentro del cuerpo del dashboard porque el
 //    reloj lo re-renderiza cada segundo y perderían foco/estado) ────────────
 const DASH_CARD = {
-  background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
-  border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: 18,
-  backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
-  boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)",
+  background: "transparent", border: "none", borderRadius: 0, boxShadow: "none",
 };
 const DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em" };
 const DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => (
@@ -1172,27 +1155,23 @@ const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
             style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer", fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
         </div>
       ) : (
-        <div style={{ display: "flex", gap: 12, overflowX: "auto", width: "100%", paddingBottom: 2 }}>
-          {projs.slice(0, 12).map(p => {
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", columnGap: 40, rowGap: 0, width: "100%", alignContent: "start" }}>
+          {projs.slice(0, 8).map(p => {
             const tks = D.TASKS[p.id] || [];
             const live = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : 0;
             return (
               <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
-                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-                style={{ flexShrink: 0, width: 216, cursor: "pointer", borderRadius: 14, padding: "13px 15px",
-                  background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)",
-                  display: "flex", flexDirection: "column", gap: 12, transition: "background .1s" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
-                  <span className={"dot " + (p.light || "")} style={{ flexShrink: 0 }}/>
-                  <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 8px", cursor: "pointer",
+                  borderRadius: 8, transition: "background .1s" }}>
+                <span className={"dot " + (p.light || "")} style={{ flexShrink: 0 }}/>
+                <span style={{ flex: 1, fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", minWidth: 0,
+                  overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                <div style={{ width: 96, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 }}>
+                  <div style={{ height: "100%", width: live + "%", background: "var(--accent)", borderRadius: 99, transition: "width .5s" }}/>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ flex: 1, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: live + "%", background: "var(--accent)", borderRadius: 99, transition: "width .5s" }}/>
-                  </div>
-                  <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 30, textAlign: "right" }}>{live}%</span>
-                </div>
+                <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 32, textAlign: "right", flexShrink: 0 }}>{live}%</span>
               </div>
             );
           })}
@@ -1306,40 +1285,34 @@ const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
 
 // Fila de próximo pago / factura (estilo "upcoming bill & payment")
 const _BILL_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-const BillRow = ({ b, hideMoney, eur, onClick }) => {
+const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
   const d = b.date;
   const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
   const initial = (b.name || "?").trim().charAt(0).toUpperCase();
   return (
     <div onClick={onClick}
-      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
-      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
-      style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)",
-        borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10,
-        cursor: "pointer", transition: "background .1s" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <div style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(158,154,229,0.12)", border: "0.5px solid rgba(158,154,229,0.2)",
-          color: "var(--accent)", fontSize: 15, fontWeight: 600, fontFamily: "var(--font-display)" }}>
-          {b.kind === "invoice" ? <Icon name="receipt" size={16} strokeWidth={1.7}/> : initial}
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
-          <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>{dateStr}</div>
-        </div>
-        <Icon name="chevron-right" size={15} style={{ color: "rgba(255,255,255,0.18)", flexShrink: 0 }}/>
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 8px", cursor: "pointer",
+        transition: "background .1s", borderRadius: 8,
+        borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
+      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "rgba(158,154,229,0.12)", border: "0.5px solid rgba(158,154,229,0.2)",
+        color: "var(--accent)", fontSize: 14, fontWeight: 600, fontFamily: "var(--font-display)" }}>
+        {b.kind === "invoice" ? <Icon name="receipt" size={15} strokeWidth={1.7}/> : initial}
       </div>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-        paddingTop: 10, borderTop: "0.5px solid rgba(255,255,255,0.05)" }}>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+        <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>{dateStr}</div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 4, flexShrink: 0 }}>
         {hideMoney
-          ? <span style={{ display: "inline-block", width: 68, height: 16, borderRadius: 999, background: "rgba(255,255,255,0.08)" }}/>
-          : <span style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)",
+          ? <span style={{ display: "inline-block", width: 56, height: 14, borderRadius: 999, background: "rgba(255,255,255,0.08)" }}/>
+          : <span style={{ fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px", color: "var(--text)",
               fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums" }}>{eur(b.amount)}</span>}
-        <span style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
-          background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.08)",
-          color: "var(--text-muted)", fontWeight: 500, letterSpacing: "-0.1px", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 10, color: "var(--text-subtle)", letterSpacing: "-0.1px", whiteSpace: "nowrap" }}>
           {b.kind === "invoice" ? "Por cobrar" : "Programado"}
         </span>
       </div>
