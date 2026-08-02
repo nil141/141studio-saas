@@ -785,6 +785,17 @@ const saveFinance = (next) => {
   _userdataSet("finance", _store.FINANCE); _emit();
 };
 
+// Días de la semana de un paso: array de 0..6 (0=domingo). Vacío = todos.
+const _cleanDays = (days) => Array.isArray(days)
+  ? [...new Set(days.map(n => Number(n)).filter(n => n >= 0 && n <= 6))].sort()
+  : [];
+// ¿aplica este paso en la fecha dada? (si no tiene días marcados → siempre)
+const stepAppliesOn = (item, dateStr) => {
+  const days = item && item.days;
+  if (!Array.isArray(days) || days.length === 0 || days.length === 7) return true;
+  return days.includes(new Date(dateStr + "T12:00:00").getDay());
+};
+
 // ¿esta rutina aplica en la fecha dada? (YYYY-MM-DD)
 const _routineMatchesDay = (r, dateStr) => {
   const d = new Date(dateStr + "T12:00:00");
@@ -809,9 +820,9 @@ const addRoutine = (input) => {
     frequency: input.frequency || "daily",
     startDate: input.startDate || _todayStr(),
     items: (input.items || [])
-      .map(t => (typeof t === "string" ? t : t.text) || "")
-      .map(t => t.trim()).filter(Boolean)
-      .map(text => ({ id: _id(), text })),
+      .map(it => (typeof it === "string" ? { text: it } : it))
+      .map(it => ({ id: _id(), text: (it.text || "").trim(), days: _cleanDays(it.days) }))
+      .filter(it => it.text),
     createdAt: Date.now(),
   };
   _store.ROUTINES = [r, ...(_store.ROUTINES || [])];
@@ -826,7 +837,7 @@ const updateRoutine = (id, changes) => {
     if (changes.items) {
       next.items = changes.items
         .map(it => (typeof it === "string" ? { id: _id(), text: it } : it))
-        .map(it => ({ id: it.id || _id(), text: (it.text || "").trim() }))
+        .map(it => ({ id: it.id || _id(), text: (it.text || "").trim(), days: _cleanDays(it.days) }))
         .filter(it => it.text);
     }
     return next;
@@ -922,8 +933,10 @@ const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
 // ¿están todos los pasos de la rutina hechos ese día?
 const routineDayComplete = (routineId, dateStr) => {
   const r = (_store.ROUTINES || []).find(x => x.id === routineId);
-  if (!r || !(r.items || []).length) return false;
-  return r.items.every(it => routineItemDone(routineId, dateStr, it.id));
+  if (!r) return false;
+  const items = (r.items || []).filter(it => stepAppliesOn(it, dateStr));
+  if (!items.length) return false;
+  return items.every(it => routineItemDone(routineId, dateStr, it.id));
 };
 
 const _ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -1097,7 +1110,7 @@ window.Data = {
   addTask, moveTask, updateTask, deleteTask,
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
-  routineItemProgress, setRoutineItemProgress,
+  routineItemProgress, setRoutineItemProgress, stepAppliesOn,
   routineItemLog, setRoutineItemLog,
   today: _todayStr, todayDate: _todayDate,
   routineDayComplete, routineStreak,

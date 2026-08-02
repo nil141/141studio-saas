@@ -21,7 +21,7 @@
       if (routine) {
         setTitle(routine.title || "");
         setFreq(routine.frequency || "daily");
-        setItems((routine.items || []).map((it) => ({ id: it.id, text: it.text })));
+        setItems((routine.items || []).map((it) => ({ id: it.id, text: it.text, days: Array.isArray(it.days) ? it.days : [] })));
       } else {
         setTitle("");
         setFreq("daily");
@@ -32,12 +32,17 @@
     const addItem = () => {
       const t = draft.trim();
       if (!t) return;
-      setItems((prev) => [...prev, { text: t }]);
+      setItems((prev) => [...prev, { text: t, days: [] }]);
       setDraft("");
       if (draftRef.current) draftRef.current.focus();
     };
     const removeItem = (i) => setItems((prev) => prev.filter((_, idx) => idx !== i));
     const editItem = (i, v) => setItems((prev) => prev.map((it, idx) => idx === i ? { ...it, text: v } : it));
+    const toggleDay = (i, d) => setItems((prev) => prev.map((it, idx) => {
+      if (idx !== i) return it;
+      const days = Array.isArray(it.days) ? it.days : [];
+      return { ...it, days: days.includes(d) ? days.filter((x) => x !== d) : [...days, d].sort() };
+    }));
     const submit = () => {
       if (!title.trim()) {
         toast("Ponle un nombre a la rutina", "warn");
@@ -91,24 +96,49 @@
           border: on ? "1px solid var(--accent)" : "0.5px solid var(--border)",
           color: on ? "var(--accent)" : "var(--text-muted)"
         } }, f.label);
-      }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Pasos ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7 lo que haces dentro de la rutina")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 2px", letterSpacing: "-0.2px" } }, "A\xF1ade los pasos que quieras (ej. \u201CRevisar correos\u201D, \u201CPlanificar el d\xEDa\u201D\u2026)."), items.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          value: it.text,
-          onChange: (e) => editItem(i, e.target.value),
-          style: { flex: 1, padding: "9px 12px", fontSize: 13 }
-        }
-      ), /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          className: "btn ghost icon-only sm",
-          onClick: () => removeItem(i),
-          "data-tooltip": "Quitar paso",
-          style: { flexShrink: 0 }
-        },
-        /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })
-      )))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
+      }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Pasos ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7 lo que haces dentro de la rutina")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6, marginBottom: 10 } }, items.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 2px", letterSpacing: "-0.2px" } }, "A\xF1ade los pasos que quieras (ej. \u201CRevisar correos\u201D, \u201CPlanificar el d\xEDa\u201D\u2026)."), items.map((it, i) => {
+        const days = Array.isArray(it.days) ? it.days : [];
+        const everyDay = days.length === 0 || days.length === 7;
+        return /* @__PURE__ */ React.createElement("div", { key: i, style: {
+          display: "flex",
+          flexDirection: "column",
+          gap: 7,
+          padding: "8px 0",
+          borderBottom: i === items.length - 1 ? "none" : "0.5px solid var(--border)"
+        } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            className: "input",
+            value: it.text,
+            onChange: (e) => editItem(i, e.target.value),
+            style: { flex: 1, padding: "9px 12px", fontSize: 13 }
+          }
+        ), /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            className: "btn ghost icon-only sm",
+            onClick: () => removeItem(i),
+            "data-tooltip": "Quitar paso",
+            style: { flexShrink: 0 }
+          },
+          /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })
+        )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, paddingLeft: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", marginRight: 2 } }, "D\xEDas:"), [["L", 1], ["M", 2], ["X", 3], ["J", 4], ["V", 5], ["S", 6], ["D", 0]].map(([lbl, d]) => {
+          const on = days.includes(d);
+          return /* @__PURE__ */ React.createElement("button", { key: d, onClick: () => toggleDay(i, d), style: {
+            width: 24,
+            height: 24,
+            borderRadius: 7,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontSize: 11,
+            letterSpacing: "-0.2px",
+            transition: "all .1s",
+            background: on ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
+            border: on ? "1px solid var(--accent)" : "0.5px solid var(--border)",
+            color: on ? "var(--accent)" : "var(--text-subtle)"
+          } }, lbl);
+        }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", marginLeft: 4 } }, everyDay ? "todos los d\xEDas" : "")));
+      })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
         "input",
         {
           ref: draftRef,
@@ -150,8 +180,9 @@
   var RoutineCard = ({ r, day, onEdit, onStep }) => {
     const D = window.Data;
     const [celebrate, setCelebrate] = useState(false);
-    const total = (r.items || []).length;
-    const doneCount = (r.items || []).filter((it) => D.routineItemDone(r.id, day, it.id)).length;
+    const items = (r.items || []).filter((it) => D.stepAppliesOn ? D.stepAppliesOn(it, day) : true);
+    const total = items.length;
+    const doneCount = items.filter((it) => D.routineItemDone(r.id, day, it.id)).length;
     const allDone = total > 0 && doneCount === total;
     let streak = D.routineStreak ? D.routineStreak(r.id, day) : 0;
     let streakPending = false;
@@ -197,10 +228,10 @@
         animation: streakPending ? "none" : "rtFlicker 1.7s ease-in-out infinite"
       } }, /* @__PURE__ */ React.createElement(Icon, { name: "flame", size: 13, strokeWidth: 1.7 })),
       /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 600, letterSpacing: "-0.2px" } }, streak)
-    )), r.items.map((it, idx) => {
+    )), items.map((it, idx) => {
       const pct = D.routineItemProgress ? D.routineItemProgress(r.id, day, it.id) : D.routineItemDone(r.id, day, it.id) ? 100 : 0;
       const done = pct >= 100;
-      const last = idx === r.items.length - 1;
+      const last = idx === items.length - 1;
       const circ = 2 * Math.PI * 17;
       const log = D.routineItemLog ? D.routineItemLog(r.id, day, it.id) : null;
       const lt = (it.text || "").toLowerCase();

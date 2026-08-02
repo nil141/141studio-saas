@@ -103,7 +103,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // se arrastran (misma lógica que el tablero de Tareas) + pasos de rutina de
   // hoy que aún no están hechos.
   const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
-    (n, r) => n + (r.items || []).filter(it => !D.routineItemDone(r.id, _todayStr, it.id)).length, 0
+    (n, r) => n + (r.items || []).filter(it => (D.stepAppliesOn ? D.stepAppliesOn(it, _todayStr) : true) && !D.routineItemDone(r.id, _todayStr, it.id)).length, 0
   );
   const pendingTasks = _pending.filter(t => t.deadline && t.deadline <= _todayStr).length + _routinePending;
   const overdueTasks = _pending.filter(t => t.deadline && t.deadline < _todayStr).length;
@@ -310,7 +310,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // Rutina de hoy: % medio de los pasos, racha y peso registrado
   const _routToday = (D.routinesForDay ? D.routinesForDay(_todayStr) : []) || [];
   let _rSteps = 0, _rSum = 0, weightToday = null;
-  _routToday.forEach(r => (r.items || []).forEach(it => {
+  const _stepOk = (it) => D.stepAppliesOn ? D.stepAppliesOn(it, _todayStr) : true;
+  _routToday.forEach(r => (r.items || []).filter(_stepOk).forEach(it => {
     _rSteps++;
     _rSum += (D.routineItemProgress ? D.routineItemProgress(r.id, _todayStr, it.id) : 0);
     if ((it.text || "").toLowerCase().includes("peso")) {
@@ -319,7 +320,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     }
   }));
   const routinePct    = _rSteps ? Math.round(_rSum / _rSteps) : 0;
-  const routineDone   = _rSteps ? _routToday.reduce((n, r) => n + (r.items || []).filter(it => D.routineItemDone(r.id, _todayStr, it.id)).length, 0) : 0;
+  const routineDone   = _rSteps ? _routToday.reduce((n, r) => n + (r.items || []).filter(it => _stepOk(it) && D.routineItemDone(r.id, _todayStr, it.id)).length, 0) : 0;
   const routineStreak = (_routToday[0] && D.routineStreak) ? D.routineStreak(_routToday[0].id, _todayStr) : 0;
 
   // Mini-finanzas: últimos 6 meses (facturado neto vs gastado)
@@ -362,7 +363,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     const tks = _liveTasks.filter(t => t.deadline === dateStr);
     let done = tks.filter(t => t.column === "done").length;
     let total = tks.length;
-    (D.routinesForDay ? D.routinesForDay(dateStr) : []).forEach(r => (r.items || []).forEach(it => {
+    (D.routinesForDay ? D.routinesForDay(dateStr) : []).forEach(r => (r.items || []).filter(it => D.stepAppliesOn ? D.stepAppliesOn(it, dateStr) : true).forEach(it => {
       total += 1; if (D.routineItemDone(r.id, dateStr, it.id)) done += 1;
     }));
     return total ? Math.round((done / total) * 100) : 0;

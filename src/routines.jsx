@@ -29,7 +29,7 @@ const RoutineModal = ({ open, onClose, routine, date }) => {
     if (routine) {
       setTitle(routine.title || "");
       setFreq(routine.frequency || "daily");
-      setItems((routine.items || []).map(it => ({ id: it.id, text: it.text })));
+      setItems((routine.items || []).map(it => ({ id: it.id, text: it.text, days: Array.isArray(it.days) ? it.days : [] })));
     } else {
       setTitle(""); setFreq("daily"); setItems([]);
     }
@@ -39,12 +39,17 @@ const RoutineModal = ({ open, onClose, routine, date }) => {
   const addItem = () => {
     const t = draft.trim();
     if (!t) return;
-    setItems(prev => [...prev, { text: t }]);
+    setItems(prev => [...prev, { text: t, days: [] }]);
     setDraft("");
     if (draftRef.current) draftRef.current.focus();
   };
   const removeItem = (i) => setItems(prev => prev.filter((_, idx) => idx !== i));
   const editItem   = (i, v) => setItems(prev => prev.map((it, idx) => idx === i ? { ...it, text: v } : it));
+  const toggleDay  = (i, d) => setItems(prev => prev.map((it, idx) => {
+    if (idx !== i) return it;
+    const days = Array.isArray(it.days) ? it.days : [];
+    return { ...it, days: days.includes(d) ? days.filter(x => x !== d) : [...days, d].sort() };
+  }));
 
   const submit = () => {
     if (!title.trim()) { toast("Ponle un nombre a la rutina", "warn"); return; }
@@ -125,18 +130,44 @@ const RoutineModal = ({ open, onClose, routine, date }) => {
                 Añade los pasos que quieras (ej. “Revisar correos”, “Planificar el día”…).
               </div>
             )}
-            {items.map((it, i) => (
-              <div key={i} style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ width:6, height:6, borderRadius:"50%", background:"var(--text-subtle)", flexShrink:0 }}/>
-                <input className="input" value={it.text}
-                  onChange={e => editItem(i, e.target.value)}
-                  style={{ flex:1, padding:"9px 12px", fontSize:13 }}/>
-                <button className="btn ghost icon-only sm" onClick={() => removeItem(i)}
-                  data-tooltip="Quitar paso" style={{ flexShrink:0 }}>
-                  <Icon name="x" size={13}/>
-                </button>
+            {items.map((it, i) => {
+              const days = Array.isArray(it.days) ? it.days : [];
+              const everyDay = days.length === 0 || days.length === 7;
+              return (
+              <div key={i} style={{ display:"flex", flexDirection:"column", gap:7, padding:"8px 0",
+                borderBottom: i === items.length - 1 ? "none" : "0.5px solid var(--border)" }}>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ width:6, height:6, borderRadius:"50%", background:"var(--text-subtle)", flexShrink:0 }}/>
+                  <input className="input" value={it.text}
+                    onChange={e => editItem(i, e.target.value)}
+                    style={{ flex:1, padding:"9px 12px", fontSize:13 }}/>
+                  <button className="btn ghost icon-only sm" onClick={() => removeItem(i)}
+                    data-tooltip="Quitar paso" style={{ flexShrink:0 }}>
+                    <Icon name="x" size={13}/>
+                  </button>
+                </div>
+                {/* Días del paso (vacío = todos) */}
+                <div style={{ display:"flex", alignItems:"center", gap:5, paddingLeft:14, flexWrap:"wrap" }}>
+                  <span style={{ fontSize:11, color:"var(--text-subtle)", marginRight:2 }}>Días:</span>
+                  {[["L",1],["M",2],["X",3],["J",4],["V",5],["S",6],["D",0]].map(([lbl, d]) => {
+                    const on = days.includes(d);
+                    return (
+                      <button key={d} onClick={() => toggleDay(i, d)} style={{
+                        width:24, height:24, borderRadius:7, cursor:"pointer", fontFamily:"inherit",
+                        fontSize:11, letterSpacing:"-0.2px", transition:"all .1s",
+                        background: on ? "var(--accent-soft)" : "rgba(255,255,255,0.04)",
+                        border: on ? "1px solid var(--accent)" : "0.5px solid var(--border)",
+                        color: on ? "var(--accent)" : "var(--text-subtle)",
+                      }}>{lbl}</button>
+                    );
+                  })}
+                  <span style={{ fontSize:11, color:"var(--text-subtle)", marginLeft:4 }}>
+                    {everyDay ? "todos los días" : ""}
+                  </span>
+                </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Añadir paso */}
@@ -179,8 +210,10 @@ const _weeklyLogAvg = (D, rId, dayStr, itId, field) => {
 const RoutineCard = ({ r, day, onEdit, onStep }) => {
   const D = window.Data;
   const [celebrate, setCelebrate] = useState(false);
-  const total = (r.items || []).length;
-  const doneCount = (r.items || []).filter(it => D.routineItemDone(r.id, day, it.id)).length;
+  // Solo los pasos que aplican en este día (según los días marcados del paso)
+  const items = (r.items || []).filter(it => D.stepAppliesOn ? D.stepAppliesOn(it, day) : true);
+  const total = items.length;
+  const doneCount = items.filter(it => D.routineItemDone(r.id, day, it.id)).length;
   const allDone = total > 0 && doneCount === total;
 
   // Racha: si el día visible está completo, cuenta desde ese día; si no,
@@ -226,10 +259,10 @@ const RoutineCard = ({ r, day, onEdit, onStep }) => {
       </div>
 
       {/* Pasos — cada uno como una fila de tarea (anillo + texto + estado) */}
-      {r.items.map((it, idx) => {
+      {items.map((it, idx) => {
         const pct = D.routineItemProgress ? D.routineItemProgress(r.id, day, it.id) : (D.routineItemDone(r.id, day, it.id) ? 100 : 0);
         const done = pct >= 100;
-        const last = idx === r.items.length - 1;
+        const last = idx === items.length - 1;
         const circ = 2 * Math.PI * 17;
         // Registros con datos (peso / macros) → mostrar el valor en el subtítulo
         const log = D.routineItemLog ? D.routineItemLog(r.id, day, it.id) : null;

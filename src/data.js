@@ -916,6 +916,12 @@ const saveFinance = (next) => {
   _userdataSet("finance", _store.FINANCE);
   _emit();
 };
+const _cleanDays = (days) => Array.isArray(days) ? [...new Set(days.map((n) => Number(n)).filter((n) => n >= 0 && n <= 6))].sort() : [];
+const stepAppliesOn = (item, dateStr) => {
+  const days = item && item.days;
+  if (!Array.isArray(days) || days.length === 0 || days.length === 7) return true;
+  return days.includes((/* @__PURE__ */ new Date(dateStr + "T12:00:00")).getDay());
+};
 const _routineMatchesDay = (r, dateStr) => {
   const d = /* @__PURE__ */ new Date(dateStr + "T12:00:00");
   const start = /* @__PURE__ */ new Date((r.startDate || dateStr) + "T12:00:00");
@@ -936,7 +942,7 @@ const addRoutine = (input) => {
     title: (input.title || "Rutina").trim(),
     frequency: input.frequency || "daily",
     startDate: input.startDate || _todayStr(),
-    items: (input.items || []).map((t) => (typeof t === "string" ? t : t.text) || "").map((t) => t.trim()).filter(Boolean).map((text) => ({ id: _id(), text })),
+    items: (input.items || []).map((it) => typeof it === "string" ? { text: it } : it).map((it) => ({ id: _id(), text: (it.text || "").trim(), days: _cleanDays(it.days) })).filter((it) => it.text),
     createdAt: Date.now()
   };
   _store.ROUTINES = [r, ..._store.ROUTINES || []];
@@ -949,7 +955,7 @@ const updateRoutine = (id, changes) => {
     if (r.id !== id) return r;
     const next = { ...r, ...changes };
     if (changes.items) {
-      next.items = changes.items.map((it) => typeof it === "string" ? { id: _id(), text: it } : it).map((it) => ({ id: it.id || _id(), text: (it.text || "").trim() })).filter((it) => it.text);
+      next.items = changes.items.map((it) => typeof it === "string" ? { id: _id(), text: it } : it).map((it) => ({ id: it.id || _id(), text: (it.text || "").trim(), days: _cleanDays(it.days) })).filter((it) => it.text);
     }
     return next;
   });
@@ -1036,8 +1042,10 @@ const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
 };
 const routineDayComplete = (routineId, dateStr) => {
   const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
-  if (!r || !(r.items || []).length) return false;
-  return r.items.every((it) => routineItemDone(routineId, dateStr, it.id));
+  if (!r) return false;
+  const items = (r.items || []).filter((it) => stepAppliesOn(it, dateStr));
+  if (!items.length) return false;
+  return items.every((it) => routineItemDone(routineId, dateStr, it.id));
 };
 const _ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const routineStreak = (routineId, dateStr) => {
@@ -1247,6 +1255,7 @@ window.Data = {
   toggleRoutineItem,
   routineItemProgress,
   setRoutineItemProgress,
+  stepAppliesOn,
   routineItemLog,
   setRoutineItemLog,
   today: _todayStr,

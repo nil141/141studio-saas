@@ -231,7 +231,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   // Los pasos de las rutinas del día también cuentan para el Daily Progress
   const dayRoutines = (D.routinesForDay ? D.routinesForDay(selDateStr) : []);
   let routineTotal = 0, routineProgress = 0;
-  dayRoutines.forEach(r => (r.items || []).forEach(it => {
+  dayRoutines.forEach(r => (r.items || []).filter(it => D.stepAppliesOn ? D.stepAppliesOn(it, selDateStr) : true).forEach(it => {
     routineTotal += 1;
     routineProgress += (D.routineItemProgress ? D.routineItemProgress(r.id, selDateStr, it.id)
                         : (D.routineItemDone(r.id, selDateStr, it.id) ? 100 : 0));
