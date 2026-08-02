@@ -282,6 +282,30 @@
     };
     const facturadoCur = (stripeMonth === null || stripeMonth === false ? 0 : stripeMonth / 100) + _incMonth(0);
     const facturadoPrev = (stripePrev || 0) / 100 + _incMonth(-1);
+    const _routToday = (D.routinesForDay ? D.routinesForDay(_todayStr) : []) || [];
+    let _rSteps = 0, _rSum = 0, weightToday = null;
+    _routToday.forEach((r) => (r.items || []).forEach((it) => {
+      _rSteps++;
+      _rSum += D.routineItemProgress ? D.routineItemProgress(r.id, _todayStr, it.id) : 0;
+      if ((it.text || "").toLowerCase().includes("peso")) {
+        const lg = D.routineItemLog ? D.routineItemLog(r.id, _todayStr, it.id) : null;
+        if (lg && lg.weight != null) weightToday = lg.weight;
+      }
+    }));
+    const routinePct = _rSteps ? Math.round(_rSum / _rSteps) : 0;
+    const routineDone = _rSteps ? _routToday.reduce((n, r) => n + (r.items || []).filter((it) => D.routineItemDone(r.id, _todayStr, it.id)).length, 0) : 0;
+    const routineStreak = _routToday[0] && D.routineStreak ? D.routineStreak(_routToday[0].id, _todayStr) : 0;
+    const _MES3 = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const finBars = [];
+    for (let o = -5; o <= 0; o++) {
+      const ref = new Date(now.getFullYear(), now.getMonth() + o, 1);
+      finBars.push({
+        label: _MES3[ref.getMonth()],
+        gasto: _spendForMonth(o),
+        ingreso: o === 0 ? facturadoCur : _incMonth(o)
+      });
+    }
+    const finMax = Math.max(1, ...finBars.map((b) => Math.max(b.gasto, b.ingreso)));
     const _countDelta = (n, word) => n > 0 ? { text: String(n), suffix: word, dir: "down", tone: "bad" } : { text: "0", suffix: word, dir: "flat", tone: "muted" };
     const _pctToDelta = (pct, goodUp, suffix) => {
       if (pct === null) return { text: "\u2014", suffix, dir: "flat", tone: "muted" };
@@ -535,6 +559,90 @@
         onClick: () => navigate("billing")
       }
     ))));
+    const WidgetCard = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "16px 20px 12px",
+      borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW(eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
+    const RoutineTodayBlock = () => {
+      const r = 26, circ = 2 * Math.PI * r, off = circ * (1 - routinePct / 100);
+      if (_routToday.length === 0) return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "H\xE1bitos", title: "Rutina de hoy", action: "Ver", onAction: () => navigate("tasks") }, /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Sin rutina para hoy."));
+      return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "H\xE1bitos", title: "Rutina de hoy", action: "Ver", onAction: () => navigate("tasks") }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 18, width: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: 68, height: 68, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("svg", { width: "68", height: "68", style: { transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement("circle", { cx: "34", cy: "34", r, fill: "none", stroke: "rgba(255,255,255,0.08)", strokeWidth: "5" }), /* @__PURE__ */ React.createElement(
+        "circle",
+        {
+          cx: "34",
+          cy: "34",
+          r,
+          fill: "none",
+          stroke: "var(--accent)",
+          strokeWidth: "5",
+          strokeLinecap: "round",
+          strokeDasharray: circ,
+          strokeDashoffset: off,
+          style: { transition: "stroke-dashoffset .5s" }
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: {
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 16,
+        fontWeight: 500,
+        letterSpacing: "-0.5px",
+        fontFamily: "var(--font-display)"
+      } }, routinePct, "%")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, routineDone, "/", _rSteps, " pasos hechos"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 500, letterSpacing: "-0.6px", fontFamily: "var(--font-display)", color: "var(--text)" } }, routineStreak, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", marginLeft: 3 } }, "d\xEDas")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "Racha")), weightToday != null && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 500, letterSpacing: "-0.6px", fontFamily: "var(--font-display)", color: "var(--text)" } }, String(weightToday).replace(".", ","), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", marginLeft: 3 } }, "kg")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "Peso hoy"))))));
+    };
+    const MiniFinanceBlock = () => /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "\xDAltimos 6 meses", title: "Finanzas", action: "Ver", onAction: () => navigate("billing"), pad: "14px 20px 12px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", flex: 1, minHeight: 0, gap: 10 } }, finBars.map((b, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 3, height: 78 } }, /* @__PURE__ */ React.createElement("div", { title: `Facturado: ${_eur(b.ingreso)}`, style: {
+      width: 9,
+      borderRadius: 3,
+      background: "var(--accent)",
+      height: Math.max(3, b.ingreso / finMax * 78)
+    } }), /* @__PURE__ */ React.createElement("div", { title: `Gastado: ${_eur(b.gasto)}`, style: {
+      width: 9,
+      borderRadius: 3,
+      background: "rgba(255,255,255,0.22)",
+      height: Math.max(3, b.gasto / finMax * 78)
+    } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, color: "var(--text-subtle)", textTransform: "capitalize" } }, b.label)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, justifyContent: "center", paddingTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: "var(--accent)" } }), "Facturado"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: "rgba(255,255,255,0.22)" } }), "Gastado"))));
+    const QueuesCountBlock = () => /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "Pendiente", title: "Colas de trabajo", pad: "14px 16px" }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: i,
+        onClick: q.action,
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
+        style: {
+          background: "rgba(255,255,255,0.03)",
+          border: "0.5px solid rgba(255,255,255,0.06)",
+          borderRadius: 12,
+          padding: "10px 12px",
+          cursor: "pointer",
+          transition: "background .1s",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 9, minWidth: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 14, strokeWidth: 1.7, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 11.5,
+        color: "var(--text-muted)",
+        letterSpacing: "-0.2px",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, q.label)),
+      /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 18,
+        fontWeight: 400,
+        fontFamily: "var(--font-display)",
+        fontVariantNumeric: "tabular-nums",
+        color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
+        letterSpacing: "-0.5px"
+      } }, q.count)
+    ))));
     const StatsInline = () => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px" } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 4, minWidth: 130 } }, /* @__PURE__ */ React.createElement("div", { style: {
       fontSize: 11,
       color: "var(--text-subtle)",
@@ -554,7 +662,7 @@
       alignItems: "center",
       justifyContent: "space-between",
       gap: 32,
-      padding: "0 4px 26px",
+      padding: "0 4px 6px",
       flexShrink: 0
     } }, kpis.map((k, i) => {
       const clickable = !!k.nav;
@@ -593,14 +701,14 @@
           background: "rgba(255,255,255,0.06)"
         } }))
       );
-    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
+    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 348, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 188, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(RoutineTodayBlock, null), /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
-      gap: 28,
-      height: "100vh",
-      overflow: "hidden",
-      padding: "28px 32px",
+      gap: 20,
+      minHeight: "100vh",
+      overflowY: "auto",
+      padding: "28px 32px 40px",
       maxWidth: 1400,
       margin: "0 auto"
     } }, Header, V3);
