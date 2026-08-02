@@ -139,6 +139,19 @@ const _cFmtDay = (ds) => {
   if (ds === _cToday()) return "Hoy";
   return new Date(ds + "T00:00:00").toLocaleDateString("es-ES", { day:"numeric", month:"short" });
 };
+// Fecha+hora local en formato "YYYY-MM-DDTHH:MM" (para <input type=datetime-local>)
+const _cNowLocal = () => {
+  const n = new Date();
+  const p = (x) => String(x).padStart(2, '0');
+  return `${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}`;
+};
+// Formatea un valor programado que puede ser "YYYY-MM-DD" o "YYYY-MM-DDTHH:MM"
+const _cFmtWhen = (s) => {
+  if (!s) return "—";
+  const [d, t] = s.split("T");
+  const day = _cFmtDay(d);
+  return t ? `${day} ${t}` : day;
+};
 const _cAddDays = (n) => {
   const d = new Date(); d.setDate(d.getDate() + n);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -189,7 +202,7 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
     return () => document.removeEventListener("click", close);
   }, [open]);
   const st = LEAD_STATUS[value] || LEAD_STATUS.new;
-  const label = value === "scheduled" && scheduledFor ? `${st.label} · ${_cFmtDay(scheduledFor)}` : st.label;
+  const label = value === "scheduled" && scheduledFor ? `${st.label} · ${_cFmtWhen(scheduledFor)}` : st.label;
   return (
     <div style={{ position:"relative" }} onClick={e => e.stopPropagation()}>
       <button onClick={() => setOpen(o => !o)} style={{
@@ -230,7 +243,7 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
                   </button>
                   {picking && (
                     <div style={{ padding:"4px 8px 6px" }} onClick={e => e.stopPropagation()}>
-                      <input type="date" autoFocus defaultValue={scheduledFor || _cToday()}
+                      <input type="datetime-local" autoFocus defaultValue={scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal()}
                         onChange={e => { if (e.target.value) { setOpen(false); setPicking(false); onChange("scheduled", e.target.value); } }}
                         style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border-strong)",
                           borderRadius:8, color:"var(--text)", fontSize:12, padding:"6px 9px", fontFamily:"inherit", outline:"none" }}/>
@@ -967,8 +980,9 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     if (!Array.isArray(camps)) return;
     const camp = camps.find(x => x.id === campaignId);
     if (!camp) return;
+    const now = _cNowLocal();
     const t = _cToday();
-    const due = (camp.leads || []).filter(l => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= t);
+    const due = (camp.leads || []).filter(l => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= now);
     if (!due.length) return;
     let cancelled = false;
     (async () => {
@@ -981,6 +995,17 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       if (!cancelled) reload();
     })();
     return () => { cancelled = true; };
+  }, [camps, campaignId]);
+
+  // Mientras la página esté abierta, revisa cada minuto si algún "Programado" ya venció.
+  useEffect(() => {
+    if (!Array.isArray(camps)) return;
+    const camp = camps.find(x => x.id === campaignId);
+    if (!camp) return;
+    const pending = (camp.leads || []).some(l => l.status === "scheduled" && l.scheduledFor);
+    if (!pending) return;
+    const id = setInterval(() => reload(), 60000);
+    return () => clearInterval(id);
   }, [camps, campaignId]);
 
   // Si venimos del wizard con una fuente elegida, la abrimos automáticamente
@@ -1026,7 +1051,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       const fields = {};
       if (["contacted","replied","won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
       // Programado guarda la fecha; cualquier otro estado la limpia
-      fields.scheduledFor = status === "scheduled" ? (scheduledFor || today) : "";
+      fields.scheduledFor = status === "scheduled" ? (scheduledFor || _cNowLocal()) : "";
       await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) { toast("Error al guardar", "warn"); }

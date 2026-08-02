@@ -138,6 +138,17 @@ const _cFmtDay = (ds) => {
   if (ds === _cToday()) return "Hoy";
   return (/* @__PURE__ */ new Date(ds + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 };
+const _cNowLocal = () => {
+  const n = /* @__PURE__ */ new Date();
+  const p = (x) => String(x).padStart(2, "0");
+  return `${n.getFullYear()}-${p(n.getMonth() + 1)}-${p(n.getDate())}T${p(n.getHours())}:${p(n.getMinutes())}`;
+};
+const _cFmtWhen = (s) => {
+  if (!s) return "\u2014";
+  const [d, t] = s.split("T");
+  const day = _cFmtDay(d);
+  return t ? `${day} ${t}` : day;
+};
 const _cAddDays = (n) => {
   const d = /* @__PURE__ */ new Date();
   d.setDate(d.getDate() + n);
@@ -183,7 +194,7 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
     return () => document.removeEventListener("click", close);
   }, [open]);
   const st = LEAD_STATUS[value] || LEAD_STATUS.new;
-  const label = value === "scheduled" && scheduledFor ? `${st.label} \xB7 ${_cFmtDay(scheduledFor)}` : st.label;
+  const label = value === "scheduled" && scheduledFor ? `${st.label} \xB7 ${_cFmtWhen(scheduledFor)}` : st.label;
   return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -255,9 +266,9 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
       ), picking && /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 8px 6px" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
         "input",
         {
-          type: "date",
+          type: "datetime-local",
           autoFocus: true,
-          defaultValue: scheduledFor || _cToday(),
+          defaultValue: scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal(),
           onChange: (e) => {
             if (e.target.value) {
               setOpen(false);
@@ -944,8 +955,9 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     if (!Array.isArray(camps)) return;
     const camp = camps.find((x) => x.id === campaignId);
     if (!camp) return;
+    const now = _cNowLocal();
     const t = _cToday();
-    const due = (camp.leads || []).filter((l) => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= t);
+    const due = (camp.leads || []).filter((l) => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= now);
     if (!due.length) return;
     let cancelled = false;
     (async () => {
@@ -965,6 +977,15 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     return () => {
       cancelled = true;
     };
+  }, [camps, campaignId]);
+  useEffect(() => {
+    if (!Array.isArray(camps)) return;
+    const camp = camps.find((x) => x.id === campaignId);
+    if (!camp) return;
+    const pending = (camp.leads || []).some((l) => l.status === "scheduled" && l.scheduledFor);
+    if (!pending) return;
+    const id = setInterval(() => reload(), 6e4);
+    return () => clearInterval(id);
   }, [camps, campaignId]);
   useEffect(() => {
     if (actionRan.current || camps === null || !initialAction) return;
@@ -999,7 +1020,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     try {
       const fields = {};
       if (["contacted", "replied", "won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
-      fields.scheduledFor = status === "scheduled" ? scheduledFor || today : "";
+      fields.scheduledFor = status === "scheduled" ? scheduledFor || _cNowLocal() : "";
       await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) {
