@@ -806,7 +806,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <AgendaBlock height="100%" slice={6}/>
         <ProjectsBlock height="100%"/>
       </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 214, flexShrink: 0 }}>
+      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 264, flexShrink: 0 }}>
         <MiniFinanceBlock/>
         <FocusBlock todayStr={_todayStr}/>
       </section>
