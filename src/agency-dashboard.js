@@ -350,6 +350,21 @@
       }
       return n;
     });
+    const [layout, setLayout] = useState(() => {
+      try {
+        return localStorage.getItem("141_home_layout") || "bento";
+      } catch (e) {
+        return "bento";
+      }
+    });
+    const setLayoutSaved = (id) => {
+      setLayout(id);
+      try {
+        localStorage.setItem("141_home_layout", id);
+      } catch (e) {
+      }
+    };
+    const LAYOUTS = [{ id: "bento", label: "Bento" }, { id: "minimal", label: "Minimal" }, { id: "focus", label: "Focus" }];
     const _eur = (n) => `\u20AC${(Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     const _int = (n) => String(Math.round(Number(n) || 0));
     const kpis = [
@@ -430,6 +445,33 @@
       letterSpacing: "-0.2px",
       lineHeight: 1.4
     } }, dayMessage)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 2,
+      padding: "3px",
+      background: "rgba(255,255,255,0.07)",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      borderRadius: 99
+    } }, LAYOUTS.map((l) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: l.id,
+        onClick: () => setLayoutSaved(l.id),
+        style: {
+          padding: "6px 13px",
+          borderRadius: 99,
+          border: "none",
+          cursor: "pointer",
+          fontSize: 12,
+          fontFamily: "inherit",
+          letterSpacing: "-0.2px",
+          transition: "all .12s",
+          background: layout === l.id ? "rgba(255,255,255,0.12)" : "transparent",
+          color: layout === l.id ? "var(--text)" : "var(--text-subtle)"
+        }
+      },
+      l.label
+    ))), /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       padding: "3px 4px",
@@ -657,7 +699,7 @@
       fontVariantNumeric: "tabular-nums",
       lineHeight: 1.1
     } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)" } }, k.sub))));
-    const V3 = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", { style: {
+    const KpiRow = /* @__PURE__ */ React.createElement("section", { style: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
@@ -693,25 +735,149 @@
           fontFamily: "var(--font-display)",
           fontVariantNumeric: "tabular-nums",
           transition: "color .15s"
-        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit))), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: {
-          display: "inline-block",
-          width: 64,
-          height: 11,
-          borderRadius: 999,
-          background: "rgba(255,255,255,0.06)"
-        } }))
+        } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit))), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 64, height: 11, borderRadius: 999, background: "rgba(255,255,255,0.06)" } }))
       );
-    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 348, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 188, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(RoutineTodayBlock, null), /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
+    }));
+    const LayoutBento = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 200, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(RoutineTodayBlock, null)), /* @__PURE__ */ React.createElement("section", { style: { height: 150, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
+    const _mHead = (title, action, onAction) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } }, EYEBROW(title), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: { ...LINK_BTN, height: 22, padding: "0 6px" } }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 11 })));
+    const _mDivider = /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } });
+    const LayoutMinimal = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "10px 0 4px" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 52, alignItems: "start", paddingTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 26 } }, /* @__PURE__ */ React.createElement("div", null, _mHead("Agenda", "Ver todo", () => navigate("agenda")), upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "Sin eventos pr\xF3ximos.") : upcomingEvents.slice(0, 4).map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "10px 0",
+      borderBottom: i === Math.min(3, upcomingEvents.length - 1) ? "none" : "0.5px solid rgba(255,255,255,0.05)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: ev.color || "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 1 } }, formatEventDate(ev.date), ev.sub ? ` \xB7 ${ev.sub}` : "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, color: "var(--text-subtle)" } }, ev.type)))), /* @__PURE__ */ React.createElement("div", null, _mHead("Tareas de hoy", "Ver todo", () => navigate("tasks")), _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "No te queda nada pendiente.") : _pendingWithPid.slice(0, 6).map((t, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { marginInline: -22 } }, /* @__PURE__ */ React.createElement(
+      QuickTaskRow,
+      {
+        t,
+        D,
+        last: i === Math.min(5, _pendingWithPid.length - 1),
+        projName: (D.PROJECTS.find((p) => p.id === t._pid) || {}).name || t.clientName || "General",
+        dateLabel: fmtTaskDate(t.deadline),
+        overdue: t.deadline && t.deadline < _todayStr
+      }
+    ))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 24 } }, /* @__PURE__ */ React.createElement("div", null, _mHead("Rutina de hoy"), _routToday.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" } }, "Sin rutina para hoy.") : (() => {
+      const r = 30, circ = 2 * Math.PI * r, off = circ * (1 - routinePct / 100);
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 20, paddingTop: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: 76, height: 76, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("svg", { width: "76", height: "76", style: { transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement("circle", { cx: "38", cy: "38", r, fill: "none", stroke: "rgba(255,255,255,0.08)", strokeWidth: "5" }), /* @__PURE__ */ React.createElement(
+        "circle",
+        {
+          cx: "38",
+          cy: "38",
+          r,
+          fill: "none",
+          stroke: "var(--accent)",
+          strokeWidth: "5",
+          strokeLinecap: "round",
+          strokeDasharray: circ,
+          strokeDashoffset: off,
+          style: { transition: "stroke-dashoffset .5s" }
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: {
+        position: "absolute",
+        inset: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        fontSize: 18,
+        fontWeight: 500,
+        letterSpacing: "-0.6px",
+        fontFamily: "var(--font-display)"
+      } }, routinePct, "%")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)" } }, routineDone, "/", _rSteps, " pasos hechos"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 18 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.5px" } }, routineStreak, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", marginLeft: 3 } }, "d\xEDas")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)" } }, "Racha")), weightToday != null && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.5px" } }, String(weightToday).replace(".", ","), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", marginLeft: 3 } }, "kg")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)" } }, "Peso")))));
+    })()), _mDivider, /* @__PURE__ */ React.createElement("div", null, _mHead("Pr\xF3ximos pagos", "Ver todo", () => navigate("billing")), upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" } }, "Sin pagos pr\xF3ximos.") : upcomingBills.slice(0, 4).map((b, i) => /* @__PURE__ */ React.createElement("div", { key: b.id, style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "9px 0",
+      borderBottom: i === Math.min(3, upcomingBills.length - 1) ? "none" : "0.5px solid rgba(255,255,255,0.05)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 30,
+      height: 30,
+      borderRadius: 9,
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: "rgba(158,154,229,0.12)",
+      border: "0.5px solid rgba(158,154,229,0.2)",
+      color: "var(--accent)",
+      fontSize: 13,
+      fontWeight: 600,
+      fontFamily: "var(--font-display)"
+    } }, b.kind === "invoice" ? /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 14 }) : (b.name || "?").trim().charAt(0).toUpperCase()), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, b.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 1 } }, `${b.date.getDate()} ${_MES3[b.date.getMonth()]} ${b.date.getFullYear()}`)), hideMoney ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 52, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.08)" } }) : /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.4px" } }, _eur(b.amount))))), _mDivider, /* @__PURE__ */ React.createElement("div", null, _mHead("Finanzas \xB7 \xFAltimos 6 meses", "Ver", () => navigate("billing")), hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" } }, "Importes ocultos.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, height: 70, paddingTop: 8 } }, finBars.map((b, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 3, height: 52 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, borderRadius: 3, background: "var(--accent)", height: Math.max(3, b.ingreso / finMax * 52) } }), /* @__PURE__ */ React.createElement("div", { style: { width: 8, borderRadius: 3, background: "rgba(255,255,255,0.22)", height: Math.max(3, b.gasto / finMax * 52) } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", textTransform: "capitalize" } }, b.label))))))));
+    const _todayTasks = _liveTasks.filter((t) => t.deadline === _todayStr);
+    const _doneToday = _todayTasks.filter((t) => t.column === "done").length;
+    const _totalToday = _todayTasks.length;
+    const _heroChips = [
+      ...upcomingEvents.slice(0, 3).map((ev) => ({ icon: ev.icon, title: ev.label, when: formatEventDate(ev.date), tint: "rgba(96,165,250,0.14)", color: "var(--blue)" })),
+      ...upcomingBills.slice(0, 3).map((b) => ({ icon: b.kind === "invoice" ? "receipt" : "refresh-cw", title: b.name, when: `${b.date.getDate()} ${_MES3[b.date.getMonth()]}`, tint: "rgba(158,154,229,0.14)", color: "var(--accent)" }))
+    ];
+    const HeroRing = ({ pct, size = 92, stroke = 7, label, value }) => {
+      const r = (size - stroke) / 2, circ = 2 * Math.PI * r, off = circ * (1 - pct / 100);
+      return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: size, height: size, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement("circle", { cx: size / 2, cy: size / 2, r, fill: "none", stroke: "rgba(255,255,255,0.1)", strokeWidth: stroke }), /* @__PURE__ */ React.createElement(
+        "circle",
+        {
+          cx: size / 2,
+          cy: size / 2,
+          r,
+          fill: "none",
+          stroke: "var(--accent)",
+          strokeWidth: stroke,
+          strokeLinecap: "round",
+          strokeDasharray: circ,
+          strokeDashoffset: off,
+          style: { transition: "stroke-dashoffset .5s" }
+        }
+      )), /* @__PURE__ */ React.createElement("div", { style: { position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px", fontFamily: "var(--font-display)", lineHeight: 1 } }, value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 9.5, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 } }, label)));
+    };
+    const LayoutFocus = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("div", { style: {
+      ...APPLE_CARD,
+      borderRadius: 24,
+      padding: 22,
+      background: "linear-gradient(135deg, rgba(158,154,229,0.14) 0%, rgba(255,255,255,0.02) 55%)",
+      display: "flex",
+      alignItems: "center",
+      gap: 30,
+      flexShrink: 0
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 22, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+      HeroRing,
+      {
+        pct: _totalToday ? Math.round(_doneToday / _totalToday * 100) : 0,
+        label: "Tareas",
+        value: `${_doneToday}/${_totalToday || 0}`
+      }
+    ), /* @__PURE__ */ React.createElement(HeroRing, { pct: routinePct, label: "Rutina", value: `${routinePct}%` })), /* @__PURE__ */ React.createElement("div", { style: { width: "0.5px", alignSelf: "stretch", background: "rgba(255,255,255,0.08)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Pr\xF3ximo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 } }, _heroChips.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-subtle)" } }, "Nada pr\xF3ximo.") : _heroChips.map((c, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      flexShrink: 0,
+      minWidth: 150,
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      background: "rgba(255,255,255,0.04)",
+      border: "0.5px solid rgba(255,255,255,0.08)",
+      borderRadius: 14,
+      padding: "10px 12px"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 30,
+      height: 30,
+      borderRadius: 9,
+      flexShrink: 0,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      background: c.tint,
+      color: c.color
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: c.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, c.when))))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
+    const renderLayout = () => layout === "minimal" ? LayoutMinimal : layout === "focus" ? LayoutFocus : LayoutBento;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
-      gap: 20,
+      gap: 16,
       minHeight: "100vh",
       overflowY: "auto",
       padding: "28px 32px 40px",
       maxWidth: 1400,
       margin: "0 auto"
-    } }, Header, V3);
+    } }, Header, renderLayout());
   };
   var LINK_BTN = {
     display: "inline-flex",

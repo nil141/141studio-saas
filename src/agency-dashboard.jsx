@@ -375,6 +375,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     try { localStorage.setItem("141_hide_money", n ? "1" : "0"); } catch {}
     return n;
   });
+  const [layout, setLayout] = useState(() => {
+    try { return localStorage.getItem("141_home_layout") || "bento"; } catch { return "bento"; }
+  });
+  const setLayoutSaved = (id) => { setLayout(id); try { localStorage.setItem("141_home_layout", id); } catch {} };
+  const LAYOUTS = [{ id: "bento", label: "Bento" }, { id: "minimal", label: "Minimal" }, { id: "focus", label: "Focus" }];
   const _eur = n => `€${(Number(n)||0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const _int = n => String(Math.round(Number(n)||0));
   const kpis = [
@@ -455,6 +460,20 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         </div>
 
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Selector de diseño del Inicio */}
+          <div style={{ display: "flex", alignItems: "center", gap: 2, padding: "3px",
+            background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
+            {LAYOUTS.map(l => (
+              <button key={l.id} onClick={() => setLayoutSaved(l.id)}
+                style={{ padding: "6px 13px", borderRadius: 99, border: "none", cursor: "pointer",
+                  fontSize: 12, fontFamily: "inherit", letterSpacing: "-0.2px", transition: "all .12s",
+                  background: layout === l.id ? "rgba(255,255,255,0.12)" : "transparent",
+                  color: layout === l.id ? "var(--text)" : "var(--text-subtle)" }}>
+                {l.label}
+              </button>
+            ))}
+          </div>
+
           {/* Ocultar / mostrar importes */}
           <div style={{ display: "flex", alignItems: "center", padding: "3px 4px",
             background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
@@ -751,66 +770,258 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </div>
   );
 
-  // ═══ Opción 3 — Tres columnas iguales ════════════════════════════════════
-  const V3 = (
-    <>
-      <section style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
-        padding: "0 4px 6px", flexShrink: 0,
-      }}>
-        {kpis.map((k, i) => {
-          const clickable = !!k.nav;
-          const on = hoverKpi === i;
-          const masked = k.money && hideMoney;
-          return (
-          <div key={i}
-            onClick={clickable ? () => navigate(k.nav) : undefined}
-            onMouseEnter={clickable ? () => setHoverKpi(i) : undefined}
-            onMouseLeave={clickable ? () => setHoverKpi(null) : undefined}
-            style={{ display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }}>
-            <span style={{ fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" }}>{k.label}</span>
-            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
-              <div style={{ display: "flex", alignItems: "baseline", gap: 4, height: 32 }}>
-                {masked
-                  ? <span style={{ display: "inline-block", width: 116, height: 20, borderRadius: 999,
-                      background: "linear-gradient(90deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))",
-                      alignSelf: "center" }}/>
-                  : <>
-                      <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
-                        fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
-                      {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
-                    </>}
-              </div>
-              {k.delta && !masked && <MetricDelta {...k.delta}/>}
-              {masked && <span style={{ display: "inline-block", width: 64, height: 11, borderRadius: 999,
-                background: "rgba(255,255,255,0.06)" }}/>}
+  // ── Tira de KPIs (compartida por todos los diseños) ───────────────────────
+  const KpiRow = (
+    <section style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
+      padding: "0 4px 6px", flexShrink: 0 }}>
+      {kpis.map((k, i) => {
+        const clickable = !!k.nav;
+        const on = hoverKpi === i;
+        const masked = k.money && hideMoney;
+        return (
+        <div key={i}
+          onClick={clickable ? () => navigate(k.nav) : undefined}
+          onMouseEnter={clickable ? () => setHoverKpi(i) : undefined}
+          onMouseLeave={clickable ? () => setHoverKpi(null) : undefined}
+          style={{ display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }}>
+          <span style={{ fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" }}>{k.label}</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 4, height: 32 }}>
+              {masked
+                ? <span style={{ display: "inline-block", width: 116, height: 20, borderRadius: 999,
+                    background: "linear-gradient(90deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))", alignSelf: "center" }}/>
+                : <>
+                    <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
+                      fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
+                    {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+                  </>}
             </div>
+            {k.delta && !masked && <MetricDelta {...k.delta}/>}
+            {masked && <span style={{ display: "inline-block", width: 64, height: 11, borderRadius: 999, background: "rgba(255,255,255,0.06)" }}/>}
           </div>
-          );
-        })}
-      </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 348, flexShrink: 0 }}>
+        </div>
+        );
+      })}
+    </section>
+  );
+
+  // ═══ Diseño 1 — Bento asimétrico ══════════════════════════════════════════
+  const LayoutBento = (
+    <>
+      {KpiRow}
+      <section style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 }}>
+        <QueuesBlock height="100%"/>
         <AgendaBlock height="100%" slice={6}/>
+        <ProjectsBlock height="100%"/>
+      </section>
+      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 200, flexShrink: 0 }}>
+        <MiniFinanceBlock/>
+        <RoutineTodayBlock/>
+      </section>
+      <section style={{ height: 150, flexShrink: 0 }}>
+        <QueuesCountBlock/>
+      </section>
+    </>
+  );
+
+  // ═══ Diseño 2 — Minimal (sin cajas, aireado) ══════════════════════════════
+  const _mHead = (title, action, onAction) => (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+      {EYEBROW(title)}
+      {action && <button onClick={onAction} style={{ ...LINK_BTN, height: 22, padding: "0 6px" }}>{action} <Icon name="arrow" size={11}/></button>}
+    </div>
+  );
+  const _mDivider = <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }}/>;
+  const LayoutMinimal = (
+    <>
+      {KpiRow}
+      <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "10px 0 4px" }}/>
+      <div style={{ display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 52, alignItems: "start", paddingTop: 8 }}>
+        {/* Columna izquierda — Tu día */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 26 }}>
+          <div>
+            {_mHead("Agenda", "Ver todo", () => navigate("agenda"))}
+            {upcomingEvents.length === 0
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" }}>Sin eventos próximos.</div>
+              : upcomingEvents.slice(0, 4).map((ev, i) => (
+                <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0",
+                  borderBottom: i === Math.min(3, upcomingEvents.length - 1) ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: ev.color || "var(--accent)", flexShrink: 0 }}/>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ev.label}</div>
+                    <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 1 }}>{formatEventDate(ev.date)}{ev.sub ? ` · ${ev.sub}` : ""}</div>
+                  </div>
+                  <span style={{ fontSize: 10.5, color: "var(--text-subtle)" }}>{ev.type}</span>
+                </div>
+              ))}
+          </div>
+          <div>
+            {_mHead("Tareas de hoy", "Ver todo", () => navigate("tasks"))}
+            {_pendingWithPid.length === 0
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" }}>No te queda nada pendiente.</div>
+              : _pendingWithPid.slice(0, 6).map((t, i) => (
+                <div key={t.id} style={{ marginInline: -22 }}>
+                  <QuickTaskRow t={t} D={D} last={i === Math.min(5, _pendingWithPid.length - 1)}
+                    projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
+                    dateLabel={fmtTaskDate(t.deadline)} overdue={t.deadline && t.deadline < _todayStr}/>
+                </div>
+              ))}
+          </div>
+        </div>
+        {/* Columna derecha — Resumen */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
+          {/* Rutina */}
+          <div>
+            {_mHead("Rutina de hoy")}
+            {_routToday.length === 0
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" }}>Sin rutina para hoy.</div>
+              : (() => {
+                  const r = 30, circ = 2 * Math.PI * r, off = circ * (1 - routinePct / 100);
+                  return (
+                    <div style={{ display: "flex", alignItems: "center", gap: 20, paddingTop: 6 }}>
+                      <div style={{ position: "relative", width: 76, height: 76, flexShrink: 0 }}>
+                        <svg width="76" height="76" style={{ transform: "rotate(-90deg)" }}>
+                          <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5"/>
+                          <circle cx="38" cy="38" r={r} fill="none" stroke="var(--accent)" strokeWidth="5" strokeLinecap="round"
+                            strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset .5s" }}/>
+                        </svg>
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                          fontSize: 18, fontWeight: 500, letterSpacing: "-0.6px", fontFamily: "var(--font-display)" }}>{routinePct}%</div>
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                        <div style={{ fontSize: 12.5, color: "var(--text-muted)" }}>{routineDone}/{_rSteps} pasos hechos</div>
+                        <div style={{ display: "flex", gap: 18 }}>
+                          <div><div style={{ fontSize: 16, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.5px" }}>{routineStreak}<span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 3 }}>días</span></div><div style={{ fontSize: 10.5, color: "var(--text-subtle)" }}>Racha</div></div>
+                          {weightToday != null && <div><div style={{ fontSize: 16, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.5px" }}>{String(weightToday).replace(".", ",")}<span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 3 }}>kg</span></div><div style={{ fontSize: 10.5, color: "var(--text-subtle)" }}>Peso</div></div>}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+          </div>
+          {_mDivider}
+          {/* Próximos pagos */}
+          <div>
+            {_mHead("Próximos pagos", "Ver todo", () => navigate("billing"))}
+            {upcomingBills.length === 0
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" }}>Sin pagos próximos.</div>
+              : upcomingBills.slice(0, 4).map((b, i) => (
+                <div key={b.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "9px 0",
+                  borderBottom: i === Math.min(3, upcomingBills.length - 1) ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "rgba(158,154,229,0.12)", border: "0.5px solid rgba(158,154,229,0.2)", color: "var(--accent)", fontSize: 13, fontWeight: 600, fontFamily: "var(--font-display)" }}>
+                    {b.kind === "invoice" ? <Icon name="receipt" size={14}/> : (b.name || "?").trim().charAt(0).toUpperCase()}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+                    <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 1 }}>{`${b.date.getDate()} ${_MES3[b.date.getMonth()]} ${b.date.getFullYear()}`}</div>
+                  </div>
+                  {hideMoney
+                    ? <span style={{ display: "inline-block", width: 52, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.08)" }}/>
+                    : <span style={{ fontSize: 14, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-0.4px" }}>{_eur(b.amount)}</span>}
+                </div>
+              ))}
+          </div>
+          {_mDivider}
+          {/* Finanzas sparkline */}
+          <div>
+            {_mHead("Finanzas · últimos 6 meses", "Ver", () => navigate("billing"))}
+            {hideMoney
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "6px 0" }}>Importes ocultos.</div>
+              : <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 10, height: 70, paddingTop: 8 }}>
+                  {finBars.map((b, i) => (
+                    <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
+                      <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 52 }}>
+                        <div style={{ width: 8, borderRadius: 3, background: "var(--accent)", height: Math.max(3, (b.ingreso / finMax) * 52) }}/>
+                        <div style={{ width: 8, borderRadius: 3, background: "rgba(255,255,255,0.22)", height: Math.max(3, (b.gasto / finMax) * 52) }}/>
+                      </div>
+                      <span style={{ fontSize: 10, color: "var(--text-subtle)", textTransform: "capitalize" }}>{b.label}</span>
+                    </div>
+                  ))}
+                </div>}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+
+  // ═══ Diseño 3 — Focus (hero del día) ══════════════════════════════════════
+  const _todayTasks = _liveTasks.filter(t => t.deadline === _todayStr);
+  const _doneToday  = _todayTasks.filter(t => t.column === "done").length;
+  const _totalToday = _todayTasks.length;
+  const _heroChips = [
+    ...upcomingEvents.slice(0, 3).map(ev => ({ icon: ev.icon, title: ev.label, when: formatEventDate(ev.date), tint: "rgba(96,165,250,0.14)", color: "var(--blue)" })),
+    ...upcomingBills.slice(0, 3).map(b => ({ icon: b.kind === "invoice" ? "receipt" : "refresh-cw", title: b.name, when: `${b.date.getDate()} ${_MES3[b.date.getMonth()]}`, tint: "rgba(158,154,229,0.14)", color: "var(--accent)" })),
+  ];
+  const HeroRing = ({ pct, size = 92, stroke = 7, label, value }) => {
+    const r = (size - stroke) / 2, circ = 2 * Math.PI * r, off = circ * (1 - pct / 100);
+    return (
+      <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+        <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={stroke}/>
+          <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="var(--accent)" strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={circ} strokeDashoffset={off} style={{ transition: "stroke-dashoffset .5s" }}/>
+        </svg>
+        <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ fontSize: 22, fontWeight: 500, letterSpacing: "-0.8px", fontFamily: "var(--font-display)", lineHeight: 1 }}>{value}</div>
+          <div style={{ fontSize: 9.5, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.06em", marginTop: 3 }}>{label}</div>
+        </div>
+      </div>
+    );
+  };
+  const LayoutFocus = (
+    <>
+      {KpiRow}
+      <div style={{ ...APPLE_CARD, borderRadius: 24, padding: 22,
+        background: "linear-gradient(135deg, rgba(158,154,229,0.14) 0%, rgba(255,255,255,0.02) 55%)",
+        display: "flex", alignItems: "center", gap: 30, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 22, flexShrink: 0 }}>
+          <HeroRing pct={_totalToday ? Math.round(_doneToday / _totalToday * 100) : 0}
+            label="Tareas" value={`${_doneToday}/${_totalToday || 0}`}/>
+          <HeroRing pct={routinePct} label="Rutina" value={`${routinePct}%`}/>
+        </div>
+        <div style={{ width: "0.5px", alignSelf: "stretch", background: "rgba(255,255,255,0.08)" }}/>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ ...APPLE_SECTION, marginBottom: 12 }}>Próximo</div>
+          <div style={{ display: "flex", gap: 12, overflowX: "auto", paddingBottom: 4 }}>
+            {_heroChips.length === 0
+              ? <span style={{ fontSize: 12.5, color: "var(--text-subtle)" }}>Nada próximo.</span>
+              : _heroChips.map((c, i) => (
+                <div key={i} style={{ flexShrink: 0, minWidth: 150, display: "flex", alignItems: "center", gap: 10,
+                  background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: "10px 12px" }}>
+                  <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+                    background: c.tint, color: c.color }}><Icon name={c.icon} size={14} strokeWidth={1.7}/></div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.title}</div>
+                    <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 1 }}>{c.when}</div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      </div>
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 }}>
         <QueuesBlock height="100%"/>
         <ProjectsBlock height="100%"/>
       </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, height: 188, flexShrink: 0 }}>
-        <RoutineTodayBlock/>
+      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 }}>
         <MiniFinanceBlock/>
         <QueuesCountBlock/>
       </section>
     </>
   );
 
+  const renderLayout = () => layout === "minimal" ? LayoutMinimal : layout === "focus" ? LayoutFocus : LayoutBento;
+
   return (
     <div style={{
-      display: "flex", flexDirection: "column", gap: 20,
+      display: "flex", flexDirection: "column", gap: 16,
       minHeight: "100vh", overflowY: "auto",
       padding: "28px 32px 40px",
       maxWidth: 1400, margin: "0 auto",
     }}>
       {Header}
-      {V3}
+      {renderLayout()}
     </div>
   );
 };
