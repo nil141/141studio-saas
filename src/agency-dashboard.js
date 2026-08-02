@@ -540,7 +540,7 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "18px 22px 14px",
+      padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
     } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.slice(0, slice).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(slice - 1, upcomingEvents.length - 1), formatEventDate }))));
     const fmtTaskDate = (ds) => {
@@ -552,7 +552,7 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "18px 22px 14px",
+      padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
     } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "No te queda nada pendiente." })) : _pendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
@@ -570,9 +570,9 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "18px 22px 14px",
+      padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pagos y suscripciones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "6px 14px" } }, upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin pagos pr\xF3ximos", sub: "No hay cobros ni facturas pendientes." })) : upcomingBills.map((b, i) => /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pagos y suscripciones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "6px 4px" } }, upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin pagos pr\xF3ximos", sub: "No hay cobros ni facturas pendientes." })) : upcomingBills.map((b, i) => /* @__PURE__ */ React.createElement(
       BillRow,
       {
         key: b.id,
@@ -587,7 +587,7 @@
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
-      padding: "16px 20px 12px",
+      padding: "2px 4px 12px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
     } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW(eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
     const RoutineTodayBlock = () => {
@@ -621,7 +621,7 @@
     };
     const MiniFinanceBlock = () => {
       const FinTrend = window.FinTrendChart;
-      return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "\xDAltimos 6 meses", title: "Facturado", action: "Ver", onAction: () => navigate("billing"), pad: "10px 18px 10px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : FinTrend ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", width: "100%", minHeight: 0 } }, /* @__PURE__ */ React.createElement(FinTrend, { trend: finTrend, single: true })) : /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 } }, "\u2026"));
+      return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "\xDAltimos 6 meses", title: "Facturado", action: "Ver", onAction: () => navigate("billing"), pad: "10px 4px 4px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : FinTrend ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", width: "100%", minHeight: 0 } }, /* @__PURE__ */ React.createElement(FinTrend, { trend: finTrend, single: true })) : /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 } }, "\u2026"));
     };
     const QueuesCountBlock = () => /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "Pendiente", title: "Colas de trabajo", pad: "14px 16px" }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(
       "div",
@@ -713,7 +713,7 @@
         } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit))), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 64, height: 11, borderRadius: 999, background: "rgba(255,255,255,0.06)" } }))
       );
     }));
-    const LayoutBento = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 264, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(GoalBlock, { billed: facturadoCur, eur: _eur, hideMoney })), /* @__PURE__ */ React.createElement("section", { style: { height: 176, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(ProjectsProgressBlock, { D, navigate, openModal })));
+    const LayoutBento = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 48, height: 344, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 48, height: 264, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(GoalBlock, { billed: facturadoCur, eur: _eur, hideMoney })), /* @__PURE__ */ React.createElement("section", { style: { height: 176, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(ProjectsProgressBlock, { D, navigate, openModal })));
     const _mHead = (title, action, onAction) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } }, EYEBROW(title), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: { ...LINK_BTN, height: 22, padding: "0 6px" } }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 11 })));
     const _mDivider = /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } });
     const LayoutMinimal = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "10px 0 4px" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 52, alignItems: "start", paddingTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 26 } }, /* @__PURE__ */ React.createElement("div", null, _mHead("Agenda", "Ver todo", () => navigate("agenda")), upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "Sin eventos pr\xF3ximos.") : upcomingEvents.slice(0, 4).map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
@@ -846,10 +846,10 @@
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
-      gap: 16,
+      gap: 34,
       minHeight: "100vh",
       overflowY: "auto",
-      padding: "28px 32px 40px",
+      padding: "28px 36px 48px",
       maxWidth: 1400,
       margin: "0 auto"
     } }, Header, renderLayout());
@@ -881,7 +881,7 @@
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: "16px 20px 12px",
+    padding: "2px 4px 12px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
   } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: DASH_EYEBROW }, eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
   var _goalSkel = (w) => /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: w, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.09)", verticalAlign: "middle" } });
@@ -913,7 +913,7 @@
       setEditing(false);
     };
     const done = pct >= 100;
-    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "Objetivo", title: "Meta del mes", action: editing ? null : "Editar", onAction: startEdit, pad: "18px 20px" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%", justifyContent: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: {
+    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "Objetivo", title: "Meta del mes", action: editing ? null : "Editar", onAction: startEdit, pad: "14px 4px" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%", justifyContent: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: {
       fontSize: 40,
       fontWeight: 400,
       letterSpacing: "-1.6px",
@@ -959,7 +959,7 @@
   };
   var ProjectsProgressBlock = ({ D, navigate, openModal }) => {
     const projs = D.PROJECTS || [];
-    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "En curso", title: "Proyectos", action: "Ver todo", onAction: () => navigate("projects"), pad: "14px 16px" }, projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", fontSize: 12.5, color: "var(--text-subtle)" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "En curso", title: "Proyectos", action: "Ver todo", onAction: () => navigate("projects"), pad: "8px 4px" }, projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", fontSize: 12.5, color: "var(--text-subtle)" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => openModal("newProject"),
@@ -980,7 +980,7 @@
             display: "flex",
             alignItems: "center",
             gap: 14,
-            padding: "11px 8px",
+            padding: "11px 4px",
             cursor: "pointer",
             borderRadius: 8,
             transition: "background .1s"
@@ -1011,8 +1011,9 @@
         display: "flex",
         alignItems: "center",
         gap: 14,
-        padding: "14px 22px",
+        padding: "13px 4px",
         transition: "background .1s",
+        borderRadius: 8,
         borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)"
       }
     },
@@ -1071,7 +1072,8 @@
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "12px 22px",
+          padding: "12px 4px",
+          borderRadius: 8,
           transition: "background .1s",
           borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)"
         }
@@ -1134,7 +1136,7 @@
           display: "flex",
           alignItems: "center",
           gap: 13,
-          padding: "12px 8px",
+          padding: "12px 4px",
           cursor: "pointer",
           transition: "background .1s",
           borderRadius: 8,

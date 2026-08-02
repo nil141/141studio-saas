@@ -556,7 +556,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const AgendaBlock = ({ height = 360, slice = 8 }) => (
     <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        padding: "2px 4px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
           {EYEBROW("Próximamente")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Agenda</div>
@@ -583,7 +583,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const QueuesBlock = ({ height = 360 }) => (
     <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        padding: "2px 4px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
           {EYEBROW("Pendiente")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Tareas rápidas</div>
@@ -609,14 +609,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const ProjectsBlock = ({ height = 360 }) => (
     <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        padding: "2px 4px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
           {EYEBROW("Próximos")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Pagos y suscripciones</div>
         </div>
         <button onClick={() => navigate("billing")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
       </div>
-      <div style={{ flex: 1, overflowY: "auto", padding: "6px 14px" }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
         {upcomingBills.length === 0 ? (
           <div style={{ padding: 30, textAlign: "center" }}>
             <Empty icon="check" title="Sin pagos próximos" sub="No hay cobros ni facturas pendientes."/>
@@ -633,7 +633,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const WidgetCard = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => (
     <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "16px 20px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        padding: "2px 4px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
         <div>
           {EYEBROW(eyebrow)}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>{title}</div>
@@ -694,7 +694,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const MiniFinanceBlock = () => {
     const FinTrend = window.FinTrendChart;
     return (
-    <WidgetCard eyebrow="Últimos 6 meses" title="Facturado" action="Ver" onAction={() => navigate("billing")} pad="10px 18px 10px">
+    <WidgetCard eyebrow="Últimos 6 meses" title="Facturado" action="Ver" onAction={() => navigate("billing")} pad="10px 4px 4px">
       {hideMoney ? (
         <div style={{ margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 }}>Importes ocultos</div>
       ) : FinTrend ? (
@@ -787,12 +787,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const LayoutBento = (
     <>
       {KpiRow}
-      <section style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 }}>
+      <section style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 48, height: 344, flexShrink: 0 }}>
         <QueuesBlock height="100%"/>
         <AgendaBlock height="100%" slice={6}/>
         <ProjectsBlock height="100%"/>
       </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 264, flexShrink: 0 }}>
+      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 48, height: 264, flexShrink: 0 }}>
         <MiniFinanceBlock/>
         <GoalBlock billed={facturadoCur} eur={_eur} hideMoney={hideMoney}/>
       </section>
@@ -993,9 +993,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", gap: 16,
+      display: "flex", flexDirection: "column", gap: 34,
       minHeight: "100vh", overflowY: "auto",
-      padding: "28px 32px 40px",
+      padding: "28px 36px 48px",
       maxWidth: 1400, margin: "0 auto",
     }}>
       {Header}
@@ -1021,7 +1021,7 @@ const DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)
 const DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => (
   <div style={{ ...DASH_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "16px 20px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+      padding: "2px 4px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
       <div>
         <div style={DASH_EYEBROW}>{eyebrow}</div>
         <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>{title}</div>
@@ -1107,7 +1107,7 @@ const GoalBlock = ({ billed, eur, hideMoney }) => {
   };
   const done = pct >= 100;
   return (
-    <DashCardShell eyebrow="Objetivo" title="Meta del mes" action={editing ? null : "Editar"} onAction={startEdit} pad="18px 20px">
+    <DashCardShell eyebrow="Objetivo" title="Meta del mes" action={editing ? null : "Editar"} onAction={startEdit} pad="14px 4px">
       <div style={{ display: "flex", flexDirection: "column", width: "100%", justifyContent: "center", gap: 16 }}>
         <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
           <span style={{ fontSize: 40, fontWeight: 400, letterSpacing: "-1.6px", lineHeight: 1, fontFamily: "var(--font-display)",
@@ -1148,7 +1148,7 @@ const GoalBlock = ({ billed, eur, hideMoney }) => {
 const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
   const projs = D.PROJECTS || [];
   return (
-    <DashCardShell eyebrow="En curso" title="Proyectos" action="Ver todo" onAction={() => navigate("projects")} pad="14px 16px">
+    <DashCardShell eyebrow="En curso" title="Proyectos" action="Ver todo" onAction={() => navigate("projects")} pad="8px 4px">
       {projs.length === 0 ? (
         <div style={{ margin: "auto", fontSize: 12.5, color: "var(--text-subtle)" }}>
           Sin proyectos. <button onClick={() => openModal("newProject")}
@@ -1163,7 +1163,7 @@ const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
               <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-                style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 8px", cursor: "pointer",
+                style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 4px", cursor: "pointer",
                   borderRadius: 8, transition: "background .1s" }}>
                 <span className={"dot " + (p.light || "")} style={{ flexShrink: 0 }}/>
                 <span style={{ flex: 1, fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", minWidth: 0,
@@ -1187,7 +1187,7 @@ const EventRow = ({ ev, last, formatEventDate }) => (
     onMouseLeave={e => e.currentTarget.style.background = "transparent"}
     style={{
       display: "flex", alignItems: "center", gap: 14,
-      padding: "14px 22px", transition: "background .1s",
+      padding: "13px 4px", transition: "background .1s", borderRadius: 8,
       borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)",
     }}>
     <div style={{
@@ -1260,7 +1260,7 @@ const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
     <div
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-      style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 22px",
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 4px", borderRadius: 8,
         transition: "background .1s", borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)" }}>
       <button onClick={complete} title="Completar"
         style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, padding: 0, cursor: "pointer",
@@ -1293,7 +1293,7 @@ const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
     <div onClick={onClick}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
       onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-      style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 8px", cursor: "pointer",
+      style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", cursor: "pointer",
         transition: "background .1s", borderRadius: 8,
         borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
       <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
