@@ -808,10 +808,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 264, flexShrink: 0 }}>
         <MiniFinanceBlock/>
-        <FocusBlock todayStr={_todayStr}/>
+        <GoalBlock billed={facturadoCur} eur={_eur} hideMoney={hideMoney}/>
       </section>
-      <section style={{ height: 160, flexShrink: 0 }}>
-        <ClientsBlock D={D} navigate={navigate}/>
+      <section style={{ height: 176, flexShrink: 0 }}>
+        <ProjectsProgressBlock D={D} navigate={navigate} openModal={openModal}/>
       </section>
     </>
   );
@@ -1098,6 +1098,100 @@ const ClientsBlock = ({ D, navigate }) => {
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
                   <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.service || "Cliente"}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </DashCardShell>
+  );
+};
+
+// Widget "Meta del mes" — progreso hacia el objetivo de facturación (editable)
+const _goalSkel = (w) => <span style={{ display: "inline-block", width: w, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.09)", verticalAlign: "middle" }}/>;
+const GoalBlock = ({ billed, eur, hideMoney }) => {
+  const [goal, setGoal] = useState(() => { try { return Number(localStorage.getItem("141_month_goal")) || 3000; } catch { return 3000; } });
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const pct = goal > 0 ? Math.min(100, Math.round((billed / goal) * 100)) : 0;
+  const remaining = Math.max(0, goal - billed);
+  const startEdit = () => { setDraft(String(goal)); setEditing(true); };
+  const commit = () => {
+    const n = Math.round(Number(String(draft).replace(/[^0-9.,]/g, "").replace(",", ".")) || 0);
+    if (n > 0) { setGoal(n); try { localStorage.setItem("141_month_goal", String(n)); } catch {} }
+    setEditing(false);
+  };
+  const done = pct >= 100;
+  return (
+    <DashCardShell eyebrow="Objetivo" title="Meta del mes" action={editing ? null : "Editar"} onAction={startEdit} pad="18px 20px">
+      <div style={{ display: "flex", flexDirection: "column", width: "100%", justifyContent: "center", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 10 }}>
+          <span style={{ fontSize: 40, fontWeight: 400, letterSpacing: "-1.6px", lineHeight: 1, fontFamily: "var(--font-display)",
+            color: done ? "var(--accent)" : "var(--text)" }}>{pct}%</span>
+          {done && <span style={{ fontSize: 12.5, color: "var(--accent)", letterSpacing: "-0.3px" }}>¡Superado!</span>}
+        </div>
+        <div style={{ height: 9, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+          <div style={{ height: "100%", width: pct + "%", background: "var(--accent)", borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" }}/>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 13, letterSpacing: "-0.3px" }}>
+          <span style={{ color: "var(--text-muted)" }}>
+            {hideMoney ? _goalSkel(46) : eur(billed)} <span style={{ color: "var(--text-subtle)", fontSize: 12 }}>facturado</span>
+          </span>
+          {editing ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 2, color: "var(--text-muted)" }}>
+              €<input autoFocus value={draft} onChange={e => setDraft(e.target.value.replace(/[^0-9.,]/g, ""))}
+                onKeyDown={e => { if (e.key === "Enter") commit(); if (e.key === "Escape") setEditing(false); }}
+                onBlur={commit}
+                style={{ width: 64, background: "rgba(255,255,255,0.06)", border: "0.5px solid var(--accent)", borderRadius: 8,
+                  color: "var(--text)", fontSize: 13, padding: "4px 8px", fontFamily: "var(--font-sans)", outline: "none", textAlign: "right" }}/>
+            </span>
+          ) : (
+            <button onClick={startEdit} style={{ background: "transparent", border: 0, cursor: "pointer", color: "var(--text-subtle)",
+              fontFamily: "inherit", fontSize: 12.5, letterSpacing: "-0.3px", display: "inline-flex", alignItems: "center", gap: 5 }}>
+              meta {hideMoney ? _goalSkel(40) : eur(goal)} <Icon name="edit-2" size={11}/>
+            </button>
+          )}
+        </div>
+        <div style={{ fontSize: 12, color: done ? "var(--accent)" : "var(--text-subtle)", letterSpacing: "-0.2px" }}>
+          {done ? "Objetivo cumplido este mes 🎯" : hideMoney ? "Progreso del mes" : `Faltan ${eur(remaining)} para la meta`}
+        </div>
+      </div>
+    </DashCardShell>
+  );
+};
+
+// Widget "Proyectos en curso" — barras de progreso por proyecto
+const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
+  const projs = D.PROJECTS || [];
+  return (
+    <DashCardShell eyebrow="En curso" title="Proyectos" action="Ver todo" onAction={() => navigate("projects")} pad="14px 16px">
+      {projs.length === 0 ? (
+        <div style={{ margin: "auto", fontSize: 12.5, color: "var(--text-subtle)" }}>
+          Sin proyectos. <button onClick={() => openModal("newProject")}
+            style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer", fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", width: "100%", paddingBottom: 2 }}>
+          {projs.slice(0, 12).map(p => {
+            const tks = D.TASKS[p.id] || [];
+            const live = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : 0;
+            return (
+              <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                style={{ flexShrink: 0, width: 216, cursor: "pointer", borderRadius: 14, padding: "13px 15px",
+                  background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)",
+                  display: "flex", flexDirection: "column", gap: 12, transition: "background .1s" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <span className={"dot " + (p.light || "")} style={{ flexShrink: 0 }}/>
+                  <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <div style={{ flex: 1, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: live + "%", background: "var(--accent)", borderRadius: 99, transition: "width .5s" }}/>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 30, textAlign: "right" }}>{live}%</span>
                 </div>
               </div>
             );
