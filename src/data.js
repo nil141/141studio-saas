@@ -177,7 +177,8 @@ const _ml = (r) => r && {
   next: r.next,
   nextDate: r.next_date,
   needs: r.needs,
-  when: r.when_field
+  when: r.when_field,
+  instagram: r.instagram || ""
 };
 const _ms = (r) => r && {
   name: r.name,
@@ -756,11 +757,12 @@ const addLead = (input) => {
     next: "Cualificar",
     nextDate: "\u2014",
     needs: input.message || "",
-    when: "\u2014"
+    when: "\u2014",
+    instagram: input.instagram || ""
   };
   _store.LEADS = [l, ..._store.LEADS];
   _emit();
-  _sb.from("leads").insert({
+  _insertAdaptive("leads", {
     id: l.id,
     agency_id: uid,
     name: l.name,
@@ -773,8 +775,15 @@ const addLead = (input) => {
     next: l.next,
     next_date: l.nextDate,
     needs: l.needs,
-    when_field: l.when
-  }).then();
+    when_field: l.when,
+    instagram: l.instagram || null
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addLead] Supabase error:", error.message);
+      _store.LEADS = _store.LEADS.filter((x) => x.id !== l.id);
+      _emit();
+    }
+  });
   return l;
 };
 const addTask = (input) => {

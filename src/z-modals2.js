@@ -1,7 +1,7 @@
 const NewLeadModal = ({ open, onClose }) => {
   const D = window.Data;
   const toast = useToast();
-  const [data, setData] = useState({ name: "", company: "", channel: "linkedin", calendly: "", message: "" });
+  const [data, setData] = useState({ name: "", company: "", instagram: "", channel: "linkedin", calendly: "", message: "" });
   const [checked, setChecked] = useState({});
   const submit = () => {
     if (!data.name.trim()) {
@@ -11,20 +11,29 @@ const NewLeadModal = ({ open, onClose }) => {
     const l = D.addLead(data);
     toast(`Lead "${l.name}" a\xF1adido al pipeline`, "success");
     onClose();
-    setData({ name: "", company: "", channel: "linkedin", calendly: "", message: "" });
+    setData({ name: "", company: "", instagram: "", channel: "linkedin", calendly: "", message: "" });
     setChecked({});
   };
-  return /* @__PURE__ */ React.createElement(Modal, { open, onClose, title: "Nuevo lead", sub: "Captaci\xF3n + cualificaci\xF3n", size: "lg", footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: submit }, "A\xF1adir al pipeline ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))) }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Carla Esteban", value: data.name, onChange: (e) => setData({ ...data, name: e.target.value }), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Empresa"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Bruna Studio", value: data.company, onChange: (e) => setData({ ...data, company: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Canal de origen"), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { flexWrap: "wrap" } }, Object.entries(D.CHANNELS).map(([k, v]) => /* @__PURE__ */ React.createElement("button", { key: k, className: "chip", style: { cursor: "pointer", padding: "4px 10px", borderColor: data.channel === k ? "var(--text)" : "var(--border-strong)", color: data.channel === k ? "var(--text)" : "var(--text-muted)" }, onClick: () => setData({ ...data, channel: k }) }, /* @__PURE__ */ React.createElement(Icon, { name: v.icon, size: 11 }), " ", v.label)))), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Link Calendly (opcional)"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "https://calendly.com/\u2026", value: data.calendly, onChange: (e) => setData({ ...data, calendly: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Primer mensaje / contexto"), /* @__PURE__ */ React.createElement("textarea", { className: "textarea", rows: 3, placeholder: "\xBFQu\xE9 necesita? \xBFC\xF3mo te ha contactado?", value: data.message, onChange: (e) => setData({ ...data, message: e.target.value }) })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 10 } }, "Antes de la llamada"), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginBottom: 10 } }, "Tu checklist para no llegar a fr\xEDo."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, D.CALL_PREP.map((item, i) => /* @__PURE__ */ React.createElement("label", { key: i, className: "row tight", style: { padding: "8px 10px", background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!checked[i], onChange: (e) => setChecked({ ...checked, [i]: e.target.checked }) }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, textDecoration: checked[i] ? "line-through" : "none", opacity: checked[i] ? 0.5 : 1 } }, item)))))));
+  return /* @__PURE__ */ React.createElement(Modal, { open, onClose, title: "Nuevo lead", sub: "Captaci\xF3n + cualificaci\xF3n", size: "lg", footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: submit }, "A\xF1adir al pipeline ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))) }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Carla Esteban", value: data.name, onChange: (e) => setData({ ...data, name: e.target.value }), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Empresa"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Bruna Studio", value: data.company, onChange: (e) => setData({ ...data, company: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Instagram"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "input",
+      placeholder: "@usuario",
+      value: data.instagram,
+      onChange: (e) => setData({ ...data, instagram: e.target.value })
+    }
+  )), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Canal de origen"), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { flexWrap: "wrap" } }, Object.entries(D.CHANNELS).map(([k, v]) => /* @__PURE__ */ React.createElement("button", { key: k, className: "chip", style: { cursor: "pointer", padding: "4px 10px", borderColor: data.channel === k ? "var(--text)" : "var(--border-strong)", color: data.channel === k ? "var(--text)" : "var(--text-muted)" }, onClick: () => setData({ ...data, channel: k }) }, /* @__PURE__ */ React.createElement(Icon, { name: v.icon, size: 11 }), " ", v.label)))), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Link Calendly (opcional)"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "https://calendly.com/\u2026", value: data.calendly, onChange: (e) => setData({ ...data, calendly: e.target.value }) })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1 / -1" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Primer mensaje / contexto"), /* @__PURE__ */ React.createElement("textarea", { className: "textarea", rows: 3, placeholder: "\xBFQu\xE9 necesita? \xBFC\xF3mo te ha contactado?", value: data.message, onChange: (e) => setData({ ...data, message: e.target.value }) })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card-title", style: { marginBottom: 10 } }, "Antes de la llamada"), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginBottom: 10 } }, "Tu checklist para no llegar a fr\xEDo."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, D.CALL_PREP.map((item, i) => /* @__PURE__ */ React.createElement("label", { key: i, className: "row tight", style: { padding: "8px 10px", background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, cursor: "pointer" } }, /* @__PURE__ */ React.createElement("input", { type: "checkbox", checked: !!checked[i], onChange: (e) => setChecked({ ...checked, [i]: e.target.checked }) }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, textDecoration: checked[i] ? "line-through" : "none", opacity: checked[i] ? 0.5 : 1 } }, item)))))));
 };
 const NewInvoiceModal = ({ open, onClose }) => {
+  var _a, _b;
   const D = window.Data;
   D.useStore && D.useStore();
   const toast = useToast();
   const hasClients = D.CLIENTS.length > 0;
   const hasProjects = D.PROJECTS.length > 0;
   const [data, setData] = useState({
-    clientId: D.CLIENTS[0]?.id || "",
-    projectId: D.PROJECTS[0]?.id || "",
+    clientId: ((_a = D.CLIENTS[0]) == null ? void 0 : _a.id) || "",
+    projectId: ((_b = D.PROJECTS[0]) == null ? void 0 : _b.id) || "",
     amount: "750",
     type: "50% inicial"
   });
@@ -70,7 +79,7 @@ const InviteClientModal = ({ open, onClose, session }) => {
     if (res && res.token) {
       setLink(`${window.location.origin}/invite/${res.token}`);
     } else {
-      toast(res?.error || "Error al generar el enlace", "error");
+      toast((res == null ? void 0 : res.error) || "Error al generar el enlace", "error");
     }
     setBusy(false);
   };

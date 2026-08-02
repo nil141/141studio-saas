@@ -136,7 +136,7 @@ const _ml = r => r && ({
   id: r.id, name: r.name, company: r.company, channel: r.channel,
   stage: r.stage, budget: r.budget, light: r.light,
   enteredAt: r.entered_at, next: r.next, nextDate: r.next_date,
-  needs: r.needs, when: r.when_field,
+  needs: r.needs, when: r.when_field, instagram: r.instagram || "",
 });
 const _ms = r => r && ({
   name: r.name, email: r.email, phone: r.phone,
@@ -645,15 +645,20 @@ const addLead = (input) => {
     company: input.company || "—", channel: input.channel || "linkedin",
     stage: "new", budget: input.budget || 0, light: "green",
     enteredAt: "ahora", next: "Cualificar", nextDate: "—",
-    needs: input.message || "", when: "—",
+    needs: input.message || "", when: "—", instagram: input.instagram || "",
   };
   _store.LEADS = [l, ..._store.LEADS]; _emit();
-  _sb.from("leads").insert({
+  _insertAdaptive("leads", {
     id: l.id, agency_id: uid, name: l.name, company: l.company,
     channel: l.channel, stage: l.stage, budget: l.budget, light: l.light,
     entered_at: l.enteredAt, next: l.next, next_date: l.nextDate,
-    needs: l.needs, when_field: l.when,
-  }).then();
+    needs: l.needs, when_field: l.when, instagram: l.instagram || null,
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addLead] Supabase error:", error.message);
+      _store.LEADS = _store.LEADS.filter(x => x.id !== l.id); _emit();
+    }
+  });
   return l;
 };
 

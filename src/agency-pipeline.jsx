@@ -169,6 +169,15 @@ const LeadDetailModal = ({ lead, onClose }) => {
               <div className="label">¿Qué necesita?</div>
               <div style={{padding: 10, background:"var(--bg-elev-2)", borderRadius: 8, fontSize: 13, border:"0.5px solid var(--border)"}}>{lead.needs}</div>
             </div>
+            {lead.instagram && (
+              <div>
+                <div className="label">Instagram</div>
+                <a href={`https://instagram.com/${String(lead.instagram).replace(/^@/, "")}`} target="_blank" rel="noreferrer"
+                  style={{fontSize: 13, color:"var(--accent)", textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6}}>
+                  <Icon name="external-link" size={12}/> {lead.instagram.startsWith("@") ? lead.instagram : "@" + lead.instagram}
+                </a>
+              </div>
+            )}
             <div className="row tight">
               <div className="grow">
                 <div className="label">Presupuesto</div>

@@ -2,7 +2,7 @@
 const NewLeadModal = ({ open, onClose }) => {
   const D = window.Data;
   const toast = useToast();
-  const [data, setData] = useState({ name: "", company: "", channel: "linkedin", calendly: "", message: "" });
+  const [data, setData] = useState({ name: "", company: "", instagram: "", channel: "linkedin", calendly: "", message: "" });
   const [checked, setChecked] = useState({});
 
   const submit = () => {
@@ -10,7 +10,7 @@ const NewLeadModal = ({ open, onClose }) => {
     const l = D.addLead(data);
     toast(`Lead "${l.name}" añadido al pipeline`, "success");
     onClose();
-    setData({ name:"", company:"", channel:"linkedin", calendly:"", message:"" });
+    setData({ name:"", company:"", instagram:"", channel:"linkedin", calendly:"", message:"" });
     setChecked({});
   };
 
@@ -33,6 +33,11 @@ const NewLeadModal = ({ open, onClose }) => {
             <div style={{gridColumn:"1 / -1"}}>
               <div className="label">Empresa</div>
               <input className="input" placeholder="Bruna Studio" value={data.company} onChange={e => setData({...data, company: e.target.value})}/>
+            </div>
+            <div style={{gridColumn:"1 / -1"}}>
+              <div className="label">Instagram</div>
+              <input className="input" placeholder="@usuario" value={data.instagram}
+                onChange={e => setData({...data, instagram: e.target.value})}/>
             </div>
             <div style={{gridColumn:"1 / -1"}}>
               <div className="label">Canal de origen</div>
