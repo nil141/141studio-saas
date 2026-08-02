@@ -1285,10 +1285,36 @@ const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
 
 // Fila de próximo pago / factura (estilo "upcoming bill & payment")
 const _BILL_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+// Mapa de marca → dominio para buscar el logo (Clearbit). Si no hay match o el
+// logo no carga, se muestra la inicial de siempre.
+const _BRANDS = [
+  [/claude|anthropic/, "anthropic.com"], [/railway/, "railway.app"], [/ionos/, "ionos.com"],
+  [/magnific/, "magnific.ai"], [/google|workspace|gmail|gsuite/, "google.com"],
+  [/netflix/, "netflix.com"], [/spotify/, "spotify.com"], [/adobe|creative cloud/, "adobe.com"],
+  [/figma/, "figma.com"], [/notion/, "notion.so"], [/vercel/, "vercel.com"],
+  [/openai|chatgpt|\bgpt\b/, "openai.com"], [/github/, "github.com"], [/gitlab/, "gitlab.com"],
+  [/canva/, "canva.com"], [/shopify/, "shopify.com"], [/stripe/, "stripe.com"],
+  [/dropbox/, "dropbox.com"], [/slack/, "slack.com"], [/discord/, "discord.com"],
+  [/microsoft|office|365|azure/, "microsoft.com"], [/apple|icloud/, "apple.com"],
+  [/\baws\b|amazon/, "aws.amazon.com"], [/cloudflare/, "cloudflare.com"],
+  [/hostinger/, "hostinger.com"], [/godaddy/, "godaddy.com"], [/namecheap/, "namecheap.com"],
+  [/wordpress/, "wordpress.com"], [/wix/, "wix.com"], [/webflow/, "webflow.com"],
+  [/mailchimp/, "mailchimp.com"], [/hubspot/, "hubspot.com"], [/zapier/, "zapier.com"],
+  [/airtable/, "airtable.com"], [/linear/, "linear.app"], [/supabase/, "supabase.com"],
+  [/digitalocean/, "digitalocean.com"], [/heroku/, "heroku.com"], [/twitch/, "twitch.tv"],
+  [/youtube/, "youtube.com"], [/meta|facebook|instagram/, "meta.com"], [/linkedin/, "linkedin.com"],
+  [/dribbble/, "dribbble.com"], [/behance/, "behance.net"], [/semrush/, "semrush.com"],
+  [/ahrefs/, "ahrefs.com"], [/elevenlabs/, "elevenlabs.io"], [/midjourney/, "midjourney.com"],
+  [/runway/, "runwayml.com"], [/perplexity/, "perplexity.ai"], [/cursor/, "cursor.com"],
+];
+const _brandDomain = (name) => { const t = (name || "").toLowerCase(); for (const [re, d] of _BRANDS) if (re.test(t)) return d; return null; };
 const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
   const d = b.date;
   const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
   const initial = (b.name || "?").trim().charAt(0).toUpperCase();
+  const domain = b.kind === "invoice" ? null : _brandDomain(b.name);
+  const [logoOk, setLogoOk] = useState(true);
+  const showLogo = domain && logoOk;
   return (
     <div onClick={onClick}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
@@ -1296,11 +1322,16 @@ const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
       style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", cursor: "pointer",
         transition: "background .1s", borderRadius: 8,
         borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, overflow: "hidden",
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: "rgba(158,154,229,0.12)", border: "0.5px solid rgba(158,154,229,0.2)",
+        background: showLogo ? "#fff" : "rgba(158,154,229,0.12)",
+        border: showLogo ? "0.5px solid rgba(255,255,255,0.12)" : "0.5px solid rgba(158,154,229,0.2)",
         color: "var(--accent)", fontSize: 14, fontWeight: 600, fontFamily: "var(--font-display)" }}>
-        {b.kind === "invoice" ? <Icon name="receipt" size={15} strokeWidth={1.7}/> : initial}
+        {showLogo
+          ? <img src={`https://logo.clearbit.com/${domain}`} alt="" width="24" height="24"
+              referrerPolicy="no-referrer" onError={() => setLogoOk(false)}
+              style={{ width: 24, height: 24, objectFit: "contain" }}/>
+          : (b.kind === "invoice" ? <Icon name="receipt" size={15} strokeWidth={1.7}/> : initial)}
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",
