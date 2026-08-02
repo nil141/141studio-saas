@@ -1314,7 +1314,8 @@ const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
         borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
       <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: cat.color + "22", border: `0.5px solid ${cat.color}33`, color: cat.color }}>
+        background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.09)",
+        color: "var(--text-muted)" }}>
         <PhIcon name={cat.icon} size={19}/>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>

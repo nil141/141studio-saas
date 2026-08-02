@@ -1178,9 +1178,9 @@
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        background: cat.color + "22",
-        border: `0.5px solid ${cat.color}33`,
-        color: cat.color
+        background: "rgba(255,255,255,0.05)",
+        border: "0.5px solid rgba(255,255,255,0.09)",
+        color: "var(--text-muted)"
       } }, /* @__PURE__ */ React.createElement(PhIcon, { name: cat.icon, size: 19 })),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 13.5,
