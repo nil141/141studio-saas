@@ -558,7 +558,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
     background: "var(--bg-elev-1)",
     border: "0.5px solid var(--border)",
     borderRadius: 14
-  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Web", "website", "empresa.com"), field("LinkedIn", "linkedin", "linkedin.com/in/\u2026")), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "search", title: "Auditor\xEDa del ecommerce" }, /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12, display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "user-cog", size: 12 }), " Datos del lead"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 } }, field("Nombre", "name", "Nombre"), field("Empresa", "company", "Empresa"), field("Sector", "sector", "Sector"), field("Email", "email", "email@\u2026", "email"), field("Tel\xE9fono", "phone", "+34 \u2026"), field("Instagram", "instagram", "@usuario"), field("Web", "website", "empresa.com"), field("LinkedIn", "linkedin", "linkedin.com/in/\u2026")), /* @__PURE__ */ React.createElement(_LeadSection, { icon: "search", title: "Auditor\xEDa del ecommerce" }, /* @__PURE__ */ React.createElement(
     "textarea",
     {
       className: "input",
@@ -733,7 +733,7 @@ const useCSVImport = (campaignId, onDone) => {
 };
 const AddLeadModal = ({ open, onClose, campaignId, onDone }) => {
   const toast = useToast();
-  const empty = { name: "", company: "", email: "", phone: "", website: "", sector: "" };
+  const empty = { name: "", company: "", email: "", phone: "", website: "", sector: "", instagram: "" };
   const [f, setF] = useState(empty);
   useEffect(() => {
     if (open) setF(empty);
@@ -773,7 +773,7 @@ const AddLeadModal = ({ open, onClose, campaignId, onDone }) => {
       sub: "Un contacto suelto para esta campa\xF1a.",
       footer: /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: submit }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir lead"))
     },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, field("Nombre", "name", "Ej. Mar\xEDa L\xF3pez"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, field("Empresa", "company", "Ej. Joyas Alba"), field("Sector", "sector", "Ej. joyer\xEDa")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, field("Email", "email", "hola@empresa.com", "email"), field("Tel\xE9fono", "phone", "+34 \u2026")), field("Web", "website", "empresa.com"))
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, field("Nombre", "name", "Ej. Mar\xEDa L\xF3pez"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, field("Empresa", "company", "Ej. Joyas Alba"), field("Sector", "sector", "Ej. joyer\xEDa")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, field("Email", "email", "hola@empresa.com", "email"), field("Tel\xE9fono", "phone", "+34 \u2026")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, field("Instagram", "instagram", "@usuario"), field("Web", "website", "empresa.com")))
   );
 };
 const CoworkConnectModal = ({ open, onClose, campaignName }) => {

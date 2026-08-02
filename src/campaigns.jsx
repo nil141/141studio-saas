@@ -640,6 +640,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
             {field("Sector", "sector", "Sector")}
             {field("Email", "email", "email@…", "email")}
             {field("Teléfono", "phone", "+34 …")}
+            {field("Instagram", "instagram", "@usuario")}
             {field("Web", "website", "empresa.com")}
             {field("LinkedIn", "linkedin", "linkedin.com/in/…")}
           </div>
@@ -789,7 +790,7 @@ const useCSVImport = (campaignId, onDone) => {
 // ── Modal: añadir lead a mano ─────────────────────────────────────────
 const AddLeadModal = ({ open, onClose, campaignId, onDone }) => {
   const toast = useToast();
-  const empty = { name:"", company:"", email:"", phone:"", website:"", sector:"" };
+  const empty = { name:"", company:"", email:"", phone:"", website:"", sector:"", instagram:"" };
   const [f, setF] = useState(empty);
   useEffect(() => { if (open) setF(empty); }, [open]);
   const set = (k) => (e) => setF(prev => ({ ...prev, [k]: e.target.value }));
@@ -825,7 +826,10 @@ const AddLeadModal = ({ open, onClose, campaignId, onDone }) => {
           {field("Email", "email", "hola@empresa.com", "email")}
           {field("Teléfono", "phone", "+34 …")}
         </div>
-        {field("Web", "website", "empresa.com")}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          {field("Instagram", "instagram", "@usuario")}
+          {field("Web", "website", "empresa.com")}
+        </div>
       </div>
     </Modal>
   );
