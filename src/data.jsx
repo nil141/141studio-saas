@@ -560,6 +560,24 @@ const deleteProject = (id) => {
   _sb.from("projects").delete().eq("id", id).then();
 };
 
+// Actualiza campos de un proyecto (p.ej. las fases guardadas en "service").
+const updateProject = (id, changes) => {
+  const uid = _uid(); if (!uid) return;
+  _store.PROJECTS = _store.PROJECTS.map(p => p.id === id ? { ...p, ...changes } : p);
+  _emit();
+  const dbChanges = {};
+  if (changes.name        !== undefined) dbChanges.name        = changes.name;
+  if (changes.service     !== undefined) dbChanges.service     = changes.service;
+  if (changes.deadline    !== undefined) dbChanges.deadline    = changes.deadline;
+  if (changes.description !== undefined) dbChanges.description = changes.description;
+  if (changes.recurring   !== undefined) dbChanges.recurring   = changes.recurring;
+  if (Object.keys(dbChanges).length) {
+    _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
+      if (error) console.error("[updateProject] Supabase error:", error.message);
+    });
+  }
+};
+
 // ── INVOICES ────────────────────────────────────────────────────────
 const addInvoice = (input) => {
   const uid = _uid(); if (!uid) return;
@@ -1067,7 +1085,7 @@ window.Data = {
   _sb, _SB_URL, _SB_KEY,
   // Mutators
   addClient, updateClient, deleteClient,
-  addProject, addProjectAsync, addTasksBulk, deleteProject,
+  addProject, addProjectAsync, addTasksBulk, deleteProject, updateProject,
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
   addLead,

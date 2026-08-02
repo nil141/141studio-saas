@@ -20,6 +20,8 @@
     const [editingId, setEditingId] = useState(null);
     const [editDraft, setEditDraft] = useState("");
     const [datePicking, setDatePicking] = useState(null);
+    const [phaseAdding, setPhaseAdding] = useState(false);
+    const [phaseDraft, setPhaseDraft] = useState("");
     const [driveTick, setDriveTick] = useState(0);
     const [driveEditing, setDriveEditing] = useState(false);
     const [driveDraft, setDriveDraft] = useState("");
@@ -58,6 +60,28 @@
       toast("Tarea a\xF1adida", "success");
       setDraft("");
       setAdding(null);
+    };
+    const phaseList = () => (p.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");
+    const savePhases = (names) => D.updateProject(p.id, { service: names.join(", ") || "libre" });
+    const addPhase = (name) => {
+      const v = (name || "").trim();
+      if (!v) {
+        setPhaseAdding(false);
+        setPhaseDraft("");
+        return;
+      }
+      const names = phaseList();
+      if (!names.some((n) => n.toLowerCase() === v.toLowerCase())) {
+        savePhases([...names, v]);
+        toast("Fase a\xF1adida", "success");
+      }
+      setPhaseDraft("");
+      setPhaseAdding(false);
+    };
+    const removePhase = (name) => {
+      (D.TASKS[p.id] || []).filter((t) => t.phase === name).forEach((t) => D.updateTask(p.id, t.id, { phase: null }));
+      savePhases(phaseList().filter((n) => n !== name));
+      toast("Fase eliminada", "success");
     };
     const onDragStart = (taskId) => {
       dragTaskRef.current = taskId;
@@ -154,7 +178,7 @@
         return { label: "Sin empezar", cls: "" };
       };
       const secLabel = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 4 };
-      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 34 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Fases del proyecto"), planGroups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Sin fases", sub: "Este proyecto no tiene fases. A\xF1ade tareas desde el Tablero." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, planGroups.map((g, i) => {
+      return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 34 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Fases del proyecto"), planGroups.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 14, padding: "20px 0" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Sin fases", sub: "Organiza el proyecto en fases y a\xF1ade tareas dentro de cada una." }), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: () => setTab("tasks") }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Crear fases y tareas")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%" } }, planGroups.map((g, i) => {
         const gDone = g.tasks.filter((t) => t.column === "done").length;
         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
         const st = phaseStatus(gDone, g.tasks.length);
@@ -389,14 +413,23 @@
         const gDone = g.tasks.filter((t) => t.column === "done").length;
         const addKey = "add:" + g.name;
         const isAdding = adding === addKey;
-        return /* @__PURE__ */ React.createElement("div", { key: g.name, style: { marginTop: gi === 0 ? 0 : 26 } }, /* @__PURE__ */ React.createElement("div", { style: {
+        return /* @__PURE__ */ React.createElement("div", { key: g.name, style: { marginTop: gi === 0 ? 0 : 26 } }, /* @__PURE__ */ React.createElement("div", { className: "phase-head", style: {
           display: "flex",
           alignItems: "center",
           gap: 8,
           marginBottom: 2,
           paddingBottom: 8,
           borderBottom: "0.5px solid var(--border)"
-        } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", fontWeight: 600 } }, g.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", opacity: 0.7 } }, gDone, "/", g.tasks.length)), gTasks.map((t) => renderRow(t, false)), isAdding ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 20, height: 20, borderRadius: 99, border: "1.5px dashed var(--border-strong)" } })), /* @__PURE__ */ React.createElement(
+        } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--text-subtle)", fontWeight: 600 } }, g.label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", opacity: 0.7 } }, gDone, "/", g.tasks.length), g.name !== "__otras__" && /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            className: "phase-del btn ghost icon-only sm",
+            title: "Eliminar fase",
+            onClick: () => removePhase(g.name),
+            style: { marginLeft: "auto", color: "var(--text-subtle)" }
+          },
+          /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 })
+        )), gTasks.map((t) => renderRow(t, false)), isAdding ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 38, height: 38, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 20, height: 20, borderRadius: 99, border: "1.5px dashed var(--border-strong)" } })), /* @__PURE__ */ React.createElement(
           "input",
           {
             autoFocus: true,
@@ -427,7 +460,37 @@
           /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }),
           " A\xF1adir tarea"
         ));
-      }));
+      }), /* @__PURE__ */ React.createElement("div", { style: { marginTop: groups.length ? 26 : 0, paddingTop: 14, borderTop: "0.5px solid var(--border)" } }, phaseAdding ? /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          className: "input",
+          placeholder: "Nombre de la fase\u2026",
+          value: phaseDraft,
+          onChange: (e) => setPhaseDraft(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") addPhase(phaseDraft);
+            if (e.key === "Escape") {
+              setPhaseAdding(false);
+              setPhaseDraft("");
+            }
+          },
+          onBlur: () => addPhase(phaseDraft),
+          style: { maxWidth: 320, padding: "7px 10px", fontSize: 14 }
+        }
+      ) : /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          className: "btn ghost sm",
+          onClick: () => {
+            setPhaseAdding(true);
+            setPhaseDraft("");
+          },
+          style: { justifyContent: "flex-start", color: "var(--accent)", padding: "9px 4px" }
+        },
+        /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }),
+        " A\xF1adir fase"
+      )));
     })(), tab === "files" && (() => {
       const driveKey = "proj_drive_" + p.id;
       const driveUrl = typeof localStorage !== "undefined" && localStorage.getItem(driveKey) || "";

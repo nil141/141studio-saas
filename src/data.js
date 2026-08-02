@@ -642,6 +642,23 @@ const deleteProject = (id) => {
   _sb.from("tasks").delete().eq("project_id", id).then();
   _sb.from("projects").delete().eq("id", id).then();
 };
+const updateProject = (id, changes) => {
+  const uid = _uid();
+  if (!uid) return;
+  _store.PROJECTS = _store.PROJECTS.map((p) => p.id === id ? { ...p, ...changes } : p);
+  _emit();
+  const dbChanges = {};
+  if (changes.name !== void 0) dbChanges.name = changes.name;
+  if (changes.service !== void 0) dbChanges.service = changes.service;
+  if (changes.deadline !== void 0) dbChanges.deadline = changes.deadline;
+  if (changes.description !== void 0) dbChanges.description = changes.description;
+  if (changes.recurring !== void 0) dbChanges.recurring = changes.recurring;
+  if (Object.keys(dbChanges).length) {
+    _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
+      if (error) console.error("[updateProject] Supabase error:", error.message);
+    });
+  }
+};
 const addInvoice = (input) => {
   const uid = _uid();
   if (!uid) return;
@@ -1202,6 +1219,7 @@ window.Data = {
   addProjectAsync,
   addTasksBulk,
   deleteProject,
+  updateProject,
   addInvoice,
   deleteInvoice,
   addDeliverable,

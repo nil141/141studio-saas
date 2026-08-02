@@ -31,6 +31,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   const [editingId, setEditingId] = useState(null);
   const [editDraft, setEditDraft] = useState("");
   const [datePicking, setDatePicking] = useState(null); // taskId
+  const [phaseAdding, setPhaseAdding] = useState(false);
+  const [phaseDraft, setPhaseDraft]   = useState("");
   // Carpeta de Drive del proyecto (por ahora guardada localmente; la creación
   // automática llegará al conectar Google Drive).
   const [driveTick, setDriveTick] = useState(0);
@@ -85,6 +87,24 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
     toast("Tarea añadida", "success");
     setDraft("");
     setAdding(null);
+  };
+
+  // ── Gestión de fases (nombres libres guardados en p.service) ──────────────
+  const phaseList = () => (p.service || "").split(",").map(s => s.trim())
+    .filter(n => n && n !== "libre" && n !== "—");
+  const savePhases = (names) => D.updateProject(p.id, { service: names.join(", ") || "libre" });
+  const addPhase = (name) => {
+    const v = (name || "").trim();
+    if (!v) { setPhaseAdding(false); setPhaseDraft(""); return; }
+    const names = phaseList();
+    if (!names.some(n => n.toLowerCase() === v.toLowerCase())) { savePhases([...names, v]); toast("Fase añadida", "success"); }
+    setPhaseDraft(""); setPhaseAdding(false);
+  };
+  const removePhase = (name) => {
+    // Las tareas de esa fase pasan a "sin fase" (Otras tareas), no se borran.
+    (D.TASKS[p.id] || []).filter(t => t.phase === name).forEach(t => D.updateTask(p.id, t.id, { phase: null }));
+    savePhases(phaseList().filter(n => n !== name));
+    toast("Fase eliminada", "success");
   };
 
   const onDragStart = (taskId) => { dragTaskRef.current = taskId; };
@@ -210,7 +230,12 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                 <div>
                   <div style={secLabel}>Fases del proyecto</div>
                   {planGroups.length === 0 ? (
-                    <Empty icon="list-todo" title="Sin fases" sub="Este proyecto no tiene fases. Añade tareas desde el Tablero."/>
+                    <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:14, padding:"20px 0"}}>
+                      <Empty icon="list-todo" title="Sin fases" sub="Organiza el proyecto en fases y añade tareas dentro de cada una."/>
+                      <button className="btn primary sm" onClick={() => setTab("tasks")}>
+                        <Icon name="plus" size={13}/> Crear fases y tareas
+                      </button>
+                    </div>
                   ) : (
                     <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
                       {planGroups.map((g, i) => {
@@ -382,10 +407,17 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                   return (
                     <div key={g.name} style={{marginTop: gi === 0 ? 0 : 26}}>
                       {/* Encabezado de fase */}
-                      <div style={{display:"flex", alignItems:"center", gap:8, marginBottom:2,
+                      <div className="phase-head" style={{display:"flex", alignItems:"center", gap:8, marginBottom:2,
                         paddingBottom:8, borderBottom:"0.5px solid var(--border)"}}>
                         <span style={{fontSize:11.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", fontWeight:600}}>{g.label}</span>
                         <span style={{fontSize:11, color:"var(--text-subtle)", opacity:0.7}}>{gDone}/{g.tasks.length}</span>
+                        {g.name !== "__otras__" && (
+                          <button className="phase-del btn ghost icon-only sm" title="Eliminar fase"
+                            onClick={() => removePhase(g.name)}
+                            style={{marginLeft:"auto", color:"var(--text-subtle)"}}>
+                            <Icon name="trash" size={12}/>
+                          </button>
+                        )}
                       </div>
                       {/* Tareas de la fase */}
                       {gTasks.map(t => renderRow(t, false))}
@@ -409,6 +441,20 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                     </div>
                   );
                 })}
+                {/* Añadir una fase nueva */}
+                <div style={{marginTop: groups.length ? 26 : 0, paddingTop: 14, borderTop:"0.5px solid var(--border)"}}>
+                  {phaseAdding ? (
+                    <input autoFocus className="input" placeholder="Nombre de la fase…"
+                      value={phaseDraft} onChange={e => setPhaseDraft(e.target.value)}
+                      onKeyDown={e => { if(e.key==="Enter") addPhase(phaseDraft); if(e.key==="Escape"){setPhaseAdding(false);setPhaseDraft("");} }}
+                      onBlur={() => addPhase(phaseDraft)} style={{maxWidth:320, padding:"7px 10px", fontSize:14}}/>
+                  ) : (
+                    <button className="btn ghost sm" onClick={() => { setPhaseAdding(true); setPhaseDraft(""); }}
+                      style={{justifyContent:"flex-start", color:"var(--accent)", padding:"9px 4px"}}>
+                      <Icon name="plus" size={13}/> Añadir fase
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })()}
