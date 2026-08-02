@@ -626,7 +626,7 @@ def api_stripe_create_invoice(body):
 LEADS_API_KEY  = os.environ.get("LEADS_API_KEY", "")
 _CAMPAIGNS_FILE = os.path.join(_STORE_DIR, "campaign_leads.json")
 
-LEAD_STATUSES = {"new", "contacted", "replied", "won", "discarded"}
+LEAD_STATUSES = {"new", "scheduled", "contacted", "replied", "won", "discarded"}
 
 def _campaigns_load():
     try:
@@ -739,6 +739,7 @@ def _add_leads(camp, leads_in, source="api"):
             "website": (l.get("website") or "")[:300],
             "linkedin":(l.get("linkedin") or "")[:300],
             "instagram":(l.get("instagram") or "")[:200],
+            "scheduledFor": (l.get("scheduledFor") or "")[:10],
             "sector":  (l.get("sector") or "")[:120],
             "audit":   (l.get("audit") or "")[:8000],
             "notes":   (l.get("notes") or "")[:8000],
@@ -847,7 +848,7 @@ def api_campaigns_update(body):
 
 LEAD_EDIT_FIELDS = {
     "name": 200, "company": 200, "email": 200, "phone": 60, "website": 300,
-    "linkedin": 300, "instagram": 200, "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
+    "linkedin": 300, "instagram": 200, "scheduledFor": 10, "sector": 120, "audit": 8000, "subject": 300, "draft": 8000,
     "whatsapp": 8000, "notes": 8000, "followUp": 10, "workedAt": 10,
 }
 _FU_CHANNELS = ("email", "whatsapp", "call")

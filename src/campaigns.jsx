@@ -17,12 +17,13 @@ const useCampaigns = () => {
 
 const LEAD_STATUS = {
   new:       { label:"Nuevo",      color:"var(--text-muted)", dot:"rgba(255,255,255,0.35)" },
+  scheduled: { label:"Programado", color:"#eec06a",           dot:"#eec06a" },
   contacted: { label:"Contactado", color:"#60a5fa",           dot:"#60a5fa" },
   replied:   { label:"Respondió",  color:"var(--green)",      dot:"var(--green)" },
   won:       { label:"Ganado",     color:"var(--accent)",     dot:"var(--accent)" },
   discarded: { label:"Descartado", color:"var(--text-subtle)",dot:"rgba(255,255,255,0.18)" },
 };
-const STATUS_ORDER = ["new", "contacted", "replied", "won", "discarded"];
+const STATUS_ORDER = ["new", "scheduled", "contacted", "replied", "won", "discarded"];
 
 // Tipos de campaña — se eligen al crearla
 const CTYPES = {
@@ -178,15 +179,17 @@ const CampMiniStat = ({ label, value, sub, color }) => (
 );
 
 // Selector de estado — pill con punto de color y menú propio (nada de <select> nativo)
-const LeadStatusPill = ({ value, onChange }) => {
+const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
   const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
   useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
+    if (!open) { setPicking(false); return; }
+    const close = () => { setOpen(false); setPicking(false); };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [open]);
   const st = LEAD_STATUS[value] || LEAD_STATUS.new;
+  const label = value === "scheduled" && scheduledFor ? `${st.label} · ${_cFmtDay(scheduledFor)}` : st.label;
   return (
     <div style={{ position:"relative" }} onClick={e => e.stopPropagation()}>
       <button onClick={() => setOpen(o => !o)} style={{
@@ -194,22 +197,48 @@ const LeadStatusPill = ({ value, onChange }) => {
         padding:"5px 12px", borderRadius:99, cursor:"pointer",
         background:"rgba(255,255,255,0.04)", border:"0.5px solid var(--border)",
         color: st.color, fontSize:12, letterSpacing:"-0.2px", fontFamily:"inherit",
-        transition:"background .1s",
+        transition:"background .1s", whiteSpace:"nowrap",
       }}
         onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
         onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}>
         <span style={{ width:6, height:6, borderRadius:"50%", background:st.dot, flexShrink:0 }}/>
-        {st.label}
+        {label}
         <Icon name="chevron-down" size={11} style={{ opacity:0.5 }}/>
       </button>
       {open && (
         <div style={{
-          position:"absolute", right:0, top:"calc(100% + 6px)", zIndex:60, minWidth:160,
+          position:"absolute", right:0, top:"calc(100% + 6px)", zIndex:60, minWidth:180,
           background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.1)",
           borderRadius:12, padding:5, boxShadow:"0 8px 32px rgba(0,0,0,0.5)",
         }}>
           {STATUS_ORDER.map(k => {
             const s = LEAD_STATUS[k];
+            if (k === "scheduled") {
+              return (
+                <div key={k}>
+                  <button onClick={e => { e.stopPropagation(); setPicking(p => !p); }} style={{
+                    display:"flex", alignItems:"center", gap:9, width:"100%",
+                    padding:"8px 10px", borderRadius:8, cursor:"pointer", textAlign:"left",
+                    background: k === value ? "rgba(255,255,255,0.06)" : "transparent",
+                    border:0, color:s.color, fontSize:12.5, fontFamily:"inherit",
+                  }}
+                    onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                    onMouseLeave={e => e.currentTarget.style.background = k === value ? "rgba(255,255,255,0.06)" : "transparent"}>
+                    <span style={{ width:6, height:6, borderRadius:"50%", background:s.dot }}/>
+                    {s.label}
+                    <Icon name="calendar" size={12} style={{ marginLeft:"auto", opacity:0.6 }}/>
+                  </button>
+                  {picking && (
+                    <div style={{ padding:"4px 8px 6px" }} onClick={e => e.stopPropagation()}>
+                      <input type="date" autoFocus defaultValue={scheduledFor || _cToday()}
+                        onChange={e => { if (e.target.value) { setOpen(false); setPicking(false); onChange("scheduled", e.target.value); } }}
+                        style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border-strong)",
+                          borderRadius:8, color:"var(--text)", fontSize:12, padding:"6px 9px", fontFamily:"inherit", outline:"none" }}/>
+                    </div>
+                  )}
+                </div>
+              );
+            }
             return (
               <button key={k} onClick={() => { setOpen(false); onChange(k); }} style={{
                 display:"flex", alignItems:"center", gap:9, width:"100%",
@@ -629,7 +658,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
             </a>
           )}
         </div>
-        <LeadStatusPill value={l.status} onChange={onStatus}/>
+        <LeadStatusPill value={l.status} scheduledFor={l.scheduledFor} onChange={onStatus}/>
         <Icon name="chevron-down" size={13} style={{
           color:"rgba(255,255,255,0.2)", flexShrink:0,
           transform: open ? "rotate(180deg)" : "none", transition:"transform .15s",
@@ -933,6 +962,27 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [pickCSV, csvInput] = useCSVImport(campaignId, () => reload());
   const actionRan = useRef(false);
 
+  // Auto-avance: los leads "Programado" cuya fecha ya llegó pasan a "Contactado".
+  useEffect(() => {
+    if (!Array.isArray(camps)) return;
+    const camp = camps.find(x => x.id === campaignId);
+    if (!camp) return;
+    const t = _cToday();
+    const due = (camp.leads || []).filter(l => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= t);
+    if (!due.length) return;
+    let cancelled = false;
+    (async () => {
+      for (const l of due) {
+        try {
+          await window.apiFetch("/api/campaigns/update_lead", { campaignId: camp.id, leadId: l.id,
+            status: "contacted", fields: { scheduledFor: "", workedAt: l.workedAt !== t ? t : (l.workedAt || "") } });
+        } catch (e) {}
+      }
+      if (!cancelled) reload();
+    })();
+    return () => { cancelled = true; };
+  }, [camps, campaignId]);
+
   // Si venimos del wizard con una fuente elegida, la abrimos automáticamente
   useEffect(() => {
     if (actionRan.current || camps === null || !initialAction) return;
@@ -970,11 +1020,13 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     return true;
   });
 
-  const setStatus = async (l, status) => {
+  const setStatus = async (l, status, scheduledFor) => {
     try {
       // Avanzar un lead (contactado/respondió/ganado) cuenta como trabajo de hoy
       const fields = {};
       if (["contacted","replied","won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
+      // Programado guarda la fecha; cualquier otro estado la limpia
+      fields.scheduledFor = status === "scheduled" ? (scheduledFor || today) : "";
       await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) { toast("Error al guardar", "warn"); }
@@ -1180,7 +1232,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
             <LeadRow l={l} last={i === visible.length - 1} today={today}
               open={openId === l.id}
               onToggle={() => setOpenId(openId === l.id ? null : l.id)}
-              onStatus={(s) => setStatus(l, s)}
+              onStatus={(s, d) => setStatus(l, s, d)}
               onDelete={() => removeLead(l)}
               onCopy={() => copyDraft(l)}
               onSave={(fields) => saveLead(l, fields)}/>

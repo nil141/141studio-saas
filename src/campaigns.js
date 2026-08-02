@@ -16,12 +16,13 @@ const useCampaigns = () => {
 };
 const LEAD_STATUS = {
   new: { label: "Nuevo", color: "var(--text-muted)", dot: "rgba(255,255,255,0.35)" },
+  scheduled: { label: "Programado", color: "#eec06a", dot: "#eec06a" },
   contacted: { label: "Contactado", color: "#60a5fa", dot: "#60a5fa" },
   replied: { label: "Respondi\xF3", color: "var(--green)", dot: "var(--green)" },
   won: { label: "Ganado", color: "var(--accent)", dot: "var(--accent)" },
   discarded: { label: "Descartado", color: "var(--text-subtle)", dot: "rgba(255,255,255,0.18)" }
 };
-const STATUS_ORDER = ["new", "contacted", "replied", "won", "discarded"];
+const STATUS_ORDER = ["new", "scheduled", "contacted", "replied", "won", "discarded"];
 const CTYPES = {
   email: { label: "Correo", icon: "mail", hint: "Outreach por email" },
   meta: { label: "Meta Ads", icon: "megaphone", hint: "Facebook / Instagram Ads" },
@@ -166,15 +167,23 @@ const _leadNextDue = (l) => {
   return p.length ? p[0] : null;
 };
 const CampMiniStat = ({ label, value, sub, color }) => /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 6 } }, label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 600, fontFamily: "var(--font-display)", letterSpacing: "-0.5px", color: color || "var(--text)" } }, value), sub && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, sub));
-const LeadStatusPill = ({ value, onChange }) => {
+const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
   const [open, setOpen] = useState(false);
+  const [picking, setPicking] = useState(false);
   useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
+    if (!open) {
+      setPicking(false);
+      return;
+    }
+    const close = () => {
+      setOpen(false);
+      setPicking(false);
+    };
     document.addEventListener("click", close);
     return () => document.removeEventListener("click", close);
   }, [open]);
   const st = LEAD_STATUS[value] || LEAD_STATUS.new;
+  const label = value === "scheduled" && scheduledFor ? `${st.label} \xB7 ${_cFmtDay(scheduledFor)}` : st.label;
   return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
     "button",
     {
@@ -192,20 +201,21 @@ const LeadStatusPill = ({ value, onChange }) => {
         fontSize: 12,
         letterSpacing: "-0.2px",
         fontFamily: "inherit",
-        transition: "background .1s"
+        transition: "background .1s",
+        whiteSpace: "nowrap"
       },
       onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.08)",
       onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)"
     },
     /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: st.dot, flexShrink: 0 } }),
-    st.label,
+    label,
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 11, style: { opacity: 0.5 } })
   ), open && /* @__PURE__ */ React.createElement("div", { style: {
     position: "absolute",
     right: 0,
     top: "calc(100% + 6px)",
     zIndex: 60,
-    minWidth: 160,
+    minWidth: 180,
     background: "#1a1a1c",
     border: "0.5px solid rgba(255,255,255,0.1)",
     borderRadius: 12,
@@ -213,6 +223,62 @@ const LeadStatusPill = ({ value, onChange }) => {
     boxShadow: "0 8px 32px rgba(0,0,0,0.5)"
   } }, STATUS_ORDER.map((k) => {
     const s = LEAD_STATUS[k];
+    if (k === "scheduled") {
+      return /* @__PURE__ */ React.createElement("div", { key: k }, /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: (e) => {
+            e.stopPropagation();
+            setPicking((p) => !p);
+          },
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 9,
+            width: "100%",
+            padding: "8px 10px",
+            borderRadius: 8,
+            cursor: "pointer",
+            textAlign: "left",
+            background: k === value ? "rgba(255,255,255,0.06)" : "transparent",
+            border: 0,
+            color: s.color,
+            fontSize: 12.5,
+            fontFamily: "inherit"
+          },
+          onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+          onMouseLeave: (e) => e.currentTarget.style.background = k === value ? "rgba(255,255,255,0.06)" : "transparent"
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: s.dot } }),
+        s.label,
+        /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12, style: { marginLeft: "auto", opacity: 0.6 } })
+      ), picking && /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 8px 6px" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          autoFocus: true,
+          defaultValue: scheduledFor || _cToday(),
+          onChange: (e) => {
+            if (e.target.value) {
+              setOpen(false);
+              setPicking(false);
+              onChange("scheduled", e.target.value);
+            }
+          },
+          style: {
+            width: "100%",
+            background: "rgba(255,255,255,0.06)",
+            border: "0.5px solid var(--border-strong)",
+            borderRadius: 8,
+            color: "var(--text)",
+            fontSize: 12,
+            padding: "6px 9px",
+            fontFamily: "inherit",
+            outline: "none"
+          }
+        }
+      )));
+    }
     return /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -571,7 +637,7 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
       "data-tooltip": "WhatsApp"
     },
     /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 16 })
-  )), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+  )), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, scheduledFor: l.scheduledFor, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
     color: "rgba(255,255,255,0.2)",
     flexShrink: 0,
     transform: open ? "rotate(180deg)" : "none",
@@ -875,6 +941,32 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [pickCSV, csvInput] = useCSVImport(campaignId, () => reload());
   const actionRan = useRef(false);
   useEffect(() => {
+    if (!Array.isArray(camps)) return;
+    const camp = camps.find((x) => x.id === campaignId);
+    if (!camp) return;
+    const t = _cToday();
+    const due = (camp.leads || []).filter((l) => l.status === "scheduled" && l.scheduledFor && l.scheduledFor <= t);
+    if (!due.length) return;
+    let cancelled = false;
+    (async () => {
+      for (const l of due) {
+        try {
+          await window.apiFetch("/api/campaigns/update_lead", {
+            campaignId: camp.id,
+            leadId: l.id,
+            status: "contacted",
+            fields: { scheduledFor: "", workedAt: l.workedAt !== t ? t : l.workedAt || "" }
+          });
+        } catch (e) {
+        }
+      }
+      if (!cancelled) reload();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [camps, campaignId]);
+  useEffect(() => {
     if (actionRan.current || camps === null || !initialAction) return;
     if (!camps.find((x) => x.id === campaignId)) return;
     actionRan.current = true;
@@ -903,10 +995,11 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     }
     return true;
   });
-  const setStatus = async (l, status) => {
+  const setStatus = async (l, status, scheduledFor) => {
     try {
       const fields = {};
       if (["contacted", "replied", "won"].includes(status) && l.workedAt !== today) fields.workedAt = today;
+      fields.scheduledFor = status === "scheduled" ? scheduledFor || today : "";
       await window.apiFetch("/api/campaigns/update_lead", { campaignId: c.id, leadId: l.id, status, fields });
       reload();
     } catch (e) {
@@ -1114,7 +1207,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
       today,
       open: openId === l.id,
       onToggle: () => setOpenId(openId === l.id ? null : l.id),
-      onStatus: (s) => setStatus(l, s),
+      onStatus: (s, d) => setStatus(l, s, d),
       onDelete: () => removeLead(l),
       onCopy: () => copyDraft(l),
       onSave: (fields) => saveLead(l, fields)
