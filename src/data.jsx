@@ -963,6 +963,8 @@ const updateTask = (projectId, taskId, changes) => {
   if (eff.deadline !== undefined) dbChanges.deadline = eff.deadline || null;
   if (eff.progress !== undefined) dbChanges.progress = eff.progress;
   if (eff.phase    !== undefined) dbChanges.phase    = eff.phase || null;
+  if (eff.clientId   !== undefined) dbChanges.client_id   = eff.clientId || null;
+  if (eff.clientName !== undefined) dbChanges.client_name = eff.clientName || null;
   _updateAdaptive("tasks", taskId, dbChanges).then(({ error }) => {
     if (error) console.error("[updateTask] Supabase error:", error.message);
   });

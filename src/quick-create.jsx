@@ -67,9 +67,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     if (!canSubmit) return;
     const t = title.trim();
     if (editTask && editTask.task) {
+      const client = clientId ? D.CLIENTS.find(c => c.id === clientId) : null;
       D.updateTask(editTask.pid, editTask.task.id, {
         title: t, notes: desc || null,
         deadline: date || null, time: time || null, frequency: freq,
+        clientId: clientId || null,
+        clientName: client ? (client.company || client.name || "") : null,
       });
       onClose();
       return;
