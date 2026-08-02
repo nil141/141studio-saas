@@ -63,6 +63,10 @@
     const _liveTasks = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([, arr]) => arr);
     const _todayStr = D.today ? D.today() : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const _pending = _liveTasks.filter((t) => t.column !== "done");
+    const _pendingWithPid = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || _projIds.has(pid)).flatMap(([pid, arr]) => arr.filter((t) => t.column !== "done").map((t) => ({ ...t, _pid: pid }))).sort((a, b) => {
+      const da = a.deadline || "9999-99-99", db = b.deadline || "9999-99-99";
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
     const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
       (n, r) => n + (r.items || []).filter((it) => !D.routineItemDone(r.id, _todayStr, it.id)).length,
       0
@@ -174,6 +178,44 @@
         return diff >= 0 && diff <= 7;
       }).sort((a, b) => a.date - b.date).slice(0, 8);
     }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE]);
+    const upcomingBills = React.useMemo(() => {
+      const out = [];
+      const todayMid = /* @__PURE__ */ new Date();
+      todayMid.setHours(0, 0, 0, 0);
+      try {
+        const fin = window.Data && window.Data.FINANCE || {};
+        (fin.subs || []).filter((s) => s.active !== false && s.nextRenewal).forEach((s) => {
+          let d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
+          if (isNaN(d)) return;
+          let guard = 0;
+          while (d < todayMid && guard < 60) {
+            if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+            else d.setMonth(d.getMonth() + 1);
+            guard++;
+          }
+          out.push({
+            id: "sub:" + (s.id || s.name),
+            name: s.name || "Suscripci\xF3n",
+            date: new Date(d),
+            amount: Number(s.amount) || 0,
+            cycle: s.cycle === "yearly" ? "anual" : "mensual",
+            kind: "sub"
+          });
+        });
+      } catch (e) {
+      }
+      (D.INVOICES || []).filter((i) => i.status !== "paid").forEach((i) => {
+        const d = parseSpanishDate(i.due);
+        if (d) out.push({
+          id: "inv:" + i.id,
+          name: i.client || i.id,
+          date: d,
+          amount: Number(i.amount) || 0,
+          kind: "invoice"
+        });
+      });
+      return out.sort((a, b) => a.date - b.date).slice(0, 6);
+    }, [D.INVOICES, D.FINANCE]);
     const formatEventDate = (d) => {
       const todayMid = /* @__PURE__ */ new Date();
       todayMid.setHours(0, 0, 0, 0);
@@ -454,70 +496,45 @@
       padding: "18px 22px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
     } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.slice(0, slice).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(slice - 1, upcomingEvents.length - 1), formatEventDate }))));
-    const QueuesBlock = ({ height = 360, showProjects = true }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height } }, /* @__PURE__ */ React.createElement("div", { style: {
+    const fmtTaskDate = (ds) => {
+      if (!ds) return "";
+      const d = /* @__PURE__ */ new Date(ds + "T00:00:00");
+      return isNaN(d) ? "" : formatEventDate(d);
+    };
+    const QueuesBlock = ({ height = 360 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height } }, /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       justifyContent: "space-between",
       padding: "18px 22px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Colas de trabajo")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(QueueRow, { key: i, q })), showProjects && /* @__PURE__ */ React.createElement(ActiveProjects, { D, navigate, openModal, APPLE_SECTION })));
-    const ProjectsBlock = ({ height = 360, slice = 6 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height } }, /* @__PURE__ */ React.createElement("div", { style: {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      padding: "18px 22px 14px",
-      borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("En curso"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Proyectos")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "14px 22px" } }, D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
-      "button",
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "No te queda nada pendiente." })) : _pendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
+      QuickTaskRow,
       {
-        onClick: () => openModal("newProject"),
-        style: {
-          background: "transparent",
-          border: 0,
-          color: "var(--accent)",
-          cursor: "pointer",
-          fontSize: 12.5,
-          padding: 0,
-          fontFamily: "inherit",
-          textDecoration: "underline"
-        }
-      },
-      "Crear uno"
-    )) : D.PROJECTS.slice(0, slice).map((p) => {
-      const pTasks = D.TASKS[p.id] || [];
-      const live = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
-      return /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: p.id,
-          onClick: () => navigate("project", { projectId: p.id }),
-          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
-          onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-          style: {
-            display: "flex",
-            alignItems: "center",
-            gap: 10,
-            padding: "8px 8px",
-            cursor: "pointer",
-            borderRadius: 8,
-            transition: "background .1s",
-            marginInline: -8
-          }
-        },
-        /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }),
-        /* @__PURE__ */ React.createElement("span", { style: {
-          flex: 1,
-          fontSize: 13,
-          fontWeight: 500,
-          minWidth: 0,
-          letterSpacing: "-0.2px",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap"
-        } }, p.name),
-        /* @__PURE__ */ React.createElement("div", { style: { width: 70, display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right" } }, live, "%"))
-      );
-    })));
+        key: t.id,
+        t,
+        D,
+        last: i === Math.min(11, _pendingWithPid.length - 1),
+        projName: (D.PROJECTS.find((p) => p.id === t._pid) || {}).name || t.clientName || "General",
+        dateLabel: fmtTaskDate(t.deadline),
+        overdue: t.deadline && t.deadline < _todayStr
+      }
+    ))));
+    const ProjectsBlock = ({ height = 360 }) => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height } }, /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      padding: "18px 22px 14px",
+      borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pagos y suscripciones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 } }, upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin pagos pr\xF3ximos", sub: "No hay cobros ni facturas pendientes." })) : upcomingBills.map((b) => /* @__PURE__ */ React.createElement(
+      BillRow,
+      {
+        key: b.id,
+        b,
+        hideMoney,
+        eur: _eur,
+        onClick: () => navigate("billing")
+      }
+    ))));
     const StatsInline = () => /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_CARD, display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px" } }, kpis.map((k, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", flexDirection: "column", gap: 4, minWidth: 130 } }, /* @__PURE__ */ React.createElement("div", { style: {
       fontSize: 11,
       color: "var(--text-subtle)",
@@ -576,7 +593,7 @@
           background: "rgba(255,255,255,0.06)"
         } }))
       );
-    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%", showProjects: false }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
+    })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 } }, /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })));
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
@@ -651,99 +668,147 @@
       fontWeight: 500
     } }, ev.type)
   );
-  var QueueRow = ({ q }) => /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      onClick: q.action,
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "14px 22px",
-        cursor: "pointer",
-        transition: "background .1s",
-        borderBottom: "0.5px solid rgba(255,255,255,0.04)"
-      }
-    },
-    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: 32,
-      height: 32,
-      borderRadius: 9,
-      flexShrink: 0,
-      background: "rgba(255,255,255,0.04)",
-      border: "0.5px solid rgba(255,255,255,0.06)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" } }, q.label)),
-    /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 17,
-      fontWeight: 400,
-      fontVariantNumeric: "tabular-nums",
-      color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
-      letterSpacing: "-0.5px",
-      fontFamily: "var(--font-display)"
-    } }, q.count)
-  );
-  var ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 22px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 12 } }, "Proyectos activos"), D.PROJECTS.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => openModal("newProject"),
-      style: {
-        background: "transparent",
-        border: 0,
-        color: "var(--accent)",
-        cursor: "pointer",
-        fontSize: 12.5,
-        padding: 0,
-        fontFamily: "inherit",
-        textDecoration: "underline"
-      }
-    },
-    "Crear uno"
-  )) : D.PROJECTS.slice(0, 5).map((p) => {
-    const pTasks = D.TASKS[p.id] || [];
-    const live = pTasks.length ? Math.round(pTasks.filter((t) => t.column === "done").length / pTasks.length * 100) : 0;
+  var QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
+    const [checking, setChecking] = useState(false);
+    const complete = (e) => {
+      e.stopPropagation();
+      if (checking) return;
+      setChecking(true);
+      setTimeout(() => {
+        try {
+          D.moveTask(t._pid, t.id, "done");
+        } catch (err) {
+        }
+      }, 280);
+    };
     return /* @__PURE__ */ React.createElement(
       "div",
       {
-        key: p.id,
-        onClick: () => navigate("project", { projectId: p.id }),
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.04)",
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
         onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
         style: {
           display: "flex",
           alignItems: "center",
           gap: 12,
-          padding: "8px 8px",
-          cursor: "pointer",
-          borderRadius: 8,
+          padding: "12px 22px",
           transition: "background .1s",
-          marginInline: -8
+          borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)"
         }
       },
-      /* @__PURE__ */ React.createElement("span", { className: "dot " + p.light }),
-      /* @__PURE__ */ React.createElement("span", { style: {
-        flex: 1,
-        fontSize: 13,
+      /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: complete,
+          title: "Completar",
+          style: {
+            width: 26,
+            height: 26,
+            borderRadius: "50%",
+            flexShrink: 0,
+            padding: 0,
+            cursor: "pointer",
+            border: checking ? "1px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.22)",
+            background: checking ? "var(--accent)" : "transparent",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "all .15s"
+          }
+        },
+        checking && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 14, style: { color: "#fff" } })
+      ),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+        fontSize: 13.5,
         fontWeight: 500,
-        minWidth: 0,
+        letterSpacing: "-0.3px",
+        color: checking ? "var(--text-subtle)" : "var(--text)",
+        textDecoration: checking ? "line-through" : "none",
+        transition: "color .15s",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, t.title), /* @__PURE__ */ React.createElement("div", { style: {
+        fontSize: 12,
+        color: "var(--text-subtle)",
+        marginTop: 2,
         letterSpacing: "-0.2px",
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap"
-      } }, p.name),
-      /* @__PURE__ */ React.createElement("div", { style: { width: 78, display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "progress", style: { flex: 1 } }, /* @__PURE__ */ React.createElement("i", { style: { width: live + "%" } })), /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 11,
-        color: "var(--text-muted)",
-        fontVariantNumeric: "tabular-nums",
-        width: 28,
-        textAlign: "right"
-      } }, live, "%"))
+      } }, projName, dateLabel ? /* @__PURE__ */ React.createElement("span", { style: { color: overdue ? "var(--red)" : "var(--text-muted)" } }, " \xB7 ", dateLabel) : ""))
     );
-  }));
+  };
+  var _BILL_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  var BillRow = ({ b, hideMoney, eur, onClick }) => {
+    const d = b.date;
+    const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
+    const initial = (b.name || "?").trim().charAt(0).toUpperCase();
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick,
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
+        style: {
+          background: "rgba(255,255,255,0.03)",
+          border: "0.5px solid rgba(255,255,255,0.06)",
+          borderRadius: 14,
+          padding: "12px 14px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 10,
+          cursor: "pointer",
+          transition: "background .1s"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: {
+        width: 38,
+        height: 38,
+        borderRadius: 11,
+        flexShrink: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "rgba(158,154,229,0.12)",
+        border: "0.5px solid rgba(158,154,229,0.2)",
+        color: "var(--accent)",
+        fontSize: 15,
+        fontWeight: 600,
+        fontFamily: "var(--font-display)"
+      } }, b.kind === "invoice" ? /* @__PURE__ */ React.createElement(Icon, { name: "receipt", size: 16, strokeWidth: 1.7 }) : initial), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+        fontSize: 13.5,
+        fontWeight: 500,
+        letterSpacing: "-0.3px",
+        color: "var(--text)",
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, b.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, dateStr)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15, style: { color: "rgba(255,255,255,0.18)", flexShrink: 0 } })),
+      /* @__PURE__ */ React.createElement("div", { style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        paddingTop: 10,
+        borderTop: "0.5px solid rgba(255,255,255,0.05)"
+      } }, hideMoney ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 68, height: 16, borderRadius: 999, background: "rgba(255,255,255,0.08)" } }) : /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 16,
+        fontWeight: 500,
+        letterSpacing: "-0.5px",
+        color: "var(--text)",
+        fontFamily: "var(--font-display)",
+        fontVariantNumeric: "tabular-nums"
+      } }, eur(b.amount)), /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 10.5,
+        padding: "3px 9px",
+        borderRadius: 99,
+        background: "rgba(255,255,255,0.05)",
+        border: "0.5px solid rgba(255,255,255,0.08)",
+        color: "var(--text-muted)",
+        fontWeight: 500,
+        letterSpacing: "-0.1px",
+        whiteSpace: "nowrap"
+      } }, b.kind === "invoice" ? "Por cobrar" : "Programado"))
+    );
+  };
   window.AgencyDashboard = AgencyDashboard;
 })();
