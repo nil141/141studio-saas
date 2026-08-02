@@ -107,8 +107,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
 
   const hasClients = D.CLIENTS.length > 0;
   const filtered = D.CLIENTS.filter(c =>
-    c.name.toLowerCase().includes(cq.toLowerCase()) ||
-    c.company.toLowerCase().includes(cq.toLowerCase())
+    (c.name || "").toLowerCase().includes(cq.toLowerCase()) ||
+    (c.company || "").toLowerCase().includes(cq.toLowerCase())
   );
   const selClient = D.CLIENTS.find(c => c.id === a.clientId);
 
@@ -193,23 +193,26 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
         <button className="input row tight" style={{ textAlign:"left", height:38 }} onClick={() => setSearching(s => !s)}>
           {selClient ? (
             <><Avatar size="sm" name={selClient.name} initials={selClient.initials} color={selClient.color}/>
-              <span className="grow" style={{ textAlign:"left" }}>{selClient.name} · {selClient.company}</span>
+              <span className="grow" style={{ textAlign:"left" }}>{[selClient.name, selClient.company].filter(Boolean).join(" · ")}</span>
               <Icon name="chevron" size={12} style={{ transform:"rotate(90deg)" }}/></>
           ) : <span className="muted">Selecciona un cliente</span>}
         </button>
         {searching && (
-          <div style={{ position:"absolute", top:"100%", left:0, right:0, marginTop:4, background:"var(--bg-elev-2)", border:"0.5px solid var(--border-strong)", borderRadius:10, zIndex:10, overflow:"hidden", boxShadow:"0 8px 24px rgba(0,0,0,0.2)" }}>
+          <div style={{ marginTop:6, background:"var(--bg-elev-2)", border:"0.5px solid var(--border-strong)", borderRadius:10, overflow:"hidden" }}>
             <div style={{ padding:8, borderBottom:"0.5px solid var(--border)" }}>
               <div className="search"><Icon name="search" size={13}/><input autoFocus placeholder="Buscar…" value={cq} onChange={e => setCq(e.target.value)}/></div>
             </div>
-            <div style={{ maxHeight:160, overflowY:"auto" }}>
+            <div style={{ maxHeight:200, overflowY:"auto" }}>
+              {filtered.length === 0 && (
+                <div style={{ padding:"12px", fontSize:12.5, color:"var(--text-subtle)", textAlign:"center" }}>Sin resultados</div>
+              )}
               {filtered.map(c => (
                 <div key={c.id} onClick={() => { set("clientId", c.id); setSearching(false); }}
                   style={{ padding:"8px 12px", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}
                   onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
                   onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                   <Avatar size="sm" name={c.name} initials={c.initials} color={c.color}/>
-                  <span className="grow small">{c.name} · {c.company}</span>
+                  <span className="grow small">{[c.name, c.company].filter(Boolean).join(" · ")}</span>
                   {c.id === a.clientId && <Icon name="check" size={13}/>}
                 </div>
               ))}
