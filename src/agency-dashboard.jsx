@@ -793,7 +793,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <ProjectsBlock height="100%"/>
       </section>
       <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 48, height: 264, flexShrink: 0 }}>
-        <MiniFinanceBlock/>
+        <FinanceChartBlock finTrend={finTrend} hideMoney={hideMoney} navigate={navigate}/>
         <GoalBlock billed={facturadoCur} eur={_eur} hideMoney={hideMoney}/>
       </section>
       <section style={{ height: 176, flexShrink: 0 }}>
@@ -1177,6 +1177,22 @@ const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
           })}
         </div>
       )}
+    </DashCardShell>
+  );
+};
+
+// Bloque del gráfico de facturación — a nivel de módulo (identidad estable) para
+// que NO se remonte con el reloj del Inicio; así la animación de dibujo de la
+// línea sólo se reproduce al entrar a la página, no cada segundo.
+const FinanceChartBlock = ({ finTrend, hideMoney, navigate }) => {
+  const FinTrend = window.FinTrendChart;
+  return (
+    <DashCardShell eyebrow="Últimos 6 meses" title="Facturado" action="Ver" onAction={() => navigate("billing")} pad="10px 4px 4px">
+      {hideMoney
+        ? <div style={{ margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 }}>Importes ocultos</div>
+        : FinTrend
+          ? <div style={{ display: "flex", width: "100%", minHeight: 0 }}><FinTrend trend={finTrend} single/></div>
+          : <div style={{ margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 }}>…</div>}
     </DashCardShell>
   );
 };

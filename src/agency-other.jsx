@@ -1461,6 +1461,38 @@ const _finSmooth = (pts) => {
 // Gráfico de líneas: recurrente vs puntual, últimos 6 meses. Crosshair + tooltip al pasar el ratón.
 const FinTrendChart = ({ trend, single = false }) => {
   const [hov, setHov] = useState(null); // { i: índice de mes, px, py: posición del ratón en px }
+  // Animación de entrada: la(s) línea(s) se "dibujan" y el área hace fade.
+  const drawRef = useRef(null);
+  const drawnRef = useRef(false);
+  useEffect(() => {
+    if (drawnRef.current) return;
+    const svg = drawRef.current; if (!svg) return;
+    drawnRef.current = true;
+    svg.querySelectorAll("path.fin-line").forEach(p => {
+      let L; try { L = p.getTotalLength(); } catch (e) { return; }
+      p.style.transition = "none";
+      p.style.strokeDasharray = L + " " + L;
+      p.style.strokeDashoffset = String(L);
+      p.getBoundingClientRect(); // reflow para fijar el estado inicial
+      p.style.transition = "stroke-dashoffset 1.15s cubic-bezier(.45,0,.25,1)";
+      p.style.strokeDashoffset = "0";
+    });
+    svg.querySelectorAll("path.fin-area").forEach(a => {
+      a.style.transition = "none";
+      a.style.opacity = "0";
+      a.getBoundingClientRect();
+      a.style.transition = "opacity .9s ease .25s";
+      a.style.opacity = "1";
+    });
+    // Al terminar, quitar el dasharray para que futuros cambios de datos no
+    // recorten la línea.
+    const clear = setTimeout(() => {
+      svg.querySelectorAll("path.fin-line").forEach(p => {
+        p.style.transition = "none"; p.style.strokeDasharray = "none"; p.style.strokeDashoffset = "0";
+      });
+    }, 1400);
+    return () => clearTimeout(clear);
+  }, []);
   const W = 600, H = 150, PX = 10, PY = 14;
   const maxV = Math.max(...(single ? trend.map(t => t.total) : [...trend.map(t => t.rec), ...trend.map(t => t.puntual)]), 1) * 1.15;
   const x = (i) => PX + i * (W - 2 * PX) / (trend.length - 1);
@@ -1489,7 +1521,7 @@ const FinTrendChart = ({ trend, single = false }) => {
   return (
     <div style={{ position:"relative", flex:1, minHeight:0, display:"flex", flexDirection:"column" }}>
       <div style={{ position:"relative", flex:1, minHeight:0 }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
+        <svg ref={drawRef} width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
           style={{ display:"block", cursor:"crosshair" }}
           onMouseMove={onMove} onMouseLeave={() => setHov(null)}>
           <defs>
@@ -1518,17 +1550,17 @@ const FinTrendChart = ({ trend, single = false }) => {
           {/* Áreas y curvas — en modo single, una sola línea morada (total) como outdomode */}
           {single ? (
             <>
-              <path d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
-              <path d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              <path className="fin-area" d={areaOf(totPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path className="fin-line" d={_finSmooth(totPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
             </>
           ) : (
             <>
-              <path d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
-              <path d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
-              <path d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
+              <path className="fin-area" d={areaOf(punPts)} fill="url(#finGradPun)" stroke="none"/>
+              <path className="fin-area" d={areaOf(recPts)} fill="url(#finGradRec)" stroke="none"/>
+              <path className="fin-line" d={_finSmooth(punPts)} fill="none" stroke={FIN_SERIES.pun} strokeWidth="2.5"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
-              <path d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
+              <path className="fin-line" d={_finSmooth(recPts)} fill="none" stroke={FIN_SERIES.rec} strokeWidth="3"
                 strokeLinecap="round" vectorEffect="non-scaling-stroke"/>
               {(hov !== null ? [hov.i] : [trend.length - 1]).map(i => (
                 <g key={i}>
