@@ -1,0 +1,858 @@
+// Agency Dashboard — 141'STUDIO MVP
+
+// ── Número con animación de conteo (0 → valor, easeOutCubic) ──
+// A nivel de módulo para que no se reinicie en cada render del componente.
+const AnimatedValue = ({ num, fmt }) => {
+  const [disp, setDisp] = React.useState(0);
+  const raf = React.useRef();
+  useEffect(() => {
+    cancelAnimationFrame(raf.current);
+    const to = Number(num) || 0;
+    const dur = 700;
+    const ease = t => 1 - Math.pow(1 - t, 3);
+    let start = null;
+    const step = (ts) => {
+      if (start == null) start = ts;
+      const p = Math.min(1, (ts - start) / dur);
+      setDisp(to * ease(p));
+      if (p < 1) raf.current = requestAnimationFrame(step);
+      else setDisp(to);
+    };
+    raf.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf.current);
+  }, [num]);
+  return fmt ? fmt(disp) : Math.round(disp);
+};
+
+// ── Date helpers ─────────────────────────────────────────────
+const parseSpanishDate = (str) => {
+  if (!str || str === "—") return null;
+  const M = {ene:0,feb:1,mar:2,abr:3,may:4,jun:5,jul:6,ago:7,sep:8,oct:9,nov:10,dic:11};
+  const parts = str.trim().toLowerCase().split(/[\s\/\-]+/);
+  if (parts.length < 2) return null;
+  const day = parseInt(parts[0]);
+  const mon = M[parts[1].slice(0,3)];
+  if (isNaN(day) || mon === undefined) return null;
+  return new Date(new Date().getFullYear(), mon, day);
+};
+
+// ── Icon badge ────────────────────────────────────────────────
+const IconBadge = ({ icon }) => (
+  <div style={{
+    width: 38, height: 38, borderRadius: 10,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0,
+    color: "var(--text-muted)",
+  }}>
+    <Icon name={icon} size={18} strokeWidth={1.6}/>
+  </div>
+);
+
+// ── Dashboard ────────────────────────────────────────────────
+const AgencyDashboard = ({ openModal, navigate, session }) => {
+  const D = window.Data;
+  D.useStore();
+
+  // Reloj en vivo — se actualiza cada segundo
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const greeting = (() => {
+    const h = now.getHours();
+    if (h < 6)  return "Buenas noches";
+    if (h < 13) return "Buenos días";
+    if (h < 21) return "Buenas tardes";
+    return "Buenas noches";
+  })();
+
+  const todayStr = (() => {
+    const dias  = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+    const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+    return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
+  })();
+
+  const timeStr = `${String(now.getHours()).padStart(2,"0")}:${String(now.getMinutes()).padStart(2,"0")}:${String(now.getSeconds()).padStart(2,"0")}`;
+
+  const agencyName     = D.SETTINGS.name || "141'STUDIO";
+  const adminEmail     = D.SETTINGS.email || "nil@141agency.com";
+  const adminName      = (() => { const n = adminEmail.split("@")[0]; return n.charAt(0).toUpperCase() + n.slice(1); })();
+  const activeProjects = D.PROJECTS.length;
+  // Solo tareas "vivas": de proyectos existentes + sueltas (__none__). Excluye
+  // huérfanas de proyectos borrados, que inflaban el contador de pendientes.
+  const _projIds = new Set(D.PROJECTS.map(p => p.id));
+  const _liveTasks = Object.entries(D.TASKS)
+    .filter(([pid]) => pid === "__none__" || _projIds.has(pid))
+    .flatMap(([, arr]) => arr);
+  const _todayStr = D.today ? D.today()
+    : `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
+  const _pending  = _liveTasks.filter(t => t.column !== "done");
+  // Pendientes conservando su projectId (para poder completarlas desde el panel)
+  const _pendingWithPid = Object.entries(D.TASKS)
+    .filter(([pid]) => pid === "__none__" || _projIds.has(pid))
+    .flatMap(([pid, arr]) => arr.filter(t => t.column !== "done").map(t => ({ ...t, _pid: pid })))
+    .sort((a, b) => {
+      const da = a.deadline || "9999-99-99", db = b.deadline || "9999-99-99";
+      return da < db ? -1 : da > db ? 1 : 0;
+    });
+  // "Tareas pendientes" del panel = las de HOY: vencen hoy o son atrasadas que
+  // se arrastran (misma lógica que el tablero de Tareas) + pasos de rutina de
+  // hoy que aún no están hechos.
+  const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
+    (n, r) => n + (r.items || []).filter(it => !D.routineItemDone(r.id, _todayStr, it.id)).length, 0
+  );
+  const pendingTasks = _pending.filter(t => t.deadline && t.deadline <= _todayStr).length + _routinePending;
+  const overdueTasks = _pending.filter(t => t.deadline && t.deadline < _todayStr).length;
+  const backlogTasks = _pending.length;   // todas las incompletas (para la cola de trabajo)
+  const pendingInvoices = D.INVOICES.filter(i => i.status !== "paid").length;
+  const atRisk = D.PROJECTS.filter(p => p.light === "red").length;
+  const capacity = activeProjects <= 3 ? "green" : activeProjects <= 4 ? "amber" : "red";
+  const capacityLabel = activeProjects === 0 ? "Sin proyectos"
+    : activeProjects <= 3 ? "Capacidad cómoda"
+    : activeProjects <= 4 ? "Capacidad media" : "Al límite";
+
+  // ── Mensaje bajo el saludo: "Hoy es [fecha] y son las [hora]." ──
+  const dayMessage = `Hoy es ${todayStr} y son las ${timeStr}`;
+
+  // ── Stripe ──
+  const [stripeMonth, setStripeMonth] = useState(null);
+  const [stripePrev, setStripePrev]   = useState(null);   // mes anterior (para la comparativa)
+  useEffect(() => {
+    const now = new Date();
+    const monthStart = Math.floor(new Date(now.getFullYear(), now.getMonth(), 1).getTime() / 1000);
+    const prevStart  = Math.floor(new Date(now.getFullYear(), now.getMonth() - 1, 1).getTime() / 1000);
+    window.apiFetch("/api/stripe/invoices", { limit: 100 })
+      .then(r => r.json())
+      .then(res => {
+        if (!res.ok) { setStripeMonth(false); return; }
+        const paid = (res.invoices || []).filter(i => i.status === "paid");
+        setStripeMonth(paid.filter(i => i.created >= monthStart).reduce((a,b) => a+(b.amount_paid??b.amount??0), 0));
+        setStripePrev(paid.filter(i => i.created >= prevStart && i.created < monthStart).reduce((a,b) => a+(b.amount_paid??b.amount??0), 0));
+      })
+      .catch(() => setStripeMonth(false));
+  }, []);
+
+  // ── Próximos eventos (solo lo que está por venir: reuniones, cobros, entregas, facturas) ──
+  const upcomingEvents = React.useMemo(() => {
+    const ev = [];
+    const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+
+    // Entregas de proyectos (con deadline futuro)
+    D.PROJECTS.forEach(p => {
+      const d = parseSpanishDate(p.deadline);
+      if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "Entrega",
+        color: p.light==="red"?"var(--red)":p.light==="amber"?"var(--amber)":"var(--green)",
+        icon: "folder" });
+    });
+
+    // Facturas pendientes de cobro
+    D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
+      const d = parseSpanishDate(i.due);
+      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "Factura",
+        color: i.status==="overdue"?"var(--red)":"var(--amber)", icon: "receipt" });
+    });
+
+    // Cobros de suscripciones (siguiente renovación desde Gastos)
+    try {
+      const fin = (window.Data && window.Data.FINANCE) || {};
+      (fin.subs || []).filter(s => s.active !== false && s.nextRenewal).forEach(s => {
+        let d = new Date(s.nextRenewal + "T00:00:00");
+        if (isNaN(d)) return;
+        // Si la fecha ya pasó, avanzamos al siguiente ciclo hasta que sea futura
+        let guard = 0;
+        while (d < todayMid && guard < 60) {
+          if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
+          else d.setMonth(d.getMonth() + 1);
+          guard++;
+        }
+        const amount = Number(s.amount) || 0;
+        ev.push({
+          date: d, label: s.name,
+          sub: `Cobro · €${amount.toLocaleString("es-ES")} · ${s.cycle === "yearly" ? "anual" : "mensual"}`,
+          type: "Suscripción", color: "var(--accent)", icon: "refresh-cw",
+        });
+      });
+    } catch (err) {}
+
+    // Eventos personalizados de Agenda (reuniones, etc.)
+    try {
+      const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
+      custom.forEach(e => {
+        if (!e.date) return;
+        const d = new Date(e.date + "T00:00:00");
+        if (isNaN(d)) return;
+        const iconMap  = { meeting:"users", task:"list-todo", custom:"calendar" };
+        const colorMap = { meeting:"var(--red)", task:"var(--accent)", custom:"var(--blue)" };
+        const typeLabel= { meeting:"Reunión", task:"Tarea", custom:"Evento" };
+        ev.push({
+          date: d, label: e.title,
+          time: e.time || null, timeEnd: e.timeEnd || null,
+          type: typeLabel[e.type] || "Evento",
+          color: colorMap[e.type] || "var(--blue)",
+          icon: iconMap[e.type] || "calendar",
+        });
+      });
+    } catch(err) {}
+
+    // Solo los próximos 7 días (hoy incluido)
+    return ev
+      .filter(e => {
+        const dMid = new Date(e.date); dMid.setHours(0,0,0,0);
+        const diff = Math.round((dMid - todayMid) / 86400000);
+        return diff >= 0 && diff <= 7;
+      })
+      .sort((a,b) => a.date - b.date)
+      .slice(0, 8);
+  }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE]);
+
+  // Próximos pagos: suscripciones (siguiente renovación) + facturas por cobrar
+  const upcomingBills = React.useMemo(() => {
+    const out = [];
+    const todayMid = new Date(); todayMid.setHours(0, 0, 0, 0);
+    try {
+      const fin = (window.Data && window.Data.FINANCE) || {};
+      (fin.subs || []).filter(s => s.active !== false && s.nextRenewal).forEach(s => {
+        let d = new Date(s.nextRenewal + "T00:00:00");
+        if (isNaN(d)) return;
+        let guard = 0;
+        while (d < todayMid && guard < 60) {
+          if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1); else d.setMonth(d.getMonth() + 1);
+          guard++;
+        }
+        out.push({ id: "sub:" + (s.id || s.name), name: s.name || "Suscripción", date: new Date(d),
+          amount: Number(s.amount) || 0, cycle: s.cycle === "yearly" ? "anual" : "mensual", kind: "sub" });
+      });
+    } catch (e) {}
+    (D.INVOICES || []).filter(i => i.status !== "paid").forEach(i => {
+      const d = parseSpanishDate(i.due);
+      if (d) out.push({ id: "inv:" + i.id, name: i.client || i.id, date: d,
+        amount: Number(i.amount) || 0, kind: "invoice" });
+    });
+    return out.sort((a, b) => a.date - b.date).slice(0, 6);
+  }, [D.INVOICES, D.FINANCE]);
+
+  const formatEventDate = (d) => {
+    const todayMid = new Date(); todayMid.setHours(0,0,0,0);
+    const dMid = new Date(d);   dMid.setHours(0,0,0,0);
+    const diff = Math.round((dMid - todayMid) / 86400000);
+    if (diff < 0)  return `hace ${Math.abs(diff)}d`;
+    if (diff === 0) return "Hoy";
+    if (diff === 1) return "Mañana";
+    const dias  = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+    const meses = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+    return `${dias[d.getDay()]} ${d.getDate()} ${meses[d.getMonth()]}`;
+  };
+
+  // ── KPI config ──
+  // "Gastado este mes" — igual que la página de Gastos: en el mes actual solo
+  // cuentan las suscripciones ya cobradas (día de renovación ≤ hoy); en meses
+  // pasados, el recurrente completo.
+  const _spendForMonth = (offset = 0) => {
+    try {
+      const fin = (window.Data && window.Data.FINANCE) || {};
+      const base = new Date(), today = base.getDate();
+      const isCurrent = offset === 0;
+      const rec = (fin.subs || []).filter(s => s.active !== false).reduce((a, s) => {
+        if (!isCurrent) return a + (s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : (Number(s.amount) || 0));
+        // mes actual: solo lo ya cobrado hasta hoy
+        if (s.cycle === "yearly") {
+          if (!s.nextRenewal) return a;
+          const d = new Date(s.nextRenewal + "T00:00:00");
+          return a + ((!isNaN(d) && d.getMonth() === base.getMonth() && d.getDate() <= today) ? (Number(s.amount) || 0) : 0);
+        }
+        const day = s.nextRenewal ? new Date(s.nextRenewal + "T00:00:00").getDate() : 1;
+        return a + (day <= today ? (Number(s.amount) || 0) : 0);
+      }, 0);
+      const y = base.getFullYear(), m = base.getMonth() + offset;
+      const ref = new Date(y, m, 1);
+      const exp = (fin.expenses || []).filter(e => {
+        if (!e.date) return false;
+        const d = new Date(e.date);
+        return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+      }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
+      return rec + exp;
+    } catch { return 0; }
+  };
+  const monthSpend     = _spendForMonth(0);
+  const lastMonthSpend = _spendForMonth(-1);
+  const prevMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("es-ES", { month: "short" });
+  const _pctDelta = (cur, prev) => (prev > 0 ? Math.round(((cur - prev) / prev) * 100) : null);
+  const spendDelta   = _pctDelta(monthSpend, lastMonthSpend);
+
+  // Facturado como en la página de Facturación: mensualidades activas + cobros
+  // manuales (con IVA, de 141_income_v1) además de las facturas de Stripe.
+  const _incMonth = (offset = 0) => {
+    try {
+      const d = JSON.parse(localStorage.getItem("141_income_v1")) || {};
+      const vatOf   = (x) => (x.vat === undefined || x.vat === null ? 21 : Number(x.vat));
+      const irpfOf  = (x) => (x.irpf === undefined || x.irpf === null ? 0 : Number(x.irpf));
+      // Neto (base + IVA − IRPF), igual que la página de Facturación
+      const withVat = (x) => (Number(x.amount) || 0) * (1 + vatOf(x) / 100 - irpfOf(x) / 100);
+      const ref = new Date(now.getFullYear(), now.getMonth() + offset, 1);
+      const key    = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
+      const nowKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const pun = (d.incomes || []).filter(i => (i.date || "").startsWith(key)).reduce((a, i) => a + withVat(i), 0);
+      const rec = (d.recs || []).filter(r => r.active).filter(r => {
+        const start = r.nextCharge && r.nextCharge.slice(0, 7) < nowKey ? r.nextCharge.slice(0, 7) : nowKey;
+        return start <= key;
+      }).reduce((a, r) => a + (r.cycle === "yearly" ? withVat(r) / 12 : withVat(r)), 0);
+      return pun + rec;
+    } catch { return 0; }
+  };
+  const facturadoCur  = (stripeMonth === null || stripeMonth === false ? 0 : stripeMonth / 100) + _incMonth(0);
+  const facturadoPrev = ((stripePrev || 0) / 100) + _incMonth(-1);
+
+  // Comparativa: {text, suffix, dir, tone} para el indicador estilo outdomode
+  const _countDelta = (n, word) => n > 0
+    ? { text: String(n), suffix: word, dir: "down", tone: "bad" }
+    : { text: "0", suffix: word, dir: "flat", tone: "muted" };
+  const _pctToDelta = (pct, goodUp, suffix) => {
+    if (pct === null) return { text: "—", suffix, dir: "flat", tone: "muted" };
+    const up = pct > 0, down = pct < 0;
+    const good = up === goodUp;
+    return {
+      text: `${up ? "+" : down ? "−" : ""}${Math.abs(pct)}%`,
+      suffix, dir: up ? "up" : down ? "down" : "flat",
+      tone: (up || down) ? (good ? "good" : "bad") : "muted",
+    };
+  };
+
+  // % de completado de un día (tareas con fecha ese día + pasos de rutina)
+  const _dayCompletion = (dateStr) => {
+    const tks = _liveTasks.filter(t => t.deadline === dateStr);
+    let done = tks.filter(t => t.column === "done").length;
+    let total = tks.length;
+    (D.routinesForDay ? D.routinesForDay(dateStr) : []).forEach(r => (r.items || []).forEach(it => {
+      total += 1; if (D.routineItemDone(r.id, dateStr, it.id)) done += 1;
+    }));
+    return total ? Math.round((done / total) * 100) : 0;
+  };
+  const _yestStr = (() => {
+    const d = new Date(_todayStr + "T12:00:00"); d.setDate(d.getDate() - 1);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  })();
+  const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr); // puntos %
+
+  const [hoverKpi, setHoverKpi] = useState(null);
+  const [hideMoney, setHideMoney] = useState(() => {
+    try { return localStorage.getItem("141_hide_money") === "1"; } catch { return false; }
+  });
+  const toggleMoney = () => setHideMoney(v => {
+    const n = !v;
+    try { localStorage.setItem("141_hide_money", n ? "1" : "0"); } catch {}
+    return n;
+  });
+  const _eur = n => `€${(Number(n)||0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const _int = n => String(Math.round(Number(n)||0));
+  const kpis = [
+    {
+      label:  "Proyectos activos",
+      value:  activeProjects,
+      num:    activeProjects, fmt: _int,
+      delta:  _countDelta(atRisk, "en riesgo"),
+      nav:    "projects",
+    },
+    {
+      label:  "Tareas pendientes",
+      value:  pendingTasks,
+      num:    pendingTasks, fmt: _int,
+      delta:  _pctToDelta(_tasksDayDelta, true, "vs ayer"),
+      nav:    "tasks",
+    },
+    {
+      label:  "Gastado este mes",
+      value:  `€${monthSpend.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      num:    monthSpend, fmt: _eur,
+      delta:  _pctToDelta(spendDelta, false, `vs ${prevMonthLabel}`),
+      nav:    "billing", money: true,
+    },
+    {
+      label:  "Facturado este mes",
+      value:  stripeMonth===null?"…":`€${facturadoCur.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}`,
+      num:    stripeMonth===null ? null : facturadoCur, fmt: _eur,
+      delta:  stripeMonth===null ? { text:"—", dir:"flat", tone:"muted" }
+                : facturadoPrev > 0
+                  ? _pctToDelta(_pctDelta(facturadoCur, facturadoPrev), true, `vs ${prevMonthLabel}`)
+                  : facturadoCur > 0
+                    ? { text:"+100%", suffix:`vs ${prevMonthLabel}`, dir:"up", tone:"good" }
+                    : { text:"0%", suffix:`vs ${prevMonthLabel}`, dir:"flat", tone:"muted" },
+      nav:    "income", money: true,
+    },
+  ];
+
+  // ── Queues ──
+  const queues = [
+    { icon:"list-todo", label:"Tareas sin completar",  count:backlogTasks,    action:()=>navigate("projects") },
+    { icon:"clock",     label:"Tareas vencidas",        count:overdueTasks,    action:()=>navigate("projects") },
+    { icon:"flag",      label:"Proyectos en riesgo",    count:atRisk,          action:()=>navigate("projects") },
+    { icon:"receipt",   label:"Facturas pendientes",    count:pendingInvoices, action:()=>navigate("invoices") },
+  ];
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // Apple HIG style — tokens locales (vibrancy / continuous radius / SF system)
+  // ───────────────────────────────────────────────────────────────────────────
+  const APPLE_CARD = {
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+    border: "0.5px solid rgba(255,255,255,0.08)",
+    borderRadius: 18,
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)",
+  };
+  const APPLE_SECTION = {
+    fontSize: 11, fontWeight: 600, color: "var(--text-subtle)",
+    textTransform: "uppercase", letterSpacing: "0.08em",
+  };
+
+  // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
+  const Header = (
+    <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0,
+      paddingBottom: 24 }}>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          <h1 style={{
+            fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
+            margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
+          }}>{greeting}, {adminName}.</h1>
+          <p style={{
+            margin: 0, fontSize: 14, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.4,
+          }}>
+            {dayMessage}
+          </p>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {/* Ocultar / mostrar importes */}
+          <div style={{ display: "flex", alignItems: "center", padding: "3px 4px",
+            background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
+            <button
+              onClick={toggleMoney}
+              title={hideMoney ? "Mostrar importes" : "Ocultar importes"}
+              style={{ width: 34, height: 34, borderRadius: "50%", background: "transparent", border: "none",
+                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+                color: hideMoney ? "var(--accent)" : "var(--text-muted)", transition: "background .12s" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
+              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+            >
+              <Icon name={hideMoney ? "eye-off" : "eye"} size={16}/>
+            </button>
+          </div>
+
+          <ActionPill
+            plusActions={[
+              { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
+              { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
+              { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
+              { icon: "receipt", label: "Nueva factura",  sub: "Se crea y envía desde Stripe.", onClick: () => openModal("newInvoice") },
+            ]}
+          />
+        </div>
+      </div>
+    </header>
+  );
+
+  const EYEBROW = (txt) => <div style={APPLE_SECTION}>{txt}</div>;
+
+  // ── Activity reciente (datos compartidos para varias vistas) ─────────────
+  const recentActivity = [
+    ...D.PROJECTS.slice(0, 2).map(p => ({ icon: "folder", text: p.name, sub: "Proyecto en curso" })),
+    ...D.CLIENTS.slice(0, 2).map(c => ({ icon: "users", text: c.company, sub: c.service || "Cliente" })),
+    ...(D.INVOICES || []).slice(0, 1).map(i => ({ icon: "receipt", text: i.client, sub: "Factura " + (i.status || "—") })),
+  ].slice(0, 5);
+
+  // KPI tile compartido (estilo Apple)
+  const renderKpiTile = (k, i) => (
+    <div key={i} style={{ ...APPLE_CARD, padding: "20px 22px", display: "flex", flexDirection: "column", gap: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <div style={{
+          width: 32, height: 32, borderRadius: 9,
+          background: "rgba(158,154,229,0.12)",
+          border: "0.5px solid rgba(158,154,229,0.18)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: "var(--accent)",
+        }}>
+          <Icon name={k.icon} size={15} strokeWidth={1.7}/>
+        </div>
+      </div>
+      <div>
+        <div style={{
+          fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 28,
+          fontWeight: 400, lineHeight: 1, letterSpacing: "-1.1px",
+          fontVariantNumeric: "tabular-nums", fontFamily: "var(--font-display)",
+          color: "var(--text)",
+        }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
+        <div style={{
+          marginTop: 8, fontSize: 12, color: "var(--text-muted)",
+          fontWeight: 500, letterSpacing: "-0.3px",
+        }}>{k.label}</div>
+        <div style={{
+          marginTop: 3, fontSize: 11, color: "var(--text-subtle)", letterSpacing: "-0.2px",
+        }}>{k.sub}</div>
+      </div>
+    </div>
+  );
+
+  // Mini KPI compacto (para variantes densas)
+  const renderMiniKpi = (k, i) => (
+    <div key={i} style={{ ...APPLE_CARD, padding: "14px 16px" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+        <span style={{ fontSize: 11.5, color: "var(--text-muted)", letterSpacing: "-0.2px" }}>{k.label}</span>
+        <Icon name={k.icon} size={12} strokeWidth={1.7} style={{ color: "var(--text-subtle)" }}/>
+      </div>
+      <div style={{
+        fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 18 : 22,
+        fontWeight: 400, letterSpacing: "-0.8px", fontFamily: "var(--font-display)",
+        fontVariantNumeric: "tabular-nums", lineHeight: 1,
+      }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
+    </div>
+  );
+
+  // Bloques reutilizables
+  const AgendaBlock = ({ height = 360, slice = 8 }) => (
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        <div>
+          {EYEBROW("Próximamente")}
+          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Agenda</div>
+        </div>
+        <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {upcomingEvents.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center" }}>
+            <Empty icon="check" title="Sin eventos próximos" sub="Todo al día por ahora."/>
+          </div>
+        ) : upcomingEvents.slice(0, slice).map((ev, i) => (
+          <EventRow key={i} ev={ev} last={i === Math.min(slice - 1, upcomingEvents.length - 1)} formatEventDate={formatEventDate}/>
+        ))}
+      </div>
+    </div>
+  );
+
+  const fmtTaskDate = (ds) => {
+    if (!ds) return "";
+    const d = new Date(ds + "T00:00:00");
+    return isNaN(d) ? "" : formatEventDate(d);
+  };
+  const QueuesBlock = ({ height = 360 }) => (
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        <div>
+          {EYEBROW("Pendiente")}
+          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Tareas rápidas</div>
+        </div>
+        <button onClick={() => navigate("tasks")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {_pendingWithPid.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center" }}>
+            <Empty icon="check" title="Todo hecho" sub="No te queda nada pendiente."/>
+          </div>
+        ) : _pendingWithPid.slice(0, 12).map((t, i) => (
+          <QuickTaskRow key={t.id} t={t} D={D}
+            last={i === Math.min(11, _pendingWithPid.length - 1)}
+            projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
+            dateLabel={fmtTaskDate(t.deadline)}
+            overdue={t.deadline && t.deadline < _todayStr}/>
+        ))}
+      </div>
+    </div>
+  );
+
+  const ProjectsBlock = ({ height = 360 }) => (
+    <div style={{ ...APPLE_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "18px 22px 14px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+        <div>
+          {EYEBROW("Próximos")}
+          <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Pagos y suscripciones</div>
+        </div>
+        <button onClick={() => navigate("billing")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "14px 16px", display: "flex", flexDirection: "column", gap: 10 }}>
+        {upcomingBills.length === 0 ? (
+          <div style={{ padding: 30, textAlign: "center" }}>
+            <Empty icon="check" title="Sin pagos próximos" sub="No hay cobros ni facturas pendientes."/>
+          </div>
+        ) : upcomingBills.map(b => (
+          <BillRow key={b.id} b={b} hideMoney={hideMoney} eur={_eur}
+            onClick={() => navigate("billing")}/>
+        ))}
+      </div>
+    </div>
+  );
+
+  // Stats inline (tira sin tiles)
+  const StatsInline = () => (
+    <div style={{ ...APPLE_CARD, display: "flex", flexWrap: "wrap", gap: 32, padding: "20px 24px" }}>
+      {kpis.map((k, i) => (
+        <div key={i} style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 130 }}>
+          <div style={{ fontSize: 11, color: "var(--text-subtle)", textTransform: "uppercase",
+            letterSpacing: "0.08em", fontWeight: 500 }}>{k.label}</div>
+          <div style={{
+            fontSize: typeof k.value === "string" && k.value.startsWith("€") ? 22 : 26,
+            fontWeight: 400, letterSpacing: "-0.9px", fontFamily: "var(--font-display)",
+            fontVariantNumeric: "tabular-nums", lineHeight: 1.1,
+          }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</div>
+          <div style={{ fontSize: 11.5, color: "var(--text-muted)" }}>{k.sub}</div>
+        </div>
+      ))}
+    </div>
+  );
+
+  // ═══ Opción 3 — Tres columnas iguales ════════════════════════════════════
+  const V3 = (
+    <>
+      <section style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between", gap: 32,
+        padding: "0 4px 26px", flexShrink: 0,
+      }}>
+        {kpis.map((k, i) => {
+          const clickable = !!k.nav;
+          const on = hoverKpi === i;
+          const masked = k.money && hideMoney;
+          return (
+          <div key={i}
+            onClick={clickable ? () => navigate(k.nav) : undefined}
+            onMouseEnter={clickable ? () => setHoverKpi(i) : undefined}
+            onMouseLeave={clickable ? () => setHoverKpi(null) : undefined}
+            style={{ display: "flex", flexDirection: "column", gap: 14, cursor: clickable ? "pointer" : "default" }}>
+            <span style={{ fontSize: 16, lineHeight: 1.3, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px", transition: "color .15s" }}>{k.label}</span>
+            <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 4, height: 32 }}>
+                {masked
+                  ? <span style={{ display: "inline-block", width: 116, height: 20, borderRadius: 999,
+                      background: "linear-gradient(90deg, rgba(255,255,255,0.11), rgba(255,255,255,0.05))",
+                      alignSelf: "center" }}/>
+                  : <>
+                      <span style={{ fontSize: 32, color: on ? "var(--accent)" : "var(--text)", letterSpacing: "-0.08em", lineHeight: 1,
+                        fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums", transition: "color .15s" }}>{k.num != null ? <AnimatedValue num={k.num} fmt={k.fmt}/> : k.value}</span>
+                      {k.unit && <span style={{ fontSize: 16, color: "var(--text-muted)" }}>{k.unit}</span>}
+                    </>}
+              </div>
+              {k.delta && !masked && <MetricDelta {...k.delta}/>}
+              {masked && <span style={{ display: "inline-block", width: 64, height: 11, borderRadius: 999,
+                background: "rgba(255,255,255,0.06)" }}/>}
+            </div>
+          </div>
+          );
+        })}
+      </section>
+      <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16, flex: 1, minHeight: 0 }}>
+        <AgendaBlock height="100%" slice={6}/>
+        <QueuesBlock height="100%"/>
+        <ProjectsBlock height="100%"/>
+      </section>
+    </>
+  );
+
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", gap: 28,
+      height: "100vh", overflow: "hidden",
+      padding: "28px 32px",
+      maxWidth: 1400, margin: "0 auto",
+    }}>
+      {Header}
+      {V3}
+    </div>
+  );
+};
+
+// ─── Subcomponentes compartidos (fuera del cuerpo de AgencyDashboard) ──────
+const LINK_BTN = {
+  display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
+  borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
+  background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+};
+
+const EventRow = ({ ev, last, formatEventDate }) => (
+  <div
+    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    style={{
+      display: "flex", alignItems: "center", gap: 14,
+      padding: "14px 22px", transition: "background .1s",
+      borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)",
+    }}>
+    <div style={{
+      width: 36, height: 36, borderRadius: 10, flexShrink: 0,
+      background: "rgba(255,255,255,0.04)",
+      border: "0.5px solid rgba(255,255,255,0.06)",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color: ev.color || "var(--text-muted)",
+    }}>
+      <Icon name={ev.icon} size={15} strokeWidth={1.7}/>
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{
+        fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+        color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+      }}>{ev.label}</div>
+      <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ color: "var(--text-muted)" }}>{formatEventDate(ev.date)}{ev.time ? `, ${ev.time}${ev.timeEnd ? ` – ${ev.timeEnd}` : ""}` : ""}</span>
+        {ev.sub ? ` · ${ev.sub}` : ""}
+      </div>
+    </div>
+    <span style={{
+      fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
+      background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
+      border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
+      whiteSpace: "nowrap", fontWeight: 500,
+    }}>{ev.type}</span>
+  </div>
+);
+
+const QueueRow = ({ q }) => (
+  <div onClick={q.action}
+    onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+    style={{
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "14px 22px", cursor: "pointer", transition: "background .1s",
+      borderBottom: "0.5px solid rgba(255,255,255,0.04)",
+    }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{
+        width: 32, height: 32, borderRadius: 9, flexShrink: 0,
+        background: "rgba(255,255,255,0.04)",
+        border: "0.5px solid rgba(255,255,255,0.06)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        color: "var(--text-muted)",
+      }}>
+        <Icon name={q.icon} size={14} strokeWidth={1.7}/>
+      </div>
+      <span style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px" }}>{q.label}</span>
+    </div>
+    <span style={{
+      fontSize: 17, fontWeight: 400, fontVariantNumeric: "tabular-nums",
+      color: q.count > 0 ? "var(--text)" : "var(--text-subtle)",
+      letterSpacing: "-0.5px", fontFamily: "var(--font-display)",
+    }}>{q.count}</span>
+  </div>
+);
+
+// Fila de tarea completable (quick view del panel de Inicio)
+const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
+  const [checking, setChecking] = useState(false);
+  const complete = (e) => {
+    e.stopPropagation();
+    if (checking) return;
+    setChecking(true);
+    setTimeout(() => { try { D.moveTask(t._pid, t.id, "done"); } catch (err) {} }, 280);
+  };
+  return (
+    <div
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+      onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+      style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 22px",
+        transition: "background .1s", borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.04)" }}>
+      <button onClick={complete} title="Completar"
+        style={{ width: 26, height: 26, borderRadius: "50%", flexShrink: 0, padding: 0, cursor: "pointer",
+          border: checking ? "1px solid var(--accent)" : "1.5px solid rgba(255,255,255,0.22)",
+          background: checking ? "var(--accent)" : "transparent",
+          display: "flex", alignItems: "center", justifyContent: "center", transition: "all .15s" }}>
+        {checking && <Icon name="check" size={14} style={{ color: "#fff" }}/>}
+      </button>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px",
+          color: checking ? "var(--text-subtle)" : "var(--text)",
+          textDecoration: checking ? "line-through" : "none", transition: "color .15s",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.title}</div>
+        <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px",
+          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {projName}{dateLabel ? <span style={{ color: overdue ? "var(--red)" : "var(--text-muted)" }}> · {dateLabel}</span> : ""}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Fila de próximo pago / factura (estilo "upcoming bill & payment")
+const _BILL_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const BillRow = ({ b, hideMoney, eur, onClick }) => {
+  const d = b.date;
+  const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
+  const initial = (b.name || "?").trim().charAt(0).toUpperCase();
+  return (
+    <div onClick={onClick}
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+      style={{ background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)",
+        borderRadius: 14, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10,
+        cursor: "pointer", transition: "background .1s" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 11, flexShrink: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(158,154,229,0.12)", border: "0.5px solid rgba(158,154,229,0.2)",
+          color: "var(--accent)", fontSize: 15, fontWeight: 600, fontFamily: "var(--font-display)" }}>
+          {b.kind === "invoice" ? <Icon name="receipt" size={16} strokeWidth={1.7}/> : initial}
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{b.name}</div>
+          <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" }}>{dateStr}</div>
+        </div>
+        <Icon name="chevron-right" size={15} style={{ color: "rgba(255,255,255,0.18)", flexShrink: 0 }}/>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+        paddingTop: 10, borderTop: "0.5px solid rgba(255,255,255,0.05)" }}>
+        {hideMoney
+          ? <span style={{ display: "inline-block", width: 68, height: 16, borderRadius: 999, background: "rgba(255,255,255,0.08)" }}/>
+          : <span style={{ fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "var(--text)",
+              fontFamily: "var(--font-display)", fontVariantNumeric: "tabular-nums" }}>{eur(b.amount)}</span>}
+        <span style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
+          background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.08)",
+          color: "var(--text-muted)", fontWeight: 500, letterSpacing: "-0.1px", whiteSpace: "nowrap" }}>
+          {b.kind === "invoice" ? "Por cobrar" : "Programado"}
+        </span>
+      </div>
+    </div>
+  );
+};
+
+const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => (
+  <div style={{ padding: "18px 22px 14px" }}>
+    <div style={{ ...APPLE_SECTION, marginBottom: 12 }}>Proyectos activos</div>
+    {D.PROJECTS.length === 0 ? (
+      <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 0" }}>
+        Sin proyectos. <button onClick={() => openModal("newProject")}
+          style={{ background: "transparent", border: 0, color: "var(--accent)", cursor: "pointer",
+            fontSize: 12.5, padding: 0, fontFamily: "inherit", textDecoration: "underline" }}>Crear uno</button>
+      </div>
+    ) : D.PROJECTS.slice(0, 5).map(p => {
+      const pTasks = D.TASKS[p.id] || [];
+      const live = pTasks.length ? Math.round(pTasks.filter(t => t.column === "done").length / pTasks.length * 100) : 0;
+      return (
+        <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+          onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.04)"}
+          onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+          style={{
+            display: "flex", alignItems: "center", gap: 12, padding: "8px 8px",
+            cursor: "pointer", borderRadius: 8, transition: "background .1s", marginInline: -8,
+          }}>
+          <span className={"dot " + p.light}/>
+          <span style={{
+            flex: 1, fontSize: 13, fontWeight: 500, minWidth: 0, letterSpacing: "-0.2px",
+            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          }}>{p.name}</span>
+          <div style={{ width: 78, display: "flex", alignItems: "center", gap: 8 }}>
+            <div className="progress" style={{ flex: 1 }}><i style={{ width: live + "%" }}/></div>
+            <span style={{
+              fontSize: 11, color: "var(--text-muted)",
+              fontVariantNumeric: "tabular-nums", width: 28, textAlign: "right",
+            }}>{live}%</span>
+          </div>
+        </div>
+      );
+    })}
+  </div>
+);
+
+window.AgencyDashboard = AgencyDashboard;
