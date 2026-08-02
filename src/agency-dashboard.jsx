@@ -1285,36 +1285,25 @@ const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
 
 // Fila de próximo pago / factura (estilo "upcoming bill & payment")
 const _BILL_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
-// Mapa de marca → dominio para buscar el logo (Clearbit). Si no hay match o el
-// logo no carga, se muestra la inicial de siempre.
-const _BRANDS = [
-  [/claude|anthropic/, "anthropic.com"], [/railway/, "railway.app"], [/ionos/, "ionos.com"],
-  [/magnific/, "magnific.ai"], [/google|workspace|gmail|gsuite/, "google.com"],
-  [/netflix/, "netflix.com"], [/spotify/, "spotify.com"], [/adobe|creative cloud/, "adobe.com"],
-  [/figma/, "figma.com"], [/notion/, "notion.so"], [/vercel/, "vercel.com"],
-  [/openai|chatgpt|\bgpt\b/, "openai.com"], [/github/, "github.com"], [/gitlab/, "gitlab.com"],
-  [/canva/, "canva.com"], [/shopify/, "shopify.com"], [/stripe/, "stripe.com"],
-  [/dropbox/, "dropbox.com"], [/slack/, "slack.com"], [/discord/, "discord.com"],
-  [/microsoft|office|365|azure/, "microsoft.com"], [/apple|icloud/, "apple.com"],
-  [/\baws\b|amazon/, "aws.amazon.com"], [/cloudflare/, "cloudflare.com"],
-  [/hostinger/, "hostinger.com"], [/godaddy/, "godaddy.com"], [/namecheap/, "namecheap.com"],
-  [/wordpress/, "wordpress.com"], [/wix/, "wix.com"], [/webflow/, "webflow.com"],
-  [/mailchimp/, "mailchimp.com"], [/hubspot/, "hubspot.com"], [/zapier/, "zapier.com"],
-  [/airtable/, "airtable.com"], [/linear/, "linear.app"], [/supabase/, "supabase.com"],
-  [/digitalocean/, "digitalocean.com"], [/heroku/, "heroku.com"], [/twitch/, "twitch.tv"],
-  [/youtube/, "youtube.com"], [/meta|facebook|instagram/, "meta.com"], [/linkedin/, "linkedin.com"],
-  [/dribbble/, "dribbble.com"], [/behance/, "behance.net"], [/semrush/, "semrush.com"],
-  [/ahrefs/, "ahrefs.com"], [/elevenlabs/, "elevenlabs.io"], [/midjourney/, "midjourney.com"],
-  [/runway/, "runwayml.com"], [/perplexity/, "perplexity.ai"], [/cursor/, "cursor.com"],
+// Categoría de la suscripción → icono + color. Primer match gana; si nada
+// coincide se usa una categoría genérica.
+const _CATS = [
+  [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkles", "#9e9ae5"], // IA
+  [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "image", "#e879a6"],                                             // Diseño
+  [/netflix|spotify|youtube|twitch|disney|\bhbo\b|prime|movistar|dazn|apple\s?music|music/, "play", "#dc5b5d"],                              // Entretenimiento
+  [/mailchimp|hubspot|semrush|ahrefs|\bads\b|marketing|\bseo\b|meta|facebook|instagram|linkedin|tiktok|twitter|\bx\b/, "megaphone", "#eec06a"], // Marketing / redes
+  [/gmail|correo|zoho|proton|outlook/, "mail", "#60a5fa"],                                                                                    // Email
+  [/dropbox|icloud|drive|storage|backup|almacen/, "folder", "#60a5fa"],                                                                       // Almacenamiento
+  [/github|gitlab/, "command", "#9e9ae5"],                                                                                                    // Dev
+  [/railway|ionos|vercel|\baws\b|amazon|cloudflare|hostinger|godaddy|namecheap|supabase|digitalocean|heroku|hosting|dominio|domain|\bvps\b|servidor|server/, "command", "#60a5fa"], // Hosting / infra
+  [/notion|slack|workspace|gsuite|microsoft|office|365|airtable|linear|zapier|trello|asana|monday|google/, "grid", "#9e9ae5"],               // Productividad
+  [/cuota|autonom|aut[oó]nom|irpf|gestor|stripe|paypal|impuesto|seguro|banco|\biva\b|n[oó]mina/, "receipt", "#9e9ae5"],                        // Finanzas / impuestos
 ];
-const _brandDomain = (name) => { const t = (name || "").toLowerCase(); for (const [re, d] of _BRANDS) if (re.test(t)) return d; return null; };
+const _catFor = (name) => { const t = (name || "").toLowerCase(); for (const [re, ic, co] of _CATS) if (re.test(t)) return { icon: ic, color: co }; return { icon: "package", color: "#9e9ae5" }; };
 const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
   const d = b.date;
   const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
-  const initial = (b.name || "?").trim().charAt(0).toUpperCase();
-  const domain = b.kind === "invoice" ? null : _brandDomain(b.name);
-  const [logoOk, setLogoOk] = useState(true);
-  const showLogo = domain && logoOk;
+  const cat = b.kind === "invoice" ? { icon: "receipt", color: "#9e9ae5" } : _catFor(b.name);
   return (
     <div onClick={onClick}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
@@ -1322,16 +1311,10 @@ const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
       style={{ display: "flex", alignItems: "center", gap: 13, padding: "12px 4px", cursor: "pointer",
         transition: "background .1s", borderRadius: 8,
         borderBottom: last ? "none" : "0.5px solid rgba(255,255,255,0.05)" }}>
-      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, overflow: "hidden",
+      <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0,
         display: "flex", alignItems: "center", justifyContent: "center",
-        background: showLogo ? "#fff" : "rgba(158,154,229,0.12)",
-        border: showLogo ? "0.5px solid rgba(255,255,255,0.12)" : "0.5px solid rgba(158,154,229,0.2)",
-        color: "var(--accent)", fontSize: 14, fontWeight: 600, fontFamily: "var(--font-display)" }}>
-        {showLogo
-          ? <img src={`https://logo.clearbit.com/${domain}`} alt="" width="24" height="24"
-              referrerPolicy="no-referrer" onError={() => setLogoOk(false)}
-              style={{ width: 24, height: 24, objectFit: "contain" }}/>
-          : (b.kind === "invoice" ? <Icon name="receipt" size={15} strokeWidth={1.7}/> : initial)}
+        background: cat.color + "22", border: `0.5px solid ${cat.color}33`, color: cat.color }}>
+        <Icon name={cat.icon} size={16} strokeWidth={1.7}/>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", color: "var(--text)",
