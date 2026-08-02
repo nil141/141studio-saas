@@ -334,6 +334,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     });
   }
   const finMax = Math.max(1, ...finBars.map(b => Math.max(b.gasto, b.ingreso)));
+  // Serie para el gráfico estilo Facturación (línea de facturado, últimos 6 meses)
+  const _MESFULL = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const finTrend = finBars.map((b, i) => {
+    const ref = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+    return { key: `${ref.getFullYear()}-${ref.getMonth()}`, label: b.label,
+      full: `${_MESFULL[ref.getMonth()]} ${ref.getFullYear()}`, total: b.ingreso };
+  });
 
   // Comparativa: {text, suffix, dir, tone} para el indicador estilo outdomode
   const _countDelta = (n, word) => n > 0
@@ -697,36 +704,21 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     );
   };
 
-  // Mini-finanzas — barras facturado vs gastado últimos 6 meses
-  const MiniFinanceBlock = () => (
-    <WidgetCard eyebrow="Últimos 6 meses" title="Finanzas" action="Ver" onAction={() => navigate("billing")} pad="14px 20px 12px">
+  // Mini-finanzas — mismo gráfico (línea + área) que la página de Facturación
+  const MiniFinanceBlock = () => {
+    const FinTrend = window.FinTrendChart;
+    return (
+    <WidgetCard eyebrow="Últimos 6 meses" title="Facturado" action="Ver" onAction={() => navigate("billing")} pad="10px 18px 10px">
       {hideMoney ? (
         <div style={{ margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 }}>Importes ocultos</div>
+      ) : FinTrend ? (
+        <div style={{ display: "flex", width: "100%", minHeight: 0 }}><FinTrend trend={finTrend} single/></div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", width: "100%", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flex: 1, minHeight: 0, gap: 10 }}>
-            {finBars.map((b, i) => (
-              <div key={i} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 0 }}>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: 3, height: 78 }}>
-                  <div title={`Facturado: ${_eur(b.ingreso)}`} style={{ width: 9, borderRadius: 3, background: "var(--accent)",
-                    height: Math.max(3, (b.ingreso / finMax) * 78) }}/>
-                  <div title={`Gastado: ${_eur(b.gasto)}`} style={{ width: 9, borderRadius: 3, background: "rgba(255,255,255,0.22)",
-                    height: Math.max(3, (b.gasto / finMax) * 78) }}/>
-                </div>
-                <span style={{ fontSize: 10.5, color: "var(--text-subtle)", textTransform: "capitalize" }}>{b.label}</span>
-              </div>
-            ))}
-          </div>
-          <div style={{ display: "flex", gap: 14, justifyContent: "center", paddingTop: 2 }}>
-            <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: "var(--accent)" }}/>Facturado</span>
-            <span style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" }}>
-              <span style={{ width: 8, height: 8, borderRadius: 2, background: "rgba(255,255,255,0.22)" }}/>Gastado</span>
-          </div>
-        </div>
+        <div style={{ margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 }}>…</div>
       )}
     </WidgetCard>
-  );
+    );
+  };
 
   // Colas de trabajo — contadores compactos 2×2
   const QueuesCountBlock = () => (
@@ -814,12 +806,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <AgendaBlock height="100%" slice={6}/>
         <ProjectsBlock height="100%"/>
       </section>
-      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 200, flexShrink: 0 }}>
+      <section style={{ display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 214, flexShrink: 0 }}>
         <MiniFinanceBlock/>
-        <RoutineTodayBlock/>
+        <FocusBlock todayStr={_todayStr}/>
       </section>
-      <section style={{ height: 150, flexShrink: 0 }}>
-        <QueuesCountBlock/>
+      <section style={{ height: 160, flexShrink: 0 }}>
+        <ClientsBlock D={D} navigate={navigate}/>
       </section>
     </>
   );
@@ -1031,6 +1023,89 @@ const LINK_BTN = {
   display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
   borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
   background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+};
+
+// ── Estilos + shell de tarjeta a nivel de módulo (para widgets con estado
+//    propio, que NO pueden vivir dentro del cuerpo del dashboard porque el
+//    reloj lo re-renderiza cada segundo y perderían foco/estado) ────────────
+const DASH_CARD = {
+  background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+  border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: 18,
+  backdropFilter: "blur(40px) saturate(180%)", WebkitBackdropFilter: "blur(40px) saturate(180%)",
+  boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)",
+};
+const DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em" };
+const DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => (
+  <div style={{ ...DASH_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" }}>
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "16px 20px 12px", borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}>
+      <div>
+        <div style={DASH_EYEBROW}>{eyebrow}</div>
+        <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>{title}</div>
+      </div>
+      {action && <button onClick={onAction} style={LINK_BTN}>{action} <Icon name="arrow" size={12}/></button>}
+    </div>
+    <div style={{ flex: 1, minHeight: 0, padding: pad, display: "flex" }}>{children}</div>
+  </div>
+);
+
+// Widget "Foco del día" — nota editable con la prioridad de hoy (por día)
+const FocusBlock = ({ todayStr }) => {
+  const key = "141_focus_" + todayStr;
+  const [txt, setTxt] = useState(() => { try { return localStorage.getItem(key) || ""; } catch { return ""; } });
+  useEffect(() => { try { setTxt(localStorage.getItem(key) || ""); } catch {} }, [key]);
+  const save = (v) => { setTxt(v); try { localStorage.setItem(key, v); } catch {} };
+  return (
+    <DashCardShell eyebrow="Hoy" title="Foco del día" pad="14px 18px">
+      <textarea
+        value={txt}
+        onChange={e => save(e.target.value)}
+        placeholder="¿Cuál es tu prioridad de hoy?"
+        style={{ width: "100%", height: "100%", resize: "none", background: "transparent", border: "none",
+          outline: "none", color: "var(--text)", fontSize: 14, lineHeight: 1.55, letterSpacing: "-0.3px",
+          fontFamily: "var(--font-sans)", caretColor: "var(--accent)" }}
+      />
+    </DashCardShell>
+  );
+};
+
+// Widget "Clientes" — acceso rápido a las fichas de cliente
+const ClientsBlock = ({ D, navigate }) => {
+  const clients = D.CLIENTS || [];
+  const _pal = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586"];
+  return (
+    <DashCardShell eyebrow="Cartera" title="Clientes" action="Ver todo" onAction={() => navigate("clients")} pad="14px 16px">
+      {clients.length === 0 ? (
+        <div style={{ margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 }}>
+          Aún no tienes clientes.
+        </div>
+      ) : (
+        <div style={{ display: "flex", gap: 12, overflowX: "auto", width: "100%", paddingBottom: 2 }}>
+          {clients.slice(0, 12).map((c, i) => {
+            const name = c.company || c.name || "Cliente";
+            const col = _pal[i % _pal.length];
+            return (
+              <div key={c.id || i} onClick={() => navigate("clientDetail", { clientId: c.id })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.03)"}
+                style={{ flexShrink: 0, width: 118, cursor: "pointer", borderRadius: 14, padding: "12px 12px",
+                  background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.06)",
+                  display: "flex", flexDirection: "column", gap: 9, transition: "background .1s" }}>
+                <div style={{ width: 34, height: 34, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+                  background: col + "22", border: `0.5px solid ${col}44`, color: col, fontSize: 14, fontWeight: 600, fontFamily: "var(--font-display)" }}>
+                  {name.trim().charAt(0).toUpperCase()}
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</div>
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.service || "Cliente"}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </DashCardShell>
+  );
 };
 
 const EventRow = ({ ev, last, formatEventDate }) => (

@@ -1605,6 +1605,8 @@ const FinTrendChart = ({ trend, single = false }) => {
     </div>
   );
 };
+// Exponer el gráfico de facturación para reutilizarlo en el panel de Inicio
+try { window.FinTrendChart = FinTrendChart; } catch (e) {}
 
 const AgencyBilling = () => {
   const toast = useToast();

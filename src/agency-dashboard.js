@@ -306,6 +306,16 @@
       });
     }
     const finMax = Math.max(1, ...finBars.map((b) => Math.max(b.gasto, b.ingreso)));
+    const _MESFULL = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    const finTrend = finBars.map((b, i) => {
+      const ref = new Date(now.getFullYear(), now.getMonth() - 5 + i, 1);
+      return {
+        key: `${ref.getFullYear()}-${ref.getMonth()}`,
+        label: b.label,
+        full: `${_MESFULL[ref.getMonth()]} ${ref.getFullYear()}`,
+        total: b.ingreso
+      };
+    });
     const _countDelta = (n, word) => n > 0 ? { text: String(n), suffix: word, dir: "down", tone: "bad" } : { text: "0", suffix: word, dir: "flat", tone: "muted" };
     const _pctToDelta = (pct, goodUp, suffix) => {
       if (pct === null) return { text: "\u2014", suffix, dir: "flat", tone: "muted" };
@@ -637,17 +647,10 @@
         fontFamily: "var(--font-display)"
       } }, routinePct, "%")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, routineDone, "/", _rSteps, " pasos hechos"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 500, letterSpacing: "-0.6px", fontFamily: "var(--font-display)", color: "var(--text)" } }, routineStreak, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", marginLeft: 3 } }, "d\xEDas")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "Racha")), weightToday != null && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 18, fontWeight: 500, letterSpacing: "-0.6px", fontFamily: "var(--font-display)", color: "var(--text)" } }, String(weightToday).replace(".", ","), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", marginLeft: 3 } }, "kg")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)" } }, "Peso hoy"))))));
     };
-    const MiniFinanceBlock = () => /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "\xDAltimos 6 meses", title: "Finanzas", action: "Ver", onAction: () => navigate("billing"), pad: "14px 20px 12px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", width: "100%", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", justifyContent: "space-between", flex: 1, minHeight: 0, gap: 10 } }, finBars.map((b, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 6, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-end", gap: 3, height: 78 } }, /* @__PURE__ */ React.createElement("div", { title: `Facturado: ${_eur(b.ingreso)}`, style: {
-      width: 9,
-      borderRadius: 3,
-      background: "var(--accent)",
-      height: Math.max(3, b.ingreso / finMax * 78)
-    } }), /* @__PURE__ */ React.createElement("div", { title: `Gastado: ${_eur(b.gasto)}`, style: {
-      width: 9,
-      borderRadius: 3,
-      background: "rgba(255,255,255,0.22)",
-      height: Math.max(3, b.gasto / finMax * 78)
-    } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, color: "var(--text-subtle)", textTransform: "capitalize" } }, b.label)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, justifyContent: "center", paddingTop: 2 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: "var(--accent)" } }), "Facturado"), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 2, background: "rgba(255,255,255,0.22)" } }), "Gastado"))));
+    const MiniFinanceBlock = () => {
+      const FinTrend = window.FinTrendChart;
+      return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "\xDAltimos 6 meses", title: "Facturado", action: "Ver", onAction: () => navigate("billing"), pad: "10px 18px 10px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : FinTrend ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", width: "100%", minHeight: 0 } }, /* @__PURE__ */ React.createElement(FinTrend, { trend: finTrend, single: true })) : /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 } }, "\u2026"));
+    };
     const QueuesCountBlock = () => /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "Pendiente", title: "Colas de trabajo", pad: "14px 16px" }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, width: "100%" } }, queues.map((q, i) => /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -738,7 +741,7 @@
         } }, k.num != null ? /* @__PURE__ */ React.createElement(AnimatedValue, { num: k.num, fmt: k.fmt }) : k.value), k.unit && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-muted)" } }, k.unit))), k.delta && !masked && /* @__PURE__ */ React.createElement(MetricDelta, { ...k.delta }), masked && /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: 64, height: 11, borderRadius: 999, background: "rgba(255,255,255,0.06)" } }))
       );
     }));
-    const LayoutBento = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 200, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(RoutineTodayBlock, null)), /* @__PURE__ */ React.createElement("section", { style: { height: 150, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
+    const LayoutBento = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.5fr 1fr 1fr", gap: 16, height: 344, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(AgendaBlock, { height: "100%", slice: 6 }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 214, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(FocusBlock, { todayStr: _todayStr })), /* @__PURE__ */ React.createElement("section", { style: { height: 160, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(ClientsBlock, { D, navigate })));
     const _mHead = (title, action, onAction) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 } }, EYEBROW(title), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: { ...LINK_BTN, height: 22, padding: "0 6px" } }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 11 })));
     const _mDivider = /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } });
     const LayoutMinimal = /* @__PURE__ */ React.createElement(React.Fragment, null, KpiRow, /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "10px 0 4px" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1.15fr 0.85fr", gap: 52, alignItems: "start", paddingTop: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 26 } }, /* @__PURE__ */ React.createElement("div", null, _mHead("Agenda", "Ver todo", () => navigate("agenda")), upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "Sin eventos pr\xF3ximos.") : upcomingEvents.slice(0, 4).map((ev, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
@@ -894,6 +897,112 @@
     cursor: "pointer",
     fontFamily: "inherit",
     letterSpacing: "-0.2px"
+  };
+  var DASH_CARD = {
+    background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.015) 100%)",
+    border: "0.5px solid rgba(255,255,255,0.08)",
+    borderRadius: 18,
+    backdropFilter: "blur(40px) saturate(180%)",
+    WebkitBackdropFilter: "blur(40px) saturate(180%)",
+    boxShadow: "0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 32px -16px rgba(0,0,0,0.4)"
+  };
+  var DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em" };
+  var DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => /* @__PURE__ */ React.createElement("div", { style: { ...DASH_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: "16px 20px 12px",
+    borderBottom: "0.5px solid rgba(255,255,255,0.06)"
+  } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: DASH_EYEBROW }, eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
+  var FocusBlock = ({ todayStr }) => {
+    const key = "141_focus_" + todayStr;
+    const [txt, setTxt] = useState(() => {
+      try {
+        return localStorage.getItem(key) || "";
+      } catch (e) {
+        return "";
+      }
+    });
+    useEffect(() => {
+      try {
+        setTxt(localStorage.getItem(key) || "");
+      } catch (e) {
+      }
+    }, [key]);
+    const save = (v) => {
+      setTxt(v);
+      try {
+        localStorage.setItem(key, v);
+      } catch (e) {
+      }
+    };
+    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "Hoy", title: "Foco del d\xEDa", pad: "14px 18px" }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: txt,
+        onChange: (e) => save(e.target.value),
+        placeholder: "\xBFCu\xE1l es tu prioridad de hoy?",
+        style: {
+          width: "100%",
+          height: "100%",
+          resize: "none",
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          color: "var(--text)",
+          fontSize: 14,
+          lineHeight: 1.55,
+          letterSpacing: "-0.3px",
+          fontFamily: "var(--font-sans)",
+          caretColor: "var(--accent)"
+        }
+      }
+    ));
+  };
+  var ClientsBlock = ({ D, navigate }) => {
+    const clients = D.CLIENTS || [];
+    const _pal = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586"];
+    return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "Cartera", title: "Clientes", action: "Ver todo", onAction: () => navigate("clients"), pad: "14px 16px" }, clients.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "A\xFAn no tienes clientes.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", width: "100%", paddingBottom: 2 } }, clients.slice(0, 12).map((c, i) => {
+      const name = c.company || c.name || "Cliente";
+      const col = _pal[i % _pal.length];
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: c.id || i,
+          onClick: () => navigate("clientDetail", { clientId: c.id }),
+          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
+          style: {
+            flexShrink: 0,
+            width: 118,
+            cursor: "pointer",
+            borderRadius: 14,
+            padding: "12px 12px",
+            background: "rgba(255,255,255,0.03)",
+            border: "0.5px solid rgba(255,255,255,0.06)",
+            display: "flex",
+            flexDirection: "column",
+            gap: 9,
+            transition: "background .1s"
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: {
+          width: 34,
+          height: 34,
+          borderRadius: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: col + "22",
+          border: `0.5px solid ${col}44`,
+          color: col,
+          fontSize: 14,
+          fontWeight: 600,
+          fontFamily: "var(--font-display)"
+        } }, name.trim().charAt(0).toUpperCase()),
+        /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.service || "Cliente"))
+      );
+    })));
   };
   var EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
     "div",
