@@ -1304,7 +1304,7 @@ const _catFor = (name) => { const t = (name || "").toLowerCase(); for (const [re
 // Logo de marca (Simple Icons) por nombre → slug. Si no hay, cae al icono de
 // categoría (Phosphor).
 const _SLUGS = [
-  [/claude|anthropic/, "claude"], [/railway/, "railway"], [/ionos/, "ionos"],
+  [/claude|anthropic/, "claude"], [/magnific|freepik/, "freepik"], [/railway/, "railway"], [/ionos/, "ionos"],
   [/gmail/, "google"], [/google|workspace|gsuite/, "google"], [/netflix/, "netflix"],
   [/spotify/, "spotify"], [/figma/, "figma"], [/notion/, "notion"], [/vercel/, "vercel"],
   [/github/, "github"], [/gitlab/, "gitlab"], [/shopify/, "shopify"], [/stripe/, "stripe"],

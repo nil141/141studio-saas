@@ -1151,6 +1151,7 @@
   };
   var _SLUGS = [
     [/claude|anthropic/, "claude"],
+    [/magnific|freepik/, "freepik"],
     [/railway/, "railway"],
     [/ionos/, "ionos"],
     [/gmail/, "google"],
