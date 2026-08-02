@@ -543,7 +543,7 @@ const _LeadSection = ({ icon, title, right, children }) => (
 const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, today }) => {
   const toast = useToast();
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
-  const TEXT_KEYS = ["name","company","email","phone","website","linkedin","sector","audit","subject","draft","whatsapp","notes"];
+  const TEXT_KEYS = ["name","company","email","phone","website","linkedin","instagram","sector","audit","subject","draft","whatsapp","notes"];
   const [f, setF]   = useState({});
   const [fu, setFu] = useState([]);
   useEffect(() => {
