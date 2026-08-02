@@ -983,7 +983,6 @@
             transition: "background .1s"
           }
         },
-        /* @__PURE__ */ React.createElement("span", { className: "dot " + (p.light || ""), style: { flexShrink: 0 } }),
         /* @__PURE__ */ React.createElement("span", { style: {
           flex: 1,
           fontSize: 13.5,

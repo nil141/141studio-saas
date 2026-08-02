@@ -1165,7 +1165,6 @@ const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}
                 style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 4px", cursor: "pointer",
                   borderRadius: 8, transition: "background .1s" }}>
-                <span className={"dot " + (p.light || "")} style={{ flexShrink: 0 }}/>
                 <span style={{ flex: 1, fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", minWidth: 0,
                   overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                 <div style={{ width: 96, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.08)", overflow: "hidden", flexShrink: 0 }}>
