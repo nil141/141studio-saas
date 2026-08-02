@@ -538,16 +538,40 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
       style: { color: overdue ? "var(--red)" : "var(--accent)", flexShrink: 0 },
       "data-tooltip": `${overdue ? "Seguimiento vencido" : "Pr\xF3ximo seguimiento"} \xB7 ${_cFmtDay(nextDue)}`
     }
-  )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 } }, [["search", "audit", "Auditor\xEDa"], ["mail", "email", "Email"], ["msg-circle", "whatsapp", "WhatsApp"]].map(([ic, k, lab]) => /* @__PURE__ */ React.createElement(
-    Icon,
+  )), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.company || "\u2014", l.sector ? ` \xB7 ${l.sector}` : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, flex: "1 1 0", minWidth: 0 } }, l.email && /* @__PURE__ */ React.createElement(
+    "a",
     {
-      key: k,
-      name: ic,
-      size: 13,
-      "data-tooltip": `${lab}${done[k] ? " \u2713" : " pendiente"}`,
-      style: { color: done[k] ? "var(--accent)" : "rgba(255,255,255,0.13)" }
-    }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 0", minWidth: 0, fontSize: 12, color: "var(--text-muted)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, l.email || l.website || "\u2014"), /* @__PURE__ */ React.createElement("div", { style: { width: 52, fontSize: 12, color: "var(--text-subtle)", textAlign: "right", flexShrink: 0 } }, _cFmtDay(l.date)), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
+      href: `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(l.email)}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      className: "lead-act",
+      "data-tooltip": `Escribir a ${l.email}`
+    },
+    /* @__PURE__ */ React.createElement(SiIcon, { name: "gmail", size: 16 })
+  ), (l.instagram || "").trim() && /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: `https://ig.me/m/${(l.instagram || "").replace(/^@/, "").trim()}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      className: "lead-act",
+      "data-tooltip": "Mensaje de Instagram"
+    },
+    /* @__PURE__ */ React.createElement(SiIcon, { name: "instagram", size: 16 })
+  ), (l.phone || "").replace(/[^\d]/g, "") && /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: `https://wa.me/${(l.phone || "").replace(/[^\d]/g, "")}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      className: "lead-act",
+      "data-tooltip": "WhatsApp"
+    },
+    /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 16 })
+  )), /* @__PURE__ */ React.createElement(LeadStatusPill, { value: l.status, onChange: onStatus }), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 13, style: {
     color: "rgba(255,255,255,0.2)",
     flexShrink: 0,
     transform: open ? "rotate(180deg)" : "none",

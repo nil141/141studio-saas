@@ -605,18 +605,29 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
             {l.company || "—"}{l.sector ? ` · ${l.sector}` : ""}
           </div>
         </div>
-        {/* Progreso de gestión: auditoría · email · whatsapp */}
-        <div style={{ display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
-          {[["search","audit","Auditoría"],["mail","email","Email"],["msg-circle","whatsapp","WhatsApp"]].map(([ic, k, lab]) => (
-            <Icon key={k} name={ic} size={13} data-tooltip={`${lab}${done[k] ? " ✓" : " pendiente"}`}
-              style={{ color: done[k] ? "var(--accent)" : "rgba(255,255,255,0.13)" }}/>
-          ))}
-        </div>
-        <div style={{ flex:"1 1 0", minWidth:0, fontSize:12, color:"var(--text-muted)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-          {l.email || l.website || "—"}
-        </div>
-        <div style={{ width:52, fontSize:12, color:"var(--text-subtle)", textAlign:"right", flexShrink:0 }}>
-          {_cFmtDay(l.date)}
+        {/* Acciones rápidas: Gmail · Instagram · WhatsApp (solo si hay dato) */}
+        <div style={{ display:"flex", alignItems:"center", gap:14, flex:"1 1 0", minWidth:0 }}>
+          {l.email && (
+            <a href={`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(l.email)}`}
+              target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              className="lead-act" data-tooltip={`Escribir a ${l.email}`}>
+              <SiIcon name="gmail" size={16}/>
+            </a>
+          )}
+          {(l.instagram || "").trim() && (
+            <a href={`https://ig.me/m/${(l.instagram || "").replace(/^@/, "").trim()}`}
+              target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              className="lead-act" data-tooltip="Mensaje de Instagram">
+              <SiIcon name="instagram" size={16}/>
+            </a>
+          )}
+          {(l.phone || "").replace(/[^\d]/g, "") && (
+            <a href={`https://wa.me/${(l.phone || "").replace(/[^\d]/g, "")}`}
+              target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+              className="lead-act" data-tooltip="WhatsApp">
+              <SiIcon name="whatsapp" size={16}/>
+            </a>
+          )}
         </div>
         <LeadStatusPill value={l.status} onChange={onStatus}/>
         <Icon name="chevron-down" size={13} style={{

@@ -196,6 +196,10 @@
   .phase-del { opacity: 0; transition: opacity .12s; }
   .phase-head:hover .phase-del { opacity: 1; }
 
+  /* Iconos de acción en la fila de lead (Gmail / Instagram / WhatsApp) */
+  .lead-act { color: var(--text-subtle); display: inline-flex; transition: color .12s; }
+  .lead-act:hover { color: var(--text); }
+
   /* Buttons */
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -870,7 +874,7 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
-<script src="src/icons.js?v=6"></script>
+<script src="src/icons.js?v=7"></script>
 <script src="src/data.js?v=28"></script>
 <script src="src/primitives.js?v=25"></script>
 <script src="src/auth.js?v=3"></script>
@@ -882,7 +886,7 @@
 <script src="src/agency-project.js?v=26"></script>
 <script src="src/agency-other.js?v=122"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
-<script src="src/campaigns.js?v=22"></script>
+<script src="src/campaigns.js?v=23"></script>
 <script src="src/client-portal.js?v=2"></script>
 <script src="src/onboarding.js?v=7"></script>
 <script src="src/assistant.js?v=2"></script>
