@@ -561,7 +561,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           {EYEBROW("Próximamente")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Agenda</div>
         </div>
-        <button onClick={() => navigate("agenda")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+        <button onClick={() => navigate("agenda")} className="go-btn" style={LINK_BTN} title="Ver todo"><Icon name="arrow" size={15}/></button>
       </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
         {upcomingEvents.length === 0 ? (
@@ -588,7 +588,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           {EYEBROW("Pendiente")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Tareas rápidas</div>
         </div>
-        <button onClick={() => navigate("tasks")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+        <button onClick={() => navigate("tasks")} className="go-btn" style={LINK_BTN} title="Ver todo"><Icon name="arrow" size={15}/></button>
       </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
         {_pendingWithPid.length === 0 ? (
@@ -614,7 +614,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           {EYEBROW("Próximos")}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>Pagos y suscripciones</div>
         </div>
-        <button onClick={() => navigate("billing")} style={LINK_BTN}>Ver todo <Icon name="arrow" size={12}/></button>
+        <button onClick={() => navigate("billing")} className="go-btn" style={LINK_BTN} title="Ver todo"><Icon name="arrow" size={15}/></button>
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: "6px 4px" }}>
         {upcomingBills.length === 0 ? (
@@ -638,7 +638,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           {EYEBROW(eyebrow)}
           <div style={{ marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" }}>{title}</div>
         </div>
-        {action && <button onClick={onAction} style={LINK_BTN}>{action} <Icon name="arrow" size={12}/></button>}
+        {action && <button onClick={onAction} className="go-btn" style={LINK_BTN} title={typeof action === "string" ? action : "Ver todo"}><Icon name="arrow" size={15}/></button>}
       </div>
       <div style={{ flex: 1, minHeight: 0, padding: pad, display: "flex" }}>{children}</div>
     </div>
@@ -1006,9 +1006,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
 // ─── Subcomponentes compartidos (fuera del cuerpo de AgencyDashboard) ──────
 const LINK_BTN = {
-  display: "inline-flex", alignItems: "center", gap: 4, height: 28, padding: "0 10px",
-  borderRadius: 8, fontSize: 12, fontWeight: 500, color: "var(--accent)",
-  background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit", letterSpacing: "-0.2px",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  width: 28, height: 28, borderRadius: 8, padding: 0,
+  background: "transparent", border: 0, cursor: "pointer", fontFamily: "inherit",
 };
 
 // ── Estilos + shell de tarjeta a nivel de módulo (para widgets con estado

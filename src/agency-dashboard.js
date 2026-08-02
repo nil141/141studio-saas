@@ -542,7 +542,7 @@
       justifyContent: "space-between",
       padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.slice(0, slice).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(slice - 1, upcomingEvents.length - 1), formatEventDate }))));
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximamente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Agenda")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("agenda"), className: "go-btn", style: LINK_BTN, title: "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, upcomingEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin eventos pr\xF3ximos", sub: "Todo al d\xEDa por ahora." })) : upcomingEvents.slice(0, slice).map((ev, i) => /* @__PURE__ */ React.createElement(EventRow, { key: i, ev, last: i === Math.min(slice - 1, upcomingEvents.length - 1), formatEventDate }))));
     const fmtTaskDate = (ds) => {
       if (!ds) return "";
       const d = /* @__PURE__ */ new Date(ds + "T00:00:00");
@@ -554,7 +554,7 @@
       justifyContent: "space-between",
       padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "No te queda nada pendiente." })) : _pendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), className: "go-btn", style: LINK_BTN, title: "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "No te queda nada pendiente." })) : _pendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         key: t.id,
@@ -572,7 +572,7 @@
       justifyContent: "space-between",
       padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pagos y suscripciones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), style: LINK_BTN }, "Ver todo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "6px 4px" } }, upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin pagos pr\xF3ximos", sub: "No hay cobros ni facturas pendientes." })) : upcomingBills.map((b, i) => /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pr\xF3ximos"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Pagos y suscripciones")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("billing"), className: "go-btn", style: LINK_BTN, title: "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "6px 4px" } }, upcomingBills.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 30, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Sin pagos pr\xF3ximos", sub: "No hay cobros ni facturas pendientes." })) : upcomingBills.map((b, i) => /* @__PURE__ */ React.createElement(
       BillRow,
       {
         key: b.id,
@@ -589,7 +589,7 @@
       justifyContent: "space-between",
       padding: "2px 4px 12px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW(eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW(eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, className: "go-btn", style: LINK_BTN, title: typeof action === "string" ? action : "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
     const RoutineTodayBlock = () => {
       const r = 26, circ = 2 * Math.PI * r, off = circ * (1 - routinePct / 100);
       if (_routToday.length === 0) return /* @__PURE__ */ React.createElement(WidgetCard, { eyebrow: "H\xE1bitos", title: "Rutina de hoy", action: "Ver", onAction: () => navigate("tasks") }, /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Sin rutina para hoy."));
@@ -857,18 +857,15 @@
   var LINK_BTN = {
     display: "inline-flex",
     alignItems: "center",
-    gap: 4,
+    justifyContent: "center",
+    width: 28,
     height: 28,
-    padding: "0 10px",
     borderRadius: 8,
-    fontSize: 12,
-    fontWeight: 500,
-    color: "var(--accent)",
+    padding: 0,
     background: "transparent",
     border: 0,
     cursor: "pointer",
-    fontFamily: "inherit",
-    letterSpacing: "-0.2px"
+    fontFamily: "inherit"
   };
   var DASH_CARD = {
     background: "transparent",

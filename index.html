@@ -188,6 +188,10 @@
   .page { padding: 28px 32px 80px; max-width: 1400px; margin: 0 auto; }
   .page.wide { max-width: none; }
 
+  /* Botón discreto "ver todo" (solo icono) en cabeceras de sección del Inicio */
+  .go-btn { color: var(--text-subtle); transition: color .12s, background .12s; }
+  .go-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
+
   /* Buttons */
   .btn {
     display: inline-flex; align-items: center; gap: 6px;
@@ -869,7 +873,7 @@
 <script src="src/z-modals.js?v=12"></script>
 <script src="src/z-app.js?v=12"></script>
 <!-- Non-critical: load after login screen is ready -->
-<script src="src/agency-dashboard.js?v=61"></script>
+<script src="src/agency-dashboard.js?v=62"></script>
 <script src="src/agency-clients.js?v=13"></script>
 <script src="src/agency-project.js?v=25"></script>
 <script src="src/agency-other.js?v=122"></script>
