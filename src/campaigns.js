@@ -181,6 +181,7 @@ const CampMiniStat = ({ label, value, sub, color }) => /* @__PURE__ */ React.cre
 const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [schedVal, setSchedVal] = useState("");
   useEffect(() => {
     if (!open) {
       setPicking(false);
@@ -240,6 +241,7 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
         {
           onClick: (e) => {
             e.stopPropagation();
+            if (!picking) setSchedVal(scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal());
             setPicking((p) => !p);
           },
           style: {
@@ -263,17 +265,19 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
         /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: s.dot } }),
         s.label,
         /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12, style: { marginLeft: "auto", opacity: 0.6 } })
-      ), picking && /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 8px 6px" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+      ), picking && /* @__PURE__ */ React.createElement("div", { style: { padding: "4px 8px 8px", display: "flex", flexDirection: "column", gap: 6 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
         "input",
         {
           type: "datetime-local",
           autoFocus: true,
-          defaultValue: scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal(),
-          onChange: (e) => {
-            if (e.target.value) {
+          value: schedVal,
+          onClick: (e) => e.stopPropagation(),
+          onChange: (e) => setSchedVal(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" && schedVal) {
               setOpen(false);
               setPicking(false);
-              onChange("scheduled", e.target.value);
+              onChange("scheduled", schedVal);
             }
           },
           style: {
@@ -288,6 +292,31 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
             outline: "none"
           }
         }
+      ), /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: (e) => {
+            e.stopPropagation();
+            if (schedVal) {
+              setOpen(false);
+              setPicking(false);
+              onChange("scheduled", schedVal);
+            }
+          },
+          style: {
+            width: "100%",
+            background: "rgba(238,192,106,0.14)",
+            border: "0.5px solid rgba(238,192,106,0.4)",
+            borderRadius: 8,
+            color: "#eec06a",
+            fontSize: 12,
+            padding: "6px 9px",
+            fontFamily: "inherit",
+            cursor: "pointer",
+            fontWeight: 500
+          }
+        },
+        "Programar"
       )));
     }
     return /* @__PURE__ */ React.createElement(

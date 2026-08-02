@@ -195,6 +195,7 @@ const CampMiniStat = ({ label, value, sub, color }) => (
 const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
   const [open, setOpen] = useState(false);
   const [picking, setPicking] = useState(false);
+  const [schedVal, setSchedVal] = useState("");
   useEffect(() => {
     if (!open) { setPicking(false); return; }
     const close = () => { setOpen(false); setPicking(false); };
@@ -229,7 +230,11 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
             if (k === "scheduled") {
               return (
                 <div key={k}>
-                  <button onClick={e => { e.stopPropagation(); setPicking(p => !p); }} style={{
+                  <button onClick={e => {
+                      e.stopPropagation();
+                      if (!picking) setSchedVal(scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal());
+                      setPicking(p => !p);
+                    }} style={{
                     display:"flex", alignItems:"center", gap:9, width:"100%",
                     padding:"8px 10px", borderRadius:8, cursor:"pointer", textAlign:"left",
                     background: k === value ? "rgba(255,255,255,0.06)" : "transparent",
@@ -242,11 +247,18 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
                     <Icon name="calendar" size={12} style={{ marginLeft:"auto", opacity:0.6 }}/>
                   </button>
                   {picking && (
-                    <div style={{ padding:"4px 8px 6px" }} onClick={e => e.stopPropagation()}>
-                      <input type="datetime-local" autoFocus defaultValue={scheduledFor && scheduledFor.includes("T") ? scheduledFor : _cNowLocal()}
-                        onChange={e => { if (e.target.value) { setOpen(false); setPicking(false); onChange("scheduled", e.target.value); } }}
+                    <div style={{ padding:"4px 8px 8px", display:"flex", flexDirection:"column", gap:6 }} onClick={e => e.stopPropagation()}>
+                      <input type="datetime-local" autoFocus value={schedVal}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => setSchedVal(e.target.value)}
+                        onKeyDown={e => { if (e.key === "Enter" && schedVal) { setOpen(false); setPicking(false); onChange("scheduled", schedVal); } }}
                         style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"0.5px solid var(--border-strong)",
                           borderRadius:8, color:"var(--text)", fontSize:12, padding:"6px 9px", fontFamily:"inherit", outline:"none" }}/>
+                      <button onClick={e => { e.stopPropagation(); if (schedVal) { setOpen(false); setPicking(false); onChange("scheduled", schedVal); } }}
+                        style={{ width:"100%", background:"rgba(238,192,106,0.14)", border:"0.5px solid rgba(238,192,106,0.4)",
+                          borderRadius:8, color:"#eec06a", fontSize:12, padding:"6px 9px", fontFamily:"inherit", cursor:"pointer", fontWeight:500 }}>
+                        Programar
+                      </button>
                     </div>
                   )}
                 </div>
