@@ -141,16 +141,31 @@
      El wrapper usa display:contents para no crear caja (no rompe layouts de 100vh)
      y la animación entra desde arriba: el overflow superior no genera scrollbar. */
   @keyframes pageIn {
-    from { opacity: 0; transform: translateY(-6px); }
+    from { opacity: 0; }
+    to   { opacity: 1; }
+  }
+  /* Cada sección entra con un leve desplazamiento hacia arriba, escalonado. */
+  @keyframes sectionIn {
+    from { opacity: 0; transform: translateY(9px); }
     to   { opacity: 1; transform: translateY(0); }
   }
   .page-enter { display: contents; }
-  /* Sin fill-mode "both": el transform desaparece al terminar. Si quedara aplicado,
-     los modales position:fixed de dentro de la página se centrarían respecto a ella
-     (un ancestro con transform crea containing block) en vez de respecto a la ventana. */
-  .page-enter > * { animation: pageIn .38s cubic-bezier(0.2, 0.7, 0.3, 1); }
+  /* El contenedor de la página solo hace fade (sin transform → nunca crea
+     containing block que descoloque modales position:fixed). */
+  .page-enter > * { animation: pageIn .3s ease-out; }
+  /* Las secciones (hijos directos del contenedor) suben escalonadas.
+     fill-mode "backwards": mantiene el estado inicial durante el delay (sin
+     parpadeo) pero al terminar NO deja transform aplicado, así los modales
+     position:fixed siguen centrados respecto a la ventana. */
+  .page-enter > * > * { animation: sectionIn .5s cubic-bezier(0.2, 0.7, 0.3, 1) backwards; }
+  .page-enter > * > *:nth-child(1) { animation-delay: .04s; }
+  .page-enter > * > *:nth-child(2) { animation-delay: .09s; }
+  .page-enter > * > *:nth-child(3) { animation-delay: .14s; }
+  .page-enter > * > *:nth-child(4) { animation-delay: .19s; }
+  .page-enter > * > *:nth-child(5) { animation-delay: .24s; }
+  .page-enter > * > *:nth-child(n+6) { animation-delay: .28s; }
   @media (prefers-reduced-motion: reduce) {
-    .page-enter > * { animation: none; }
+    .page-enter > *, .page-enter > * > * { animation: none; }
   }
 
   /* App layout */
