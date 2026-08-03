@@ -67,6 +67,7 @@
       const da = a.deadline || "9999-99-99", db = b.deadline || "9999-99-99";
       return da < db ? -1 : da > db ? 1 : 0;
     });
+    const _todayPendingWithPid = _pendingWithPid.filter((t) => t.deadline && t.deadline <= _todayStr);
     const _routinePending = (D.routinesForDay(_todayStr) || []).reduce(
       (n, r) => n + (r.items || []).filter((it) => (D.stepAppliesOn ? D.stepAppliesOn(it, _todayStr) : true) && !D.routineItemDone(r.id, _todayStr, it.id)).length,
       0
@@ -555,13 +556,13 @@
       justifyContent: "space-between",
       padding: "2px 4px 14px",
       borderBottom: "0.5px solid rgba(255,255,255,0.06)"
-    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), className: "go-btn", style: LINK_BTN, title: "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "No te queda nada pendiente." })) : _pendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", null, EYEBROW("Pendiente"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, "Tareas r\xE1pidas")), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), className: "go-btn", style: LINK_BTN, title: "Ver todo" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto" } }, _todayPendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: 40, textAlign: "center" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "check", title: "Todo hecho", sub: "Nada pendiente para hoy." })) : _todayPendingWithPid.slice(0, 12).map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         key: t.id,
         t,
         D,
-        last: i === Math.min(11, _pendingWithPid.length - 1),
+        last: i === Math.min(11, _todayPendingWithPid.length - 1),
         projName: (D.PROJECTS.find((p) => p.id === t._pid) || {}).name || t.clientName || "General",
         dateLabel: fmtTaskDate(t.deadline),
         overdue: t.deadline && t.deadline < _todayStr
@@ -723,12 +724,12 @@
       gap: 12,
       padding: "10px 0",
       borderBottom: i === Math.min(3, upcomingEvents.length - 1) ? "none" : "0.5px solid rgba(255,255,255,0.05)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: ev.color || "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 1 } }, formatEventDate(ev.date), ev.sub ? ` \xB7 ${ev.sub}` : "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, color: "var(--text-subtle)" } }, ev.type)))), /* @__PURE__ */ React.createElement("div", null, _mHead("Tareas de hoy", "Ver todo", () => navigate("tasks")), _pendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "No te queda nada pendiente.") : _pendingWithPid.slice(0, 6).map((t, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { marginInline: -22 } }, /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: ev.color || "var(--accent)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 1 } }, formatEventDate(ev.date), ev.sub ? ` \xB7 ${ev.sub}` : "")), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, color: "var(--text-subtle)" } }, ev.type)))), /* @__PURE__ */ React.createElement("div", null, _mHead("Tareas de hoy", "Ver todo", () => navigate("tasks")), _todayPendingWithPid.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" } }, "Nada pendiente para hoy.") : _todayPendingWithPid.slice(0, 6).map((t, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, style: { marginInline: -22 } }, /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         t,
         D,
-        last: i === Math.min(5, _pendingWithPid.length - 1),
+        last: i === Math.min(5, _todayPendingWithPid.length - 1),
         projName: (D.PROJECTS.find((p) => p.id === t._pid) || {}).name || t.clientName || "General",
         dateLabel: fmtTaskDate(t.deadline),
         overdue: t.deadline && t.deadline < _todayStr

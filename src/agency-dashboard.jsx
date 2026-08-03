@@ -99,6 +99,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       const da = a.deadline || "9999-99-99", db = b.deadline || "9999-99-99";
       return da < db ? -1 : da > db ? 1 : 0;
     });
+  // Solo las tareas de HOY para el widget de Inicio: vencen hoy o son atrasadas
+  // que se arrastran (misma noción de "hoy" que el resto de la app).
+  const _todayPendingWithPid = _pendingWithPid.filter(t => t.deadline && t.deadline <= _todayStr);
   // "Tareas pendientes" del panel = las de HOY: vencen hoy o son atrasadas que
   // se arrastran (misma lógica que el tablero de Tareas) + pasos de rutina de
   // hoy que aún no están hechos.
@@ -592,13 +595,13 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         <button onClick={() => navigate("tasks")} className="go-btn" style={LINK_BTN} title="Ver todo"><Icon name="arrow" size={15}/></button>
       </div>
       <div style={{ flex: 1, overflowY: "auto" }}>
-        {_pendingWithPid.length === 0 ? (
+        {_todayPendingWithPid.length === 0 ? (
           <div style={{ padding: 40, textAlign: "center" }}>
-            <Empty icon="check" title="Todo hecho" sub="No te queda nada pendiente."/>
+            <Empty icon="check" title="Todo hecho" sub="Nada pendiente para hoy."/>
           </div>
-        ) : _pendingWithPid.slice(0, 12).map((t, i) => (
+        ) : _todayPendingWithPid.slice(0, 12).map((t, i) => (
           <QuickTaskRow key={t.id} t={t} D={D}
-            last={i === Math.min(11, _pendingWithPid.length - 1)}
+            last={i === Math.min(11, _todayPendingWithPid.length - 1)}
             projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
             dateLabel={fmtTaskDate(t.deadline)}
             overdue={t.deadline && t.deadline < _todayStr}/>
@@ -836,11 +839,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           </div>
           <div>
             {_mHead("Tareas de hoy", "Ver todo", () => navigate("tasks"))}
-            {_pendingWithPid.length === 0
-              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" }}>No te queda nada pendiente.</div>
-              : _pendingWithPid.slice(0, 6).map((t, i) => (
+            {_todayPendingWithPid.length === 0
+              ? <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "8px 0" }}>Nada pendiente para hoy.</div>
+              : _todayPendingWithPid.slice(0, 6).map((t, i) => (
                 <div key={t.id} style={{ marginInline: -22 }}>
-                  <QuickTaskRow t={t} D={D} last={i === Math.min(5, _pendingWithPid.length - 1)}
+                  <QuickTaskRow t={t} D={D} last={i === Math.min(5, _todayPendingWithPid.length - 1)}
                     projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
                     dateLabel={fmtTaskDate(t.deadline)} overdue={t.deadline && t.deadline < _todayStr}/>
                 </div>
