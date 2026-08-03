@@ -976,6 +976,70 @@ const ConnectPanel = ({ onCSV, onManual, onCowork }) => {
     /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 6, lineHeight: 1.55, letterSpacing: "-0.1px" } }, c.sub)
   ))));
 };
+const SectionTabs = ({ view, setView }) => {
+  const TABS = [
+    { id: "leads", label: "Leads" },
+    { id: "stats", label: "Anal\xEDticas" },
+    { id: "config", label: "Ajustes" }
+  ];
+  const refs = useRef({});
+  const [ul, setUl] = useState(null);
+  useEffect(() => {
+    const el = refs.current[view];
+    if (el) setUl({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [view]);
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    position: "relative",
+    display: "flex",
+    alignItems: "center",
+    gap: 26,
+    borderBottom: "0.5px solid var(--border)",
+    marginBottom: 18
+  } }, TABS.map((t) => {
+    const on = view === t.id;
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: t.id,
+        ref: (el) => {
+          refs.current[t.id] = el;
+        },
+        onClick: () => setView(t.id),
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          padding: "0 1px 12px",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          background: "transparent",
+          border: 0,
+          color: on ? "var(--text)" : "var(--text-subtle)",
+          fontSize: 13.5,
+          letterSpacing: "-0.3px",
+          fontWeight: on ? 500 : 400,
+          transition: "color .15s"
+        },
+        onMouseEnter: (e) => {
+          if (!on) e.currentTarget.style.color = "var(--text-muted)";
+        },
+        onMouseLeave: (e) => {
+          if (!on) e.currentTarget.style.color = "var(--text-subtle)";
+        }
+      },
+      t.label
+    );
+  }), ul && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "absolute",
+    bottom: "-0.5px",
+    left: 0,
+    height: "1.5px",
+    borderRadius: 2,
+    background: "var(--text)",
+    transform: `translateX(${ul.left}px)`,
+    width: ul.width,
+    transition: "transform .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1)"
+  } }));
+};
 const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [camps, reload] = useCampaigns();
   const toast = useToast();
@@ -1160,53 +1224,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
         { icon: "trash", label: "Eliminar campa\xF1a", onClick: removeCampaign }
       ]
     }
-  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 26, borderBottom: "0.5px solid var(--border)", marginBottom: 18 } }, [
-    { id: "leads", label: "Leads", n: leads.length },
-    { id: "stats", label: "Anal\xEDticas", n: null },
-    { id: "config", label: "Ajustes", n: null }
-  ].map((t) => {
-    const on = view === t.id;
-    return /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        key: t.id,
-        onClick: () => setView(t.id),
-        style: {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 8,
-          padding: "0 1px 12px",
-          cursor: "pointer",
-          fontFamily: "inherit",
-          background: "transparent",
-          border: 0,
-          borderBottom: on ? "1.5px solid var(--text)" : "1.5px solid transparent",
-          marginBottom: "-0.5px",
-          color: on ? "var(--text)" : "var(--text-subtle)",
-          fontSize: 13.5,
-          letterSpacing: "-0.3px",
-          fontWeight: on ? 500 : 400,
-          transition: "color .12s"
-        },
-        onMouseEnter: (e) => {
-          if (!on) e.currentTarget.style.color = "var(--text-muted)";
-        },
-        onMouseLeave: (e) => {
-          if (!on) e.currentTarget.style.color = "var(--text-subtle)";
-        }
-      },
-      t.label,
-      t.n != null && /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 11,
-        minWidth: 18,
-        textAlign: "center",
-        padding: "1px 6px",
-        borderRadius: 99,
-        background: on ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
-        color: on ? "var(--text-muted)" : "var(--text-subtle)"
-      } }, t.n)
-    );
-  })), view === "leads" && leads.length > 0 && (() => {
+  )), /* @__PURE__ */ React.createElement(SectionTabs, { view, setView }), view === "leads" && leads.length > 0 && (() => {
     const pct = Math.min(100, Math.round(workedToday / dailyGoal * 100));
     const doneDay = workedToday >= dailyGoal;
     return /* @__PURE__ */ React.createElement("div", { style: {

@@ -1024,6 +1024,51 @@ const ConnectPanel = ({ onCSV, onManual, onCowork }) => {
   );
 };
 
+// Pestañas de sección con subrayado que se desliza suavemente
+const SectionTabs = ({ view, setView }) => {
+  const TABS = [
+    { id:"leads",  label:"Leads" },
+    { id:"stats",  label:"Analíticas" },
+    { id:"config", label:"Ajustes" },
+  ];
+  const refs = useRef({});
+  const [ul, setUl] = useState(null);
+  useEffect(() => {
+    const el = refs.current[view];
+    if (el) setUl({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [view]);
+  return (
+    <div style={{ position:"relative", display:"flex", alignItems:"center", gap:26,
+      borderBottom:"0.5px solid var(--border)", marginBottom:18 }}>
+      {TABS.map(t => {
+        const on = view === t.id;
+        return (
+          <button key={t.id} ref={el => { refs.current[t.id] = el; }} onClick={() => setView(t.id)} style={{
+            display:"inline-flex", alignItems:"center",
+            padding:"0 1px 12px", cursor:"pointer", fontFamily:"inherit",
+            background:"transparent", border:0,
+            color: on ? "var(--text)" : "var(--text-subtle)",
+            fontSize:13.5, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
+            transition:"color .15s",
+          }}
+            onMouseEnter={e => { if (!on) e.currentTarget.style.color = "var(--text-muted)"; }}
+            onMouseLeave={e => { if (!on) e.currentTarget.style.color = "var(--text-subtle)"; }}>
+            {t.label}
+          </button>
+        );
+      })}
+      {ul && (
+        <div style={{
+          position:"absolute", bottom:"-0.5px", left:0, height:"1.5px", borderRadius:2,
+          background:"var(--text)",
+          transform:`translateX(${ul.left}px)`, width:ul.width,
+          transition:"transform .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1)",
+        }}/>
+      )}
+    </div>
+  );
+};
+
 // ── Detalle de campaña ────────────────────────────────────────────────
 const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [camps, reload] = useCampaigns();
@@ -1208,39 +1253,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
           />
         </div>
 
-        {/* Secciones: Leads · Analíticas · Ajustes — pestañas subrayadas (como ficha de cliente) */}
-        <div style={{ display:"flex", alignItems:"center", gap:26, borderBottom:"0.5px solid var(--border)", marginBottom:18 }}>
-          {[
-            { id:"leads",  label:"Leads",      n: leads.length },
-            { id:"stats",  label:"Analíticas", n: null },
-            { id:"config", label:"Ajustes",    n: null },
-          ].map(t => {
-            const on = view === t.id;
-            return (
-              <button key={t.id} onClick={() => setView(t.id)} style={{
-                display:"inline-flex", alignItems:"center", gap:8,
-                padding:"0 1px 12px", cursor:"pointer", fontFamily:"inherit",
-                background:"transparent", border:0,
-                borderBottom: on ? "1.5px solid var(--text)" : "1.5px solid transparent",
-                marginBottom:"-0.5px",
-                color: on ? "var(--text)" : "var(--text-subtle)",
-                fontSize:13.5, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
-                transition:"color .12s",
-              }}
-                onMouseEnter={e => { if (!on) e.currentTarget.style.color = "var(--text-muted)"; }}
-                onMouseLeave={e => { if (!on) e.currentTarget.style.color = "var(--text-subtle)"; }}>
-                {t.label}
-                {t.n != null && (
-                  <span style={{
-                    fontSize:11, minWidth:18, textAlign:"center", padding:"1px 6px", borderRadius:99,
-                    background: on ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
-                    color: on ? "var(--text-muted)" : "var(--text-subtle)",
-                  }}>{t.n}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        {/* Secciones: Leads · Analíticas · Ajustes — pestañas con subrayado deslizante */}
+        <SectionTabs view={view} setView={setView}/>
 
         {/* Progreso diario — auditar/contactar X leads al día */}
         {view === "leads" && leads.length > 0 && (() => {
