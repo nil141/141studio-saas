@@ -366,30 +366,38 @@ const HBars = ({ items, total }) => (
 const CampFunnel = ({ stages }) => {
   const top = stages[0] ? stages[0].v : 0;
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
       {stages.map((s, i) => {
         const prev = i > 0 ? stages[i - 1].v : null;
         const wOfTop = top ? (s.v / top) * 100 : 0;
         const stepPct = prev != null ? (prev ? Math.round((s.v / prev) * 100) : 0) : null;
+        const dropPct = stepPct != null ? 100 - stepPct : null;
         const op = 0.85 - i * 0.16;   // más profundo = más tenue
         return (
-          <div key={i} style={{ display:"flex", alignItems:"center", gap:14 }}>
-            <div style={{ width:104, flexShrink:0 }}>
-              <div style={{ fontSize:12.5, color:"var(--text)", letterSpacing:"-0.2px" }}>{s.label}</div>
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:14, position:"relative" }}>
+            {/* Caída respecto a la etapa anterior */}
+            {dropPct != null && dropPct > 0 && (
+              <div style={{ position:"absolute", left:120, top:-13, fontSize:10, color:"var(--text-subtle)",
+                background:"var(--bg-elev)", padding:"0 6px", borderRadius:99, letterSpacing:"-0.1px" }}>
+                ▾ {dropPct}% se cae
+              </div>
+            )}
+            <div style={{ width:120, flexShrink:0 }}>
+              <div style={{ fontSize:13, color:"var(--text)", letterSpacing:"-0.2px" }}>{s.label}</div>
               {stepPct != null && (
-                <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
+                <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:2 }}>
                   {stepPct}% de {stages[i - 1].label.toLowerCase()}
                 </div>
               )}
             </div>
-            <div style={{ flex:1, height:26, borderRadius:7, background:"rgba(255,255,255,0.04)", overflow:"hidden", position:"relative" }}>
+            <div style={{ flex:1, height:30, borderRadius:8, background:"rgba(255,255,255,0.05)", overflow:"hidden", position:"relative" }}>
               <div style={{
-                width:`${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`, height:"100%", borderRadius:7,
+                width:`${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`, height:"100%", borderRadius:8,
                 background:`rgba(158,154,229,${Math.max(op, 0.22)})`, transition:"width .3s",
               }}/>
             </div>
-            <div style={{ width:44, textAlign:"right", flexShrink:0 }}>
-              <span style={{ fontSize:14.5, fontWeight:600, color:"var(--text)", fontFamily:"var(--font-display)" }}>{s.v}</span>
+            <div style={{ width:48, textAlign:"right", flexShrink:0 }}>
+              <span style={{ fontSize:15, fontWeight:600, color:"var(--text)", fontFamily:"var(--font-display)" }}>{s.v}</span>
             </div>
           </div>
         );
@@ -397,6 +405,21 @@ const CampFunnel = ({ stages }) => {
     </div>
   );
 };
+
+// Etiqueta de canal a partir de los datos del lead (prioriza Instagram → email → WhatsApp)
+const _leadChannel = (l) => {
+  if (l.instagram) return "instagram";
+  if (l.email)     return "email";
+  if (l.whatsapp || l.phone) return "whatsapp";
+  return "otro";
+};
+const _CHAN_META = {
+  instagram: { label:"Instagram", si:"instagram" },
+  email:     { label:"Email",     si:"gmail" },
+  whatsapp:  { label:"WhatsApp",  si:"whatsapp" },
+  otro:      { label:"Sin canal", si:null },
+};
+const _DOW = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
 
 // Bloque de analíticas (sección propia, todo real)
 const CampaignAnalytics = ({ c }) => {
@@ -443,6 +466,39 @@ const CampaignAnalytics = ({ c }) => {
     { label:"Respondieron", v:replied },
     { label:"Ganados",      v:won },
   ];
+
+  // Rendimiento por canal (según los datos de contacto del lead)
+  const chanAgg = {};
+  leads.forEach(l => {
+    const ch = _leadChannel(l);
+    const a = chanAgg[ch] || (chanAgg[ch] = { total:0, contacted:0, replied:0 });
+    a.total++;
+    if (["contacted","replied","won"].includes(l.status)) a.contacted++;
+    if (["replied","won"].includes(l.status)) a.replied++;
+  });
+  const channels = ["instagram","email","whatsapp","otro"].filter(k => chanAgg[k])
+    .map(k => ({ key:k, ...chanAgg[k], rate: pct(chanAgg[k].replied, chanAgg[k].contacted) }));
+
+  // Conversión por sector (respuestas conseguidas / leads del nicho)
+  const secAgg = {};
+  leads.forEach(l => {
+    const s = (l.sector || "Sin sector").trim() || "Sin sector";
+    const a = secAgg[s] || (secAgg[s] = { total:0, replied:0 });
+    a.total++;
+    if (["replied","won"].includes(l.status)) a.replied++;
+  });
+  const sectorConv = Object.entries(secAgg).sort((a, b) => b[1].total - a[1].total).slice(0, 6)
+    .map(([label, v]) => ({ label, ...v }));
+
+  // Ritmo de contacto por día de la semana (según workedAt)
+  const dow = [0, 0, 0, 0, 0, 0, 0];
+  worked.forEach(l => { const d = new Date((l.workedAt || "").slice(0, 10) + "T12:00:00"); if (!isNaN(d)) dow[d.getDay()]++; });
+  const dowMax = Math.max(...dow, 1);
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];   // Lun … Dom
+
+  // Próximos contactos programados
+  const upcoming = leads.filter(l => l.status === "scheduled" && l.scheduledFor)
+    .sort((a, b) => (a.scheduledFor || "").localeCompare(b.scheduledFor || "")).slice(0, 6);
 
   const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"18px 20px" };
   const cardTitle = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:14 };
@@ -501,17 +557,116 @@ const CampaignAnalytics = ({ c }) => {
         )}
       </div>
 
+      {/* Rendimiento por canal + Conversión por sector */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-        {/* Sectores */}
+        {/* Rendimiento por canal */}
         <div style={cardStyle}>
-          <div style={cardTitle}>Por sector</div>
-          <HBars items={sectors} total={total}/>
+          <div style={cardTitle}>Rendimiento por canal</div>
+          {channels.length === 0 ? (
+            <div style={{ fontSize:12.5, color:"var(--text-subtle)", padding:"12px 0" }}>Sin datos de canal.</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+              {channels.map(ch => {
+                const m = _CHAN_META[ch.key];
+                return (
+                  <div key={ch.key} style={{ display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:34, height:34, borderRadius:9, background:"var(--bg-elev-2)",
+                      border:"0.5px solid var(--border)", display:"grid", placeItems:"center",
+                      color:"var(--text-muted)", flexShrink:0 }}>
+                      {m.si ? <SiIcon name={m.si} size={16}/> : <Icon name="user" size={15} strokeWidth={1.7}/>}
+                    </div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontSize:12.5, color:"var(--text)", letterSpacing:"-0.2px" }}>{m.label}</div>
+                      <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:1 }}>
+                        {ch.contacted} contactados · {ch.replied} {ch.replied === 1 ? "respuesta" : "respuestas"}
+                      </div>
+                    </div>
+                    <div style={{ fontSize:16, fontWeight:600, fontFamily:"var(--font-display)",
+                      color: ch.rate > 0 ? "var(--text)" : "var(--text-subtle)", flexShrink:0 }}>{ch.rate}%</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
-        {/* Orígenes */}
+        {/* Conversión por sector */}
         <div style={cardStyle}>
-          <div style={cardTitle}>Origen de los leads</div>
-          <HBars items={sources} total={total}/>
+          <div style={cardTitle}>Conversión por sector</div>
+          <div style={{ display:"flex", flexDirection:"column", gap:11 }}>
+            {sectorConv.map((s, i) => (
+              <div key={i} style={{ display:"flex", alignItems:"center", gap:12, fontSize:12.5 }}>
+                <span style={{ width:96, flexShrink:0, color:"var(--text-muted)", whiteSpace:"nowrap",
+                  overflow:"hidden", textOverflow:"ellipsis" }}>{s.label}</span>
+                <div style={{ flex:1, height:7, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+                  <div style={{ width:`${s.total ? (s.replied / s.total) * 100 : 0}%`, height:"100%",
+                    borderRadius:99, background:"rgba(158,154,229,0.6)", transition:"width .25s" }}/>
+                </div>
+                <span style={{ width:56, textAlign:"right", flexShrink:0 }}>
+                  <b style={{ color:"var(--text)", fontWeight:600 }}>{s.replied}</b>
+                  <span style={{ color:"var(--text-subtle)", fontSize:11, marginLeft:5 }}>de {s.total}</span>
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
+      </div>
+
+      {/* Ritmo de contacto + Próximos programados */}
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
+        {/* Ritmo por día de la semana */}
+        <div style={cardStyle}>
+          <div style={{ ...cardTitle, display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+            <span>Ritmo de contacto</span>
+            <span style={{ textTransform:"none", letterSpacing:"-0.2px", color:"var(--text-subtle)", fontSize:11 }}>por día de la semana</span>
+          </div>
+          {worked.length === 0 ? (
+            <div style={{ fontSize:12.5, color:"var(--text-subtle)", padding:"12px 0" }}>Aún sin actividad.</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:11 }}>
+              {dowOrder.map(d => (
+                <div key={d} style={{ display:"flex", alignItems:"center", gap:12, fontSize:12.5 }}>
+                  <span style={{ width:34, flexShrink:0, color:"var(--text-muted)" }}>{_DOW[d]}</span>
+                  <div style={{ flex:1, height:7, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
+                    <div style={{ width:`${(dow[d] / dowMax) * 100}%`, height:"100%", borderRadius:99,
+                      background:"rgba(158,154,229,0.6)", transition:"width .25s" }}/>
+                  </div>
+                  <span style={{ width:26, textAlign:"right", flexShrink:0, fontWeight:600,
+                    color: dow[d] ? "var(--text)" : "var(--text-subtle)" }}>{dow[d]}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        {/* Próximos programados */}
+        <div style={cardStyle}>
+          <div style={{ ...cardTitle, display:"flex", justifyContent:"space-between", alignItems:"baseline" }}>
+            <span>Próximos programados</span>
+            <span style={{ textTransform:"none", letterSpacing:"-0.2px", color:"var(--text-subtle)", fontSize:11 }}>{nScheduled} en cola</span>
+          </div>
+          {upcoming.length === 0 ? (
+            <div style={{ fontSize:12.5, color:"var(--text-subtle)", padding:"12px 0" }}>No hay contactos programados.</div>
+          ) : (
+            <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
+              {upcoming.map(l => {
+                const m = _CHAN_META[_leadChannel(l)];
+                return (
+                  <div key={l.id} style={{ display:"flex", alignItems:"center", gap:12, fontSize:12.5 }}>
+                    <span style={{ width:92, flexShrink:0, color:"var(--accent)", fontSize:11.5 }}>{_cFmtWhen(l.scheduledFor)}</span>
+                    <span style={{ flex:1, minWidth:0, color:"var(--text)", whiteSpace:"nowrap",
+                      overflow:"hidden", textOverflow:"ellipsis" }}>{l.name || l.company || "—"}</span>
+                    {m.si && <span style={{ color:"var(--text-subtle)", flexShrink:0, display:"inline-flex" }}><SiIcon name={m.si} size={13}/></span>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Origen de los leads */}
+      <div style={cardStyle}>
+        <div style={cardTitle}>Origen de los leads</div>
+        <HBars items={sources} total={total}/>
       </div>
     </div>
   );

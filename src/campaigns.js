@@ -420,20 +420,44 @@ const HBars = ({ items, total }) => /* @__PURE__ */ React.createElement("div", {
 } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, color: "var(--text)", width: 34, textAlign: "right", flexShrink: 0 } }, it.v), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", width: 38, textAlign: "right", flexShrink: 0 } }, total ? Math.round(it.v / total * 100) : 0, "%"))));
 const CampFunnel = ({ stages }) => {
   const top = stages[0] ? stages[0].v : 0;
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, stages.map((s, i) => {
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, stages.map((s, i) => {
     const prev = i > 0 ? stages[i - 1].v : null;
     const wOfTop = top ? s.v / top * 100 : 0;
     const stepPct = prev != null ? prev ? Math.round(s.v / prev * 100) : 0 : null;
+    const dropPct = stepPct != null ? 100 - stepPct : null;
     const op = 0.85 - i * 0.16;
-    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 104, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text)", letterSpacing: "-0.2px" } }, s.label), stepPct != null && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, stepPct, "% de ", stages[i - 1].label.toLowerCase())), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.04)", overflow: "hidden", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 14, position: "relative" } }, dropPct != null && dropPct > 0 && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      left: 120,
+      top: -13,
+      fontSize: 10,
+      color: "var(--text-subtle)",
+      background: "var(--bg-elev)",
+      padding: "0 6px",
+      borderRadius: 99,
+      letterSpacing: "-0.1px"
+    } }, "\u25BE ", dropPct, "% se cae"), /* @__PURE__ */ React.createElement("div", { style: { width: 120, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.2px" } }, s.label), stepPct != null && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 2 } }, stepPct, "% de ", stages[i - 1].label.toLowerCase())), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 30, borderRadius: 8, background: "rgba(255,255,255,0.05)", overflow: "hidden", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: `${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`,
       height: "100%",
-      borderRadius: 7,
+      borderRadius: 8,
       background: `rgba(158,154,229,${Math.max(op, 0.22)})`,
       transition: "width .3s"
-    } })), /* @__PURE__ */ React.createElement("div", { style: { width: 44, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14.5, fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-display)" } }, s.v)));
+    } })), /* @__PURE__ */ React.createElement("div", { style: { width: 48, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-display)" } }, s.v)));
   }));
 };
+const _leadChannel = (l) => {
+  if (l.instagram) return "instagram";
+  if (l.email) return "email";
+  if (l.whatsapp || l.phone) return "whatsapp";
+  return "otro";
+};
+const _CHAN_META = {
+  instagram: { label: "Instagram", si: "instagram" },
+  email: { label: "Email", si: "gmail" },
+  whatsapp: { label: "WhatsApp", si: "whatsapp" },
+  otro: { label: "Sin canal", si: null }
+};
+const _DOW = ["Dom", "Lun", "Mar", "Mi\xE9", "Jue", "Vie", "S\xE1b"];
 const CampaignAnalytics = ({ c }) => {
   const leads = c.leads || [];
   const nStatus = (s) => leads.filter((l) => l.status === s).length;
@@ -469,6 +493,31 @@ const CampaignAnalytics = ({ c }) => {
     { label: "Respondieron", v: replied },
     { label: "Ganados", v: won }
   ];
+  const chanAgg = {};
+  leads.forEach((l) => {
+    const ch = _leadChannel(l);
+    const a = chanAgg[ch] || (chanAgg[ch] = { total: 0, contacted: 0, replied: 0 });
+    a.total++;
+    if (["contacted", "replied", "won"].includes(l.status)) a.contacted++;
+    if (["replied", "won"].includes(l.status)) a.replied++;
+  });
+  const channels = ["instagram", "email", "whatsapp", "otro"].filter((k) => chanAgg[k]).map((k) => ({ key: k, ...chanAgg[k], rate: pct(chanAgg[k].replied, chanAgg[k].contacted) }));
+  const secAgg = {};
+  leads.forEach((l) => {
+    const s = (l.sector || "Sin sector").trim() || "Sin sector";
+    const a = secAgg[s] || (secAgg[s] = { total: 0, replied: 0 });
+    a.total++;
+    if (["replied", "won"].includes(l.status)) a.replied++;
+  });
+  const sectorConv = Object.entries(secAgg).sort((a, b) => b[1].total - a[1].total).slice(0, 6).map(([label, v]) => ({ label, ...v }));
+  const dow = [0, 0, 0, 0, 0, 0, 0];
+  worked.forEach((l) => {
+    const d = /* @__PURE__ */ new Date((l.workedAt || "").slice(0, 10) + "T12:00:00");
+    if (!isNaN(d)) dow[d.getDay()]++;
+  });
+  const dowMax = Math.max(...dow, 1);
+  const dowOrder = [1, 2, 3, 4, 5, 6, 0];
+  const upcoming = leads.filter((l) => l.status === "scheduled" && l.scheduledFor).sort((a, b) => (a.scheduledFor || "").localeCompare(b.scheduledFor || "")).slice(0, 6);
   const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "18px 20px" };
   const cardTitle = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 14 };
   return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "4px 2px 16px", borderBottom: "0.5px solid var(--border)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Leads", value: total, sub: nNew ? `${nNew} sin contactar` : "todos trabajados" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Contactados", value: contacted, sub: `${contactRate}% del total` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Tasa de respuesta", value: contacted ? `${replyRate}%` : "\u2014", sub: `${replied} ${replied === 1 ? "respuesta" : "respuestas"}` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Tasa de cierre", value: contacted ? `${winRate}%` : "\u2014", sub: `${won} ${won === 1 ? "ganado" : "ganados"}` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Programados", value: nScheduled, sub: nScheduled ? "pr\xF3ximos contactos" : "\u2014" })), c.goal > 0 && /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Objetivo \xB7 clientes cerrados"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--accent)", fontSize: 16 } }, won), " / ", c.goal, won >= c.goal && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", marginLeft: 8 } }, "\xA1Conseguido!"))), /* @__PURE__ */ React.createElement("div", { style: { height: 8, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
@@ -477,7 +526,61 @@ const CampaignAnalytics = ({ c }) => {
     background: "var(--accent)",
     borderRadius: 99,
     transition: "width .3s"
-  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Embudo de conversi\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.2px" } }, nNew, " nuevos \xB7 ", discarded, " descartados")), /* @__PURE__ */ React.createElement(CampFunnel, { stages: funnelStages })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Actividad de contacto \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, worked.length, " trabajados en total")), worked.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5, letterSpacing: "-0.2px" } }, "A\xFAn no has trabajado ning\xFAn lead \u2014 la actividad aparecer\xE1 aqu\xED a medida que los contactes.") : /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30, dateField: "workedAt" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por sector"), /* @__PURE__ */ React.createElement(HBars, { items: sectors, total })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total }))));
+  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Embudo de conversi\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.2px" } }, nNew, " nuevos \xB7 ", discarded, " descartados")), /* @__PURE__ */ React.createElement(CampFunnel, { stages: funnelStages })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Actividad de contacto \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, worked.length, " trabajados en total")), worked.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5, letterSpacing: "-0.2px" } }, "A\xFAn no has trabajado ning\xFAn lead \u2014 la actividad aparecer\xE1 aqu\xED a medida que los contactes.") : /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30, dateField: "workedAt" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Rendimiento por canal"), channels.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "12px 0" } }, "Sin datos de canal.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, channels.map((ch) => {
+    const m = _CHAN_META[ch.key];
+    return /* @__PURE__ */ React.createElement("div", { key: ch.key, style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 34,
+      height: 34,
+      borderRadius: 9,
+      background: "var(--bg-elev-2)",
+      border: "0.5px solid var(--border)",
+      display: "grid",
+      placeItems: "center",
+      color: "var(--text-muted)",
+      flexShrink: 0
+    } }, m.si ? /* @__PURE__ */ React.createElement(SiIcon, { name: m.si, size: 16 }) : /* @__PURE__ */ React.createElement(Icon, { name: "user", size: 15, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text)", letterSpacing: "-0.2px" } }, m.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, ch.contacted, " contactados \xB7 ", ch.replied, " ", ch.replied === 1 ? "respuesta" : "respuestas")), /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 16,
+      fontWeight: 600,
+      fontFamily: "var(--font-display)",
+      color: ch.rate > 0 ? "var(--text)" : "var(--text-subtle)",
+      flexShrink: 0
+    } }, ch.rate, "%"));
+  }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Conversi\xF3n por sector"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 11 } }, sectorConv.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 12, fontSize: 12.5 } }, /* @__PURE__ */ React.createElement("span", { style: {
+    width: 96,
+    flexShrink: 0,
+    color: "var(--text-muted)",
+    whiteSpace: "nowrap",
+    overflow: "hidden",
+    textOverflow: "ellipsis"
+  } }, s.label), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: `${s.total ? s.replied / s.total * 100 : 0}%`,
+    height: "100%",
+    borderRadius: 99,
+    background: "rgba(158,154,229,0.6)",
+    transition: "width .25s"
+  } })), /* @__PURE__ */ React.createElement("span", { style: { width: 56, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, s.replied), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontSize: 11, marginLeft: 5 } }, "de ", s.total))))))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", null, "Ritmo de contacto"), /* @__PURE__ */ React.createElement("span", { style: { textTransform: "none", letterSpacing: "-0.2px", color: "var(--text-subtle)", fontSize: 11 } }, "por d\xEDa de la semana")), worked.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "12px 0" } }, "A\xFAn sin actividad.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 11 } }, dowOrder.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: { display: "flex", alignItems: "center", gap: 12, fontSize: 12.5 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 34, flexShrink: 0, color: "var(--text-muted)" } }, _DOW[d]), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 7, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: `${dow[d] / dowMax * 100}%`,
+    height: "100%",
+    borderRadius: 99,
+    background: "rgba(158,154,229,0.6)",
+    transition: "width .25s"
+  } })), /* @__PURE__ */ React.createElement("span", { style: {
+    width: 26,
+    textAlign: "right",
+    flexShrink: 0,
+    fontWeight: 600,
+    color: dow[d] ? "var(--text)" : "var(--text-subtle)"
+  } }, dow[d]))))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, display: "flex", justifyContent: "space-between", alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("span", null, "Pr\xF3ximos programados"), /* @__PURE__ */ React.createElement("span", { style: { textTransform: "none", letterSpacing: "-0.2px", color: "var(--text-subtle)", fontSize: 11 } }, nScheduled, " en cola")), upcoming.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "12px 0" } }, "No hay contactos programados.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, upcoming.map((l) => {
+    const m = _CHAN_META[_leadChannel(l)];
+    return /* @__PURE__ */ React.createElement("div", { key: l.id, style: { display: "flex", alignItems: "center", gap: 12, fontSize: 12.5 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 92, flexShrink: 0, color: "var(--accent)", fontSize: 11.5 } }, _cFmtWhen(l.scheduledFor)), /* @__PURE__ */ React.createElement("span", { style: {
+      flex: 1,
+      minWidth: 0,
+      color: "var(--text)",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    } }, l.name || l.company || "\u2014"), m.si && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", flexShrink: 0, display: "inline-flex" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: m.si, size: 13 })));
+  })))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total })));
 };
 const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) => {
   const toast = useToast();
