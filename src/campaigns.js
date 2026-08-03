@@ -420,29 +420,18 @@ const HBars = ({ items, total }) => /* @__PURE__ */ React.createElement("div", {
 } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, color: "var(--text)", width: 34, textAlign: "right", flexShrink: 0 } }, it.v), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", width: 38, textAlign: "right", flexShrink: 0 } }, total ? Math.round(it.v / total * 100) : 0, "%"))));
 const CampFunnel = ({ stages }) => {
   const top = stages[0] ? stages[0].v : 0;
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 20 } }, stages.map((s, i) => {
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 22 } }, stages.map((s, i) => {
     const prev = i > 0 ? stages[i - 1].v : null;
     const wOfTop = top ? s.v / top * 100 : 0;
     const stepPct = prev != null ? prev ? Math.round(s.v / prev * 100) : 0 : null;
-    const dropPct = stepPct != null ? 100 - stepPct : null;
-    const op = 0.85 - i * 0.16;
-    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 14, position: "relative" } }, dropPct != null && dropPct > 0 && /* @__PURE__ */ React.createElement("div", { style: {
-      position: "absolute",
-      left: 120,
-      top: -13,
-      fontSize: 10,
-      color: "var(--text-subtle)",
-      background: "var(--bg-elev)",
-      padding: "0 6px",
-      borderRadius: 99,
-      letterSpacing: "-0.1px"
-    } }, "\u25BE ", dropPct, "% se cae"), /* @__PURE__ */ React.createElement("div", { style: { width: 120, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.2px" } }, s.label), stepPct != null && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 2 } }, stepPct, "% de ", stages[i - 1].label.toLowerCase())), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 30, borderRadius: 8, background: "rgba(255,255,255,0.05)", overflow: "hidden", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: {
-      width: `${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`,
+    const op = 0.9 - i * 0.17;
+    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 118, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text)", letterSpacing: "-0.2px" } }, s.label), stepPct != null && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 2 } }, stepPct, "% de ", stages[i - 1].label.toLowerCase())), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: `${Math.max(wOfTop, s.v > 0 ? 1.5 : 0)}%`,
       height: "100%",
-      borderRadius: 8,
-      background: `rgba(158,154,229,${Math.max(op, 0.22)})`,
-      transition: "width .3s"
-    } })), /* @__PURE__ */ React.createElement("div", { style: { width: 48, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-display)" } }, s.v)));
+      borderRadius: 99,
+      background: `rgba(158,154,229,${Math.max(op, 0.28)})`,
+      transition: "width .35s cubic-bezier(.4,0,.2,1)"
+    } })), /* @__PURE__ */ React.createElement("div", { style: { width: 44, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15, fontWeight: 600, color: s.v ? "var(--text)" : "var(--text-subtle)", fontFamily: "var(--font-display)" } }, s.v)));
   }));
 };
 const _leadChannel = (l) => {

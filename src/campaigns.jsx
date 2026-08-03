@@ -366,23 +366,15 @@ const HBars = ({ items, total }) => (
 const CampFunnel = ({ stages }) => {
   const top = stages[0] ? stages[0].v : 0;
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
+    <div style={{ display:"flex", flexDirection:"column", gap:22 }}>
       {stages.map((s, i) => {
         const prev = i > 0 ? stages[i - 1].v : null;
         const wOfTop = top ? (s.v / top) * 100 : 0;
         const stepPct = prev != null ? (prev ? Math.round((s.v / prev) * 100) : 0) : null;
-        const dropPct = stepPct != null ? 100 - stepPct : null;
-        const op = 0.85 - i * 0.16;   // más profundo = más tenue
+        const op = 0.9 - i * 0.17;   // más profundo = más tenue
         return (
-          <div key={i} style={{ display:"flex", alignItems:"center", gap:14, position:"relative" }}>
-            {/* Caída respecto a la etapa anterior */}
-            {dropPct != null && dropPct > 0 && (
-              <div style={{ position:"absolute", left:120, top:-13, fontSize:10, color:"var(--text-subtle)",
-                background:"var(--bg-elev)", padding:"0 6px", borderRadius:99, letterSpacing:"-0.1px" }}>
-                ▾ {dropPct}% se cae
-              </div>
-            )}
-            <div style={{ width:120, flexShrink:0 }}>
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:16 }}>
+            <div style={{ width:118, flexShrink:0 }}>
               <div style={{ fontSize:13, color:"var(--text)", letterSpacing:"-0.2px" }}>{s.label}</div>
               {stepPct != null && (
                 <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:2 }}>
@@ -390,14 +382,15 @@ const CampFunnel = ({ stages }) => {
                 </div>
               )}
             </div>
-            <div style={{ flex:1, height:30, borderRadius:8, background:"rgba(255,255,255,0.05)", overflow:"hidden", position:"relative" }}>
+            {/* Barra fina sin caja de fondo — limpia */}
+            <div style={{ flex:1, height:8 }}>
               <div style={{
-                width:`${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`, height:"100%", borderRadius:8,
-                background:`rgba(158,154,229,${Math.max(op, 0.22)})`, transition:"width .3s",
+                width:`${Math.max(wOfTop, s.v > 0 ? 1.5 : 0)}%`, height:"100%", borderRadius:99,
+                background:`rgba(158,154,229,${Math.max(op, 0.28)})`, transition:"width .35s cubic-bezier(.4,0,.2,1)",
               }}/>
             </div>
-            <div style={{ width:48, textAlign:"right", flexShrink:0 }}>
-              <span style={{ fontSize:15, fontWeight:600, color:"var(--text)", fontFamily:"var(--font-display)" }}>{s.v}</span>
+            <div style={{ width:44, textAlign:"right", flexShrink:0 }}>
+              <span style={{ fontSize:15, fontWeight:600, color: s.v ? "var(--text)" : "var(--text-subtle)", fontFamily:"var(--font-display)" }}>{s.v}</span>
             </div>
           </div>
         );
