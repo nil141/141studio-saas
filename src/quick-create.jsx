@@ -27,6 +27,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [title,     setTitle]     = useState("");
   const [desc,      setDesc]      = useState("");
   const [clientId,  setClientId]  = useState("");
+  const [projectId, setProjectId] = useState("");
   const [date,      setDate]      = useState(today());
   const [time,      setTime]      = useState("");
   const [timeEnd,   setTimeEnd]   = useState("");
@@ -40,11 +41,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       if (editTask && editTask.task) {
         const tk = editTask.task;
         setTitle(tk.title || ""); setDesc(tk.notes || ""); setClientId(tk.clientId || "");
+        setProjectId("");
         setDate(tk.deadline || defaultDate || today());
         setTime(tk.time || ""); setTimeEnd(""); setFreq(tk.frequency || "once");
         setType("task");
       } else {
-        setTitle(""); setDesc(""); setClientId(""); setDate(defaultDate || today());
+        setTitle(""); setDesc(""); setClientId(""); setProjectId(""); setDate(defaultDate || today());
         setTime(""); setTimeEnd(""); setFreq("once");
         setType(defaultType);
       }
@@ -79,7 +81,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     }
     if (type === "task") {
       const deadline = date || defaultDate || null;
-      if (clientId) {
+      if (projectId) {
+        // Proyecto elegido explícitamente → la tarea va a ese proyecto
+        D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
+      } else if (clientId) {
         const client = D.CLIENTS.find(c => c.id === clientId);
         const proj   = D.PROJECTS.find(p => p.clientId === clientId);
         if (proj) {
@@ -114,13 +119,15 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   };
   const dateChanged = date && date !== (defaultDate || today());
 
-  // Tab definitions — "cliente" only for task
+  // Tab definitions — "cliente" y "proyecto" solo para tareas
   const tabs = [
-    ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users",    hasVal: !!clientId }] : []),
+    ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users", hasVal: !!clientId }] : []),
+    ...(type === "task" && !editTask ? [{ id:"project", label:"Proyecto", icon:"folder", hasVal: !!projectId }] : []),
     { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
     { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
     { id:"date", label:"Fecha",      icon:"calendar",   hasVal: dateChanged },
   ];
+  const curProject = projectId ? D.PROJECTS.find(p => p.id === projectId) : null;
 
   const toggleTab = (id) => setActiveTab(prev => prev === id ? null : id);
 
@@ -244,7 +251,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               {D.CLIENTS.length === 0
                 ? <span style={{ fontSize:13, color:"var(--text-subtle)", textAlign:"center" }}>Sin clientes</span>
                 : [...D.CLIENTS].sort((a,b) => (a.company||a.name||"").localeCompare(b.company||b.name||"")).map(c => (
-                  <button key={c.id} onClick={() => setClientId(clientId === c.id ? "" : c.id)} style={{
+                  <button key={c.id} onClick={() => {
+                      const nid = clientId === c.id ? "" : c.id;
+                      setClientId(nid);
+                      // Si el proyecto elegido es de otro cliente, se deselecciona
+                      if (curProject && curProject.clientId !== nid) setProjectId("");
+                    }} style={{
                     padding:"10px 16px", borderRadius:12, fontSize:13, letterSpacing:"-0.5px",
                     background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.04)",
                     border: clientId === c.id ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
@@ -256,6 +268,40 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
                   </button>
                 ))
               }
+            </div>
+          )}
+
+          {/* Proyecto */}
+          {activeTab === "project" && (
+            <div style={{ width:"100%", maxHeight:180, overflowY:"auto", display:"flex", flexDirection:"column", gap:4 }}>
+              {(() => {
+                const list = clientId ? D.PROJECTS.filter(p => p.clientId === clientId) : D.PROJECTS;
+                if (list.length === 0) return (
+                  <span style={{ fontSize:13, color:"var(--text-subtle)", textAlign:"center" }}>
+                    {clientId ? "Este cliente no tiene proyectos" : "Sin proyectos"}
+                  </span>
+                );
+                return [...list].sort((a,b) => (a.name||"").localeCompare(b.name||"")).map(p => {
+                  const cl = D.CLIENTS.find(c => c.id === p.clientId);
+                  const on = projectId === p.id;
+                  return (
+                    <button key={p.id} onClick={() => {
+                        if (on) { setProjectId(""); }
+                        else { setProjectId(p.id); if (p.clientId) setClientId(p.clientId); }
+                      }} style={{
+                      padding:"10px 16px", borderRadius:12, letterSpacing:"-0.5px",
+                      background: on ? accentHex + "22" : "rgba(255,255,255,0.04)",
+                      border: on ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
+                      color: on ? accentHex : "var(--text-muted)",
+                      cursor:"pointer", fontFamily:"var(--font-sans)", transition:"all .1s",
+                      textAlign:"left", width:"100%",
+                    }}>
+                      <div style={{ fontSize:13 }}>{p.name || "Proyecto"}</div>
+                      {cl && <div style={{ fontSize:11, opacity:0.6, marginTop:1 }}>{cl.company || cl.name}</div>}
+                    </button>
+                  );
+                });
+              })()}
             </div>
           )}
 
@@ -335,6 +381,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               {tab.label}
               {tab.id === "client" && clientId && (
                 <span style={{ width:6, height:6, borderRadius:"50%", background:accentHex, flexShrink:0 }}/>
+              )}
+              {tab.id === "project" && curProject && (
+                <span style={{ fontSize:10, color:accentHex, marginLeft:2, maxWidth:90, overflow:"hidden",
+                  textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{curProject.name}</span>
               )}
               {tab.id === "freq" && freq !== "once" && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>

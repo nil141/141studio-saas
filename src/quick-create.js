@@ -20,6 +20,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [clientId, setClientId] = useState("");
+  const [projectId, setProjectId] = useState("");
   const [date, setDate] = useState(today());
   const [time, setTime] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
@@ -34,6 +35,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setTitle(tk.title || "");
         setDesc(tk.notes || "");
         setClientId(tk.clientId || "");
+        setProjectId("");
         setDate(tk.deadline || defaultDate || today());
         setTime(tk.time || "");
         setTimeEnd("");
@@ -43,6 +45,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setTitle("");
         setDesc("");
         setClientId("");
+        setProjectId("");
         setDate(defaultDate || today());
         setTime("");
         setTimeEnd("");
@@ -83,7 +86,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     }
     if (type === "task") {
       const deadline = date || defaultDate || null;
-      if (clientId) {
+      if (projectId) {
+        D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
+      } else if (clientId) {
         const client = D.CLIENTS.find((c) => c.id === clientId);
         const proj = D.PROJECTS.find((p) => p.clientId === clientId);
         if (proj) {
@@ -126,10 +131,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const dateChanged = date && date !== (defaultDate || today());
   const tabs = [
     ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
+    ...type === "task" && !editTask ? [{ id: "project", label: "Proyecto", icon: "folder", hasVal: !!projectId }] : [],
     { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
     { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
     { id: "date", label: "Fecha", icon: "calendar", hasVal: dateChanged }
   ];
+  const curProject = projectId ? D.PROJECTS.find((p) => p.id === projectId) : null;
   const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
   return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
     "div",
@@ -248,7 +255,11 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           }
         }
       )),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => setClientId(clientId === c.id ? "" : c.id), style: {
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => {
+        const nid = clientId === c.id ? "" : c.id;
+        setClientId(nid);
+        if (curProject && curProject.clientId !== nid) setProjectId("");
+      }, style: {
         padding: "10px 16px",
         borderRadius: 12,
         fontSize: 13,
@@ -261,7 +272,34 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         transition: "all .1s",
         textAlign: "left",
         width: "100%"
-      } }, c.company || c.name))), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, FREQ_OPTS.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
+      } }, c.company || c.name))), activeTab === "project" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, (() => {
+        const list = clientId ? D.PROJECTS.filter((p) => p.clientId === clientId) : D.PROJECTS;
+        if (list.length === 0) return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, clientId ? "Este cliente no tiene proyectos" : "Sin proyectos");
+        return [...list].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((p) => {
+          const cl = D.CLIENTS.find((c) => c.id === p.clientId);
+          const on = projectId === p.id;
+          return /* @__PURE__ */ React.createElement("button", { key: p.id, onClick: () => {
+            if (on) {
+              setProjectId("");
+            } else {
+              setProjectId(p.id);
+              if (p.clientId) setClientId(p.clientId);
+            }
+          }, style: {
+            padding: "10px 16px",
+            borderRadius: 12,
+            letterSpacing: "-0.5px",
+            background: on ? accentHex + "22" : "rgba(255,255,255,0.04)",
+            border: on ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
+            color: on ? accentHex : "var(--text-muted)",
+            cursor: "pointer",
+            fontFamily: "var(--font-sans)",
+            transition: "all .1s",
+            textAlign: "left",
+            width: "100%"
+          } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13 } }, p.name || "Proyecto"), cl && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, opacity: 0.6, marginTop: 1 } }, cl.company || cl.name));
+        });
+      })()), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, FREQ_OPTS.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
         padding: "8px 18px",
         borderRadius: 99,
         fontSize: 13,
@@ -314,7 +352,15 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           cursor: "pointer",
           fontFamily: "var(--font-sans)",
           transition: "all .12s"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "project" && curProject && /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10,
+          color: accentHex,
+          marginLeft: 2,
+          maxWidth: 90,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
       }))
     )
   ), pickerFor && /* @__PURE__ */ React.createElement(
