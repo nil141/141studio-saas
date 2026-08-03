@@ -351,14 +351,14 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
   })));
 };
 let _sparkGradSeq = 0;
-const LeadsSpark = ({ leads, days: nDays = 14, height = 192 }) => {
+const LeadsSpark = ({ leads, days: nDays = 14, height = 192, dateField = "date" }) => {
   const gradId = useRef(null);
   if (!gradId.current) gradId.current = "leadsGrad" + ++_sparkGradSeq;
   const days = Array.from({ length: nDays }, (_, i) => {
     const d = /* @__PURE__ */ new Date();
     d.setDate(d.getDate() - (nDays - 1 - i));
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    return { ds, v: leads.filter((x) => x.date === ds).length, lab: d.getDate() };
+    return { ds, v: leads.filter((x) => (x[dateField] || "").slice(0, 10) === ds).length, lab: d.getDate() };
   });
   const max = Math.max(...days.map((d) => d.v), 1);
   const W = 818, H = height, padL = 20, padR = 20, top = 5, base = H - 55;
@@ -418,58 +418,66 @@ const HBars = ({ items, total }) => /* @__PURE__ */ React.createElement("div", {
   borderRadius: 99,
   transition: "width .25s"
 } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 600, color: "var(--text)", width: 34, textAlign: "right", flexShrink: 0 } }, it.v), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", width: 38, textAlign: "right", flexShrink: 0 } }, total ? Math.round(it.v / total * 100) : 0, "%"))));
+const CampFunnel = ({ stages }) => {
+  const top = stages[0] ? stages[0].v : 0;
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, stages.map((s, i) => {
+    const prev = i > 0 ? stages[i - 1].v : null;
+    const wOfTop = top ? s.v / top * 100 : 0;
+    const stepPct = prev != null ? prev ? Math.round(s.v / prev * 100) : 0 : null;
+    const op = 0.85 - i * 0.16;
+    return /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", alignItems: "center", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 104, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text)", letterSpacing: "-0.2px" } }, s.label), stepPct != null && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, stepPct, "% de ", stages[i - 1].label.toLowerCase())), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 26, borderRadius: 7, background: "rgba(255,255,255,0.04)", overflow: "hidden", position: "relative" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: `${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`,
+      height: "100%",
+      borderRadius: 7,
+      background: `rgba(158,154,229,${Math.max(op, 0.22)})`,
+      transition: "width .3s"
+    } })), /* @__PURE__ */ React.createElement("div", { style: { width: 44, textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14.5, fontWeight: 600, color: "var(--text)", fontFamily: "var(--font-display)" } }, s.v)));
+  }));
+};
 const CampaignAnalytics = ({ c }) => {
   const leads = c.leads || [];
-  const today = _cToday();
   const nStatus = (s) => leads.filter((l) => l.status === s).length;
+  const total = leads.length;
+  const nNew = nStatus("new");
+  const nScheduled = nStatus("scheduled");
   const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
   const replied = nStatus("replied") + nStatus("won");
   const won = nStatus("won");
+  const discarded = nStatus("discarded");
   if (!leads.length) return /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "70px 0", color: "var(--text-subtle)", fontSize: 13.5, letterSpacing: "-0.3px" } }, "Sin datos todav\xEDa \u2014 las anal\xEDticas aparecen cuando la campa\xF1a tiene leads.");
-  const byDay = {};
-  leads.forEach((l) => {
-    if (l.date) byDay[l.date] = (byDay[l.date] || 0) + 1;
-  });
-  const dayEntries = Object.entries(byDay).sort((a, b) => b[1] - a[1]);
-  const bestDay = dayEntries[0];
-  const activeDays = dayEntries.length || 1;
-  const avg = (leads.length / activeDays).toFixed(1).replace(".0", "");
+  const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+  const contactRate = pct(contacted, total);
+  const replyRate = pct(replied, contacted);
+  const winRate = pct(won, contacted);
   const bySector = {};
   leads.forEach((l) => {
-    const s = (l.sector || "Sin sector").trim();
+    const s = (l.sector || "Sin sector").trim() || "Sin sector";
     bySector[s] = (bySector[s] || 0) + 1;
   });
-  const sectors = Object.entries(bySector).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, v]) => ({ label, v }));
+  const sectors = Object.entries(bySector).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, v]) => ({ label, v, color: "rgba(158,154,229,0.55)" }));
   const SRC = { cowork: "Claude Cowork", csv: "CSV", manual: "A mano", api: "API" };
   const bySrc = {};
   leads.forEach((l) => {
     const s = SRC[l.source] || "Claude Cowork";
     bySrc[s] = (bySrc[s] || 0) + 1;
   });
-  const sources = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, v, color: "rgba(158,154,229,0.65)" }));
-  const funnel = [
-    { label: "Nuevos", v: nStatus("new"), color: "rgba(255,255,255,0.3)" },
-    { label: "Contactados", v: nStatus("contacted"), color: "#60a5fa" },
-    { label: "Respondieron", v: nStatus("replied"), color: "var(--green)" },
-    { label: "Ganados", v: won, color: "var(--accent)" },
-    { label: "Descartados", v: nStatus("discarded"), color: "rgba(255,255,255,0.14)" }
+  const sources = Object.entries(bySrc).sort((a, b) => b[1] - a[1]).map(([label, v]) => ({ label, v, color: "rgba(158,154,229,0.35)" }));
+  const worked = leads.filter((l) => l.workedAt);
+  const funnelStages = [
+    { label: "Leads", v: total },
+    { label: "Contactados", v: contacted },
+    { label: "Respondieron", v: replied },
+    { label: "Ganados", v: won }
   ];
   const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "18px 20px" };
   const cardTitle = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 14 };
-  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "4px 2px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Leads", value: leads.length, sub: `media ${avg}/d\xEDa` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Contactados", value: contacted, sub: `${Math.round(contacted / leads.length * 100)}% del total`, color: "#60a5fa" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Respuestas", value: replied, sub: contacted ? `${Math.round(replied / contacted * 100)}% de contactados` : "\u2014", color: "var(--green)" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Ganados", value: won, sub: leads.length ? `${Math.round(won / leads.length * 100)}% de cierre` : "\u2014", color: "var(--accent)" }), /* @__PURE__ */ React.createElement(
-    CampMiniStat,
-    {
-      label: "Mejor d\xEDa",
-      value: bestDay ? bestDay[1] : "\u2014",
-      sub: bestDay ? (/* @__PURE__ */ new Date(bestDay[0] + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "short" }) : ""
-    }
-  )), c.goal > 0 && /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Objetivo \xB7 clientes cerrados"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--accent)", fontSize: 16 } }, won), " / ", c.goal, won >= c.goal && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--green)", marginLeft: 8 } }, "\xA1Conseguido! \u{1F389}"))), /* @__PURE__ */ React.createElement("div", { style: { height: 8, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16, paddingBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 26, padding: "4px 2px 16px", borderBottom: "0.5px solid var(--border)", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Leads", value: total, sub: nNew ? `${nNew} sin contactar` : "todos trabajados" }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Contactados", value: contacted, sub: `${contactRate}% del total` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Tasa de respuesta", value: contacted ? `${replyRate}%` : "\u2014", sub: `${replied} ${replied === 1 ? "respuesta" : "respuestas"}` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Tasa de cierre", value: contacted ? `${winRate}%` : "\u2014", sub: `${won} ${won === 1 ? "ganado" : "ganados"}` }), /* @__PURE__ */ React.createElement(CampMiniStat, { label: "Programados", value: nScheduled, sub: nScheduled ? "pr\xF3ximos contactos" : "\u2014" })), c.goal > 0 && /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Objetivo \xB7 clientes cerrados"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--accent)", fontSize: 16 } }, won), " / ", c.goal, won >= c.goal && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", marginLeft: 8 } }, "\xA1Conseguido!"))), /* @__PURE__ */ React.createElement("div", { style: { height: 8, borderRadius: 99, background: "rgba(255,255,255,0.06)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: `${Math.min(100, won / c.goal * 100)}%`,
     height: "100%",
-    background: won >= c.goal ? "var(--green)" : "var(--accent)",
+    background: "var(--accent)",
     borderRadius: 99,
     transition: "width .3s"
-  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Leads recibidos \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30 })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Embudo"), /* @__PURE__ */ React.createElement(HBars, { items: funnel, total: leads.length })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por sector"), /* @__PURE__ */ React.createElement(HBars, { items: sectors, total: leads.length }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total: leads.length })));
+  } }))), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Embudo de conversi\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", letterSpacing: "-0.2px" } }, nNew, " nuevos \xB7 ", discarded, " descartados")), /* @__PURE__ */ React.createElement(CampFunnel, { stages: funnelStages })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { ...cardTitle, marginBottom: 0 } }, "Actividad de contacto \xB7 \xFAltimos 30 d\xEDas"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, worked.length, " trabajados en total")), worked.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 0", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5, letterSpacing: "-0.2px" } }, "A\xFAn no has trabajado ning\xFAn lead \u2014 la actividad aparecer\xE1 aqu\xED a medida que los contactes.") : /* @__PURE__ */ React.createElement(LeadsSpark, { leads, days: 30, dateField: "workedAt" })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Por sector"), /* @__PURE__ */ React.createElement(HBars, { items: sectors, total })), /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: cardTitle }, "Origen de los leads"), /* @__PURE__ */ React.createElement(HBars, { items: sources, total }))));
 };
 const CampaignSettings = ({ c, reload, onRemove, onCSV, onManual, onCowork }) => {
   const toast = useToast();
@@ -1152,28 +1160,52 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
         { icon: "trash", label: "Eliminar campa\xF1a", onClick: removeCampaign }
       ]
     }
-  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, paddingBottom: 16, borderBottom: "0.5px solid var(--border)", marginBottom: 16 } }, [
-    { id: "leads", label: "Leads", icon: "users" },
-    { id: "stats", label: "Anal\xEDticas", icon: "bar-chart" },
-    { id: "config", label: "Ajustes", icon: "settings" }
+  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 26, borderBottom: "0.5px solid var(--border)", marginBottom: 18 } }, [
+    { id: "leads", label: "Leads", n: leads.length },
+    { id: "stats", label: "Anal\xEDticas", n: null },
+    { id: "config", label: "Ajustes", n: null }
   ].map((t) => {
     const on = view === t.id;
-    return /* @__PURE__ */ React.createElement("button", { key: t.id, onClick: () => setView(t.id), style: {
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 7,
-      padding: "7px 15px",
-      borderRadius: 99,
-      cursor: "pointer",
-      fontFamily: "inherit",
-      background: on ? "rgba(255,255,255,0.08)" : "transparent",
-      border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
-      color: on ? "var(--text)" : "var(--text-subtle)",
-      fontSize: 13,
-      letterSpacing: "-0.3px",
-      fontWeight: on ? 500 : 400,
-      transition: "all .12s"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: t.icon, size: 13, strokeWidth: 1.7 }), t.label);
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: t.id,
+        onClick: () => setView(t.id),
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 8,
+          padding: "0 1px 12px",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          background: "transparent",
+          border: 0,
+          borderBottom: on ? "1.5px solid var(--text)" : "1.5px solid transparent",
+          marginBottom: "-0.5px",
+          color: on ? "var(--text)" : "var(--text-subtle)",
+          fontSize: 13.5,
+          letterSpacing: "-0.3px",
+          fontWeight: on ? 500 : 400,
+          transition: "color .12s"
+        },
+        onMouseEnter: (e) => {
+          if (!on) e.currentTarget.style.color = "var(--text-muted)";
+        },
+        onMouseLeave: (e) => {
+          if (!on) e.currentTarget.style.color = "var(--text-subtle)";
+        }
+      },
+      t.label,
+      t.n != null && /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 11,
+        minWidth: 18,
+        textAlign: "center",
+        padding: "1px 6px",
+        borderRadius: 99,
+        background: on ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+        color: on ? "var(--text-muted)" : "var(--text-subtle)"
+      } }, t.n)
+    );
   })), view === "leads" && leads.length > 0 && (() => {
     const pct = Math.min(100, Math.round(workedToday / dailyGoal * 100));
     const doneDay = workedToday >= dailyGoal;

@@ -287,14 +287,14 @@ const LeadStatusPill = ({ value, onChange, scheduledFor }) => {
 // Gráfico de área estilo outdomode: curva suave con tangentes horizontales,
 // borde morado 3px, degradado que se desvanece y referencias punteadas.
 let _sparkGradSeq = 0;
-const LeadsSpark = ({ leads, days: nDays = 14, height = 192 }) => {
+const LeadsSpark = ({ leads, days: nDays = 14, height = 192, dateField = "date" }) => {
   const gradId = useRef(null);
   if (!gradId.current) gradId.current = "leadsGrad" + (++_sparkGradSeq);
 
   const days = Array.from({ length: nDays }, (_, i) => {
     const d = new Date(); d.setDate(d.getDate() - (nDays - 1 - i));
     const ds = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-    return { ds, v: leads.filter(x => x.date === ds).length, lab: d.getDate() };
+    return { ds, v: leads.filter(x => (x[dateField] || "").slice(0, 10) === ds).length, lab: d.getDate() };
   });
   const max = Math.max(...days.map(d => d.v), 1);
 
@@ -362,14 +362,53 @@ const HBars = ({ items, total }) => (
   </div>
 );
 
+// Embudo de conversión — cada etapa muestra su volumen y el % que pasa desde la anterior
+const CampFunnel = ({ stages }) => {
+  const top = stages[0] ? stages[0].v : 0;
+  return (
+    <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+      {stages.map((s, i) => {
+        const prev = i > 0 ? stages[i - 1].v : null;
+        const wOfTop = top ? (s.v / top) * 100 : 0;
+        const stepPct = prev != null ? (prev ? Math.round((s.v / prev) * 100) : 0) : null;
+        const op = 0.85 - i * 0.16;   // más profundo = más tenue
+        return (
+          <div key={i} style={{ display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{ width:104, flexShrink:0 }}>
+              <div style={{ fontSize:12.5, color:"var(--text)", letterSpacing:"-0.2px" }}>{s.label}</div>
+              {stepPct != null && (
+                <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
+                  {stepPct}% de {stages[i - 1].label.toLowerCase()}
+                </div>
+              )}
+            </div>
+            <div style={{ flex:1, height:26, borderRadius:7, background:"rgba(255,255,255,0.04)", overflow:"hidden", position:"relative" }}>
+              <div style={{
+                width:`${Math.max(wOfTop, s.v > 0 ? 2 : 0)}%`, height:"100%", borderRadius:7,
+                background:`rgba(158,154,229,${Math.max(op, 0.22)})`, transition:"width .3s",
+              }}/>
+            </div>
+            <div style={{ width:44, textAlign:"right", flexShrink:0 }}>
+              <span style={{ fontSize:14.5, fontWeight:600, color:"var(--text)", fontFamily:"var(--font-display)" }}>{s.v}</span>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
 // Bloque de analíticas (sección propia, todo real)
 const CampaignAnalytics = ({ c }) => {
   const leads = c.leads || [];
-  const today = _cToday();
   const nStatus = (s) => leads.filter(l => l.status === s).length;
+  const total     = leads.length;
+  const nNew       = nStatus("new");
+  const nScheduled = nStatus("scheduled");
   const contacted = nStatus("contacted") + nStatus("replied") + nStatus("won");
   const replied   = nStatus("replied") + nStatus("won");
   const won       = nStatus("won");
+  const discarded = nStatus("discarded");
 
   if (!leads.length) return (
     <div style={{ textAlign:"center", padding:"70px 0", color:"var(--text-subtle)", fontSize:13.5, letterSpacing:"-0.3px" }}>
@@ -377,33 +416,32 @@ const CampaignAnalytics = ({ c }) => {
     </div>
   );
 
-  // Días con actividad → media y mejor día
-  const byDay = {};
-  leads.forEach(l => { if (l.date) byDay[l.date] = (byDay[l.date] || 0) + 1; });
-  const dayEntries = Object.entries(byDay).sort((a, b) => b[1] - a[1]);
-  const bestDay = dayEntries[0];
-  const activeDays = dayEntries.length || 1;
-  const avg = (leads.length / activeDays).toFixed(1).replace(".0", "");
+  // Tasas de conversión (la lógica real de un outreach)
+  const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
+  const contactRate = pct(contacted, total);       // cuántos del total ya he tocado
+  const replyRate   = pct(replied, contacted);     // de los contactados, cuántos responden
+  const winRate     = pct(won, contacted);         // de los contactados, cuántos cierro
 
-  // Sectores (top 6)
+  // Sectores (top 6) — a qué nichos estoy apuntando
   const bySector = {};
-  leads.forEach(l => { const s = (l.sector || "Sin sector").trim(); bySector[s] = (bySector[s] || 0) + 1; });
+  leads.forEach(l => { const s = (l.sector || "Sin sector").trim() || "Sin sector"; bySector[s] = (bySector[s] || 0) + 1; });
   const sectors = Object.entries(bySector).sort((a, b) => b[1] - a[1]).slice(0, 6)
-    .map(([label, v]) => ({ label, v }));
+    .map(([label, v]) => ({ label, v, color:"rgba(158,154,229,0.55)" }));
 
   // Orígenes
   const SRC = { cowork:"Claude Cowork", csv:"CSV", manual:"A mano", api:"API" };
   const bySrc = {};
   leads.forEach(l => { const s = SRC[l.source] || "Claude Cowork"; bySrc[s] = (bySrc[s] || 0) + 1; });
   const sources = Object.entries(bySrc).sort((a, b) => b[1] - a[1])
-    .map(([label, v]) => ({ label, v, color:"rgba(158,154,229,0.65)" }));
+    .map(([label, v]) => ({ label, v, color:"rgba(158,154,229,0.35)" }));
 
-  const funnel = [
-    { label:"Nuevos",       v:nStatus("new"),       color:"rgba(255,255,255,0.3)" },
-    { label:"Contactados",  v:nStatus("contacted"), color:"#60a5fa" },
-    { label:"Respondieron", v:nStatus("replied"),   color:"var(--green)" },
-    { label:"Ganados",      v:won,                  color:"var(--accent)" },
-    { label:"Descartados",  v:nStatus("discarded"), color:"rgba(255,255,255,0.14)" },
+  // Actividad real de contacto (por día que trabajé el lead)
+  const worked = leads.filter(l => l.workedAt);
+  const funnelStages = [
+    { label:"Leads",        v:total },
+    { label:"Contactados",  v:contacted },
+    { label:"Respondieron", v:replied },
+    { label:"Ganados",      v:won },
   ];
 
   const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"18px 20px" };
@@ -411,14 +449,13 @@ const CampaignAnalytics = ({ c }) => {
 
   return (
     <div style={{ display:"flex", flexDirection:"column", gap:16, paddingBottom:24 }}>
-      {/* KPIs */}
-      <div style={{ display:"flex", gap:26, padding:"4px 2px 16px", borderBottom:"0.5px solid var(--border)" }}>
-        <CampMiniStat label="Leads" value={leads.length} sub={`media ${avg}/día`}/>
-        <CampMiniStat label="Contactados" value={contacted} sub={`${Math.round((contacted/leads.length)*100)}% del total`} color="#60a5fa"/>
-        <CampMiniStat label="Respuestas" value={replied} sub={contacted ? `${Math.round((replied/contacted)*100)}% de contactados` : "—"} color="var(--green)"/>
-        <CampMiniStat label="Ganados" value={won} sub={leads.length ? `${Math.round((won/leads.length)*100)}% de cierre` : "—"} color="var(--accent)"/>
-        <CampMiniStat label="Mejor día" value={bestDay ? bestDay[1] : "—"}
-          sub={bestDay ? new Date(bestDay[0] + "T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"}) : ""}/>
+      {/* KPIs — todo en color neutro, coherente */}
+      <div style={{ display:"flex", gap:26, padding:"4px 2px 16px", borderBottom:"0.5px solid var(--border)", flexWrap:"wrap" }}>
+        <CampMiniStat label="Leads" value={total} sub={nNew ? `${nNew} sin contactar` : "todos trabajados"}/>
+        <CampMiniStat label="Contactados" value={contacted} sub={`${contactRate}% del total`}/>
+        <CampMiniStat label="Tasa de respuesta" value={contacted ? `${replyRate}%` : "—"} sub={`${replied} ${replied === 1 ? "respuesta" : "respuestas"}`}/>
+        <CampMiniStat label="Tasa de cierre" value={contacted ? `${winRate}%` : "—"} sub={`${won} ${won === 1 ? "ganado" : "ganados"}`}/>
+        <CampMiniStat label="Programados" value={nScheduled} sub={nScheduled ? "próximos contactos" : "—"}/>
       </div>
 
       {/* Objetivo de la campaña (si está definido) */}
@@ -428,39 +465,53 @@ const CampaignAnalytics = ({ c }) => {
             <div style={cardTitle}>Objetivo · clientes cerrados</div>
             <div style={{ fontSize:13, color:"var(--text-muted)" }}>
               <b style={{ color:"var(--accent)", fontSize:16 }}>{won}</b> / {c.goal}
-              {won >= c.goal && <span style={{ color:"var(--green)", marginLeft:8 }}>¡Conseguido! 🎉</span>}
+              {won >= c.goal && <span style={{ color:"var(--accent)", marginLeft:8 }}>¡Conseguido!</span>}
             </div>
           </div>
           <div style={{ height:8, borderRadius:99, background:"rgba(255,255,255,0.06)", overflow:"hidden" }}>
             <div style={{ width:`${Math.min(100, (won / c.goal) * 100)}%`, height:"100%",
-              background: won >= c.goal ? "var(--green)" : "var(--accent)", borderRadius:99, transition:"width .3s" }}/>
+              background:"var(--accent)", borderRadius:99, transition:"width .3s" }}/>
           </div>
         </div>
       )}
 
-      {/* Leads por día — 30 días */}
+      {/* Embudo de conversión — el corazón de las analíticas */}
       <div style={cardStyle}>
-        <div style={cardTitle}>Leads recibidos · últimos 30 días</div>
-        <LeadsSpark leads={leads} days={30}/>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:16 }}>
+          <div style={{ ...cardTitle, marginBottom:0 }}>Embudo de conversión</div>
+          <div style={{ fontSize:11.5, color:"var(--text-subtle)", letterSpacing:"-0.2px" }}>
+            {nNew} nuevos · {discarded} descartados
+          </div>
+        </div>
+        <CampFunnel stages={funnelStages}/>
+      </div>
+
+      {/* Actividad de contacto — trabajo real por día */}
+      <div style={cardStyle}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"baseline", marginBottom:14 }}>
+          <div style={{ ...cardTitle, marginBottom:0 }}>Actividad de contacto · últimos 30 días</div>
+          <div style={{ fontSize:11.5, color:"var(--text-subtle)" }}>{worked.length} trabajados en total</div>
+        </div>
+        {worked.length === 0 ? (
+          <div style={{ padding:"40px 0", textAlign:"center", color:"var(--text-subtle)", fontSize:12.5, letterSpacing:"-0.2px" }}>
+            Aún no has trabajado ningún lead — la actividad aparecerá aquí a medida que los contactes.
+          </div>
+        ) : (
+          <LeadsSpark leads={leads} days={30} dateField="workedAt"/>
+        )}
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:16 }}>
-        {/* Embudo */}
-        <div style={cardStyle}>
-          <div style={cardTitle}>Embudo</div>
-          <HBars items={funnel} total={leads.length}/>
-        </div>
         {/* Sectores */}
         <div style={cardStyle}>
           <div style={cardTitle}>Por sector</div>
-          <HBars items={sectors} total={leads.length}/>
+          <HBars items={sectors} total={total}/>
         </div>
-      </div>
-
-      {/* Orígenes */}
-      <div style={cardStyle}>
-        <div style={cardTitle}>Origen de los leads</div>
-        <HBars items={sources} total={leads.length}/>
+        {/* Orígenes */}
+        <div style={cardStyle}>
+          <div style={cardTitle}>Origen de los leads</div>
+          <HBars items={sources} total={total}/>
+        </div>
       </div>
     </div>
   );
@@ -1157,26 +1208,35 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
           />
         </div>
 
-        {/* Secciones: Leads · Analíticas · Ajustes */}
-        <div style={{ display:"flex", alignItems:"center", gap:6, paddingBottom:16, borderBottom:"0.5px solid var(--border)", marginBottom:16 }}>
+        {/* Secciones: Leads · Analíticas · Ajustes — pestañas subrayadas (como ficha de cliente) */}
+        <div style={{ display:"flex", alignItems:"center", gap:26, borderBottom:"0.5px solid var(--border)", marginBottom:18 }}>
           {[
-            { id:"leads",  label:"Leads",      icon:"users" },
-            { id:"stats",  label:"Analíticas", icon:"bar-chart" },
-            { id:"config", label:"Ajustes",    icon:"settings" },
+            { id:"leads",  label:"Leads",      n: leads.length },
+            { id:"stats",  label:"Analíticas", n: null },
+            { id:"config", label:"Ajustes",    n: null },
           ].map(t => {
             const on = view === t.id;
             return (
               <button key={t.id} onClick={() => setView(t.id)} style={{
-                display:"inline-flex", alignItems:"center", gap:7,
-                padding:"7px 15px", borderRadius:99, cursor:"pointer", fontFamily:"inherit",
-                background: on ? "rgba(255,255,255,0.08)" : "transparent",
-                border: on ? "0.5px solid rgba(255,255,255,0.14)" : "0.5px solid transparent",
+                display:"inline-flex", alignItems:"center", gap:8,
+                padding:"0 1px 12px", cursor:"pointer", fontFamily:"inherit",
+                background:"transparent", border:0,
+                borderBottom: on ? "1.5px solid var(--text)" : "1.5px solid transparent",
+                marginBottom:"-0.5px",
                 color: on ? "var(--text)" : "var(--text-subtle)",
-                fontSize:13, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
-                transition:"all .12s",
-              }}>
-                <Icon name={t.icon} size={13} strokeWidth={1.7}/>
+                fontSize:13.5, letterSpacing:"-0.3px", fontWeight: on ? 500 : 400,
+                transition:"color .12s",
+              }}
+                onMouseEnter={e => { if (!on) e.currentTarget.style.color = "var(--text-muted)"; }}
+                onMouseLeave={e => { if (!on) e.currentTarget.style.color = "var(--text-subtle)"; }}>
                 {t.label}
+                {t.n != null && (
+                  <span style={{
+                    fontSize:11, minWidth:18, textAlign:"center", padding:"1px 6px", borderRadius:99,
+                    background: on ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.05)",
+                    color: on ? "var(--text-muted)" : "var(--text-subtle)",
+                  }}>{t.n}</span>
+                )}
               </button>
             );
           })}
