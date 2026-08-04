@@ -248,6 +248,9 @@
           if (log.fat != null) parts.push(`${log.fat}G`);
           if (log.carbs != null) parts.push(`${log.carbs}C`);
           if (parts.length) sub = parts.join(" \xB7 ");
+        } else if (lt.includes("paso") && log.steps != null) {
+          const goal = D.parseStepsGoal ? D.parseStepsGoal(it.text) : 1e4;
+          sub = `${Number(log.steps).toLocaleString("es-ES")} / ${goal.toLocaleString("es-ES")} pasos`;
         }
       }
       return /* @__PURE__ */ React.createElement(

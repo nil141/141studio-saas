@@ -872,12 +872,18 @@ const _routineVal = (routineId, dateStr, itemId) => {
 // un número suelto, se DERIVA del registro, para que "hecho" y el dato nunca
 // se desincronicen (si no hay registro → 0%, aunque hubiera un valor viejo).
 const _MACRO_GOALS = { kcal: 2500, protein: 140, fat: 70, carbs: 330 };
+// Objetivo de pasos leído del propio texto del paso ("10.000 pasos" → 10000)
+const _parseStepsGoal = (text) => {
+  const m = (text || "").replace(/[.\s]/g, "").match(/(\d{3,7})/);
+  return m ? parseInt(m[1], 10) : 10000;
+};
 const _itemMetric = (routineId, itemId) => {
   const r  = (_store.ROUTINES || []).find(x => x.id === routineId);
   const it = r && (r.items || []).find(i => i.id === itemId);
   const t  = ((it && it.text) || "").toLowerCase();
   if (t.includes("peso"))  return "weight";
   if (t.includes("macro")) return "macros";
+  if (t.includes("paso"))  return "steps";
   return null;
 };
 const routineItemProgress = (routineId, dateStr, itemId) => {
@@ -886,6 +892,13 @@ const routineItemProgress = (routineId, dateStr, itemId) => {
     const log = routineItemLog(routineId, dateStr, itemId);
     if (!log) return 0;
     if (metric === "weight") return log.weight != null ? 100 : 0;
+    if (metric === "steps") {
+      const r  = (_store.ROUTINES || []).find(x => x.id === routineId);
+      const it = r && (r.items || []).find(i => i.id === itemId);
+      const goal = _parseStepsGoal(it && it.text);
+      const s = Number(log.steps) || 0;
+      return goal ? Math.min(100, Math.round((s / goal) * 100)) : (s > 0 ? 100 : 0);
+    }
     const keys = Object.keys(_MACRO_GOALS);
     let sum = 0;
     keys.forEach(k => { const v = Number(log[k]) || 0; sum += Math.min(1, v / _MACRO_GOALS[k]); });
@@ -1111,7 +1124,7 @@ window.Data = {
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,
   routinesForDay, routineItemDone, toggleRoutineItem,
   routineItemProgress, setRoutineItemProgress, stepAppliesOn,
-  routineItemLog, setRoutineItemLog,
+  routineItemLog, setRoutineItemLog, parseStepsGoal: _parseStepsGoal,
   today: _todayStr, todayDate: _todayDate,
   routineDayComplete, routineStreak,
   saveFinance,

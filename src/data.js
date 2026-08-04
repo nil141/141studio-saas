@@ -986,12 +986,17 @@ const _routineVal = (routineId, dateStr, itemId) => {
   return 0;
 };
 const _MACRO_GOALS = { kcal: 2500, protein: 140, fat: 70, carbs: 330 };
+const _parseStepsGoal = (text) => {
+  const m = (text || "").replace(/[.\s]/g, "").match(/(\d{3,7})/);
+  return m ? parseInt(m[1], 10) : 1e4;
+};
 const _itemMetric = (routineId, itemId) => {
   const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
   const it = r && (r.items || []).find((i) => i.id === itemId);
   const t = (it && it.text || "").toLowerCase();
   if (t.includes("peso")) return "weight";
   if (t.includes("macro")) return "macros";
+  if (t.includes("paso")) return "steps";
   return null;
 };
 const routineItemProgress = (routineId, dateStr, itemId) => {
@@ -1000,6 +1005,13 @@ const routineItemProgress = (routineId, dateStr, itemId) => {
     const log = routineItemLog(routineId, dateStr, itemId);
     if (!log) return 0;
     if (metric === "weight") return log.weight != null ? 100 : 0;
+    if (metric === "steps") {
+      const r = (_store.ROUTINES || []).find((x) => x.id === routineId);
+      const it = r && (r.items || []).find((i) => i.id === itemId);
+      const goal = _parseStepsGoal(it && it.text);
+      const s = Number(log.steps) || 0;
+      return goal ? Math.min(100, Math.round(s / goal * 100)) : s > 0 ? 100 : 0;
+    }
     const keys = Object.keys(_MACRO_GOALS);
     let sum = 0;
     keys.forEach((k) => {
@@ -1258,6 +1270,7 @@ window.Data = {
   stepAppliesOn,
   routineItemLog,
   setRoutineItemLog,
+  parseStepsGoal: _parseStepsGoal,
   today: _todayStr,
   todayDate: _todayDate,
   routineDayComplete,

@@ -384,6 +384,7 @@
         const common = { routineId: routineModal.r.id, day: selDateStr, itemId: routineModal.it.id, onClose: () => setRoutineModal(null) };
         if (metric === "weight") return /* @__PURE__ */ React.createElement(WeightLogModal, { ...common });
         if (metric === "macros") return /* @__PURE__ */ React.createElement(MacrosLogModal, { ...common });
+        if (metric === "steps") return /* @__PURE__ */ React.createElement(StepsLogModal, { ...common, text: routineModal.it.text });
         return /* @__PURE__ */ React.createElement(
           TaskProgressModal,
           {
@@ -1471,6 +1472,7 @@
     const t = (text || "").toLowerCase();
     if (t.includes("peso")) return "weight";
     if (t.includes("macro")) return "macros";
+    if (t.includes("paso")) return "steps";
     return null;
   };
   var _LogModalShell = ({ title, subtitle, onClose, onConfirm, onClear, canClear, children }) => ReactDOM.createPortal(
@@ -1603,6 +1605,64 @@
           }
         }
       ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 22, color: "var(--text-subtle)" } }, "kg"))
+    );
+  };
+  var StepsLogModal = ({ routineId, day, itemId, text, onClose }) => {
+    const D = window.Data;
+    const goal = D.parseStepsGoal ? D.parseStepsGoal(text) : 1e4;
+    const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
+    const [s, setS] = useState(existing && existing.steps != null ? String(existing.steps) : "");
+    const n = parseInt(String(s).replace(/[^0-9]/g, ""), 10);
+    const prog = isFinite(n) && goal ? Math.min(100, Math.round(n / goal * 100)) : 0;
+    const save = () => {
+      if (!isFinite(n) || n <= 0) {
+        onClose();
+        return;
+      }
+      D.setRoutineItemLog(routineId, day, itemId, { steps: n });
+      onClose();
+    };
+    const clear = () => {
+      D.setRoutineItemLog(routineId, day, itemId, null);
+      onClose();
+    };
+    return /* @__PURE__ */ React.createElement(
+      _LogModalShell,
+      {
+        title: "Registrar pasos",
+        subtitle: `Objetivo \xB7 ${goal.toLocaleString("es-ES")} pasos${isFinite(n) && n > 0 ? ` \xB7 ${prog}%` : ""}`,
+        onClose,
+        onConfirm: save,
+        canClear: !!existing,
+        onClear: clear
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "center", gap: 8 } }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          type: "text",
+          inputMode: "numeric",
+          value: s,
+          onChange: (e) => setS(e.target.value.replace(/[^0-9]/g, "")),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") save();
+          },
+          placeholder: "0",
+          style: {
+            width: 220,
+            textAlign: "center",
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            color: s ? "var(--text)" : "rgba(255,255,255,0.15)",
+            fontSize: 52,
+            fontWeight: 300,
+            letterSpacing: "-2px",
+            fontFamily: "var(--font-display)",
+            caretColor: "var(--accent)"
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 20, color: "var(--text-subtle)" } }, "pasos"))
     );
   };
   var _MACROS = [
