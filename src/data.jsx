@@ -117,11 +117,22 @@ const _mp = r => r && ({
   nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used ?? 0,
   description: r.description, recurring: r.recurring ?? false,
 });
+// Notas de tarea con respaldo local: la descripción se guarda también en el
+// navegador, para que no se pierda al recargar aunque la columna 'notes' aún
+// no exista en la base de datos (si existe, se prioriza la de la nube).
+const _TASK_NOTES_KEY = "task_notes_v1";
+let _taskNotesLocal = {};
+try { _taskNotesLocal = JSON.parse(localStorage.getItem(_TASK_NOTES_KEY) || "{}") || {}; } catch (e) { _taskNotesLocal = {}; }
+const _setTaskNoteLocal = (id, notes) => {
+  if (!id) return;
+  if (notes) _taskNotesLocal[id] = notes; else delete _taskNotesLocal[id];
+  try { localStorage.setItem(_TASK_NOTES_KEY, JSON.stringify(_taskNotesLocal)); } catch (e) {}
+};
 const _mt = r => r && ({
   id: r.id, title: r.title, column: r.col, assignee: r.assignee,
   clientId: r.client_id, clientName: r.client_name,
   done: r.done, deadline: r.deadline, phase: r.phase || null,
-  notes: r.notes || null,
+  notes: r.notes || _taskNotesLocal[r.id] || null,
   progress: r.progress ?? 0,
 });
 const _mi = r => r && ({
@@ -676,6 +687,7 @@ const addTask = (input) => {
     notes: input.notes || null,
     done: false, deadline: input.deadline || null,
   };
+  _setTaskNoteLocal(t.id, t.notes);
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]]; _emit();
   _insertAdaptive("tasks", {
     id: t.id, agency_id: uid,
@@ -998,6 +1010,7 @@ const updateTask = (projectId, taskId, changes) => {
   const uid = _uid(); if (!uid) return;
   if (!_store.TASKS[projectId]) return;
   const eff = { ...changes };
+  if (eff.notes !== undefined) _setTaskNoteLocal(taskId, eff.notes);
   // Mismo criterio que moveTask: completar una vencida la pasa a hoy.
   if (changes.column === "done") {
     const cur = _store.TASKS[projectId].find(t => t.id === taskId);

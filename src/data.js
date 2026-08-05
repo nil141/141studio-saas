@@ -128,6 +128,22 @@ const _mp = (r) => {
     recurring: (_f = r.recurring) != null ? _f : false
   };
 };
+const _TASK_NOTES_KEY = "task_notes_v1";
+let _taskNotesLocal = {};
+try {
+  _taskNotesLocal = JSON.parse(localStorage.getItem(_TASK_NOTES_KEY) || "{}") || {};
+} catch (e) {
+  _taskNotesLocal = {};
+}
+const _setTaskNoteLocal = (id, notes) => {
+  if (!id) return;
+  if (notes) _taskNotesLocal[id] = notes;
+  else delete _taskNotesLocal[id];
+  try {
+    localStorage.setItem(_TASK_NOTES_KEY, JSON.stringify(_taskNotesLocal));
+  } catch (e) {
+  }
+};
 const _mt = (r) => {
   var _a;
   return r && {
@@ -140,7 +156,7 @@ const _mt = (r) => {
     done: r.done,
     deadline: r.deadline,
     phase: r.phase || null,
-    notes: r.notes || null,
+    notes: r.notes || _taskNotesLocal[r.id] || null,
     progress: (_a = r.progress) != null ? _a : 0
   };
 };
@@ -804,6 +820,7 @@ const addTask = (input) => {
     done: false,
     deadline: input.deadline || null
   };
+  _setTaskNoteLocal(t.id, t.notes);
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]];
   _emit();
   _insertAdaptive("tasks", {
@@ -1102,6 +1119,7 @@ const updateTask = (projectId, taskId, changes) => {
   if (!uid) return;
   if (!_store.TASKS[projectId]) return;
   const eff = { ...changes };
+  if (eff.notes !== void 0) _setTaskNoteLocal(taskId, eff.notes);
   if (changes.column === "done") {
     const cur = _store.TASKS[projectId].find((t) => t.id === taskId);
     const dl = changes.deadline !== void 0 ? changes.deadline : cur && cur.deadline;
