@@ -121,6 +121,7 @@ const _mt = r => r && ({
   id: r.id, title: r.title, column: r.col, assignee: r.assignee,
   clientId: r.client_id, clientName: r.client_name,
   done: r.done, deadline: r.deadline, phase: r.phase || null,
+  notes: r.notes || null,
   progress: r.progress ?? 0,
 });
 const _mi = r => r && ({
@@ -672,6 +673,7 @@ const addTask = (input) => {
     assignee: input.assignee || "Tú",
     clientId: input.clientId || null, clientName: input.clientName || null,
     phase: input.phase || null,
+    notes: input.notes || null,
     done: false, deadline: input.deadline || null,
   };
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]]; _emit();
@@ -682,6 +684,7 @@ const addTask = (input) => {
     client_id: t.clientId || null, client_name: t.clientName || null,
     deadline: t.deadline || null,
     phase: t.phase || null,
+    notes: t.notes || null,
     done: false,
   }).then(({ error }) => {
     if (error) {
@@ -1014,6 +1017,7 @@ const updateTask = (projectId, taskId, changes) => {
   if (eff.phase    !== undefined) dbChanges.phase    = eff.phase || null;
   if (eff.clientId   !== undefined) dbChanges.client_id   = eff.clientId || null;
   if (eff.clientName !== undefined) dbChanges.client_name = eff.clientName || null;
+  if (eff.notes      !== undefined) dbChanges.notes       = eff.notes || null;
   _updateAdaptive("tasks", taskId, dbChanges).then(({ error }) => {
     if (error) console.error("[updateTask] Supabase error:", error.message);
   });

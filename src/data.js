@@ -140,6 +140,7 @@ const _mt = (r) => {
     done: r.done,
     deadline: r.deadline,
     phase: r.phase || null,
+    notes: r.notes || null,
     progress: (_a = r.progress) != null ? _a : 0
   };
 };
@@ -799,6 +800,7 @@ const addTask = (input) => {
     clientId: input.clientId || null,
     clientName: input.clientName || null,
     phase: input.phase || null,
+    notes: input.notes || null,
     done: false,
     deadline: input.deadline || null
   };
@@ -815,6 +817,7 @@ const addTask = (input) => {
     client_name: t.clientName || null,
     deadline: t.deadline || null,
     phase: t.phase || null,
+    notes: t.notes || null,
     done: false
   }).then(({ error }) => {
     if (error) {
@@ -1118,6 +1121,7 @@ const updateTask = (projectId, taskId, changes) => {
   if (eff.phase !== void 0) dbChanges.phase = eff.phase || null;
   if (eff.clientId !== void 0) dbChanges.client_id = eff.clientId || null;
   if (eff.clientName !== void 0) dbChanges.client_name = eff.clientName || null;
+  if (eff.notes !== void 0) dbChanges.notes = eff.notes || null;
   _updateAdaptive("tasks", taskId, dbChanges).then(({ error }) => {
     if (error) console.error("[updateTask] Supabase error:", error.message);
   });

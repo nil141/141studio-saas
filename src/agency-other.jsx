@@ -553,9 +553,10 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                     <div style={{ fontSize:14, letterSpacing:"-0.5px", color: isDone ? "var(--text-subtle)" : "var(--text)" }}>
                       {t.title}
                     </div>
-                    <div style={{ fontSize:11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                    <div style={{ fontSize:11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px",
+                      whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
                       {project ? project.name : (isDone ? "Completada" : colLabel || "Por hacer")}
-                      {t.deadline ? ` · ${new Date(t.deadline+"T00:00:00").toLocaleDateString("es-ES",{day:"numeric",month:"short"})}` : ""}
+                      {t.notes ? ` · ${t.notes}` : ""}
                       {isOverdue ? " · Vencida" : ""}
                     </div>
                   </div>
