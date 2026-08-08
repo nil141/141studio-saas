@@ -250,12 +250,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   const groupMap = {};
   D.PROJECTS.forEach(p => {
     const tasks = (D.TASKS[p.id] || []).filter(matchesDay);
-    const key   = p.clientId || "__nc";
+    // Con cliente → se agrupa por cliente. Sin cliente (interno) → cada proyecto
+    // es su propio grupo y el encabezado es el nombre del proyecto.
+    const key   = p.clientId || ("__nc:" + p.id);
     if (!groupMap[key]) {
       const cl = D.CLIENTS.find(c => c.id === p.clientId);
       groupMap[key] = {
         clientId: key,
-        clientName: (cl?.company || p.clientName || "Sin cliente").toUpperCase(),
+        clientName: (p.clientId ? (cl?.company || p.clientName || "Sin cliente") : (p.name || "Proyecto")).toUpperCase(),
         color: clientColorMap[p.clientId] || "#a78bfa",
         projects: [],
       };
@@ -555,7 +557,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                     </div>
                     <div style={{ fontSize:11, color: isOverdue ? "var(--red)" : "var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px",
                       whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>
-                      {project ? project.name : (isDone ? "Completada" : colLabel || "Por hacer")}
+                      {/* Solo mostramos el nombre del proyecto si el encabezado es el cliente;
+                          en proyectos internos el encabezado ya es el nombre del proyecto. */}
+                      {project && project.clientId ? project.name : (isDone ? "Completada" : colLabel || "Por hacer")}
                       {t.notes ? ` · ${t.notes}` : ""}
                       {isOverdue ? " · Vencida" : ""}
                     </div>

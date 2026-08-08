@@ -68,12 +68,12 @@
     const groupMap = {};
     D.PROJECTS.forEach((p) => {
       const tasks = (D.TASKS[p.id] || []).filter(matchesDay);
-      const key = p.clientId || "__nc";
+      const key = p.clientId || "__nc:" + p.id;
       if (!groupMap[key]) {
         const cl = D.CLIENTS.find((c) => c.id === p.clientId);
         groupMap[key] = {
           clientId: key,
-          clientName: ((cl == null ? void 0 : cl.company) || p.clientName || "Sin cliente").toUpperCase(),
+          clientName: (p.clientId ? (cl == null ? void 0 : cl.company) || p.clientName || "Sin cliente" : p.name || "Proyecto").toUpperCase(),
           color: clientColorMap[p.clientId] || "#a78bfa",
           projects: []
         };
@@ -366,7 +366,7 @@
             whiteSpace: "nowrap",
             overflow: "hidden",
             textOverflow: "ellipsis"
-          } }, project ? project.name : isDone ? "Completada" : colLabel || "Por hacer", t.notes ? ` \xB7 ${t.notes}` : "", isOverdue ? " \xB7 Vencida" : "")),
+          } }, project && project.clientId ? project.name : isDone ? "Completada" : colLabel || "Por hacer", t.notes ? ` \xB7 ${t.notes}` : "", isOverdue ? " \xB7 Vencida" : "")),
           /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { color: "rgba(255,255,255,0.15)", flexShrink: 0 } })
         );
       })), gIdx !== visibleGroups.length - 1 && /* @__PURE__ */ React.createElement("div", { className: "client-divider", style: { height: "0.5px", background: "var(--border)", marginTop: 4 } })))),
