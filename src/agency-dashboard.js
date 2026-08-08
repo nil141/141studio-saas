@@ -113,44 +113,10 @@
           label: p.name,
           sub: p.clientName,
           type: "Entrega",
-          color: p.light === "red" ? "var(--red)" : p.light === "amber" ? "var(--amber)" : "var(--green)",
+          color: "var(--text-muted)",
           icon: "folder"
         });
       });
-      D.INVOICES.filter((i) => i.status !== "paid").forEach((i) => {
-        const d = parseSpanishDate(i.due);
-        if (d) ev.push({
-          date: d,
-          label: i.id,
-          sub: `${i.client} \xB7 \u20AC${i.amount}`,
-          type: "Factura",
-          color: i.status === "overdue" ? "var(--red)" : "var(--amber)",
-          icon: "receipt"
-        });
-      });
-      try {
-        const fin = window.Data && window.Data.FINANCE || {};
-        (fin.subs || []).filter((s) => s.active !== false && s.nextRenewal).forEach((s) => {
-          let d = /* @__PURE__ */ new Date(s.nextRenewal + "T00:00:00");
-          if (isNaN(d)) return;
-          let guard = 0;
-          while (d < todayMid && guard < 60) {
-            if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
-            else d.setMonth(d.getMonth() + 1);
-            guard++;
-          }
-          const amount = Number(s.amount) || 0;
-          ev.push({
-            date: d,
-            label: s.name,
-            sub: `Cobro \xB7 \u20AC${amount.toLocaleString("es-ES")} \xB7 ${s.cycle === "yearly" ? "anual" : "mensual"}`,
-            type: "Suscripci\xF3n",
-            color: "var(--accent)",
-            icon: "refresh-cw"
-          });
-        });
-      } catch (err) {
-      }
       try {
         const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
         custom.forEach((e) => {
@@ -158,7 +124,6 @@
           const d = /* @__PURE__ */ new Date(e.date + "T00:00:00");
           if (isNaN(d)) return;
           const iconMap = { meeting: "users", task: "list-todo", custom: "calendar" };
-          const colorMap = { meeting: "var(--red)", task: "var(--accent)", custom: "var(--blue)" };
           const typeLabel = { meeting: "Reuni\xF3n", task: "Tarea", custom: "Evento" };
           ev.push({
             date: d,
@@ -166,7 +131,7 @@
             time: e.time || null,
             timeEnd: e.timeEnd || null,
             type: typeLabel[e.type] || "Evento",
-            color: colorMap[e.type] || "var(--blue)",
+            color: "var(--text-muted)",
             icon: iconMap[e.type] || "calendar"
           });
         });

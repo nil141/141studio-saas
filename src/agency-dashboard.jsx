@@ -144,44 +144,14 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     const ev = [];
     const todayMid = new Date(); todayMid.setHours(0,0,0,0);
 
-    // Entregas de proyectos (con deadline futuro)
+    // Entregas de proyectos (con deadline futuro) — hitos del calendario
     D.PROJECTS.forEach(p => {
       const d = parseSpanishDate(p.deadline);
       if (d) ev.push({ date: d, label: p.name, sub: p.clientName, type: "Entrega",
-        color: p.light==="red"?"var(--red)":p.light==="amber"?"var(--amber)":"var(--green)",
-        icon: "folder" });
+        color: "var(--text-muted)", icon: "folder" });
     });
 
-    // Facturas pendientes de cobro
-    D.INVOICES.filter(i => i.status !== "paid").forEach(i => {
-      const d = parseSpanishDate(i.due);
-      if (d) ev.push({ date: d, label: i.id, sub: `${i.client} · €${i.amount}`, type: "Factura",
-        color: i.status==="overdue"?"var(--red)":"var(--amber)", icon: "receipt" });
-    });
-
-    // Cobros de suscripciones (siguiente renovación desde Gastos)
-    try {
-      const fin = (window.Data && window.Data.FINANCE) || {};
-      (fin.subs || []).filter(s => s.active !== false && s.nextRenewal).forEach(s => {
-        let d = new Date(s.nextRenewal + "T00:00:00");
-        if (isNaN(d)) return;
-        // Si la fecha ya pasó, avanzamos al siguiente ciclo hasta que sea futura
-        let guard = 0;
-        while (d < todayMid && guard < 60) {
-          if (s.cycle === "yearly") d.setFullYear(d.getFullYear() + 1);
-          else d.setMonth(d.getMonth() + 1);
-          guard++;
-        }
-        const amount = Number(s.amount) || 0;
-        ev.push({
-          date: d, label: s.name,
-          sub: `Cobro · €${amount.toLocaleString("es-ES")} · ${s.cycle === "yearly" ? "anual" : "mensual"}`,
-          type: "Suscripción", color: "var(--accent)", icon: "refresh-cw",
-        });
-      });
-    } catch (err) {}
-
-    // Eventos personalizados de Agenda (reuniones, etc.)
+    // Eventos personalizados de Agenda (reuniones, eventos, tareas) — colores neutros
     try {
       const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
       custom.forEach(e => {
@@ -189,13 +159,12 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         const d = new Date(e.date + "T00:00:00");
         if (isNaN(d)) return;
         const iconMap  = { meeting:"users", task:"list-todo", custom:"calendar" };
-        const colorMap = { meeting:"var(--red)", task:"var(--accent)", custom:"var(--blue)" };
         const typeLabel= { meeting:"Reunión", task:"Tarea", custom:"Evento" };
         ev.push({
           date: d, label: e.title,
           time: e.time || null, timeEnd: e.timeEnd || null,
           type: typeLabel[e.type] || "Evento",
-          color: colorMap[e.type] || "var(--blue)",
+          color: "var(--text-muted)",
           icon: iconMap[e.type] || "calendar",
         });
       });
