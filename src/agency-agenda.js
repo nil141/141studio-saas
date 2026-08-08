@@ -23,7 +23,7 @@ const CUSTOM_KEY = "agenda_custom_events";
 const loadCustom = () => {
   try {
     return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
-  } catch {
+  } catch (e) {
     return [];
   }
 };
@@ -32,7 +32,7 @@ const VIEW_KEY = "agenda_view";
 const loadView = () => {
   try {
     return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month";
-  } catch {
+  } catch (e) {
     return "month";
   }
 };
@@ -65,7 +65,7 @@ const AgendaPage = ({ navigate }) => {
   const [panelOpen, setPanelOpen] = useState(true);
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "" });
+  const [form, setForm] = useState({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "", link: "" });
   const [pickerFor, setPickerFor] = useState(null);
   const allEvents = useMemo(() => {
     const evts = [];
@@ -149,7 +149,7 @@ const AgendaPage = ({ navigate }) => {
     setViewMode(v);
     try {
       localStorage.setItem(VIEW_KEY, v);
-    } catch {
+    } catch (e) {
     }
   };
   const weekDays = useMemo(() => {
@@ -211,6 +211,7 @@ const AgendaPage = ({ navigate }) => {
       sub: form.notes || "",
       time: form.time || null,
       timeEnd: form.timeEnd || null,
+      link: (form.link || "").trim() || null,
       type: form.type
     };
     const updated = [...customEvents, evt];
@@ -218,7 +219,7 @@ const AgendaPage = ({ navigate }) => {
     saveCustom(updated);
     setShowForm(false);
     setPickerFor(null);
-    setForm({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "" });
+    setForm({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "", link: "" });
     setSelected(evt.date);
   };
   const deleteCustom = (id) => {
@@ -264,7 +265,32 @@ const AgendaPage = ({ navigate }) => {
     textOverflow: "ellipsis",
     whiteSpace: "nowrap",
     paddingRight: onDelete ? 16 : 0
-  } }, ev.title), ev.time ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 10, strokeWidth: 2 }), /* @__PURE__ */ React.createElement("span", null, ev.time, ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : "")) : ev.sub ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.sub) : null, onDelete && /* @__PURE__ */ React.createElement(
+  } }, ev.title), ev.time ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 10, strokeWidth: 2 }), /* @__PURE__ */ React.createElement("span", null, ev.time, ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : "")) : ev.sub ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, ev.sub) : null, ev.link && /* @__PURE__ */ React.createElement(
+    "a",
+    {
+      href: ev.link,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      onClick: (e) => e.stopPropagation(),
+      title: ev.link,
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        marginTop: 6,
+        textDecoration: "none",
+        fontSize: 11,
+        padding: "4px 10px",
+        borderRadius: 99,
+        background: "var(--accent-soft)",
+        color: "var(--accent)",
+        border: "0.5px solid rgba(158,154,229,0.35)",
+        fontWeight: 500
+      }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 11 }),
+    " Unirse"
+  ), onDelete && /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: (e) => {
@@ -597,7 +623,7 @@ const AgendaPage = ({ navigate }) => {
           }
         }
       )),
-      /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px 20px" } }, /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px 14px" } }, /* @__PURE__ */ React.createElement(
         "input",
         {
           placeholder: "A\xF1adir descripci\xF3n o ubicaci\xF3n...",
@@ -612,6 +638,27 @@ const AgendaPage = ({ navigate }) => {
             fontWeight: 400,
             letterSpacing: "-0.96px",
             color: form.notes ? "var(--text-muted)" : "rgba(255,255,255,0.15)",
+            fontFamily: "var(--font-sans)",
+            caretColor: "var(--accent)"
+          }
+        }
+      )),
+      /* @__PURE__ */ React.createElement("div", { style: { padding: "0 24px 20px", display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 15, strokeWidth: 1.7, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "url",
+          placeholder: "Enlace de la reuni\xF3n (Meet, Zoom\u2026)",
+          value: form.link,
+          onChange: (e) => setForm((f) => ({ ...f, link: e.target.value })),
+          style: {
+            flex: 1,
+            background: "transparent",
+            border: "none",
+            outline: "none",
+            fontSize: 13.5,
+            fontWeight: 400,
+            letterSpacing: "-0.3px",
+            color: form.link ? "var(--text-muted)" : "rgba(255,255,255,0.15)",
             fontFamily: "var(--font-sans)",
             caretColor: "var(--accent)"
           }

@@ -31,6 +31,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [date,      setDate]      = useState(today());
   const [time,      setTime]      = useState("");
   const [timeEnd,   setTimeEnd]   = useState("");
+  const [link,      setLink]      = useState("");
   const [freq,      setFreq]      = useState("once");
   const [activeTab, setActiveTab] = useState(null); // null | "client" | "freq" | "time" | "date"
   const [pickerFor, setPickerFor] = useState(null);
@@ -47,7 +48,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setType("task");
       } else {
         setTitle(""); setDesc(""); setClientId(""); setProjectId(""); setDate(defaultDate || today());
-        setTime(""); setTimeEnd(""); setFreq("once");
+        setTime(""); setTimeEnd(""); setLink(""); setFreq("once");
         setType(defaultType);
       }
       setActiveTab(null); setPickerFor(null); setDatePicker(false);
@@ -101,6 +102,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       localStorage.setItem(CUSTOM_KEY, JSON.stringify([...prev, {
         id: "custom-" + Date.now(), date, title: t,
         time: time||null, timeEnd: timeEnd||null,
+        link: link.trim() || null,
         frequency: freq, type: type === "meeting" ? "meeting" : "custom",
       }]));
     }
@@ -123,6 +125,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const tabs = [
     ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users", hasVal: !!clientId }] : []),
     ...(type === "task" && !editTask ? [{ id:"project", label:"Proyecto", icon:"folder", hasVal: !!projectId }] : []),
+    ...(type === "event" || type === "meeting" ? [{ id:"link", label:"Enlace", icon:"link", hasVal: !!link.trim() }] : []),
     { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
     { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
     { id:"date", label:"Fecha",      icon:"calendar",   hasVal: dateChanged },
@@ -356,6 +359,31 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
             </div>
           )}
 
+          {/* Enlace de la reunión */}
+          {activeTab === "link" && (
+            <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+              <div style={{
+                width:44, height:44, borderRadius:12, background:"rgba(255,255,255,0.05)",
+                border:"0.5px solid rgba(255,255,255,0.08)", display:"grid", placeItems:"center",
+                color:"var(--text-muted)",
+              }}>
+                <Icon name="link" size={18} strokeWidth={1.7}/>
+              </div>
+              <input autoFocus type="url" value={link}
+                onChange={e => setLink(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}
+                placeholder="https://meet.google.com/…"
+                style={{
+                  width:"100%", maxWidth:360, textAlign:"center",
+                  background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)",
+                  borderRadius:12, padding:"11px 14px", fontSize:13.5, letterSpacing:"-0.3px",
+                  color: link ? "var(--text)" : "rgba(255,255,255,0.3)", outline:"none",
+                  fontFamily:"var(--font-sans)", caretColor: accentColor,
+                }}/>
+              <span style={{ fontSize:11.5, color:"var(--text-subtle)" }}>Meet, Zoom, Teams… el enlace de la reunión</span>
+            </div>
+          )}
+
         </div>
 
         {/* Divider */}
@@ -393,6 +421,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               )}
               {tab.id === "time" && time && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{time}</span>
+              )}
+              {tab.id === "link" && link.trim() && (
+                <span style={{ width:6, height:6, borderRadius:"50%", background:accentHex, flexShrink:0 }}/>
               )}
               {tab.id === "date" && dateChanged && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{fmtDate(date)}</span>

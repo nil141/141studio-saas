@@ -24,6 +24,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [date, setDate] = useState(today());
   const [time, setTime] = useState("");
   const [timeEnd, setTimeEnd] = useState("");
+  const [link, setLink] = useState("");
   const [freq, setFreq] = useState("once");
   const [activeTab, setActiveTab] = useState(null);
   const [pickerFor, setPickerFor] = useState(null);
@@ -49,6 +50,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setDate(defaultDate || today());
         setTime("");
         setTimeEnd("");
+        setLink("");
         setFreq("once");
         setType(defaultType);
       }
@@ -114,6 +116,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         title: t,
         time: time || null,
         timeEnd: timeEnd || null,
+        link: link.trim() || null,
         frequency: freq,
         type: type === "meeting" ? "meeting" : "custom"
       }]));
@@ -132,6 +135,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const tabs = [
     ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
     ...type === "task" && !editTask ? [{ id: "project", label: "Proyecto", icon: "folder", hasVal: !!projectId }] : [],
+    ...type === "event" || type === "meeting" ? [{ id: "link", label: "Enlace", icon: "link", hasVal: !!link.trim() }] : [],
     { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
     { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
     { id: "date", label: "Fecha", icon: "calendar", hasVal: dateChanged }
@@ -334,7 +338,43 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         letterSpacing: "-1px",
         fontFamily: "var(--font-display)",
         transition: "all .1s"
-      } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora"))),
+      } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora")), activeTab === "link" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        background: "rgba(255,255,255,0.05)",
+        border: "0.5px solid rgba(255,255,255,0.08)",
+        display: "grid",
+        placeItems: "center",
+        color: "var(--text-muted)"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          autoFocus: true,
+          type: "url",
+          value: link,
+          onChange: (e) => setLink(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter" && canSubmit) handleSubmit();
+          },
+          placeholder: "https://meet.google.com/\u2026",
+          style: {
+            width: "100%",
+            maxWidth: 360,
+            textAlign: "center",
+            background: "rgba(255,255,255,0.05)",
+            border: "0.5px solid rgba(255,255,255,0.1)",
+            borderRadius: 12,
+            padding: "11px 14px",
+            fontSize: 13.5,
+            letterSpacing: "-0.3px",
+            color: link ? "var(--text)" : "rgba(255,255,255,0.3)",
+            outline: "none",
+            fontFamily: "var(--font-sans)",
+            caretColor: accentColor
+          }
+        }
+      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "Meet, Zoom, Teams\u2026 el enlace de la reuni\xF3n"))),
       /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => {
         var _a;
@@ -360,7 +400,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap"
-        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
+        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && link.trim() && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
       }))
     )
   ), pickerFor && /* @__PURE__ */ React.createElement(

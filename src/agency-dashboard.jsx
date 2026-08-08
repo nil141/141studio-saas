@@ -163,6 +163,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         ev.push({
           date: d, label: e.title,
           time: e.time || null, timeEnd: e.timeEnd || null,
+          link: e.link || null,
           type: typeLabel[e.type] || "Evento",
           color: "var(--text-muted)",
           icon: iconMap[e.type] || "calendar",
@@ -1197,12 +1198,26 @@ const EventRow = ({ ev, last, formatEventDate }) => (
         {ev.sub ? ` · ${ev.sub}` : ""}
       </div>
     </div>
-    <span style={{
-      fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
-      background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
-      border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
-      whiteSpace: "nowrap", fontWeight: 500,
-    }}>{ev.type}</span>
+    {ev.link ? (
+      <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+        title={ev.link}
+        style={{
+          display: "inline-flex", alignItems: "center", gap: 5, textDecoration: "none",
+          fontSize: 10.5, padding: "4px 10px", borderRadius: 99,
+          background: "var(--accent-soft)", color: "var(--accent)",
+          border: "0.5px solid rgba(158,154,229,0.35)", letterSpacing: "-0.1px",
+          whiteSpace: "nowrap", fontWeight: 500, flexShrink: 0,
+        }}>
+        <Icon name="link" size={11}/> Unirse
+      </a>
+    ) : (
+      <span style={{
+        fontSize: 10.5, padding: "3px 9px", borderRadius: 99,
+        background: "rgba(255,255,255,0.05)", color: "var(--text-muted)",
+        border: "0.5px solid rgba(255,255,255,0.08)", letterSpacing: "-0.1px",
+        whiteSpace: "nowrap", fontWeight: 500,
+      }}>{ev.type}</span>
+    )}
   </div>
 );
 

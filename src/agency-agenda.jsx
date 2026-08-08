@@ -64,7 +64,7 @@ const AgendaPage = ({ navigate }) => {
   const [panelOpen, setPanelOpen] = useState(true);   // detalle del día (siempre visible)
   const [customEvents, setCustomEvents] = useState(loadCustom);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
+  const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"", link:"" });
   const [pickerFor, setPickerFor] = useState(null); // null | "start" | "end"
 
   // ── build event list from all sources ──────────────────────────────────────
@@ -216,6 +216,7 @@ const AgendaPage = ({ navigate }) => {
       sub: form.notes || "",
       time: form.time || null,
       timeEnd: form.timeEnd || null,
+      link: (form.link || "").trim() || null,
       type: form.type,
     };
     const updated = [...customEvents, evt];
@@ -223,7 +224,7 @@ const AgendaPage = ({ navigate }) => {
     saveCustom(updated);
     setShowForm(false);
     setPickerFor(null);
-    setForm({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"" });
+    setForm({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"", link:"" });
     setSelected(evt.date);
   };
 
@@ -297,6 +298,17 @@ const AgendaPage = ({ navigate }) => {
           {ev.sub}
         </div>
       ) : null}
+      {ev.link && (
+        <a href={ev.link} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} title={ev.link}
+          style={{
+            display:"inline-flex", alignItems:"center", gap:5, marginTop:6, textDecoration:"none",
+            fontSize:11, padding:"4px 10px", borderRadius:99,
+            background:"var(--accent-soft)", color:"var(--accent)",
+            border:"0.5px solid rgba(158,154,229,0.35)", fontWeight:500,
+          }}>
+          <Icon name="link" size={11}/> Unirse
+        </a>
+      )}
       {onDelete && (
         <button onClick={(e) => { e.stopPropagation(); onDelete(); }}
           style={{
@@ -655,7 +667,7 @@ const AgendaPage = ({ navigate }) => {
             </div>
 
             {/* Description */}
-            <div style={{padding:"0 24px 20px"}}>
+            <div style={{padding:"0 24px 14px"}}>
               <input
                 placeholder="Añadir descripción o ubicación..."
                 value={form.notes}
@@ -666,6 +678,23 @@ const AgendaPage = ({ navigate }) => {
                   color: form.notes ? "var(--text-muted)" : "rgba(255,255,255,0.15)",
                   fontFamily:"var(--font-sans)",
                   caretColor:"var(--accent)",
+                }}
+              />
+            </div>
+
+            {/* Enlace de la reunión */}
+            <div style={{padding:"0 24px 20px", display:"flex", alignItems:"center", gap:10}}>
+              <Icon name="link" size={15} strokeWidth={1.7} style={{color:"var(--text-subtle)", flexShrink:0}}/>
+              <input
+                type="url"
+                placeholder="Enlace de la reunión (Meet, Zoom…)"
+                value={form.link}
+                onChange={e => setForm(f=>({...f, link:e.target.value}))}
+                style={{
+                  flex:1, background:"transparent", border:"none", outline:"none",
+                  fontSize:13.5, fontWeight:400, letterSpacing:"-0.3px",
+                  color: form.link ? "var(--text-muted)" : "rgba(255,255,255,0.15)",
+                  fontFamily:"var(--font-sans)", caretColor:"var(--accent)",
                 }}
               />
             </div>

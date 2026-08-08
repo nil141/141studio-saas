@@ -130,6 +130,7 @@
             label: e.title,
             time: e.time || null,
             timeEnd: e.timeEnd || null,
+            link: e.link || null,
             type: typeLabel[e.type] || "Evento",
             color: "var(--text-muted)",
             icon: iconMap[e.type] || "calendar"
@@ -1005,7 +1006,34 @@
       textOverflow: "ellipsis",
       whiteSpace: "nowrap"
     } }, ev.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-muted)" } }, formatEventDate(ev.date), ev.time ? `, ${ev.time}${ev.timeEnd ? ` \u2013 ${ev.timeEnd}` : ""}` : ""), ev.sub ? ` \xB7 ${ev.sub}` : "")),
-    /* @__PURE__ */ React.createElement("span", { style: {
+    ev.link ? /* @__PURE__ */ React.createElement(
+      "a",
+      {
+        href: ev.link,
+        target: "_blank",
+        rel: "noopener noreferrer",
+        onClick: (e) => e.stopPropagation(),
+        title: ev.link,
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          textDecoration: "none",
+          fontSize: 10.5,
+          padding: "4px 10px",
+          borderRadius: 99,
+          background: "var(--accent-soft)",
+          color: "var(--accent)",
+          border: "0.5px solid rgba(158,154,229,0.35)",
+          letterSpacing: "-0.1px",
+          whiteSpace: "nowrap",
+          fontWeight: 500,
+          flexShrink: 0
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 11 }),
+      " Unirse"
+    ) : /* @__PURE__ */ React.createElement("span", { style: {
       fontSize: 10.5,
       padding: "3px 9px",
       borderRadius: 99,
