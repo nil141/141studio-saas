@@ -423,7 +423,8 @@ const addProject = (input) => {
   })();
   const p = {
     id: _id(), name: input.name || "Proyecto sin nombre",
-    clientId: input.clientId, clientName: client?.company || "—",
+    clientId: input.clientId || null,
+    clientName: client ? (client.company || client.name || "—") : (input.clientId ? "—" : "Interno"),
     service: input.template || "—", light: "green", phase: 0, week: 1,
     progress: 0, budget: 0, deadline,
     nextMilestone: "Kickoff", revisionsUsed: 0, description: input.description || "",
@@ -508,7 +509,8 @@ const addProjectAsync = async (input) => {
   })();
   const p = {
     id: _id(), name: input.name || "Proyecto sin nombre",
-    clientId: input.clientId, clientName: client?.company || "—",
+    clientId: input.clientId || null,
+    clientName: client ? (client.company || client.name || "—") : (input.clientId ? "—" : "Interno"),
     service: input.template || "—", light: "green", phase: 0, week: 1,
     progress: 0, budget: 0, deadline,
     nextMilestone: "Kickoff", revisionsUsed: 0, description: input.description || "",
@@ -583,6 +585,8 @@ const updateProject = (id, changes) => {
   if (changes.deadline    !== undefined) dbChanges.deadline    = changes.deadline;
   if (changes.description !== undefined) dbChanges.description = changes.description;
   if (changes.recurring   !== undefined) dbChanges.recurring   = changes.recurring;
+  if (changes.clientId    !== undefined) dbChanges.client_id   = changes.clientId || null;
+  if (changes.clientName  !== undefined) dbChanges.client_name = changes.clientName || null;
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);

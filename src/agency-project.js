@@ -1,5 +1,101 @@
 (() => {
   // src/agency-project.jsx
+  var _PM_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  var _pmIsoToShort = (iso) => {
+    if (!iso) return "";
+    const d = /* @__PURE__ */ new Date(iso + "T12:00:00");
+    return isNaN(d) ? "" : `${d.getDate()} ${_PM_MESES[d.getMonth()]}`;
+  };
+  var EditProjectModal = ({ project, onClose }) => {
+    const D = window.Data;
+    const toast = useToast();
+    const [name, setName] = useState(project.name || "");
+    const [clientId, setClientId] = useState(project.clientId || "");
+    const [recurring, setRecurring] = useState(!!project.recurring);
+    const [deadline, setDeadline] = useState("");
+    const [pickClient, setPickClient] = useState(false);
+    const clients = D.CLIENTS || [];
+    const selClient = clientId ? clients.find((c) => c.id === clientId) : null;
+    const save = () => {
+      if (!name.trim()) {
+        toast("Ponle un nombre al proyecto", "warn");
+        return;
+      }
+      const cl = clientId ? clients.find((c) => c.id === clientId) : null;
+      const changes = {
+        name: name.trim(),
+        clientId: clientId || null,
+        clientName: cl ? cl.company || cl.name || "\u2014" : "Interno",
+        recurring
+      };
+      if (recurring) changes.deadline = "";
+      else if (deadline) changes.deadline = _pmIsoToShort(deadline);
+      D.updateProject(project.id, changes);
+      toast("Proyecto actualizado", "success");
+      onClose();
+    };
+    return /* @__PURE__ */ React.createElement(
+      Modal,
+      {
+        open: true,
+        onClose,
+        title: "Editar proyecto",
+        footer: /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, justifyContent: "flex-end", width: "100%" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar"))
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", value: name, onChange: (e) => setName(e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "(opcional)")), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setPickClient((s) => !s) }, /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left", color: selClient ? "var(--text)" : "var(--text-muted)" } }, selClient ? selClient.company || selClient.name : "Sin cliente \xB7 proyecto interno"), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })), pickClient && /* @__PURE__ */ React.createElement("div", { style: {
+        marginTop: 6,
+        background: "var(--bg-elev-2)",
+        border: "0.5px solid var(--border-strong)",
+        borderRadius: 10,
+        overflow: "hidden",
+        maxHeight: 200,
+        overflowY: "auto"
+      } }, /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          onClick: () => {
+            setClientId("");
+            setPickClient(false);
+          },
+          style: { padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 },
+          onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "grow" }, "Sin cliente \xB7 proyecto interno"),
+        !clientId && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
+      ), clients.map((c) => /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: c.id,
+          onClick: () => {
+            setClientId(c.id);
+            setPickClient(false);
+          },
+          style: { padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", fontSize: 13 },
+          onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+        },
+        /* @__PURE__ */ React.createElement("span", { className: "grow" }, [c.name, c.company].filter(Boolean).join(" \xB7 ")),
+        c.id === clientId && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
+      )))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tipo"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, [{ id: false, title: "Puntual", icon: "flag" }, { id: true, title: "Recurrente", icon: "refresh-cw" }].map((opt) => {
+        const on = recurring === opt.id;
+        return /* @__PURE__ */ React.createElement("button", { key: String(opt.id), onClick: () => setRecurring(opt.id), style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 9,
+          textAlign: "left",
+          padding: "10px 12px",
+          borderRadius: 12,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+          border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+          color: on ? "var(--text)" : "var(--text-muted)",
+          transition: "all .12s"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: opt.icon, size: 14, strokeWidth: 1.7, style: { color: on ? "var(--accent)" : "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13 } }, opt.title));
+      }))), !recurring && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: deadline, onChange: (e) => setDeadline(e.target.value) }), project.deadline && project.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 5 } }, "Actual: ", project.deadline, deadline ? "" : " \xB7 d\xE9jalo vac\xEDo para mantenerla")))
+    );
+  };
   var AgencyProject = ({ projectId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
@@ -22,6 +118,7 @@
     const [datePicking, setDatePicking] = useState(null);
     const [phaseAdding, setPhaseAdding] = useState(false);
     const [phaseDraft, setPhaseDraft] = useState("");
+    const [editOpen, setEditOpen] = useState(false);
     const [driveTick, setDriveTick] = useState(0);
     const [driveEditing, setDriveEditing] = useState(false);
     const [driveDraft, setDriveDraft] = useState("");
@@ -124,6 +221,7 @@
           setDraft("");
         },
         moreActions: [
+          { icon: "edit", label: "Editar proyecto", sub: "Cambia nombre, cliente, tipo o fecha.", onClick: () => setEditOpen(true) },
           { icon: "trash", label: "Eliminar proyecto", sub: "Borra el proyecto y sus tareas.", onClick: removeProjectFromHere }
         ]
       }
@@ -638,7 +736,7 @@
           "Eliminar tarea"
         )
       );
-    })());
+    })(), editOpen && /* @__PURE__ */ React.createElement(EditProjectModal, { project: p, onClose: () => setEditOpen(false) }));
   };
   window.AgencyProject = AgencyProject;
 })();

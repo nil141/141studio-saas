@@ -75,7 +75,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   D.useStore && D.useStore();
   const toast = useToast();
 
-  const blank = () => ({ name: "", clientId: prefilledClientId || D.CLIENTS[0]?.id || "", deadline: "", recurring: false });
+  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false });
 
   const [step, setStep]           = useState(0);
   const [a, setA]                 = useState(blank);
@@ -113,8 +113,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const selClient = D.CLIENTS.find(c => c.id === a.clientId);
 
   const canNext = [
-    // Puntual necesita fecha; recurrente no (es mensual, sin fecha fija)
-    !!(a.name.trim() && a.clientId && hasClients && (a.recurring || a.deadline)),
+    // Cliente opcional (proyectos internos). Puntual necesita fecha; recurrente no.
+    !!(a.name.trim() && (a.recurring || a.deadline)),
     true,   // las fases son opcionales: se puede crear un proyecto vacío
   ];
 
@@ -124,7 +124,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     // Crear el proyecto con sus fases (nombres libres). Sin tareas: las creas tú
     // dentro de cada fase. Las fases se guardan en el campo service del proyecto.
     const res = await D.addProjectAsync({
-      name: a.name.trim(), clientId: a.clientId,
+      name: a.name.trim(), clientId: a.clientId || null,
       deadline: a.recurring ? "" : a.deadline,
       recurring: a.recurring,
       template: phases.join(", ") || "libre",
@@ -150,11 +150,6 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   // ── Paso 0: Básicos ──────────────────────────────────────────
   const renderStep0 = () => (
     <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
-      {!hasClients && (
-        <div style={{ padding:12, background:"var(--amber-soft)", border:"0.5px solid var(--amber)", borderRadius:10, color:"var(--amber)", fontSize:13, display:"flex", gap:10, alignItems:"center" }}>
-          <Icon name="info" size={14}/> <span>Crea primero un cliente antes de añadir proyectos.</span>
-        </div>
-      )}
       <div>
         <div className="label">Tipo de proyecto</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
@@ -189,13 +184,16 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
         <input className="input" placeholder="Ej. Rediseño web 2026" value={a.name} onChange={e => set("name", e.target.value)} autoFocus/>
       </div>
       <div style={{ position:"relative" }}>
-        <div className="label">Cliente</div>
+        <div className="label">Cliente <span style={{ color:"var(--text-subtle)", fontWeight:400 }}>(opcional)</span></div>
         <button className="input row tight" style={{ textAlign:"left", height:38 }} onClick={() => setSearching(s => !s)}>
           {selClient ? (
             <><Avatar size="sm" name={selClient.name} initials={selClient.initials} color={selClient.color}/>
               <span className="grow" style={{ textAlign:"left" }}>{[selClient.name, selClient.company].filter(Boolean).join(" · ")}</span>
               <Icon name="chevron" size={12} style={{ transform:"rotate(90deg)" }}/></>
-          ) : <span className="muted">Selecciona un cliente</span>}
+          ) : (
+            <><span className="grow muted" style={{ textAlign:"left" }}>Sin cliente · proyecto interno</span>
+              <Icon name="chevron" size={12} style={{ transform:"rotate(90deg)" }}/></>
+          )}
         </button>
         {searching && (
           <div style={{ marginTop:6, background:"var(--bg-elev-2)", border:"0.5px solid var(--border-strong)", borderRadius:10, overflow:"hidden" }}>
@@ -203,9 +201,18 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
               <div className="search"><Icon name="search" size={13}/><input autoFocus placeholder="Buscar…" value={cq} onChange={e => setCq(e.target.value)}/></div>
             </div>
             <div style={{ maxHeight:200, overflowY:"auto" }}>
-              {filtered.length === 0 && (
-                <div style={{ padding:"12px", fontSize:12.5, color:"var(--text-subtle)", textAlign:"center" }}>Sin resultados</div>
-              )}
+              {/* Opción sin cliente — proyecto interno */}
+              <div onClick={() => { set("clientId", ""); setSearching(false); }}
+                style={{ padding:"8px 12px", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <div style={{ width:26, height:26, borderRadius:8, flexShrink:0, display:"grid", placeItems:"center",
+                  background:"rgba(255,255,255,0.05)", border:"0.5px solid var(--border)", color:"var(--text-muted)" }}>
+                  <Icon name="folder" size={13}/>
+                </div>
+                <span className="grow small">Sin cliente · proyecto interno</span>
+                {!a.clientId && <Icon name="check" size={13}/>}
+              </div>
               {filtered.map(c => (
                 <div key={c.id} onClick={() => { set("clientId", c.id); setSearching(false); }}
                   style={{ padding:"8px 12px", display:"flex", alignItems:"center", gap:10, cursor:"pointer" }}

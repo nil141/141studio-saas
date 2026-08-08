@@ -89,10 +89,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const toast = useToast();
-  const blank = () => {
-    var _a;
-    return { name: "", clientId: prefilledClientId || ((_a = D.CLIENTS[0]) == null ? void 0 : _a.id) || "", deadline: "", recurring: false };
-  };
+  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false });
   const [step, setStep] = useState(0);
   const [a, setA] = useState(blank);
   const [searching, setSearching] = useState(false);
@@ -130,8 +127,8 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   );
   const selClient = D.CLIENTS.find((c) => c.id === a.clientId);
   const canNext = [
-    // Puntual necesita fecha; recurrente no (es mensual, sin fecha fija)
-    !!(a.name.trim() && a.clientId && hasClients && (a.recurring || a.deadline)),
+    // Cliente opcional (proyectos internos). Puntual necesita fecha; recurrente no.
+    !!(a.name.trim() && (a.recurring || a.deadline)),
     true
     // las fases son opcionales: se puede crear un proyecto vacío
   ];
@@ -140,7 +137,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     setCreating(true);
     const res = await D.addProjectAsync({
       name: a.name.trim(),
-      clientId: a.clientId,
+      clientId: a.clientId || null,
       deadline: a.recurring ? "" : a.deadline,
       recurring: a.recurring,
       template: phases.join(", ") || "libre"
@@ -160,7 +157,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     onCreate && onCreate(p);
   };
   const STEP_LABELS = ["B\xE1sicos", "Fases"];
-  const renderStep0 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, !hasClients && /* @__PURE__ */ React.createElement("div", { style: { padding: 12, background: "var(--amber-soft)", border: "0.5px solid var(--amber)", borderRadius: 10, color: "var(--amber)", fontSize: 13, display: "flex", gap: 10, alignItems: "center" } }, /* @__PURE__ */ React.createElement(Icon, { name: "info", size: 14 }), " ", /* @__PURE__ */ React.createElement("span", null, "Crea primero un cliente antes de a\xF1adir proyectos.")), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tipo de proyecto"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, [
+  const renderStep0 = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tipo de proyecto"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, [
     { id: false, title: "Puntual", sub: "Trabajo con entrega", icon: "flag" },
     { id: true, title: "Recurrente", sub: "Mensual (ej. redes)", icon: "refresh-cw" }
   ].map((opt) => {
@@ -188,7 +185,31 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
       background: on ? "rgba(158,154,229,0.18)" : "rgba(255,255,255,0.05)",
       color: on ? "var(--accent)" : "var(--text-subtle)"
     } }, /* @__PURE__ */ React.createElement(Icon, { name: opt.icon, size: 15, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, letterSpacing: "-0.3px", color: on ? "var(--text)" : "var(--text-muted)" } }, opt.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, opt.sub)));
-  }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Redise\xF1o web 2026", value: a.name, onChange: (e) => set("name", e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente"), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setSearching((s) => !s) }, selClient ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: selClient.name, initials: selClient.initials, color: selClient.color }), /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left" } }, [selClient.name, selClient.company].filter(Boolean).join(" \xB7 ")), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })) : /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Selecciona un cliente")), searching && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, background: "var(--bg-elev-2)", border: "0.5px solid var(--border-strong)", borderRadius: 10, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: 8, borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13 }), /* @__PURE__ */ React.createElement("input", { autoFocus: true, placeholder: "Buscar\u2026", value: cq, onChange: (e) => setCq(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 200, overflowY: "auto" } }, filtered.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "12px", fontSize: 12.5, color: "var(--text-subtle)", textAlign: "center" } }, "Sin resultados"), filtered.map((c) => /* @__PURE__ */ React.createElement(
+  }))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Nombre del proyecto"), /* @__PURE__ */ React.createElement("input", { className: "input", placeholder: "Ej. Redise\xF1o web 2026", value: a.name, onChange: (e) => set("name", e.target.value), autoFocus: true })), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "(opcional)")), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setSearching((s) => !s) }, selClient ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Avatar, { size: "sm", name: selClient.name, initials: selClient.initials, color: selClient.color }), /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left" } }, [selClient.name, selClient.company].filter(Boolean).join(" \xB7 ")), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "grow muted", style: { textAlign: "left" } }, "Sin cliente \xB7 proyecto interno"), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } }))), searching && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, background: "var(--bg-elev-2)", border: "0.5px solid var(--border-strong)", borderRadius: 10, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { padding: 8, borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 13 }), /* @__PURE__ */ React.createElement("input", { autoFocus: true, placeholder: "Buscar\u2026", value: cq, onChange: (e) => setCq(e.target.value) }))), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 200, overflowY: "auto" } }, /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick: () => {
+        set("clientId", "");
+        setSearching(false);
+      },
+      style: { padding: "8px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer" },
+      onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+    },
+    /* @__PURE__ */ React.createElement("div", { style: {
+      width: 26,
+      height: 26,
+      borderRadius: 8,
+      flexShrink: 0,
+      display: "grid",
+      placeItems: "center",
+      background: "rgba(255,255,255,0.05)",
+      border: "0.5px solid var(--border)",
+      color: "var(--text-muted)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 13 })),
+    /* @__PURE__ */ React.createElement("span", { className: "grow small" }, "Sin cliente \xB7 proyecto interno"),
+    !a.clientId && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 })
+  ), filtered.map((c) => /* @__PURE__ */ React.createElement(
     "div",
     {
       key: c.id,

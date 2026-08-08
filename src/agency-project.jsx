@@ -1,3 +1,124 @@
+// Modal de edición de proyecto — nombre, cliente (opcional), tipo y fecha
+const _PM_MESES = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
+const _pmIsoToShort = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso + "T12:00:00");
+  return isNaN(d) ? "" : `${d.getDate()} ${_PM_MESES[d.getMonth()]}`;
+};
+const EditProjectModal = ({ project, onClose }) => {
+  const D = window.Data;
+  const toast = useToast();
+  const [name, setName]           = useState(project.name || "");
+  const [clientId, setClientId]   = useState(project.clientId || "");
+  const [recurring, setRecurring] = useState(!!project.recurring);
+  const [deadline, setDeadline]   = useState("");   // ISO nuevo; vacío = mantener el actual
+  const [pickClient, setPickClient] = useState(false);
+
+  const clients = D.CLIENTS || [];
+  const selClient = clientId ? clients.find(c => c.id === clientId) : null;
+
+  const save = () => {
+    if (!name.trim()) { toast("Ponle un nombre al proyecto", "warn"); return; }
+    const cl = clientId ? clients.find(c => c.id === clientId) : null;
+    const changes = {
+      name: name.trim(),
+      clientId: clientId || null,
+      clientName: cl ? (cl.company || cl.name || "—") : "Interno",
+      recurring,
+    };
+    if (recurring) changes.deadline = "";
+    else if (deadline) changes.deadline = _pmIsoToShort(deadline);
+    D.updateProject(project.id, changes);
+    toast("Proyecto actualizado", "success");
+    onClose();
+  };
+
+  return (
+    <Modal open onClose={onClose} title="Editar proyecto"
+      footer={
+        <div style={{ display:"flex", gap:10, justifyContent:"flex-end", width:"100%" }}>
+          <button className="btn ghost" onClick={onClose}>Cancelar</button>
+          <button className="btn primary" onClick={save}><Icon name="check" size={13}/> Guardar</button>
+        </div>
+      }>
+      <div style={{ display:"flex", flexDirection:"column", gap:14 }}>
+        {/* Nombre */}
+        <div>
+          <div className="label">Nombre del proyecto</div>
+          <input className="input" value={name} onChange={e => setName(e.target.value)} autoFocus/>
+        </div>
+
+        {/* Cliente (opcional) */}
+        <div style={{ position:"relative" }}>
+          <div className="label">Cliente <span style={{ color:"var(--text-subtle)", fontWeight:400 }}>(opcional)</span></div>
+          <button className="input row tight" style={{ textAlign:"left", height:38 }} onClick={() => setPickClient(s => !s)}>
+            <span className="grow" style={{ textAlign:"left", color: selClient ? "var(--text)" : "var(--text-muted)" }}>
+              {selClient ? (selClient.company || selClient.name) : "Sin cliente · proyecto interno"}
+            </span>
+            <Icon name="chevron" size={12} style={{ transform:"rotate(90deg)" }}/>
+          </button>
+          {pickClient && (
+            <div style={{ marginTop:6, background:"var(--bg-elev-2)", border:"0.5px solid var(--border-strong)",
+              borderRadius:10, overflow:"hidden", maxHeight:200, overflowY:"auto" }}>
+              <div onClick={() => { setClientId(""); setPickClient(false); }}
+                style={{ padding:"8px 12px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", fontSize:13 }}
+                onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                <span className="grow">Sin cliente · proyecto interno</span>
+                {!clientId && <Icon name="check" size={13}/>}
+              </div>
+              {clients.map(c => (
+                <div key={c.id} onClick={() => { setClientId(c.id); setPickClient(false); }}
+                  style={{ padding:"8px 12px", display:"flex", alignItems:"center", gap:10, cursor:"pointer", fontSize:13 }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                  <span className="grow">{[c.name, c.company].filter(Boolean).join(" · ")}</span>
+                  {c.id === clientId && <Icon name="check" size={13}/>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Tipo */}
+        <div>
+          <div className="label">Tipo</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {[{ id:false, title:"Puntual", icon:"flag" }, { id:true, title:"Recurrente", icon:"refresh-cw" }].map(opt => {
+              const on = recurring === opt.id;
+              return (
+                <button key={String(opt.id)} onClick={() => setRecurring(opt.id)} style={{
+                  display:"flex", alignItems:"center", gap:9, textAlign:"left",
+                  padding:"10px 12px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
+                  background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+                  border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+                  color: on ? "var(--text)" : "var(--text-muted)", transition:"all .12s",
+                }}>
+                  <Icon name={opt.icon} size={14} strokeWidth={1.7} style={{ color: on ? "var(--accent)" : "var(--text-subtle)" }}/>
+                  <span style={{ fontSize:13 }}>{opt.title}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Fecha de entrega (solo puntual) */}
+        {!recurring && (
+          <div>
+            <div className="label">Fecha de entrega</div>
+            <input className="input" type="date" value={deadline} onChange={e => setDeadline(e.target.value)}/>
+            {project.deadline && project.deadline !== "—" && (
+              <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:5 }}>
+                Actual: {project.deadline}{deadline ? "" : " · déjalo vacío para mantenerla"}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+};
+
 // Agency Project detail with 6-week roadmap
 const AgencyProject = ({ projectId, navigate, openModal }) => {
   const D = window.Data;
@@ -33,6 +154,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   const [datePicking, setDatePicking] = useState(null); // taskId
   const [phaseAdding, setPhaseAdding] = useState(false);
   const [phaseDraft, setPhaseDraft]   = useState("");
+  const [editOpen, setEditOpen]       = useState(false);
   // Carpeta de Drive del proyecto (por ahora guardada localmente; la creación
   // automática llegará al conectar Google Drive).
   const [driveTick, setDriveTick] = useState(0);
@@ -139,6 +261,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         <ActionPill
           plusActions={() => { setTab("tasks"); setAdding("add:" + ((aiPhases && aiPhases[0]) ? aiPhases[0].name : "__otras__")); setDraft(""); }}
           moreActions={[
+            { icon:"edit", label:"Editar proyecto", sub:"Cambia nombre, cliente, tipo o fecha.", onClick: () => setEditOpen(true) },
             { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
           ]}
         />
@@ -578,6 +701,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         </div>
       );
     })()}
+    {editOpen && <EditProjectModal project={p} onClose={() => setEditOpen(false)}/>}
     </>
   );
 };

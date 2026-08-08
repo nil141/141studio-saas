@@ -465,8 +465,8 @@ const addProject = (input) => {
   const p = {
     id: _id(),
     name: input.name || "Proyecto sin nombre",
-    clientId: input.clientId,
-    clientName: (client == null ? void 0 : client.company) || "\u2014",
+    clientId: input.clientId || null,
+    clientName: client ? client.company || client.name || "\u2014" : input.clientId ? "\u2014" : "Interno",
     service: input.template || "\u2014",
     light: "green",
     phase: 0,
@@ -568,8 +568,8 @@ const addProjectAsync = async (input) => {
   const p = {
     id: _id(),
     name: input.name || "Proyecto sin nombre",
-    clientId: input.clientId,
-    clientName: (client == null ? void 0 : client.company) || "\u2014",
+    clientId: input.clientId || null,
+    clientName: client ? client.company || client.name || "\u2014" : input.clientId ? "\u2014" : "Interno",
     service: input.template || "\u2014",
     light: "green",
     phase: 0,
@@ -671,6 +671,8 @@ const updateProject = (id, changes) => {
   if (changes.deadline !== void 0) dbChanges.deadline = changes.deadline;
   if (changes.description !== void 0) dbChanges.description = changes.description;
   if (changes.recurring !== void 0) dbChanges.recurring = changes.recurring;
+  if (changes.clientId !== void 0) dbChanges.client_id = changes.clientId || null;
+  if (changes.clientName !== void 0) dbChanges.client_name = changes.clientName || null;
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);
