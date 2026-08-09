@@ -793,7 +793,7 @@ const _LeadSection = ({ icon, title, right, children }) => (
   </div>
 );
 
-const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, today }) => {
+const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, today, selected, onSelectToggle }) => {
   const toast = useToast();
   const st = LEAD_STATUS[l.status] || LEAD_STATUS.new;
   const TEXT_KEYS = ["name","company","email","phone","website","linkedin","instagram","sector","audit","subject","draft","whatsapp","notes"];
@@ -844,6 +844,18 @@ const LeadRow = ({ l, last, open, onToggle, onStatus, onDelete, onCopy, onSave, 
         padding:"13px 4px", cursor:"pointer",
         borderBottom: (last && !open) ? "none" : "0.5px solid var(--border)",
       }}>
+        {/* Checkbox de selección para exportar */}
+        <button onClick={e => { e.stopPropagation(); onSelectToggle && onSelectToggle(); }}
+          data-tooltip={selected ? "Quitar de la selección" : "Seleccionar"}
+          style={{
+            width:17, height:17, borderRadius:5, flexShrink:0, cursor:"pointer", padding:0,
+            display:"grid", placeItems:"center",
+            background: selected ? "var(--accent)" : "transparent",
+            border: selected ? "0.5px solid var(--accent)" : "0.5px solid var(--border-strong)",
+            transition:"background .1s, border-color .1s",
+          }}>
+          {selected && <Icon name="check" size={11} style={{ color:"#fff" }}/>}
+        </button>
         <span style={{ width:7, height:7, borderRadius:"50%", background:st.dot, flexShrink:0 }}/>
         <div style={{ flex:"1.4 1 0", minWidth:0 }}>
           <div style={{ fontSize:14, letterSpacing:"-0.4px", color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis", display:"flex", alignItems:"center", gap:7 }}>
@@ -1226,6 +1238,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
   const [filter, setFilter]   = useState("all");
   const [query, setQuery]     = useState("");
   const [openId, setOpenId]   = useState(null);
+  const [selected, setSelected] = useState(() => new Set());   // ids de leads seleccionados
   const [addingLead, setAddingLead]   = useState(false);
   const [coworkOpen, setCoworkOpen]   = useState(false);
   const [pickCSV, csvInput] = useCSVImport(campaignId, () => reload());
@@ -1331,20 +1344,27 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     setFilter("all"); setQuery(""); setOpenId(next.id);
     setTimeout(() => document.getElementById("lead-" + next.id)?.scrollIntoView({ behavior:"smooth", block:"center" }), 60);
   };
-  const exportCSV = () => {
-    if (!leads.length) { toast("No hay leads que exportar", "warn"); return; }
-    const cols = ["name","company","email","phone","website","linkedin","sector","status","date","notes","subject","draft","whatsapp","audit"];
-    const head = ["Nombre","Empresa","Email","Teléfono","Web","LinkedIn","Sector","Estado","Fecha","Notas","Asunto","Email","WhatsApp","Auditoría"];
+  const exportCSV = (list) => {
+    const data = (list && list.length) ? list : leads;
+    if (!data.length) { toast("No hay leads que exportar", "warn"); return; }
+    const cols = ["name","company","email","phone","website","linkedin","instagram","sector","status","date","notes","subject","draft","whatsapp","audit"];
+    const head = ["Nombre","Empresa","Email","Teléfono","Web","LinkedIn","Instagram","Sector","Estado","Fecha","Notas","Asunto","Email","WhatsApp","Auditoría"];
     const esc = (v) => { const s = (v == null ? "" : String(v)); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const rows = leads.map(l => cols.map(k => esc(k === "status" ? (LEAD_STATUS[l.status] || {}).label : l[k])).join(","));
+    const rows = data.map(l => cols.map(k => esc(k === "status" ? (LEAD_STATUS[l.status] || {}).label : l[k])).join(","));
     const csv = head.join(",") + "\n" + rows.join("\n");
     const blob = new Blob(["﻿" + csv], { type:"text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url; a.download = `${c.name.replace(/[^\w\-]+/g, "_")}_leads.csv`;
     a.click(); URL.revokeObjectURL(url);
-    toast(`${leads.length} leads exportados`, "success");
+    toast(`${data.length} lead${data.length === 1 ? "" : "s"} exportado${data.length === 1 ? "" : "s"}`, "success");
   };
+  const toggleSelect = (id) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+  const clearSelect = () => setSelected(new Set());
   const removeLead = async (l) => {
     const ok = await confirm({ title:"¿Eliminar este lead?", body:`${l.name}${l.company ? " · " + l.company : ""} se eliminará de la campaña.`, danger:true, confirmLabel:"Eliminar" });
     if (!ok) return;
@@ -1374,6 +1394,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
+      position:"relative",
     }}>
       {/* Header */}
       <div style={{ flexShrink:0 }}>
@@ -1490,6 +1511,8 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
           <div key={l.id} id={"lead-" + l.id}>
             <LeadRow l={l} last={i === visible.length - 1} today={today}
               open={openId === l.id}
+              selected={selected.has(l.id)}
+              onSelectToggle={() => toggleSelect(l.id)}
               onToggle={() => setOpenId(openId === l.id ? null : l.id)}
               onStatus={(s, d) => setStatus(l, s, d)}
               onDelete={() => removeLead(l)}
@@ -1498,6 +1521,45 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
           </div>
         ))}
       </div>
+
+      {/* Barra de selección → exportar los leads elegidos */}
+      {view === "leads" && selected.size > 0 && (
+        <div style={{
+          position:"absolute", left:"50%", bottom:24, transform:"translateX(-50%)", zIndex:70,
+          display:"flex", alignItems:"center", gap:6, padding:"7px 8px 7px 16px",
+          background:"#1a1a1c", border:"0.5px solid rgba(255,255,255,0.12)", borderRadius:99,
+          boxShadow:"0 12px 40px rgba(0,0,0,0.55)",
+        }}>
+          <span style={{ fontSize:13, color:"var(--text)", letterSpacing:"-0.2px", whiteSpace:"nowrap" }}>
+            <b style={{ fontWeight:600 }}>{selected.size}</b> seleccionado{selected.size === 1 ? "" : "s"}
+          </span>
+          {selected.size < visible.length && (
+            <button onClick={() => setSelected(new Set(visible.map(l => l.id)))} style={{
+              background:"transparent", border:0, cursor:"pointer", fontFamily:"inherit",
+              color:"var(--text-subtle)", fontSize:12.5, padding:"6px 10px", borderRadius:99, letterSpacing:"-0.2px",
+            }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+              onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+              Todos ({visible.length})
+            </button>
+          )}
+          <button onClick={clearSelect} style={{
+            background:"transparent", border:0, cursor:"pointer", fontFamily:"inherit",
+            color:"var(--text-subtle)", fontSize:12.5, padding:"6px 10px", borderRadius:99, letterSpacing:"-0.2px",
+          }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+            Quitar
+          </button>
+          <button onClick={() => { exportCSV(leads.filter(l => selected.has(l.id))); }} style={{
+            display:"inline-flex", alignItems:"center", gap:7, cursor:"pointer", fontFamily:"inherit",
+            background:"var(--accent)", border:"none", color:"#fff", fontSize:13, fontWeight:500,
+            padding:"9px 16px", borderRadius:99, letterSpacing:"-0.2px", whiteSpace:"nowrap",
+          }}>
+            <Icon name="download" size={13}/> Exportar CSV
+          </button>
+        </div>
+      )}
 
       {csvInput}
       <AddLeadModal open={addingLead} onClose={() => setAddingLead(false)} campaignId={c.id} onDone={reload}/>
