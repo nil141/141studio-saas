@@ -340,10 +340,11 @@
       borderRadius: 99,
       background: "var(--accent)",
       transition: "width .4s ease"
-    } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+    } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan" },
       { id: "tasks", label: "Tablero" },
-      { id: "files", label: "Archivos" }
+      { id: "files", label: "Archivos" },
+      { id: "pay", label: "Cobro" }
     ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (tab === t.id ? " active" : ""), onClick: () => setTab(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), /* @__PURE__ */ React.createElement("div", null, tab === "plan" && (() => {
       const phaseNames = (aiPhases || []).map((ph) => ph.name);
       const planGroups = phaseNames.map((name) => ({
@@ -754,7 +755,7 @@
         setDriveDraft("");
         setDriveEditing(true);
       } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir carpeta de Drive")))));
-    })())), ctxMenu && (() => {
+    })(), tab === "pay" && /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }))), ctxMenu && (() => {
       const ctxTask = projectTasks.find((t) => t.id === ctxMenu.taskId);
       if (!ctxTask) return null;
       return /* @__PURE__ */ React.createElement(

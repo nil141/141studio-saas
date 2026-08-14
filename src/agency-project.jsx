@@ -427,14 +427,12 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         </div>
       </div>
 
-      {/* Cobro del proyecto */}
-      <ProjectPayments project={p}/>
-
       <div className="tabs">
         {[
           {id:"plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan"},
           {id:"tasks", label:"Tablero"},
           {id:"files", label:"Archivos"},
+          {id:"pay", label:"Cobro"},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
@@ -786,6 +784,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               </div></div>
             );
           })()}
+
+          {tab === "pay" && <ProjectPayments project={p}/>}
 
       </div>
     </div>
