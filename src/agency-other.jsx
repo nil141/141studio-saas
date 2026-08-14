@@ -2750,12 +2750,10 @@ const IncomePage = () => {
       })
       .catch(() => {});
   };
-  useEffect(() => { fetchStripe(); }, []);
-
-  const stripeConnected = stripeInc !== null;
-  const stripeOpen = (stripeMeta && stripeMeta.open) || [];
-  // Ingresos combinados (manuales + Stripe) para totales, gráfico y listas
-  const allIncomes = stripeInc ? [...data.incomes, ...stripeInc] : data.incomes;
+  // Stripe desconectado: Finanzas es 100% manual.
+  const stripeConnected = false;
+  const stripeOpen = [];
+  const allIncomes = data.incomes;
 
   const persist = (next) => { setData(next); _incSave(next); };
   const clientName = (id) => { const c = D.CLIENTS.find(c => c.id === id); return c ? (c.company || c.name || "") : ""; };
@@ -2847,6 +2845,11 @@ const IncomePage = () => {
 
   const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
+  // KPIs manuales (sin Stripe)
+  const _yearStr = _todayISO().slice(0, 4);
+  const yearTotal = allIncomes.filter(i => (i.date || "").slice(0, 4) === _yearStr).reduce((a, i) => a + _withVat(i), 0);
+  const mrrTotal  = activeRecs.reduce((a, r) => a + _recMoCobro(r), 0);
+
   // Origen de la facturación de este mes (para Analíticas)
   const stripeMonthSum = allIncomes.filter(i => _sameMonth(i.date) && i.source === "stripe").reduce((a, i) => a + _withVat(i), 0);
   const manualPunSum   = allIncomes.filter(i => _sameMonth(i.date) && i.source !== "stripe").reduce((a, i) => a + _withVat(i), 0);
@@ -2873,22 +2876,14 @@ const IncomePage = () => {
         <div className="page-head" style={{ marginBottom:22 }}>
           <div>
             <h1>Facturación</h1>
-            <div className="sub" style={{ display:"flex", alignItems:"center", gap:7 }}>
-              <span style={{ width:6, height:6, borderRadius:99, flexShrink:0,
-                background: stripeConnected ? "var(--green)" : "var(--text-subtle)", display:"inline-block" }}/>
-              Stripe {stripeConnected ? "conectado" : "sin conectar"}
-              {` · ${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"}`}
-              {stripeOpen.length ? ` · ${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} sin cobrar` : ""}
+            <div className="sub">
+              {`${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"} · ${sortedInc.length} cobro${sortedInc.length === 1 ? "" : "s"}`}
             </div>
           </div>
           <ActionPill plusActions={[
-            { icon:"receipt", label:"Factura Stripe", sub:"Se crea y envía desde Stripe.", accent:true,
-              onClick: () => setStripeInvOpen(true) },
-            { icon:"external-link", label:"Enlace de pago", sub:"Link de cobro de Stripe para compartir.",
-              onClick: () => setPayLinkOpen(true) },
-            { icon:"refresh-cw", label:"Suscripción", sub:"El cliente se suscribe con un enlace y se cobra solo.",
-              onClick: () => setSubLinkOpen(true) },
-            { icon:"edit", label:"Ingreso manual", sub:"Mensualidad o cobro apuntado a mano.",
+            { icon:"refresh-cw", label:"Mensualidad", sub:"Ingreso recurrente (fee mensual).", accent:true,
+              onClick: () => { setIncType("rec"); setAddOpen(true); } },
+            { icon:"receipt", label:"Cobro puntual", sub:"Un ingreso apuntado a mano.",
               onClick: () => { setIncType("pun"); setAddOpen(true); } },
           ]}/>
         </div>
@@ -2904,17 +2899,13 @@ const IncomePage = () => {
                     dir={monthTotal > _prevMo.total ? "up" : "flat"}
                     tone={monthTotal > _prevMo.total ? "good" : "muted"}/>
                 : <TrendDelta pct={deltaPct} goodUp={true} suffix={`vs ${_prevMo.label.toLowerCase()}`}/> },
-            { label:"Saldo Stripe",
-              value: stripeMeta && stripeMeta.available !== undefined ? _eur(stripeMeta.available) : "—",
-              delta:<MetricDelta text={_eur((stripeMeta && stripeMeta.pending) || 0)} suffix="pendiente de abono"
-                dir={((stripeMeta && stripeMeta.pending) || 0) > 0 ? "up" : "flat"}
-                tone={((stripeMeta && stripeMeta.pending) || 0) > 0 ? "good" : "muted"}/> },
-            { label:"Pendiente de cobro",
-              value: stripeConnected ? _eur((stripeMeta && stripeMeta.openSum) || 0) : "—",
-              delta:<MetricDelta text={String(stripeOpen.length)}
-                suffix={`factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`}
-                dir={stripeOpen.length ? "down" : "flat"}
-                tone={stripeOpen.length ? "bad" : "muted"}/> },
+            { label:"Ingresos recurrentes",
+              value: _eur(mrrTotal),
+              delta:<MetricDelta text={`${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"}`}
+                suffix="al mes" dir={mrrTotal > 0 ? "up" : "flat"} tone={mrrTotal > 0 ? "good" : "muted"}/> },
+            { label:"Facturado este año",
+              value: _eur(yearTotal),
+              delta:<MetricDelta text={_yearStr} suffix="acumulado" dir="flat" tone="muted"/> },
           ].map(k => (
             <div key={k.label} style={{ display:"flex", flexDirection:"column", gap:14 }}>
               <span style={{ fontSize:16, lineHeight:1.3, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>{k.label}</span>
@@ -3265,10 +3256,6 @@ const IncomePage = () => {
         }}
       />
 
-      {/* Funcionalidades de Stripe */}
-      <StripeInvoiceModal open={stripeInvOpen} onClose={() => setStripeInvOpen(false)} onCreated={fetchStripe}/>
-      <PaymentLinkModal open={payLinkOpen} onClose={() => setPayLinkOpen(false)}/>
-      <StripeSubscriptionModal open={subLinkOpen} onClose={() => setSubLinkOpen(false)} onCreated={fetchStripe}/>
     </div>
   );
 };

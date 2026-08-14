@@ -2192,12 +2192,9 @@
       }).catch(() => {
       });
     };
-    useEffect(() => {
-      fetchStripe();
-    }, []);
-    const stripeConnected = stripeInc !== null;
-    const stripeOpen = stripeMeta && stripeMeta.open || [];
-    const allIncomes = stripeInc ? [...data.incomes, ...stripeInc] : data.incomes;
+    const stripeConnected = false;
+    const stripeOpen = [];
+    const allIncomes = data.incomes;
     const persist = (next) => {
       setData(next);
       _incSave(next);
@@ -2297,6 +2294,9 @@
     const clients = Object.entries(byClient).sort((a, b) => b[1] - a[1]).slice(0, 5);
     const cliMax = clients.length ? clients[0][1] : 1;
     const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+    const _yearStr = _todayISO().slice(0, 4);
+    const yearTotal = allIncomes.filter((i) => (i.date || "").slice(0, 4) === _yearStr).reduce((a, i) => a + _withVat(i), 0);
+    const mrrTotal = activeRecs.reduce((a, r) => a + _recMoCobro(r), 0);
     const stripeMonthSum = allIncomes.filter((i) => _sameMonth(i.date) && i.source === "stripe").reduce((a, i) => a + _withVat(i), 0);
     const manualPunSum = allIncomes.filter((i) => _sameMonth(i.date) && i.source !== "stripe").reduce((a, i) => a + _withVat(i), 0);
     const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "18px 20px" };
@@ -2340,37 +2340,21 @@
       maxWidth: 1400,
       margin: "0 auto",
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: {
-      width: 6,
-      height: 6,
-      borderRadius: 99,
-      flexShrink: 0,
-      background: stripeConnected ? "var(--green)" : "var(--text-subtle)",
-      display: "inline-block"
-    } }), "Stripe ", stripeConnected ? "conectado" : "sin conectar", ` \xB7 ${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"}`, stripeOpen.length ? ` \xB7 ${stripeOpen.length} factura${stripeOpen.length === 1 ? "" : "s"} sin cobrar` : "")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: [
-      {
-        icon: "receipt",
-        label: "Factura Stripe",
-        sub: "Se crea y env\xEDa desde Stripe.",
-        accent: true,
-        onClick: () => setStripeInvOpen(true)
-      },
-      {
-        icon: "external-link",
-        label: "Enlace de pago",
-        sub: "Link de cobro de Stripe para compartir.",
-        onClick: () => setPayLinkOpen(true)
-      },
+    } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, `${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"} \xB7 ${sortedInc.length} cobro${sortedInc.length === 1 ? "" : "s"}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: [
       {
         icon: "refresh-cw",
-        label: "Suscripci\xF3n",
-        sub: "El cliente se suscribe con un enlace y se cobra solo.",
-        onClick: () => setSubLinkOpen(true)
+        label: "Mensualidad",
+        sub: "Ingreso recurrente (fee mensual).",
+        accent: true,
+        onClick: () => {
+          setIncType("rec");
+          setAddOpen(true);
+        }
       },
       {
-        icon: "edit",
-        label: "Ingreso manual",
-        sub: "Mensualidad o cobro apuntado a mano.",
+        icon: "receipt",
+        label: "Cobro puntual",
+        sub: "Un ingreso apuntado a mano.",
         onClick: () => {
           setIncType("pun");
           setAddOpen(true);
@@ -2398,30 +2382,22 @@
         ) : /* @__PURE__ */ React.createElement(TrendDelta, { pct: deltaPct, goodUp: true, suffix: `vs ${_prevMo.label.toLowerCase()}` })
       },
       {
-        label: "Saldo Stripe",
-        value: stripeMeta && stripeMeta.available !== void 0 ? _eur(stripeMeta.available) : "\u2014",
+        label: "Ingresos recurrentes",
+        value: _eur(mrrTotal),
         delta: /* @__PURE__ */ React.createElement(
           MetricDelta,
           {
-            text: _eur(stripeMeta && stripeMeta.pending || 0),
-            suffix: "pendiente de abono",
-            dir: (stripeMeta && stripeMeta.pending || 0) > 0 ? "up" : "flat",
-            tone: (stripeMeta && stripeMeta.pending || 0) > 0 ? "good" : "muted"
+            text: `${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"}`,
+            suffix: "al mes",
+            dir: mrrTotal > 0 ? "up" : "flat",
+            tone: mrrTotal > 0 ? "good" : "muted"
           }
         )
       },
       {
-        label: "Pendiente de cobro",
-        value: stripeConnected ? _eur(stripeMeta && stripeMeta.openSum || 0) : "\u2014",
-        delta: /* @__PURE__ */ React.createElement(
-          MetricDelta,
-          {
-            text: String(stripeOpen.length),
-            suffix: `factura${stripeOpen.length === 1 ? "" : "s"} abierta${stripeOpen.length === 1 ? "" : "s"}`,
-            dir: stripeOpen.length ? "down" : "flat",
-            tone: stripeOpen.length ? "bad" : "muted"
-          }
-        )
+        label: "Facturado este a\xF1o",
+        value: _eur(yearTotal),
+        delta: /* @__PURE__ */ React.createElement(MetricDelta, { text: _yearStr, suffix: "acumulado", dir: "flat", tone: "muted" })
       }
     ].map((k) => /* @__PURE__ */ React.createElement("div", { key: k.label, style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, lineHeight: 1.3, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, k.label), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 7 } }, /* @__PURE__ */ React.createElement("span", { style: {
       fontSize: 32,
@@ -2696,313 +2672,7 @@
           return null;
         }
       }
-    ), /* @__PURE__ */ React.createElement(StripeInvoiceModal, { open: stripeInvOpen, onClose: () => setStripeInvOpen(false), onCreated: fetchStripe }), /* @__PURE__ */ React.createElement(PaymentLinkModal, { open: payLinkOpen, onClose: () => setPayLinkOpen(false) }), /* @__PURE__ */ React.createElement(StripeSubscriptionModal, { open: subLinkOpen, onClose: () => setSubLinkOpen(false), onCreated: fetchStripe }));
-  };
-  var StripeSubscriptionModal = ({ open, onClose, onCreated }) => {
-    const D = window.Data;
-    D.useStore();
-    const toast = useToast();
-    const [clientId, setClientId] = useState("");
-    const [email, setEmail] = useState("");
-    const [name, setName] = useState("");
-    const [concept, setConcept] = useState("");
-    const [amount, setAmount] = useState("");
-    const [interval, setItv] = useState("month");
-    const [mode, setMode] = useState("card");
-    const [trialDays, setTrial] = useState(0);
-    const [dueDays, setDueDays] = useState(15);
-    const [vat, setVat] = useState(21);
-    const [busy, setBusy] = useState(false);
-    const [done, setDone] = useState(null);
-    useEffect(() => {
-      if (open) {
-        setClientId("");
-        setEmail("");
-        setName("");
-        setConcept("");
-        setAmount("");
-        setItv("month");
-        setMode("card");
-        setTrial(0);
-        setDueDays(15);
-        setVat(21);
-        setBusy(false);
-        setDone(null);
-      }
-    }, [open]);
-    const pickClient = (id) => {
-      setClientId(id);
-      const c = D.CLIENTS.find((c2) => c2.id === id);
-      if (c) {
-        setEmail(c.email || "");
-        setName(c.company || c.name || "");
-      }
-    };
-    const emailOk = /\S+@\S+\.\S+/.test(email.trim());
-    const canSubmit = !!concept.trim() && Number(amount) > 0 && (mode === "card" || emailOk) && !busy;
-    const create = async () => {
-      if (!canSubmit) {
-        if (mode === "invoice" && !emailOk) toast("Pon el email del cliente (ah\xED llegan las facturas)", "warn");
-        return;
-      }
-      setBusy(true);
-      try {
-        if (mode === "card") {
-          const res = await _stripeApi("create_payment_link", {
-            name: concept.trim(),
-            amount: Number(amount),
-            interval,
-            trial_days: trialDays,
-            vat
-          });
-          if (res.ok) {
-            setDone({ url: res.url });
-            toast("Enlace de suscripci\xF3n creado", "success");
-          } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
-        } else {
-          const res = await _stripeApi("create_subscription", {
-            email: email.trim(),
-            name: name.trim() || email.trim(),
-            concept: concept.trim(),
-            amount: Number(amount),
-            interval,
-            trial_days: trialDays,
-            due_days: dueDays,
-            vat
-          });
-          if (res.ok) {
-            setDone(res);
-            onCreated && onCreated();
-            toast("Suscripci\xF3n creada en Stripe", "success");
-          } else toast(res.error || "No se pudo crear la suscripci\xF3n", "warn");
-        }
-      } catch (e) {
-        toast("Error de conexi\xF3n", "warn");
-      }
-      setBusy(false);
-    };
-    const copy = (v) => navigator.clipboard.writeText(v).then(() => toast("Enlace copiado", "success")).catch(() => {
-    });
-    const FIELD = {
-      width: "100%",
-      padding: "12px 16px",
-      fontSize: 14,
-      borderRadius: 14,
-      background: "rgba(255,255,255,0.04)",
-      border: "0.5px solid rgba(255,255,255,0.1)",
-      color: "var(--text)",
-      outline: "none",
-      fontFamily: "inherit",
-      letterSpacing: "-0.3px",
-      transition: "border-color .2s, background .2s"
-    };
-    const itvWord = interval === "year" ? "a\xF1o" : "mes";
-    if (!open) return null;
-    return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
-      position: "fixed",
-      inset: 0,
-      zIndex: 200,
-      background: "rgba(0,0,0,0.6)",
-      backdropFilter: "blur(8px)",
-      WebkitBackdropFilter: "blur(8px)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: 24,
-      animation: "fade .15s ease-out"
-    } }, /* @__PURE__ */ React.createElement("style", null, `.od-input:focus { border-color: rgba(158,154,229,0.5) !important; background: rgba(158,154,229,0.05) !important; }`), /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
-      width: "100%",
-      maxWidth: 520,
-      maxHeight: "90vh",
-      overflowY: "auto",
-      background: "#0e0e10",
-      border: "1px solid #232324",
-      borderRadius: 32,
-      boxShadow: "0 40px 90px rgba(0,0,0,0.6)",
-      animation: "pop .2s cubic-bezier(.2,.8,.2,1)",
-      display: "flex",
-      flexDirection: "column"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "22px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
-      width: 40,
-      height: 40,
-      borderRadius: "50%",
-      background: "rgba(255,255,255,0.08)",
-      border: "0.5px solid rgba(255,255,255,0.1)",
-      cursor: "pointer",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "var(--text-muted)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, "Nueva suscripci\xF3n"), done ? /* @__PURE__ */ React.createElement("div", { style: {
-      width: 40,
-      height: 40,
-      borderRadius: "50%",
-      background: "var(--green-soft)",
-      border: "0.5px solid var(--green)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "var(--green)"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 15 })) : /* @__PURE__ */ React.createElement("button", { onClick: create, style: {
-      width: 40,
-      height: 40,
-      borderRadius: "50%",
-      background: canSubmit ? "var(--accent)" : "rgba(255,255,255,0.08)",
-      border: "none",
-      cursor: canSubmit ? "pointer" : "default",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "#fff",
-      transition: "all .15s",
-      opacity: canSubmit ? 1 : 0.4
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: busy ? "refresh-cw" : "arrow-up", size: 15 }))), done ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", fontFamily: "var(--font-display)" } }, done.url ? "Enlace de suscripci\xF3n listo" : "Suscripci\xF3n creada"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 6, letterSpacing: "-0.3px" } }, _eur(amount), " cada ", itvWord, " \xB7 ", concept.trim(), trialDays > 0 ? ` \xB7 ${trialDays} d\xEDas de prueba` : ""), (done.url || done.hosted_url) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        readOnly: true,
-        value: done.url || done.hosted_url,
-        onClick: (e) => e.target.select(),
-        style: { ...FIELD, flex: 1, fontFamily: "var(--font-mono)", fontSize: 12 }
-      }
-    ), /* @__PURE__ */ React.createElement("button", { onClick: () => copy(done.url || done.hosted_url), style: {
-      ...FIELD,
-      width: "auto",
-      cursor: "pointer",
-      flexShrink: 0,
-      background: "var(--accent-soft)",
-      border: "0.5px solid var(--accent)",
-      color: "var(--accent)"
-    } }, "Copiar")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 14, lineHeight: 1.5 } }, done.url ? `Comp\xE1rtelo con el cliente: pone su tarjeta una vez y Stripe le cobra autom\xE1ticamente cada ${itvWord}.` : `Stripe enviar\xE1 una factura a ${email.trim()} cada ${itvWord}${done.hosted_url ? "; arriba tienes la primera" : ""}. La suscripci\xF3n est\xE1 en Stripe \u2192 Suscripciones.`)) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        autoFocus: true,
-        placeholder: "Nombre de la suscripci\xF3n...",
-        value: concept,
-        onChange: (e) => setConcept(e.target.value),
-        onKeyDown: (e) => {
-          if (e.key === "Enter" && canSubmit) create();
-        },
-        style: {
-          width: "100%",
-          background: "transparent",
-          border: "none",
-          outline: "none",
-          fontSize: 28,
-          fontWeight: 400,
-          letterSpacing: "-1.4px",
-          color: concept ? "var(--text)" : "rgba(255,255,255,0.15)",
-          fontFamily: "var(--font-display)",
-          caretColor: "var(--accent)"
-        }
-      }
-    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 28px 26px", display: "flex", flexDirection: "column", gap: 14 } }, D.CLIENTS.length > 0 && /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: clientId,
-        placeholder: "Elegir cliente",
-        icon: "users",
-        onChange: pickClient,
-        options: [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => ({ value: c.id, label: c.company || c.name }))
-      }
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        className: "od-input",
-        style: FIELD,
-        type: "email",
-        placeholder: "Email del cliente",
-        value: email,
-        onChange: (e) => setEmail(e.target.value)
-      }
-    ), /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        className: "od-input",
-        style: FIELD,
-        placeholder: "Nombre / empresa",
-        value: name,
-        onChange: (e) => setName(e.target.value)
-      }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        className: "od-input",
-        style: FIELD,
-        type: "number",
-        min: "0",
-        step: "0.01",
-        placeholder: "Importe (\u20AC)",
-        value: amount,
-        onChange: (e) => setAmount(e.target.value)
-      }
-    ), /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: interval,
-        placeholder: "Frecuencia",
-        icon: "refresh-cw",
-        onChange: setItv,
-        options: [
-          { value: "month", label: "Cada mes" },
-          { value: "year", label: "Cada a\xF1o" }
-        ]
-      }
-    )), /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: mode,
-        placeholder: "C\xF3mo se cobra",
-        icon: "receipt",
-        onChange: setMode,
-        options: [
-          { value: "card", label: "Cobro autom\xE1tico \u2014 el cliente pone su tarjeta con un enlace" },
-          { value: "invoice", label: "Factura por email cada ciclo \u2014 la paga manualmente" }
-        ]
-      }
-    ), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: trialDays,
-        placeholder: "Prueba gratuita",
-        icon: "clock",
-        up: true,
-        onChange: setTrial,
-        options: [
-          { value: 0, label: "Sin prueba" },
-          { value: 7, label: "7 d\xEDas de prueba" },
-          { value: 14, label: "14 d\xEDas de prueba" },
-          { value: 30, label: "30 d\xEDas de prueba" }
-        ]
-      }
-    ), mode === "invoice" ? /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: dueDays,
-        placeholder: "Vencimiento",
-        icon: "calendar",
-        up: true,
-        onChange: setDueDays,
-        options: [7, 15, 30, 45, 60].map((d) => ({ value: d, label: `Vence en ${d} d\xEDas` }))
-      }
-    ) : /* @__PURE__ */ React.createElement("div", { style: { ...FIELD, display: "flex", alignItems: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Se cobra solo con la tarjeta")), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(
-      FieldSelect,
-      {
-        value: vat,
-        placeholder: "IVA",
-        icon: "tag",
-        up: true,
-        onChange: setVat,
-        options: [
-          { value: 21, label: "IVA 21%" },
-          { value: 10, label: "IVA 10%" },
-          { value: 0, label: "Sin IVA" }
-        ]
-      }
-    ), /* @__PURE__ */ React.createElement("div", { style: { ...FIELD, display: "flex", alignItems: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "IRPF no disponible en suscripciones")), Number(amount) > 0 && (() => {
-      const base = Number(amount);
-      const iva = base * vat / 100;
-      return /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px", padding: "0 2px" } }, "Base ", _eur(base), vat ? ` + IVA ${_eur(iva)}` : "", " \u2192 el cliente paga ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, _eur(base + iva)), " cada ", itvWord);
-    })(), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", lineHeight: 1.5, padding: "0 2px" } }, mode === "card" ? "Se crea un enlace de Stripe con el IVA incluido en el precio: el cliente lo abre, paga y queda suscrito con cobro autom\xE1tico." : "Se crea la suscripci\xF3n sobre el cliente en Stripe y le llega una factura por email cada ciclo, con IVA e IRPF desglosados.")))));
+    ));
   };
   var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
     const [open, setOpen] = useState(false);
@@ -3368,93 +3038,6 @@
         style: { accentColor: "var(--accent)", width: 15, height: 15 }
       }
     ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Enviar ahora por email desde Stripe"))))));
-  };
-  var PaymentLinkModal = ({ open, onClose }) => {
-    const toast = useToast();
-    const [concept, setConcept] = useState("");
-    const [amount, setAmount] = useState("");
-    const [vat, setVat] = useState(21);
-    const [busy, setBusy] = useState(false);
-    const [url, setUrl] = useState("");
-    useEffect(() => {
-      if (open) {
-        setConcept("");
-        setAmount("");
-        setVat(21);
-        setUrl("");
-        setBusy(false);
-      }
-    }, [open]);
-    const create = async () => {
-      if (!concept.trim() || !(Number(amount) > 0)) {
-        toast("Pon concepto e importe", "warn");
-        return;
-      }
-      setBusy(true);
-      try {
-        const res = await _stripeApi("create_payment_link", { name: concept.trim(), amount: Number(amount), vat });
-        if (res.ok) setUrl(res.url);
-        else toast(res.error || "No se pudo crear el enlace", "warn");
-      } catch (e) {
-        toast("Error de conexi\xF3n", "warn");
-      }
-      setBusy(false);
-    };
-    const copy = () => navigator.clipboard.writeText(url).then(() => toast("Enlace copiado", "success")).catch(() => {
-    });
-    return /* @__PURE__ */ React.createElement(
-      Modal,
-      {
-        open,
-        onClose,
-        title: "Enlace de pago",
-        sub: "Un link de cobro de Stripe: comp\xE1rtelo por WhatsApp, email o donde quieras.",
-        footer: url ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cerrar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: copy }, /* @__PURE__ */ React.createElement(Icon, { name: "file", size: 12 }), " Copiar enlace")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: onClose }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: create, disabled: busy }, busy ? "Creando\u2026" : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " Crear enlace")))
-      },
-      url ? /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Tu enlace de pago"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          readOnly: true,
-          value: url,
-          onClick: (e) => e.target.select(),
-          style: { fontFamily: "var(--font-mono)", fontSize: 12.5 }
-        }
-      ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Cuando alguien pague, el cobro aparecer\xE1 autom\xE1ticamente en esta p\xE1gina.")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Concepto"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          placeholder: "Ej. Auditor\xEDa web",
-          value: concept,
-          onChange: (e) => setConcept(e.target.value),
-          autoFocus: true
-        }
-      )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 13 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Importe base (\u20AC)"), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          className: "input",
-          type: "number",
-          min: "0",
-          step: "0.01",
-          placeholder: "150",
-          value: amount,
-          onChange: (e) => setAmount(e.target.value)
-        }
-      )), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "IVA"), /* @__PURE__ */ React.createElement(
-        FieldSelect,
-        {
-          value: vat,
-          placeholder: "IVA",
-          icon: "tag",
-          onChange: setVat,
-          options: [
-            { value: 21, label: "IVA 21%" },
-            { value: 10, label: "IVA 10%" },
-            { value: 0, label: "Sin IVA" }
-          ]
-        }
-      ))), Number(amount) > 0 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "El cliente pagar\xE1 ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, _eur(Number(amount) * (1 + vat / 100))), vat ? " (IVA incluido)" : ""))
-    );
   };
   Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow, StripeInvoiceModal });
 })();
