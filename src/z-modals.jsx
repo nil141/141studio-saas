@@ -75,7 +75,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   D.useStore && D.useStore();
   const toast = useToast();
 
-  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false });
+  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false, amount: "", plan: "5050" });
 
   const [step, setStep]           = useState(0);
   const [a, setA]                 = useState(blank);
@@ -123,11 +123,14 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     setCreating(true);
     // Crear el proyecto con sus fases (nombres libres). Sin tareas: las creas tú
     // dentro de cada fase. Las fases se guardan en el campo service del proyecto.
+    const amt = Number(a.amount) || 0;
     const res = await D.addProjectAsync({
       name: a.name.trim(), clientId: a.clientId || null,
       deadline: a.recurring ? "" : a.deadline,
       recurring: a.recurring,
       template: phases.join(", ") || "libre",
+      amount: amt,
+      payments: amt > 0 ? D.buildPayments(amt, a.plan) : [],
     });
     const p = res && res.project;
     if (!p) {
@@ -237,6 +240,48 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
         <div>
           <div className="label">Fecha de entrega</div>
           <input className="input" type="date" value={a.deadline} onChange={e => set("deadline", e.target.value)}/>
+        </div>
+      )}
+
+      {/* Precio cerrado del proyecto */}
+      <div>
+        <div className="label">Precio cerrado <span style={{ color:"var(--text-subtle)", fontWeight:400 }}>(opcional)</span></div>
+        <div style={{ position:"relative" }}>
+          <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"var(--text-subtle)", fontSize:14 }}>€</span>
+          <input className="input" type="number" min="0" step="any" placeholder="Ej. 1500" value={a.amount}
+            onChange={e => set("amount", e.target.value)} style={{ paddingLeft:26 }}/>
+        </div>
+      </div>
+
+      {/* Plan de cobro — solo si hay precio */}
+      {Number(a.amount) > 0 && (
+        <div>
+          <div className="label">Cómo se cobra</div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            {Object.entries(D.PAY_PLANS).map(([id, pl]) => {
+              const on = a.plan === id;
+              return (
+                <button key={id} onClick={() => set("plan", id)} style={{
+                  textAlign:"left", padding:"10px 12px", borderRadius:12, cursor:"pointer", fontFamily:"inherit",
+                  background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+                  border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+                  transition:"all .12s",
+                }}>
+                  <div style={{ fontSize:13, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing:"-0.2px" }}>{pl.label}</div>
+                  <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:2 }}>{pl.desc}</div>
+                </button>
+              );
+            })}
+          </div>
+          {/* Vista previa de los pagos generados */}
+          <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:5 }}>
+            {D.buildPayments(Number(a.amount), a.plan).map((p, i) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
+                <span>{p.label} <span style={{ color:"var(--text-subtle)" }}>· {p.pct}%</span></span>
+                <span style={{ color:"var(--text)", fontVariantNumeric:"tabular-nums" }}>€{p.amount.toLocaleString("es-ES")}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

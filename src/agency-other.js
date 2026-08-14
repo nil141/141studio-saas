@@ -2202,7 +2202,27 @@
     };
     const stripeConnected = false;
     const stripeOpen = [];
-    const allIncomes = data.incomes;
+    const _projClient = (p) => p.clientName && p.clientName !== "Interno" ? p.clientName : "";
+    const projPaid = (D.PROJECTS || []).flatMap((p) => (p.payments || []).filter((x) => x.paid).map((x) => ({
+      id: "proj:" + p.id + ":" + x.id,
+      date: x.paidDate || _todayISO(),
+      concept: `${p.name} \xB7 ${x.label}`,
+      clientName: _projClient(p),
+      amount: Number(x.amount) || 0,
+      vat: 0,
+      irpf: 0,
+      source: "project"
+    })));
+    const projPending = (D.PROJECTS || []).flatMap((p) => (p.payments || []).filter((x) => !x.paid).map((x) => ({
+      id: "projp:" + p.id + ":" + x.id,
+      projId: p.id,
+      concept: `${p.name} \xB7 ${x.label}`,
+      clientName: _projClient(p),
+      amount: Number(x.amount) || 0,
+      pct: x.pct
+    })));
+    const pendingSum = projPending.reduce((a, x) => a + x.amount, 0);
+    const allIncomes = [...data.incomes, ...projPaid];
     const persist = (next) => {
       setData(next);
       _incSave(next);
@@ -2488,7 +2508,23 @@
       data.recs.length === 0 ? "A\xF1ade tu primera mensualidad" : "A\xF1adir mensualidad",
       " ",
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
-    ))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Cobros"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, shownInc.length ? `${shownInc.length} ${incMonth === "all" ? "en total" : "en " + _monthLabel(incMonth)} \xB7 ${_eur(shownSum)}` : incMonth === "all" ? "Pagos e ingresos puntuales" : `Sin cobros en ${_monthLabel(incMonth)}`)), incMonths.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { onClick: () => setIncMonthOpen((o) => !o), style: {
+    ))), projPending.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Pendiente de cobro"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, `${projPending.length} pago${projPending.length === 1 ? "" : "s"} \xB7 ${_eur(pendingSum)} \xB7 no cuenta como facturado`), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, projPending.map((x, i) => /* @__PURE__ */ React.createElement("div", { key: x.id, className: "task-row", style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 14,
+      padding: "13px 4px",
+      borderBottom: i === projPending.length - 1 ? "none" : "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 38,
+      height: 38,
+      borderRadius: "50%",
+      flexShrink: 0,
+      border: "1px solid rgba(238,229,134,0.35)",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      color: "var(--amber)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "clock", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, x.concept), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, x.pct, "% del proyecto", x.clientName ? ` \xB7 ${x.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px", color: "var(--amber)" } }, _eur(x.amount)), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, "pendiente")), /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }))))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Cobros"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, shownInc.length ? `${shownInc.length} ${incMonth === "all" ? "en total" : "en " + _monthLabel(incMonth)} \xB7 ${_eur(shownSum)}` : incMonth === "all" ? "Pagos e ingresos puntuales" : `Sin cobros en ${_monthLabel(incMonth)}`)), incMonths.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { onClick: () => setIncMonthOpen((o) => !o), style: {
       display: "inline-flex",
       alignItems: "center",
       gap: 7,
@@ -2598,26 +2634,15 @@
       alignItems: "center",
       justifyContent: "center",
       color: FIN_SERIES.pun
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, inc.concept), inc.source === "stripe" && /* @__PURE__ */ React.createElement("span", { style: {
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "trending-up", size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, letterSpacing: "-0.5px", color: "var(--text)", display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, inc.concept), inc.source === "project" && /* @__PURE__ */ React.createElement("span", { style: {
       fontSize: 10,
       padding: "2px 8px",
       borderRadius: 99,
       flexShrink: 0,
-      background: "rgba(99,91,255,0.14)",
-      border: "0.5px solid rgba(99,91,255,0.4)",
-      color: "#9d97ff"
-    } }, "Stripe")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, "+", _eur(_cobro(inc))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, inc.source === "stripe" ? "Cobrado en Stripe" : _fiscalSub(inc))), inc.source === "stripe" ? inc.hostedUrl ? /* @__PURE__ */ React.createElement(
-      "a",
-      {
-        className: "btn ghost icon-only sm",
-        href: inc.hostedUrl,
-        target: "_blank",
-        rel: "noopener noreferrer",
-        title: "Ver factura en Stripe",
-        style: { flexShrink: 0 }
-      },
-      /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
-    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
+      background: "var(--accent-soft)",
+      border: "0.5px solid rgba(158,154,229,0.4)",
+      color: "var(--accent)"
+    } }, "Proyecto")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 2, letterSpacing: "-0.2px" } }, _finDate(inc.date), inc.clientName ? ` \xB7 ${inc.clientName}` : "")), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontVariantNumeric: "tabular-nums", letterSpacing: "-0.4px" } }, "+", _eur(_cobro(inc))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 1 } }, inc.source === "project" ? "Cobro de proyecto" : _fiscalSub(inc))), inc.source === "project" ? /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => delInc(inc.id), title: "Eliminar", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 13 })))), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => {

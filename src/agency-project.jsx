@@ -119,6 +119,138 @@ const EditProjectModal = ({ project, onClose }) => {
   );
 };
 
+// Cobro del proyecto: precio + plan de pagos, con cada pago marcable como cobrado.
+const _eurP = (n) => "€" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const ProjectPayments = ({ project }) => {
+  const D = window.Data;
+  const toast = useToast();
+  const payments = project.payments || [];
+  const [editing, setEditing] = useState(false);
+  const [price, setPrice] = useState(String(project.amount || ""));
+  const [plan, setPlan]   = useState("5050");
+
+  const savePlan = () => {
+    const amt = Number(price) || 0;
+    if (amt <= 0) { toast("Pon un precio mayor que 0", "warn"); return; }
+    D.updateProject(project.id, { amount: amt, payments: D.buildPayments(amt, plan) });
+    setEditing(false);
+    toast("Plan de cobro guardado", "success");
+  };
+  const togglePaid = (payId) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const next = payments.map(p => p.id === payId
+      ? { ...p, paid: !p.paid, paidDate: !p.paid ? today : null } : p);
+    D.updateProject(project.id, { payments: next });
+  };
+
+  const cardStyle = { background:"var(--bg-elev-1)", border:"0.5px solid var(--border)", borderRadius:16, padding:"16px 18px", marginBottom:22 };
+  const total   = payments.reduce((a, p) => a + (Number(p.amount) || 0), 0) || Number(project.amount) || 0;
+  const cobrado = payments.filter(p => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+  const pend    = total - cobrado;
+
+  // Estado vacío / edición
+  if (editing || payments.length === 0) {
+    if (!editing) {
+      return (
+        <div style={cardStyle}>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:12 }}>
+            <div>
+              <div style={{ fontSize:13.5, color:"var(--text)", letterSpacing:"-0.3px" }}>Cobro del proyecto</div>
+              <div style={{ fontSize:12, color:"var(--text-subtle)", marginTop:2 }}>Añade el precio cerrado y cómo lo cobras.</div>
+            </div>
+            <button className="btn sm" onClick={() => { setPrice(String(project.amount || "")); setEditing(true); }}>
+              <Icon name="plus" size={12}/> Añadir cobro
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <div style={cardStyle}>
+        <div style={{ fontSize:13.5, color:"var(--text)", letterSpacing:"-0.3px", marginBottom:12 }}>Cobro del proyecto</div>
+        <div className="label">Precio cerrado</div>
+        <div style={{ position:"relative", maxWidth:200, marginBottom:12 }}>
+          <span style={{ position:"absolute", left:12, top:"50%", transform:"translateY(-50%)", color:"var(--text-subtle)", fontSize:14 }}>€</span>
+          <input className="input" type="number" min="0" step="any" placeholder="Ej. 1500" value={price}
+            onChange={e => setPrice(e.target.value)} style={{ paddingLeft:26 }} autoFocus/>
+        </div>
+        <div className="label">Cómo se cobra</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+          {Object.entries(D.PAY_PLANS).map(([id, pl]) => {
+            const on = plan === id;
+            return (
+              <button key={id} onClick={() => setPlan(id)} style={{
+                textAlign:"left", padding:"9px 11px", borderRadius:11, cursor:"pointer", fontFamily:"inherit",
+                background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+                border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+              }}>
+                <div style={{ fontSize:12.5, color: on ? "var(--text)" : "var(--text-muted)" }}>{pl.label}</div>
+                <div style={{ fontSize:10, color:"var(--text-subtle)", marginTop:1 }}>{pl.desc}</div>
+              </button>
+            );
+          })}
+        </div>
+        {Number(price) > 0 && (
+          <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:4 }}>
+            {D.buildPayments(Number(price), plan).map((p, i) => (
+              <div key={i} style={{ display:"flex", justifyContent:"space-between", fontSize:12, color:"var(--text-muted)" }}>
+                <span>{p.label} <span style={{ color:"var(--text-subtle)" }}>· {p.pct}%</span></span>
+                <span style={{ color:"var(--text)" }}>{_eurP(p.amount)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+        <div style={{ display:"flex", gap:8, marginTop:14 }}>
+          <button className="btn primary sm" onClick={savePlan}><Icon name="check" size={12}/> Guardar</button>
+          {payments.length > 0 && <button className="btn ghost sm" onClick={() => setEditing(false)}>Cancelar</button>}
+        </div>
+      </div>
+    );
+  }
+
+  // Plan definido: lista de pagos con toggle cobrado
+  return (
+    <div style={cardStyle}>
+      <div style={{ display:"flex", alignItems:"baseline", justifyContent:"space-between", gap:12, marginBottom:12 }}>
+        <div style={{ fontSize:13.5, color:"var(--text)", letterSpacing:"-0.3px" }}>
+          Cobro del proyecto <span style={{ color:"var(--text-subtle)", fontWeight:400 }}>· {_eurP(total)}</span>
+        </div>
+        <div style={{ fontSize:12, color:"var(--text-muted)", letterSpacing:"-0.2px" }}>
+          <span style={{ color:"var(--accent)" }}>{_eurP(cobrado)}</span> cobrado
+          {pend > 0.005 && <span> · {_eurP(pend)} pendiente</span>}
+          <button onClick={() => { setPrice(String(project.amount || "")); setEditing(true); }}
+            title="Editar plan" style={{ marginLeft:10, background:"transparent", border:0, cursor:"pointer",
+            color:"var(--text-subtle)", padding:0, verticalAlign:"middle" }}>
+            <Icon name="edit" size={12}/>
+          </button>
+        </div>
+      </div>
+      <div style={{ display:"flex", flexDirection:"column", gap:2 }}>
+        {payments.map(p => (
+          <div key={p.id} style={{ display:"flex", alignItems:"center", gap:12, padding:"9px 2px",
+            borderTop:"0.5px solid var(--border)" }}>
+            <button onClick={() => togglePaid(p.id)} title={p.paid ? "Marcar pendiente" : "Marcar cobrado"} style={{
+              width:22, height:22, borderRadius:99, flexShrink:0, cursor:"pointer", padding:0, display:"grid", placeItems:"center",
+              background: p.paid ? "var(--accent)" : "transparent",
+              border: p.paid ? "0.5px solid var(--accent)" : "0.5px solid var(--border-strong)",
+            }}>
+              {p.paid && <Icon name="check" size={12} style={{ color:"#fff" }}/>}
+            </button>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontSize:13, color: p.paid ? "var(--text-muted)" : "var(--text)", letterSpacing:"-0.2px" }}>{p.label}</div>
+              <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:1 }}>
+                {p.pct}%{p.paid && p.paidDate ? ` · cobrado ${p.paidDate.split("-").reverse().slice(0,2).join("/")}` : " · pendiente"}
+              </div>
+            </div>
+            <div style={{ fontSize:13.5, fontVariantNumeric:"tabular-nums", flexShrink:0,
+              color: p.paid ? "var(--accent)" : "var(--text)" }}>{_eurP(p.amount)}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 // Agency Project detail with 6-week roadmap
 const AgencyProject = ({ projectId, navigate, openModal }) => {
   const D = window.Data;
@@ -294,6 +426,9 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           {tasksByCol.done.length}/{projectTasks.length} tareas
         </div>
       </div>
+
+      {/* Cobro del proyecto */}
+      <ProjectPayments project={p}/>
 
       <div className="tabs">
         {[

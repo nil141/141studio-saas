@@ -109,7 +109,7 @@ const _mc = (r) => r && {
   // no existe en DB
 };
 const _mp = (r) => {
-  var _a, _b, _c, _d, _e, _f;
+  var _a, _b, _c, _d, _e, _f, _g;
   return r && {
     id: r.id,
     name: r.name,
@@ -122,10 +122,14 @@ const _mp = (r) => {
     progress: (_c = r.progress) != null ? _c : 0,
     budget: (_d = r.budget) != null ? _d : 0,
     deadline: r.deadline,
+    amount: (_e = r.budget) != null ? _e : 0,
+    // precio cerrado del proyecto
+    payments: _projPayLocal[r.id] || [],
+    // plan de cobro (respaldo local)
     nextMilestone: r.next_milestone,
-    revisionsUsed: (_e = r.revisions_used) != null ? _e : 0,
+    revisionsUsed: (_f = r.revisions_used) != null ? _f : 0,
     description: r.description,
-    recurring: (_f = r.recurring) != null ? _f : false
+    recurring: (_g = r.recurring) != null ? _g : false
   };
 };
 const _TASK_NOTES_KEY = "task_notes_v1";
@@ -159,6 +163,42 @@ const _mt = (r) => {
     notes: r.notes || _taskNotesLocal[r.id] || null,
     progress: (_a = r.progress) != null ? _a : 0
   };
+};
+const _PROJ_PAY_KEY = "project_payments_v1";
+let _projPayLocal = {};
+try {
+  _projPayLocal = JSON.parse(localStorage.getItem(_PROJ_PAY_KEY) || "{}") || {};
+} catch (e) {
+  _projPayLocal = {};
+}
+const _setProjPayLocal = (id, payments) => {
+  if (!id) return;
+  if (payments && payments.length) _projPayLocal[id] = payments;
+  else delete _projPayLocal[id];
+  try {
+    localStorage.setItem(_PROJ_PAY_KEY, JSON.stringify(_projPayLocal));
+  } catch (e) {
+  }
+};
+const _PAY_PLANS = {
+  full: { label: "Un pago", desc: "100% del total", segs: [{ label: "Pago \xFAnico", pct: 100 }] },
+  "5050": { label: "50 / 50", desc: "Mitad al empezar, mitad al entregar", segs: [{ label: "Al empezar", pct: 50 }, { label: "Al entregar", pct: 50 }] },
+  "3070": { label: "30 / 70", desc: "30% al empezar, 70% al entregar", segs: [{ label: "Al empezar", pct: 30 }, { label: "Al entregar", pct: 70 }] },
+  "333": { label: "3 pagos", desc: "Al empezar, a mitad y al entregar", segs: [{ label: "Al empezar", pct: 34 }, { label: "A mitad", pct: 33 }, { label: "Al entregar", pct: 33 }] }
+};
+const buildPayments = (amount, planId) => {
+  const plan = _PAY_PLANS[planId] || _PAY_PLANS.full;
+  const amt = Number(amount) || 0;
+  let assigned = 0;
+  return plan.segs.map((s, i) => {
+    let val;
+    if (i === plan.segs.length - 1) val = Math.round((amt - assigned) * 100) / 100;
+    else {
+      val = Math.round(amt * s.pct) / 100;
+      assigned += val;
+    }
+    return { id: "pay" + i, label: s.label, pct: s.pct, amount: val, paid: false, paidDate: null };
+  });
 };
 const _mi = (r) => r && {
   id: r.id,
@@ -575,13 +615,16 @@ const addProjectAsync = async (input) => {
     phase: 0,
     week: 1,
     progress: 0,
-    budget: 0,
+    budget: Number(input.amount) || 0,
     deadline,
+    amount: Number(input.amount) || 0,
+    payments: input.payments || [],
     nextMilestone: "Kickoff",
     revisionsUsed: 0,
     description: input.description || "",
     recurring: !!input.recurring
   };
+  _setProjPayLocal(p.id, input.payments || []);
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map((c) => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
   _emit();
@@ -663,9 +706,11 @@ const deleteProject = (id) => {
 const updateProject = (id, changes) => {
   const uid = _uid();
   if (!uid) return;
+  if (changes.payments !== void 0) _setProjPayLocal(id, changes.payments);
   _store.PROJECTS = _store.PROJECTS.map((p) => p.id === id ? { ...p, ...changes } : p);
   _emit();
   const dbChanges = {};
+  if (changes.amount !== void 0) dbChanges.budget = Number(changes.amount) || 0;
   if (changes.name !== void 0) dbChanges.name = changes.name;
   if (changes.service !== void 0) dbChanges.service = changes.service;
   if (changes.deadline !== void 0) dbChanges.deadline = changes.deadline;
@@ -1273,6 +1318,8 @@ window.Data = {
   addTasksBulk,
   deleteProject,
   updateProject,
+  PAY_PLANS: _PAY_PLANS,
+  buildPayments,
   addInvoice,
   deleteInvoice,
   addDeliverable,

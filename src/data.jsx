@@ -114,6 +114,8 @@ const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
   service: r.service, light: r.light || "green", phase: r.phase ?? 0, week: r.week ?? 1,
   progress: r.progress ?? 0, budget: r.budget ?? 0, deadline: r.deadline,
+  amount: r.budget ?? 0,                               // precio cerrado del proyecto
+  payments: _projPayLocal[r.id] || [],                 // plan de cobro (respaldo local)
   nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used ?? 0,
   description: r.description, recurring: r.recurring ?? false,
 });
@@ -135,6 +137,36 @@ const _mt = r => r && ({
   notes: r.notes || _taskNotesLocal[r.id] || null,
   progress: r.progress ?? 0,
 });
+
+// Plan de cobro del proyecto (precio + pagos) con respaldo local en el navegador.
+// { [projId]: [{ id, label, pct, amount, paid, paidDate }] }
+const _PROJ_PAY_KEY = "project_payments_v1";
+let _projPayLocal = {};
+try { _projPayLocal = JSON.parse(localStorage.getItem(_PROJ_PAY_KEY) || "{}") || {}; } catch (e) { _projPayLocal = {}; }
+const _setProjPayLocal = (id, payments) => {
+  if (!id) return;
+  if (payments && payments.length) _projPayLocal[id] = payments; else delete _projPayLocal[id];
+  try { localStorage.setItem(_PROJ_PAY_KEY, JSON.stringify(_projPayLocal)); } catch (e) {}
+};
+// Planes de cobro disponibles
+const _PAY_PLANS = {
+  full:  { label:"Un pago",  desc:"100% del total",                   segs:[{ label:"Pago único", pct:100 }] },
+  "5050":{ label:"50 / 50",  desc:"Mitad al empezar, mitad al entregar", segs:[{ label:"Al empezar", pct:50 }, { label:"Al entregar", pct:50 }] },
+  "3070":{ label:"30 / 70",  desc:"30% al empezar, 70% al entregar",     segs:[{ label:"Al empezar", pct:30 }, { label:"Al entregar", pct:70 }] },
+  "333": { label:"3 pagos",  desc:"Al empezar, a mitad y al entregar",   segs:[{ label:"Al empezar", pct:34 }, { label:"A mitad", pct:33 }, { label:"Al entregar", pct:33 }] },
+};
+// Genera el array de pagos a partir del precio y el plan elegido
+const buildPayments = (amount, planId) => {
+  const plan = _PAY_PLANS[planId] || _PAY_PLANS.full;
+  const amt = Number(amount) || 0;
+  let assigned = 0;
+  return plan.segs.map((s, i) => {
+    let val;
+    if (i === plan.segs.length - 1) val = Math.round((amt - assigned) * 100) / 100;   // el último recoge el resto
+    else { val = Math.round(amt * s.pct) / 100; assigned += val; }
+    return { id: "pay" + i, label: s.label, pct: s.pct, amount: val, paid: false, paidDate: null };
+  });
+};
 const _mi = r => r && ({
   id: r.id, clientId: r.client_id, project: r.project_name,
   client: r.client_name, amount: r.amount, type: r.type,
@@ -512,10 +544,12 @@ const addProjectAsync = async (input) => {
     clientId: input.clientId || null,
     clientName: client ? (client.company || client.name || "—") : (input.clientId ? "—" : "Interno"),
     service: input.template || "—", light: "green", phase: 0, week: 1,
-    progress: 0, budget: 0, deadline,
+    progress: 0, budget: Number(input.amount) || 0, deadline,
+    amount: Number(input.amount) || 0, payments: input.payments || [],
     nextMilestone: "Kickoff", revisionsUsed: 0, description: input.description || "",
     recurring: !!input.recurring,
   };
+  _setProjPayLocal(p.id, input.payments || []);
   _store.PROJECTS = [p, ..._store.PROJECTS];
   if (client) _store.CLIENTS = _store.CLIENTS.map(c => c.id === client.id ? { ...c, projects: c.projects + 1 } : c);
   _emit();
@@ -577,9 +611,12 @@ const deleteProject = (id) => {
 // Actualiza campos de un proyecto (p.ej. las fases guardadas en "service").
 const updateProject = (id, changes) => {
   const uid = _uid(); if (!uid) return;
+  // El plan de pagos se guarda en el respaldo local (no en Supabase)
+  if (changes.payments !== undefined) _setProjPayLocal(id, changes.payments);
   _store.PROJECTS = _store.PROJECTS.map(p => p.id === id ? { ...p, ...changes } : p);
   _emit();
   const dbChanges = {};
+  if (changes.amount      !== undefined) dbChanges.budget      = Number(changes.amount) || 0;
   if (changes.name        !== undefined) dbChanges.name        = changes.name;
   if (changes.service     !== undefined) dbChanges.service     = changes.service;
   if (changes.deadline    !== undefined) dbChanges.deadline    = changes.deadline;
@@ -1138,6 +1175,7 @@ window.Data = {
   // Mutators
   addClient, updateClient, deleteClient,
   addProject, addProjectAsync, addTasksBulk, deleteProject, updateProject,
+  PAY_PLANS: _PAY_PLANS, buildPayments,
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
   addLead,

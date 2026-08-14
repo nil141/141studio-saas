@@ -2761,7 +2761,21 @@ const IncomePage = () => {
   // Stripe desconectado: Finanzas es 100% manual.
   const stripeConnected = false;
   const stripeOpen = [];
-  const allIncomes = data.incomes;
+  // Pagos de proyectos: los COBRADOS entran como ingresos (facturado); los
+  // pendientes NO cuentan como facturado, se listan aparte.
+  const _projClient = (p) => (p.clientName && p.clientName !== "Interno" ? p.clientName : "");
+  const projPaid = (D.PROJECTS || []).flatMap(p => (p.payments || []).filter(x => x.paid).map(x => ({
+    id: "proj:" + p.id + ":" + x.id, date: x.paidDate || _todayISO(),
+    concept: `${p.name} · ${x.label}`, clientName: _projClient(p),
+    amount: Number(x.amount) || 0, vat: 0, irpf: 0, source: "project",
+  })));
+  const projPending = (D.PROJECTS || []).flatMap(p => (p.payments || []).filter(x => !x.paid).map(x => ({
+    id: "projp:" + p.id + ":" + x.id, projId: p.id,
+    concept: `${p.name} · ${x.label}`, clientName: _projClient(p),
+    amount: Number(x.amount) || 0, pct: x.pct,
+  })));
+  const pendingSum = projPending.reduce((a, x) => a + x.amount, 0);
+  const allIncomes = [...data.incomes, ...projPaid];
 
   const persist = (next) => { setData(next); _incSave(next); };
   const clientName = (id) => { const c = D.CLIENTS.find(c => c.id === id); return c ? (c.company || c.name || "") : ""; };
@@ -3024,6 +3038,38 @@ const IncomePage = () => {
           </div>
         </div>
 
+        {/* Pendiente de cobro — pagos de proyecto aún no cobrados (no cuentan como facturado) */}
+        {projPending.length > 0 && (
+          <div style={{ minWidth:0, marginBottom:26 }}>
+            <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Pendiente de cobro</div>
+            <div style={{ fontSize:13, color:"var(--text-muted)", marginTop:3, letterSpacing:"-0.2px" }}>
+              {`${projPending.length} pago${projPending.length === 1 ? "" : "s"} · ${_eur(pendingSum)} · no cuenta como facturado`}
+            </div>
+            <div style={{ marginTop:10 }}>
+              {projPending.map((x, i) => (
+                <div key={x.id} className="task-row" style={{ display:"flex", alignItems:"center", gap:14,
+                  padding:"13px 4px", borderBottom: i === projPending.length - 1 ? "none" : "0.5px solid var(--border)" }}>
+                  <div style={{ width:38, height:38, borderRadius:"50%", flexShrink:0, border:"1px solid rgba(238,229,134,0.35)",
+                    display:"flex", alignItems:"center", justifyContent:"center", color:"var(--amber)" }}>
+                    <Icon name="clock" size={14} strokeWidth={1.7}/>
+                  </div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{x.concept}</div>
+                    <div style={{ fontSize:11, color:"var(--text-subtle)", marginTop:2, letterSpacing:"-0.2px" }}>
+                      {x.pct}% del proyecto{x.clientName ? ` · ${x.clientName}` : ""}
+                    </div>
+                  </div>
+                  <div style={{ textAlign:"right", flexShrink:0 }}>
+                    <div style={{ fontSize:14, fontVariantNumeric:"tabular-nums", letterSpacing:"-0.4px", color:"var(--amber)" }}>{_eur(x.amount)}</div>
+                    <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>pendiente</div>
+                  </div>
+                  <span style={{ width:28, flexShrink:0 }}/>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Cobros — ingresos puntuales (filtrables por mes) */}
         <div style={{ minWidth:0 }}>
           <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12 }}>
@@ -3130,10 +3176,10 @@ const IncomePage = () => {
               <div style={{ flex:1, minWidth:0 }}>
                 <div style={{ fontSize:14, letterSpacing:"-0.5px", color:"var(--text)", display:"flex", alignItems:"center", gap:8 }}>
                   <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{inc.concept}</span>
-                  {inc.source === "stripe" && (
+                  {inc.source === "project" && (
                     <span style={{ fontSize:10, padding:"2px 8px", borderRadius:99, flexShrink:0,
-                      background:"rgba(99,91,255,0.14)", border:"0.5px solid rgba(99,91,255,0.4)", color:"#9d97ff" }}>
-                      Stripe
+                      background:"var(--accent-soft)", border:"0.5px solid rgba(158,154,229,0.4)", color:"var(--accent)" }}>
+                      Proyecto
                     </span>
                   )}
                 </div>
@@ -3146,16 +3192,11 @@ const IncomePage = () => {
                   +{_eur(_cobro(inc))}
                 </div>
                 <div style={{ fontSize:10.5, color:"var(--text-subtle)", marginTop:1 }}>
-                  {inc.source === "stripe" ? "Cobrado en Stripe" : _fiscalSub(inc)}
+                  {inc.source === "project" ? "Cobro de proyecto" : _fiscalSub(inc)}
                 </div>
               </div>
-              {inc.source === "stripe" ? (
-                inc.hostedUrl
-                  ? <a className="btn ghost icon-only sm" href={inc.hostedUrl} target="_blank" rel="noopener noreferrer"
-                      title="Ver factura en Stripe" style={{ flexShrink:0 }}>
-                      <Icon name="external-link" size={13}/>
-                    </a>
-                  : <span style={{ width:28, flexShrink:0 }}/>
+              {inc.source === "project" ? (
+                <span style={{ width:28, flexShrink:0 }}/>
               ) : (
                 <button className="btn ghost icon-only sm" onClick={() => delInc(inc.id)} title="Eliminar" style={{ flexShrink:0 }}>
                   <Icon name="trash" size={13}/>

@@ -89,7 +89,7 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const toast = useToast();
-  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false });
+  const blank = () => ({ name: "", clientId: prefilledClientId || "", deadline: "", recurring: false, amount: "", plan: "5050" });
   const [step, setStep] = useState(0);
   const [a, setA] = useState(blank);
   const [searching, setSearching] = useState(false);
@@ -135,12 +135,15 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
   const submit = async () => {
     if (creating) return;
     setCreating(true);
+    const amt = Number(a.amount) || 0;
     const res = await D.addProjectAsync({
       name: a.name.trim(),
       clientId: a.clientId || null,
       deadline: a.recurring ? "" : a.deadline,
       recurring: a.recurring,
-      template: phases.join(", ") || "libre"
+      template: phases.join(", ") || "libre",
+      amount: amt,
+      payments: amt > 0 ? D.buildPayments(amt, a.plan) : []
     });
     const p = res && res.project;
     if (!p) {
@@ -234,7 +237,31 @@ const NewProjectModal = ({ open, onClose, onCreate, prefilledClientId }) => {
     border: "0.5px solid rgba(158,154,229,0.25)",
     fontSize: 12.5,
     color: "var(--text-muted)"
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "Servicio mensual: se renueva cada mes, sin fecha de entrega fija.")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: a.deadline, onChange: (e) => set("deadline", e.target.value) })));
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "refresh-cw", size: 14, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "Servicio mensual: se renueva cada mes, sin fecha de entrega fija.")) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: a.deadline, onChange: (e) => set("deadline", e.target.value) })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Precio cerrado ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "(opcional)")), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-subtle)", fontSize: 14 } }, "\u20AC"), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "input",
+      type: "number",
+      min: "0",
+      step: "any",
+      placeholder: "Ej. 1500",
+      value: a.amount,
+      onChange: (e) => set("amount", e.target.value),
+      style: { paddingLeft: 26 }
+    }
+  ))), Number(a.amount) > 0 && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "C\xF3mo se cobra"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.entries(D.PAY_PLANS).map(([id, pl]) => {
+    const on = a.plan === id;
+    return /* @__PURE__ */ React.createElement("button", { key: id, onClick: () => set("plan", id), style: {
+      textAlign: "left",
+      padding: "10px 12px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+      border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)",
+      transition: "all .12s"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: on ? "var(--text)" : "var(--text-muted)", letterSpacing: "-0.2px" } }, pl.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, color: "var(--text-subtle)", marginTop: 2 } }, pl.desc));
+  })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", flexDirection: "column", gap: 5 } }, D.buildPayments(Number(a.amount), a.plan).map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, /* @__PURE__ */ React.createElement("span", null, p.label, " ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7 ", p.pct, "%")), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontVariantNumeric: "tabular-nums" } }, "\u20AC", p.amount.toLocaleString("es-ES")))))));
   const renderStep1 = () => {
     const available = SUGGESTED_PHASES.filter((s) => !phases.includes(s));
     return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, "A\xF1ade las fases del proyecto. Las tareas de cada fase las creas t\xFA luego dentro del proyecto. Puedes crearlo sin fases y organizarlo despu\xE9s."), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement(

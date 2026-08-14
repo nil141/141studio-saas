@@ -96,6 +96,109 @@
       }))), !recurring && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: deadline, onChange: (e) => setDeadline(e.target.value) }), project.deadline && project.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 5 } }, "Actual: ", project.deadline, deadline ? "" : " \xB7 d\xE9jalo vac\xEDo para mantenerla")))
     );
   };
+  var _eurP = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var ProjectPayments = ({ project }) => {
+    const D = window.Data;
+    const toast = useToast();
+    const payments = project.payments || [];
+    const [editing, setEditing] = useState(false);
+    const [price, setPrice] = useState(String(project.amount || ""));
+    const [plan, setPlan] = useState("5050");
+    const savePlan = () => {
+      const amt = Number(price) || 0;
+      if (amt <= 0) {
+        toast("Pon un precio mayor que 0", "warn");
+        return;
+      }
+      D.updateProject(project.id, { amount: amt, payments: D.buildPayments(amt, plan) });
+      setEditing(false);
+      toast("Plan de cobro guardado", "success");
+    };
+    const togglePaid = (payId) => {
+      const today = (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+      const next = payments.map((p) => p.id === payId ? { ...p, paid: !p.paid, paidDate: !p.paid ? today : null } : p);
+      D.updateProject(project.id, { payments: next });
+    };
+    const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "16px 18px", marginBottom: 22 };
+    const total = payments.reduce((a, p) => a + (Number(p.amount) || 0), 0) || Number(project.amount) || 0;
+    const cobrado = payments.filter((p) => p.paid).reduce((a, p) => a + (Number(p.amount) || 0), 0);
+    const pend = total - cobrado;
+    if (editing || payments.length === 0) {
+      if (!editing) {
+        return /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.3px" } }, "Cobro del proyecto"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 2 } }, "A\xF1ade el precio cerrado y c\xF3mo lo cobras.")), /* @__PURE__ */ React.createElement("button", { className: "btn sm", onClick: () => {
+          setPrice(String(project.amount || ""));
+          setEditing(true);
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 12 }), " A\xF1adir cobro")));
+      }
+      return /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.3px", marginBottom: 12 } }, "Cobro del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "label" }, "Precio cerrado"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", maxWidth: 200, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-subtle)", fontSize: 14 } }, "\u20AC"), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          className: "input",
+          type: "number",
+          min: "0",
+          step: "any",
+          placeholder: "Ej. 1500",
+          value: price,
+          onChange: (e) => setPrice(e.target.value),
+          style: { paddingLeft: 26 },
+          autoFocus: true
+        }
+      )), /* @__PURE__ */ React.createElement("div", { className: "label" }, "C\xF3mo se cobra"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 } }, Object.entries(D.PAY_PLANS).map(([id, pl]) => {
+        const on = plan === id;
+        return /* @__PURE__ */ React.createElement("button", { key: id, onClick: () => setPlan(id), style: {
+          textAlign: "left",
+          padding: "9px 11px",
+          borderRadius: 11,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          background: on ? "rgba(158,154,229,0.14)" : "rgba(255,255,255,0.03)",
+          border: on ? "0.5px solid rgba(158,154,229,0.5)" : "0.5px solid var(--border)"
+        } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: on ? "var(--text)" : "var(--text-muted)" } }, pl.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", marginTop: 1 } }, pl.desc));
+      })), Number(price) > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10, display: "flex", flexDirection: "column", gap: 4 } }, D.buildPayments(Number(price), plan).map((p, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", justifyContent: "space-between", fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", null, p.label, " ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7 ", p.pct, "%")), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)" } }, _eurP(p.amount))))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 14 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: savePlan }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar"), payments.length > 0 && /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setEditing(false) }, "Cancelar")));
+    }
+    return /* @__PURE__ */ React.createElement("div", { style: cardStyle }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 12, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.3px" } }, "Cobro del proyecto ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "\xB7 ", _eurP(total))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, _eurP(cobrado)), " cobrado", pend > 5e-3 && /* @__PURE__ */ React.createElement("span", null, " \xB7 ", _eurP(pend), " pendiente"), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setPrice(String(project.amount || ""));
+          setEditing(true);
+        },
+        title: "Editar plan",
+        style: {
+          marginLeft: 10,
+          background: "transparent",
+          border: 0,
+          cursor: "pointer",
+          color: "var(--text-subtle)",
+          padding: 0,
+          verticalAlign: "middle"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 12 })
+    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, payments.map((p) => /* @__PURE__ */ React.createElement("div", { key: p.id, style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      padding: "9px 2px",
+      borderTop: "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement("button", { onClick: () => togglePaid(p.id), title: p.paid ? "Marcar pendiente" : "Marcar cobrado", style: {
+      width: 22,
+      height: 22,
+      borderRadius: 99,
+      flexShrink: 0,
+      cursor: "pointer",
+      padding: 0,
+      display: "grid",
+      placeItems: "center",
+      background: p.paid ? "var(--accent)" : "transparent",
+      border: p.paid ? "0.5px solid var(--accent)" : "0.5px solid var(--border-strong)"
+    } }, p.paid && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color: "#fff" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: p.paid ? "var(--text-muted)" : "var(--text)", letterSpacing: "-0.2px" } }, p.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, p.pct, "%", p.paid && p.paidDate ? ` \xB7 cobrado ${p.paidDate.split("-").reverse().slice(0, 2).join("/")}` : " \xB7 pendiente")), /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 13.5,
+      fontVariantNumeric: "tabular-nums",
+      flexShrink: 0,
+      color: p.paid ? "var(--accent)" : "var(--text)"
+    } }, _eurP(p.amount))))));
+  };
   var AgencyProject = ({ projectId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
@@ -237,7 +340,7 @@
       borderRadius: 99,
       background: "var(--accent)",
       transition: "width .4s ease"
-    } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+    } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan" },
       { id: "tasks", label: "Tablero" },
       { id: "files", label: "Archivos" }
