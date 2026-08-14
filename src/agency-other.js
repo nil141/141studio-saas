@@ -2149,7 +2149,7 @@
     const [data, setData] = useState(_incLoad);
     const [addOpen, setAddOpen] = useState(false);
     const [incType, setIncType] = useState("rec");
-    const [incMonth, setIncMonth] = useState("all");
+    const [incMonth, setIncMonth] = useState(() => _todayISO().slice(0, 7));
     const [incMonthOpen, setIncMonthOpen] = useState(false);
     useEffect(() => {
       if (!incMonthOpen) return;

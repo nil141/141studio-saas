@@ -2696,7 +2696,7 @@ const IncomePage = () => {
   const [data, setData] = useState(_incLoad);
   const [addOpen, setAddOpen] = useState(false);
   const [incType, setIncType] = useState("rec"); // "rec" | "pun" — tipo dentro del pop-up
-  const [incMonth, setIncMonth] = useState("all"); // filtro de cobros por mes ("all" | "YYYY-MM")
+  const [incMonth, setIncMonth] = useState(() => _todayISO().slice(0, 7)); // por defecto, el mes actual
   const [incMonthOpen, setIncMonthOpen] = useState(false);
   useEffect(() => {
     if (!incMonthOpen) return;
