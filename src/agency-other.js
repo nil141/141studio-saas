@@ -2149,6 +2149,14 @@
     const [data, setData] = useState(_incLoad);
     const [addOpen, setAddOpen] = useState(false);
     const [incType, setIncType] = useState("rec");
+    const [incMonth, setIncMonth] = useState("all");
+    const [incMonthOpen, setIncMonthOpen] = useState(false);
+    useEffect(() => {
+      if (!incMonthOpen) return;
+      const close = () => setIncMonthOpen(false);
+      document.addEventListener("click", close);
+      return () => document.removeEventListener("click", close);
+    }, [incMonthOpen]);
     const blankRec = { concept: "", amount: "", cycle: "monthly", clientId: "", nextCharge: "", vat: 21, irpf: 15 };
     const blankInc = { date: _todayISO(), concept: "", amount: "", clientId: "", vat: 21, irpf: 15 };
     const [recForm, setRecForm] = useState(blankRec);
@@ -2295,8 +2303,16 @@
     const cliMax = clients.length ? clients[0][1] : 1;
     const sortedInc = [...allIncomes].sort((a, b) => (b.date || "").localeCompare(a.date || ""));
     const _yearStr = _todayISO().slice(0, 4);
-    const yearTotal = allIncomes.filter((i) => (i.date || "").slice(0, 4) === _yearStr).reduce((a, i) => a + _withVat(i), 0);
+    const yearTotal = allIncomes.filter((i) => (i.date || "").slice(0, 4) === _yearStr).reduce((a, i) => a + _cobro(i), 0);
     const mrrTotal = activeRecs.reduce((a, r) => a + _recMoCobro(r), 0);
+    const incMonths = [...new Set(sortedInc.map((i) => (i.date || "").slice(0, 7)).filter(Boolean))].sort().reverse();
+    const _MES3 = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const _monthLabel = (ym) => {
+      const [y, m] = ym.split("-");
+      return `${_MES3[+m - 1]} ${y}`;
+    };
+    const shownInc = incMonth === "all" ? sortedInc : sortedInc.filter((i) => (i.date || "").slice(0, 7) === incMonth);
+    const shownSum = shownInc.reduce((a, i) => a + _cobro(i), 0);
     const stripeMonthSum = allIncomes.filter((i) => _sameMonth(i.date) && i.source === "stripe").reduce((a, i) => a + _withVat(i), 0);
     const manualPunSum = allIncomes.filter((i) => _sameMonth(i.date) && i.source !== "stripe").reduce((a, i) => a + _withVat(i), 0);
     const cardStyle = { background: "var(--bg-elev-1)", border: "0.5px solid var(--border)", borderRadius: 16, padding: "18px 20px" };
@@ -2472,7 +2488,66 @@
       data.recs.length === 0 ? "A\xF1ade tu primera mensualidad" : "A\xF1adir mensualidad",
       " ",
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
-    ))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Cobros"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, stripeOpen.length + sortedInc.length ? `${stripeOpen.length + sortedInc.length} en total${punMonth > 0 ? ` \xB7 ${_eur(punMonth)} este mes` : ""}` : "Facturas y pagos puntuales"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
+    ))), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, color: "var(--text)", letterSpacing: "-0.4px" } }, "Cobros"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 3, letterSpacing: "-0.2px" } }, shownInc.length ? `${shownInc.length} ${incMonth === "all" ? "en total" : "en " + _monthLabel(incMonth)} \xB7 ${_eur(shownSum)}` : incMonth === "all" ? "Pagos e ingresos puntuales" : `Sin cobros en ${_monthLabel(incMonth)}`)), incMonths.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { onClick: () => setIncMonthOpen((o) => !o), style: {
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 7,
+      padding: "7px 12px",
+      borderRadius: 99,
+      background: "rgba(255,255,255,0.05)",
+      border: "0.5px solid var(--border)",
+      cursor: "pointer",
+      color: "var(--text-muted)",
+      fontSize: 12.5,
+      fontFamily: "inherit",
+      letterSpacing: "-0.2px",
+      whiteSpace: "nowrap"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12 }), incMonth === "all" ? "Todos los meses" : _monthLabel(incMonth), /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 11, style: { opacity: 0.5 } })), incMonthOpen && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      right: 0,
+      top: "calc(100% + 6px)",
+      zIndex: 60,
+      minWidth: 170,
+      background: "#1a1a1c",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      borderRadius: 12,
+      padding: 5,
+      boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+      maxHeight: 280,
+      overflowY: "auto"
+    } }, [["all", "Todos los meses"], ...incMonths.map((m) => [m, _monthLabel(m)])].map(([val, lab]) => {
+      const on = incMonth === val;
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: val,
+          onClick: () => {
+            setIncMonth(val);
+            setIncMonthOpen(false);
+          },
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            width: "100%",
+            padding: "8px 10px",
+            borderRadius: 8,
+            cursor: "pointer",
+            textAlign: "left",
+            border: 0,
+            fontFamily: "inherit",
+            fontSize: 12.5,
+            background: on ? "rgba(255,255,255,0.06)" : "transparent",
+            color: on ? "var(--text)" : "var(--text-muted)",
+            textTransform: "capitalize"
+          },
+          onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+          onMouseLeave: (e) => e.currentTarget.style.background = on ? "rgba(255,255,255,0.06)" : "transparent"
+        },
+        lab,
+        on && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { marginLeft: "auto" } })
+      );
+    })))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, stripeOpen.map((inv) => /* @__PURE__ */ React.createElement("div", { key: inv.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
@@ -2507,12 +2582,12 @@
         style: { flexShrink: 0 }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 })
-    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }))), sortedInc.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
+    ) : /* @__PURE__ */ React.createElement("span", { style: { width: 28, flexShrink: 0 } }))), shownInc.map((inc, i) => /* @__PURE__ */ React.createElement("div", { key: inc.id, className: "task-row", style: {
       display: "flex",
       alignItems: "center",
       gap: 14,
       padding: "13px 4px",
-      borderBottom: i === sortedInc.length - 1 ? "none" : "0.5px solid var(--border)"
+      borderBottom: i === shownInc.length - 1 ? "none" : "0.5px solid var(--border)"
     } }, /* @__PURE__ */ React.createElement("div", { style: {
       width: 38,
       height: 38,
@@ -2553,7 +2628,7 @@
         onMouseEnter: (e) => e.currentTarget.style.opacity = 0.85,
         onMouseLeave: (e) => e.currentTarget.style.opacity = 0.5
       },
-      stripeOpen.length + sortedInc.length === 0 ? "Registra tu primer cobro" : "A\xF1adir cobro",
+      sortedInc.length === 0 ? "Registra tu primer cobro" : "A\xF1adir cobro",
       " ",
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 })
     ))))), /* @__PURE__ */ React.createElement(
