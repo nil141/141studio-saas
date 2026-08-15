@@ -26,7 +26,20 @@ const OnboardingPage = ({ token }) => {
   const [status, setStatus] = useState("checking");
   const [errMsg, setErrMsg] = useState("");
   const [busy, setBusy] = useState(false);
-  const [form, setForm] = useState({ name: "", company: "", email: "", pw: "", pw2: "", phone: "" });
+  const [form, setForm] = useState({
+    name: "",
+    company: "",
+    email: "",
+    pw: "",
+    pw2: "",
+    phone: "",
+    sector: "",
+    website: "",
+    fiscalName: "",
+    nif: "",
+    fiscalAddress: "",
+    about: ""
+  });
   const [step, setStep] = useState(0);
   const [err, setErr] = useState("");
   const [topErr, setTopErr] = useState("");
@@ -59,6 +72,25 @@ const OnboardingPage = ({ token }) => {
       title: (f) => first(f.name) ? `Encantado, ${first(f.name)}.` : "\xBFCu\xE1l es tu empresa?",
       sub: "El nombre de tu empresa o marca.",
       fields: [{ id: "company", ph: "Mi Empresa S.L.", autoC: "organization" }]
+    },
+    {
+      key: "about",
+      title: () => "\xBFA qu\xE9 os dedic\xE1is?",
+      sub: "Cu\xE9ntanos brevemente tu negocio y tu web (opcional).",
+      fields: [
+        { id: "about", ph: "Ej. Restaurante de cocina mediterr\xE1nea" },
+        { id: "website", ph: "tuweb.com", autoC: "url" }
+      ]
+    },
+    {
+      key: "fiscal",
+      title: () => "Datos de facturaci\xF3n",
+      sub: "Para poder emitirte las facturas (opcional).",
+      fields: [
+        { id: "fiscalName", ph: "Raz\xF3n social (Mi Empresa S.L.)", autoC: "organization" },
+        { id: "nif", ph: "NIF / CIF" },
+        { id: "fiscalAddress", ph: "Direcci\xF3n fiscal" }
+      ]
     },
     {
       key: "phone",
@@ -112,12 +144,18 @@ const OnboardingPage = ({ token }) => {
     setStep((s2) => Math.max(0, s2 - 1));
   };
   const finishSignup = async (sb) => {
-    const { data: result, error: rpcError } = await sb.rpc("complete_invite", {
-      p_token: token,
-      p_name: form.name.trim(),
-      p_company: form.company.trim(),
-      p_phone: form.phone.trim()
-    });
+    const base = { p_token: token, p_name: form.name.trim(), p_company: form.company.trim(), p_phone: form.phone.trim() };
+    const extra = {
+      nif: form.nif.trim(),
+      fiscal_name: form.fiscalName.trim(),
+      fiscal_address: form.fiscalAddress.trim(),
+      website: form.website.trim(),
+      about: form.about.trim()
+    };
+    let { data: result, error: rpcError } = await sb.rpc("complete_invite", { ...base, p_extra: extra });
+    if (rpcError && /function|does not exist|schema cache|p_extra/i.test(rpcError.message || "")) {
+      ({ data: result, error: rpcError } = await sb.rpc("complete_invite", base));
+    }
     if (rpcError || !(result == null ? void 0 : result.ok)) return (result == null ? void 0 : result.error) || (rpcError == null ? void 0 : rpcError.message) || "Error al completar el registro";
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");

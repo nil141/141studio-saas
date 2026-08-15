@@ -432,6 +432,33 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
         </div>
       )}
 
+      {/* Datos de facturación / onboarding (lo que rellenó el cliente) */}
+      {!editing && (c.fiscalName || c.nif || c.fiscalAddress || c.website || c.about) && (
+        <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em",
+            color: "var(--text-subtle)", marginBottom: 12 }}>Datos de facturación</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "12px 24px" }}>
+            {[
+              ["Razón social", c.fiscalName],
+              ["NIF / CIF", c.nif],
+              ["Dirección fiscal", c.fiscalAddress],
+              ["Web", c.website],
+            ].filter(([, v]) => v).map(([k, v]) => (
+              <div key={k}>
+                <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>{k}</div>
+                <div style={{ fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.2px", wordBreak: "break-word" }}>{v}</div>
+              </div>
+            ))}
+          </div>
+          {c.about && (
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>A qué se dedica</div>
+              <div style={{ fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 }}>{c.about}</div>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Tabs */}
       <div className="tabs">
         {[

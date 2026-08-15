@@ -109,6 +109,9 @@ const _mc = r => r && ({
   status: "active",                // no existe en DB
   service: r.sector || "—",        // DB usa "sector"
   since: "—",                      // no existe en DB
+  // Datos de onboarding / facturación
+  nif: r.nif || "", fiscalName: r.fiscal_name || "", fiscalAddress: r.fiscal_address || "",
+  website: r.website || "", about: r.about || "",
 });
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
@@ -406,7 +409,13 @@ const updateClient = (id, changes) => {
   if (changes.email   !== undefined) dbChanges.email   = changes.email;
   if (changes.whatsapp !== undefined) dbChanges.phone  = changes.whatsapp; // DB usa "phone"
   if (changes.service !== undefined) dbChanges.sector  = changes.service;  // DB usa "sector"
-  _sb.from("clients").update(dbChanges).eq("id", id).then();
+  if (changes.nif          !== undefined) dbChanges.nif            = changes.nif || null;
+  if (changes.fiscalName   !== undefined) dbChanges.fiscal_name    = changes.fiscalName || null;
+  if (changes.fiscalAddress!== undefined) dbChanges.fiscal_address = changes.fiscalAddress || null;
+  if (changes.website      !== undefined) dbChanges.website        = changes.website || null;
+  if (changes.about        !== undefined) dbChanges.about          = changes.about || null;
+  // Adaptativo: si alguna columna aún no existe, la quita y guarda el resto.
+  _updateAdaptive("clients", id, dbChanges);
 };
 
 const deleteClient = async (id) => {

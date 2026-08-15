@@ -105,8 +105,14 @@ const _mc = (r) => r && {
   // no existe en DB
   service: r.sector || "\u2014",
   // DB usa "sector"
-  since: "\u2014"
+  since: "\u2014",
   // no existe en DB
+  // Datos de onboarding / facturación
+  nif: r.nif || "",
+  fiscalName: r.fiscal_name || "",
+  fiscalAddress: r.fiscal_address || "",
+  website: r.website || "",
+  about: r.about || ""
 };
 const _mp = (r) => {
   var _a, _b, _c, _d, _e, _f, _g;
@@ -459,7 +465,12 @@ const updateClient = (id, changes) => {
   if (changes.email !== void 0) dbChanges.email = changes.email;
   if (changes.whatsapp !== void 0) dbChanges.phone = changes.whatsapp;
   if (changes.service !== void 0) dbChanges.sector = changes.service;
-  _sb.from("clients").update(dbChanges).eq("id", id).then();
+  if (changes.nif !== void 0) dbChanges.nif = changes.nif || null;
+  if (changes.fiscalName !== void 0) dbChanges.fiscal_name = changes.fiscalName || null;
+  if (changes.fiscalAddress !== void 0) dbChanges.fiscal_address = changes.fiscalAddress || null;
+  if (changes.website !== void 0) dbChanges.website = changes.website || null;
+  if (changes.about !== void 0) dbChanges.about = changes.about || null;
+  _updateAdaptive("clients", id, dbChanges);
 };
 const deleteClient = async (id) => {
   const uid = _uid();

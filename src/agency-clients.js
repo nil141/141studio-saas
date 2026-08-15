@@ -348,7 +348,18 @@
           maxWidth: "100%"
         }
       }
-    ), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: copyPortal }, portalCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }) : null, " ", portalCopied ? "Copiado" : "Copiar enlace")) : !hasPortal && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: createPortal, disabled: portalBusy }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " ", portalBusy ? "Generando\u2026" : "Crear portal")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+    ), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: copyPortal }, portalCopied ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }) : null, " ", portalCopied ? "Copiado" : "Copiar enlace")) : !hasPortal && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: createPortal, disabled: portalBusy }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " ", portalBusy ? "Generando\u2026" : "Crear portal")), !editing && (c.fiscalName || c.nif || c.fiscalAddress || c.website || c.about) && /* @__PURE__ */ React.createElement("div", { className: "card", style: { padding: "16px 20px", marginBottom: 16 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 11,
+      textTransform: "uppercase",
+      letterSpacing: "0.07em",
+      color: "var(--text-subtle)",
+      marginBottom: 12
+    } }, "Datos de facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "12px 24px" } }, [
+      ["Raz\xF3n social", c.fiscalName],
+      ["NIF / CIF", c.nif],
+      ["Direcci\xF3n fiscal", c.fiscalAddress],
+      ["Web", c.website]
+    ].filter(([, v]) => v).map(([k, v]) => /* @__PURE__ */ React.createElement("div", { key: k }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 } }, k), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.2px", wordBreak: "break-word" } }, v)))), c.about && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 } }, "A qu\xE9 se dedica"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, c.about))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "projects", label: "Proyectos", count: projects.length },
       { id: "billing", label: "Facturaci\xF3n", count: invoices.length },
       { id: "files", label: "Archivos (Drive)" },

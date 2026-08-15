@@ -20,7 +20,8 @@ const OnboardingPage = ({ token }) => {
   const [status, setStatus] = useState("checking"); // checking | error | form | verify | done
   const [errMsg, setErrMsg] = useState("");
   const [busy, setBusy]     = useState(false);
-  const [form, setForm]     = useState({ name:"", company:"", email:"", pw:"", pw2:"", phone:"" });
+  const [form, setForm]     = useState({ name:"", company:"", email:"", pw:"", pw2:"", phone:"",
+    sector:"", website:"", fiscalName:"", nif:"", fiscalAddress:"", about:"" });
   const [step, setStep]     = useState(0);
   const [err, setErr]       = useState("");
   const [topErr, setTopErr] = useState("");
@@ -48,6 +49,17 @@ const OnboardingPage = ({ token }) => {
     { key:"company", title: (f) => first(f.name) ? `Encantado, ${first(f.name)}.` : "¿Cuál es tu empresa?",
       sub:"El nombre de tu empresa o marca.",
       fields:[{ id:"company", ph:"Mi Empresa S.L.", autoC:"organization" }] },
+    { key:"about",   title: () => "¿A qué os dedicáis?", sub:"Cuéntanos brevemente tu negocio y tu web (opcional).",
+      fields:[
+        { id:"about",   ph:"Ej. Restaurante de cocina mediterránea" },
+        { id:"website", ph:"tuweb.com", autoC:"url" },
+      ] },
+    { key:"fiscal",  title: () => "Datos de facturación", sub:"Para poder emitirte las facturas (opcional).",
+      fields:[
+        { id:"fiscalName",    ph:"Razón social (Mi Empresa S.L.)", autoC:"organization" },
+        { id:"nif",           ph:"NIF / CIF" },
+        { id:"fiscalAddress", ph:"Dirección fiscal" },
+      ] },
     { key:"phone",   title: () => "¿Cómo te contactamos?", sub:"Teléfono o WhatsApp (opcional).",
       fields:[{ id:"phone", ph:"+34 600 000 000", type:"tel", autoC:"tel" }] },
     { key:"email",   title: () => "Tu email de acceso", sub:"Te enviaremos un código para confirmarlo.",
@@ -82,9 +94,17 @@ const OnboardingPage = ({ token }) => {
   const back = () => { setErr(""); setStep(s => Math.max(0, s - 1)); };
 
   const finishSignup = async (sb) => {
-    const { data: result, error: rpcError } = await sb.rpc("complete_invite", {
-      p_token: token, p_name: form.name.trim(), p_company: form.company.trim(), p_phone: form.phone.trim(),
-    });
+    const base = { p_token: token, p_name: form.name.trim(), p_company: form.company.trim(), p_phone: form.phone.trim() };
+    const extra = {
+      nif: form.nif.trim(), fiscal_name: form.fiscalName.trim(), fiscal_address: form.fiscalAddress.trim(),
+      website: form.website.trim(), about: form.about.trim(),
+    };
+    // Versión con datos fiscales; si aún no se ha corrido el SQL nuevo, se
+    // cae a la versión antigua (la cuenta se crea igual, sin los datos extra).
+    let { data: result, error: rpcError } = await sb.rpc("complete_invite", { ...base, p_extra: extra });
+    if (rpcError && /function|does not exist|schema cache|p_extra/i.test(rpcError.message || "")) {
+      ({ data: result, error: rpcError } = await sb.rpc("complete_invite", base));
+    }
     if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");
