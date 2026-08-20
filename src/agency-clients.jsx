@@ -530,31 +530,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
         </div></div>
       )}
 
-      {tab === "files" && (
-        <div className="card">
-          <div className="card-header">
-            <div className="row tight">
-              <div style={{width:24, height:24, borderRadius:6, background:"#fff", display:"grid", placeItems:"center"}}>
-                <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#1FA463" d="M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z"/><path fill="#FFD041" d="M7.71 3.5h6.58L21.85 15l-3.27 5.5z" opacity=".7"/></svg>
-              </div>
-              <div className="card-title">Sincronizado con Google Drive</div>
-            </div>
-            <button className="btn sm"><Icon name="external-link" size={12}/> Abrir en Drive</button>
-          </div>
-          <div className="card-body flush">
-            {D.DRIVE_FOLDERS.map((f, i) => (
-              <div key={f.name} style={{padding:"14px 18px", display:"flex", alignItems:"center", gap: 12, borderBottom: i === D.DRIVE_FOLDERS.length - 1 ? "0" : "0.5px solid var(--border)", cursor:"pointer"}}>
-                <Icon name="folder" size={16} style={{color:"var(--text-muted)"}}/>
-                <div className="grow">
-                  <div style={{fontWeight: 500, fontSize: 13}}>/{f.name}</div>
-                  <div className="subtle xsmall">{f.count} archivos · {f.size}</div>
-                </div>
-                <Icon name="chevron" size={13} style={{color:"var(--text-subtle)"}}/>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {tab === "files" && <AgencyDriveFolder client={c}/>}
 
       {tab === "clienttasks" && <AgencyClientTasks clientId={c.id}/>}
 
@@ -654,6 +630,35 @@ const AgencyCredentials = ({ clientId }) => {
         </div>
       )}
     </div>
+  );
+};
+
+// ── Carpeta de Google Drive del cliente ─────────────────────────────
+const AgencyDriveFolder = ({ client }) => {
+  const D = window.Data;
+  const [url, setUrl] = useState(client.driveUrl || "");
+  const [saved, setSaved] = useState(false);
+  const save = () => { D.updateClient(client.id, { driveUrl: url.trim() }); setSaved(true); setTimeout(() => setSaved(false), 1500); };
+  const inp = { width:"100%", height:40, borderRadius:10, padding:"8px 12px", background:"var(--bg-elev)",
+    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5 };
+  return (
+    <div className="card"><div className="card-body" style={{padding: 20}}>
+      <div className="row tight" style={{marginBottom: 6}}>
+        <div style={{width:24, height:24, borderRadius:6, background:"#fff", display:"grid", placeItems:"center"}}>
+          <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#1FA463" d="M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z"/><path fill="#FFD041" d="M7.71 3.5h6.58L21.85 15l-3.27 5.5z" opacity=".7"/></svg>
+        </div>
+        <div className="card-title">Carpeta de Google Drive del cliente</div>
+      </div>
+      <div className="small muted" style={{marginBottom: 14, lineHeight: 1.5}}>
+        Pega el enlace de la carpeta compartida. El cliente verá el botón «Abrir carpeta en Google Drive» en su portal → Documentación. Si lo dejas vacío, verá «Estamos preparando la carpeta».
+      </div>
+      <input style={inp} placeholder="https://drive.google.com/drive/folders/…" value={url} onChange={e => setUrl(e.target.value)}/>
+      <div className="row tight" style={{marginTop: 10}}>
+        <button className="btn primary sm" onClick={save}>Guardar enlace</button>
+        {client.driveUrl && <a className="btn ghost sm" href={client.driveUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}><Icon name="external-link" size={12}/> Abrir</a>}
+        {saved && <span className="small" style={{color:"var(--green)"}}>Guardado ✓</span>}
+      </div>
+    </div></div>
   );
 };
 

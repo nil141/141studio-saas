@@ -115,7 +115,9 @@ const _mc = (r) => r && {
   fiscalName: r.fiscal_name || "",
   fiscalAddress: r.fiscal_address || "",
   website: r.website || "",
-  about: r.about || ""
+  about: r.about || "",
+  driveUrl: r.drive_url || ""
+  // carpeta de Google Drive del cliente
 };
 const _parseArr = (v) => {
   if (Array.isArray(v)) return v;
@@ -328,11 +330,12 @@ const _loadAll = async () => {
   const clientDbId = prof.client_db_id;
   _store._prof = { agencyId, isClient, clientDbId };
   if (isClient) {
-    const [proj, inv, cred, ctasks, sett] = await Promise.all([
+    const [proj, inv, cred, ctasks, me, sett] = await Promise.all([
       _sb.from("projects").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("invoices").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("credentials").select("*").eq("client_id", clientDbId),
       _sb.from("client_tasks").select("*").eq("client_id", clientDbId).order("sort", { ascending: true }),
+      _sb.from("clients").select("*").eq("id", clientDbId).maybeSingle(),
       _sb.from("settings").select("*").eq("agency_id", agencyId).maybeSingle()
     ]);
     _store.PROJECTS = (proj.data || []).map(_mp);
@@ -340,7 +343,7 @@ const _loadAll = async () => {
     _store.CREDENTIALS = (cred.data || []).map(_mcr);
     _store.CLIENT_TASKS = (ctasks.data || []).map(_mct);
     _store.SETTINGS = _ms(sett.data) || { ...SETTINGS_DEFAULT };
-    _store.CLIENTS = [];
+    _store.CLIENTS = me.data ? [_mc(me.data)] : [];
     _store.LEADS = [];
     _store.TASKS = {};
     if ((_e = proj.data) == null ? void 0 : _e.length) {
@@ -534,6 +537,7 @@ const updateClient = (id, changes) => {
   if (changes.fiscalAddress !== void 0) dbChanges.fiscal_address = changes.fiscalAddress || null;
   if (changes.website !== void 0) dbChanges.website = changes.website || null;
   if (changes.about !== void 0) dbChanges.about = changes.about || null;
+  if (changes.driveUrl !== void 0) dbChanges.drive_url = changes.driveUrl || null;
   _updateAdaptive("clients", id, dbChanges);
 };
 const deleteClient = async (id) => {

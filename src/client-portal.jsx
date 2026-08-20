@@ -474,21 +474,100 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
   );
 };
 
-// ── Documentación: archivos + facturas ──────────────────────────────
+// Logo de Google Drive
+const DriveLogo = ({ size = 24 }) => (
+  <svg viewBox="0 0 87.3 78" width={size} height={size}>
+    <path d="M6.6 66.85l3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8H0c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+    <path d="M43.65 25L29.9 1.2c-1.35.8-2.5 1.9-3.3 3.3L1.2 48.5c-.8 1.4-1.2 2.95-1.2 4.5h27.5z" fill="#00ac47"/>
+    <path d="M73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5H59.8l5.85 11.5z" fill="#ea4335"/>
+    <path d="M43.65 25L57.4 1.2C56.05.4 54.5 0 52.95 0H34.35c-1.55 0-3.1.45-4.45 1.2z" fill="#00832d"/>
+    <path d="M59.8 52.9H27.5L13.75 76.7c1.35.8 2.9 1.2 4.45 1.2h50.9c1.55 0 3.1-.45 4.45-1.2z" fill="#2684fc"/>
+    <path d="M73.4 26.5L60.75 4.5c-.8-1.4-1.95-2.5-3.3-3.3L43.65 25l16.15 27.9h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+  </svg>
+);
+
+// ── Documentación operativa ─────────────────────────────────────────
 const ClientDocs = ({ session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const invoices = D.INVOICES || [];
+  const me = (D.CLIENTS || [])[0] || null;
+  const driveUrl = me?.driveUrl || "";
+  const p0 = (D.PROJECTS || [])[0];
+  const plan0 = p0 ? _planOf(p0) : null;
+  const eyebrow = (plan0?.active ? plan0.active.name : "Documentación");
+  const needs = [
+    { t:"SOPs y procesos documentados", d:"Cualquier procedimiento escrito, aunque esté en Notion, Google Docs o PDF." },
+    { t:"Plantillas y mensajes tipo", d:"Emails, WhatsApps, scripts de venta, respuestas frecuentes." },
+    { t:"Ejemplos reales", d:"Capturas o exports de cómo trabaja tu equipo hoy: materiales internos, entregables, etc." },
+  ];
+  const numCircle = {width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
+    fontSize:12, fontWeight:600, color:"var(--text-muted)", border:"1.5px solid var(--border-strong)"};
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>Documentación</h1>
-          <div className="sub">Tus facturas y archivos del proyecto.</div>
+      {/* Cabecera */}
+      <div style={{marginBottom: 24}}>
+        <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>{eyebrow}</div>
+        <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Tu documentación operativa</h1>
+        <div className="sub" style={{marginTop:8, maxWidth:620, color:"var(--text-muted)"}}>
+          Este espacio es donde compartes con nosotros toda la documentación operativa de tu negocio: SOPs, plantillas, mensajes tipo, exports y cualquier documento que refleje cómo trabajáis internamente.
         </div>
       </div>
 
+      {/* Tarjeta Google Drive */}
+      <div className="card" style={{marginBottom: 18}}>
+        <div className="card-body" style={{padding: 24, display:"flex", gap:18, alignItems:"flex-start", flexWrap:"wrap"}}>
+          <div style={{width:46, height:46, borderRadius:12, background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", display:"grid", placeItems:"center", flexShrink:0}}>
+            <DriveLogo size={24}/>
+          </div>
+          <div style={{flex:1, minWidth:240}}>
+            <div style={{fontFamily:"var(--font-display)", fontSize:18, fontWeight:500, letterSpacing:"-0.4px", lineHeight:1.25}}>
+              Adjunta toda la documentación en tu carpeta de Google Drive
+            </div>
+            <div className="muted small" style={{marginTop:8, lineHeight:1.6, maxWidth:560}}>
+              {driveUrl
+                ? "Sube aquí todo tu material operativo. Puedes abrir la carpeta cuando quieras desde el botón."
+                : "Estamos preparando la carpeta compartida. En cuanto esté lista, el botón se activará y podrás abrirla desde aquí. Te avisamos también por WhatsApp."}
+            </div>
+            <div style={{marginTop:16}}>
+              {driveUrl ? (
+                <a className="btn primary" href={driveUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}>
+                  Abrir carpeta en Google Drive <Icon name="external-link" size={13}/>
+                </a>
+              ) : (
+                <button className="btn" disabled style={{opacity:0.45, cursor:"not-allowed"}}>
+                  Abrir carpeta en Google Drive <Icon name="external-link" size={13}/>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Qué necesitamos que subas */}
+      <div className="card" style={{marginBottom: 24}}>
+        <div className="card-body" style={{padding: 24}}>
+          <div style={{fontFamily:"var(--font-display)", fontSize:18, fontWeight:500, letterSpacing:"-0.4px"}}>Qué necesitamos que subas</div>
+          <div className="muted small" style={{marginTop:6}}>Estos son los tipos de material que nos interesan.</div>
+          <div style={{marginTop:14}}>
+            {needs.map((n, i) => (
+              <div key={i} style={{display:"flex", gap:16, alignItems:"flex-start", padding:"14px 0", borderTop: i ? "0.5px solid var(--border)" : "none"}}>
+                <div style={numCircle}>{i+1}</div>
+                <div>
+                  <div style={{fontWeight:500, fontSize:14}}>{n.t}</div>
+                  <div className="muted small" style={{marginTop:3, lineHeight:1.5}}>{n.d}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="muted small" style={{marginTop:16, lineHeight:1.6, paddingTop:16, borderTop:"0.5px solid var(--border)"}}>
+            Cuanto más completo llegue el material, más ajustado saldrá el diagnóstico. No hace falta que esté perfecto ni ordenado.
+          </div>
+        </div>
+      </div>
+
+      {/* Facturas */}
       <div style={{marginBottom: 10, fontSize: 11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)"}}>Facturas</div>
       {invoices.length === 0 ? (
         <Empty icon="file-text" title="Sin facturas todavía" sub="Aquí aparecerán tus facturas cuando tu agencia las emita."/>
@@ -518,9 +597,6 @@ const ClientDocs = ({ session }) => {
           </table>
         </div></div>
       )}
-
-      <div style={{marginBottom: 10, fontSize: 11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)"}}>Archivos</div>
-      <Empty icon="folder" title="Sin archivos compartidos" sub="Cuando tu agencia comparta archivos o entregables descargables, los verás aquí."/>
 
       <WhatsAppFloat/>
     </div>
