@@ -192,6 +192,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const projects = D.PROJECTS.filter(p => p.clientId === c.id);
   const invoices = D.INVOICES.filter(i => i.clientId === c.id);
   const creds = D.credentialsForClient ? D.credentialsForClient(c.id) : [];
+  const ctasks = D.clientTasksFor ? D.clientTasksFor(c.id) : [];
   const [tab, setTab] = useState("projects");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
@@ -465,6 +466,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
         {[
           {id:"projects", label:"Proyectos", count:projects.length},
           {id:"billing",  label:"Facturación", count:invoices.length},
+          {id:"clienttasks", label:"Qué le toca", count:ctasks.length},
           {id:"credentials", label:"Credenciales", count:creds.length},
           {id:"files",    label:"Archivos (Drive)"},
           {id:"notas",    label:"Notas internas"},
@@ -553,6 +555,8 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
           </div>
         </div>
       )}
+
+      {tab === "clienttasks" && <AgencyClientTasks clientId={c.id}/>}
 
       {tab === "credentials" && <AgencyCredentials clientId={c.id}/>}
 
@@ -645,6 +649,72 @@ const AgencyCredentials = ({ clientId }) => {
                 </div>
               )}
               {c.notes && <div className="muted xsmall" style={{marginTop: 8, lineHeight: 1.5}}>{c.notes}</div>}
+            </div></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ── Panel "Qué le toca" — tareas de onboarding del cliente ──────────
+const AgencyClientTasks = ({ clientId }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const tasks = D.clientTasksFor ? D.clientTasksFor(clientId) : [];
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const blank = { title:"", description:"" };
+  const [form, setForm] = useState(blank);
+  const set = (k, v) => setForm(s => ({ ...s, [k]: v }));
+  const startAdd  = () => { setForm(blank); setEditing(null); setAdding(true); };
+  const startEdit = (t) => { setForm({ title:t.title, description:t.description }); setEditing(t.id); setAdding(true); };
+  const cancel = () => { setAdding(false); setEditing(null); setForm(blank); };
+  const save = () => {
+    if (!form.title.trim()) return;
+    if (editing) D.updateClientTask(editing, form); else D.addClientTask(clientId, form);
+    cancel();
+  };
+  const del = (t) => { if (confirm(`¿Eliminar la tarea "${t.title}"?`)) D.deleteClientTask(t.id); };
+  const inp = { width:"100%", height:38, borderRadius:9, padding:"8px 12px", background:"var(--bg-elev)",
+    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:9 };
+
+  return (
+    <div>
+      <div className="row between" style={{marginBottom: 14}}>
+        <div className="small muted">Acciones que el cliente verá en «Qué te toca ahora». Él las marca como realizadas desde su portal.</div>
+        {!adding && <button className="btn primary sm" onClick={startAdd}><Icon name="plus" size={13}/> Añadir</button>}
+      </div>
+
+      {adding && (
+        <div className="card" style={{marginBottom: 14}}><div className="card-body" style={{padding: 16}}>
+          <input style={inp} placeholder="Título (p.ej. Rellenar el cuestionario)" value={form.title} onChange={e => set("title", e.target.value)} autoFocus/>
+          <input style={{...inp, marginBottom: 12}} placeholder="Descripción (opcional)" value={form.description} onChange={e => set("description", e.target.value)}/>
+          <div className="row tight">
+            <button className="btn primary sm" disabled={!form.title.trim()} onClick={save}>Guardar</button>
+            <button className="btn ghost sm" onClick={cancel}>Cancelar</button>
+          </div>
+        </div></div>
+      )}
+
+      {tasks.length === 0 && !adding ? (
+        <Empty icon="list-todo" title="Sin tareas para el cliente" sub="Añade las acciones de onboarding que el cliente debe completar."/>
+      ) : (
+        <div style={{display:"flex", flexDirection:"column", gap: 10}}>
+          {tasks.map((t, i) => (
+            <div key={t.id} className="card"><div className="card-body" style={{padding: 15, display:"flex", gap: 14, alignItems:"flex-start"}}>
+              <div style={{fontFamily:"var(--font-display)", fontSize: 22, fontWeight: 300, color:"var(--text-subtle)", minWidth: 20}}>{i+1}</div>
+              <div style={{flex:1, minWidth:0}}>
+                <div className="row between" style={{alignItems:"flex-start", gap:10}}>
+                  <div style={{fontWeight:500, fontSize:14}}>{t.title}</div>
+                  <div className="row tight" style={{flexShrink:0}}>
+                    {t.done && <span className="chip green" style={{fontSize:10, padding:"1px 7px"}}>Realizado</span>}
+                    <button className="btn ghost icon-only sm" onClick={() => startEdit(t)}><Icon name="edit" size={12}/></button>
+                    <button className="btn ghost icon-only sm" onClick={() => del(t)}><Icon name="trash" size={12}/></button>
+                  </div>
+                </div>
+                {t.description && <div className="muted small" style={{marginTop:4, lineHeight:1.5}}>{t.description}</div>}
+              </div>
             </div></div>
           ))}
         </div>

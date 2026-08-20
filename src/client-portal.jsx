@@ -117,15 +117,10 @@ const ClientDashboard = ({ navigate, session }) => {
   const name = session?.name || "";
   const pending = (D.DELIVERABLES || []).filter(d => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
-  // "Tus tareas": las que el cliente tiene que completar (asignadas al cliente).
-  // Cuando montemos el Cuestionario, se sumarán aquí también.
-  const myTasks = [];
-  projects.forEach(p => (D.TASKS[p.id] || []).forEach(t => {
-    const who = (t.assignee || "").toLowerCase();
-    if (t.forClient || who.includes("client") || who.includes("cliente")) myTasks.push(t);
-  }));
-  const myDone = myTasks.filter(t => t.column === "done").length;
-  const myPct = myTasks.length ? Math.round(myDone / myTasks.length * 100) : 0;
+  // "Qué te toca ahora": tareas de onboarding que el cliente debe realizar.
+  const clientTasks = D.CLIENT_TASKS || [];
+  const myDone = clientTasks.filter(t => t.done).length;
+  const myPct = clientTasks.length ? Math.round(myDone / clientTasks.length * 100) : 0;
 
   // La capa inferior funde el hero con el fondo de la app (--bg) para que no
   // se vea ninguna línea de corte al terminar el degradado.
@@ -234,22 +229,63 @@ const ClientDashboard = ({ navigate, session }) => {
         </div>
       )}
 
-      {/* Accesos rápidos */}
-      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 12, marginTop: 26}}>
+      {/* Qué te toca ahora — tareas de onboarding del cliente */}
+      {clientTasks.length > 0 && (
+        <>
+          <div style={{marginTop: 34, marginBottom: 14, fontFamily:"var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing:"-0.5px"}}>
+            Qué te toca ahora
+          </div>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(320px, 1fr))", gap: 14}}>
+            {clientTasks.map((t, i) => (
+              <div key={t.id} className="card" style={{opacity: t.done ? 0.7 : 1}}>
+                <div className="card-body" style={{padding: 20, display:"flex", gap: 18}}>
+                  <div style={{fontFamily:"var(--font-display)", fontSize: 30, fontWeight: 300, lineHeight: 1,
+                    color:"var(--text-subtle)", flexShrink:0, minWidth: 24}}>{i + 1}</div>
+                  <div style={{flex: 1, minWidth: 0}}>
+                    <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap: 10}}>
+                      <div style={{fontWeight: 500, fontSize: 14.5, lineHeight: 1.3}}>{t.title}</div>
+                      <button className={t.done ? "btn sm" : "btn ghost sm"} style={{flexShrink:0, whiteSpace:"nowrap"}}
+                        onClick={() => D.toggleClientTask(t.id)}>
+                        {t.done ? <><Icon name="check" size={12}/> Realizado</> : "Marcar como realizado"}
+                      </button>
+                    </div>
+                    {t.description && <div className="muted small" style={{marginTop: 5, lineHeight: 1.5}}>{t.description}</div>}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* Módulos de tu portal */}
+      <div style={{marginTop: 34, marginBottom: 14, fontFamily:"var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing:"-0.5px"}}>
+        Módulos de tu portal
+      </div>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap: 16}}>
         {[
-          { id:"client-docs", icon:"file-text", title:"Documentación", sub:"Archivos y facturas" },
-          { id:"client-credentials", icon:"lock", title:"Credenciales", sub:"Tus accesos compartidos" },
-        ].map(q => (
-          <div key={q.id} className="card" style={{cursor:"pointer"}} onClick={() => navigate(q.id)}>
-            <div className="card-body" style={{padding: 18, display:"flex", alignItems:"center", gap: 12}}>
-              <div style={{width: 38, height: 38, borderRadius: 10, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text-muted)", border:"0.5px solid var(--border)", flexShrink:0}}>
-                <Icon name={q.icon} size={17}/>
+          { id:"client-status",      badge:"PROYECTO",  title:"Estado del proyecto", desc:"Fases, avance y entregables.",        status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
+          { id:"client-docs",        badge:"DOCUMENTOS", title:"Documentación",       desc:"Archivos y facturas del proyecto.",   status: (D.INVOICES||[]).length ? "Disponible" : "Sin empezar", pct: (D.INVOICES||[]).length ? 100 : 0 },
+          { id:"client-credentials", badge:"ACCESOS",    title:"Credenciales",        desc:"Accesos que compartes con el equipo.", status: (D.CREDENTIALS||[]).length ? `${(D.CREDENTIALS||[]).length} guardados` : "Sin empezar", pct: (D.CREDENTIALS||[]).length ? 100 : 0 },
+        ].map(m => (
+          <div key={m.id} className="card" style={{cursor:"pointer", overflow:"hidden"}} onClick={() => navigate(m.id)}>
+            <div style={{height: 118, position:"relative", padding: 16,
+              background:"radial-gradient(120% 130% at 85% 0%, rgba(150,105,70,0.22) 0%, rgba(20,16,14,0) 55%), linear-gradient(135deg, #17141140 0%, var(--bg-elev-2) 70%)",
+              borderBottom:"0.5px solid var(--border)"}}>
+              <span style={{fontSize: 10, letterSpacing:"0.08em", padding:"4px 10px", borderRadius: 99,
+                background:"var(--bg-hover)", border:"0.5px solid var(--border)", color:"var(--text-muted)"}}>{m.badge}</span>
+            </div>
+            <div style={{padding: 18}}>
+              <div style={{fontFamily:"var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing:"-0.5px"}}>{m.title}</div>
+              <div className="muted small" style={{marginTop: 4}}>{m.desc}</div>
+              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop: 16, marginBottom: 6}}>
+                <span style={{fontSize: 10.5, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-subtle)"}}>{m.status}</span>
+                <span style={{fontSize: 12, color:"var(--text-muted)"}}>{m.pct}%</span>
               </div>
-              <div className="grow">
-                <div style={{fontWeight: 500, fontSize: 14}}>{q.title}</div>
-                <div className="muted xsmall" style={{marginTop: 2}}>{q.sub}</div>
+              <div style={{height: 3, borderRadius: 99, background:"var(--border)", overflow:"hidden"}}>
+                <div style={{width: m.pct + "%", height:"100%", background:"var(--text-muted)", borderRadius: 99}}/>
               </div>
-              <Icon name="chevron" size={14} style={{color:"var(--text-subtle)"}}/>
+              <div style={{marginTop: 14, fontSize: 13, color:"var(--text)"}}>Entrar en el módulo <Icon name="arrow" size={12}/></div>
             </div>
           </div>
         ))}

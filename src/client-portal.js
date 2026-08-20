@@ -96,13 +96,9 @@ const ClientDashboard = ({ navigate, session }) => {
   const name = (session == null ? void 0 : session.name) || "";
   const pending = (D.DELIVERABLES || []).filter((d) => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
-  const myTasks = [];
-  projects.forEach((p) => (D.TASKS[p.id] || []).forEach((t) => {
-    const who = (t.assignee || "").toLowerCase();
-    if (t.forClient || who.includes("client") || who.includes("cliente")) myTasks.push(t);
-  }));
-  const myDone = myTasks.filter((t) => t.column === "done").length;
-  const myPct = myTasks.length ? Math.round(myDone / myTasks.length * 100) : 0;
+  const clientTasks = D.CLIENT_TASKS || [];
+  const myDone = clientTasks.filter((t) => t.done).length;
+  const myPct = clientTasks.length ? Math.round(myDone / clientTasks.length * 100) : 0;
   const heroFade = "linear-gradient(to bottom, rgba(0,0,0,0) 55%, var(--bg) 100%)";
   const heroBg = HERO_BG ? `${heroFade}, linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover` : `${heroFade}, radial-gradient(130% 120% at 82% 0%, rgba(150,105,70,0.38) 0%, rgba(20,16,14,0) 55%), linear-gradient(120deg, #16130f 0%, #0b0b0d 58%, #191410 100%)`;
   const hero = /* @__PURE__ */ React.createElement("div", { className: "portal-hero", style: {
@@ -195,10 +191,41 @@ const ClientDashboard = ({ navigate, session }) => {
         overflow: "hidden"
       } }, desc)
     );
-  })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
-    { id: "client-docs", icon: "file-text", title: "Documentaci\xF3n", sub: "Archivos y facturas" },
-    { id: "client-credentials", icon: "lock", title: "Credenciales", sub: "Tus accesos compartidos" }
-  ].map((q) => /* @__PURE__ */ React.createElement("div", { key: q.id, className: "card", style: { cursor: "pointer" }, onClick: () => navigate(q.id) }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 18, display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 38, height: 38, borderRadius: 10, background: "var(--bg-elev-2)", display: "grid", placeItems: "center", color: "var(--text-muted)", border: "0.5px solid var(--border)", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 17 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14 } }, q.title), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 2 } }, q.sub)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { color: "var(--text-subtle)" } }))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
+  })), clientTasks.length > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 34, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "Qu\xE9 te toca ahora"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: 14 } }, clientTasks.map((t, i) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "card", style: { opacity: t.done ? 0.7 : 1 } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 20, display: "flex", gap: 18 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    fontFamily: "var(--font-display)",
+    fontSize: 30,
+    fontWeight: 300,
+    lineHeight: 1,
+    color: "var(--text-subtle)",
+    flexShrink: 0,
+    minWidth: 24
+  } }, i + 1), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14.5, lineHeight: 1.3 } }, t.title), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: t.done ? "btn sm" : "btn ghost sm",
+      style: { flexShrink: 0, whiteSpace: "nowrap" },
+      onClick: () => D.toggleClientTask(t.id)
+    },
+    t.done ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Realizado") : "Marcar como realizado"
+  )), t.description && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 5, lineHeight: 1.5 } }, t.description))))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 34, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "M\xF3dulos de tu portal"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 } }, [
+    { id: "client-status", badge: "PROYECTO", title: "Estado del proyecto", desc: "Fases, avance y entregables.", status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
+    { id: "client-docs", badge: "DOCUMENTOS", title: "Documentaci\xF3n", desc: "Archivos y facturas del proyecto.", status: (D.INVOICES || []).length ? "Disponible" : "Sin empezar", pct: (D.INVOICES || []).length ? 100 : 0 },
+    { id: "client-credentials", badge: "ACCESOS", title: "Credenciales", desc: "Accesos que compartes con el equipo.", status: (D.CREDENTIALS || []).length ? `${(D.CREDENTIALS || []).length} guardados` : "Sin empezar", pct: (D.CREDENTIALS || []).length ? 100 : 0 }
+  ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.id, className: "card", style: { cursor: "pointer", overflow: "hidden" }, onClick: () => navigate(m.id) }, /* @__PURE__ */ React.createElement("div", { style: {
+    height: 118,
+    position: "relative",
+    padding: 16,
+    background: "radial-gradient(120% 130% at 85% 0%, rgba(150,105,70,0.22) 0%, rgba(20,16,14,0) 55%), linear-gradient(135deg, #17141140 0%, var(--bg-elev-2) 70%)",
+    borderBottom: "0.5px solid var(--border)"
+  } }, /* @__PURE__ */ React.createElement("span", { style: {
+    fontSize: 10,
+    letterSpacing: "0.08em",
+    padding: "4px 10px",
+    borderRadius: 99,
+    background: "var(--bg-hover)",
+    border: "0.5px solid var(--border)",
+    color: "var(--text-muted)"
+  } }, m.badge)), /* @__PURE__ */ React.createElement("div", { style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing: "-0.5px" } }, m.title), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 4 } }, m.desc), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-subtle)" } }, m.status), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)" } }, m.pct, "%")), /* @__PURE__ */ React.createElement("div", { style: { height: 3, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: m.pct + "%", height: "100%", background: "var(--text-muted)", borderRadius: 99 } })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, fontSize: 13, color: "var(--text)" } }, "Entrar en el m\xF3dulo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
 };
 const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
   const D = window.Data;

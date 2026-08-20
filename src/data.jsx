@@ -85,7 +85,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 // ── Reactive store ──────────────────────────────────────────────────
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
-  LEADS: [], TASKS: {}, CREDENTIALS: [], SETTINGS: { ...SETTINGS_DEFAULT },
+  LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], SETTINGS: { ...SETTINGS_DEFAULT },
   _user: null, _prof: null,
   _subs: new Set(),
 };
@@ -195,6 +195,10 @@ const _mcr = r => r && ({
   id: r.id, clientId: r.client_id, label: r.label || "", url: r.url || "",
   username: r.username || "", password: r.password || "", notes: r.notes || "",
 });
+const _mct = r => r && ({
+  id: r.id, clientId: r.client_id, title: r.title || "", description: r.description || "",
+  done: !!r.done, sort: r.sort ?? 0,
+});
 const _ml = r => r && ({
   id: r.id, name: r.name, company: r.company, channel: r.channel,
   stage: r.stage, budget: r.budget, light: r.light,
@@ -247,15 +251,17 @@ const _loadAll = async () => {
   _store._prof = { agencyId, isClient, clientDbId };
 
   if (isClient) {
-    const [proj, inv, cred, sett] = await Promise.all([
+    const [proj, inv, cred, ctasks, sett] = await Promise.all([
       _sb.from("projects").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("invoices").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("credentials").select("*").eq("client_id", clientDbId),
+      _sb.from("client_tasks").select("*").eq("client_id", clientDbId).order("sort", { ascending: true }),
       _sb.from("settings").select("*").eq("agency_id", agencyId).maybeSingle(),
     ]);
     _store.PROJECTS     = (proj.data  || []).map(_mp);
     _store.INVOICES     = (inv.data   || []).map(_mi);
     _store.CREDENTIALS  = (cred.data  || []).map(_mcr);
+    _store.CLIENT_TASKS = (ctasks.data || []).map(_mct);
     _store.SETTINGS     = _ms(sett.data) || { ...SETTINGS_DEFAULT };
     _store.CLIENTS      = [];
     _store.LEADS        = [];
@@ -287,12 +293,14 @@ const _loadAll = async () => {
       _sb.from("credentials").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("settings").select("*").eq("agency_id", uid).maybeSingle(),
     ]);
+    const ct = await _sb.from("client_tasks").select("*").eq("agency_id", uid).order("sort", { ascending: true });
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
     _store.DELIVERABLES = (d.data || []).map(_md);
     _store.LEADS        = (l.data || []).map(_ml);
     _store.CREDENTIALS  = (cr.data || []).map(_mcr);
+    _store.CLIENT_TASKS = (ct.data || []).map(_mct);
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -320,6 +328,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "leads",        filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "credentials",  filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -791,6 +800,58 @@ const deleteCredential = (id) => {
   _store.CREDENTIALS = _store.CREDENTIALS.filter(c => c.id !== id); _emit();
   _sb.from("credentials").delete().eq("id", id).then(({ error }) => {
     if (error) { _store.CREDENTIALS = prev; _emit(); }
+  });
+};
+
+// ── CLIENT TASKS ("Qué te toca ahora") ──────────────────────────────
+const clientTasksFor = (clientId) =>
+  (_store.CLIENT_TASKS || []).filter(t => t.clientId === clientId).sort((a, b) => a.sort - b.sort);
+
+const addClientTask = (clientId, input) => {
+  const uid = _uid(); if (!uid) return;
+  const prof = _store._prof || {};
+  const cid = clientId || prof.clientDbId;
+  if (!cid) return;
+  const agencyId = prof.agencyId || uid;
+  const sort = (_store.CLIENT_TASKS.filter(t => t.clientId === cid).length) + 1;
+  const t = {
+    id: _id(), clientId: cid, title: (input.title || "").trim(),
+    description: (input.description || "").trim(), done: false, sort,
+  };
+  _store.CLIENT_TASKS = [..._store.CLIENT_TASKS, t]; _emit();
+  _insertAdaptive("client_tasks", {
+    id: t.id, agency_id: agencyId, client_id: cid,
+    title: t.title, description: t.description, done: false, sort,
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addClientTask] Supabase error:", error.message);
+      _store.CLIENT_TASKS = _store.CLIENT_TASKS.filter(x => x.id !== t.id); _emit();
+    }
+  });
+  return t;
+};
+
+const updateClientTask = (id, changes) => {
+  const uid = _uid(); if (!uid) return;
+  _store.CLIENT_TASKS = _store.CLIENT_TASKS.map(t => t.id === id ? { ...t, ...changes } : t); _emit();
+  const db = {};
+  if (changes.title       !== undefined) db.title       = changes.title || "";
+  if (changes.description !== undefined) db.description = changes.description || "";
+  if (changes.done        !== undefined) db.done        = !!changes.done;
+  _updateAdaptive("client_tasks", id, db);
+};
+
+const toggleClientTask = (id) => {
+  const t = _store.CLIENT_TASKS.find(x => x.id === id); if (!t) return;
+  updateClientTask(id, { done: !t.done });
+};
+
+const deleteClientTask = (id) => {
+  const uid = _uid(); if (!uid) return;
+  const prev = _store.CLIENT_TASKS;
+  _store.CLIENT_TASKS = _store.CLIENT_TASKS.filter(t => t.id !== id); _emit();
+  _sb.from("client_tasks").delete().eq("id", id).then(({ error }) => {
+    if (error) { _store.CLIENT_TASKS = prev; _emit(); }
   });
 };
 
@@ -1268,6 +1329,7 @@ window.Data = {
   get LEADS()        { return _store.LEADS; },
   get TASKS()        { return _store.TASKS; },
   get CREDENTIALS()  { return _store.CREDENTIALS; },
+  get CLIENT_TASKS() { return _store.CLIENT_TASKS; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1284,6 +1346,7 @@ window.Data = {
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
   credentialsForClient, addCredential, updateCredential, deleteCredential,
+  clientTasksFor, addClientTask, updateClientTask, toggleClientTask, deleteClientTask,
   addLead,
   addTask, moveTask, updateTask, deleteTask,
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,

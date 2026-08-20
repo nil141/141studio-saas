@@ -74,6 +74,7 @@ const _store = {
   LEADS: [],
   TASKS: {},
   CREDENTIALS: [],
+  CLIENT_TASKS: [],
   SETTINGS: { ...SETTINGS_DEFAULT },
   _user: null,
   _prof: null,
@@ -263,6 +264,17 @@ const _mcr = (r) => r && {
   password: r.password || "",
   notes: r.notes || ""
 };
+const _mct = (r) => {
+  var _a;
+  return r && {
+    id: r.id,
+    clientId: r.client_id,
+    title: r.title || "",
+    description: r.description || "",
+    done: !!r.done,
+    sort: (_a = r.sort) != null ? _a : 0
+  };
+};
 const _ml = (r) => r && {
   id: r.id,
   name: r.name,
@@ -316,15 +328,17 @@ const _loadAll = async () => {
   const clientDbId = prof.client_db_id;
   _store._prof = { agencyId, isClient, clientDbId };
   if (isClient) {
-    const [proj, inv, cred, sett] = await Promise.all([
+    const [proj, inv, cred, ctasks, sett] = await Promise.all([
       _sb.from("projects").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("invoices").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("credentials").select("*").eq("client_id", clientDbId),
+      _sb.from("client_tasks").select("*").eq("client_id", clientDbId).order("sort", { ascending: true }),
       _sb.from("settings").select("*").eq("agency_id", agencyId).maybeSingle()
     ]);
     _store.PROJECTS = (proj.data || []).map(_mp);
     _store.INVOICES = (inv.data || []).map(_mi);
     _store.CREDENTIALS = (cred.data || []).map(_mcr);
+    _store.CLIENT_TASKS = (ctasks.data || []).map(_mct);
     _store.SETTINGS = _ms(sett.data) || { ...SETTINGS_DEFAULT };
     _store.CLIENTS = [];
     _store.LEADS = [];
@@ -355,12 +369,14 @@ const _loadAll = async () => {
       _sb.from("credentials").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("settings").select("*").eq("agency_id", uid).maybeSingle()
     ]);
+    const ct = await _sb.from("client_tasks").select("*").eq("agency_id", uid).order("sort", { ascending: true });
     _store.CLIENTS = (c.data || []).map(_mc);
     _store.PROJECTS = (p.data || []).map(_mp);
     _store.INVOICES = (i.data || []).map(_mi);
     _store.DELIVERABLES = (d.data || []).map(_md);
     _store.LEADS = (l.data || []).map(_ml);
     _store.CREDENTIALS = (cr.data || []).map(_mcr);
+    _store.CLIENT_TASKS = (ct.data || []).map(_mct);
     _store.SETTINGS = _ms(s.data) || { ...SETTINGS_DEFAULT };
     _store.TASKS = {};
     for (const row of t.data || []) {
@@ -380,7 +396,7 @@ const _setupRealtime = () => {
     _sb.removeChannel(_channel);
     _channel = null;
   }
-  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
+  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
   var _a, _b;
@@ -944,6 +960,71 @@ const deleteCredential = (id) => {
     }
   });
 };
+const clientTasksFor = (clientId) => (_store.CLIENT_TASKS || []).filter((t) => t.clientId === clientId).sort((a, b) => a.sort - b.sort);
+const addClientTask = (clientId, input) => {
+  const uid = _uid();
+  if (!uid) return;
+  const prof = _store._prof || {};
+  const cid = clientId || prof.clientDbId;
+  if (!cid) return;
+  const agencyId = prof.agencyId || uid;
+  const sort = _store.CLIENT_TASKS.filter((t2) => t2.clientId === cid).length + 1;
+  const t = {
+    id: _id(),
+    clientId: cid,
+    title: (input.title || "").trim(),
+    description: (input.description || "").trim(),
+    done: false,
+    sort
+  };
+  _store.CLIENT_TASKS = [..._store.CLIENT_TASKS, t];
+  _emit();
+  _insertAdaptive("client_tasks", {
+    id: t.id,
+    agency_id: agencyId,
+    client_id: cid,
+    title: t.title,
+    description: t.description,
+    done: false,
+    sort
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addClientTask] Supabase error:", error.message);
+      _store.CLIENT_TASKS = _store.CLIENT_TASKS.filter((x) => x.id !== t.id);
+      _emit();
+    }
+  });
+  return t;
+};
+const updateClientTask = (id, changes) => {
+  const uid = _uid();
+  if (!uid) return;
+  _store.CLIENT_TASKS = _store.CLIENT_TASKS.map((t) => t.id === id ? { ...t, ...changes } : t);
+  _emit();
+  const db = {};
+  if (changes.title !== void 0) db.title = changes.title || "";
+  if (changes.description !== void 0) db.description = changes.description || "";
+  if (changes.done !== void 0) db.done = !!changes.done;
+  _updateAdaptive("client_tasks", id, db);
+};
+const toggleClientTask = (id) => {
+  const t = _store.CLIENT_TASKS.find((x) => x.id === id);
+  if (!t) return;
+  updateClientTask(id, { done: !t.done });
+};
+const deleteClientTask = (id) => {
+  const uid = _uid();
+  if (!uid) return;
+  const prev = _store.CLIENT_TASKS;
+  _store.CLIENT_TASKS = _store.CLIENT_TASKS.filter((t) => t.id !== id);
+  _emit();
+  _sb.from("client_tasks").delete().eq("id", id).then(({ error }) => {
+    if (error) {
+      _store.CLIENT_TASKS = prev;
+      _emit();
+    }
+  });
+};
 const addLead = (input) => {
   const uid = _uid();
   if (!uid) return;
@@ -1431,6 +1512,9 @@ window.Data = {
   get CREDENTIALS() {
     return _store.CREDENTIALS;
   },
+  get CLIENT_TASKS() {
+    return _store.CLIENT_TASKS;
+  },
   get ROUTINES() {
     return _store.ROUTINES;
   },
@@ -1471,6 +1555,11 @@ window.Data = {
   addCredential,
   updateCredential,
   deleteCredential,
+  clientTasksFor,
+  addClientTask,
+  updateClientTask,
+  toggleClientTask,
+  deleteClientTask,
   addLead,
   addTask,
   moveTask,
