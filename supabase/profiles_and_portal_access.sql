@@ -15,7 +15,7 @@ create table if not exists public.profiles (
   name         text default '',
   initials     text default '',
   agency_id    uuid,
-  client_db_id uuid references public.clients(id) on delete set null,
+  client_db_id text references public.clients(id) on delete set null,  -- clients.id es text
   created_at   timestamptz not null default now()
 );
 
