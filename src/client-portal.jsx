@@ -136,12 +136,10 @@ const ClientDashboard = ({ navigate, session }) => {
         Esta es tu área de cliente. Desde aquí sigues el estado del proyecto, subes documentación,
         das acceso a tus herramientas y ves todo lo importante en un solo sitio.
       </p>
-      {primary && (
-        <div style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
-          <RingStat pct={plan.pct} label="Progreso del proyecto"/>
-          <RingStat pct={fasesPct} label="Fases completadas"/>
-        </div>
-      )}
+      <div style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
+        <RingStat pct={plan.pct} label="Progreso del proyecto"/>
+        <RingStat pct={fasesPct} label="Fases completadas"/>
+      </div>
     </div>
   );
 
