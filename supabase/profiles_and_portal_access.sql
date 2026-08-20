@@ -53,14 +53,7 @@ create policy "client reads own tasks" on public.tasks
     where client_id = (select client_db_id from public.profiles where id = auth.uid())
   ));
 
--- Entregables (de sus proyectos)
-drop policy if exists "client reads own deliverables" on public.deliverables;
-create policy "client reads own deliverables" on public.deliverables
-  for select to authenticated
-  using (project_id in (
-    select id from public.projects
-    where client_id = (select client_db_id from public.profiles where id = auth.uid())
-  ));
+-- (Entregables: se añadirá su política cuando esa tabla tenga datos reales.)
 
 -- Facturas
 drop policy if exists "client reads own invoices" on public.invoices;
