@@ -193,7 +193,9 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const invoices = D.INVOICES.filter(i => i.clientId === c.id);
   const creds = D.credentialsForClient ? D.credentialsForClient(c.id) : [];
   const ctasks = D.clientTasksFor ? D.clientTasksFor(c.id) : [];
-  const [tab, setTab] = useState("projects");
+  const projectIdSet = new Set(projects.map(p => p.id));
+  const clientDeliverables = (D.DELIVERABLES || []).filter(d => projectIdSet.has(d.projectId));
+  const [tab, setTab] = useState("vista");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({});
 
@@ -294,97 +296,63 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
           </div>
         </div>
       ) : (
-        <div className="card" style={{marginBottom: 20, overflow:"hidden"}}>
-          {/* Accent strip */}
-          <div style={{height: 4, background: c.color, opacity: 0.7}}/>
-
-          <div style={{padding: "28px 28px 24px", display:"flex", gap: 24, alignItems:"flex-start"}}>
-            {/* Avatar */}
-            <div style={{
-              width: 72, height: 72, borderRadius: 16, flexShrink: 0,
-              background: c.color + "22", border: "1.5px solid " + c.color + "44",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize: 24, fontWeight: 600, color: c.color,
-              fontFamily:"var(--font-display)", letterSpacing:"-0.03em",
-            }}>
-              {c.initials}
-            </div>
-
-            {/* Info block */}
-            <div style={{flex: 1, minWidth: 0}}>
-              <div style={{display:"flex", alignItems:"center", gap: 10, marginBottom: 6}}>
-                <h1 style={{fontSize: 22, margin: 0}}>{c.company}</h1>
-                <StatusChip status={c.status}/>
-                <span className="chip">{c.service}</span>
-              </div>
-              <div style={{display:"flex", gap: 20, color:"var(--text-muted)", fontSize: 13, flexWrap:"wrap"}}>
-                <span style={{display:"flex", alignItems:"center", gap: 5}}>
-                  <Icon name="users" size={12}/> {c.name}
-                </span>
-                <span style={{display:"flex", alignItems:"center", gap: 5}}>
-                  <Icon name="mail" size={12}/> {c.email}
-                </span>
-                {c.whatsapp && (
-                  <span style={{display:"flex", alignItems:"center", gap: 5}}>
-                    <Icon name="phone" size={12}/> {c.whatsapp}
-                  </span>
-                )}
-                <span style={{color:"var(--text-subtle)"}}>Cliente desde {c.since}</span>
+        <div className="card" style={{marginBottom: 20}}>
+          <div style={{padding: "26px 28px 22px"}}>
+            <div style={{display:"flex", justifyContent:"space-between", gap: 20, alignItems:"flex-start", flexWrap:"wrap"}}>
+              <div style={{minWidth: 0}}>
+                <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)"}}>
+                  {[c.service && c.service !== "—" ? c.service : null, projects[0] ? (D.PHASES[projects[0].phase] || {}).label : null].filter(Boolean).join(" · ") || "Cliente"}
+                </div>
+                <h1 style={{fontFamily:"var(--font-display)", fontSize:"clamp(28px,3.4vw,38px)", fontWeight:400, letterSpacing:"-1.2px", margin:"6px 0 10px"}}>
+                  {c.company || c.name}
+                </h1>
+                <div style={{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", color:"var(--text-muted)", fontSize:13.5}}>
+                  {c.name && <span>{c.name}</span>}
+                  {c.email && <><span style={{opacity:0.4}}>·</span><span>{c.email}</span></>}
+                  {c.whatsapp && <><span style={{opacity:0.4}}>·</span><span>{c.whatsapp}</span></>}
+                  <StatusChip status={c.status}/>
+                </div>
               </div>
 
-              {/* Stats row */}
-              <div style={{display:"flex", gap: 12, marginTop: 20}}>
-                {[
-                  { label: "Facturado", value: "€" + totalBilled.toLocaleString("es-ES"), color: "var(--text)" },
-                  { label: "Pendiente", value: pending > 0 ? "€" + pending.toLocaleString("es-ES") : "—", color: pending > 0 ? "var(--amber)" : "var(--text-subtle)" },
-                  { label: "Proyectos activos", value: projects.length, color: "var(--text)" },
-                  { label: "MRR", value: c.mrr ? "€" + c.mrr + "/m" : "—", color: c.mrr ? "var(--green)" : "var(--text-subtle)" },
-                ].map(s => (
-                  <div key={s.label} style={{
-                    padding:"10px 16px", borderRadius: 10,
-                    background:"var(--bg-elev-2)", border:"0.5px solid var(--border)",
-                    minWidth: 100,
-                  }}>
-                    <div style={{fontSize: 11, color:"var(--text-subtle)", marginBottom: 4, fontWeight: 500}}>{s.label}</div>
-                    <div style={{fontSize: 18, fontWeight: 600, color: s.color, fontFamily:"var(--font-display)", letterSpacing:"-0.02em"}}>{s.value}</div>
-                  </div>
-                ))}
+              <div style={{display:"flex", gap: 6, alignItems:"center", flexShrink: 0}}>
+                <a className="btn" href={`https://wa.me/${(c.whatsapp||"").replace(/\D/g,"")}`} target="_blank"
+                  style={{color:"#25D366", borderColor:"#25D36655"}}>
+                  <Icon name="msg-circle" size={13}/> WhatsApp
+                </a>
+                <button className="btn" onClick={startEdit}><Icon name="edit" size={13}/> Editar</button>
+                <button className="btn primary" onClick={() => navigate("client-dashboard")}><Icon name="external-link" size={13}/> Abrir portal</button>
+                <div style={{position:"relative"}} onClick={e => e.stopPropagation()}>
+                  <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}><Icon name="more-h" size={14}/></button>
+                  {menuOpen && (
+                    <div style={{position:"absolute", right: 0, top:"calc(100% + 4px)", zIndex: 20,
+                      background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
+                      borderRadius: 10, padding: 4, minWidth: 170, boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>
+                      <button onClick={() => { setMenuOpen(false); toast("Archivado"); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--text)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
+                        <Icon name="archive" size={13}/> Archivar cliente
+                      </button>
+                      <div style={{height:1, background:"var(--border)", margin:"4px 0"}}/>
+                      <button onClick={() => { setMenuOpen(false); removeClient(); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--red)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
+                        <Icon name="x" size={13}/> Eliminar cliente
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
-            {/* Actions — single row, consistent height */}
-            <div style={{display:"flex", gap: 6, alignItems:"center", flexShrink: 0, alignSelf:"flex-start"}}>
-              <a className="btn" href={`https://wa.me/${(c.whatsapp||"").replace(/\D/g,"")}`} target="_blank"
-                style={{color:"#25D366", borderColor:"#25D36655"}}>
-                <Icon name="msg-circle" size={13}/> WhatsApp
-              </a>
-              <button className="btn" onClick={startEdit}>
-                <Icon name="edit" size={13}/> Editar
-              </button>
-              <button className="btn primary" onClick={() => navigate("client-dashboard")}>
-                <Icon name="external-link" size={13}/> Abrir portal
-              </button>
-              <div style={{position:"relative"}} onClick={e => e.stopPropagation()}>
-                <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}>
-                  <Icon name="more-h" size={14}/>
-                </button>
-                {menuOpen && (
-                  <div style={{
-                    position:"absolute", right: 0, top:"calc(100% + 4px)", zIndex: 20,
-                    background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
-                    borderRadius: 10, padding: 4, minWidth: 170,
-                    boxShadow:"0 8px 24px rgba(0,0,0,0.25)"
-                  }}>
-                    <button onClick={() => { setMenuOpen(false); toast("Archivado"); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--text)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
-                      <Icon name="archive" size={13}/> Archivar cliente
-                    </button>
-                    <div style={{height:1, background:"var(--border)", margin:"4px 0"}}/>
-                    <button onClick={() => { setMenuOpen(false); removeClient(); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--red)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
-                      <Icon name="x" size={13}/> Eliminar cliente
-                    </button>
-                  </div>
-                )}
-              </div>
+            {/* Stats */}
+            <div style={{display:"flex", gap: 12, marginTop: 22, flexWrap:"wrap"}}>
+              {[
+                { label: "Facturado", value: "€" + totalBilled.toLocaleString("es-ES"), color: "var(--text)" },
+                { label: "Pendiente", value: pending > 0 ? "€" + pending.toLocaleString("es-ES") : "—", color: pending > 0 ? "var(--amber)" : "var(--text-subtle)" },
+                { label: "Proyectos", value: projects.length, color: "var(--text)" },
+                { label: "MRR", value: c.mrr ? "€" + c.mrr + "/m" : "—", color: c.mrr ? "var(--green)" : "var(--text-subtle)" },
+              ].map(s => (
+                <div key={s.label} style={{padding:"10px 16px", borderRadius: 10, background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", minWidth: 100}}>
+                  <div style={{fontSize: 11, color:"var(--text-subtle)", marginBottom: 4, fontWeight: 500}}>{s.label}</div>
+                  <div style={{fontSize: 18, fontWeight: 600, color: s.color, fontFamily:"var(--font-display)", letterSpacing:"-0.02em"}}>{s.value}</div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -434,48 +402,49 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
         </div>
       )}
 
-      {/* Datos de facturación / onboarding (lo que rellenó el cliente) */}
-      {!editing && (c.fiscalName || c.nif || c.fiscalAddress || c.website || c.about) && (
-        <div className="card" style={{ padding: "16px 20px", marginBottom: 16 }}>
-          <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em",
-            color: "var(--text-subtle)", marginBottom: 12 }}>Datos de facturación</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "12px 24px" }}>
-            {[
-              ["Razón social", c.fiscalName],
-              ["NIF / CIF", c.nif],
-              ["Dirección fiscal", c.fiscalAddress],
-              ["Web", c.website],
-            ].filter(([, v]) => v).map(([k, v]) => (
-              <div key={k}>
-                <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>{k}</div>
-                <div style={{ fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.2px", wordBreak: "break-word" }}>{v}</div>
-              </div>
-            ))}
-          </div>
-          {c.about && (
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>A qué se dedica</div>
-              <div style={{ fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 }}>{c.about}</div>
-            </div>
-          )}
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="tabs">
         {[
-          {id:"projects", label:"Proyectos", count:projects.length},
-          {id:"billing",  label:"Facturación", count:invoices.length},
-          {id:"clienttasks", label:"Qué le toca", count:ctasks.length},
-          {id:"credentials", label:"Credenciales", count:creds.length},
-          {id:"files",    label:"Archivos (Drive)"},
-          {id:"notas",    label:"Notas internas"},
+          {id:"vista",       label:"Vista general"},
+          {id:"projects",    label:"Proyectos", count:projects.length},
+          {id:"clienttasks", label:"Intake", count:ctasks.length},
+          {id:"deliverables",label:"Entregables", count:clientDeliverables.length || null},
+          {id:"billing",     label:"Financiero", count:invoices.length || null},
+          {id:"credentials", label:"Credenciales", count:creds.length || null},
+          {id:"files",       label:"Documentación"},
+          {id:"eventos",     label:"Eventos"},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
           </div>
         ))}
       </div>
+
+      {tab === "vista" && (
+        <div style={{display:"flex", flexDirection:"column", gap: 16}}>
+          {(c.fiscalName || c.nif || c.fiscalAddress || c.website || c.about) ? (
+            <div className="card" style={{ padding: "18px 20px" }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12 }}>Datos de facturación</div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0,1fr))", gap: "12px 24px" }}>
+                {[["Razón social", c.fiscalName],["NIF / CIF", c.nif],["Dirección fiscal", c.fiscalAddress],["Web", c.website]].filter(([, v]) => v).map(([k, v]) => (
+                  <div key={k}>
+                    <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>{k}</div>
+                    <div style={{ fontSize: 13.5, color: "var(--text)", wordBreak: "break-word" }}>{v}</div>
+                  </div>
+                ))}
+              </div>
+              {c.about && (
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 }}>A qué se dedica</div>
+                  <div style={{ fontSize: 13.5, color: "var(--text-muted)", lineHeight: 1.5 }}>{c.about}</div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Empty icon="user-cog" title="Sin datos de onboarding" sub="Cuando el cliente complete su registro, aquí verás sus datos fiscales y a qué se dedica."/>
+          )}
+        </div>
+      )}
 
       {tab === "projects" && (
         <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 14}}>
@@ -511,24 +480,80 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
       )}
 
       {tab === "billing" && (
-        <div className="card"><div className="card-body flush">
-          {invoices.length === 0 ? <Empty icon="receipt" title="Sin facturas" sub="Este cliente todavía no tiene facturas."/> : (
-          <table className="table">
-            <thead><tr><th>Nº</th><th>Proyecto</th><th>Tipo</th><th>Emitida</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th></tr></thead>
-            <tbody>{invoices.map(i => (
-              <tr key={i.id}>
-                <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
-                <td>{i.project}</td>
-                <td><span className="chip">{i.type}</span></td>
-                <td className="muted">{i.issued}</td>
-                <td style={{textAlign:"right", fontWeight: 500}}>€{i.amount.toLocaleString("es-ES")}</td>
-                <td><StatusChip status={i.status}/></td>
-              </tr>
-            ))}</tbody>
-          </table>
-          )}
-        </div></div>
+        invoices.length === 0 ? (
+          <Empty icon="receipt" title="Sin facturas" sub="Este cliente todavía no tiene facturas."/>
+        ) : (
+          <div className="card"><div className="card-body flush">
+            <div style={{padding:"14px 18px", borderBottom:"0.5px solid var(--border)", fontSize:11, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)"}}>
+              {invoices.length} factura{invoices.length===1?"":"s"} · Total €{totalBilled.toLocaleString("es-ES")}
+            </div>
+            <table className="table">
+              <thead><tr><th>Nº</th><th>Proyecto</th><th>Tipo</th><th>Emitida</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th></tr></thead>
+              <tbody>{invoices.map(i => (
+                <tr key={i.id}>
+                  <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
+                  <td>{i.project}</td>
+                  <td><span className="chip">{i.type}</span></td>
+                  <td className="muted">{i.issued}</td>
+                  <td style={{textAlign:"right", fontWeight: 500}}>€{i.amount.toLocaleString("es-ES")}</td>
+                  <td><StatusChip status={i.status}/></td>
+                </tr>
+              ))}</tbody>
+            </table>
+          </div></div>
+        )
       )}
+
+      {tab === "deliverables" && (
+        clientDeliverables.length === 0 ? (
+          <Empty icon="package" title="Sin entregables" sub="Los entregables de los proyectos de este cliente aparecerán aquí."/>
+        ) : (
+          <div className="rg-deliverables">
+            {clientDeliverables.map(d => {
+              const proj = projects.find(p => p.id === d.projectId);
+              return (
+                <div key={d.id} className="card">
+                  <div style={{aspectRatio:"16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius:10, borderTopRightRadius:10}}/>
+                  <div className="card-body">
+                    <div className="row between"><div style={{fontWeight:500, fontSize:13.5}}>{d.title}</div>{d.version && <span className="chip">{d.version}</span>}</div>
+                    <div className="subtle xsmall" style={{marginTop:6}}>{proj?.name || "—"}{d.date ? " · " + d.date : ""}</div>
+                    <div style={{marginTop:12}}>
+                      {d.status === "approved"
+                        ? <span className="row tight" style={{color:"var(--green)", fontSize:12.5}}><Icon name="check" size={13}/> Aprobado</span>
+                        : <span className="chip amber" style={{fontSize:11}}>Pendiente de aprobar</span>}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )
+      )}
+
+      {tab === "eventos" && (() => {
+        const evs = [];
+        projects.forEach(p => (p.phasesDone || []).forEach(name => evs.push({ type:"Fase", title:`Fase completada: ${name}`, sub:p.name })));
+        projects.forEach(p => (D.TASKS[p.id] || []).forEach(t => { if (t.column === "done") evs.push({ type:"Hito", title:t.title, sub:p.name }); }));
+        ctasks.forEach(t => { if (t.done) evs.push({ type:"Intake", title:`El cliente realizó: ${t.title}` }); });
+        evs.push({ type:"Alta", title:"Cliente creado en la plataforma" });
+        return (
+          <div className="card"><div className="card-body" style={{padding:20}}>
+            <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500, marginBottom:4}}>Historial de eventos</div>
+            <div className="muted xsmall" style={{marginBottom:16}}>Lo que ha pasado en el proyecto, en orden cronológico inverso.</div>
+            <div style={{display:"flex", flexDirection:"column", gap:14}}>
+              {evs.map((e, i) => (
+                <div key={i} style={{display:"flex", gap:12}}>
+                  <div style={{width:7, height:7, borderRadius:99, background:"var(--text-subtle)", marginTop:5, flexShrink:0}}/>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:10, letterSpacing:"0.07em", textTransform:"uppercase", color:"var(--text-subtle)"}}>{e.type}{e.sub ? " · " + e.sub : ""}</div>
+                    <div style={{fontSize:13, marginTop:2, lineHeight:1.4}}>{e.title}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div></div>
+        );
+      })()}
 
       {tab === "files" && <AgencyDriveFolder client={c}/>}
 
