@@ -79,8 +79,13 @@ const ClientDashboard = ({ navigate, session }) => {
   const name = (session == null ? void 0 : session.name) || "";
   const pending = (D.DELIVERABLES || []).filter((d) => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
-  const fasesDone = plan.groups.filter((g) => g.total > 0 && g.done === g.total).length;
-  const fasesPct = plan.groups.length ? Math.round(fasesDone / plan.groups.length * 100) : 0;
+  const myTasks = [];
+  projects.forEach((p) => (D.TASKS[p.id] || []).forEach((t) => {
+    const who = (t.assignee || "").toLowerCase();
+    if (t.forClient || who.includes("client") || who.includes("cliente")) myTasks.push(t);
+  }));
+  const myDone = myTasks.filter((t) => t.column === "done").length;
+  const myPct = myTasks.length ? Math.round(myDone / myTasks.length * 100) : 0;
   const heroBg = HERO_BG ? `linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover` : `radial-gradient(130% 120% at 82% 0%, rgba(150,105,70,0.38) 0%, rgba(20,16,14,0) 55%), linear-gradient(120deg, #16130f 0%, #0b0b0d 58%, #191410 100%)`;
   const hero = /* @__PURE__ */ React.createElement("div", { style: {
     position: "relative",
@@ -115,7 +120,7 @@ const ClientDashboard = ({ navigate, session }) => {
     letterSpacing: "-1.5px",
     color: "#fff",
     margin: 0
-  } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: fasesPct, label: "Fases completadas" })));
+  } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: myPct, label: "Tus tareas completadas" })));
   if (!projects.length) return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto activo", sub: "Cuando tu agencia cree tu proyecto, aqu\xED ver\xE1s su avance por fases." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" } }, projects.map((pr) => /* @__PURE__ */ React.createElement(
     "button",

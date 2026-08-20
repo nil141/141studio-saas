@@ -110,8 +110,15 @@ const ClientDashboard = ({ navigate, session }) => {
   const name = session?.name || "";
   const pending = (D.DELIVERABLES || []).filter(d => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
-  const fasesDone = plan.groups.filter(g => g.total > 0 && g.done === g.total).length;
-  const fasesPct = plan.groups.length ? Math.round(fasesDone / plan.groups.length * 100) : 0;
+  // "Tus tareas": las que el cliente tiene que completar (asignadas al cliente).
+  // Cuando montemos el Cuestionario, se sumarán aquí también.
+  const myTasks = [];
+  projects.forEach(p => (D.TASKS[p.id] || []).forEach(t => {
+    const who = (t.assignee || "").toLowerCase();
+    if (t.forClient || who.includes("client") || who.includes("cliente")) myTasks.push(t);
+  }));
+  const myDone = myTasks.filter(t => t.column === "done").length;
+  const myPct = myTasks.length ? Math.round(myDone / myTasks.length * 100) : 0;
 
   const heroBg = HERO_BG
     ? `linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover`
@@ -138,7 +145,7 @@ const ClientDashboard = ({ navigate, session }) => {
       </p>
       <div style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
         <RingStat pct={plan.pct} label="Progreso del proyecto"/>
-        <RingStat pct={fasesPct} label="Fases completadas"/>
+        <RingStat pct={myPct} label="Tus tareas completadas"/>
       </div>
     </div>
   );
