@@ -311,9 +311,14 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
       <WhatsAppFloat/>
     </div>
   );
-  const phase = D.PHASES[p.phase] || D.PHASES[0] || { label: "", weeks: "" };
   const plan = _planOf(p);
   const deliverables = (D.DELIVERABLES || []).filter(d => d.projectId === p.id);
+
+  // Historial de eventos derivado de lo conocido (fases y hitos completados).
+  const events = [];
+  plan.groups.forEach(g => { if (g.complete) events.push({ type:"Fase", title:`Fase completada: ${g.name}` }); });
+  plan.groups.forEach(g => g.tasks.forEach(t => { if (t.column === "done") events.push({ type:"Hito", title:`Hito completado: ${t.title}` }); }));
+  events.push({ type:"Portal", title:"Portal del cliente activado" });
 
   const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10 };
 
@@ -328,154 +333,141 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
         </div>
       )}
 
-      <div className="page-head">
-        <div>
-          <h1>{p.name}</h1>
-          <div className="row tight" style={{marginTop: 8, color:"var(--text-muted)", fontSize: 13, flexWrap:"wrap"}}>
-            <StatusChip status={p.light} label={phase.label + (phase.weeks ? " · " + phase.weeks : "")}/>
-            {p.deadline && <><span className="vdiv hide-mobile"/><span className="hide-mobile"><Icon name="calendar" size={12}/> Entrega estimada {p.deadline}</span></>}
-            <span className="vdiv hide-mobile"/>
-            <span style={{display:"inline-flex", alignItems:"center", gap: 6}}>
-              <span style={{width: 100}}><div className="progress"><i style={{width: plan.pct + "%"}}/></div></span>
-              {plan.pct}%
-            </span>
-          </div>
+      {/* Cabecera */}
+      <div style={{marginBottom: 24}}>
+        <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>
+          Proyecto{p.name ? " · " + p.name : ""}
+        </div>
+        <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Estado del proyecto</h1>
+        <div className="sub" style={{marginTop:8, maxWidth:640, color:"var(--text-muted)"}}>
+          Aquí ves las fases del proyecto en detalle: qué ocurre en cada una, en cuál estás ahora y los hitos que ha definido tu equipo.
         </div>
       </div>
 
-      <div className="tabs">
-        {[
-          {id:"plan", label:"Plan y fases", count: plan.names.length || null},
-          {id:"deliverables", label:"Entregables", count: deliverables.length || null},
-        ].map(t => (
-          <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
-            {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
-          </div>
-        ))}
-      </div>
+      {/* Dos columnas: fases + historial */}
+      <div style={{display:"flex", gap:20, alignItems:"flex-start", flexWrap:"wrap"}}>
+        <div style={{flex:"1 1 460px", minWidth:0, display:"flex", flexDirection:"column", gap:16}}>
+          {plan.groups.length === 0 ? (
+            <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está organizando el proyecto en fases. Vuelve pronto."/>
+          ) : plan.groups.map((g, i) => {
+            const isComplete = g.complete;
+            const isActive = i === plan.activeIdx && !isComplete;
+            const nChip = {padding:"3px 9px", borderRadius:99, fontSize:10, letterSpacing:"0.05em", textTransform:"uppercase",
+              whiteSpace:"nowrap", flexShrink:0, display:"inline-flex", alignItems:"center", gap:5,
+              border:"0.5px solid var(--border)", background:"var(--bg-hover)", color:"var(--text-muted)"};
+            const aChip = {...nChip, border:"0.5px solid var(--amber)", background:"var(--amber-soft)", color:"var(--amber)"};
+            return (
+              <div key={i} style={{
+                borderRadius:16, padding:"20px 22px",
+                border: isActive ? "1px solid var(--amber)" : "0.5px solid var(--border)",
+                background: isActive ? "var(--amber-soft)" : "var(--bg-elev-2)",
+                opacity: isComplete ? 0.85 : 1}}>
+                <div style={{display:"flex", justifyContent:"space-between", gap:12, alignItems:"flex-start"}}>
+                  <div style={{display:"flex", gap:14, minWidth:0}}>
+                    <div style={{width:30, height:30, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center", fontSize:13, fontWeight:600,
+                      border:"1.5px solid " + (isComplete?"var(--green)":isActive?"var(--amber)":"var(--border-strong)"),
+                      color: isComplete?"var(--green)":isActive?"var(--amber)":"var(--text-muted)",
+                      background: isActive?"var(--amber-soft)":"transparent"}}>
+                      {isComplete ? <Icon name="check" size={14}/> : i+1}
+                    </div>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontFamily:"var(--font-display)", fontSize:20, fontWeight:500, letterSpacing:"-0.4px"}}>{g.name}</div>
+                      {g.desc && <div className="muted small" style={{marginTop:5, lineHeight:1.5, maxWidth:560}}>{g.desc}</div>}
+                    </div>
+                  </div>
+                  <span style={isActive ? aChip : nChip}>
+                    {isActive && <span style={{width:5, height:5, borderRadius:99, background:"var(--amber)"}}/>}
+                    {isComplete ? "Completada" : isActive ? "En curso" : "Pendiente"}
+                  </span>
+                </div>
 
-      {tab === "plan" && (
-        <div style={{display:"flex", flexDirection:"column", gap: 24}}>
-          {/* Resumen de avance */}
-          <div className="card"><div className="card-body" style={{padding: 22}}>
-            <div className="row between" style={{alignItems:"flex-end", marginBottom: 12}}>
-              <div>
-                <div style={secLabel}>Avance del proyecto</div>
-                <div style={{fontSize: 30, fontFamily:"var(--font-display)", fontWeight: 500, lineHeight: 1}}>{plan.pct}%</div>
-              </div>
-              <div className="muted small" style={{textAlign:"right"}}>
-                {plan.total ? `${plan.done} de ${plan.total} tareas completadas` : "Aún sin tareas"}
-                {plan.active && <div style={{marginTop: 4}}>Fase actual: <b style={{color:"var(--text)"}}>{plan.active.name}</b></div>}
-              </div>
-            </div>
-            <div style={{height:6, borderRadius:99, background:"var(--border)", overflow:"hidden"}}>
-              <div style={{width: plan.pct + "%", height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s"}}/>
-            </div>
-          </div></div>
-
-          {/* Fases */}
-          <div>
-            <div style={secLabel}>Fases del proyecto</div>
-            {plan.groups.length === 0 ? (
-              <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está organizando el proyecto en fases. Vuelve pronto."/>
-            ) : (
-              <div style={{display:"flex", flexDirection:"column", gap: 12}}>
-                {plan.groups.map((g, i) => {
-                  const isDone = g.complete;
-                  const isActive = i === plan.activeIdx && !isDone;
-                  const chip = {fontSize:10, padding:"2px 8px", borderRadius:99, whiteSpace:"nowrap", flexShrink:0,
-                    background:"var(--bg-hover)", border:"0.5px solid var(--border)", color:"var(--text-muted)",
-                    display:"inline-flex", alignItems:"center", gap:5, letterSpacing:"0.02em"};
-                  return (
-                    <div key={i} style={{
-                      border:"0.5px solid var(--border)", borderRadius:12, overflow:"hidden",
-                      background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
-                      opacity: isDone ? 0.6 : 1,
-                    }}>
-                      <div style={{padding:"14px 18px"}}>
-                        <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:10, marginBottom: g.total ? 12 : 0}}>
-                          <div style={{minWidth:0}}>
-                            <div style={{fontFamily:"var(--font-display)", fontWeight:500, fontSize:16}}>{g.name}</div>
-                            {g.desc && <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, lineHeight:1.45}}>{g.desc}</div>}
+                {g.tasks.length > 0 && (
+                  <div style={{marginTop:18}}>
+                    <div style={{fontSize:10.5, textTransform:"uppercase", letterSpacing:"0.08em", color:"var(--text-subtle)", marginBottom:4}}>Hitos de esta fase</div>
+                    {g.tasks.map((t, ti) => {
+                      const done = t.column === "done";
+                      return (
+                        <div key={ti} style={{display:"flex", gap:12, alignItems:"flex-start", padding:"12px 0", borderTop:"0.5px solid var(--border)"}}>
+                          <div style={{width:16, height:16, borderRadius:99, marginTop:1, flexShrink:0, display:"grid", placeItems:"center",
+                            background: done?"var(--green)":"transparent", border: done?"none":"1.5px solid var(--border-strong)"}}>
+                            {done && <Icon name="check" size={10} style={{color:"#000"}}/>}
                           </div>
-                          <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0}}>
-                            {g.total > 0 && <span style={{fontSize:13, fontWeight:600, color:"var(--text-subtle)"}}>{g.pct}%</span>}
-                            {isDone && <span style={chip}><Icon name="check" size={9}/> Completada</span>}
-                            {isActive && <span style={chip}><span style={{width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/> En curso</span>}
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontSize:13.5, color: done?"var(--text-muted)":"var(--text)"}}>{t.title}</div>
+                            {t.notes && <div className="muted xsmall" style={{marginTop:2, lineHeight:1.45}}>{t.notes}</div>}
                           </div>
+                          <span style={{...nChip, alignSelf:"center"}}>{done ? "Hecho" : "Pendiente"}</span>
                         </div>
-                        {g.total > 0 && (
-                          <>
-                            <div style={{height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", marginBottom:12}}>
-                              <div style={{width:g.pct+"%", height:"100%", background: isDone?"var(--green)":"var(--accent)", borderRadius:99, transition:"width .4s"}}/>
-                            </div>
-                            <div style={{display:"flex", flexDirection:"column", gap:6}}>
-                              {g.tasks.map((t, ti) => {
-                                const taskDone = t.column === "done";
-                                return (
-                                  <div key={ti} style={{display:"flex", alignItems:"center", gap:9, fontSize:12.5}}>
-                                    <div style={{width:15, height:15, borderRadius:5, flexShrink:0, display:"grid", placeItems:"center",
-                                      background: taskDone?"var(--green)":"transparent",
-                                      border: taskDone?"none":"1px solid var(--border-strong)"}}>
-                                      {taskDone && <Icon name="check" size={10} style={{color:"#000"}}/>}
-                                    </div>
-                                    <span style={{color: taskDone?"var(--text-subtle)":"var(--text)", textDecoration: taskDone?"line-through":"none"}}>{t.title}</span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+
+          {/* Entregables */}
+          {deliverables.length > 0 && (
+            <div style={{marginTop:10}}>
+              <div style={secLabel}>Entregables</div>
+              <div className="rg-deliverables">
+                {deliverables.map(d => (
+                  <div key={d.id} className="card">
+                    <div style={{aspectRatio:"16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius: 10, borderTopRightRadius: 10}}/>
+                    <div className="card-body">
+                      <div className="row between">
+                        <div style={{fontWeight: 500, fontSize: 13.5}}>{d.title}</div>
+                        {d.version && <span className="chip">{d.version}</span>}
+                      </div>
+                      <div className="subtle xsmall" style={{marginTop: 6}}>{d.type}{d.date ? " · subido " + d.date : ""}</div>
+                      <div style={{marginTop: 14}}>
+                        {d.status === "approved" ? (
+                          <div className="row tight" style={{color:"var(--green)", fontSize: 12.5}}>
+                            <Icon name="check" size={13}/> Aprobado
+                          </div>
+                        ) : (
+                          <div className="row tight">
+                            <button className="btn primary sm grow" onClick={() => openModal("approve", { deliverable: d })}>
+                              <Icon name="thumbs-up" size={12}/> Revisar
+                            </button>
+                            <button className="btn ghost icon-only sm"><Icon name="download" size={12}/></button>
+                          </div>
                         )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {tab === "deliverables" && (
-        deliverables.length === 0 ? (
-          <Empty icon="package" title="Sin entregables todavía" sub="Aquí verás los entregables cuando tu agencia los suba para tu revisión."/>
-        ) : (
-          <div>
-            <div className="card" style={{marginBottom: 14, padding: 12, display:"flex", alignItems:"center", gap: 12}}>
-              <Icon name="info" size={14} style={{color:"var(--text-muted)"}}/>
-              <div className="small grow">Revisa cada entregable y apruébalo cuando estés conforme. Tu aprobación queda registrada.</div>
             </div>
-            <div className="rg-deliverables">
-              {deliverables.map(d => (
-                <div key={d.id} className="card">
-                  <div style={{aspectRatio:"16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius: 10, borderTopRightRadius: 10}}/>
-                  <div className="card-body">
-                    <div className="row between">
-                      <div style={{fontWeight: 500, fontSize: 13.5}}>{d.title}</div>
-                      {d.version && <span className="chip">{d.version}</span>}
-                    </div>
-                    <div className="subtle xsmall" style={{marginTop: 6}}>{d.type}{d.date ? " · subido " + d.date : ""}</div>
-                    <div style={{marginTop: 14}}>
-                      {d.status === "approved" ? (
-                        <div className="row tight" style={{color:"var(--green)", fontSize: 12.5}}>
-                          <Icon name="check" size={13}/> Aprobado
-                        </div>
-                      ) : (
-                        <div className="row tight">
-                          <button className="btn primary sm grow" onClick={() => openModal("approve", { deliverable: d })}>
-                            <Icon name="thumbs-up" size={12}/> Revisar
-                          </button>
-                          <button className="btn ghost icon-only sm"><Icon name="download" size={12}/></button>
-                        </div>
-                      )}
+          )}
+        </div>
+
+        {/* Historial de eventos */}
+        <div style={{flex:"1 1 240px", minWidth:0, maxWidth:340}}>
+          <div className="card"><div className="card-body" style={{padding:18}}>
+            <div className="row between" style={{alignItems:"flex-start"}}>
+              <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500}}>Historial de eventos</div>
+              <span className="muted xsmall">{events.length}</span>
+            </div>
+            <div className="muted xsmall" style={{marginTop:4, marginBottom:16, lineHeight:1.5}}>Lo que ha pasado en el proyecto, en orden cronológico inverso.</div>
+            {events.length === 0 ? (
+              <div className="muted small">Aún no hay eventos registrados.</div>
+            ) : (
+              <div style={{display:"flex", flexDirection:"column", gap:14}}>
+                {events.map((e, i) => (
+                  <div key={i} style={{display:"flex", gap:10}}>
+                    <div style={{width:7, height:7, borderRadius:99, background:"var(--text-subtle)", marginTop:5, flexShrink:0}}/>
+                    <div style={{minWidth:0}}>
+                      <div style={{fontSize:10, letterSpacing:"0.07em", textTransform:"uppercase", color:"var(--text-subtle)"}}>{e.type}</div>
+                      <div style={{fontSize:13, marginTop:2, lineHeight:1.4}}>{e.title}</div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )
-      )}
+                ))}
+              </div>
+            )}
+          </div></div>
+        </div>
+      </div>
 
       <WhatsAppFloat/>
     </div>

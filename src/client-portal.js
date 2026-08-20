@@ -234,9 +234,16 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
   const p = projectId && projects.find((x) => x.id === projectId) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
   if (!p) return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "El avance de tu proyecto aparecer\xE1 aqu\xED."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "40vh" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto", sub: "Cuando tu agencia cree un proyecto podr\xE1s seguir su avance aqu\xED." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
-  const phase = D.PHASES[p.phase] || D.PHASES[0] || { label: "", weeks: "" };
   const plan = _planOf(p);
   const deliverables = (D.DELIVERABLES || []).filter((d) => d.projectId === p.id);
+  const events = [];
+  plan.groups.forEach((g) => {
+    if (g.complete) events.push({ type: "Fase", title: `Fase completada: ${g.name}` });
+  });
+  plan.groups.forEach((g) => g.tasks.forEach((t) => {
+    if (t.column === "done") events.push({ type: "Hito", title: `Hito completado: ${t.title}` });
+  }));
+  events.push({ type: "Portal", title: "Portal del cliente activado" });
   const secLabel = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 10 };
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" } }, projects.map((pr) => /* @__PURE__ */ React.createElement(
     "button",
@@ -246,46 +253,58 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
       onClick: () => navigate("client-status", { projectId: pr.id })
     },
     pr.name
-  ))), /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, p.name), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginTop: 8, color: "var(--text-muted)", fontSize: 13, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(StatusChip, { status: p.light, label: phase.label + (phase.weeks ? " \xB7 " + phase.weeks : "") }), p.deadline && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { className: "vdiv hide-mobile" }), /* @__PURE__ */ React.createElement("span", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 12 }), " Entrega estimada ", p.deadline)), /* @__PURE__ */ React.createElement("span", { className: "vdiv hide-mobile" }), /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 100 } }, /* @__PURE__ */ React.createElement("div", { className: "progress" }, /* @__PURE__ */ React.createElement("i", { style: { width: plan.pct + "%" } }))), plan.pct, "%")))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
-    { id: "plan", label: "Plan y fases", count: plan.names.length || null },
-    { id: "deliverables", label: "Entregables", count: deliverables.length || null }
-  ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (tab === t.id ? " active" : ""), onClick: () => setTab(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), tab === "plan" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 22 } }, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { alignItems: "flex-end", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Avance del proyecto"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 30, fontFamily: "var(--font-display)", fontWeight: 500, lineHeight: 1 } }, plan.pct, "%")), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { textAlign: "right" } }, plan.total ? `${plan.done} de ${plan.total} tareas completadas` : "A\xFAn sin tareas", plan.active && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4 } }, "Fase actual: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, plan.active.name)))), /* @__PURE__ */ React.createElement("div", { style: { height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: plan.pct + "%", height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Fases del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases. Vuelve pronto." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, plan.groups.map((g, i) => {
-    const isDone = g.complete;
-    const isActive = i === plan.activeIdx && !isDone;
-    const chip = {
-      fontSize: 10,
-      padding: "2px 8px",
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Proyecto", p.name ? " \xB7 " + p.name : ""), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, maxWidth: 640, color: "var(--text-muted)" } }, "Aqu\xED ves las fases del proyecto en detalle: qu\xE9 ocurre en cada una, en cu\xE1l est\xE1s ahora y los hitos que ha definido tu equipo.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 460px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 } }, plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases. Vuelve pronto." }) : plan.groups.map((g, i) => {
+    const isComplete = g.complete;
+    const isActive = i === plan.activeIdx && !isComplete;
+    const nChip = {
+      padding: "3px 9px",
       borderRadius: 99,
+      fontSize: 10,
+      letterSpacing: "0.05em",
+      textTransform: "uppercase",
       whiteSpace: "nowrap",
       flexShrink: 0,
-      background: "var(--bg-hover)",
-      border: "0.5px solid var(--border)",
-      color: "var(--text-muted)",
       display: "inline-flex",
       alignItems: "center",
       gap: 5,
-      letterSpacing: "0.02em"
-    };
-    return /* @__PURE__ */ React.createElement("div", { key: i, style: {
       border: "0.5px solid var(--border)",
-      borderRadius: 12,
-      overflow: "hidden",
-      background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
-      opacity: isDone ? 0.6 : 1
-    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: g.total ? 12 : 0 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 16 } }, g.name), g.desc && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, lineHeight: 1.45 } }, g.desc)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, g.total > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: "var(--text-subtle)" } }, g.pct, "%"), isDone && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }), " En curso"))), g.total > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: g.pct + "%", height: "100%", background: isDone ? "var(--green)" : "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, g.tasks.map((t, ti) => {
-      const taskDone = t.column === "done";
-      return /* @__PURE__ */ React.createElement("div", { key: ti, style: { display: "flex", alignItems: "center", gap: 9, fontSize: 12.5 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 15,
-        height: 15,
-        borderRadius: 5,
+      background: "var(--bg-hover)",
+      color: "var(--text-muted)"
+    };
+    const aChip = { ...nChip, border: "0.5px solid var(--amber)", background: "var(--amber-soft)", color: "var(--amber)" };
+    return /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      borderRadius: 16,
+      padding: "20px 22px",
+      border: isActive ? "1px solid var(--amber)" : "0.5px solid var(--border)",
+      background: isActive ? "var(--amber-soft)" : "var(--bg-elev-2)",
+      opacity: isComplete ? 0.85 : 1
+    } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 14, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 30,
+      height: 30,
+      borderRadius: 99,
+      flexShrink: 0,
+      display: "grid",
+      placeItems: "center",
+      fontSize: 13,
+      fontWeight: 600,
+      border: "1.5px solid " + (isComplete ? "var(--green)" : isActive ? "var(--amber)" : "var(--border-strong)"),
+      color: isComplete ? "var(--green)" : isActive ? "var(--amber)" : "var(--text-muted)",
+      background: isActive ? "var(--amber-soft)" : "transparent"
+    } }, isComplete ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 14 }) : i + 1), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, letterSpacing: "-0.4px" } }, g.name), g.desc && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 5, lineHeight: 1.5, maxWidth: 560 } }, g.desc))), /* @__PURE__ */ React.createElement("span", { style: isActive ? aChip : nChip }, isActive && /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--amber)" } }), isComplete ? "Completada" : isActive ? "En curso" : "Pendiente")), g.tasks.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, textTransform: "uppercase", letterSpacing: "0.08em", color: "var(--text-subtle)", marginBottom: 4 } }, "Hitos de esta fase"), g.tasks.map((t, ti) => {
+      const done = t.column === "done";
+      return /* @__PURE__ */ React.createElement("div", { key: ti, style: { display: "flex", gap: 12, alignItems: "flex-start", padding: "12px 0", borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: {
+        width: 16,
+        height: 16,
+        borderRadius: 99,
+        marginTop: 1,
         flexShrink: 0,
         display: "grid",
         placeItems: "center",
-        background: taskDone ? "var(--green)" : "transparent",
-        border: taskDone ? "none" : "1px solid var(--border-strong)"
-      } }, taskDone && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 10, style: { color: "#000" } })), /* @__PURE__ */ React.createElement("span", { style: { color: taskDone ? "var(--text-subtle)" : "var(--text)", textDecoration: taskDone ? "line-through" : "none" } }, t.title));
-    })))));
-  })))), tab === "deliverables" && (deliverables.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "package", title: "Sin entregables todav\xEDa", sub: "Aqu\xED ver\xE1s los entregables cuando tu agencia los suba para tu revisi\xF3n." }) : /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 14, padding: 12, display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "info", size: 14, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("div", { className: "small grow" }, "Revisa cada entregable y apru\xE9balo cuando est\xE9s conforme. Tu aprobaci\xF3n queda registrada.")), /* @__PURE__ */ React.createElement("div", { className: "rg-deliverables" }, deliverables.map((d) => /* @__PURE__ */ React.createElement("div", { key: d.id, className: "card" }, /* @__PURE__ */ React.createElement("div", { style: { aspectRatio: "16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius: 10, borderTopRightRadius: 10 } }), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "row between" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, d.title), d.version && /* @__PURE__ */ React.createElement("span", { className: "chip" }, d.version)), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 6 } }, d.type, d.date ? " \xB7 subido " + d.date : ""), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, d.status === "approved" ? /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { color: "var(--green)", fontSize: 12.5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Aprobado") : /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm grow", onClick: () => openModal("approve", { deliverable: d }) }, /* @__PURE__ */ React.createElement(Icon, { name: "thumbs-up", size: 12 }), " Revisar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "download", size: 12 })))))))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
+        background: done ? "var(--green)" : "transparent",
+        border: done ? "none" : "1.5px solid var(--border-strong)"
+      } }, done && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 10, style: { color: "#000" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: done ? "var(--text-muted)" : "var(--text)" } }, t.title), t.notes && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 2, lineHeight: 1.45 } }, t.notes)), /* @__PURE__ */ React.createElement("span", { style: { ...nChip, alignSelf: "center" } }, done ? "Hecho" : "Pendiente"));
+    })));
+  }), deliverables.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Entregables"), /* @__PURE__ */ React.createElement("div", { className: "rg-deliverables" }, deliverables.map((d) => /* @__PURE__ */ React.createElement("div", { key: d.id, className: "card" }, /* @__PURE__ */ React.createElement("div", { style: { aspectRatio: "16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius: 10, borderTopRightRadius: 10 } }), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "row between" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13.5 } }, d.title), d.version && /* @__PURE__ */ React.createElement("span", { className: "chip" }, d.version)), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 6 } }, d.type, d.date ? " \xB7 subido " + d.date : ""), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, d.status === "approved" ? /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { color: "var(--green)", fontSize: 12.5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Aprobado") : /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm grow", onClick: () => openModal("approve", { deliverable: d }) }, /* @__PURE__ */ React.createElement(Icon, { name: "thumbs-up", size: 12 }), " Revisar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "download", size: 12 })))))))))), /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 240px", minWidth: 0, maxWidth: 340 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500 } }, "Historial de eventos"), /* @__PURE__ */ React.createElement("span", { className: "muted xsmall" }, events.length)), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 4, marginBottom: 16, lineHeight: 1.5 } }, "Lo que ha pasado en el proyecto, en orden cronol\xF3gico inverso."), events.length === 0 ? /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "A\xFAn no hay eventos registrados.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 14 } }, events.map((e, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: 99, background: "var(--text-subtle)", marginTop: 5, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, letterSpacing: "0.07em", textTransform: "uppercase", color: "var(--text-subtle)" } }, e.type), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, marginTop: 2, lineHeight: 1.4 } }, e.title))))))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
 };
 const ClientDocs = ({ session }) => {
   const D = window.Data;
