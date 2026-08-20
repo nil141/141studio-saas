@@ -109,10 +109,10 @@ const ClientDashboard = ({ navigate, session }) => {
     marginBottom: 18
   } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: "var(--green)" } }), "Portal", primary ? " \xB7 " + primary.name : ""), /* @__PURE__ */ React.createElement("h1", { style: {
     fontFamily: "var(--font-display)",
-    fontWeight: 500,
-    fontSize: "clamp(30px, 5vw, 46px)",
-    lineHeight: 1.05,
-    letterSpacing: "-1px",
+    fontWeight: 300,
+    fontSize: "clamp(38px, 6vw, 58px)",
+    lineHeight: 1.02,
+    letterSpacing: "-1.5px",
     color: "#fff",
     margin: 0
   } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), primary && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: fasesPct, label: "Fases completadas" })));

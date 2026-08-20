@@ -128,8 +128,8 @@ const ClientDashboard = ({ navigate, session }) => {
         <span style={{width:6, height:6, borderRadius:99, background:"var(--green)"}}/>
         Portal{primary ? " · " + primary.name : ""}
       </div>
-      <h1 style={{fontFamily:"var(--font-display)", fontWeight: 500,
-        fontSize:"clamp(30px, 5vw, 46px)", lineHeight:1.05, letterSpacing:"-1px", color:"#fff", margin:0}}>
+      <h1 style={{fontFamily:"var(--font-display)", fontWeight: 300,
+        fontSize:"clamp(38px, 6vw, 58px)", lineHeight:1.02, letterSpacing:"-1.5px", color:"#fff", margin:0}}>
         Hola, {name || "bienvenido"}
       </h1>
       <p style={{color:"rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight:1.6, maxWidth: 560, marginTop: 14}}>
