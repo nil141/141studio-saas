@@ -28,7 +28,7 @@ as $$
 declare
   v_invite public.invites%rowtype;
   v_uid    uuid := auth.uid();
-  v_client uuid;
+  v_client text;   -- clients.id es text (uuid guardado como texto)
   v_email  text;
 begin
   if v_uid is null then
@@ -47,7 +47,7 @@ begin
 
   if v_invite.client_id is not null then
     -- Vincular a la ficha existente y completar sus datos
-    v_client := v_invite.client_id;
+    v_client := v_invite.client_id::text;
     update public.clients
        set name           = coalesce(nullif(p_name, ''), name),
            company        = coalesce(nullif(p_company, ''), company),
@@ -62,7 +62,7 @@ begin
      where id = v_client;
   else
     -- Sin client_id → crear ficha nueva
-    v_client := gen_random_uuid();
+    v_client := gen_random_uuid()::text;
     insert into public.clients (id, agency_id, name, company, email, phone, initials, color, sector,
                                 nif, fiscal_name, fiscal_address, website, about)
     values (
