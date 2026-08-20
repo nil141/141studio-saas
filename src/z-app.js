@@ -167,14 +167,18 @@
       switch (view.name) {
         case "client-dashboard":
           return /* @__PURE__ */ React.createElement(ClientDashboard, { navigate, openModal, session });
+        case "client-status":
+          return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
+        case "client-docs":
+          return /* @__PURE__ */ React.createElement(ClientDocs, { navigate, openModal, session, projectId: view.params.projectId });
+        case "client-credentials":
+          return /* @__PURE__ */ React.createElement(ClientCredentials, { navigate, openModal, session });
         case "client-project":
-          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session, projectId: view.params.projectId });
+          return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":
-          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session, projectId: view.params.projectId, initialTab: "deliverables" });
+          return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId, initialTab: "deliverables" });
         case "client-invoices":
-          return /* @__PURE__ */ React.createElement(SimplePage, { title: "Tus facturas", icon: "receipt" });
-        case "client-messages":
-          return /* @__PURE__ */ React.createElement(SimplePage, { title: "Mensajes", icon: "msg-circle" });
+          return /* @__PURE__ */ React.createElement(ClientDocs, { navigate, openModal, session });
         default:
           return /* @__PURE__ */ React.createElement(ClientDashboard, { navigate, openModal, session });
       }

@@ -48,9 +48,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       title: "Tu cuenta",
       items: [
         { id: "client-dashboard", label: "Inicio", icon: "home" },
-        { id: "client-project", label: "Tu proyecto", icon: "folder", badge: 2 },
-        { id: "client-invoices", label: "Facturas", icon: "receipt" },
-        { id: "client-messages", label: "Mensajes", icon: "msg-circle" }
+        { id: "client-status", label: "Estado del proyecto", icon: "activity" },
+        { id: "client-docs", label: "Documentaci\xF3n", icon: "file-text" },
+        { id: "client-credentials", label: "Credenciales", icon: "lock" }
       ]
     }
   ];

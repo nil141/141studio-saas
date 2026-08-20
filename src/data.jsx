@@ -85,8 +85,8 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 // ── Reactive store ──────────────────────────────────────────────────
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
-  LEADS: [], TASKS: {}, SETTINGS: { ...SETTINGS_DEFAULT },
-  _user: null,
+  LEADS: [], TASKS: {}, CREDENTIALS: [], SETTINGS: { ...SETTINGS_DEFAULT },
+  _user: null, _prof: null,
   _subs: new Set(),
 };
 
@@ -179,6 +179,10 @@ const _md = r => r && ({
   id: r.id, projectId: r.project_id, title: r.title, type: r.type,
   thumb: r.thumb, status: r.status, date: r.date, version: r.version,
 });
+const _mcr = r => r && ({
+  id: r.id, clientId: r.client_id, label: r.label || "", url: r.url || "",
+  username: r.username || "", password: r.password || "", notes: r.notes || "",
+});
 const _ml = r => r && ({
   id: r.id, name: r.name, company: r.company, channel: r.channel,
   stage: r.stage, budget: r.budget, light: r.light,
@@ -228,15 +232,18 @@ const _loadAll = async () => {
   const agencyId   = prof.agency_id || uid;
   const isClient   = prof.role === "client";
   const clientDbId = prof.client_db_id;
+  _store._prof = { agencyId, isClient, clientDbId };
 
   if (isClient) {
-    const [proj, inv, sett] = await Promise.all([
+    const [proj, inv, cred, sett] = await Promise.all([
       _sb.from("projects").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
       _sb.from("invoices").select("*").eq("agency_id", agencyId).eq("client_id", clientDbId),
+      _sb.from("credentials").select("*").eq("client_id", clientDbId),
       _sb.from("settings").select("*").eq("agency_id", agencyId).maybeSingle(),
     ]);
     _store.PROJECTS     = (proj.data  || []).map(_mp);
     _store.INVOICES     = (inv.data   || []).map(_mi);
+    _store.CREDENTIALS  = (cred.data  || []).map(_mcr);
     _store.SETTINGS     = _ms(sett.data) || { ...SETTINGS_DEFAULT };
     _store.CLIENTS      = [];
     _store.LEADS        = [];
@@ -258,13 +265,14 @@ const _loadAll = async () => {
       _store.DELIVERABLES = [];
     }
   } else {
-    const [c, p, i, d, l, t, s] = await Promise.all([
+    const [c, p, i, d, l, t, cr, s] = await Promise.all([
       _sb.from("clients").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("projects").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("invoices").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("deliverables").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("leads").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("tasks").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
+      _sb.from("credentials").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("settings").select("*").eq("agency_id", uid).maybeSingle(),
     ]);
     _store.CLIENTS      = (c.data || []).map(_mc);
@@ -272,6 +280,7 @@ const _loadAll = async () => {
     _store.INVOICES     = (i.data || []).map(_mi);
     _store.DELIVERABLES = (d.data || []).map(_md);
     _store.LEADS        = (l.data || []).map(_ml);
+    _store.CREDENTIALS  = (cr.data || []).map(_mcr);
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -298,6 +307,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "invoices",     filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "leads",        filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "credentials",  filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -706,6 +716,52 @@ const deleteDeliverable = (id) => {
   const uid = _uid(); if (!uid) return;
   _store.DELIVERABLES = _store.DELIVERABLES.filter(d => d.id !== id); _emit();
   _sb.from("deliverables").delete().eq("id", id).then();
+};
+
+// ── CREDENCIALES (accesos compartidos por cliente) ───────────────────
+const credentialsForClient = (clientId) =>
+  (_store.CREDENTIALS || []).filter(c => c.clientId === clientId);
+
+const addCredential = (clientId, input) => {
+  const uid = _uid(); if (!uid) return;
+  const prof = _store._prof || {};
+  const cid = clientId || prof.clientDbId;
+  if (!cid) return;
+  const agencyId = prof.agencyId || uid;
+  const cr = {
+    id: _id(), clientId: cid,
+    label: (input.label || "").trim(), url: (input.url || "").trim(),
+    username: (input.username || "").trim(), password: input.password || "",
+    notes: (input.notes || "").trim(),
+  };
+  _store.CREDENTIALS = [cr, ..._store.CREDENTIALS]; _emit();
+  _insertAdaptive("credentials", {
+    id: cr.id, agency_id: agencyId, client_id: cid,
+    label: cr.label, url: cr.url, username: cr.username, password: cr.password, notes: cr.notes,
+  }).then(({ error }) => {
+    if (error) {
+      console.error("[addCredential] Supabase error:", error.message);
+      _store.CREDENTIALS = _store.CREDENTIALS.filter(x => x.id !== cr.id); _emit();
+    }
+  });
+  return cr;
+};
+
+const updateCredential = (id, changes) => {
+  const uid = _uid(); if (!uid) return;
+  _store.CREDENTIALS = _store.CREDENTIALS.map(c => c.id === id ? { ...c, ...changes } : c); _emit();
+  const db = {};
+  ["label","url","username","password","notes"].forEach(k => { if (changes[k] !== undefined) db[k] = changes[k] || ""; });
+  _updateAdaptive("credentials", id, db);
+};
+
+const deleteCredential = (id) => {
+  const uid = _uid(); if (!uid) return;
+  const prev = _store.CREDENTIALS;
+  _store.CREDENTIALS = _store.CREDENTIALS.filter(c => c.id !== id); _emit();
+  _sb.from("credentials").delete().eq("id", id).then(({ error }) => {
+    if (error) { _store.CREDENTIALS = prev; _emit(); }
+  });
 };
 
 // ── LEADS ────────────────────────────────────────────────────────────
@@ -1181,6 +1237,7 @@ window.Data = {
   get DELIVERABLES() { return _store.DELIVERABLES; },
   get LEADS()        { return _store.LEADS; },
   get TASKS()        { return _store.TASKS; },
+  get CREDENTIALS()  { return _store.CREDENTIALS; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1196,6 +1253,7 @@ window.Data = {
   PAY_PLANS: _PAY_PLANS, buildPayments,
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,
+  credentialsForClient, addCredential, updateCredential, deleteCredential,
   addLead,
   addTask, moveTask, updateTask, deleteTask,
   addRoutine, updateRoutine, deleteRoutine, clearRoutines,

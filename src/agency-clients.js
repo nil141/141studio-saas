@@ -186,7 +186,7 @@
   var AgencyClientDetail = ({ clientId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
-    const confirm = useConfirm();
+    const confirm2 = useConfirm();
     const toast = useToast();
     const c = D.CLIENTS.find((x) => x.id === clientId);
     useEffect(() => {
@@ -195,6 +195,7 @@
     if (!c) return null;
     const projects = D.PROJECTS.filter((p) => p.clientId === c.id);
     const invoices = D.INVOICES.filter((i) => i.clientId === c.id);
+    const creds = D.credentialsForClient ? D.credentialsForClient(c.id) : [];
     const [tab, setTab] = useState("projects");
     const [editing, setEditing] = useState(false);
     const [form, setForm] = useState({});
@@ -232,7 +233,7 @@
     const cancelEdit = () => setEditing(false);
     const field = (key) => ({ value: form[key] || "", onChange: (e) => setForm((f) => ({ ...f, [key]: e.target.value })) });
     const removeClient = async () => {
-      const ok = await confirm({
+      const ok = await confirm2({
         title: `Eliminar a ${c.company}?`,
         body: `Se eliminar\xE1n tambi\xE9n ${projects.length} proyecto${projects.length === 1 ? "" : "s"} y ${invoices.length} factura${invoices.length === 1 ? "" : "s"}. Esta acci\xF3n no se puede deshacer.`,
         confirmLabel: "S\xED, eliminar",
@@ -245,7 +246,7 @@
       }
     };
     const removeProject = async (p) => {
-      const ok = await confirm({
+      const ok = await confirm2({
         title: `Eliminar el proyecto "${p.name}"?`,
         body: "Se eliminar\xE1n tambi\xE9n sus entregables. Esta acci\xF3n no se puede deshacer.",
         confirmLabel: "S\xED, eliminar",
@@ -362,6 +363,7 @@
     ].filter(([, v]) => v).map(([k, v]) => /* @__PURE__ */ React.createElement("div", { key: k }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 } }, k), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.2px", wordBreak: "break-word" } }, v)))), c.about && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginBottom: 3 } }, "A qu\xE9 se dedica"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.5 } }, c.about))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "projects", label: "Proyectos", count: projects.length },
       { id: "billing", label: "Facturaci\xF3n", count: invoices.length },
+      { id: "credentials", label: "Credenciales", count: creds.length },
       { id: "files", label: "Archivos (Drive)" },
       { id: "notas", label: "Notas internas" }
     ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (tab === t.id ? " active" : ""), onClick: () => setTab(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), tab === "projects" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 } }, projects.map((p) => {
@@ -380,9 +382,66 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo proyecto para ",
       c.company
-    )), tab === "billing" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, invoices.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "receipt", title: "Sin facturas", sub: "Este cliente todav\xEDa no tiene facturas." }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "N\xBA"), /* @__PURE__ */ React.createElement("th", null, "Proyecto"), /* @__PURE__ */ React.createElement("th", null, "Tipo"), /* @__PURE__ */ React.createElement("th", null, "Emitida"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Importe"), /* @__PURE__ */ React.createElement("th", null, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, invoices.map((i) => /* @__PURE__ */ React.createElement("tr", { key: i.id }, /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: 12 } }, i.id), /* @__PURE__ */ React.createElement("td", null, i.project), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("span", { className: "chip" }, i.type)), /* @__PURE__ */ React.createElement("td", { className: "muted" }, i.issued), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontWeight: 500 } }, "\u20AC", i.amount.toLocaleString("es-ES")), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StatusChip, { status: i.status })))))))), tab === "files" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("div", { style: { width: 24, height: 24, borderRadius: 6, background: "#fff", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24" }, /* @__PURE__ */ React.createElement("path", { fill: "#1FA463", d: "M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z" }), /* @__PURE__ */ React.createElement("path", { fill: "#FFD041", d: "M7.71 3.5h6.58L21.85 15l-3.27 5.5z", opacity: ".7" }))), /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Sincronizado con Google Drive")), /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 12 }), " Abrir en Drive")), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, D.DRIVE_FOLDERS.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.name, style: { padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: i === D.DRIVE_FOLDERS.length - 1 ? "0" : "0.5px solid var(--border)", cursor: "pointer" } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 16, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13 } }, "/", f.name), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, f.count, " archivos \xB7 ", f.size)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 13, style: { color: "var(--text-subtle)" } }))))), tab === "notas" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("textarea", { className: "textarea", rows: 6, defaultValue: `Cliente hist\xF3rico, prefiere comunicaci\xF3n por WhatsApp.
+    )), tab === "billing" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, invoices.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "receipt", title: "Sin facturas", sub: "Este cliente todav\xEDa no tiene facturas." }) : /* @__PURE__ */ React.createElement("table", { className: "table" }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", null, "N\xBA"), /* @__PURE__ */ React.createElement("th", null, "Proyecto"), /* @__PURE__ */ React.createElement("th", null, "Tipo"), /* @__PURE__ */ React.createElement("th", null, "Emitida"), /* @__PURE__ */ React.createElement("th", { style: { textAlign: "right" } }, "Importe"), /* @__PURE__ */ React.createElement("th", null, "Estado"))), /* @__PURE__ */ React.createElement("tbody", null, invoices.map((i) => /* @__PURE__ */ React.createElement("tr", { key: i.id }, /* @__PURE__ */ React.createElement("td", { style: { fontFamily: "var(--font-mono)", fontSize: 12 } }, i.id), /* @__PURE__ */ React.createElement("td", null, i.project), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement("span", { className: "chip" }, i.type)), /* @__PURE__ */ React.createElement("td", { className: "muted" }, i.issued), /* @__PURE__ */ React.createElement("td", { style: { textAlign: "right", fontWeight: 500 } }, "\u20AC", i.amount.toLocaleString("es-ES")), /* @__PURE__ */ React.createElement("td", null, /* @__PURE__ */ React.createElement(StatusChip, { status: i.status })))))))), tab === "files" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("div", { style: { width: 24, height: 24, borderRadius: 6, background: "#fff", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24" }, /* @__PURE__ */ React.createElement("path", { fill: "#1FA463", d: "M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z" }), /* @__PURE__ */ React.createElement("path", { fill: "#FFD041", d: "M7.71 3.5h6.58L21.85 15l-3.27 5.5z", opacity: ".7" }))), /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Sincronizado con Google Drive")), /* @__PURE__ */ React.createElement("button", { className: "btn sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 12 }), " Abrir en Drive")), /* @__PURE__ */ React.createElement("div", { className: "card-body flush" }, D.DRIVE_FOLDERS.map((f, i) => /* @__PURE__ */ React.createElement("div", { key: f.name, style: { padding: "14px 18px", display: "flex", alignItems: "center", gap: 12, borderBottom: i === D.DRIVE_FOLDERS.length - 1 ? "0" : "0.5px solid var(--border)", cursor: "pointer" } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 16, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 13 } }, "/", f.name), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall" }, f.count, " archivos \xB7 ", f.size)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 13, style: { color: "var(--text-subtle)" } }))))), tab === "credentials" && /* @__PURE__ */ React.createElement(AgencyCredentials, { clientId: c.id }), tab === "notas" && /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("textarea", { className: "textarea", rows: 6, defaultValue: `Cliente hist\xF3rico, prefiere comunicaci\xF3n por WhatsApp.
 Prioridad: redise\xF1o antes del Q3.
 Pedido: factura siempre con CIF en cabecera.` }), /* @__PURE__ */ React.createElement("div", { className: "row", style: { marginTop: 12, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm" }, "Guardar nota")))));
+  };
+  var AgencyCredentials = ({ clientId }) => {
+    const D = window.Data;
+    D.useStore && D.useStore();
+    const creds = D.credentialsForClient ? D.credentialsForClient(clientId) : [];
+    const [adding, setAdding] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [reveal, setReveal] = useState({});
+    const [copied, setCopied] = useState("");
+    const blank = { label: "", url: "", username: "", password: "", notes: "" };
+    const [form, setForm] = useState(blank);
+    const startAdd = () => {
+      setForm(blank);
+      setEditing(null);
+      setAdding(true);
+    };
+    const startEdit = (c) => {
+      setForm({ label: c.label, url: c.url, username: c.username, password: c.password, notes: c.notes });
+      setEditing(c.id);
+      setAdding(true);
+    };
+    const cancel = () => {
+      setAdding(false);
+      setEditing(null);
+      setForm(blank);
+    };
+    const save = () => {
+      if (!form.label.trim()) return;
+      if (editing) D.updateCredential(editing, form);
+      else D.addCredential(clientId, form);
+      cancel();
+    };
+    const del = (c) => {
+      if (confirm(`\xBFEliminar el acceso "${c.label}"?`)) D.deleteCredential(c.id);
+    };
+    const copy = (val, key) => {
+      try {
+        navigator.clipboard.writeText(val);
+        setCopied(key);
+        setTimeout(() => setCopied(""), 1200);
+      } catch (e) {
+      }
+    };
+    const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+    const inp = {
+      width: "100%",
+      height: 38,
+      borderRadius: 9,
+      padding: "8px 12px",
+      background: "var(--bg-elev)",
+      border: "0.5px solid var(--border)",
+      color: "var(--text)",
+      fontFamily: "inherit",
+      fontSize: 13.5,
+      marginBottom: 9
+    };
+    return /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "small muted" }, "Accesos compartidos con este cliente. El cliente tambi\xE9n los ve y edita desde su portal."), !adding && /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: startAdd }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir")), adding && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16 } }, /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "Nombre del acceso (Instagram, Hosting\u2026)", value: form.label, onChange: (e) => set("label", e.target.value), autoFocus: true }), /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "URL", value: form.url, onChange: (e) => set("url", e.target.value) }), /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "Usuario / email", value: form.username, onChange: (e) => set("username", e.target.value) }), /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "Contrase\xF1a", value: form.password, onChange: (e) => set("password", e.target.value) }), /* @__PURE__ */ React.createElement("input", { style: { ...inp, marginBottom: 12 }, placeholder: "Notas (opcional)", value: form.notes, onChange: (e) => set("notes", e.target.value) }), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", disabled: !form.label.trim(), onClick: save }, "Guardar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: cancel }, "Cancelar")))), creds.length === 0 && !adding ? /* @__PURE__ */ React.createElement(Empty, { icon: "lock", title: "Sin credenciales", sub: "A\xF1ade los accesos del cliente o p\xEDdele que los rellene desde su portal." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, creds.map((c) => /* @__PURE__ */ React.createElement("div", { key: c.id, className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 15 } }, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("div", { style: { width: 32, height: 32, borderRadius: 8, background: "var(--bg-elev-2)", display: "grid", placeItems: "center", color: "var(--text-muted)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "key", size: 14 })), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14 } }, c.label)), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => startEdit(c) }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => del(c) }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 })))), c.url && /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 8, wordBreak: "break-all" } }, /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Web: "), c.url), c.username && /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4, wordBreak: "break-all" } }, /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Usuario: "), c.username, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", style: { marginLeft: 4 }, onClick: () => copy(c.username, c.id + "u") }, /* @__PURE__ */ React.createElement(Icon, { name: copied === c.id + "u" ? "check" : "copy", size: 11 }))), c.password && /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Clave: "), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, reveal[c.id] ? c.password : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => setReveal((r) => ({ ...r, [c.id]: !r[c.id] })) }, /* @__PURE__ */ React.createElement(Icon, { name: reveal[c.id] ? "eye-off" : "eye", size: 11 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => copy(c.password, c.id + "p") }, /* @__PURE__ */ React.createElement(Icon, { name: copied === c.id + "p" ? "check" : "copy", size: 11 }))), c.notes && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 8, lineHeight: 1.5 } }, c.notes))))));
   };
   Object.assign(window, { AgencyClientsList, AgencyClientDetail });
 })();

@@ -135,7 +135,7 @@ const ClientDashboard = ({ navigate, session }) => {
               </div>
               <div className="small muted" style={{marginTop: 2}}>{pending.map(d => d.title).slice(0,3).join(" · ")}</div>
             </div>
-            <button className="btn primary" onClick={() => navigate("client-project", { projectId: pending[0].projectId })}>Revisar ahora</button>
+            <button className="btn primary" onClick={() => navigate("client-status", { projectId: pending[0].projectId })}>Revisar ahora</button>
           </div>
         </div>
       )}
@@ -149,7 +149,7 @@ const ClientDashboard = ({ navigate, session }) => {
           const ph = D.PHASES[p.phase] || D.PHASES[0] || { label: "" };
           const sub = plan.active ? plan.active.name : ph.label;
           return (
-            <div key={p.id} className="card" style={{cursor:"pointer"}} onClick={() => navigate("client-project", { projectId: p.id })}>
+            <div key={p.id} className="card" style={{cursor:"pointer"}} onClick={() => navigate("client-status", { projectId: p.id })}>
               <div className="card-body" style={{padding: 22}}>
                 <div className="row between" style={{alignItems:"flex-start"}}>
                   <div>
@@ -175,35 +175,62 @@ const ClientDashboard = ({ navigate, session }) => {
         })}
       </div>
 
+      <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 12, marginTop: 22}}>
+        {[
+          { id:"client-docs", icon:"file-text", title:"Documentación", sub:"Archivos y facturas" },
+          { id:"client-credentials", icon:"lock", title:"Credenciales", sub:"Tus accesos compartidos" },
+        ].map(q => (
+          <div key={q.id} className="card" style={{cursor:"pointer"}} onClick={() => navigate(q.id)}>
+            <div className="card-body" style={{padding: 18, display:"flex", alignItems:"center", gap: 12}}>
+              <div style={{width: 38, height: 38, borderRadius: 10, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text-muted)", border:"0.5px solid var(--border)", flexShrink:0}}>
+                <Icon name={q.icon} size={17}/>
+              </div>
+              <div className="grow">
+                <div style={{fontWeight: 500, fontSize: 14}}>{q.title}</div>
+                <div className="muted xsmall" style={{marginTop: 2}}>{q.sub}</div>
+              </div>
+              <Icon name="chevron" size={14} style={{color:"var(--text-subtle)"}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+
       <WhatsAppFloat/>
     </div>
   );
 };
 
-const ClientProject = ({ navigate, openModal, projectId, initialTab }) => {
+const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const p = (projectId && D.PROJECTS.find(x => x.id === projectId)) || D.PROJECTS[0];
+  const projects = D.PROJECTS || [];
+  const p = (projectId && projects.find(x => x.id === projectId)) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
   if (!p) return (
-    <div className="page" style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"60vh"}}>
-      <Empty icon="folder" title="Sin proyecto" sub="Cuando tu agencia cree un proyecto podrás verlo aquí."/>
+    <div className="page">
+      <div className="page-head"><div><h1>Estado del proyecto</h1><div className="sub">El avance de tu proyecto aparecerá aquí.</div></div></div>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"40vh"}}>
+        <Empty icon="folder" title="Sin proyecto" sub="Cuando tu agencia cree un proyecto podrás seguir su avance aquí."/>
+      </div>
+      <WhatsAppFloat/>
     </div>
   );
   const phase = D.PHASES[p.phase] || D.PHASES[0] || { label: "", weeks: "" };
   const plan = _planOf(p);
   const deliverables = (D.DELIVERABLES || []).filter(d => d.projectId === p.id);
-  const invoices = (D.INVOICES || []).filter(i => !i.project || i.project === p.name || i.clientId === p.clientId);
 
   const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10 };
 
   return (
     <div className="page">
-      <div style={{marginBottom: 16}}>
-        <button className="btn ghost sm" onClick={() => navigate("client-dashboard")}>
-          <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Inicio
-        </button>
-      </div>
+      {projects.length > 1 && (
+        <div style={{display:"flex", gap: 8, marginBottom: 16, flexWrap:"wrap"}}>
+          {projects.map(pr => (
+            <button key={pr.id} className={"btn sm" + (pr.id === p.id ? " primary" : " ghost")}
+              onClick={() => navigate("client-status", { projectId: pr.id })}>{pr.name}</button>
+          ))}
+        </div>
+      )}
 
       <div className="page-head">
         <div>
@@ -222,9 +249,8 @@ const ClientProject = ({ navigate, openModal, projectId, initialTab }) => {
 
       <div className="tabs">
         {[
-          {id:"plan", label:"Plan", count: plan.names.length || null},
+          {id:"plan", label:"Plan y fases", count: plan.names.length || null},
           {id:"deliverables", label:"Entregables", count: deliverables.length || null},
-          {id:"invoices", label:"Facturas", count: invoices.length || null},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
@@ -351,35 +377,175 @@ const ClientProject = ({ navigate, openModal, projectId, initialTab }) => {
         )
       )}
 
-      {tab === "invoices" && (
-        invoices.length === 0 ? (
-          <Empty icon="file-text" title="Sin facturas" sub="Aquí aparecerán tus facturas cuando tu agencia las emita."/>
-        ) : (
-          <div className="card"><div className="card-body flush">
-            <table className="table">
-              <thead><tr><th>Nº</th><th>Tipo</th><th>Emitida</th><th>Vencimiento</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th><th></th></tr></thead>
-              <tbody>
-                {invoices.map(i => (
-                  <tr key={i.id}>
-                    <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
-                    <td>{i.type ? <span className="chip">{i.type}</span> : "—"}</td>
-                    <td className="muted">{i.issued || "—"}</td>
-                    <td className="muted">{i.due || "—"}</td>
-                    <td style={{textAlign:"right", fontWeight: 500}}>€{Number(i.amount || 0).toLocaleString("es-ES")}</td>
-                    <td><StatusChip status={i.status}/></td>
-                    <td>
-                      {i.status === "pending" || i.status === "overdue" ? (
-                        <button className="btn primary sm" style={{background:"#635bff", borderColor:"#635bff", color:"#fff"}}>Pagar con Stripe</button>
-                      ) : (
-                        <button className="btn ghost sm"><Icon name="download" size={12}/> PDF</button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div></div>
-        )
+      <WhatsAppFloat/>
+    </div>
+  );
+};
+
+// ── Documentación: archivos + facturas ──────────────────────────────
+const ClientDocs = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const invoices = D.INVOICES || [];
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Documentación</h1>
+          <div className="sub">Tus facturas y archivos del proyecto.</div>
+        </div>
+      </div>
+
+      <div style={{marginBottom: 10, fontSize: 11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)"}}>Facturas</div>
+      {invoices.length === 0 ? (
+        <Empty icon="file-text" title="Sin facturas todavía" sub="Aquí aparecerán tus facturas cuando tu agencia las emita."/>
+      ) : (
+        <div className="card" style={{marginBottom: 24}}><div className="card-body flush">
+          <table className="table">
+            <thead><tr><th>Nº</th><th>Tipo</th><th>Emitida</th><th>Vencimiento</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              {invoices.map(i => (
+                <tr key={i.id}>
+                  <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
+                  <td>{i.type ? <span className="chip">{i.type}</span> : "—"}</td>
+                  <td className="muted">{i.issued || "—"}</td>
+                  <td className="muted">{i.due || "—"}</td>
+                  <td style={{textAlign:"right", fontWeight: 500}}>€{Number(i.amount || 0).toLocaleString("es-ES")}</td>
+                  <td><StatusChip status={i.status}/></td>
+                  <td>
+                    {i.status === "pending" || i.status === "overdue" ? (
+                      <button className="btn primary sm" style={{background:"#635bff", borderColor:"#635bff", color:"#fff"}}>Pagar con Stripe</button>
+                    ) : (
+                      <button className="btn ghost sm"><Icon name="download" size={12}/> PDF</button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div></div>
+      )}
+
+      <div style={{marginBottom: 10, fontSize: 11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)"}}>Archivos</div>
+      <Empty icon="folder" title="Sin archivos compartidos" sub="Cuando tu agencia comparta archivos o entregables descargables, los verás aquí."/>
+
+      <WhatsAppFloat/>
+    </div>
+  );
+};
+
+// ── Credenciales: accesos compartidos con la agencia ────────────────
+const CredForm = ({ initial, onSave, onCancel }) => {
+  const [f, setF] = useState(initial || { label:"", url:"", username:"", password:"", notes:"" });
+  const set = (k, v) => setF(s => ({ ...s, [k]: v }));
+  const inp = { width:"100%", height:40, borderRadius:10, padding:"8px 12px", background:"var(--bg-elev)",
+    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:14, marginBottom:10 };
+  return (
+    <div className="card" style={{marginBottom: 14}}>
+      <div className="card-body" style={{padding: 16}}>
+        <input style={inp} placeholder="Nombre del acceso (p.ej. Instagram, Hosting…)" value={f.label} onChange={e => set("label", e.target.value)} autoFocus/>
+        <input style={inp} placeholder="URL (p.ej. instagram.com)" value={f.url} onChange={e => set("url", e.target.value)}/>
+        <input style={inp} placeholder="Usuario / email" value={f.username} onChange={e => set("username", e.target.value)}/>
+        <input style={inp} placeholder="Contraseña" value={f.password} onChange={e => set("password", e.target.value)}/>
+        <input style={{...inp, marginBottom: 14}} placeholder="Notas (opcional)" value={f.notes} onChange={e => set("notes", e.target.value)}/>
+        <div className="row tight">
+          <button className="btn primary sm" disabled={!f.label.trim()} onClick={() => onSave(f)}>Guardar</button>
+          <button className="btn ghost sm" onClick={onCancel}>Cancelar</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const CredCard = ({ c, onEdit, onDelete }) => {
+  const [show, setShow] = useState(false);
+  const [copied, setCopied] = useState("");
+  const copy = (val, which) => { try { navigator.clipboard.writeText(val); setCopied(which); setTimeout(() => setCopied(""), 1200); } catch {} };
+  const row = (label, val, which, mono) => val ? (
+    <div style={{display:"flex", alignItems:"center", gap: 8, marginTop: 8}}>
+      <div style={{width: 78, fontSize: 12, color:"var(--text-subtle)", flexShrink:0}}>{label}</div>
+      <div style={{flex:1, fontSize: 13.5, fontFamily: mono ? "var(--font-mono)" : "inherit", wordBreak:"break-all"}}>{val}</div>
+      <button className="btn ghost icon-only sm" onClick={() => copy(val, which)} title="Copiar">
+        <Icon name={copied === which ? "check" : "copy"} size={13}/>
+      </button>
+    </div>
+  ) : null;
+  return (
+    <div className="card">
+      <div className="card-body" style={{padding: 16}}>
+        <div className="row between" style={{alignItems:"flex-start"}}>
+          <div className="row tight">
+            <div style={{width: 34, height: 34, borderRadius: 9, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text-muted)", border:"0.5px solid var(--border)"}}>
+              <Icon name="key" size={15}/>
+            </div>
+            <div style={{fontWeight: 500, fontSize: 14.5}}>{c.label}</div>
+          </div>
+          <div className="row tight">
+            <button className="btn ghost icon-only sm" onClick={() => onEdit(c)} title="Editar"><Icon name="edit" size={13}/></button>
+            <button className="btn ghost icon-only sm" onClick={() => onDelete(c)} title="Eliminar"><Icon name="trash" size={13}/></button>
+          </div>
+        </div>
+        {row("Web", c.url, "url")}
+        {row("Usuario", c.username, "user")}
+        {c.password ? (
+          <div style={{display:"flex", alignItems:"center", gap: 8, marginTop: 8}}>
+            <div style={{width: 78, fontSize: 12, color:"var(--text-subtle)", flexShrink:0}}>Contraseña</div>
+            <div style={{flex:1, fontSize: 13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all"}}>{show ? c.password : "••••••••"}</div>
+            <button className="btn ghost icon-only sm" onClick={() => setShow(s => !s)} title={show ? "Ocultar" : "Mostrar"}>
+              <Icon name={show ? "eye-off" : "eye"} size={13}/>
+            </button>
+            <button className="btn ghost icon-only sm" onClick={() => copy(c.password, "pw")} title="Copiar">
+              <Icon name={copied === "pw" ? "check" : "copy"} size={13}/>
+            </button>
+          </div>
+        ) : null}
+        {c.notes ? <div className="muted small" style={{marginTop: 10, lineHeight: 1.5}}>{c.notes}</div> : null}
+      </div>
+    </div>
+  );
+};
+
+const ClientCredentials = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const clientId = session?.clientId;
+  const creds = D.CREDENTIALS || [];
+  const [adding, setAdding] = useState(false);
+  const [editing, setEditing] = useState(null);
+
+  const save = (f) => {
+    if (editing) D.updateCredential(editing.id, f); else D.addCredential(clientId, f);
+    setAdding(false); setEditing(null);
+  };
+  const del = (c) => { if (confirm(`¿Eliminar el acceso "${c.label}"?`)) D.deleteCredential(c.id); };
+
+  return (
+    <div className="page">
+      <div className="page-head">
+        <div className="row between" style={{alignItems:"flex-start", width:"100%"}}>
+          <div>
+            <h1>Credenciales</h1>
+            <div className="sub">Accesos que compartes con tu agencia. Solo tú y el equipo de 141 podéis verlos.</div>
+          </div>
+          {!adding && !editing && (
+            <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" size={14}/> Añadir acceso</button>
+          )}
+        </div>
+      </div>
+
+      {(adding || editing) && (
+        <CredForm initial={editing} onSave={save} onCancel={() => { setAdding(false); setEditing(null); }}/>
+      )}
+
+      {creds.length === 0 && !adding ? (
+        <Empty icon="lock" title="Sin accesos guardados" sub="Añade aquí los accesos (web, hosting, redes, dominio…) que tu agencia necesita para trabajar."/>
+      ) : (
+        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 14}}>
+          {creds.map(c => (
+            <CredCard key={c.id} c={c} onEdit={(x) => { setEditing(x); setAdding(false); }} onDelete={del}/>
+          ))}
+        </div>
       )}
 
       <WhatsAppFloat/>
@@ -387,4 +553,4 @@ const ClientProject = ({ navigate, openModal, projectId, initialTab }) => {
   );
 };
 
-Object.assign(window, { ClientLogin, ClientDashboard, ClientProject });
+Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials });

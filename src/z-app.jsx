@@ -164,10 +164,13 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
   const renderClient = () => {
     switch (view.name) {
       case "client-dashboard": return <ClientDashboard navigate={navigate} openModal={openModal} session={session}/>;
-      case "client-project": return <ClientProject navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
-      case "client-deliverables": return <ClientProject navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId} initialTab="deliverables"/>;
-      case "client-invoices": return <SimplePage title="Tus facturas" icon="receipt"/>;
-      case "client-messages": return <SimplePage title="Mensajes" icon="msg-circle"/>;
+      case "client-status": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
+      case "client-docs": return <ClientDocs navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
+      case "client-credentials": return <ClientCredentials navigate={navigate} openModal={openModal} session={session}/>;
+      // compat con enlaces antiguos
+      case "client-project": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
+      case "client-deliverables": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId} initialTab="deliverables"/>;
+      case "client-invoices": return <ClientDocs navigate={navigate} openModal={openModal} session={session}/>;
       default: return <ClientDashboard navigate={navigate} openModal={openModal} session={session}/>;
     }
   };
