@@ -201,27 +201,39 @@ const ClientDashboard = ({ navigate, session }) => {
         <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está organizando el proyecto en fases."/>
       ) : (
         <div style={{display:"flex", gap: 12, overflowX:"auto", paddingBottom: 6}}>
-          {plan.groups.map((g, i) => {
-            const st = _phaseStatus(g.done, g.total);
-            const isActive = plan.active && g.name === plan.active.name && st.cls !== "green";
-            const isDone = g.total > 0 && g.done === g.total;
-            return (
-              <div key={i} onClick={() => navigate("client-status", { projectId: primary.id })}
-                style={{cursor:"pointer", flex:"0 0 auto", width: 186, minHeight: 118, borderRadius: 16,
-                  padding: "16px 18px", display:"flex", flexDirection:"column",
-                  border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
-                  background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)", opacity: isDone ? 0.72 : 1}}>
-                <div className="row tight" style={{marginBottom: 8}}>
-                  {isDone && <Icon name="check" size={13} style={{color:"var(--green)"}}/>}
-                  {st.label && <span className={"chip " + st.cls} style={{fontSize:10, padding:"1px 7px"}}>{st.label}</span>}
+          {(() => {
+            // La fase activa es la primera que no está completada (por defecto, la primera).
+            const activeIdx = (() => {
+              const i = plan.groups.findIndex(g => !(g.total > 0 && g.done === g.total));
+              return i === -1 ? plan.groups.length - 1 : i;
+            })();
+            return plan.groups.map((g, i) => {
+              const isDone = g.total > 0 && g.done === g.total;
+              const isActive = i === activeIdx && !isDone;
+              return (
+                <div key={i} onClick={() => navigate("client-status", { projectId: primary.id })}
+                  style={{cursor:"pointer", flex:"0 0 auto", width: 190, minHeight: 120, borderRadius: 16,
+                    padding: "16px 18px", display:"flex", flexDirection:"column",
+                    border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
+                    background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)", opacity: isDone ? 0.7 : 1}}>
+                  <div style={{minHeight: 20, marginBottom: 8}}>
+                    {isDone && (
+                      <span className="chip green" style={{fontSize:10, padding:"1px 7px", display:"inline-flex", alignItems:"center", gap:4}}>
+                        <Icon name="check" size={9}/> Completada
+                      </span>
+                    )}
+                    {isActive && (
+                      <span className="chip blue" style={{fontSize:10, padding:"1px 7px"}}>En curso</span>
+                    )}
+                  </div>
+                  <div style={{fontFamily:"var(--font-display)", fontSize: 17, fontWeight: 500}}>{g.name}</div>
+                  {g.total > 0 && (
+                    <div className="muted xsmall" style={{marginTop:"auto", paddingTop: 8}}>{g.done}/{g.total} tareas</div>
+                  )}
                 </div>
-                <div style={{fontFamily:"var(--font-display)", fontSize: 17, fontWeight: 500, marginBottom: 6}}>{g.name}</div>
-                <div className="muted xsmall" style={{marginTop:"auto"}}>
-                  {g.total ? `${g.done}/${g.total} tareas` : "Sin tareas aún"}
-                </div>
-              </div>
-            );
-          })}
+              );
+            });
+          })()}
         </div>
       )}
 

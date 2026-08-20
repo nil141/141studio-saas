@@ -129,34 +129,39 @@ const ClientDashboard = ({ navigate, session }) => {
       onClick: () => setSelId(pr.id)
     },
     pr.name
-  ))), pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, plan.groups.map((g, i) => {
-    const st = _phaseStatus(g.done, g.total);
-    const isActive = plan.active && g.name === plan.active.name && st.cls !== "green";
-    const isDone = g.total > 0 && g.done === g.total;
-    return /* @__PURE__ */ React.createElement(
-      "div",
-      {
-        key: i,
-        onClick: () => navigate("client-status", { projectId: primary.id }),
-        style: {
-          cursor: "pointer",
-          flex: "0 0 auto",
-          width: 186,
-          minHeight: 118,
-          borderRadius: 16,
-          padding: "16px 18px",
-          display: "flex",
-          flexDirection: "column",
-          border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
-          background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
-          opacity: isDone ? 0.72 : 1
-        }
-      },
-      /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginBottom: 8 } }, isDone && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13, style: { color: "var(--green)" } }), st.label && /* @__PURE__ */ React.createElement("span", { className: "chip " + st.cls, style: { fontSize: 10, padding: "1px 7px" } }, st.label)),
-      /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500, marginBottom: 6 } }, g.name),
-      /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: "auto" } }, g.total ? `${g.done}/${g.total} tareas` : "Sin tareas a\xFAn")
-    );
-  })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
+  ))), pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, (() => {
+    const activeIdx = (() => {
+      const i = plan.groups.findIndex((g) => !(g.total > 0 && g.done === g.total));
+      return i === -1 ? plan.groups.length - 1 : i;
+    })();
+    return plan.groups.map((g, i) => {
+      const isDone = g.total > 0 && g.done === g.total;
+      const isActive = i === activeIdx && !isDone;
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: i,
+          onClick: () => navigate("client-status", { projectId: primary.id }),
+          style: {
+            cursor: "pointer",
+            flex: "0 0 auto",
+            width: 190,
+            minHeight: 120,
+            borderRadius: 16,
+            padding: "16px 18px",
+            display: "flex",
+            flexDirection: "column",
+            border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
+            background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
+            opacity: isDone ? 0.7 : 1
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { minHeight: 20, marginBottom: 8 } }, isDone && /* @__PURE__ */ React.createElement("span", { className: "chip green", style: { fontSize: 10, padding: "1px 7px", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { className: "chip blue", style: { fontSize: 10, padding: "1px 7px" } }, "En curso")),
+        /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500 } }, g.name),
+        g.total > 0 && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: "auto", paddingTop: 8 } }, g.done, "/", g.total, " tareas")
+      );
+    });
+  })()), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
     { id: "client-docs", icon: "file-text", title: "Documentaci\xF3n", sub: "Archivos y facturas" },
     { id: "client-credentials", icon: "lock", title: "Credenciales", sub: "Tus accesos compartidos" }
   ].map((q) => /* @__PURE__ */ React.createElement("div", { key: q.id, className: "card", style: { cursor: "pointer" }, onClick: () => navigate(q.id) }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 18, display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 38, height: 38, borderRadius: 10, background: "var(--bg-elev-2)", display: "grid", placeItems: "center", color: "var(--text-muted)", border: "0.5px solid var(--border)", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 17 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14 } }, q.title), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 2 } }, q.sub)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { color: "var(--text-subtle)" } }))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
