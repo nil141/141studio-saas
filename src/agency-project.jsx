@@ -497,9 +497,13 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                       {planGroups.map((g, i) => {
                         const gDone = g.tasks.filter(t => t.column === "done").length;
                         const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
-                        const st = phaseStatus(gDone, g.tasks.length);
                         const isReal = g.name !== "__otras__";
+                        const doneSet = new Set(p.phasesDone || []);
+                        const isComplete = isReal && (doneSet.has(g.name) || (g.tasks.length > 0 && gDone === g.tasks.length));
+                        const desc = (p.phasesDesc || {})[g.name] || "";
                         const on = hoverId === g.name;
+                        const editDesc = (e) => { e.stopPropagation(); const v = prompt(`Descripción de la fase «${g.label}» (la ve el cliente):`, desc); if (v !== null) D.setProjectPhaseDesc(p.id, g.name, v); };
+                        const toggleDone = (e) => { e.stopPropagation(); D.toggleProjectPhase(p.id, g.name); toast(isComplete ? "Fase reabierta" : "Fase completada", "success"); };
                         return (
                           <div key={g.name}
                             onClick={() => { if (isReal) { setTab("tasks"); setPhaseTab(g.name); } }}
@@ -509,26 +513,28 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                               <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
                                 <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
                                   fontSize:12, fontWeight:600, background:"transparent",
-                                  color: gPct===100 ? "var(--accent)" : "var(--text-muted)",
-                                  border: "1.5px solid " + (gPct===100 ? "var(--accent)" : "var(--border-strong)")}}>
-                                  {gPct===100 ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
+                                  color: isComplete ? "var(--accent)" : "var(--text-muted)",
+                                  border: "1.5px solid " + (isComplete ? "var(--accent)" : "var(--border-strong)")}}>
+                                  {isComplete ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
                                 </span>
                                 <div style={{minWidth:0}}>
                                   <div style={{fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
                                     whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{g.label}</div>
-                                  <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, display:"flex", alignItems:"center", gap:6}}>
-                                    <span style={{color: (st.cls==="green" || st.cls==="blue") ? "var(--accent)" : "var(--text-muted)"}}>{st.label}</span>
-                                    <span style={{opacity:0.4, fontSize:10}}>•</span>
-                                    <span>{gDone}/{g.tasks.length} tareas</span>
-                                    <span style={{opacity:0.4, fontSize:10}}>•</span>
-                                    <span>{gPct}%</span>
+                                  <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+                                    {desc || (g.tasks.length ? `${gDone}/${g.tasks.length} tareas · ${gPct}%` : "Sin descripción")}
                                   </div>
                                 </div>
                               </div>
                               {isReal && (
-                                <Icon name="chevron-right" size={18}
-                                  style={{color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
-                                    transition:"all .2s", flexShrink:0}}/>
+                                <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
+                                  <button className="btn ghost icon-only sm" onClick={editDesc} title="Editar descripción"><Icon name="edit" size={12}/></button>
+                                  <button className={"btn sm" + (isComplete ? " ghost" : "")} onClick={toggleDone} title={isComplete ? "Reabrir fase" : "Marcar fase completada"}>
+                                    {isComplete ? "Reabrir" : "Completar"}
+                                  </button>
+                                  <Icon name="chevron-right" size={18}
+                                    style={{color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
+                                      transition:"all .2s"}}/>
+                                </div>
                               )}
                             </div>
                             <div style={{height:1, width:"100%", background:"var(--border)"}}/>

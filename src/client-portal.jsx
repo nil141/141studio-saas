@@ -61,20 +61,27 @@ const _planOf = (p) => {
   const names = (p.service || "").split(",").map(s => s.trim())
     .filter(n => n && n !== "libre" && n !== "—");
   const tasks = D.TASKS[p.id] || [];
+  const doneSet = new Set(p.phasesDone || []);   // fases marcadas a mano
+  const descMap = p.phasesDesc || {};
   const mk = (name, gt) => {
     const done = gt.filter(t => t.column === "done").length;
-    return { name, tasks: gt, done, total: gt.length, pct: gt.length ? Math.round(done / gt.length * 100) : 0 };
+    // Completa si se marcó a mano, o si tiene tareas y todas están hechas.
+    const complete = doneSet.has(name) || (gt.length > 0 && done === gt.length);
+    return { name, tasks: gt, done, total: gt.length, complete, desc: descMap[name] || "",
+      pct: gt.length ? Math.round(done / gt.length * 100) : (complete ? 100 : 0) };
   };
   const groups = names.map(name => mk(name, tasks.filter(t => (t.phase || null) === name)));
   const otras = tasks.filter(t => !names.includes(t.phase || null));
   if (otras.length) groups.push(mk("Otras tareas", otras));
+  // Progreso del proyecto = fases completadas / total de fases.
+  const totalPhases = groups.length;
+  const donePhases = groups.filter(g => g.complete).length;
+  const pct = totalPhases ? Math.round(donePhases / totalPhases * 100) : (p.progress || 0);
+  const activeIdx = (() => { const i = groups.findIndex(g => !g.complete); return i === -1 ? groups.length - 1 : i; })();
+  const active = groups[activeIdx] || null;
   const total = tasks.length;
   const done = tasks.filter(t => t.column === "done").length;
-  const pct = total ? Math.round(done / total * 100) : (p.progress || 0);
-  const active = groups.find(g => g.done > 0 && g.done < g.total)
-    || groups.find(g => g.total > 0 && g.done === 0)
-    || groups[groups.length - 1] || null;
-  return { names, groups, total, done, pct, active };
+  return { names, groups, total, done, pct, active, activeIdx, donePhases, totalPhases };
 };
 
 // Imagen de fondo del hero del portal (opcional). Deja "" para usar el
@@ -201,39 +208,28 @@ const ClientDashboard = ({ navigate, session }) => {
         <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está organizando el proyecto en fases."/>
       ) : (
         <div style={{display:"flex", gap: 12, overflowX:"auto", paddingBottom: 6}}>
-          {(() => {
-            // La fase activa es la primera que no está completada (por defecto, la primera).
-            const activeIdx = (() => {
-              const i = plan.groups.findIndex(g => !(g.total > 0 && g.done === g.total));
-              return i === -1 ? plan.groups.length - 1 : i;
-            })();
-            return plan.groups.map((g, i) => {
-              const isDone = g.total > 0 && g.done === g.total;
-              const isActive = i === activeIdx && !isDone;
-              return (
-                <div key={i} onClick={() => navigate("client-status", { projectId: primary.id })}
-                  style={{cursor:"pointer", flex:"0 0 auto", width: 190, minHeight: 120, borderRadius: 16,
-                    padding: "16px 18px", display:"flex", flexDirection:"column",
-                    border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
-                    background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)", opacity: isDone ? 0.7 : 1}}>
-                  <div style={{minHeight: 20, marginBottom: 8}}>
-                    {isDone && (
-                      <span className="chip green" style={{fontSize:10, padding:"1px 7px", display:"inline-flex", alignItems:"center", gap:4}}>
-                        <Icon name="check" size={9}/> Completada
-                      </span>
-                    )}
-                    {isActive && (
-                      <span className="chip blue" style={{fontSize:10, padding:"1px 7px"}}>En curso</span>
-                    )}
-                  </div>
-                  <div style={{fontFamily:"var(--font-display)", fontSize: 17, fontWeight: 500}}>{g.name}</div>
-                  {g.total > 0 && (
-                    <div className="muted xsmall" style={{marginTop:"auto", paddingTop: 8}}>{g.done}/{g.total} tareas</div>
-                  )}
+          {plan.groups.map((g, i) => {
+            const isDone = g.complete;
+            const isActive = i === plan.activeIdx && !isDone;
+            const chip = {fontSize:10, padding:"2px 8px", borderRadius:99, whiteSpace:"nowrap", flexShrink:0,
+              background:"var(--bg-hover)", border:"0.5px solid var(--border)", color:"var(--text-muted)",
+              display:"inline-flex", alignItems:"center", gap:5, letterSpacing:"0.02em"};
+            const desc = g.desc || (g.total ? `${g.done} de ${g.total} tareas` : "");
+            return (
+              <div key={i} onClick={() => navigate("client-status", { projectId: primary.id })}
+                style={{cursor:"pointer", flex:"0 0 auto", width: 210, minHeight: 128, borderRadius: 16,
+                  padding: "16px 18px", display:"flex", flexDirection:"column", gap: 8,
+                  border:"0.5px solid var(--border)",
+                  background: isActive ? "var(--surface)" : "var(--bg-elev-2)", opacity: isDone ? 0.6 : 1}}>
+                <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap: 8}}>
+                  <div style={{fontFamily:"var(--font-display)", fontSize: 16.5, fontWeight: 500, letterSpacing:"-0.4px", lineHeight:1.15}}>{g.name}</div>
+                  {isDone && <span style={chip}><Icon name="check" size={9}/> Completada</span>}
+                  {isActive && <span style={chip}><span style={{width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/> En curso</span>}
                 </div>
-              );
-            });
-          })()}
+                {desc && <div style={{fontSize: 12.5, color:"var(--text-muted)", lineHeight:1.45}}>{desc}</div>}
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -348,24 +344,28 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
             ) : (
               <div style={{display:"flex", flexDirection:"column", gap: 12}}>
                 {plan.groups.map((g, i) => {
-                  const st = _phaseStatus(g.done, g.total);
-                  const isActive = plan.active && g.name === plan.active.name && st.cls !== "green";
-                  const isDone = g.total > 0 && g.done === g.total;
+                  const isDone = g.complete;
+                  const isActive = i === plan.activeIdx && !isDone;
+                  const chip = {fontSize:10, padding:"2px 8px", borderRadius:99, whiteSpace:"nowrap", flexShrink:0,
+                    background:"var(--bg-hover)", border:"0.5px solid var(--border)", color:"var(--text-muted)",
+                    display:"inline-flex", alignItems:"center", gap:5, letterSpacing:"0.02em"};
                   return (
                     <div key={i} style={{
-                      border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
-                      borderRadius:12, overflow:"hidden",
-                      background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
-                      opacity: isDone ? 0.7 : 1,
+                      border:"0.5px solid var(--border)", borderRadius:12, overflow:"hidden",
+                      background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
+                      opacity: isDone ? 0.6 : 1,
                     }}>
                       <div style={{padding:"14px 18px"}}>
-                        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: g.total ? 10 : 0}}>
-                          <div style={{fontWeight:600, fontSize:14, display:"flex", alignItems:"center", gap:8}}>
-                            {isDone && <Icon name="check" size={13} style={{color:"var(--green)"}}/>}
-                            {g.name}
-                            {st.label && <span className={"chip " + st.cls} style={{fontSize:10, padding:"1px 7px"}}>{st.label}</span>}
+                        <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:10, marginBottom: g.total ? 12 : 0}}>
+                          <div style={{minWidth:0}}>
+                            <div style={{fontFamily:"var(--font-display)", fontWeight:500, fontSize:16}}>{g.name}</div>
+                            {g.desc && <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, lineHeight:1.45}}>{g.desc}</div>}
                           </div>
-                          {g.total > 0 && <span style={{fontSize:13, fontWeight:600, color: isDone ? "var(--green)" : "var(--text-subtle)"}}>{g.pct}%</span>}
+                          <div style={{display:"flex", alignItems:"center", gap:8, flexShrink:0}}>
+                            {g.total > 0 && <span style={{fontSize:13, fontWeight:600, color:"var(--text-subtle)"}}>{g.pct}%</span>}
+                            {isDone && <span style={chip}><Icon name="check" size={9}/> Completada</span>}
+                            {isActive && <span style={chip}><span style={{width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/> En curso</span>}
+                          </div>
                         </div>
                         {g.total > 0 && (
                           <>

@@ -113,6 +113,16 @@ const _mc = r => r && ({
   nif: r.nif || "", fiscalName: r.fiscal_name || "", fiscalAddress: r.fiscal_address || "",
   website: r.website || "", about: r.about || "",
 });
+const _parseArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (!v) return [];
+  try { const a = JSON.parse(v); return Array.isArray(a) ? a : []; } catch { return []; }
+};
+const _parseObj = (v) => {
+  if (v && typeof v === "object") return v;
+  if (!v) return {};
+  try { const o = JSON.parse(v); return (o && typeof o === "object") ? o : {}; } catch { return {}; }
+};
 const _mp = r => r && ({
   id: r.id, name: r.name, clientId: r.client_id, clientName: r.client_name,
   service: r.service, light: r.light || "green", phase: r.phase ?? 0, week: r.week ?? 1,
@@ -121,6 +131,8 @@ const _mp = r => r && ({
   payments: _projPayLocal[r.id] || [],                 // plan de cobro (respaldo local)
   nextMilestone: r.next_milestone, revisionsUsed: r.revisions_used ?? 0,
   description: r.description, recurring: r.recurring ?? false,
+  phasesDone: _parseArr(r.phases_done),                // fases marcadas como completadas
+  phasesDesc: _parseObj(r.phases_desc),                // { nombreFase: "descripción corta" }
 });
 // Notas de tarea con respaldo local: la descripción se guarda también en el
 // navegador, para que no se pierda al recargar aunque la columna 'notes' aún
@@ -652,11 +664,29 @@ const updateProject = (id, changes) => {
   if (changes.recurring   !== undefined) dbChanges.recurring   = changes.recurring;
   if (changes.clientId    !== undefined) dbChanges.client_id   = changes.clientId || null;
   if (changes.clientName  !== undefined) dbChanges.client_name = changes.clientName || null;
+  if (changes.phasesDone  !== undefined) dbChanges.phases_done = JSON.stringify(changes.phasesDone || []);
+  if (changes.phasesDesc  !== undefined) dbChanges.phases_desc = JSON.stringify(changes.phasesDesc || {});
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);
     });
   }
+};
+
+// Marca/desmarca una fase (por nombre) como completada manualmente.
+const toggleProjectPhase = (id, name) => {
+  const p = _store.PROJECTS.find(x => x.id === id); if (!p) return;
+  const done = new Set(p.phasesDone || []);
+  if (done.has(name)) done.delete(name); else done.add(name);
+  updateProject(id, { phasesDone: [...done] });
+};
+
+// Guarda la descripción corta de una fase.
+const setProjectPhaseDesc = (id, name, desc) => {
+  const p = _store.PROJECTS.find(x => x.id === id); if (!p) return;
+  const map = { ...(p.phasesDesc || {}) };
+  if (desc && desc.trim()) map[name] = desc.trim(); else delete map[name];
+  updateProject(id, { phasesDesc: map });
 };
 
 // ── INVOICES ────────────────────────────────────────────────────────
@@ -1249,7 +1279,7 @@ window.Data = {
   _sb, _SB_URL, _SB_KEY,
   // Mutators
   addClient, updateClient, deleteClient,
-  addProject, addProjectAsync, addTasksBulk, deleteProject, updateProject,
+  addProject, addProjectAsync, addTasksBulk, deleteProject, updateProject, toggleProjectPhase, setProjectPhaseDesc,
   PAY_PLANS: _PAY_PLANS, buildPayments,
   addInvoice, deleteInvoice,
   addDeliverable, deleteDeliverable,

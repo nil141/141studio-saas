@@ -116,6 +116,26 @@ const _mc = (r) => r && {
   website: r.website || "",
   about: r.about || ""
 };
+const _parseArr = (v) => {
+  if (Array.isArray(v)) return v;
+  if (!v) return [];
+  try {
+    const a = JSON.parse(v);
+    return Array.isArray(a) ? a : [];
+  } catch (e) {
+    return [];
+  }
+};
+const _parseObj = (v) => {
+  if (v && typeof v === "object") return v;
+  if (!v) return {};
+  try {
+    const o = JSON.parse(v);
+    return o && typeof o === "object" ? o : {};
+  } catch (e) {
+    return {};
+  }
+};
 const _mp = (r) => {
   var _a, _b, _c, _d, _e, _f, _g;
   return r && {
@@ -137,7 +157,11 @@ const _mp = (r) => {
     nextMilestone: r.next_milestone,
     revisionsUsed: (_f = r.revisions_used) != null ? _f : 0,
     description: r.description,
-    recurring: (_g = r.recurring) != null ? _g : false
+    recurring: (_g = r.recurring) != null ? _g : false,
+    phasesDone: _parseArr(r.phases_done),
+    // fases marcadas como completadas
+    phasesDesc: _parseObj(r.phases_desc)
+    // { nombreFase: "descripción corta" }
   };
 };
 const _TASK_NOTES_KEY = "task_notes_v1";
@@ -753,11 +777,29 @@ const updateProject = (id, changes) => {
   if (changes.recurring !== void 0) dbChanges.recurring = changes.recurring;
   if (changes.clientId !== void 0) dbChanges.client_id = changes.clientId || null;
   if (changes.clientName !== void 0) dbChanges.client_name = changes.clientName || null;
+  if (changes.phasesDone !== void 0) dbChanges.phases_done = JSON.stringify(changes.phasesDone || []);
+  if (changes.phasesDesc !== void 0) dbChanges.phases_desc = JSON.stringify(changes.phasesDesc || {});
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);
     });
   }
+};
+const toggleProjectPhase = (id, name) => {
+  const p = _store.PROJECTS.find((x) => x.id === id);
+  if (!p) return;
+  const done = new Set(p.phasesDone || []);
+  if (done.has(name)) done.delete(name);
+  else done.add(name);
+  updateProject(id, { phasesDone: [...done] });
+};
+const setProjectPhaseDesc = (id, name, desc) => {
+  const p = _store.PROJECTS.find((x) => x.id === id);
+  if (!p) return;
+  const map = { ...p.phasesDesc || {} };
+  if (desc && desc.trim()) map[name] = desc.trim();
+  else delete map[name];
+  updateProject(id, { phasesDesc: map });
 };
 const addInvoice = (input) => {
   const uid = _uid();
@@ -1417,6 +1459,8 @@ window.Data = {
   addTasksBulk,
   deleteProject,
   updateProject,
+  toggleProjectPhase,
+  setProjectPhaseDesc,
   PAY_PLANS: _PAY_PLANS,
   buildPayments,
   addInvoice,

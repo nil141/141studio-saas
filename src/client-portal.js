@@ -37,18 +37,35 @@ const _planOf = (p) => {
   const D = window.Data;
   const names = (p.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");
   const tasks = D.TASKS[p.id] || [];
+  const doneSet = new Set(p.phasesDone || []);
+  const descMap = p.phasesDesc || {};
   const mk = (name, gt) => {
     const done2 = gt.filter((t) => t.column === "done").length;
-    return { name, tasks: gt, done: done2, total: gt.length, pct: gt.length ? Math.round(done2 / gt.length * 100) : 0 };
+    const complete = doneSet.has(name) || gt.length > 0 && done2 === gt.length;
+    return {
+      name,
+      tasks: gt,
+      done: done2,
+      total: gt.length,
+      complete,
+      desc: descMap[name] || "",
+      pct: gt.length ? Math.round(done2 / gt.length * 100) : complete ? 100 : 0
+    };
   };
   const groups = names.map((name) => mk(name, tasks.filter((t) => (t.phase || null) === name)));
   const otras = tasks.filter((t) => !names.includes(t.phase || null));
   if (otras.length) groups.push(mk("Otras tareas", otras));
+  const totalPhases = groups.length;
+  const donePhases = groups.filter((g) => g.complete).length;
+  const pct = totalPhases ? Math.round(donePhases / totalPhases * 100) : p.progress || 0;
+  const activeIdx = (() => {
+    const i = groups.findIndex((g) => !g.complete);
+    return i === -1 ? groups.length - 1 : i;
+  })();
+  const active = groups[activeIdx] || null;
   const total = tasks.length;
   const done = tasks.filter((t) => t.column === "done").length;
-  const pct = total ? Math.round(done / total * 100) : p.progress || 0;
-  const active = groups.find((g) => g.done > 0 && g.done < g.total) || groups.find((g) => g.total > 0 && g.done === 0) || groups[groups.length - 1] || null;
-  return { names, groups, total, done, pct, active };
+  return { names, groups, total, done, pct, active, activeIdx, donePhases, totalPhases };
 };
 const HERO_BG = "";
 const RingStat = ({ pct = 0, label }) => {
@@ -129,39 +146,48 @@ const ClientDashboard = ({ navigate, session }) => {
       onClick: () => setSelId(pr.id)
     },
     pr.name
-  ))), pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, (() => {
-    const activeIdx = (() => {
-      const i = plan.groups.findIndex((g) => !(g.total > 0 && g.done === g.total));
-      return i === -1 ? plan.groups.length - 1 : i;
-    })();
-    return plan.groups.map((g, i) => {
-      const isDone = g.total > 0 && g.done === g.total;
-      const isActive = i === activeIdx && !isDone;
-      return /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          key: i,
-          onClick: () => navigate("client-status", { projectId: primary.id }),
-          style: {
-            cursor: "pointer",
-            flex: "0 0 auto",
-            width: 190,
-            minHeight: 120,
-            borderRadius: 16,
-            padding: "16px 18px",
-            display: "flex",
-            flexDirection: "column",
-            border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
-            background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
-            opacity: isDone ? 0.7 : 1
-          }
-        },
-        /* @__PURE__ */ React.createElement("div", { style: { minHeight: 20, marginBottom: 8 } }, isDone && /* @__PURE__ */ React.createElement("span", { className: "chip green", style: { fontSize: 10, padding: "1px 7px", display: "inline-flex", alignItems: "center", gap: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { className: "chip blue", style: { fontSize: 10, padding: "1px 7px" } }, "En curso")),
-        /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500 } }, g.name),
-        g.total > 0 && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: "auto", paddingTop: 8 } }, g.done, "/", g.total, " tareas")
-      );
-    });
-  })()), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
+  ))), pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, plan.groups.map((g, i) => {
+    const isDone = g.complete;
+    const isActive = i === plan.activeIdx && !isDone;
+    const chip = {
+      fontSize: 10,
+      padding: "2px 8px",
+      borderRadius: 99,
+      whiteSpace: "nowrap",
+      flexShrink: 0,
+      background: "var(--bg-hover)",
+      border: "0.5px solid var(--border)",
+      color: "var(--text-muted)",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 5,
+      letterSpacing: "0.02em"
+    };
+    const desc = g.desc || (g.total ? `${g.done} de ${g.total} tareas` : "");
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        key: i,
+        onClick: () => navigate("client-status", { projectId: primary.id }),
+        style: {
+          cursor: "pointer",
+          flex: "0 0 auto",
+          width: 210,
+          minHeight: 128,
+          borderRadius: 16,
+          padding: "16px 18px",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+          border: "0.5px solid var(--border)",
+          background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
+          opacity: isDone ? 0.6 : 1
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16.5, fontWeight: 500, letterSpacing: "-0.4px", lineHeight: 1.15 } }, g.name), isDone && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }), " En curso")),
+      desc && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.45 } }, desc)
+    );
+  })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
     { id: "client-docs", icon: "file-text", title: "Documentaci\xF3n", sub: "Archivos y facturas" },
     { id: "client-credentials", icon: "lock", title: "Credenciales", sub: "Tus accesos compartidos" }
   ].map((q) => /* @__PURE__ */ React.createElement("div", { key: q.id, className: "card", style: { cursor: "pointer" }, onClick: () => navigate(q.id) }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 18, display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 38, height: 38, borderRadius: 10, background: "var(--bg-elev-2)", display: "grid", placeItems: "center", color: "var(--text-muted)", border: "0.5px solid var(--border)", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: q.icon, size: 17 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14 } }, q.title), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 2 } }, q.sub)), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { color: "var(--text-subtle)" } }))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
@@ -189,16 +215,29 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
     { id: "plan", label: "Plan y fases", count: plan.names.length || null },
     { id: "deliverables", label: "Entregables", count: deliverables.length || null }
   ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (tab === t.id ? " active" : ""), onClick: () => setTab(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), tab === "plan" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 22 } }, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { alignItems: "flex-end", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Avance del proyecto"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 30, fontFamily: "var(--font-display)", fontWeight: 500, lineHeight: 1 } }, plan.pct, "%")), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { textAlign: "right" } }, plan.total ? `${plan.done} de ${plan.total} tareas completadas` : "A\xFAn sin tareas", plan.active && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4 } }, "Fase actual: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, plan.active.name)))), /* @__PURE__ */ React.createElement("div", { style: { height: 6, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: plan.pct + "%", height: "100%", background: "var(--accent)", borderRadius: 99, transition: "width .4s" } })))), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: secLabel }, "Fases del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases. Vuelve pronto." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, plan.groups.map((g, i) => {
-    const st = _phaseStatus(g.done, g.total);
-    const isActive = plan.active && g.name === plan.active.name && st.cls !== "green";
-    const isDone = g.total > 0 && g.done === g.total;
+    const isDone = g.complete;
+    const isActive = i === plan.activeIdx && !isDone;
+    const chip = {
+      fontSize: 10,
+      padding: "2px 8px",
+      borderRadius: 99,
+      whiteSpace: "nowrap",
+      flexShrink: 0,
+      background: "var(--bg-hover)",
+      border: "0.5px solid var(--border)",
+      color: "var(--text-muted)",
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 5,
+      letterSpacing: "0.02em"
+    };
     return /* @__PURE__ */ React.createElement("div", { key: i, style: {
-      border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
+      border: "0.5px solid var(--border)",
       borderRadius: 12,
       overflow: "hidden",
-      background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
-      opacity: isDone ? 0.7 : 1
-    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: g.total ? 10 : 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14, display: "flex", alignItems: "center", gap: 8 } }, isDone && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13, style: { color: "var(--green)" } }), g.name, st.label && /* @__PURE__ */ React.createElement("span", { className: "chip " + st.cls, style: { fontSize: 10, padding: "1px 7px" } }, st.label)), g.total > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: isDone ? "var(--green)" : "var(--text-subtle)" } }, g.pct, "%")), g.total > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: g.pct + "%", height: "100%", background: isDone ? "var(--green)" : "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, g.tasks.map((t, ti) => {
+      background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
+      opacity: isDone ? 0.6 : 1
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 18px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10, marginBottom: g.total ? 12 : 0 } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontWeight: 500, fontSize: 16 } }, g.name), g.desc && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 3, lineHeight: 1.45 } }, g.desc)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0 } }, g.total > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, fontWeight: 600, color: "var(--text-subtle)" } }, g.pct, "%"), isDone && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }), " En curso"))), g.total > 0 && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { height: 4, borderRadius: 99, background: "var(--border)", overflow: "hidden", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: g.pct + "%", height: "100%", background: isDone ? "var(--green)" : "var(--accent)", borderRadius: 99, transition: "width .4s" } })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 6 } }, g.tasks.map((t, ti) => {
       const taskDone = t.column === "done";
       return /* @__PURE__ */ React.createElement("div", { key: ti, style: { display: "flex", alignItems: "center", gap: 9, fontSize: 12.5 } }, /* @__PURE__ */ React.createElement("div", { style: {
         width: 15,
