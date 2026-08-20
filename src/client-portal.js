@@ -87,17 +87,15 @@ const ClientDashboard = ({ navigate, session }) => {
   const myDone = myTasks.filter((t) => t.column === "done").length;
   const myPct = myTasks.length ? Math.round(myDone / myTasks.length * 100) : 0;
   const heroBg = HERO_BG ? `linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover` : `radial-gradient(130% 120% at 82% 0%, rgba(150,105,70,0.38) 0%, rgba(20,16,14,0) 55%), linear-gradient(120deg, #16130f 0%, #0b0b0d 58%, #191410 100%)`;
-  const hero = /* @__PURE__ */ React.createElement("div", { style: {
+  const hero = /* @__PURE__ */ React.createElement("div", { className: "portal-hero", style: {
     position: "relative",
-    borderRadius: 22,
     overflow: "hidden",
     background: heroBg,
-    minHeight: 380,
-    padding: "clamp(28px, 5vw, 48px)",
+    minHeight: 420,
+    padding: "clamp(32px, 5vw, 56px)",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "flex-end",
-    border: "0.5px solid var(--border)"
+    justifyContent: "flex-end"
   } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "inline-flex",
     alignItems: "center",

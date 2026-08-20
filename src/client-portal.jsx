@@ -125,9 +125,9 @@ const ClientDashboard = ({ navigate, session }) => {
     : `radial-gradient(130% 120% at 82% 0%, rgba(150,105,70,0.38) 0%, rgba(20,16,14,0) 55%), linear-gradient(120deg, #16130f 0%, #0b0b0d 58%, #191410 100%)`;
 
   const hero = (
-    <div style={{position:"relative", borderRadius: 22, overflow:"hidden", background: heroBg,
-      minHeight: 380, padding: "clamp(28px, 5vw, 48px)", display:"flex", flexDirection:"column",
-      justifyContent:"flex-end", border:"0.5px solid var(--border)"}}>
+    <div className="portal-hero" style={{position:"relative", overflow:"hidden", background: heroBg,
+      minHeight: 420, padding: "clamp(32px, 5vw, 56px)", display:"flex", flexDirection:"column",
+      justifyContent:"flex-end"}}>
       <div style={{display:"inline-flex", alignItems:"center", gap: 7, alignSelf:"flex-start",
         padding:"5px 12px", borderRadius: 99, background:"rgba(255,255,255,0.1)",
         border:"0.5px solid rgba(255,255,255,0.18)", color:"rgba(255,255,255,0.9)",
