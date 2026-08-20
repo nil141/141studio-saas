@@ -293,8 +293,16 @@ const _loadAll = async () => {
     _store.TASKS = {};
     if ((_e = proj.data) == null ? void 0 : _e.length) {
       const pids = proj.data.map((p) => p.id);
-      const { data: dData } = await _sb.from("deliverables").select("*").in("project_id", pids);
-      _store.DELIVERABLES = (dData || []).map(_md);
+      const [dRes, tRes] = await Promise.all([
+        _sb.from("deliverables").select("*").in("project_id", pids),
+        _sb.from("tasks").select("*").in("project_id", pids)
+      ]);
+      _store.DELIVERABLES = (dRes.data || []).map(_md);
+      for (const row of tRes.data || []) {
+        const pid = row.project_id || "__none__";
+        if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
+        _store.TASKS[pid].push(_mt(row));
+      }
     } else {
       _store.DELIVERABLES = [];
     }

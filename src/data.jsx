@@ -243,8 +243,17 @@ const _loadAll = async () => {
     _store.TASKS        = {};
     if (proj.data?.length) {
       const pids = proj.data.map(p => p.id);
-      const { data: dData } = await _sb.from("deliverables").select("*").in("project_id", pids);
-      _store.DELIVERABLES = (dData || []).map(_md);
+      const [dRes, tRes] = await Promise.all([
+        _sb.from("deliverables").select("*").in("project_id", pids),
+        _sb.from("tasks").select("*").in("project_id", pids),
+      ]);
+      _store.DELIVERABLES = (dRes.data || []).map(_md);
+      // Tareas de sus proyectos → { projectId: [tasks] } (para ver fases y progreso)
+      for (const row of (tRes.data || [])) {
+        const pid = row.project_id || "__none__";
+        if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
+        _store.TASKS[pid].push(_mt(row));
+      }
     } else {
       _store.DELIVERABLES = [];
     }

@@ -153,12 +153,10 @@
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":
           return null;
-        // rendered always below
         case "income":
           return /* @__PURE__ */ React.createElement(IncomePage, null);
         case "mail":
           return null;
-        // rendered always below
         case "settings":
           return /* @__PURE__ */ React.createElement(SettingsPage, null);
         default:
@@ -170,9 +168,9 @@
         case "client-dashboard":
           return /* @__PURE__ */ React.createElement(ClientDashboard, { navigate, openModal, session });
         case "client-project":
-          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session });
+          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":
-          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session });
+          return /* @__PURE__ */ React.createElement(ClientProject, { navigate, openModal, session, projectId: view.params.projectId, initialTab: "deliverables" });
         case "client-invoices":
           return /* @__PURE__ */ React.createElement(SimplePage, { title: "Tus facturas", icon: "receipt" });
         case "client-messages":

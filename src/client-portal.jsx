@@ -1,6 +1,7 @@
-// Client portal: login, dashboard, project view (MVP — Plan · Intake · Entregables · Archivos · Facturas)
+// Portal de cliente — datos reales: fases del proyecto (project.service) +
+// progreso desde las tareas (D.TASKS), entregables y facturas de SUS proyectos.
 const ClientLogin = ({ onLogin }) => {
-  const [email, setEmail] = useState("ana@acme.co");
+  const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   return (
     <div style={{minHeight:"100vh", display:"grid", gridTemplateColumns:"1fr 1fr", background:"var(--bg)"}}>
@@ -10,8 +11,8 @@ const ClientLogin = ({ onLogin }) => {
           <div className="brand-name">141<span className="tick">'</span>STUDIO</div>
         </div>
         <div style={{maxWidth: 360}}>
-          <h1 style={{fontSize: 32, fontWeight: 500, lineHeight: 1.15, marginBottom: 8}}>Bienvenida al portal de tu proyecto.</h1>
-          <div className="muted" style={{fontSize: 14, marginBottom: 32}}>Aquí puedes ver el plan, completar el intake, aprobar entregables y descargar tus facturas.</div>
+          <h1 style={{fontSize: 32, fontWeight: 500, lineHeight: 1.15, marginBottom: 8}}>Bienvenido al portal de tu proyecto.</h1>
+          <div className="muted" style={{fontSize: 14, marginBottom: 32}}>Aquí puedes ver el avance por fases, aprobar entregables y descargar tus facturas.</div>
           {!sent ? (
             <>
               <div className="label">Tu email</div>
@@ -30,16 +31,7 @@ const ClientLogin = ({ onLogin }) => {
         </div>
         <div className="subtle xsmall" style={{marginTop: "auto"}}>© 141'STUDIO · soporte@141.studio</div>
       </div>
-      <div style={{background:"linear-gradient(160deg,#0f172a 0%,#020617 60%,#312e81 100%)", position:"relative", overflow:"hidden"}}>
-        <div style={{position:"absolute", inset: 40, border:"0.5px solid rgba(255,255,255,0.12)", borderRadius: 16, padding: 28, color:"#e5e7eb"}}>
-          <div className="xsmall" style={{color:"#94a3b8", marginBottom: 12}}>Tu próximo hito</div>
-          <div style={{fontSize: 24, fontFamily:"var(--font-display)", fontWeight: 500, lineHeight: 1.15, marginBottom: 14}}>Mockups landing v3 · listos para revisar</div>
-          <div style={{height: 4, borderRadius: 99, background:"rgba(255,255,255,0.08)"}}><div style={{width: "65%", height: "100%", background:"#e5e7eb", borderRadius: 99}}/></div>
-          <div className="row between" style={{marginTop: 12, fontSize: 12, color:"#94a3b8"}}>
-            <span>Rediseño web · Acme Co.</span><span>65%</span>
-          </div>
-        </div>
-      </div>
+      <div style={{background:"linear-gradient(160deg,#0f172a 0%,#020617 60%,#312e81 100%)", position:"relative", overflow:"hidden"}}/>
     </div>
   );
 };
@@ -55,12 +47,40 @@ const WhatsAppFloat = () => (
   </a>
 );
 
-const ClientDashboard = ({ navigate, openModal, session }) => {
+// ── Modelo real de fases + progreso (mismo que la vista de agencia) ──────────
+// Las fases son nombres libres guardados en project.service; cada tarea lleva
+// su fase en task.phase; el progreso se calcula desde las tareas hechas.
+const _phaseStatus = (done, total) =>
+  total === 0    ? { label: "Sin tareas",  cls: "" }
+  : done === total ? { label: "Completada", cls: "green" }
+  : done > 0     ? { label: "En curso",   cls: "blue" }
+  :                { label: "Sin empezar", cls: "" };
+
+const _planOf = (p) => {
+  const D = window.Data;
+  const names = (p.service || "").split(",").map(s => s.trim())
+    .filter(n => n && n !== "libre" && n !== "—");
+  const tasks = D.TASKS[p.id] || [];
+  const mk = (name, gt) => {
+    const done = gt.filter(t => t.column === "done").length;
+    return { name, tasks: gt, done, total: gt.length, pct: gt.length ? Math.round(done / gt.length * 100) : 0 };
+  };
+  const groups = names.map(name => mk(name, tasks.filter(t => (t.phase || null) === name)));
+  const otras = tasks.filter(t => !names.includes(t.phase || null));
+  if (otras.length) groups.push(mk("Otras tareas", otras));
+  const total = tasks.length;
+  const done = tasks.filter(t => t.column === "done").length;
+  const pct = total ? Math.round(done / total * 100) : (p.progress || 0);
+  const active = groups.find(g => g.done > 0 && g.done < g.total)
+    || groups.find(g => g.total > 0 && g.done === 0)
+    || groups[groups.length - 1] || null;
+  return { names, groups, total, done, pct, active };
+};
+
+const ClientDashboard = ({ navigate, session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const p = D.PROJECTS[0];
-  const pTasks = p ? (D.TASKS[p.id] || []) : [];
-  const liveProgress = pTasks.length ? Math.round(pTasks.filter(t=>t.column==="done").length/pTasks.length*100) : 0;
+  const projects = D.PROJECTS || [];
 
   const greeting = (() => {
     const h = new Date().getHours();
@@ -69,74 +89,90 @@ const ClientDashboard = ({ navigate, openModal, session }) => {
     if (h < 21) return "Buenas tardes";
     return "Buenas noches";
   })();
-
   const dateStr = (() => {
     const now = new Date();
     const dias  = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
     const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
     return `${dias[now.getDay()]} ${now.getDate()} de ${meses[now.getMonth()]}`;
   })();
-
   const firstName = session?.name?.split(" ")[0] || "";
 
-  if (!p) return (
-    <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>{greeting}{firstName ? ", " + firstName : ""}.</h1>
-          <div className="sub">{dateStr} · esto tienes encima de la mesa.</div>
-        </div>
-      </div>
-      <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"40vh"}}>
-        <Empty icon="folder" title="Sin proyectos activos" sub="Cuando tu agencia cree un proyecto podrás verlo aquí."/>
+  // Entregables reales pendientes de aprobar (de todos sus proyectos)
+  const pending = (D.DELIVERABLES || []).filter(d => d.status && d.status !== "approved");
+
+  const head = (
+    <div className="page-head">
+      <div>
+        <h1>{greeting}{firstName ? ", " + firstName : ""}.</h1>
+        <div className="sub">{dateStr}{projects.length ? " · esto tienes encima de la mesa." : ""}</div>
       </div>
     </div>
   );
+
+  if (!projects.length) return (
+    <div className="page">
+      {head}
+      <div style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"40vh"}}>
+        <Empty icon="folder" title="Sin proyectos activos" sub="Cuando tu agencia cree un proyecto podrás ver aquí su avance."/>
+      </div>
+      <WhatsAppFloat/>
+    </div>
+  );
+
   return (
     <div className="page">
-      <div className="page-head">
-        <div>
-          <h1>{greeting}{firstName ? ", " + firstName : ""}.</h1>
-          <div className="sub">{dateStr} · esto tienes encima de la mesa.</div>
-        </div>
-      </div>
+      {head}
 
-      <div className="card" style={{marginBottom: 18, borderColor:"var(--amber)", background:"var(--amber-soft)"}}>
-        <div className="card-body" style={{padding: 16, display:"flex", alignItems:"center", gap: 14, flexWrap:"wrap"}}>
-          <div style={{width: 36, height: 36, borderRadius: 10, background:"var(--amber-soft)", display:"grid", placeItems:"center", color:"var(--amber)", border:"0.5px solid var(--amber)"}}>
-            <Icon name="package" size={16}/>
-          </div>
-          <div className="grow">
-            <div style={{fontWeight: 500}}>Tienes 2 entregables pendientes de aprobar</div>
-            <div className="small muted" style={{marginTop: 2}}>Mockups landing v3 y Animación hero · proyecto Rediseño web</div>
-          </div>
-          <button className="btn primary" onClick={() => navigate("client-project")}>Revisar ahora</button>
-        </div>
-      </div>
-
-      <div style={{marginBottom: 12, fontSize: 13, color:"var(--text-muted)", fontWeight: 500}}>Tu proyecto</div>
-      <div className="card" style={{cursor:"pointer"}} onClick={() => navigate("client-project")}>
-        <div className="client-project-card">
-          <div className="client-project-card-thumb" style={{aspectRatio:"1/1", background:"linear-gradient(135deg,#1e3a8a 0%,#0f172a 100%)"}}/>
-          <div className="card-body" style={{padding: 24}}>
-            <div className="row between">
-              <div>
-                <div style={{fontWeight: 500, fontSize: 18, fontFamily:"var(--font-display)"}}>{p.name}</div>
-                <div className="muted small" style={{marginTop: 4}}>{p.service} · {D.PHASES[p.phase].label} (semana {p.week})</div>
+      {pending.length > 0 && (
+        <div className="card" style={{marginBottom: 18, borderColor:"var(--amber)", background:"var(--amber-soft)"}}>
+          <div className="card-body" style={{padding: 16, display:"flex", alignItems:"center", gap: 14, flexWrap:"wrap"}}>
+            <div style={{width: 36, height: 36, borderRadius: 10, background:"var(--amber-soft)", display:"grid", placeItems:"center", color:"var(--amber)", border:"0.5px solid var(--amber)"}}>
+              <Icon name="package" size={16}/>
+            </div>
+            <div className="grow">
+              <div style={{fontWeight: 500}}>
+                Tienes {pending.length} entregable{pending.length === 1 ? "" : "s"} pendiente{pending.length === 1 ? "" : "s"} de aprobar
               </div>
-              <StatusChip status={p.light} label={D.PHASES[p.phase].label}/>
+              <div className="small muted" style={{marginTop: 2}}>{pending.map(d => d.title).slice(0,3).join(" · ")}</div>
             </div>
-            <div className="muted small" style={{marginTop: 14}}>Próximo: {p.nextMilestone}</div>
-            <div style={{marginTop: 16, display:"flex", alignItems:"center", gap: 10}}>
-              <div className="progress grow"><i style={{width: liveProgress + "%"}}/></div>
-              <span className="muted small">{liveProgress}%</span>
-            </div>
-            <div className="row between" style={{marginTop: 14}}>
-              <div className="muted xsmall"><Icon name="calendar" size={11}/> Entrega {p.deadline}</div>
-              <span className="small" style={{color:"var(--text)"}}>Ver proyecto <Icon name="arrow" size={11}/></span>
-            </div>
+            <button className="btn primary" onClick={() => navigate("client-project", { projectId: pending[0].projectId })}>Revisar ahora</button>
           </div>
         </div>
+      )}
+
+      <div style={{marginBottom: 12, fontSize: 13, color:"var(--text-muted)", fontWeight: 500}}>
+        {projects.length === 1 ? "Tu proyecto" : "Tus proyectos"}
+      </div>
+      <div style={{display:"flex", flexDirection:"column", gap: 14}}>
+        {projects.map(p => {
+          const plan = _planOf(p);
+          const ph = D.PHASES[p.phase] || D.PHASES[0] || { label: "" };
+          const sub = plan.active ? plan.active.name : ph.label;
+          return (
+            <div key={p.id} className="card" style={{cursor:"pointer"}} onClick={() => navigate("client-project", { projectId: p.id })}>
+              <div className="card-body" style={{padding: 22}}>
+                <div className="row between" style={{alignItems:"flex-start"}}>
+                  <div>
+                    <div style={{fontWeight: 500, fontSize: 18, fontFamily:"var(--font-display)"}}>{p.name}</div>
+                    <div className="muted small" style={{marginTop: 4}}>{sub ? "Fase actual: " + sub : "Proyecto en marcha"}</div>
+                  </div>
+                  <StatusChip status={p.light} label={ph.label}/>
+                </div>
+                <div style={{marginTop: 16, display:"flex", alignItems:"center", gap: 10}}>
+                  <div className="progress grow"><i style={{width: plan.pct + "%"}}/></div>
+                  <span className="muted small" style={{minWidth: 34, textAlign:"right"}}>{plan.pct}%</span>
+                </div>
+                <div className="row between" style={{marginTop: 14}}>
+                  <div className="muted xsmall">
+                    {plan.total ? `${plan.done}/${plan.total} tareas` : "Plan en preparación"}
+                    {p.deadline ? <> · <Icon name="calendar" size={11}/> Entrega {p.deadline}</> : null}
+                  </div>
+                  <span className="small" style={{color:"var(--text)"}}>Ver proyecto <Icon name="arrow" size={11}/></span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       <WhatsAppFloat/>
@@ -144,20 +180,22 @@ const ClientDashboard = ({ navigate, openModal, session }) => {
   );
 };
 
-const ClientProject = ({ navigate, openModal }) => {
+const ClientProject = ({ navigate, openModal, projectId, initialTab }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const p = D.PROJECTS[0];
-  const [tab, setTab] = useState("plan");
+  const p = (projectId && D.PROJECTS.find(x => x.id === projectId)) || D.PROJECTS[0];
+  const [tab, setTab] = useState(initialTab || "plan");
   if (!p) return (
     <div className="page" style={{display:"flex", alignItems:"center", justifyContent:"center", minHeight:"60vh"}}>
       <Empty icon="folder" title="Sin proyecto" sub="Cuando tu agencia cree un proyecto podrás verlo aquí."/>
     </div>
   );
-  const phase = D.PHASES[p.phase];
-  const cpTasks = D.TASKS[p.id] || [];
-  const liveProgress = cpTasks.length ? Math.round(cpTasks.filter(t=>t.column==="done").length/cpTasks.length*100) : 0;
-  const [revisionsUsed] = useState(1);
+  const phase = D.PHASES[p.phase] || D.PHASES[0] || { label: "", weeks: "" };
+  const plan = _planOf(p);
+  const deliverables = (D.DELIVERABLES || []).filter(d => d.projectId === p.id);
+  const invoices = (D.INVOICES || []).filter(i => !i.project || i.project === p.name || i.clientId === p.clientId);
+
+  const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10 };
 
   return (
     <div className="page">
@@ -171,13 +209,12 @@ const ClientProject = ({ navigate, openModal }) => {
         <div>
           <h1>{p.name}</h1>
           <div className="row tight" style={{marginTop: 8, color:"var(--text-muted)", fontSize: 13, flexWrap:"wrap"}}>
-            <StatusChip status={p.light} label={phase.label + " · " + phase.weeks}/>
-            <span className="vdiv hide-mobile"/>
-            <span className="hide-mobile"><Icon name="calendar" size={12}/> Entrega estimada {p.deadline}</span>
+            <StatusChip status={p.light} label={phase.label + (phase.weeks ? " · " + phase.weeks : "")}/>
+            {p.deadline && <><span className="vdiv hide-mobile"/><span className="hide-mobile"><Icon name="calendar" size={12}/> Entrega estimada {p.deadline}</span></>}
             <span className="vdiv hide-mobile"/>
             <span style={{display:"inline-flex", alignItems:"center", gap: 6}}>
-              <span style={{width: 100}}><div className="progress"><i style={{width: liveProgress + "%"}}/></div></span>
-              {liveProgress}%
+              <span style={{width: 100}}><div className="progress"><i style={{width: plan.pct + "%"}}/></div></span>
+              {plan.pct}%
             </span>
           </div>
         </div>
@@ -185,11 +222,9 @@ const ClientProject = ({ navigate, openModal }) => {
 
       <div className="tabs">
         {[
-          {id:"plan", label:"Plan"},
-          {id:"intake", label:"Intake", count: "12/24"},
-          {id:"deliverables", label:"Entregables", count: 3},
-          {id:"files", label:"Archivos"},
-          {id:"invoices", label:"Facturas"},
+          {id:"plan", label:"Plan", count: plan.names.length || null},
+          {id:"deliverables", label:"Entregables", count: deliverables.length || null},
+          {id:"invoices", label:"Facturas", count: invoices.length || null},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
@@ -197,206 +232,154 @@ const ClientProject = ({ navigate, openModal }) => {
         ))}
       </div>
 
-      {tab === "plan" && (() => {
-        const aiPhases = (() => {
-          try { return JSON.parse(localStorage.getItem("141_phases_" + p.id) || "null"); } catch { return null; }
-        })();
-        const projectTasks = D.TASKS[p.id] || [];
-        return (
-        <div style={{display:"flex", flexDirection:"column", gap: 16}}>
-          <div className="card"><div className="card-body" style={{padding: 24}}>
-            <div className="card-title" style={{marginBottom: 14}}>Plan del proyecto</div>
-            {aiPhases ? (
-              <div style={{display:"flex", flexDirection:"column", gap:12}}>
-                {aiPhases.map((ph, pi) => {
-                  const allTitles = (ph.tasks||[]).map(t => typeof t==="string"?t:t.title);
-                  const done = projectTasks.filter(t=>allTitles.includes(t.title)&&t.column==="done").length;
-                  const total = allTitles.length;
-                  const pct = total ? Math.round(done/total*100) : 0;
-                  const top3 = allTitles.slice(0,3);
-                  const isActive = done > 0 && done < total;
-                  const isDone = total > 0 && done === total;
+      {tab === "plan" && (
+        <div style={{display:"flex", flexDirection:"column", gap: 24}}>
+          {/* Resumen de avance */}
+          <div className="card"><div className="card-body" style={{padding: 22}}>
+            <div className="row between" style={{alignItems:"flex-end", marginBottom: 12}}>
+              <div>
+                <div style={secLabel}>Avance del proyecto</div>
+                <div style={{fontSize: 30, fontFamily:"var(--font-display)", fontWeight: 500, lineHeight: 1}}>{plan.pct}%</div>
+              </div>
+              <div className="muted small" style={{textAlign:"right"}}>
+                {plan.total ? `${plan.done} de ${plan.total} tareas completadas` : "Aún sin tareas"}
+                {plan.active && <div style={{marginTop: 4}}>Fase actual: <b style={{color:"var(--text)"}}>{plan.active.name}</b></div>}
+              </div>
+            </div>
+            <div style={{height:6, borderRadius:99, background:"var(--border)", overflow:"hidden"}}>
+              <div style={{width: plan.pct + "%", height:"100%", background:"var(--accent)", borderRadius:99, transition:"width .4s"}}/>
+            </div>
+          </div></div>
+
+          {/* Fases */}
+          <div>
+            <div style={secLabel}>Fases del proyecto</div>
+            {plan.groups.length === 0 ? (
+              <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está organizando el proyecto en fases. Vuelve pronto."/>
+            ) : (
+              <div style={{display:"flex", flexDirection:"column", gap: 12}}>
+                {plan.groups.map((g, i) => {
+                  const st = _phaseStatus(g.done, g.total);
+                  const isActive = plan.active && g.name === plan.active.name && st.cls !== "green";
+                  const isDone = g.total > 0 && g.done === g.total;
                   return (
-                    <div key={pi} style={{
+                    <div key={i} style={{
                       border: isActive ? "0.5px solid var(--accent)" : "0.5px solid var(--border)",
                       borderRadius:12, overflow:"hidden",
                       background: isActive ? "var(--accent-soft)" : "var(--bg-elev-2)",
-                      opacity: isDone ? 0.65 : 1,
+                      opacity: isDone ? 0.7 : 1,
                     }}>
                       <div style={{padding:"14px 18px"}}>
-                        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6}}>
+                        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom: g.total ? 10 : 0}}>
                           <div style={{fontWeight:600, fontSize:14, display:"flex", alignItems:"center", gap:8}}>
                             {isDone && <Icon name="check" size={13} style={{color:"var(--green)"}}/>}
-                            {isActive && <span className="chip blue" style={{fontSize:10, padding:"1px 6px"}}>En curso</span>}
-                            {ph.name}
+                            {g.name}
+                            {st.label && <span className={"chip " + st.cls} style={{fontSize:10, padding:"1px 7px"}}>{st.label}</span>}
                           </div>
-                          <span style={{fontSize:13, fontWeight:600, color: isDone ? "var(--green)" : "var(--text-subtle)"}}>{pct}%</span>
+                          {g.total > 0 && <span style={{fontSize:13, fontWeight:600, color: isDone ? "var(--green)" : "var(--text-subtle)"}}>{g.pct}%</span>}
                         </div>
-                        {ph.description && <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:10, lineHeight:1.5}}>{ph.description}</div>}
-                        <div style={{height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", marginBottom:10}}>
-                          <div style={{width:pct+"%", height:"100%", background: isDone?"var(--green)":"var(--accent)", borderRadius:99, transition:"width .4s"}}/>
-                        </div>
-                        <div style={{display:"flex", flexDirection:"column", gap:5}}>
-                          {top3.map((title, ti) => {
-                            const matched = projectTasks.find(t=>t.title===title);
-                            const taskDone = matched?.column==="done";
-                            return (
-                              <div key={ti} style={{display:"flex", alignItems:"center", gap:8, fontSize:12}}>
-                                <div style={{width:14, height:14, borderRadius:4, flexShrink:0, display:"grid", placeItems:"center",
-                                  background: taskDone?"var(--green)":"transparent",
-                                  border: taskDone?"none":"1px solid var(--border-strong)"}}>
-                                  {taskDone && <Icon name="check" size={9} style={{color:"#000"}}/>}
-                                </div>
-                                <span style={{color: taskDone?"var(--text-subtle)":"var(--text)", textDecoration: taskDone?"line-through":"none"}}>{title}</span>
-                              </div>
-                            );
-                          })}
-                          {allTitles.length > 3 && <div style={{fontSize:11, color:"var(--text-muted)", paddingLeft:22}}>+{allTitles.length-3} tareas más</div>}
-                        </div>
+                        {g.total > 0 && (
+                          <>
+                            <div style={{height:4, borderRadius:99, background:"var(--border)", overflow:"hidden", marginBottom:12}}>
+                              <div style={{width:g.pct+"%", height:"100%", background: isDone?"var(--green)":"var(--accent)", borderRadius:99, transition:"width .4s"}}/>
+                            </div>
+                            <div style={{display:"flex", flexDirection:"column", gap:6}}>
+                              {g.tasks.map((t, ti) => {
+                                const taskDone = t.column === "done";
+                                return (
+                                  <div key={ti} style={{display:"flex", alignItems:"center", gap:9, fontSize:12.5}}>
+                                    <div style={{width:15, height:15, borderRadius:5, flexShrink:0, display:"grid", placeItems:"center",
+                                      background: taskDone?"var(--green)":"transparent",
+                                      border: taskDone?"none":"1px solid var(--border-strong)"}}>
+                                      {taskDone && <Icon name="check" size={10} style={{color:"#000"}}/>}
+                                    </div>
+                                    <span style={{color: taskDone?"var(--text-subtle)":"var(--text)", textDecoration: taskDone?"line-through":"none"}}>{t.title}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   );
                 })}
               </div>
-            ) : (
-              <Empty icon="list-todo" title="Plan en preparación" sub="Tu agencia está trabajando en el plan. Vuelve pronto."/>
             )}
-          </div></div>
-
-          <div className="card">
-            <div className="card-header"><div className="card-title">Última actualización del equipo</div><span className="subtle xsmall">hace 2 días</span></div>
-            <div className="card-body">
-              <div className="row tight" style={{marginBottom: 8}}>
-                <Avatar size="sm" name="Marta" initials="MR" color="#fb7185"/>
-                <span style={{fontWeight: 500, fontSize: 13}}>Marta — 141'STUDIO</span>
-              </div>
-              <div className="small" style={{lineHeight: 1.6}}>Hola Ana, te dejo los mockups v3 para revisar. Hemos ajustado la jerarquía del hero y la sección de producto como hablamos. Cuando los apruebes pasamos a desarrollo.</div>
-            </div>
-          </div>
-        </div>
-        );
-      })()}
-
-      {tab === "intake" && (
-        <div className="card">
-          <div className="card-header">
-            <div>
-              <div className="card-title">Intake del proyecto</div>
-              <div className="card-sub">Última edición hace 2 horas · auto-guardado</div>
-            </div>
-            <span className="chip amber">Incompleto · 12/24</span>
-          </div>
-          <div className="card-body flush">
-            {D.INTAKE_SECTIONS.map((s, i) => {
-              const complete = s.done === s.items;
-              return (
-                <div key={s.id} className="client-intake-row" style={{padding:"16px 18px", borderBottom: i === D.INTAKE_SECTIONS.length - 1 ? 0 : "0.5px solid var(--border)", cursor:"pointer"}}>
-                  <div style={{width: 36, height: 36, borderRadius: 10, background: complete ? "var(--green-soft)" : "var(--bg-elev-2)", color: complete ? "var(--green)" : "var(--text-muted)", display:"grid", placeItems:"center", border:"0.5px solid var(--border)", flexShrink:0}}>
-                    <Icon name={complete ? "check" : s.icon} size={15}/>
-                  </div>
-                  <div className="grow">
-                    <div style={{fontWeight: 500, fontSize: 14}}>{s.title}</div>
-                    <div className="muted xsmall" style={{marginTop: 2}}>{s.done}/{s.items} respondidas</div>
-                  </div>
-                  <div className="client-intake-progress">
-                    <div className="progress"><i style={{width: (s.done/s.items*100)+"%", background: complete ? "var(--green)" : "var(--text)"}}/></div>
-                  </div>
-                  <button className="btn sm" style={{flexShrink:0}}>{complete ? "Revisar" : "Continuar"} <Icon name="chevron" size={11}/></button>
-                </div>
-              );
-            })}
           </div>
         </div>
       )}
 
       {tab === "deliverables" && (
-        <div>
-          <div className="card" style={{marginBottom: 14, padding: 12, display:"flex", alignItems:"center", gap: 12}}>
-            <Icon name="info" size={14} style={{color:"var(--text-muted)"}}/>
-            <div className="small grow">Llevas <b>{revisionsUsed} de 2</b> rondas de revisión incluidas. Tu aprobación escrita activa la factura del 50% final.</div>
-          </div>
-          <div className="rg-deliverables">
-            {D.DELIVERABLES.filter(d => d.projectId === "p1").map(d => (
-              <div key={d.id} className="card">
-                <div style={{aspectRatio:"16/10", background: d.thumb, borderTopLeftRadius: 10, borderTopRightRadius: 10}}/>
-                <div className="card-body">
-                  <div className="row between">
-                    <div style={{fontWeight: 500, fontSize: 13.5}}>{d.title}</div>
-                    <span className="chip">{d.version}</span>
-                  </div>
-                  <div className="subtle xsmall" style={{marginTop: 6}}>{d.type} · subido {d.date}</div>
-                  <div style={{marginTop: 14}}>
-                    {d.status === "approved" ? (
-                      <div className="row tight" style={{color:"var(--green)", fontSize: 12.5}}>
-                        <Icon name="check" size={13}/> Aprobado
-                      </div>
-                    ) : (
-                      <div className="row tight">
-                        <button className="btn primary sm grow" onClick={() => openModal("approve", { deliverable: d })}>
-                          <Icon name="thumbs-up" size={12}/> Revisar
-                        </button>
-                        <button className="btn ghost icon-only sm"><Icon name="download" size={12}/></button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {tab === "files" && (
-        <div className="card">
-          <div className="card-header">
-            <div className="row tight">
-              <div style={{width:24, height:24, borderRadius:6, background:"#fff", display:"grid", placeItems:"center"}}>
-                <svg width="14" height="14" viewBox="0 0 24 24"><path fill="#1FA463" d="M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z"/><path fill="#FFD041" d="M7.71 3.5h6.58L21.85 15l-3.27 5.5z" opacity=".7"/></svg>
-              </div>
-              <div className="card-title">Carpeta del proyecto en Google Drive</div>
+        deliverables.length === 0 ? (
+          <Empty icon="package" title="Sin entregables todavía" sub="Aquí verás los entregables cuando tu agencia los suba para tu revisión."/>
+        ) : (
+          <div>
+            <div className="card" style={{marginBottom: 14, padding: 12, display:"flex", alignItems:"center", gap: 12}}>
+              <Icon name="info" size={14} style={{color:"var(--text-muted)"}}/>
+              <div className="small grow">Revisa cada entregable y apruébalo cuando estés conforme. Tu aprobación queda registrada.</div>
             </div>
-            <button className="btn sm"><Icon name="external-link" size={12}/> Abrir en Drive</button>
-          </div>
-          <div className="card-body flush">
-            {D.DRIVE_FOLDERS.map((f, i) => (
-              <div key={f.name} style={{padding:"14px 18px", display:"flex", alignItems:"center", gap: 12, borderBottom: i === D.DRIVE_FOLDERS.length - 1 ? "0" : "0.5px solid var(--border)", cursor:"pointer"}}>
-                <Icon name="folder" size={16} style={{color:"var(--text-muted)"}}/>
-                <div className="grow">
-                  <div style={{fontWeight: 500, fontSize: 13}}>/{f.name}</div>
-                  <div className="subtle xsmall">{f.count} archivos · {f.size}</div>
+            <div className="rg-deliverables">
+              {deliverables.map(d => (
+                <div key={d.id} className="card">
+                  <div style={{aspectRatio:"16/10", background: d.thumb || "linear-gradient(135deg,#1e3a8a,#0f172a)", borderTopLeftRadius: 10, borderTopRightRadius: 10}}/>
+                  <div className="card-body">
+                    <div className="row between">
+                      <div style={{fontWeight: 500, fontSize: 13.5}}>{d.title}</div>
+                      {d.version && <span className="chip">{d.version}</span>}
+                    </div>
+                    <div className="subtle xsmall" style={{marginTop: 6}}>{d.type}{d.date ? " · subido " + d.date : ""}</div>
+                    <div style={{marginTop: 14}}>
+                      {d.status === "approved" ? (
+                        <div className="row tight" style={{color:"var(--green)", fontSize: 12.5}}>
+                          <Icon name="check" size={13}/> Aprobado
+                        </div>
+                      ) : (
+                        <div className="row tight">
+                          <button className="btn primary sm grow" onClick={() => openModal("approve", { deliverable: d })}>
+                            <Icon name="thumbs-up" size={12}/> Revisar
+                          </button>
+                          <button className="btn ghost icon-only sm"><Icon name="download" size={12}/></button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <Icon name="chevron" size={13} style={{color:"var(--text-subtle)"}}/>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {tab === "invoices" && (
-        <div className="card"><div className="card-body flush">
-          <table className="table">
-            <thead><tr><th>Nº</th><th>Tipo</th><th>Emitida</th><th>Vencimiento</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th><th></th></tr></thead>
-            <tbody>
-              {D.INVOICES.filter(i => i.clientId === "c1").map(i => (
-                <tr key={i.id}>
-                  <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
-                  <td><span className="chip">{i.type}</span></td>
-                  <td className="muted">{i.issued}</td>
-                  <td className="muted">{i.due}</td>
-                  <td style={{textAlign:"right", fontWeight: 500}}>€{i.amount.toLocaleString("es-ES")}</td>
-                  <td><StatusChip status={i.status}/></td>
-                  <td>
-                    {i.status === "pending" || i.status === "overdue" ? (
-                      <button className="btn primary sm" style={{background:"#635bff", borderColor:"#635bff", color:"#fff"}}>Pagar con Stripe</button>
-                    ) : (
-                      <button className="btn ghost sm"><Icon name="download" size={12}/> PDF</button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div></div>
+        invoices.length === 0 ? (
+          <Empty icon="file-text" title="Sin facturas" sub="Aquí aparecerán tus facturas cuando tu agencia las emita."/>
+        ) : (
+          <div className="card"><div className="card-body flush">
+            <table className="table">
+              <thead><tr><th>Nº</th><th>Tipo</th><th>Emitida</th><th>Vencimiento</th><th style={{textAlign:"right"}}>Importe</th><th>Estado</th><th></th></tr></thead>
+              <tbody>
+                {invoices.map(i => (
+                  <tr key={i.id}>
+                    <td style={{fontFamily:"var(--font-mono)", fontSize: 12}}>{i.id}</td>
+                    <td>{i.type ? <span className="chip">{i.type}</span> : "—"}</td>
+                    <td className="muted">{i.issued || "—"}</td>
+                    <td className="muted">{i.due || "—"}</td>
+                    <td style={{textAlign:"right", fontWeight: 500}}>€{Number(i.amount || 0).toLocaleString("es-ES")}</td>
+                    <td><StatusChip status={i.status}/></td>
+                    <td>
+                      {i.status === "pending" || i.status === "overdue" ? (
+                        <button className="btn primary sm" style={{background:"#635bff", borderColor:"#635bff", color:"#fff"}}>Pagar con Stripe</button>
+                      ) : (
+                        <button className="btn ghost sm"><Icon name="download" size={12}/> PDF</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div></div>
+        )
       )}
 
       <WhatsAppFloat/>
