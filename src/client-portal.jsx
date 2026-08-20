@@ -217,16 +217,17 @@ const ClientDashboard = ({ navigate, session }) => {
             const desc = g.desc || (g.total ? `${g.done} de ${g.total} tareas` : "");
             return (
               <div key={i} onClick={() => navigate("client-status", { projectId: primary.id })}
-                style={{cursor:"pointer", flex:"0 0 auto", width: 210, minHeight: 128, borderRadius: 16,
-                  padding: "16px 18px", display:"flex", flexDirection:"column", gap: 8,
+                style={{cursor:"pointer", flex:"0 0 auto", width: 214, minHeight: 104, borderRadius: 16,
+                  padding: "15px 18px", display:"flex", flexDirection:"column", gap: 7,
                   border:"0.5px solid var(--border)",
                   background: isActive ? "var(--surface)" : "var(--bg-elev-2)", opacity: isDone ? 0.6 : 1}}>
                 <div style={{display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap: 8}}>
-                  <div style={{fontFamily:"var(--font-display)", fontSize: 16.5, fontWeight: 500, letterSpacing:"-0.4px", lineHeight:1.15}}>{g.name}</div>
+                  <div style={{fontFamily:"var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing:"-0.6px", lineHeight:1.1}}>{g.name}</div>
                   {isDone && <span style={chip}><Icon name="check" size={9}/> Completada</span>}
                   {isActive && <span style={chip}><span style={{width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/> En curso</span>}
                 </div>
-                {desc && <div style={{fontSize: 12.5, color:"var(--text-muted)", lineHeight:1.45}}>{desc}</div>}
+                {desc && <div style={{fontSize: 12.5, color:"var(--text-muted)", lineHeight:1.45,
+                  display:"-webkit-box", WebkitLineClamp:2, WebkitBoxOrient:"vertical", overflow:"hidden"}}>{desc}</div>}
               </div>
             );
           })}

@@ -172,20 +172,28 @@ const ClientDashboard = ({ navigate, session }) => {
         style: {
           cursor: "pointer",
           flex: "0 0 auto",
-          width: 210,
-          minHeight: 128,
+          width: 214,
+          minHeight: 104,
           borderRadius: 16,
-          padding: "16px 18px",
+          padding: "15px 18px",
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: 7,
           border: "0.5px solid var(--border)",
           background: isActive ? "var(--surface)" : "var(--bg-elev-2)",
           opacity: isDone ? 0.6 : 1
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16.5, fontWeight: 500, letterSpacing: "-0.4px", lineHeight: 1.15 } }, g.name), isDone && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }), " En curso")),
-      desc && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.45 } }, desc)
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing: "-0.6px", lineHeight: 1.1 } }, g.name), isDone && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 9 }), " Completada"), isActive && /* @__PURE__ */ React.createElement("span", { style: chip }, /* @__PURE__ */ React.createElement("span", { style: { width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }), " En curso")),
+      desc && /* @__PURE__ */ React.createElement("div", { style: {
+        fontSize: 12.5,
+        color: "var(--text-muted)",
+        lineHeight: 1.45,
+        display: "-webkit-box",
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: "vertical",
+        overflow: "hidden"
+      } }, desc)
     );
   })), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginTop: 26 } }, [
     { id: "client-docs", icon: "file-text", title: "Documentaci\xF3n", sub: "Archivos y facturas" },
