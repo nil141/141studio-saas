@@ -23,7 +23,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     const pid = sessionStorage.getItem("141_preview_client");
     if (pid) l = l.filter((n) => n.clientId === pid);
     clientUnread = l.filter((n) => !n.read).length;
-  } catch (e) {
+  } catch {
   }
   const topItem = { id: "dashboard", label: "Inicio", icon: "home" };
   const agencySections = [
@@ -101,7 +101,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const [collapsed, setCollapsed] = React.useState(() => {
     try {
       return new Set(JSON.parse(localStorage.getItem(COLLAPSE_KEY) || "[]"));
-    } catch (e) {
+    } catch {
       return /* @__PURE__ */ new Set();
     }
   });
@@ -257,20 +257,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     padding: "20px 12px 16px",
     overflow: "hidden",
     flexShrink: 0
-  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "6px 8px 26px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    flexShrink: 0,
-    background: "var(--accent)",
-    color: "#fff",
-    display: "grid",
-    placeItems: "center",
-    fontFamily: "var(--font-display)",
-    fontWeight: 600,
-    fontSize: 13,
-    letterSpacing: "-0.5px"
-  } }, "141"), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "6px 8px 26px 8px" } }, /* @__PURE__ */ React.createElement("img", { src: "/logo.svg", alt: "141'DIGITAL", style: { height: 22, width: "auto", flexShrink: 0, display: "block" } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "1.5px", color: "#fff", opacity: 0.92 } }, "DIGITAL")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 40,
     height: 40,
     borderRadius: 16,
@@ -373,7 +360,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     textTransform: "uppercase",
     padding: "0 12px",
     marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && (session == null ? void 0 : session.role) === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), kind === "client" ? /* @__PURE__ */ React.createElement(
+  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "agency" && session?.role === "admin" && /* @__PURE__ */ React.createElement(FooterItem, { icon: "sparkles", label: "Nora IA", onClick: onAssistant, active: current === "nora" }), kind === "client" ? /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => onNavigate("client-settings"),
@@ -503,7 +490,7 @@ const NotificationBell = ({ kind }) => {
     try {
       const pid = sessionStorage.getItem("141_preview_client");
       if (pid) list = list.filter((n) => n.clientId === pid);
-    } catch (e) {
+    } catch {
     }
   }
   const unread = list.filter((n) => !n.read).length;
@@ -797,7 +784,7 @@ const ConfirmProvider = ({ children }) => {
   const [state, setState] = useState(null);
   const confirm = (opts) => new Promise((resolve) => setState({ ...opts, resolve }));
   const close = (val) => {
-    state == null ? void 0 : state.resolve(val);
+    state?.resolve(val);
     setState(null);
   };
   return /* @__PURE__ */ React.createElement(ConfirmContext.Provider, { value: confirm }, children, state && /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: () => close(false) }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 420 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "modal-title" }, state.title || "\xBFEst\xE1s seguro?"), state.body ? /* @__PURE__ */ React.createElement("div", { className: "modal-sub", style: { marginTop: 6, lineHeight: 1.5 } }, state.body) : null)), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => close(false) }, state.cancelLabel || "Cancelar"), /* @__PURE__ */ React.createElement(

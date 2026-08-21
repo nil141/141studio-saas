@@ -275,11 +275,10 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     }}>
       {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
       {kind === "client" ? (
-        <div style={{display:"flex", alignItems:"center", gap:10, padding:"6px 8px 26px 8px"}}>
-          <div style={{width:34, height:34, borderRadius:10, flexShrink:0, background:"var(--accent)", color:"#fff",
-            display:"grid", placeItems:"center", fontFamily:"var(--font-display)", fontWeight:600, fontSize:13, letterSpacing:"-0.5px"}}>141</div>
-          <div style={{fontFamily:"var(--font-display)", fontSize:17, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
-            141<span style={{color:"var(--accent)"}}>'</span>DIGITAL
+        <div style={{display:"flex", alignItems:"center", gap:11, padding:"6px 8px 26px 8px"}}>
+          <img src="/logo.svg" alt="141'DIGITAL" style={{height:22, width:"auto", flexShrink:0, display:"block"}} />
+          <div style={{fontFamily:"var(--font-display)", fontSize:15, fontWeight:500, letterSpacing:"1.5px", color:"#fff", opacity:0.92}}>
+            DIGITAL
           </div>
         </div>
       ) : (
