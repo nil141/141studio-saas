@@ -614,6 +614,12 @@ const ToastProvider = ({ children }) => {
     setToasts((t) => [...t, { id, msg, kind }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3200);
   };
+  React.useEffect(() => {
+    window.__pushToast = push;
+    return () => {
+      if (window.__pushToast === push) delete window.__pushToast;
+    };
+  }, []);
   return /* @__PURE__ */ React.createElement(ToastContext.Provider, { value: push }, children, /* @__PURE__ */ React.createElement("div", { className: "toast-stack" }, toasts.map((t) => /* @__PURE__ */ React.createElement("div", { className: "toast", key: t.id }, /* @__PURE__ */ React.createElement(Icon, { name: t.kind === "success" ? "check" : t.kind === "warn" ? "alert-triangle" : "info", size: 14 }), /* @__PURE__ */ React.createElement("span", null, t.msg)))));
 };
 const useToast = () => useContext(ToastContext);

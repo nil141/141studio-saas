@@ -1066,15 +1066,26 @@ const notify = (clientId, input) => {
   try {
     const cli = (_store.CLIENTS || []).find((c) => c.id === clientId);
     const to = cli && cli.email;
-    if (to) {
+    const _toast = (m, k) => {
+      try {
+        window.__pushToast && window.__pushToast(m, k);
+      } catch {
+      }
+    };
+    if (!to) {
+      _toast("Aviso creado, pero el cliente no tiene email \u2014 no se envi\xF3 correo", "warn");
+    } else {
       apiFetch("/api/mail/notify_client", {
         to,
         client_name: cli.name || "",
         title: n.title,
         body: n.body,
         kind: n.kind
-      }).catch(() => {
-      });
+      }).then((r) => r.json().catch(() => ({}))).then((j) => {
+        if (j && j.ok) _toast("Correo enviado a " + to, "success");
+        else if (j && j.skipped) _toast("Correo NO enviado: falta configurar Resend en el servidor", "warn");
+        else _toast("Correo NO enviado: " + (j && j.error || "error desconocido"), "warn");
+      }).catch((e) => _toast("Correo NO enviado: " + (e && e.message || "sin conexi\xF3n al servidor"), "warn"));
     }
   } catch {
   }

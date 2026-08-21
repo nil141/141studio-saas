@@ -605,6 +605,8 @@ const ToastProvider = ({ children }) => {
     setToasts(t => [...t, { id, msg, kind }]);
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3200);
   };
+  // Puente global para poder lanzar toasts desde la capa de datos (no-React).
+  React.useEffect(() => { window.__pushToast = push; return () => { if (window.__pushToast === push) delete window.__pushToast; }; }, []);
   return (
     <ToastContext.Provider value={push}>
       {children}
