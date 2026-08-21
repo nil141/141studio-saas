@@ -97,6 +97,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   };
   const me = session ? kind === "agency" ? { name: cleanName(session.name || session.email, "Nil"), initials: cleanName(session.name || session.email, "N")[0].toUpperCase(), email: session.email || "" } : { name: cleanName(session.name || session.email, "Cliente"), initials: cleanName(session.name || session.email, "C")[0].toUpperCase(), email: session.email || "" } : { name: "Nil", initials: "N", email: "nil@141agency.com" };
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [logoErr, setLogoErr] = React.useState(false);
   const COLLAPSE_KEY = "sidebar_collapsed_v1";
   const [collapsed, setCollapsed] = React.useState(() => {
     try {
@@ -257,7 +258,15 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     padding: "20px 12px 16px",
     overflow: "hidden",
     flexShrink: 0
-  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "6px 8px 26px 8px" } }, /* @__PURE__ */ React.createElement("img", { src: "/logo.svg", alt: "141'DIGITAL", style: { height: 22, width: "auto", flexShrink: 0, display: "block" } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "1.5px", color: "#fff", opacity: 0.92 } }, "DIGITAL")) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "6px 8px 26px 8px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+    "img",
+    {
+      src: "/logo-141digital-white.png",
+      alt: "141'DIGITAL",
+      onError: () => setLogoErr(true),
+      style: { height: 26, width: "auto", maxWidth: 170, flexShrink: 0, display: "block", objectFit: "contain" }
+    }
+  )) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 40,
     height: 40,
     borderRadius: 16,

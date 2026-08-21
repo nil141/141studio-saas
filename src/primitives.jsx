@@ -122,6 +122,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
   // ── Sliding pill refs ──────────────────────────────────────────────
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [logoErr, setLogoErr] = React.useState(false);
 
   // Secciones plegables del menú (se recuerda en el navegador)
   const COLLAPSE_KEY = "sidebar_collapsed_v1";
@@ -276,10 +277,15 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
       {kind === "client" ? (
         <div style={{display:"flex", alignItems:"center", gap:11, padding:"6px 8px 26px 8px"}}>
-          <img src="/logo.svg" alt="141'DIGITAL" style={{height:22, width:"auto", flexShrink:0, display:"block"}} />
-          <div style={{fontFamily:"var(--font-display)", fontSize:15, fontWeight:500, letterSpacing:"1.5px", color:"#fff", opacity:0.92}}>
-            DIGITAL
-          </div>
+          {logoErr ? (
+            <div style={{fontFamily:"var(--font-display)", fontSize:17, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
+              141<span style={{color:"var(--accent)"}}>'</span>DIGITAL
+            </div>
+          ) : (
+            <img src="/logo-141digital-white.png" alt="141'DIGITAL"
+              onError={() => setLogoErr(true)}
+              style={{height:26, width:"auto", maxWidth:170, flexShrink:0, display:"block", objectFit:"contain"}} />
+          )}
         </div>
       ) : (
       <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
