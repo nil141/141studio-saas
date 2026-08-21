@@ -622,26 +622,46 @@ const ClientDocs = ({ session }) => {
 };
 
 // ── Credenciales: catálogo de accesos ───────────────────────────────
-const _brandBox = { width:36, height:36, borderRadius:9, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text)", border:"0.5px solid var(--border)", flexShrink:0 };
+const _brandBox = (size = 40) => ({ width:size, height:size, borderRadius:11, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text)", border:"0.5px solid var(--border)", flexShrink:0 });
+const _credComplete = (c, mode) => mode === "access" ? !!c.granted : !!(c.username && c.password);
+const CredStatus = ({ ok, label }) => (
+  <span style={{fontSize:10.5, letterSpacing:"0.03em", padding:"3px 9px", borderRadius:99, whiteSpace:"nowrap", flexShrink:0,
+    display:"inline-flex", alignItems:"center", gap:5,
+    background: ok ? "var(--green-soft)" : "var(--amber-soft)", color: ok ? "var(--green)" : "var(--amber)",
+    border: "0.5px solid " + (ok ? "var(--green)" : "var(--amber)")}}>
+    {ok && <Icon name="check" size={9}/>}{label}
+  </span>
+);
 
-const CredCatalog = ({ onPick }) => {
+const CredCatalog = ({ onPick, onCancel }) => {
   const D = window.Data;
   const cat = D.CRED_CATALOG || [];
+  const groups = [
+    { mode:"login",  title:"Con usuario y contraseña", sub:"Nos das tus datos de acceso." },
+    { mode:"access", title:"Dando acceso a nuestro correo", sub:"Nos añades como colaborador; no compartes contraseñas." },
+  ];
   return (
-    <div className="card" style={{marginBottom:14}}><div className="card-body" style={{padding:16}}>
-      <div className="muted small" style={{marginBottom:12}}>¿Qué acceso quieres añadir?</div>
-      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(150px,1fr))", gap:10}}>
-        {cat.map(p => (
-          <button key={p.key} onClick={() => onPick(p)}
-            style={{display:"flex", alignItems:"center", gap:10, padding:"11px 13px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12, textAlign:"left", fontFamily:"inherit"}}>
-            <span style={_brandBox}><Icon name={p.icon} size={17}/></span>
-            <span style={{minWidth:0}}>
-              <span style={{display:"block", fontWeight:500, fontSize:13.5, color:"var(--text)"}}>{p.name}</span>
-              <span className="muted xsmall">{p.mode === "access" ? "Dar acceso" : "Usuario y clave"}</span>
-            </span>
-          </button>
-        ))}
+    <div className="card" style={{marginBottom:18}}><div className="card-body" style={{padding:22}}>
+      <div className="row between" style={{alignItems:"flex-start", marginBottom:4}}>
+        <div style={{fontFamily:"var(--font-display)", fontSize:18, fontWeight:500, letterSpacing:"-0.4px"}}>Añadir un acceso</div>
+        <button className="btn ghost sm" onClick={onCancel}>Cancelar</button>
       </div>
+      <div className="muted small" style={{marginBottom:4}}>Elige la plataforma.</div>
+      {groups.map(g => (
+        <div key={g.mode} style={{marginTop:18}}>
+          <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)"}}>{g.title}</div>
+          <div className="muted xsmall" style={{marginTop:2, marginBottom:10}}>{g.sub}</div>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(156px,1fr))", gap:10}}>
+            {cat.filter(p => p.mode === g.mode).map(p => (
+              <button key={p.key} className="cred-tile" onClick={() => onPick(p)}
+                style={{display:"flex", alignItems:"center", gap:11, padding:"11px 13px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12, textAlign:"left", fontFamily:"inherit"}}>
+                <span style={_brandBox(34)}><Icon name={p.icon} size={17}/></span>
+                <span style={{minWidth:0, fontWeight:500, fontSize:13.5, color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{p.name}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
     </div></div>
   );
 };
@@ -650,6 +670,7 @@ const CredItem = ({ c, agencyEmail, editable, onDelete }) => {
   const D = window.Data;
   const meta = D.credMeta(c.platform);
   const mode = meta.mode;
+  const complete = _credComplete(c, mode);
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState("");
   const [editing, setEditing] = useState(editable && mode === "login" && !c.username && !c.password);
@@ -657,60 +678,63 @@ const CredItem = ({ c, agencyEmail, editable, onDelete }) => {
   const copy = (val, which) => { try { navigator.clipboard.writeText(val); setCopied(which); setTimeout(() => setCopied(""), 1200); } catch {} };
   const inp = { width:"100%", height:38, borderRadius:9, padding:"8px 12px", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:9 };
   const saveEdit = () => { D.updateCredential(c.id, f); setEditing(false); };
+  const field = (label, val, mono, which, extra) => (
+    <div style={{display:"flex", alignItems:"center", gap:8, marginTop:9}}>
+      <div style={{width:66, fontSize:11.5, color:"var(--text-subtle)", flexShrink:0}}>{label}</div>
+      <div style={{flex:1, fontSize:13.5, fontFamily: mono ? "var(--font-mono)" : "inherit", wordBreak:"break-all"}}>{val}</div>
+      {extra}
+      <button className="btn ghost icon-only sm" onClick={() => copy(typeof val === "string" ? val : "", which)}><Icon name={copied === which ? "check" : "copy"} size={12}/></button>
+    </div>
+  );
 
   return (
-    <div className="card"><div className="card-body" style={{padding:16}}>
-      <div className="row between" style={{alignItems:"flex-start"}}>
-        <div className="row tight">
-          <span style={_brandBox}><Icon name={meta.icon} size={16}/></span>
-          <div style={{fontWeight:500, fontSize:14.5}}>{c.label || meta.name}</div>
+    <div className="card"><div className="card-body" style={{padding:18}}>
+      <div className="row between" style={{alignItems:"flex-start", gap:10}}>
+        <div style={{display:"flex", gap:12, minWidth:0}}>
+          <span style={_brandBox(40)}><Icon name={meta.icon} size={19}/></span>
+          <div style={{minWidth:0}}>
+            <div style={{fontWeight:500, fontSize:15}}>{c.label || meta.name}</div>
+            <div className="muted xsmall" style={{marginTop:2}}>{mode === "access" ? "Dar acceso" : "Usuario y contraseña"}</div>
+          </div>
         </div>
-        <div className="row tight">
+        <div className="row tight" style={{flexShrink:0}}>
+          <CredStatus ok={complete} label={mode === "access" ? (complete ? "Concedido" : "Pendiente") : (complete ? "Guardado" : "Pendiente")}/>
           {mode === "login" && editable && !editing && <button className="btn ghost icon-only sm" onClick={() => setEditing(true)}><Icon name="edit" size={13}/></button>}
           {editable && <button className="btn ghost icon-only sm" onClick={() => onDelete(c)}><Icon name="trash" size={13}/></button>}
         </div>
       </div>
 
       {mode === "access" ? (
-        <div style={{marginTop:12}}>
-          <div className="muted small" style={{lineHeight:1.5, marginBottom:8}}>Dale acceso a este correo en tu cuenta de {meta.name}:</div>
+        <div style={{marginTop:14, paddingTop:14, borderTop:"0.5px solid var(--border)"}}>
+          <div className="muted small" style={{lineHeight:1.5, marginBottom:8}}>Añade este correo como acceso en tu cuenta de <b style={{color:"var(--text)"}}>{meta.name}</b>:</div>
           <div style={{display:"flex", alignItems:"center", gap:8}}>
-            <div style={{flex:1, fontSize:13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all", background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:8, padding:"8px 12px"}}>{agencyEmail}</div>
+            <div style={{flex:1, fontSize:13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all", background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:9, padding:"9px 12px"}}>{agencyEmail}</div>
             <button className="btn ghost icon-only sm" onClick={() => copy(agencyEmail, "mail")}><Icon name={copied === "mail" ? "check" : "copy"} size={13}/></button>
           </div>
           {editable ? (
-            <button className={"btn sm" + (c.granted ? "" : " ghost")} style={{marginTop:10}} onClick={() => D.updateCredential(c.id, { granted: !c.granted })}>
-              {c.granted ? <><Icon name="check" size={12}/> Acceso concedido</> : "Marcar acceso concedido"}
+            <button className={"btn sm" + (c.granted ? "" : " ghost")} style={{marginTop:12}} onClick={() => D.updateCredential(c.id, { granted: !c.granted })}>
+              {c.granted ? <><Icon name="check" size={12}/> Acceso concedido</> : "Ya he dado el acceso"}
             </button>
-          ) : c.granted ? (
-            <div style={{marginTop:10, color:"var(--green)", fontSize:12.5, display:"inline-flex", alignItems:"center", gap:5}}><Icon name="check" size={12}/> Acceso concedido</div>
           ) : null}
         </div>
       ) : editing ? (
-        <div style={{marginTop:12}}>
+        <div style={{marginTop:14, paddingTop:14, borderTop:"0.5px solid var(--border)"}}>
           <input style={inp} placeholder="Usuario / email" value={f.username} onChange={e => setF(s => ({...s, username:e.target.value}))} autoFocus/>
           <input style={inp} placeholder="Contraseña" value={f.password} onChange={e => setF(s => ({...s, password:e.target.value}))}/>
           <input style={{...inp, marginBottom:12}} placeholder="Notas (opcional)" value={f.notes} onChange={e => setF(s => ({...s, notes:e.target.value}))}/>
           <div className="row tight"><button className="btn primary sm" onClick={saveEdit}>Guardar</button><button className="btn ghost sm" onClick={() => setEditing(false)}>Cancelar</button></div>
         </div>
       ) : (
-        <div style={{marginTop:8}}>
-          {c.username && (
-            <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
-              <div style={{width:70, fontSize:12, color:"var(--text-subtle)", flexShrink:0}}>Usuario</div>
-              <div style={{flex:1, fontSize:13.5, wordBreak:"break-all"}}>{c.username}</div>
-              <button className="btn ghost icon-only sm" onClick={() => copy(c.username, "u")}><Icon name={copied === "u" ? "check" : "copy"} size={12}/></button>
+        <div style={{marginTop:14, paddingTop:14, borderTop:"0.5px solid var(--border)"}}>
+          {c.username && field("Usuario", c.username, false, "u")}
+          {c.password && field("Contraseña", show ? c.password : "••••••••••", true, "p",
+            <button className="btn ghost icon-only sm" onClick={() => setShow(s => !s)}><Icon name={show ? "eye-off" : "eye"} size={12}/></button>)}
+          {!c.username && !c.password && (
+            <div className="muted small" style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:8}}>
+              <span>Aún no has rellenado este acceso.</span>
+              {editable && <button className="btn primary sm" onClick={() => setEditing(true)}>Rellenar</button>}
             </div>
           )}
-          {c.password && (
-            <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
-              <div style={{width:70, fontSize:12, color:"var(--text-subtle)", flexShrink:0}}>Clave</div>
-              <div style={{flex:1, fontSize:13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all"}}>{show ? c.password : "••••••••"}</div>
-              <button className="btn ghost icon-only sm" onClick={() => setShow(s => !s)}><Icon name={show ? "eye-off" : "eye"} size={12}/></button>
-              <button className="btn ghost icon-only sm" onClick={() => copy(c.password, "p")}><Icon name={copied === "p" ? "check" : "copy"} size={12}/></button>
-            </div>
-          )}
-          {!c.username && !c.password && <div className="muted small" style={{marginTop:6}}>Sin datos todavía.</div>}
           {c.notes ? <div className="muted small" style={{marginTop:10, lineHeight:1.5}}>{c.notes}</div> : null}
         </div>
       )}
@@ -728,23 +752,42 @@ const ClientCredentials = ({ session }) => {
   const [picking, setPicking] = useState(false);
   const add = (p) => { D.addCredential(clientId, { platform: p.key, label: p.name }); setPicking(false); };
   const del = (c) => { if (confirm(`¿Eliminar "${c.label || ""}"?`)) D.deleteCredential(c.id); };
+  const doneCount = creds.filter(c => _credComplete(c, D.credMeta(c.platform).mode)).length;
 
   return (
     <div className="page">
-      <div className="page-head">
-        <div className="row between" style={{alignItems:"flex-start", width:"100%"}}>
-          <div>
-            <h1>Credenciales</h1>
-            <div className="sub">Accesos que compartes con tu agencia. Solo tú y el equipo de 141 podéis verlos.</div>
+      {/* Cabecera */}
+      <div style={{marginBottom: 20}}>
+        <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>Accesos</div>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16, flexWrap:"wrap"}}>
+          <div style={{minWidth:0}}>
+            <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Credenciales</h1>
+            <div className="sub" style={{marginTop:8, maxWidth:560, color:"var(--text-muted)"}}>
+              Guarda aquí los accesos que tu equipo de 141 necesita para trabajar. Solo tú y el equipo podéis verlos.
+            </div>
           </div>
           {!picking && <button className="btn primary" onClick={() => setPicking(true)}><Icon name="plus" size={14}/> Añadir acceso</button>}
         </div>
+        {creds.length > 0 && (
+          <div className="muted xsmall" style={{marginTop:14, display:"inline-flex", alignItems:"center", gap:7}}>
+            <Icon name="lock" size={12}/> {doneCount} de {creds.length} accesos listos · cifrado y privado
+          </div>
+        )}
       </div>
 
-      {picking && <CredCatalog onPick={add}/>}
+      {picking && <CredCatalog onPick={add} onCancel={() => setPicking(false)}/>}
 
       {creds.length === 0 && !picking ? (
-        <Empty icon="lock" title="Sin accesos guardados" sub="Añade los accesos (redes, web, hosting…) que tu agencia necesita para trabajar."/>
+        <div className="card"><div className="card-body" style={{padding:"40px 24px", textAlign:"center"}}>
+          <div style={{width:52, height:52, borderRadius:14, margin:"0 auto 16px", display:"grid", placeItems:"center", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", color:"var(--text-muted)"}}>
+            <Icon name="lock" size={22}/>
+          </div>
+          <div style={{fontFamily:"var(--font-display)", fontSize:18, fontWeight:500}}>Sin accesos todavía</div>
+          <div className="muted small" style={{marginTop:6, maxWidth:380, marginLeft:"auto", marginRight:"auto", lineHeight:1.5}}>
+            Añade los accesos que tu agencia necesita: redes sociales, web, hosting, analytics… Elige la plataforma y te decimos qué necesitamos.
+          </div>
+          <button className="btn primary" style={{marginTop:18}} onClick={() => setPicking(true)}><Icon name="plus" size={14}/> Añadir acceso</button>
+        </div></div>
       ) : (
         <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px,1fr))", gap:14}}>
           {creds.map(c => <CredItem key={c.id} c={c} agencyEmail={agencyEmail} editable={true} onDelete={del}/>)}

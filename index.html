@@ -202,6 +202,9 @@
     100% { transform: translate(0,0) scale(1);      opacity: .55; }
   }
   @media (prefers-reduced-motion: reduce) { .portal-hero-glow { animation: none; } }
+  /* Fichas del catálogo de credenciales */
+  .cred-tile { transition: border-color .15s ease, background .15s ease, transform .15s ease; }
+  .cred-tile:hover { border-color: var(--border-strong) !important; background: var(--bg-hover) !important; }
   .page.wide { max-width: none; }
 
   /* Botón discreto "ver todo" (solo icono) en cabeceras de sección del Inicio */
@@ -904,7 +907,7 @@
 <script src="src/agency-other.js?v=130"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=31"></script>
-<script src="src/client-portal.js?v=24"></script>
+<script src="src/client-portal.js?v=25"></script>
 <script src="src/onboarding.js?v=8"></script>
 <script src="src/assistant.js?v=2"></script>
 <script src="src/gmail.js?v=3"></script>
