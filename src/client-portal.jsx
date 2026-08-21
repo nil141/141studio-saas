@@ -515,9 +515,9 @@ const ClientDocs = ({ session }) => {
   const plan0 = p0 ? _planOf(p0) : null;
   const eyebrow = (plan0?.active ? plan0.active.name : "Documentación");
   const needs = [
-    { t:"SOPs y procesos documentados", d:"Cualquier procedimiento escrito, aunque esté en Notion, Google Docs o PDF." },
-    { t:"Plantillas y mensajes tipo", d:"Emails, WhatsApps, scripts de venta, respuestas frecuentes." },
-    { t:"Ejemplos reales", d:"Capturas o exports de cómo trabaja tu equipo hoy: materiales internos, entregables, etc." },
+    { t:"Activos de marca", d:"Logos, tipografías, colores, manual de marca y cualquier recurso gráfico que tengas." },
+    { t:"Contenido y materiales", d:"Fotos, vídeos, textos, catálogos, presentaciones… lo que uses en tu negocio." },
+    { t:"Documentación y procesos", d:"Cómo trabajáis por dentro: procedimientos, plantillas, mensajes tipo, exports de Notion, etc." },
   ];
   const numCircle = {width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
     fontSize:12, fontWeight:600, color:"var(--text-muted)", border:"1.5px solid var(--border-strong)"};
@@ -527,9 +527,9 @@ const ClientDocs = ({ session }) => {
       {/* Cabecera */}
       <div style={{marginBottom: 24}}>
         <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>{eyebrow}</div>
-        <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Tu documentación operativa</h1>
+        <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Documentación y materiales</h1>
         <div className="sub" style={{marginTop:8, maxWidth:620, color:"var(--text-muted)"}}>
-          Este espacio es donde compartes con nosotros toda la documentación operativa de tu negocio: SOPs, plantillas, mensajes tipo, exports y cualquier documento que refleje cómo trabajáis internamente.
+          Esta es tu carpeta compartida. Sube aquí todo lo que creas que puede servir para tu proyecto: activos de marca, contenido, materiales y documentación de tu negocio.
         </div>
       </div>
 
@@ -580,7 +580,7 @@ const ClientDocs = ({ session }) => {
             ))}
           </div>
           <div className="muted small" style={{marginTop:16, lineHeight:1.6, paddingTop:16, borderTop:"0.5px solid var(--border)"}}>
-            Cuanto más completo llegue el material, más ajustado saldrá el diagnóstico. No hace falta que esté perfecto ni ordenado.
+            Sube todo lo que creas que puede servir, aunque no estés seguro. Cuanto más completo, mejor — no hace falta que esté perfecto ni ordenado.
           </div>
         </div>
       </div>
