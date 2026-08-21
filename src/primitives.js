@@ -58,8 +58,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         { id: "client-dashboard", label: "Inicio", icon: "home" },
         { id: "client-status", label: "Estado del proyecto", icon: "activity" },
         { id: "client-docs", label: "Documentaci\xF3n", icon: "file-text" },
-        { id: "client-credentials", label: "Credenciales", icon: "lock" },
-        { id: "client-notifications", label: "Notificaciones", icon: "bell", badge: clientUnread || void 0 }
+        { id: "client-credentials", label: "Credenciales", icon: "lock" }
       ]
     }
   ];
@@ -96,6 +95,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     return n.charAt(0).toUpperCase() + n.slice(1);
   };
   const me = session ? kind === "agency" ? { name: cleanName(session.name || session.email, "Nil"), initials: cleanName(session.name || session.email, "N")[0].toUpperCase(), email: session.email || "" } : { name: cleanName(session.name || session.email, "Cliente"), initials: cleanName(session.name || session.email, "C")[0].toUpperCase(), email: session.email || "" } : { name: "Nil", initials: "N", email: "nil@141agency.com" };
+  let clientAccount = me;
+  if (kind === "client") {
+    try {
+      const cs = D.CLIENTS || [];
+      const pid = sessionStorage.getItem("141_preview_client");
+      const rec = pid ? cs.find((c) => c.id === pid) : cs[0];
+      if (rec && rec.name) clientAccount = { name: rec.name, initials: rec.name.trim().charAt(0).toUpperCase(), email: rec.email || "" };
+    } catch {
+    }
+  }
   const [logoutOpen, setLogoutOpen] = React.useState(false);
   const [logoErr, setLogoErr] = React.useState(false);
   const COLLAPSE_KEY = "sidebar_collapsed_v1";
@@ -258,7 +267,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     padding: "20px 12px 16px",
     overflow: "hidden",
     flexShrink: 0
-  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 10px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
     "img",
     {
       src: "/logo-141digital-white.png",
@@ -266,7 +275,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  )) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 40,
     height: 40,
     borderRadius: 16,
@@ -388,8 +397,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         color: "var(--text)"
       }
     },
-    /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
-    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
+    /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
+    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
   ) : /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",

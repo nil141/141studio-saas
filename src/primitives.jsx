@@ -71,7 +71,6 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         { id: "client-status",        label: "Estado del proyecto", icon: "activity" },
         { id: "client-docs",          label: "Documentación",       icon: "file-text" },
         { id: "client-credentials",   label: "Credenciales",        icon: "lock" },
-        { id: "client-notifications", label: "Notificaciones",      icon: "bell", badge: clientUnread || undefined },
       ],
     },
   ];
@@ -119,6 +118,18 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         ? { name: cleanName(session.name || session.email, "Nil"), initials: (cleanName(session.name || session.email, "N"))[0].toUpperCase(), email: session.email || "" }
         : { name: cleanName(session.name || session.email, "Cliente"), initials: (cleanName(session.name || session.email, "C"))[0].toUpperCase(), email: session.email || "" })
     : { name: "Nil", initials: "N", email: "nil@141agency.com" };
+
+  // En el portal de cliente (incl. la vista previa de la agencia), la cuenta
+  // de abajo debe ser la del CLIENTE, no la del admin que previsualiza.
+  let clientAccount = me;
+  if (kind === "client") {
+    try {
+      const cs = D.CLIENTS || [];
+      const pid = sessionStorage.getItem("141_preview_client");
+      const rec = pid ? cs.find(c => c.id === pid) : cs[0];
+      if (rec && rec.name) clientAccount = { name: rec.name, initials: rec.name.trim().charAt(0).toUpperCase(), email: rec.email || "" };
+    } catch {}
+  }
 
   // ── Sliding pill refs ──────────────────────────────────────────────
   const [logoutOpen, setLogoutOpen] = React.useState(false);
@@ -276,7 +287,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     }}>
       {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
       {kind === "client" ? (
-        <div style={{display:"flex", alignItems:"center", padding:"10px 10px 30px 10px"}}>
+        <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 8px 30px 10px"}}>
           {logoErr ? (
             <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
               141<span style={{color:"var(--accent)"}}>'</span>DIGITAL
@@ -286,6 +297,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
               onError={() => setLogoErr(true)}
               style={{height:17, width:"auto", maxWidth:130, flexShrink:0, display:"block", objectFit:"contain", opacity:0.95}} />
           )}
+          <NotificationBell kind={kind}/>
         </div>
       ) : (
       <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
@@ -385,9 +397,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           <button onClick={() => onNavigate("client-settings")}
             style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
               background: current === "client-settings" ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
-            <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(me.initials || "").charAt(0)}</span>
+            <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(clientAccount.initials || "").charAt(0)}</span>
             <span style={{minWidth:0}}>
-              <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.name}</span>
+              <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{clientAccount.name}</span>
               <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)"}}>Ver tu cuenta</span>
             </span>
           </button>
