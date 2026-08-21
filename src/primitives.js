@@ -258,13 +258,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     padding: "20px 12px 16px",
     overflow: "hidden",
     flexShrink: 0
-  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "6px 8px 26px 8px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 17, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", padding: "10px 10px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
     "img",
     {
       src: "/logo-141digital-white.png",
       alt: "141'DIGITAL",
       onError: () => setLogoErr(true),
-      style: { height: 26, width: "auto", maxWidth: 170, flexShrink: 0, display: "block", objectFit: "contain" }
+      style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
   )) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 40,

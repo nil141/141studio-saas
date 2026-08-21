@@ -276,15 +276,15 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     }}>
       {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
       {kind === "client" ? (
-        <div style={{display:"flex", alignItems:"center", gap:11, padding:"6px 8px 26px 8px"}}>
+        <div style={{display:"flex", alignItems:"center", padding:"10px 10px 30px 10px"}}>
           {logoErr ? (
-            <div style={{fontFamily:"var(--font-display)", fontSize:17, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
+            <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
               141<span style={{color:"var(--accent)"}}>'</span>DIGITAL
             </div>
           ) : (
             <img src="/logo-141digital-white.png" alt="141'DIGITAL"
               onError={() => setLogoErr(true)}
-              style={{height:26, width:"auto", maxWidth:170, flexShrink:0, display:"block", objectFit:"contain"}} />
+              style={{height:17, width:"auto", maxWidth:130, flexShrink:0, display:"block", objectFit:"contain", opacity:0.95}} />
           )}
         </div>
       ) : (
