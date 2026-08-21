@@ -273,7 +273,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       overflow: "hidden",
       flexShrink: 0,
     }}>
-      {/* User profile — estilo outdomode: avatar cuadrado redondeado + inicial morada */}
+      {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
+      {kind === "client" ? (
+        <div style={{display:"flex", alignItems:"center", gap:10, padding:"6px 8px 26px 8px"}}>
+          <div style={{width:34, height:34, borderRadius:10, flexShrink:0, background:"var(--accent)", color:"#fff",
+            display:"grid", placeItems:"center", fontFamily:"var(--font-display)", fontWeight:600, fontSize:13, letterSpacing:"-0.5px"}}>141</div>
+          <div style={{fontFamily:"var(--font-display)", fontSize:17, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
+            141<span style={{color:"var(--accent)"}}>'</span>DIGITAL
+          </div>
+        </div>
+      ) : (
       <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
         <div style={{
           width: 40, height: 40, borderRadius: 16, flexShrink: 0,
@@ -293,6 +302,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           </div>
         </div>
       </div>
+      )}
 
       {/* Nav con secciones */}
       <div ref={navContainerRef} style={{flex:1, overflow:"hidden", position:"relative"}}>
@@ -366,7 +376,19 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         {kind === "agency" && session?.role === "admin" && (
           <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} active={current === "nora"}/>
         )}
-        <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
+        {kind === "client" ? (
+          <button onClick={() => onNavigate("client-settings")}
+            style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
+              background: current === "client-settings" ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
+            <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(me.initials || "").charAt(0)}</span>
+            <span style={{minWidth:0}}>
+              <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.name}</span>
+              <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)"}}>Ver tu cuenta</span>
+            </span>
+          </button>
+        ) : (
+          <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
+        )}
         <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => setLogoutOpen(true)}/>
       </div>
     </aside>

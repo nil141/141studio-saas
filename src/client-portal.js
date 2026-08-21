@@ -467,4 +467,36 @@ const ClientNotifications = ({ session }) => {
     } }, /* @__PURE__ */ React.createElement(Icon, { name: n.kind === "task" ? "list-todo" : n.kind === "project" ? "folder" : "bell", size: 17 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14.5 } }, n.title), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { flexShrink: 0 } }, _notifAgoP(n.createdAt))), n.body && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 3, lineHeight: 1.5 } }, n.body)), !n.read && /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 99, background: "var(--accent)", flexShrink: 0, marginTop: 6 } }))
   ))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
 };
-Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications });
+const ClientSettings = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const S = _portalScope(session);
+  const me = S.me;
+  const clientId = S.clientId;
+  const [form, setForm] = useState(null);
+  const [saved, setSaved] = useState(false);
+  React.useEffect(() => {
+    if (me) setForm({
+      name: me.name || "",
+      company: me.company || "",
+      whatsapp: me.whatsapp || "",
+      website: me.website || "",
+      fiscalName: me.fiscalName || "",
+      nif: me.nif || "",
+      fiscalAddress: me.fiscalAddress || "",
+      about: me.about || ""
+    });
+  }, [me && me.id]);
+  const set = (k, v) => setForm((s) => ({ ...s, [k]: v }));
+  const save = () => {
+    D.updateClient(clientId, form);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 1800);
+  };
+  const inp = { width: "100%", height: 42, borderRadius: 10, padding: "10px 12px", background: "var(--bg-elev)", border: "0.5px solid var(--border)", color: "var(--text)", fontFamily: "inherit", fontSize: 14 };
+  const field = (label, k, ph) => /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginBottom: 5 } }, label), /* @__PURE__ */ React.createElement("input", { style: inp, value: form && form[k] || "", placeholder: ph || "", onChange: (e) => set(k, e.target.value) }));
+  const head = /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Tu cuenta"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, color: "var(--text-muted)" } }, "Revisa y actualiza tus datos. Puedes cambiar lo que rellenaste al principio."));
+  if (!me || !form) return /* @__PURE__ */ React.createElement("div", { className: "page" }, head, /* @__PURE__ */ React.createElement(Empty, { icon: "user-cog", title: "Cargando tu cuenta\u2026" }), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, head, /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))", gap: 16 } }, field("Nombre de contacto", "name", "Tu nombre"), field("Empresa", "company", "Mi Empresa S.L."), field("Tel\xE9fono / WhatsApp", "whatsapp", "+34 600 000 000"), field("Web", "website", "tuweb.com"), field("Raz\xF3n social", "fiscalName", "Mi Empresa S.L."), field("NIF / CIF", "nif"), field("Direcci\xF3n fiscal", "fiscalAddress")), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginBottom: 5 } }, "A qu\xE9 te dedicas"), /* @__PURE__ */ React.createElement("textarea", { style: { ...inp, height: 80, resize: "vertical", lineHeight: 1.5 }, value: form.about, placeholder: "Cu\xE9ntanos brevemente tu negocio", onChange: (e) => set("about", e.target.value) })), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginTop: 18 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, "Guardar cambios"), saved && /* @__PURE__ */ React.createElement("span", { className: "small", style: { color: "var(--green)" } }, "Guardado \u2713")))), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 14, display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 12 }), " Tu correo de acceso es ", me.email || "\u2014", " (no se puede cambiar desde aqu\xED)."), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
+};
+Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications, ClientSettings });

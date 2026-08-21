@@ -175,6 +175,8 @@
           return /* @__PURE__ */ React.createElement(ClientCredentials, { navigate, openModal, session });
         case "client-notifications":
           return /* @__PURE__ */ React.createElement(ClientNotifications, { navigate, session });
+        case "client-settings":
+          return /* @__PURE__ */ React.createElement(ClientSettings, { navigate, session });
         case "client-project":
           return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":

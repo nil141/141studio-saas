@@ -168,6 +168,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "client-docs": return <ClientDocs navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
       case "client-credentials": return <ClientCredentials navigate={navigate} openModal={openModal} session={session}/>;
       case "client-notifications": return <ClientNotifications navigate={navigate} session={session}/>;
+      case "client-settings": return <ClientSettings navigate={navigate} session={session}/>;
       // compat con enlaces antiguos
       case "client-project": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
       case "client-deliverables": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId} initialTab="deliverables"/>;

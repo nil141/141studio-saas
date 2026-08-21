@@ -861,4 +861,73 @@ const ClientNotifications = ({ session }) => {
   );
 };
 
-Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications });
+const ClientSettings = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const S = _portalScope(session);
+  const me = S.me;
+  const clientId = S.clientId;
+  const [form, setForm] = useState(null);
+  const [saved, setSaved] = useState(false);
+  React.useEffect(() => {
+    if (me) setForm({
+      name: me.name || "", company: me.company || "", whatsapp: me.whatsapp || "",
+      website: me.website || "", fiscalName: me.fiscalName || "", nif: me.nif || "",
+      fiscalAddress: me.fiscalAddress || "", about: me.about || "",
+    });
+  }, [me && me.id]);
+  const set = (k, v) => setForm(s => ({ ...s, [k]: v }));
+  const save = () => { D.updateClient(clientId, form); setSaved(true); setTimeout(() => setSaved(false), 1800); };
+  const inp = { width:"100%", height:42, borderRadius:10, padding:"10px 12px", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:14 };
+  const field = (label, k, ph) => (
+    <div>
+      <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:5}}>{label}</div>
+      <input style={inp} value={(form && form[k]) || ""} placeholder={ph || ""} onChange={e => set(k, e.target.value)}/>
+    </div>
+  );
+
+  const head = (
+    <div style={{marginBottom: 22}}>
+      <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>Tu cuenta</div>
+      <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Ajustes</h1>
+      <div className="sub" style={{marginTop:8, color:"var(--text-muted)"}}>Revisa y actualiza tus datos. Puedes cambiar lo que rellenaste al principio.</div>
+    </div>
+  );
+
+  if (!me || !form) return (
+    <div className="page">{head}<Empty icon="user-cog" title="Cargando tu cuenta…"/><WhatsAppFloat/></div>
+  );
+
+  return (
+    <div className="page">
+      {head}
+      <div className="card"><div className="card-body" style={{padding: 22}}>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(240px,1fr))", gap: 16}}>
+          {field("Nombre de contacto", "name", "Tu nombre")}
+          {field("Empresa", "company", "Mi Empresa S.L.")}
+          {field("Teléfono / WhatsApp", "whatsapp", "+34 600 000 000")}
+          {field("Web", "website", "tuweb.com")}
+          {field("Razón social", "fiscalName", "Mi Empresa S.L.")}
+          {field("NIF / CIF", "nif")}
+          {field("Dirección fiscal", "fiscalAddress")}
+        </div>
+        <div style={{marginTop: 16}}>
+          <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:5}}>A qué te dedicas</div>
+          <textarea style={{...inp, height:80, resize:"vertical", lineHeight:1.5}} value={form.about} placeholder="Cuéntanos brevemente tu negocio" onChange={e => set("about", e.target.value)}/>
+        </div>
+        <div className="row tight" style={{marginTop: 18}}>
+          <button className="btn primary" onClick={save}>Guardar cambios</button>
+          {saved && <span className="small" style={{color:"var(--green)"}}>Guardado ✓</span>}
+        </div>
+      </div></div>
+
+      <div className="muted xsmall" style={{marginTop:14, display:"flex", alignItems:"center", gap:7}}>
+        <Icon name="mail" size={12}/> Tu correo de acceso es {me.email || "—"} (no se puede cambiar desde aquí).
+      </div>
+
+      <WhatsAppFloat/>
+    </div>
+  );
+};
+
+Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications, ClientSettings });
