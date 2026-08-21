@@ -275,7 +275,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
     width: 40,
     height: 40,
     borderRadius: 16,
@@ -483,7 +483,24 @@ const _notifAgo = (iso) => {
   if (dd < 7) return `hace ${dd} d`;
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 };
-const NotificationBell = ({ kind }) => {
+const _notifRoute = (n) => {
+  switch (n && n.kind) {
+    case "project":
+      return "client-status";
+    case "task":
+      return "client-dashboard";
+    case "credential":
+      return "client-credentials";
+    case "document":
+    case "doc":
+      return "client-docs";
+    case "invoice":
+      return "client-docs";
+    default:
+      return "client-dashboard";
+  }
+};
+const NotificationBell = ({ kind, onNavigate }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const [open, setOpen] = useState(false);
@@ -512,7 +529,7 @@ const NotificationBell = ({ kind }) => {
     }
   }
   const unread = list.filter((n) => !n.read).length;
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "data-tooltip": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
     position: "absolute",
     top: 3,
     right: 3,
@@ -551,7 +568,11 @@ const NotificationBell = ({ kind }) => {
         "div",
         {
           key: n.id,
-          onClick: () => D.markNotificationRead(n.id),
+          onClick: () => {
+            D.markNotificationRead(n.id);
+            setOpen(false);
+            onNavigate && onNavigate(_notifRoute(n));
+          },
           style: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }
         },
         /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" } }),

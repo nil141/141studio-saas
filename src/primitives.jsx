@@ -297,7 +297,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
               onError={() => setLogoErr(true)}
               style={{height:17, width:"auto", maxWidth:130, flexShrink:0, display:"block", objectFit:"contain", opacity:0.95}} />
           )}
-          <NotificationBell kind={kind}/>
+          <NotificationBell kind={kind} onNavigate={onNavigate}/>
         </div>
       ) : (
       <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
@@ -469,7 +469,19 @@ const _notifAgo = (iso) => {
   return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
 };
 
-const NotificationBell = ({ kind }) => {
+const _notifRoute = (n) => {
+  switch (n && n.kind) {
+    case "project":     return "client-status";
+    case "task":        return "client-dashboard";
+    case "credential":  return "client-credentials";
+    case "document":
+    case "doc":         return "client-docs";
+    case "invoice":     return "client-docs";
+    default:            return "client-dashboard";
+  }
+};
+
+const NotificationBell = ({ kind, onNavigate }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const [open, setOpen] = useState(false);
@@ -499,7 +511,7 @@ const NotificationBell = ({ kind }) => {
 
   return (
     <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-      <button ref={btnRef} className="btn ghost icon-only" data-tooltip="Notificaciones" onClick={toggle}>
+      <button ref={btnRef} className="btn ghost icon-only" aria-label="Notificaciones" onClick={toggle}>
         <Icon name="bell" size={15}/>
         {unread > 0 && (
           <span style={{ position: "absolute", top: 3, right: 3, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 99,
@@ -521,7 +533,7 @@ const NotificationBell = ({ kind }) => {
             {list.length === 0 ? (
               <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 }}>Sin notificaciones</div>
             ) : list.slice(0, 25).map(n => (
-              <div key={n.id} onClick={() => D.markNotificationRead(n.id)}
+              <div key={n.id} onClick={() => { D.markNotificationRead(n.id); setOpen(false); onNavigate && onNavigate(_notifRoute(n)); }}
                 style={{ display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }}>
                 <span style={{ width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" }}/>
                 <div style={{ minWidth: 0, flex: 1 }}>
