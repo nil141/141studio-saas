@@ -532,80 +532,91 @@ const AgencyCredentials = ({ clientId }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const creds = D.credentialsForClient ? D.credentialsForClient(clientId) : [];
-  const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null);
+  const cat = D.CRED_CATALOG || [];
+  const agencyEmail = (D.SETTINGS && D.SETTINGS.email) || "tu correo";
+  const [picking, setPicking] = useState(false);
+  const [editId, setEditId] = useState(null);
+  const [form, setForm] = useState({ username:"", password:"", notes:"" });
   const [reveal, setReveal] = useState({});
   const [copied, setCopied] = useState("");
-  const blank = { label:"", url:"", username:"", password:"", notes:"" };
-  const [form, setForm] = useState(blank);
-
-  const startAdd  = () => { setForm(blank); setEditing(null); setAdding(true); };
-  const startEdit = (c) => { setForm({ label:c.label, url:c.url, username:c.username, password:c.password, notes:c.notes }); setEditing(c.id); setAdding(true); };
-  const cancel = () => { setAdding(false); setEditing(null); setForm(blank); };
-  const save = () => {
-    if (!form.label.trim()) return;
-    if (editing) D.updateCredential(editing, form); else D.addCredential(clientId, form);
-    cancel();
-  };
-  const del = (c) => { if (confirm(`¿Eliminar el acceso "${c.label}"?`)) D.deleteCredential(c.id); };
-  const copy = (val, key) => { try { navigator.clipboard.writeText(val); setCopied(key); setTimeout(() => setCopied(""), 1200); } catch {} };
-  const set = (k, v) => setForm(s => ({ ...s, [k]: v }));
-  const inp = { width:"100%", height:38, borderRadius:9, padding:"8px 12px", background:"var(--bg-elev)",
-    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:9 };
+  const copy = (v, k) => { try { navigator.clipboard.writeText(v); setCopied(k); setTimeout(() => setCopied(""), 1200); } catch {} };
+  const brand = { width:32, height:32, borderRadius:8, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text)", border:"0.5px solid var(--border)", flexShrink:0 };
+  const inp = { width:"100%", height:38, borderRadius:9, padding:"8px 12px", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:9 };
+  const add = (p) => { D.addCredential(clientId, { platform:p.key, label:p.name }); setPicking(false); };
+  const startEdit = (c) => { setForm({ username:c.username, password:c.password, notes:c.notes }); setEditId(c.id); };
+  const saveEdit = () => { D.updateCredential(editId, form); setEditId(null); };
+  const del = (c) => { if (confirm(`¿Eliminar "${c.label || ""}"?`)) D.deleteCredential(c.id); };
 
   return (
     <div>
       <div className="row between" style={{marginBottom: 14}}>
-        <div className="small muted">Accesos compartidos con este cliente. El cliente también los ve y edita desde su portal.</div>
-        {!adding && <button className="btn primary sm" onClick={startAdd}><Icon name="plus" size={13}/> Añadir</button>}
+        <div className="small muted">Accesos del cliente. El cliente también los ve y edita desde su portal.</div>
+        {!picking && <button className="btn primary sm" onClick={() => setPicking(true)}><Icon name="plus" size={13}/> Añadir</button>}
       </div>
 
-      {adding && (
+      {picking && (
         <div className="card" style={{marginBottom: 14}}><div className="card-body" style={{padding: 16}}>
-          <input style={inp} placeholder="Nombre del acceso (Instagram, Hosting…)" value={form.label} onChange={e => set("label", e.target.value)} autoFocus/>
-          <input style={inp} placeholder="URL" value={form.url} onChange={e => set("url", e.target.value)}/>
-          <input style={inp} placeholder="Usuario / email" value={form.username} onChange={e => set("username", e.target.value)}/>
-          <input style={inp} placeholder="Contraseña" value={form.password} onChange={e => set("password", e.target.value)}/>
-          <input style={{...inp, marginBottom: 12}} placeholder="Notas (opcional)" value={form.notes} onChange={e => set("notes", e.target.value)}/>
-          <div className="row tight">
-            <button className="btn primary sm" disabled={!form.label.trim()} onClick={save}>Guardar</button>
-            <button className="btn ghost sm" onClick={cancel}>Cancelar</button>
+          <div className="muted small" style={{marginBottom:12}}>¿Qué acceso quieres añadir?</div>
+          <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(150px,1fr))", gap:10}}>
+            {cat.map(p => (
+              <button key={p.key} onClick={() => add(p)}
+                style={{display:"flex", alignItems:"center", gap:9, padding:"10px 12px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:10, textAlign:"left", fontFamily:"inherit"}}>
+                <span style={brand}><Icon name={p.icon} size={16}/></span>
+                <span style={{minWidth:0}}><span style={{display:"block", fontWeight:500, fontSize:13, color:"var(--text)"}}>{p.name}</span><span className="muted xsmall">{p.mode === "access" ? "Dar acceso" : "Usuario y clave"}</span></span>
+              </button>
+            ))}
           </div>
         </div></div>
       )}
 
-      {creds.length === 0 && !adding ? (
+      {creds.length === 0 && !picking ? (
         <Empty icon="lock" title="Sin credenciales" sub="Añade los accesos del cliente o pídele que los rellene desde su portal."/>
       ) : (
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 12}}>
-          {creds.map(c => (
-            <div key={c.id} className="card"><div className="card-body" style={{padding: 15}}>
-              <div className="row between" style={{alignItems:"flex-start"}}>
-                <div className="row tight">
-                  <div style={{width: 32, height: 32, borderRadius: 8, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text-muted)", border:"0.5px solid var(--border)"}}>
-                    <Icon name="key" size={14}/>
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(280px,1fr))", gap: 12}}>
+          {creds.map(c => {
+            const meta = D.credMeta(c.platform); const mode = meta.mode; const ed = editId === c.id;
+            return (
+              <div key={c.id} className="card"><div className="card-body" style={{padding: 15}}>
+                <div className="row between" style={{alignItems:"flex-start"}}>
+                  <div className="row tight"><span style={brand}><Icon name={meta.icon} size={15}/></span><div style={{fontWeight: 500, fontSize: 14}}>{c.label || meta.name}</div></div>
+                  <div className="row tight">
+                    {mode === "login" && !ed && <button className="btn ghost icon-only sm" onClick={() => startEdit(c)}><Icon name="edit" size={12}/></button>}
+                    <button className="btn ghost icon-only sm" onClick={() => del(c)}><Icon name="trash" size={12}/></button>
                   </div>
-                  <div style={{fontWeight: 500, fontSize: 14}}>{c.label}</div>
                 </div>
-                <div className="row tight">
-                  <button className="btn ghost icon-only sm" onClick={() => startEdit(c)}><Icon name="edit" size={12}/></button>
-                  <button className="btn ghost icon-only sm" onClick={() => del(c)}><Icon name="trash" size={12}/></button>
-                </div>
-              </div>
-              {c.url && <div className="small" style={{marginTop: 8, wordBreak:"break-all"}}><span className="muted">Web: </span>{c.url}</div>}
-              {c.username && <div className="small" style={{marginTop: 4, wordBreak:"break-all"}}><span className="muted">Usuario: </span>{c.username}
-                <button className="btn ghost icon-only sm" style={{marginLeft:4}} onClick={() => copy(c.username, c.id+"u")}><Icon name={copied===c.id+"u"?"check":"copy"} size={11}/></button></div>}
-              {c.password && (
-                <div className="small" style={{marginTop: 4, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap"}}>
-                  <span className="muted">Clave: </span>
-                  <span style={{fontFamily:"var(--font-mono)"}}>{reveal[c.id] ? c.password : "••••••••"}</span>
-                  <button className="btn ghost icon-only sm" onClick={() => setReveal(r => ({ ...r, [c.id]: !r[c.id] }))}><Icon name={reveal[c.id]?"eye-off":"eye"} size={11}/></button>
-                  <button className="btn ghost icon-only sm" onClick={() => copy(c.password, c.id+"p")}><Icon name={copied===c.id+"p"?"check":"copy"} size={11}/></button>
-                </div>
-              )}
-              {c.notes && <div className="muted xsmall" style={{marginTop: 8, lineHeight: 1.5}}>{c.notes}</div>}
-            </div></div>
-          ))}
+                {mode === "access" ? (
+                  <div style={{marginTop: 10}}>
+                    <div className="muted xsmall" style={{marginBottom:6}}>El cliente da acceso a:</div>
+                    <div style={{display:"flex", alignItems:"center", gap:6}}>
+                      <span style={{flex:1, fontFamily:"var(--font-mono)", fontSize:12.5, wordBreak:"break-all"}}>{agencyEmail}</span>
+                      <button className="btn ghost icon-only sm" onClick={() => copy(agencyEmail, c.id+"m")}><Icon name={copied === c.id+"m" ? "check" : "copy"} size={11}/></button>
+                    </div>
+                    <div className="xsmall" style={{marginTop:8, color: c.granted ? "var(--green)" : "var(--text-subtle)"}}>{c.granted ? "✓ Acceso concedido" : "Pendiente de acceso"}</div>
+                  </div>
+                ) : ed ? (
+                  <div style={{marginTop: 10}}>
+                    <input style={inp} placeholder="Usuario / email" value={form.username} onChange={e => setForm(s => ({...s, username:e.target.value}))} autoFocus/>
+                    <input style={inp} placeholder="Contraseña" value={form.password} onChange={e => setForm(s => ({...s, password:e.target.value}))}/>
+                    <input style={{...inp, marginBottom:10}} placeholder="Notas" value={form.notes} onChange={e => setForm(s => ({...s, notes:e.target.value}))}/>
+                    <div className="row tight"><button className="btn primary sm" onClick={saveEdit}>Guardar</button><button className="btn ghost sm" onClick={() => setEditId(null)}>Cancelar</button></div>
+                  </div>
+                ) : (
+                  <div style={{marginTop: 8}}>
+                    {c.username && <div className="small" style={{marginTop: 4, wordBreak:"break-all"}}><span className="muted">Usuario: </span>{c.username}<button className="btn ghost icon-only sm" style={{marginLeft:4}} onClick={() => copy(c.username, c.id+"u")}><Icon name={copied===c.id+"u"?"check":"copy"} size={11}/></button></div>}
+                    {c.password && (
+                      <div className="small" style={{marginTop: 4, display:"flex", alignItems:"center", gap:6, flexWrap:"wrap"}}>
+                        <span className="muted">Clave: </span><span style={{fontFamily:"var(--font-mono)"}}>{reveal[c.id] ? c.password : "••••••••"}</span>
+                        <button className="btn ghost icon-only sm" onClick={() => setReveal(r => ({ ...r, [c.id]: !r[c.id] }))}><Icon name={reveal[c.id]?"eye-off":"eye"} size={11}/></button>
+                        <button className="btn ghost icon-only sm" onClick={() => copy(c.password, c.id+"p")}><Icon name={copied===c.id+"p"?"check":"copy"} size={11}/></button>
+                      </div>
+                    )}
+                    {!c.username && !c.password && <div className="muted xsmall" style={{marginTop: 4}}>El cliente aún no lo ha rellenado.</div>}
+                    {c.notes && <div className="muted xsmall" style={{marginTop: 8, lineHeight: 1.5}}>{c.notes}</div>}
+                  </div>
+                )}
+              </div></div>
+            );
+          })}
         </div>
       )}
     </div>

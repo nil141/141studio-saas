@@ -264,8 +264,25 @@ const _mcr = (r) => r && {
   url: r.url || "",
   username: r.username || "",
   password: r.password || "",
-  notes: r.notes || ""
+  notes: r.notes || "",
+  platform: r.platform || "",
+  granted: !!r.granted
 };
+const CRED_CATALOG = [
+  { key: "instagram", name: "Instagram", mode: "login", icon: "instagram" },
+  { key: "meta", name: "Meta Business", mode: "access", icon: "meta" },
+  { key: "google", name: "Google / Analytics", mode: "access", icon: "google" },
+  { key: "shopify", name: "Shopify", mode: "access", icon: "shopify" },
+  { key: "stripe", name: "Stripe", mode: "access", icon: "stripe" },
+  { key: "wordpress", name: "WordPress", mode: "login", icon: "wordpress" },
+  { key: "hosting", name: "Hosting", mode: "login", icon: "hostinger" },
+  { key: "dominio", name: "Dominio", mode: "login", icon: "godaddy" },
+  { key: "gmail", name: "Correo", mode: "login", icon: "gmail" },
+  { key: "mailchimp", name: "Mailchimp", mode: "login", icon: "mailchimp" },
+  { key: "otro", name: "Otro acceso", mode: "login", icon: "key" }
+];
+const _credMeta = (platform) => CRED_CATALOG.find((x) => x.key === platform) || { key: platform || "otro", name: platform || "Acceso", mode: "login", icon: "key" };
+const credMode = (platform) => _credMeta(platform).mode;
 const _mct = (r) => {
   var _a;
   return r && {
@@ -918,7 +935,9 @@ const addCredential = (clientId, input) => {
     url: (input.url || "").trim(),
     username: (input.username || "").trim(),
     password: input.password || "",
-    notes: (input.notes || "").trim()
+    notes: (input.notes || "").trim(),
+    platform: input.platform || "",
+    granted: false
   };
   _store.CREDENTIALS = [cr, ..._store.CREDENTIALS];
   _emit();
@@ -930,7 +949,9 @@ const addCredential = (clientId, input) => {
     url: cr.url,
     username: cr.username,
     password: cr.password,
-    notes: cr.notes
+    notes: cr.notes,
+    platform: cr.platform,
+    granted: false
   }).then(({ error }) => {
     if (error) {
       console.error("[addCredential] Supabase error:", error.message);
@@ -946,9 +967,10 @@ const updateCredential = (id, changes) => {
   _store.CREDENTIALS = _store.CREDENTIALS.map((c) => c.id === id ? { ...c, ...changes } : c);
   _emit();
   const db = {};
-  ["label", "url", "username", "password", "notes"].forEach((k) => {
+  ["label", "url", "username", "password", "notes", "platform"].forEach((k) => {
     if (changes[k] !== void 0) db[k] = changes[k] || "";
   });
+  if (changes.granted !== void 0) db.granted = !!changes.granted;
   _updateAdaptive("credentials", id, db);
 };
 const deleteCredential = (id) => {
@@ -1559,6 +1581,9 @@ window.Data = {
   addCredential,
   updateCredential,
   deleteCredential,
+  CRED_CATALOG,
+  credMode,
+  credMeta: _credMeta,
   clientTasksFor,
   addClientTask,
   updateClientTask,

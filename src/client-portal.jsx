@@ -621,74 +621,100 @@ const ClientDocs = ({ session }) => {
   );
 };
 
-// ── Credenciales: accesos compartidos con la agencia ────────────────
-const CredForm = ({ initial, onSave, onCancel }) => {
-  const [f, setF] = useState(initial || { label:"", url:"", username:"", password:"", notes:"" });
-  const set = (k, v) => setF(s => ({ ...s, [k]: v }));
-  const inp = { width:"100%", height:40, borderRadius:10, padding:"8px 12px", background:"var(--bg-elev)",
-    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:14, marginBottom:10 };
+// ── Credenciales: catálogo de accesos ───────────────────────────────
+const _brandBox = { width:36, height:36, borderRadius:9, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text)", border:"0.5px solid var(--border)", flexShrink:0 };
+
+const CredCatalog = ({ onPick }) => {
+  const D = window.Data;
+  const cat = D.CRED_CATALOG || [];
   return (
-    <div className="card" style={{marginBottom: 14}}>
-      <div className="card-body" style={{padding: 16}}>
-        <input style={inp} placeholder="Nombre del acceso (p.ej. Instagram, Hosting…)" value={f.label} onChange={e => set("label", e.target.value)} autoFocus/>
-        <input style={inp} placeholder="URL (p.ej. instagram.com)" value={f.url} onChange={e => set("url", e.target.value)}/>
-        <input style={inp} placeholder="Usuario / email" value={f.username} onChange={e => set("username", e.target.value)}/>
-        <input style={inp} placeholder="Contraseña" value={f.password} onChange={e => set("password", e.target.value)}/>
-        <input style={{...inp, marginBottom: 14}} placeholder="Notas (opcional)" value={f.notes} onChange={e => set("notes", e.target.value)}/>
-        <div className="row tight">
-          <button className="btn primary sm" disabled={!f.label.trim()} onClick={() => onSave(f)}>Guardar</button>
-          <button className="btn ghost sm" onClick={onCancel}>Cancelar</button>
-        </div>
+    <div className="card" style={{marginBottom:14}}><div className="card-body" style={{padding:16}}>
+      <div className="muted small" style={{marginBottom:12}}>¿Qué acceso quieres añadir?</div>
+      <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(150px,1fr))", gap:10}}>
+        {cat.map(p => (
+          <button key={p.key} onClick={() => onPick(p)}
+            style={{display:"flex", alignItems:"center", gap:10, padding:"11px 13px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12, textAlign:"left", fontFamily:"inherit"}}>
+            <span style={_brandBox}><Icon name={p.icon} size={17}/></span>
+            <span style={{minWidth:0}}>
+              <span style={{display:"block", fontWeight:500, fontSize:13.5, color:"var(--text)"}}>{p.name}</span>
+              <span className="muted xsmall">{p.mode === "access" ? "Dar acceso" : "Usuario y clave"}</span>
+            </span>
+          </button>
+        ))}
       </div>
-    </div>
+    </div></div>
   );
 };
 
-const CredCard = ({ c, onEdit, onDelete }) => {
+const CredItem = ({ c, agencyEmail, editable, onDelete }) => {
+  const D = window.Data;
+  const meta = D.credMeta(c.platform);
+  const mode = meta.mode;
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState("");
+  const [editing, setEditing] = useState(editable && mode === "login" && !c.username && !c.password);
+  const [f, setF] = useState({ username: c.username, password: c.password, notes: c.notes });
   const copy = (val, which) => { try { navigator.clipboard.writeText(val); setCopied(which); setTimeout(() => setCopied(""), 1200); } catch {} };
-  const row = (label, val, which, mono) => val ? (
-    <div style={{display:"flex", alignItems:"center", gap: 8, marginTop: 8}}>
-      <div style={{width: 78, fontSize: 12, color:"var(--text-subtle)", flexShrink:0}}>{label}</div>
-      <div style={{flex:1, fontSize: 13.5, fontFamily: mono ? "var(--font-mono)" : "inherit", wordBreak:"break-all"}}>{val}</div>
-      <button className="btn ghost icon-only sm" onClick={() => copy(val, which)} title="Copiar">
-        <Icon name={copied === which ? "check" : "copy"} size={13}/>
-      </button>
-    </div>
-  ) : null;
+  const inp = { width:"100%", height:38, borderRadius:9, padding:"8px 12px", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:9 };
+  const saveEdit = () => { D.updateCredential(c.id, f); setEditing(false); };
+
   return (
-    <div className="card">
-      <div className="card-body" style={{padding: 16}}>
-        <div className="row between" style={{alignItems:"flex-start"}}>
-          <div className="row tight">
-            <div style={{width: 34, height: 34, borderRadius: 9, background:"var(--bg-elev-2)", display:"grid", placeItems:"center", color:"var(--text-muted)", border:"0.5px solid var(--border)"}}>
-              <Icon name="key" size={15}/>
-            </div>
-            <div style={{fontWeight: 500, fontSize: 14.5}}>{c.label}</div>
-          </div>
-          <div className="row tight">
-            <button className="btn ghost icon-only sm" onClick={() => onEdit(c)} title="Editar"><Icon name="edit" size={13}/></button>
-            <button className="btn ghost icon-only sm" onClick={() => onDelete(c)} title="Eliminar"><Icon name="trash" size={13}/></button>
-          </div>
+    <div className="card"><div className="card-body" style={{padding:16}}>
+      <div className="row between" style={{alignItems:"flex-start"}}>
+        <div className="row tight">
+          <span style={_brandBox}><Icon name={meta.icon} size={16}/></span>
+          <div style={{fontWeight:500, fontSize:14.5}}>{c.label || meta.name}</div>
         </div>
-        {row("Web", c.url, "url")}
-        {row("Usuario", c.username, "user")}
-        {c.password ? (
-          <div style={{display:"flex", alignItems:"center", gap: 8, marginTop: 8}}>
-            <div style={{width: 78, fontSize: 12, color:"var(--text-subtle)", flexShrink:0}}>Contraseña</div>
-            <div style={{flex:1, fontSize: 13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all"}}>{show ? c.password : "••••••••"}</div>
-            <button className="btn ghost icon-only sm" onClick={() => setShow(s => !s)} title={show ? "Ocultar" : "Mostrar"}>
-              <Icon name={show ? "eye-off" : "eye"} size={13}/>
-            </button>
-            <button className="btn ghost icon-only sm" onClick={() => copy(c.password, "pw")} title="Copiar">
-              <Icon name={copied === "pw" ? "check" : "copy"} size={13}/>
-            </button>
-          </div>
-        ) : null}
-        {c.notes ? <div className="muted small" style={{marginTop: 10, lineHeight: 1.5}}>{c.notes}</div> : null}
+        <div className="row tight">
+          {mode === "login" && editable && !editing && <button className="btn ghost icon-only sm" onClick={() => setEditing(true)}><Icon name="edit" size={13}/></button>}
+          {editable && <button className="btn ghost icon-only sm" onClick={() => onDelete(c)}><Icon name="trash" size={13}/></button>}
+        </div>
       </div>
-    </div>
+
+      {mode === "access" ? (
+        <div style={{marginTop:12}}>
+          <div className="muted small" style={{lineHeight:1.5, marginBottom:8}}>Dale acceso a este correo en tu cuenta de {meta.name}:</div>
+          <div style={{display:"flex", alignItems:"center", gap:8}}>
+            <div style={{flex:1, fontSize:13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all", background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:8, padding:"8px 12px"}}>{agencyEmail}</div>
+            <button className="btn ghost icon-only sm" onClick={() => copy(agencyEmail, "mail")}><Icon name={copied === "mail" ? "check" : "copy"} size={13}/></button>
+          </div>
+          {editable ? (
+            <button className={"btn sm" + (c.granted ? "" : " ghost")} style={{marginTop:10}} onClick={() => D.updateCredential(c.id, { granted: !c.granted })}>
+              {c.granted ? <><Icon name="check" size={12}/> Acceso concedido</> : "Marcar acceso concedido"}
+            </button>
+          ) : c.granted ? (
+            <div style={{marginTop:10, color:"var(--green)", fontSize:12.5, display:"inline-flex", alignItems:"center", gap:5}}><Icon name="check" size={12}/> Acceso concedido</div>
+          ) : null}
+        </div>
+      ) : editing ? (
+        <div style={{marginTop:12}}>
+          <input style={inp} placeholder="Usuario / email" value={f.username} onChange={e => setF(s => ({...s, username:e.target.value}))} autoFocus/>
+          <input style={inp} placeholder="Contraseña" value={f.password} onChange={e => setF(s => ({...s, password:e.target.value}))}/>
+          <input style={{...inp, marginBottom:12}} placeholder="Notas (opcional)" value={f.notes} onChange={e => setF(s => ({...s, notes:e.target.value}))}/>
+          <div className="row tight"><button className="btn primary sm" onClick={saveEdit}>Guardar</button><button className="btn ghost sm" onClick={() => setEditing(false)}>Cancelar</button></div>
+        </div>
+      ) : (
+        <div style={{marginTop:8}}>
+          {c.username && (
+            <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
+              <div style={{width:70, fontSize:12, color:"var(--text-subtle)", flexShrink:0}}>Usuario</div>
+              <div style={{flex:1, fontSize:13.5, wordBreak:"break-all"}}>{c.username}</div>
+              <button className="btn ghost icon-only sm" onClick={() => copy(c.username, "u")}><Icon name={copied === "u" ? "check" : "copy"} size={12}/></button>
+            </div>
+          )}
+          {c.password && (
+            <div style={{display:"flex", alignItems:"center", gap:8, marginTop:6}}>
+              <div style={{width:70, fontSize:12, color:"var(--text-subtle)", flexShrink:0}}>Clave</div>
+              <div style={{flex:1, fontSize:13.5, fontFamily:"var(--font-mono)", wordBreak:"break-all"}}>{show ? c.password : "••••••••"}</div>
+              <button className="btn ghost icon-only sm" onClick={() => setShow(s => !s)}><Icon name={show ? "eye-off" : "eye"} size={12}/></button>
+              <button className="btn ghost icon-only sm" onClick={() => copy(c.password, "p")}><Icon name={copied === "p" ? "check" : "copy"} size={12}/></button>
+            </div>
+          )}
+          {!c.username && !c.password && <div className="muted small" style={{marginTop:6}}>Sin datos todavía.</div>}
+          {c.notes ? <div className="muted small" style={{marginTop:10, lineHeight:1.5}}>{c.notes}</div> : null}
+        </div>
+      )}
+    </div></div>
   );
 };
 
@@ -698,14 +724,10 @@ const ClientCredentials = ({ session }) => {
   const S = _portalScope(session);
   const clientId = S.clientId;
   const creds = S.credentials;
-  const [adding, setAdding] = useState(false);
-  const [editing, setEditing] = useState(null);
-
-  const save = (f) => {
-    if (editing) D.updateCredential(editing.id, f); else D.addCredential(clientId, f);
-    setAdding(false); setEditing(null);
-  };
-  const del = (c) => { if (confirm(`¿Eliminar el acceso "${c.label}"?`)) D.deleteCredential(c.id); };
+  const agencyEmail = (D.SETTINGS && D.SETTINGS.email) || "tu agencia";
+  const [picking, setPicking] = useState(false);
+  const add = (p) => { D.addCredential(clientId, { platform: p.key, label: p.name }); setPicking(false); };
+  const del = (c) => { if (confirm(`¿Eliminar "${c.label || ""}"?`)) D.deleteCredential(c.id); };
 
   return (
     <div className="page">
@@ -715,23 +737,17 @@ const ClientCredentials = ({ session }) => {
             <h1>Credenciales</h1>
             <div className="sub">Accesos que compartes con tu agencia. Solo tú y el equipo de 141 podéis verlos.</div>
           </div>
-          {!adding && !editing && (
-            <button className="btn primary" onClick={() => setAdding(true)}><Icon name="plus" size={14}/> Añadir acceso</button>
-          )}
+          {!picking && <button className="btn primary" onClick={() => setPicking(true)}><Icon name="plus" size={14}/> Añadir acceso</button>}
         </div>
       </div>
 
-      {(adding || editing) && (
-        <CredForm initial={editing} onSave={save} onCancel={() => { setAdding(false); setEditing(null); }}/>
-      )}
+      {picking && <CredCatalog onPick={add}/>}
 
-      {creds.length === 0 && !adding ? (
-        <Empty icon="lock" title="Sin accesos guardados" sub="Añade aquí los accesos (web, hosting, redes, dominio…) que tu agencia necesita para trabajar."/>
+      {creds.length === 0 && !picking ? (
+        <Empty icon="lock" title="Sin accesos guardados" sub="Añade los accesos (redes, web, hosting…) que tu agencia necesita para trabajar."/>
       ) : (
-        <div style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 14}}>
-          {creds.map(c => (
-            <CredCard key={c.id} c={c} onEdit={(x) => { setEditing(x); setAdding(false); }} onDelete={del}/>
-          ))}
+        <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fill, minmax(300px,1fr))", gap:14}}>
+          {creds.map(c => <CredItem key={c.id} c={c} agencyEmail={agencyEmail} editable={true} onDelete={del}/>)}
         </div>
       )}
 
