@@ -508,10 +508,11 @@ const NotificationBell = ({ kind }) => {
           </span>
         )}
       </button>
-      {open && (
-        <div style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 200, width: 330, maxWidth: "90vw",
+      {open && ReactDOM.createPortal(
+        <div onClick={e => e.stopPropagation()}
+          style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 4000, width: 330, maxWidth: "92vw",
           background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 14, overflow: "hidden",
-          boxShadow: "0 12px 34px rgba(0,0,0,0.35)" }}>
+          boxShadow: "0 18px 44px rgba(0,0,0,0.45)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Notificaciones</div>
             {unread > 0 && <button onClick={() => D.markAllNotificationsRead()} style={{ background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Marcar leídas</button>}
@@ -531,7 +532,8 @@ const NotificationBell = ({ kind }) => {
               </div>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

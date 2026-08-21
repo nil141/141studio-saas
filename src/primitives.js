@@ -527,28 +527,39 @@ const NotificationBell = ({ kind }) => {
     display: "grid",
     placeItems: "center",
     lineHeight: 1
-  } }, unread > 9 ? "9+" : unread)), open && /* @__PURE__ */ React.createElement("div", { style: {
-    position: "fixed",
-    left: pos.left,
-    top: pos.top,
-    zIndex: 200,
-    width: 330,
-    maxWidth: "90vw",
-    background: "var(--bg-elev)",
-    border: "0.5px solid var(--border-strong)",
-    borderRadius: 14,
-    overflow: "hidden",
-    boxShadow: "0 12px 34px rgba(0,0,0,0.35)"
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, "Notificaciones"), unread > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => D.markAllNotificationsRead(), style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" } }, "Marcar le\xEDdas")), /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 380, overflowY: "auto" } }, list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin notificaciones") : list.slice(0, 25).map((n) => /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      key: n.id,
-      onClick: () => D.markNotificationRead(n.id),
-      style: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }
-    },
-    /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" } }),
-    /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500 } }, n.title), n.body && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.4 } }, n.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 4 } }, _notifAgo(n.createdAt)))
-  )))));
+  } }, unread > 9 ? "9+" : unread)), open && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick: (e) => e.stopPropagation(),
+        style: {
+          position: "fixed",
+          left: pos.left,
+          top: pos.top,
+          zIndex: 4e3,
+          width: 330,
+          maxWidth: "92vw",
+          background: "var(--bg-elev)",
+          border: "0.5px solid var(--border-strong)",
+          borderRadius: 14,
+          overflow: "hidden",
+          boxShadow: "0 18px 44px rgba(0,0,0,0.45)"
+        }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, "Notificaciones"), unread > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => D.markAllNotificationsRead(), style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" } }, "Marcar le\xEDdas")),
+      /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 380, overflowY: "auto" } }, list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin notificaciones") : list.slice(0, 25).map((n) => /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: n.id,
+          onClick: () => D.markNotificationRead(n.id),
+          style: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" } }),
+        /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500 } }, n.title), n.body && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.4 } }, n.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 4 } }, _notifAgo(n.createdAt)))
+      )))
+    ),
+    document.body
+  ));
 };
 const Topbar = ({ crumb, right, theme, setTheme, onSearch, kind = "agency" }) => /* @__PURE__ */ React.createElement("div", { className: "topbar" }, /* @__PURE__ */ React.createElement("div", { className: "topbar-left grow" }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14 }), /* @__PURE__ */ React.createElement("input", { placeholder: kind === "agency" ? "Buscar clientes, proyectos, tareas\u2026" : "Buscar en tu cuenta\u2026", onChange: (e) => onSearch && onSearch(e.target.value) }), /* @__PURE__ */ React.createElement("span", { className: "kbd" }, "\u2318K")), crumb ? /* @__PURE__ */ React.createElement("div", { className: "crumb", style: { marginLeft: 8 } }, crumb) : null), /* @__PURE__ */ React.createElement("div", { className: "topbar-right" }, right, /* @__PURE__ */ React.createElement(NotificationBell, { kind })));
 const Modal = ({ open, onClose, title, sub, footer, children, size }) => {
