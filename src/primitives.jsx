@@ -275,7 +275,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         }}>
           {(me.initials || "").charAt(0)}
         </div>
-        <div style={{minWidth:0}}>
+        <div style={{minWidth:0, flex:1}}>
           <div style={{fontSize:15, fontWeight:400, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {me.name}
           </div>
@@ -283,6 +283,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
           </div>
         </div>
+        {kind === "client" && <NotificationBell kind="client"/>}
       </div>
 
       {/* Nav con secciones */}
@@ -451,7 +452,7 @@ const NotificationBell = ({ kind }) => {
         )}
       </button>
       {open && (
-        <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 40, width: 330, maxWidth: "90vw",
+        <div style={{ position: "absolute", left: 0, top: "calc(100% + 8px)", zIndex: 40, width: 330, maxWidth: "80vw",
           background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 14, overflow: "hidden",
           boxShadow: "0 12px 34px rgba(0,0,0,0.35)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" }}>

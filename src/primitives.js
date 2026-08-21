@@ -261,7 +261,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     justifyContent: "center",
     fontSize: 18,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), kind === "client" && /* @__PURE__ */ React.createElement(NotificationBell, { kind: "client" })), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     width: "200%",
     height: "100%",
@@ -472,11 +472,11 @@ const NotificationBell = ({ kind }) => {
     lineHeight: 1
   } }, unread > 9 ? "9+" : unread)), open && /* @__PURE__ */ React.createElement("div", { style: {
     position: "absolute",
-    right: 0,
+    left: 0,
     top: "calc(100% + 8px)",
     zIndex: 40,
     width: 330,
-    maxWidth: "90vw",
+    maxWidth: "80vw",
     background: "var(--bg-elev)",
     border: "0.5px solid var(--border-strong)",
     borderRadius: 14,
