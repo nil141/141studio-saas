@@ -26,7 +26,7 @@ SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 # en el servidor; nunca se expone al navegador. Si falta, el envío se omite sin
 # romper nada (el aviso in-app sigue funcionando).
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM    = os.environ.get("RESEND_FROM", "141'STUDIO <hola@send.141agency.com>")
+RESEND_FROM    = os.environ.get("RESEND_FROM", "141'STUDIO <no-reply@141agency.com>")
 PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
