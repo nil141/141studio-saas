@@ -424,4 +424,47 @@ const ClientCredentials = ({ session }) => {
   const doneCount = creds.filter((c) => _credComplete(c, D.credMeta(c.platform).mode)).length;
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Accesos"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Credenciales"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, maxWidth: 560, color: "var(--text-muted)" } }, "Guarda aqu\xED los accesos que tu equipo de 141 necesita para trabajar. Solo t\xFA y el equipo pod\xE9is verlos.")), !picking && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => setPicking(true) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " A\xF1adir acceso")), creds.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement(Icon, { name: "lock", size: 12 }), " ", doneCount, " de ", creds.length, " accesos listos \xB7 cifrado y privado")), picking && /* @__PURE__ */ React.createElement(CredCatalog, { onPick: add, onCancel: () => setPicking(false) }), creds.length === 0 && !picking ? /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: "40px 24px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 52, height: 52, borderRadius: 14, margin: "0 auto 16px", display: "grid", placeItems: "center", background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "lock", size: 22 })), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500 } }, "Sin accesos todav\xEDa"), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 6, maxWidth: 380, marginLeft: "auto", marginRight: "auto", lineHeight: 1.5 } }, "A\xF1ade los accesos que tu agencia necesita: redes sociales, web, hosting, analytics\u2026 Elige la plataforma y te decimos qu\xE9 necesitamos."), /* @__PURE__ */ React.createElement("button", { className: "btn primary", style: { marginTop: 18 }, onClick: () => setPicking(true) }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " A\xF1adir acceso"))) : /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px,1fr))", gap: 14 } }, creds.map((c) => /* @__PURE__ */ React.createElement(CredItem, { key: c.id, c, agencyEmail, editable: true, onDelete: del }))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
 };
-Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials });
+const _notifAgoP = (iso) => {
+  if (!iso) return "ahora";
+  const d = new Date(iso);
+  const s = Math.floor((Date.now() - d.getTime()) / 1e3);
+  if (s < 60) return "ahora";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `hace ${h} h`;
+  const dd = Math.floor(h / 24);
+  if (dd < 7) return `hace ${dd} d`;
+  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+};
+const ClientNotifications = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const pcid = _previewClientId(session);
+  let list = D.NOTIFICATIONS || [];
+  if (pcid) list = list.filter((n) => n.clientId === pcid);
+  const unread = list.filter((n) => !n.read).length;
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Tu cuenta"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 16, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Notificaciones"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, color: "var(--text-muted)" } }, "Novedades de tu proyecto y lo que tu agencia necesita de ti.")), unread > 0 && /* @__PURE__ */ React.createElement("button", { className: "btn ghost", onClick: () => D.markAllNotificationsRead() }, "Marcar todas le\xEDdas"))), list.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "bell", title: "Sin notificaciones", sub: "Aqu\xED ver\xE1s los avisos cuando tu agencia a\xF1ada proyectos o tareas." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, list.map((n) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: n.id,
+      className: "card",
+      style: { cursor: n.read ? "default" : "pointer", borderColor: n.read ? "var(--border)" : "var(--accent)" },
+      onClick: () => {
+        if (!n.read) D.markNotificationRead(n.id);
+      }
+    },
+    /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", gap: 14, alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { style: {
+      width: 38,
+      height: 38,
+      borderRadius: 10,
+      flexShrink: 0,
+      display: "grid",
+      placeItems: "center",
+      background: n.read ? "var(--bg-elev-2)" : "var(--accent-soft)",
+      color: n.read ? "var(--text-muted)" : "var(--accent)",
+      border: "0.5px solid var(--border)"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: n.kind === "task" ? "list-todo" : n.kind === "project" ? "folder" : "bell", size: 17 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "baseline" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14.5 } }, n.title), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { flexShrink: 0 } }, _notifAgoP(n.createdAt))), n.body && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 3, lineHeight: 1.5 } }, n.body)), !n.read && /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 99, background: "var(--accent)", flexShrink: 0, marginTop: 6 } }))
+  ))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
+};
+Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications });

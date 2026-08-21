@@ -799,4 +799,66 @@ const ClientCredentials = ({ session }) => {
   );
 };
 
-Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials });
+const _notifAgoP = (iso) => {
+  if (!iso) return "ahora";
+  const d = new Date(iso); const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "ahora";
+  const m = Math.floor(s / 60); if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60); if (h < 24) return `hace ${h} h`;
+  const dd = Math.floor(h / 24); if (dd < 7) return `hace ${dd} d`;
+  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+};
+
+const ClientNotifications = ({ session }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const pcid = _previewClientId(session);
+  let list = D.NOTIFICATIONS || [];
+  if (pcid) list = list.filter(n => n.clientId === pcid);
+  const unread = list.filter(n => !n.read).length;
+
+  return (
+    <div className="page">
+      <div style={{marginBottom: 22}}>
+        <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)", marginBottom:8}}>Tu cuenta</div>
+        <div style={{display:"flex", justifyContent:"space-between", alignItems:"flex-start", gap:16, flexWrap:"wrap"}}>
+          <div>
+            <h1 style={{fontFamily:"var(--font-display)", fontWeight:400, fontSize:"clamp(26px,3.5vw,34px)", letterSpacing:"-1px"}}>Notificaciones</h1>
+            <div className="sub" style={{marginTop:8, color:"var(--text-muted)"}}>Novedades de tu proyecto y lo que tu agencia necesita de ti.</div>
+          </div>
+          {unread > 0 && <button className="btn ghost" onClick={() => D.markAllNotificationsRead()}>Marcar todas leídas</button>}
+        </div>
+      </div>
+
+      {list.length === 0 ? (
+        <Empty icon="bell" title="Sin notificaciones" sub="Aquí verás los avisos cuando tu agencia añada proyectos o tareas."/>
+      ) : (
+        <div style={{display:"flex", flexDirection:"column", gap:10}}>
+          {list.map(n => (
+            <div key={n.id} className="card" style={{cursor: n.read ? "default" : "pointer", borderColor: n.read ? "var(--border)" : "var(--accent)"}}
+              onClick={() => { if (!n.read) D.markNotificationRead(n.id); }}>
+              <div className="card-body" style={{padding:16, display:"flex", gap:14, alignItems:"flex-start"}}>
+                <div style={{width:38, height:38, borderRadius:10, flexShrink:0, display:"grid", placeItems:"center",
+                  background: n.read ? "var(--bg-elev-2)" : "var(--accent-soft)", color: n.read ? "var(--text-muted)" : "var(--accent)", border:"0.5px solid var(--border)"}}>
+                  <Icon name={n.kind === "task" ? "list-todo" : n.kind === "project" ? "folder" : "bell"} size={17}/>
+                </div>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:"flex", justifyContent:"space-between", gap:10, alignItems:"baseline"}}>
+                    <div style={{fontWeight:500, fontSize:14.5}}>{n.title}</div>
+                    <div className="muted xsmall" style={{flexShrink:0}}>{_notifAgoP(n.createdAt)}</div>
+                  </div>
+                  {n.body && <div className="muted small" style={{marginTop:3, lineHeight:1.5}}>{n.body}</div>}
+                </div>
+                {!n.read && <span style={{width:8, height:8, borderRadius:99, background:"var(--accent)", flexShrink:0, marginTop:6}}/>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <WhatsAppFloat/>
+    </div>
+  );
+};
+
+Object.assign(window, { ClientLogin, ClientDashboard, ClientStatus, ClientDocs, ClientCredentials, ClientNotifications });

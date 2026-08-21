@@ -17,6 +17,14 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   const D = window.Data;
   D.useStore();
   const pendingTasks = Object.values(D.TASKS).flat().filter((t) => t.column !== "done").length || null;
+  let clientUnread = 0;
+  try {
+    let l = D.NOTIFICATIONS || [];
+    const pid = sessionStorage.getItem("141_preview_client");
+    if (pid) l = l.filter((n) => n.clientId === pid);
+    clientUnread = l.filter((n) => !n.read).length;
+  } catch (e) {
+  }
   const topItem = { id: "dashboard", label: "Inicio", icon: "home" };
   const agencySections = [
     {
@@ -50,7 +58,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         { id: "client-dashboard", label: "Inicio", icon: "home" },
         { id: "client-status", label: "Estado del proyecto", icon: "activity" },
         { id: "client-docs", label: "Documentaci\xF3n", icon: "file-text" },
-        { id: "client-credentials", label: "Credenciales", icon: "lock" }
+        { id: "client-credentials", label: "Credenciales", icon: "lock" },
+        { id: "client-notifications", label: "Notificaciones", icon: "bell", badge: clientUnread || void 0 }
       ]
     }
   ];

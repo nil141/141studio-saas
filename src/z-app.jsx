@@ -167,6 +167,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "client-status": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
       case "client-docs": return <ClientDocs navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
       case "client-credentials": return <ClientCredentials navigate={navigate} openModal={openModal} session={session}/>;
+      case "client-notifications": return <ClientNotifications navigate={navigate} session={session}/>;
       // compat con enlaces antiguos
       case "client-project": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId}/>;
       case "client-deliverables": return <ClientStatus navigate={navigate} openModal={openModal} session={session} projectId={view.params.projectId} initialTab="deliverables"/>;
@@ -191,13 +192,6 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           <button onClick={_exitPreview} style={{padding:"3px 12px", borderRadius:99, border:"0.5px solid var(--amber)", background:"transparent", color:"var(--amber)", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:500}}>
             ← Volver al panel
           </button>
-        </div>
-      )}
-      {isClient && (
-        <div style={{position:"fixed", top: isAdminPreview ? 46 : 16, right: 20, zIndex: 60,
-          background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:12,
-          boxShadow:"0 4px 16px rgba(0,0,0,0.28)"}}>
-          <NotificationBell kind="client"/>
         </div>
       )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
