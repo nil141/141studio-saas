@@ -439,12 +439,21 @@ const NotificationBell = ({ kind }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, [open]);
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left, window.innerWidth - 342)) });
+    }
+    setOpen((o) => !o);
+  };
   let list = [];
   if (kind === "client") {
     list = D.NOTIFICATIONS || [];
@@ -455,7 +464,7 @@ const NotificationBell = ({ kind }) => {
     }
   }
   const unread = list.filter((n) => !n.read).length;
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", "data-tooltip": "Notificaciones", onClick: () => setOpen((o) => !o) }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "data-tooltip": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
     position: "absolute",
     top: 3,
     right: 3,
@@ -471,12 +480,12 @@ const NotificationBell = ({ kind }) => {
     placeItems: "center",
     lineHeight: 1
   } }, unread > 9 ? "9+" : unread)), open && /* @__PURE__ */ React.createElement("div", { style: {
-    position: "absolute",
-    left: 0,
-    top: "calc(100% + 8px)",
-    zIndex: 40,
+    position: "fixed",
+    left: pos.left,
+    top: pos.top,
+    zIndex: 200,
     width: 330,
-    maxWidth: "80vw",
+    maxWidth: "90vw",
     background: "var(--bg-elev)",
     border: "0.5px solid var(--border-strong)",
     borderRadius: 14,

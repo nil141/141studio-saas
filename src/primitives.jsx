@@ -426,12 +426,22 @@ const NotificationBell = ({ kind }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState({ top: 0, left: 0 });
+  const btnRef = useRef(null);
   useEffect(() => {
     if (!open) return;
     const close = () => setOpen(false);
     window.addEventListener("click", close);
     return () => window.removeEventListener("click", close);
   }, [open]);
+
+  const toggle = () => {
+    if (!open && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left, window.innerWidth - 342)) });
+    }
+    setOpen(o => !o);
+  };
 
   let list = [];
   if (kind === "client") {
@@ -442,7 +452,7 @@ const NotificationBell = ({ kind }) => {
 
   return (
     <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-      <button className="btn ghost icon-only" data-tooltip="Notificaciones" onClick={() => setOpen(o => !o)}>
+      <button ref={btnRef} className="btn ghost icon-only" data-tooltip="Notificaciones" onClick={toggle}>
         <Icon name="bell" size={15}/>
         {unread > 0 && (
           <span style={{ position: "absolute", top: 3, right: 3, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 99,
@@ -452,7 +462,7 @@ const NotificationBell = ({ kind }) => {
         )}
       </button>
       {open && (
-        <div style={{ position: "absolute", left: 0, top: "calc(100% + 8px)", zIndex: 40, width: 330, maxWidth: "80vw",
+        <div style={{ position: "fixed", left: pos.left, top: pos.top, zIndex: 200, width: 330, maxWidth: "90vw",
           background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 14, overflow: "hidden",
           boxShadow: "0 12px 34px rgba(0,0,0,0.35)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" }}>
