@@ -296,109 +296,48 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
           </div>
         </div>
       ) : (
-        <div className="card" style={{marginBottom: 20}}>
-          <div style={{padding: "26px 28px 22px"}}>
-            <div style={{display:"flex", justifyContent:"space-between", gap: 20, alignItems:"flex-start", flexWrap:"wrap"}}>
-              <div style={{minWidth: 0}}>
-                <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)"}}>
-                  {[c.service && c.service !== "—" ? c.service : null, projects[0] ? (D.PHASES[projects[0].phase] || {}).label : null].filter(Boolean).join(" · ") || "Cliente"}
-                </div>
-                <h1 style={{fontFamily:"var(--font-display)", fontSize:"clamp(28px,3.4vw,38px)", fontWeight:400, letterSpacing:"-1.2px", margin:"6px 0 10px"}}>
-                  {c.company || c.name}
-                </h1>
-                <div style={{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", color:"var(--text-muted)", fontSize:13.5}}>
-                  {c.name && <span>{c.name}</span>}
-                  {c.email && <><span style={{opacity:0.4}}>·</span><span>{c.email}</span></>}
-                  {c.whatsapp && <><span style={{opacity:0.4}}>·</span><span>{c.whatsapp}</span></>}
-                  <StatusChip status={c.status}/>
-                </div>
+        <div style={{marginBottom: 30}}>
+          <div style={{display:"flex", justifyContent:"space-between", gap: 20, alignItems:"flex-start", flexWrap:"wrap"}}>
+            <div style={{minWidth: 0}}>
+              <div style={{fontSize:11, textTransform:"uppercase", letterSpacing:"0.09em", color:"var(--text-subtle)"}}>
+                {[c.service && c.service !== "—" ? c.service : null, projects[0] ? (D.PHASES[projects[0].phase] || {}).label : null].filter(Boolean).join(" · ") || "Cliente"}
               </div>
-
-              <div style={{display:"flex", gap: 6, alignItems:"center", flexShrink: 0}}>
-                <a className="btn" href={`https://wa.me/${(c.whatsapp||"").replace(/\D/g,"")}`} target="_blank"
-                  style={{color:"#25D366", borderColor:"#25D36655"}}>
-                  <Icon name="msg-circle" size={13}/> WhatsApp
-                </a>
-                <button className="btn" onClick={startEdit}><Icon name="edit" size={13}/> Editar</button>
-                <button className="btn primary" onClick={() => { try { sessionStorage.setItem("141_preview_client", c.id); } catch {} navigate("client-dashboard"); }}><Icon name="external-link" size={13}/> Abrir portal</button>
-                <div style={{position:"relative"}} onClick={e => e.stopPropagation()}>
-                  <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}><Icon name="more-h" size={14}/></button>
-                  {menuOpen && (
-                    <div style={{position:"absolute", right: 0, top:"calc(100% + 4px)", zIndex: 20,
-                      background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
-                      borderRadius: 10, padding: 4, minWidth: 170, boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>
-                      <button onClick={() => { setMenuOpen(false); toast("Archivado"); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--text)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
-                        <Icon name="archive" size={13}/> Archivar cliente
-                      </button>
-                      <div style={{height:1, background:"var(--border)", margin:"4px 0"}}/>
-                      <button onClick={() => { setMenuOpen(false); removeClient(); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--red)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
-                        <Icon name="x" size={13}/> Eliminar cliente
-                      </button>
-                    </div>
-                  )}
-                </div>
+              <h1 style={{fontFamily:"var(--font-display)", fontSize:"clamp(32px,4.2vw,46px)", fontWeight:400, letterSpacing:"-1.6px", margin:"8px 0 12px"}}>
+                {c.company || c.name}
+              </h1>
+              <div style={{display:"flex", alignItems:"center", gap:10, flexWrap:"wrap", color:"var(--text-muted)", fontSize:14}}>
+                {c.name && <span>{c.name}</span>}
+                {c.email && <><span style={{opacity:0.4}}>·</span><span>{c.email}</span></>}
+                {c.whatsapp && <><span style={{opacity:0.4}}>·</span><span>{c.whatsapp}</span></>}
+                <StatusChip status={c.status}/>
               </div>
             </div>
 
-            {/* Stats */}
-            <div style={{display:"flex", gap: 12, marginTop: 22, flexWrap:"wrap"}}>
-              {[
-                { label: "Facturado", value: "€" + totalBilled.toLocaleString("es-ES"), color: "var(--text)" },
-                { label: "Pendiente", value: pending > 0 ? "€" + pending.toLocaleString("es-ES") : "—", color: pending > 0 ? "var(--amber)" : "var(--text-subtle)" },
-                { label: "Proyectos", value: projects.length, color: "var(--text)" },
-                { label: "MRR", value: c.mrr ? "€" + c.mrr + "/m" : "—", color: c.mrr ? "var(--green)" : "var(--text-subtle)" },
-              ].map(s => (
-                <div key={s.label} style={{padding:"10px 16px", borderRadius: 10, background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", minWidth: 100}}>
-                  <div style={{fontSize: 11, color:"var(--text-subtle)", marginBottom: 4, fontWeight: 500}}>{s.label}</div>
-                  <div style={{fontSize: 18, fontWeight: 600, color: s.color, fontFamily:"var(--font-display)", letterSpacing:"-0.02em"}}>{s.value}</div>
-                </div>
-              ))}
+            <div style={{display:"flex", gap: 6, alignItems:"center", flexShrink: 0}}>
+              <a className="btn" href={`https://wa.me/${(c.whatsapp||"").replace(/\D/g,"")}`} target="_blank"
+                style={{color:"#25D366", borderColor:"#25D36655"}}>
+                <Icon name="msg-circle" size={13}/> WhatsApp
+              </a>
+              <button className="btn" onClick={startEdit}><Icon name="edit" size={13}/> Editar</button>
+              <button className="btn primary" onClick={() => { try { sessionStorage.setItem("141_preview_client", c.id); } catch {} navigate("client-dashboard"); }}><Icon name="external-link" size={13}/> Abrir portal</button>
+              <div style={{position:"relative"}} onClick={e => e.stopPropagation()}>
+                <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}><Icon name="more-h" size={14}/></button>
+                {menuOpen && (
+                  <div style={{position:"absolute", right: 0, top:"calc(100% + 4px)", zIndex: 20,
+                    background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)",
+                    borderRadius: 10, padding: 4, minWidth: 170, boxShadow:"0 8px 24px rgba(0,0,0,0.25)"}}>
+                    <button onClick={() => { setMenuOpen(false); toast("Archivado"); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--text)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
+                      <Icon name="archive" size={13}/> Archivar cliente
+                    </button>
+                    <div style={{height:1, background:"var(--border)", margin:"4px 0"}}/>
+                    <button onClick={() => { setMenuOpen(false); removeClient(); }} style={{display:"flex",alignItems:"center",gap:8,width:"100%",padding:"7px 10px",border:0,background:"transparent",color:"var(--red)",fontSize:13,borderRadius:6,cursor:"pointer",fontFamily:"inherit"}}>
+                      <Icon name="x" size={13}/> Eliminar cliente
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Portal de cliente */}
-      {!editing && (
-        <div className="card" style={{ padding: "16px 20px", marginBottom: 16,
-          display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10, flexShrink: 0,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            background: hasPortal ? "var(--green-soft)" : "var(--bg-elev-2)",
-            color: hasPortal ? "var(--green)" : "var(--text-muted)",
-            border: "0.5px solid var(--border)",
-          }}>
-            <Icon name={hasPortal ? "check" : "external-link"} size={16} strokeWidth={1.7}/>
-          </div>
-          <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px" }}>
-              {hasPortal ? "Portal de cliente activo" : "Sin portal de cliente"}
-            </div>
-            <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>
-              {hasPortal
-                ? `${c.email} tiene acceso al portal.`
-                : "Genera un enlace para que cree su acceso."}
-            </div>
-          </div>
-          {portalLink ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-              <input readOnly value={portalLink} onClick={e => e.target.select()}
-                style={{
-                  fontSize: 12, padding: "8px 12px", borderRadius: 8,
-                  background: "var(--bg-elev)", border: "0.5px solid var(--border)",
-                  color: "var(--text-muted)", fontFamily: "var(--font-mono)",
-                  width: 320, maxWidth: "100%",
-                }}/>
-              <button className="btn primary sm" onClick={copyPortal}>
-                {portalCopied ? <Icon name="check" size={12}/> : null} {portalCopied ? "Copiado" : "Copiar enlace"}
-              </button>
-            </div>
-          ) : !hasPortal && (
-            <button className="btn primary" onClick={createPortal} disabled={portalBusy}>
-              <Icon name="external-link" size={13}/> {portalBusy ? "Generando…" : "Crear portal"}
-            </button>
-          )}
         </div>
       )}
 
@@ -422,6 +361,27 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
 
       {tab === "vista" && (
         <div style={{display:"flex", flexDirection:"column", gap: 16}}>
+          {/* Portal de cliente */}
+          <div className="card" style={{ padding: "16px 20px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
+              background: hasPortal ? "var(--green-soft)" : "var(--bg-elev-2)", color: hasPortal ? "var(--green)" : "var(--text-muted)", border: "0.5px solid var(--border)" }}>
+              <Icon name={hasPortal ? "check" : "external-link"} size={16} strokeWidth={1.7}/>
+            </div>
+            <div style={{ flex: 1, minWidth: 200 }}>
+              <div style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px" }}>{hasPortal ? "Portal de cliente activo" : "Sin portal de cliente"}</div>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{hasPortal ? `${c.email} tiene acceso al portal.` : "Genera un enlace para que cree su acceso."}</div>
+            </div>
+            {portalLink ? (
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <input readOnly value={portalLink} onClick={e => e.target.select()}
+                  style={{ fontSize: 12, padding: "8px 12px", borderRadius: 8, background: "var(--bg-elev)", border: "0.5px solid var(--border)", color: "var(--text-muted)", fontFamily: "var(--font-mono)", width: 320, maxWidth: "100%" }}/>
+                <button className="btn primary sm" onClick={copyPortal}>{portalCopied ? <Icon name="check" size={12}/> : null} {portalCopied ? "Copiado" : "Copiar enlace"}</button>
+              </div>
+            ) : !hasPortal && (
+              <button className="btn primary" onClick={createPortal} disabled={portalBusy}><Icon name="external-link" size={13}/> {portalBusy ? "Generando…" : "Crear portal"}</button>
+            )}
+          </div>
+
           {(c.fiscalName || c.nif || c.fiscalAddress || c.website || c.about) ? (
             <div className="card" style={{ padding: "18px 20px" }}>
               <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 12 }}>Datos de facturación</div>
