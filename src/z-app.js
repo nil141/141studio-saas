@@ -196,11 +196,13 @@
     const _previewClient = isAdminPreview && _previewId ? (window.Data.CLIENTS || []).find((c) => c.id === _previewId) : null;
     const _previewName = _previewClient ? _previewClient.company || _previewClient.name : null;
     const _exitPreview = () => {
+      const id = _previewId;
       try {
         sessionStorage.removeItem("141_preview_client");
       } catch (e) {
       }
-      navigate("clients");
+      if (id) navigate("clientDetail", { clientId: id });
+      else navigate("clients");
     };
     return /* @__PURE__ */ React.createElement(React.Fragment, null, isAdminPreview && /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 16px", background: "var(--amber-soft)", color: "var(--amber)", fontSize: 12.5, borderBottom: "0.5px solid var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, "Vista previa del portal", _previewName ? /* @__PURE__ */ React.createElement(React.Fragment, null, " de ", /* @__PURE__ */ React.createElement("b", null, _previewName)) : ""), /* @__PURE__ */ React.createElement("button", { onClick: _exitPreview, style: { padding: "3px 12px", borderRadius: 99, border: "0.5px solid var(--amber)", background: "transparent", color: "var(--amber)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 } }, "\u2190 Volver al panel")), /* @__PURE__ */ React.createElement("div", { className: "app" + (isClient ? " client" : ""), "data-screen-label": view.name }, /* @__PURE__ */ React.createElement(Sidebar, { current: view.name, onNavigate: navigate, kind: isClient ? "client" : "agency", session, onAssistant: () => navigate("nora"), onQuickCreate: () => setQuickCreate(true) }), /* @__PURE__ */ React.createElement("div", { className: "main" }, /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
       { name: "dashboard", icon: "home", label: "Inicio" },

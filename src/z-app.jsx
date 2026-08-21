@@ -181,7 +181,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
   const _previewId = (() => { try { return sessionStorage.getItem("141_preview_client"); } catch { return null; } })();
   const _previewClient = (isAdminPreview && _previewId) ? (window.Data.CLIENTS || []).find(c => c.id === _previewId) : null;
   const _previewName = _previewClient ? (_previewClient.company || _previewClient.name) : null;
-  const _exitPreview = () => { try { sessionStorage.removeItem("141_preview_client"); } catch {} navigate("clients"); };
+  const _exitPreview = () => { const id = _previewId; try { sessionStorage.removeItem("141_preview_client"); } catch {} if (id) navigate("clientDetail", { clientId: id }); else navigate("clients"); };
 
   return (
     <>
