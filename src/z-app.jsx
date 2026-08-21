@@ -178,12 +178,19 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
   const isClient = view.side === "client";
   const isAdminPreview = isClient && session.role === "admin";
   const sideIndicator = null;
+  const _previewId = (() => { try { return sessionStorage.getItem("141_preview_client"); } catch { return null; } })();
+  const _previewClient = (isAdminPreview && _previewId) ? (window.Data.CLIENTS || []).find(c => c.id === _previewId) : null;
+  const _previewName = _previewClient ? (_previewClient.company || _previewClient.name) : null;
+  const _exitPreview = () => { try { sessionStorage.removeItem("141_preview_client"); } catch {} navigate("clients"); };
 
   return (
     <>
       {isAdminPreview && (
-        <div style={{padding:"6px 16px", background:"var(--amber-soft)", color:"var(--amber)", fontSize: 12, textAlign:"center", borderBottom:"0.5px solid var(--amber)"}}>
-          Estás viendo el portal como vería <b>Ana (Acme Co.)</b> · vista solo lectura
+        <div style={{padding:"7px 16px", background:"var(--amber-soft)", color:"var(--amber)", fontSize: 12.5, borderBottom:"0.5px solid var(--amber)", display:"flex", alignItems:"center", justifyContent:"center", gap:14, flexWrap:"wrap"}}>
+          <span>Vista previa del portal{_previewName ? <> de <b>{_previewName}</b></> : ""}</span>
+          <button onClick={_exitPreview} style={{padding:"3px 12px", borderRadius:99, border:"0.5px solid var(--amber)", background:"transparent", color:"var(--amber)", fontSize:12, cursor:"pointer", fontFamily:"inherit", fontWeight:500}}>
+            ← Volver al panel
+          </button>
         </div>
       )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
