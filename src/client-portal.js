@@ -103,7 +103,7 @@ const ClientDashboard = ({ navigate, session }) => {
   const myDone = clientTasks.filter((t) => t.done).length;
   const myPct = clientTasks.length ? Math.round(myDone / clientTasks.length * 100) : 0;
   const heroFade = "linear-gradient(to bottom, rgba(0,0,0,0) 55%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, rgba(0,0,0,0) 9%)";
-  const heroBg = HERO_BG ? `${heroFade}, linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover` : `${heroFade}, radial-gradient(130% 120% at 82% 0%, rgba(158,154,229,0.12) 0%, rgba(158,154,229,0) 55%), linear-gradient(120deg, #121017 0%, #0b0b0d 58%, #141119 100%)`;
+  const heroBg = HERO_BG ? `${heroFade}, linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover` : `${heroFade}, radial-gradient(130% 120% at 82% 0%, rgba(158,154,229,0.34) 0%, rgba(158,154,229,0) 55%), linear-gradient(120deg, #131019 0%, #0b0b0d 58%, #15121c 100%)`;
   const hero = /* @__PURE__ */ React.createElement("div", { className: "portal-hero", style: {
     position: "relative",
     overflow: "hidden",
@@ -113,7 +113,7 @@ const ClientDashboard = ({ navigate, session }) => {
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end"
-  } }, /* @__PURE__ */ React.createElement("div", { className: "portal-hero-glow" }), /* @__PURE__ */ React.createElement("div", { style: { position: "relative", zIndex: 1, display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "inline-flex",
     alignItems: "center",
     gap: 7,
@@ -135,7 +135,7 @@ const ClientDashboard = ({ navigate, session }) => {
     letterSpacing: "-1.5px",
     color: "#fff",
     margin: 0
-  } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: myPct, label: "Tus tareas completadas" }))));
+  } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: myPct, label: "Tus tareas completadas" })));
   if (!projects.length) return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto activo", sub: "Cuando tu agencia cree tu proyecto, aqu\xED ver\xE1s su avance por fases." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" } }, projects.map((pr) => /* @__PURE__ */ React.createElement(
     "button",

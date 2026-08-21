@@ -143,14 +143,12 @@ const ClientDashboard = ({ navigate, session }) => {
   const heroFade = "linear-gradient(to bottom, rgba(0,0,0,0) 55%, var(--bg) 100%), linear-gradient(to right, var(--bg) 0%, rgba(0,0,0,0) 9%)";
   const heroBg = HERO_BG
     ? `${heroFade}, linear-gradient(90deg, rgba(8,8,10,0.94) 0%, rgba(8,8,10,0.75) 40%, rgba(8,8,10,0.3) 100%), url(${HERO_BG}) center/cover`
-    : `${heroFade}, radial-gradient(130% 120% at 82% 0%, rgba(158,154,229,0.12) 0%, rgba(158,154,229,0) 55%), linear-gradient(120deg, #121017 0%, #0b0b0d 58%, #141119 100%)`;
+    : `${heroFade}, radial-gradient(130% 120% at 82% 0%, rgba(158,154,229,0.34) 0%, rgba(158,154,229,0) 55%), linear-gradient(120deg, #131019 0%, #0b0b0d 58%, #15121c 100%)`;
 
   const hero = (
     <div className="portal-hero" style={{position:"relative", overflow:"hidden", background: heroBg,
       minHeight: 420, padding: "clamp(32px, 5vw, 56px)", display:"flex", flexDirection:"column",
       justifyContent:"flex-end"}}>
-      <div className="portal-hero-glow"/>
-      <div style={{position:"relative", zIndex:1, display:"flex", flexDirection:"column"}}>
       <div style={{display:"inline-flex", alignItems:"center", gap: 7, alignSelf:"flex-start",
         padding:"5px 12px", borderRadius: 99, background:"rgba(255,255,255,0.1)",
         border:"0.5px solid rgba(255,255,255,0.18)", color:"rgba(255,255,255,0.9)",
@@ -169,7 +167,6 @@ const ClientDashboard = ({ navigate, session }) => {
       <div style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
         <RingStat pct={plan.pct} label="Progreso del proyecto"/>
         <RingStat pct={myPct} label="Tus tareas completadas"/>
-      </div>
       </div>
     </div>
   );
