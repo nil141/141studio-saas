@@ -6,32 +6,7 @@ const ClientLogin = ({ onLogin }) => {
     setTimeout(onLogin, 900);
   } }, "Enviar enlace m\xE1gico"), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 16, lineHeight: 1.5 } }, "Te enviaremos un enlace seguro a tu email. Sin contrase\xF1as.")) : /* @__PURE__ */ React.createElement("div", { style: { padding: 20, border: "0.5px solid var(--border)", borderRadius: 12, background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 14 }), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 500 } }, "Revisa tu correo")), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "Te hemos enviado un enlace a ", /* @__PURE__ */ React.createElement("b", null, email), ". Entrando\u2026"))), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: "auto" } }, "\xA9 141'STUDIO \xB7 soporte@141.studio")), /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(160deg,#0f172a 0%,#020617 60%,#312e81 100%)", position: "relative", overflow: "hidden" } }));
 };
-const WhatsAppFloat = () => /* @__PURE__ */ React.createElement(
-  "a",
-  {
-    href: "https://wa.me/34611223344",
-    target: "_blank",
-    style: {
-      position: "fixed",
-      right: 24,
-      bottom: 24,
-      zIndex: 30,
-      background: "#25D366",
-      color: "#fff",
-      borderRadius: 99,
-      padding: "12px 18px",
-      display: "flex",
-      alignItems: "center",
-      gap: 8,
-      boxShadow: "0 6px 20px rgba(37,211,102,0.35)",
-      fontSize: 13,
-      fontWeight: 500,
-      textDecoration: "none"
-    }
-  },
-  /* @__PURE__ */ React.createElement(Icon, { name: "msg-circle", size: 15 }),
-  " Hablar con el equipo"
-);
+const WhatsAppFloat = () => null;
 const _phaseStatus = (done, total) => total === 0 ? { label: "Sin tareas", cls: "" } : done === total ? { label: "Completada", cls: "green" } : done > 0 ? { label: "En curso", cls: "blue" } : { label: "Sin empezar", cls: "" };
 const _planOf = (p) => {
   const D = window.Data;

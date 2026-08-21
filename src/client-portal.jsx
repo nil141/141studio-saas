@@ -36,16 +36,7 @@ const ClientLogin = ({ onLogin }) => {
   );
 };
 
-const WhatsAppFloat = () => (
-  <a href="https://wa.me/34611223344" target="_blank"
-    style={{position:"fixed", right: 24, bottom: 24, zIndex: 30,
-      background:"#25D366", color:"#fff", borderRadius: 99,
-      padding:"12px 18px", display:"flex", alignItems:"center", gap: 8,
-      boxShadow:"0 6px 20px rgba(37,211,102,0.35)", fontSize: 13, fontWeight: 500,
-      textDecoration:"none"}}>
-    <Icon name="msg-circle" size={15}/> Hablar con el equipo
-  </a>
-);
+const WhatsAppFloat = () => null;
 
 // ── Modelo real de fases + progreso (mismo que la vista de agencia) ──────────
 // Las fases son nombres libres guardados en project.service; cada tarea lleva
