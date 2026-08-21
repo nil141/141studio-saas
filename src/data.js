@@ -126,7 +126,7 @@ const _parseArr = (v) => {
   try {
     const a = JSON.parse(v);
     return Array.isArray(a) ? a : [];
-  } catch (e) {
+  } catch {
     return [];
   }
 };
@@ -136,37 +136,34 @@ const _parseObj = (v) => {
   try {
     const o = JSON.parse(v);
     return o && typeof o === "object" ? o : {};
-  } catch (e) {
+  } catch {
     return {};
   }
 };
-const _mp = (r) => {
-  var _a, _b, _c, _d, _e, _f, _g;
-  return r && {
-    id: r.id,
-    name: r.name,
-    clientId: r.client_id,
-    clientName: r.client_name,
-    service: r.service,
-    light: r.light || "green",
-    phase: (_a = r.phase) != null ? _a : 0,
-    week: (_b = r.week) != null ? _b : 1,
-    progress: (_c = r.progress) != null ? _c : 0,
-    budget: (_d = r.budget) != null ? _d : 0,
-    deadline: r.deadline,
-    amount: (_e = r.budget) != null ? _e : 0,
-    // precio cerrado del proyecto
-    payments: _projPayLocal[r.id] || [],
-    // plan de cobro (respaldo local)
-    nextMilestone: r.next_milestone,
-    revisionsUsed: (_f = r.revisions_used) != null ? _f : 0,
-    description: r.description,
-    recurring: (_g = r.recurring) != null ? _g : false,
-    phasesDone: _parseArr(r.phases_done),
-    // fases marcadas como completadas
-    phasesDesc: _parseObj(r.phases_desc)
-    // { nombreFase: "descripción corta" }
-  };
+const _mp = (r) => r && {
+  id: r.id,
+  name: r.name,
+  clientId: r.client_id,
+  clientName: r.client_name,
+  service: r.service,
+  light: r.light || "green",
+  phase: r.phase ?? 0,
+  week: r.week ?? 1,
+  progress: r.progress ?? 0,
+  budget: r.budget ?? 0,
+  deadline: r.deadline,
+  amount: r.budget ?? 0,
+  // precio cerrado del proyecto
+  payments: _projPayLocal[r.id] || [],
+  // plan de cobro (respaldo local)
+  nextMilestone: r.next_milestone,
+  revisionsUsed: r.revisions_used ?? 0,
+  description: r.description,
+  recurring: r.recurring ?? false,
+  phasesDone: _parseArr(r.phases_done),
+  // fases marcadas como completadas
+  phasesDesc: _parseObj(r.phases_desc)
+  // { nombreFase: "descripción corta" }
 };
 const _TASK_NOTES_KEY = "task_notes_v1";
 let _taskNotesLocal = {};
@@ -184,21 +181,18 @@ const _setTaskNoteLocal = (id, notes) => {
   } catch (e) {
   }
 };
-const _mt = (r) => {
-  var _a;
-  return r && {
-    id: r.id,
-    title: r.title,
-    column: r.col,
-    assignee: r.assignee,
-    clientId: r.client_id,
-    clientName: r.client_name,
-    done: r.done,
-    deadline: r.deadline,
-    phase: r.phase || null,
-    notes: r.notes || _taskNotesLocal[r.id] || null,
-    progress: (_a = r.progress) != null ? _a : 0
-  };
+const _mt = (r) => r && {
+  id: r.id,
+  title: r.title,
+  column: r.col,
+  assignee: r.assignee,
+  clientId: r.client_id,
+  clientName: r.client_name,
+  done: r.done,
+  deadline: r.deadline,
+  phase: r.phase || null,
+  notes: r.notes || _taskNotesLocal[r.id] || null,
+  progress: r.progress ?? 0
 };
 const _PROJ_PAY_KEY = "project_payments_v1";
 let _projPayLocal = {};
@@ -284,16 +278,13 @@ const CRED_CATALOG = [
 ];
 const _credMeta = (platform) => CRED_CATALOG.find((x) => x.key === platform) || { key: platform || "otro", name: platform || "Acceso", mode: "login", icon: "key" };
 const credMode = (platform) => _credMeta(platform).mode;
-const _mct = (r) => {
-  var _a;
-  return r && {
-    id: r.id,
-    clientId: r.client_id,
-    title: r.title || "",
-    description: r.description || "",
-    done: !!r.done,
-    sort: (_a = r.sort) != null ? _a : 0
-  };
+const _mct = (r) => r && {
+  id: r.id,
+  clientId: r.client_id,
+  title: r.title || "",
+  description: r.description || "",
+  done: !!r.done,
+  sort: r.sort ?? 0
 };
 const _mn = (r) => r && {
   id: r.id,
@@ -327,13 +318,12 @@ const _ms = (r) => r && {
   tagline: r.tagline
 };
 const _loadAll = async () => {
-  var _a, _b, _c, _d, _e;
-  const uid = (_a = _store._user) == null ? void 0 : _a.id;
+  const uid = _store._user?.id;
   if (!uid) return;
-  const agencyEmail = ((_b = _store._user) == null ? void 0 : _b.email) || "";
+  const agencyEmail = _store._user?.email || "";
   const { error: agErr } = await _sb.from("agencies").upsert({ id: uid, name: "141'STUDIO", email: agencyEmail }, { onConflict: "id" });
   if (agErr) console.error("[agencies upsert]", agErr.message, agErr.code, agErr.details);
-  const metaRole = (_d = (_c = _store._user) == null ? void 0 : _c.user_metadata) == null ? void 0 : _d.role;
+  const metaRole = _store._user?.user_metadata?.role;
   let prof = null;
   try {
     const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
@@ -375,7 +365,7 @@ const _loadAll = async () => {
     _store.CLIENTS = me.data ? [_mc(me.data)] : [];
     _store.LEADS = [];
     _store.TASKS = {};
-    if ((_e = proj.data) == null ? void 0 : _e.length) {
+    if (proj.data?.length) {
       const pids = proj.data.map((p) => p.id);
       const [dRes, tRes] = await Promise.all([
         _sb.from("deliverables").select("*").in("project_id", pids),
@@ -423,8 +413,7 @@ const _loadAll = async () => {
 };
 let _channel = null;
 const _setupRealtime = () => {
-  var _a;
-  const uid = (_a = _store._user) == null ? void 0 : _a.id;
+  const uid = _store._user?.id;
   if (!uid) return;
   if (_channel) {
     _sb.removeChannel(_channel);
@@ -433,11 +422,10 @@ const _setupRealtime = () => {
   _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
-  var _a, _b;
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
   if (error) return { ok: false, error: error.message };
   const uid = data.user.id;
-  const metaRole = (_a = data.user.user_metadata) == null ? void 0 : _a.role;
+  const metaRole = data.user.user_metadata?.role;
   let prof = null;
   try {
     const { data: profData } = await _sb.from("profiles").select("*").eq("id", uid).maybeSingle();
@@ -460,11 +448,11 @@ const authLogin = async (email, password) => {
     ok: true,
     session: {
       email: data.user.email,
-      role: (prof == null ? void 0 : prof.role) || "client",
-      name: (prof == null ? void 0 : prof.name) || data.user.email,
-      initials: (prof == null ? void 0 : prof.initials) || ((_b = data.user.email[0]) == null ? void 0 : _b.toUpperCase()) || "?",
-      agencyId: prof == null ? void 0 : prof.agency_id,
-      clientId: prof == null ? void 0 : prof.client_db_id,
+      role: prof?.role || "client",
+      name: prof?.name || data.user.email,
+      initials: prof?.initials || data.user.email[0]?.toUpperCase() || "?",
+      agencyId: prof?.agency_id,
+      clientId: prof?.client_db_id,
       adminEmail: data.user.email
       // backward compat with z-app
     }
@@ -488,11 +476,11 @@ const authSignOut = async () => {
 };
 const initAccount = async (_ignored) => {
   let { data: { session } } = await _sb.auth.getSession();
-  if (!(session == null ? void 0 : session.user)) {
+  if (!session?.user) {
     const { data: refreshed } = await _sb.auth.refreshSession();
-    session = refreshed == null ? void 0 : refreshed.session;
+    session = refreshed?.session;
   }
-  if (session == null ? void 0 : session.user) {
+  if (session?.user) {
     _store._user = session.user;
     await _loadAll();
     _syncUserData();
@@ -502,16 +490,10 @@ const initAccount = async (_ignored) => {
     window.dispatchEvent(new CustomEvent("141-session-expired"));
   }
 };
-const _uid = () => {
-  var _a;
-  return (_a = _store._user) == null ? void 0 : _a.id;
-};
+const _uid = () => _store._user?.id;
 const _id = () => crypto.randomUUID();
 const _palette = ["#fb7185", "#60a5fa", "#fbbf24", "#34d399", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b"];
-const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => {
-  var _a;
-  return ((_a = s[0]) == null ? void 0 : _a.toUpperCase()) || "";
-}).join("") || "??";
+const _initials = (name) => (name || "??").split(/\s+/).filter(Boolean).slice(0, 2).map((s) => s[0]?.toUpperCase() || "").join("") || "??";
 const addClient = (input) => {
   const uid = _uid();
   if (!uid) return;
@@ -862,8 +844,8 @@ const addInvoice = (input) => {
   const inv = {
     id: num,
     clientId: input.clientId,
-    project: (project == null ? void 0 : project.name) || "\u2014",
-    client: (client == null ? void 0 : client.company) || "\u2014",
+    project: project?.name || "\u2014",
+    client: client?.company || "\u2014",
     amount: Number(input.amount) || 0,
     type: input.type || "Extra",
     issued: "hoy",
@@ -1081,6 +1063,21 @@ const notify = (clientId, input) => {
       _emit();
     }
   });
+  try {
+    const cli = (_store.CLIENTS || []).find((c) => c.id === clientId);
+    const to = cli && cli.email;
+    if (to) {
+      apiFetch("/api/mail/notify_client", {
+        to,
+        client_name: cli.name || "",
+        title: n.title,
+        body: n.body,
+        kind: n.kind
+      }).catch(() => {
+      });
+    }
+  } catch {
+  }
   return n;
 };
 const markNotificationRead = (id) => {
@@ -1335,8 +1332,7 @@ const clearRoutines = () => {
   _emit();
 };
 const _routineVal = (routineId, dateStr, itemId) => {
-  var _a, _b, _c;
-  const v = (_c = (_b = (_a = _store.ROUTINE_DONE) == null ? void 0 : _a[routineId]) == null ? void 0 : _b[dateStr]) == null ? void 0 : _c[itemId];
+  const v = _store.ROUTINE_DONE?.[routineId]?.[dateStr]?.[itemId];
   if (v === true) return 100;
   if (typeof v === "number") return Math.max(0, Math.min(100, v));
   return 0;
@@ -1393,8 +1389,7 @@ const toggleRoutineItem = (routineId, dateStr, itemId) => {
   setRoutineItemProgress(routineId, dateStr, itemId, routineItemDone(routineId, dateStr, itemId) ? 0 : 100);
 };
 const routineItemLog = (routineId, dateStr, itemId) => {
-  var _a, _b, _c;
-  const v = (_c = (_b = (_a = _store.ROUTINE_LOGS) == null ? void 0 : _a[routineId]) == null ? void 0 : _b[dateStr]) == null ? void 0 : _c[itemId];
+  const v = _store.ROUTINE_LOGS?.[routineId]?.[dateStr]?.[itemId];
   return v && typeof v === "object" ? v : null;
 };
 const setRoutineItemLog = (routineId, dateStr, itemId, data) => {
@@ -1534,8 +1529,8 @@ const apiFetch = async (path, body = {}) => {
   let token = null;
   try {
     const { data: { session } } = await _sb.auth.getSession();
-    token = (session == null ? void 0 : session.access_token) || null;
-  } catch (e) {
+    token = session?.access_token || null;
+  } catch {
   }
   return fetch(path, {
     method: "POST",

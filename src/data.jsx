@@ -901,6 +901,18 @@ const notify = (clientId, input) => {
   _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS]; _emit();
   _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false })
     .then(({ error }) => { if (error) { _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter(x => x.id !== n.id); _emit(); } });
+  // Fase 2 — además del aviso in-app, mandamos un correo al cliente (Resend vía
+  // nuestro servidor). Es "fire-and-forget": si el servidor no tiene la API key
+  // o falla el envío, la notificación in-app sigue funcionando igual.
+  try {
+    const cli = (_store.CLIENTS || []).find(c => c.id === clientId);
+    const to = cli && cli.email;
+    if (to) {
+      apiFetch("/api/mail/notify_client", {
+        to, client_name: cli.name || "", title: n.title, body: n.body, kind: n.kind,
+      }).catch(() => {});
+    }
+  } catch {}
   return n;
 };
 

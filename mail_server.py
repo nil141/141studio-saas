@@ -22,6 +22,13 @@ STRIPE_SK = os.environ.get("STRIPE_SK", "") or os.environ.get("STRIPE_SECRET_KEY
 SB_URL  = os.environ.get("SUPABASE_URL", "https://ofnkazimemuiwovhxepq.supabase.co")
 SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mbmthemltZW11aXdvdmh4ZXBxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NTU5OTcsImV4cCI6MjA5NDUzMTk5N30.NVRoZb_Ie2ZgPELFkS7CxNWrLGZcgdOdWGEEkT_CNqo")
 
+# Resend — correo transaccional (avisos a clientes). La API key vive SOLO aquí,
+# en el servidor; nunca se expone al navegador. Si falta, el envío se omite sin
+# romper nada (el aviso in-app sigue funcionando).
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_FROM    = os.environ.get("RESEND_FROM", "141'STUDIO <hola@141std.com>")
+PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
+
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://app.141agency.com,http://localhost:8080"
@@ -275,6 +282,71 @@ def api_send(body):
     finally:
         try: smtp.quit()
         except: pass
+
+def _notify_email_html(client_name, title, body_text, kind):
+    """Plantilla HTML sobria para el aviso al cliente (marca 141'STUDIO)."""
+    labels = {
+        "project": "Novedad en tu proyecto",
+        "task":    "Tienes una tarea pendiente",
+        "credential": "Accesos de tu cuenta",
+        "document": "Documentación",
+        "invoice":  "Facturación",
+    }
+    eyebrow = labels.get(kind, "Novedad en tu portal")
+    hello   = f"Hola {client_name}," if client_name else "Hola,"
+    safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    body_block = f'<p style="margin:0 0 22px;color:#3f3f46;font-size:15px;line-height:1.6">{safe(body_text)}</p>' if body_text else ""
+    return f"""\
+<!doctype html><html lang="es"><body style="margin:0;background:#0b0b0d;padding:32px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
+    <tr><td style="padding:30px 34px 8px">
+      <div style="font-size:15px;font-weight:700;letter-spacing:.5px;color:#0b0b0d">141'DIGITAL</div>
+    </td></tr>
+    <tr><td style="padding:12px 34px 6px">
+      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:#8b5cf6;font-weight:600">{safe(eyebrow)}</div>
+      <h1 style="margin:8px 0 14px;font-size:22px;line-height:1.25;color:#0b0b0d;font-weight:600">{safe(title)}</h1>
+      <p style="margin:0 0 6px;color:#3f3f46;font-size:15px;line-height:1.6">{safe(hello)}</p>
+      {body_block}
+    </td></tr>
+    <tr><td style="padding:8px 34px 34px">
+      <a href="{PORTAL_URL}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:10px">Abrir mi portal &rarr;</a>
+    </td></tr>
+    <tr><td style="padding:18px 34px;border-top:1px solid #eee">
+      <div style="font-size:12px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente en 141'STUDIO.</div>
+    </td></tr>
+  </table>
+</body></html>"""
+
+def api_notify_client(body):
+    """Envía por Resend el aviso al cliente. Protegido por _handle_api (solo
+    usuarios de agencia autenticados). Si no hay API key, se omite en silencio."""
+    to      = (body.get("to") or "").strip()
+    title   = (body.get("title") or "").strip()
+    text    = (body.get("body") or "").strip()
+    kind    = (body.get("kind") or "").strip()
+    cname   = (body.get("client_name") or "").strip()
+    if not RESEND_API_KEY:
+        return {"ok": False, "skipped": "no_api_key"}
+    if "@" not in to:
+        return {"ok": False, "error": "destinatario no válido"}
+    subject = title or "Novedad en tu portal 141'STUDIO"
+    html    = _notify_email_html(cname, title, text, kind)
+    payload = json.dumps({
+        "from": RESEND_FROM, "to": [to], "subject": subject, "html": html,
+    }).encode("utf-8")
+    req = urllib.request.Request("https://api.resend.com/emails", data=payload, method="POST")
+    req.add_header("Authorization", f"Bearer {RESEND_API_KEY}")
+    req.add_header("Content-Type", "application/json")
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            data = json.loads(r.read().decode())
+            return {"ok": True, "id": data.get("id")}
+    except urllib.error.HTTPError as e:
+        try: msg = json.loads(e.read().decode()).get("message", str(e))
+        except Exception: msg = str(e)
+        return {"ok": False, "error": msg}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
 
 def api_action(body):
     c      = body.get("creds", {})
@@ -921,12 +993,13 @@ def api_campaigns_delete_campaign(body):
 # claro en store.json) se han eliminado: la app usa Supabase (RLS) para todo eso.
 
 MAIL_HANDLERS = {
-    "connect":  api_connect,
-    "folders":  api_folders,
-    "messages": api_messages,
-    "message":  api_message,
-    "send":     api_send,
-    "action":   api_action,
+    "connect":       api_connect,
+    "folders":       api_folders,
+    "messages":      api_messages,
+    "message":       api_message,
+    "send":          api_send,
+    "action":        api_action,
+    "notify_client": api_notify_client,
 }
 
 STRIPE_HANDLERS = {
