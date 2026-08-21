@@ -275,7 +275,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         }}>
           {(me.initials || "").charAt(0)}
         </div>
-        <div style={{minWidth:0, flex:1}}>
+        <div style={{minWidth:0}}>
           <div style={{fontSize:15, fontWeight:400, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {me.name}
           </div>
@@ -283,7 +283,6 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
           </div>
         </div>
-        {kind === "client" && <NotificationBell kind="client"/>}
       </div>
 
       {/* Nav con secciones */}

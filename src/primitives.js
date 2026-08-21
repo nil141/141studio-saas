@@ -261,7 +261,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     justifyContent: "center",
     fontSize: 18,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), kind === "client" && /* @__PURE__ */ React.createElement(NotificationBell, { kind: "client" })), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     width: "200%",
     height: "100%",

@@ -193,6 +193,13 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         </div>
       )}
+      {isClient && (
+        <div style={{position:"fixed", top: isAdminPreview ? 46 : 16, right: 20, zIndex: 60,
+          background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:12,
+          boxShadow:"0 4px 16px rgba(0,0,0,0.28)"}}>
+          <NotificationBell kind="client"/>
+        </div>
+      )}
       <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
         <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
