@@ -411,6 +411,74 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   );
 };
 
+const _notifAgo = (iso) => {
+  if (!iso) return "ahora";
+  const d = new Date(iso); const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "ahora";
+  const m = Math.floor(s / 60); if (m < 60) return `hace ${m} min`;
+  const h = Math.floor(m / 60); if (h < 24) return `hace ${h} h`;
+  const dd = Math.floor(h / 24); if (dd < 7) return `hace ${dd} d`;
+  return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+};
+
+const NotificationBell = ({ kind }) => {
+  const D = window.Data;
+  D.useStore && D.useStore();
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    return () => window.removeEventListener("click", close);
+  }, [open]);
+
+  let list = [];
+  if (kind === "client") {
+    list = D.NOTIFICATIONS || [];
+    try { const pid = sessionStorage.getItem("141_preview_client"); if (pid) list = list.filter(n => n.clientId === pid); } catch {}
+  }
+  const unread = list.filter(n => !n.read).length;
+
+  return (
+    <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+      <button className="btn ghost icon-only" data-tooltip="Notificaciones" onClick={() => setOpen(o => !o)}>
+        <Icon name="bell" size={15}/>
+        {unread > 0 && (
+          <span style={{ position: "absolute", top: 3, right: 3, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 99,
+            background: "var(--red)", color: "#fff", fontSize: 9.5, fontWeight: 700, display: "grid", placeItems: "center", lineHeight: 1 }}>
+            {unread > 9 ? "9+" : unread}
+          </span>
+        )}
+      </button>
+      {open && (
+        <div style={{ position: "absolute", right: 0, top: "calc(100% + 8px)", zIndex: 40, width: 330, maxWidth: "90vw",
+          background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 14, overflow: "hidden",
+          boxShadow: "0 12px 34px rgba(0,0,0,0.35)" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" }}>
+            <div style={{ fontWeight: 600, fontSize: 14 }}>Notificaciones</div>
+            {unread > 0 && <button onClick={() => D.markAllNotificationsRead()} style={{ background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Marcar leídas</button>}
+          </div>
+          <div style={{ maxHeight: 380, overflowY: "auto" }}>
+            {list.length === 0 ? (
+              <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 }}>Sin notificaciones</div>
+            ) : list.slice(0, 25).map(n => (
+              <div key={n.id} onClick={() => D.markNotificationRead(n.id)}
+                style={{ display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }}>
+                <span style={{ width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" }}/>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{n.title}</div>
+                  {n.body && <div style={{ fontSize: 12.5, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.4 }}>{n.body}</div>}
+                  <div style={{ fontSize: 11, color: "var(--text-subtle)", marginTop: 4 }}>{_notifAgo(n.createdAt)}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
 const Topbar = ({ crumb, right, theme, setTheme, onSearch, kind = "agency" }) => (
   <div className="topbar">
     <div className="topbar-left grow">
@@ -423,10 +491,7 @@ const Topbar = ({ crumb, right, theme, setTheme, onSearch, kind = "agency" }) =>
     </div>
     <div className="topbar-right">
       {right}
-      <button className="btn ghost icon-only" data-tooltip="Notificaciones" onClick={() => {}}>
-        <Icon name="bell" size={15}/>
-      </button>
-
+      <NotificationBell kind={kind}/>
     </div>
   </div>
 );

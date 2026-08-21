@@ -75,6 +75,7 @@ const _store = {
   TASKS: {},
   CREDENTIALS: [],
   CLIENT_TASKS: [],
+  NOTIFICATIONS: [],
   SETTINGS: { ...SETTINGS_DEFAULT },
   _user: null,
   _prof: null,
@@ -294,6 +295,15 @@ const _mct = (r) => {
     sort: (_a = r.sort) != null ? _a : 0
   };
 };
+const _mn = (r) => r && {
+  id: r.id,
+  clientId: r.client_id,
+  title: r.title || "",
+  body: r.body || "",
+  kind: r.kind || "",
+  read: !!r.read,
+  createdAt: r.created_at
+};
 const _ml = (r) => r && {
   id: r.id,
   name: r.name,
@@ -355,10 +365,12 @@ const _loadAll = async () => {
       _sb.from("clients").select("*").eq("id", clientDbId).maybeSingle(),
       _sb.from("settings").select("*").eq("agency_id", agencyId).maybeSingle()
     ]);
+    const notif = await _sb.from("notifications").select("*").eq("client_id", clientDbId).order("created_at", { ascending: false });
     _store.PROJECTS = (proj.data || []).map(_mp);
     _store.INVOICES = (inv.data || []).map(_mi);
     _store.CREDENTIALS = (cred.data || []).map(_mcr);
     _store.CLIENT_TASKS = (ctasks.data || []).map(_mct);
+    _store.NOTIFICATIONS = (notif.data || []).map(_mn);
     _store.SETTINGS = _ms(sett.data) || { ...SETTINGS_DEFAULT };
     _store.CLIENTS = me.data ? [_mc(me.data)] : [];
     _store.LEADS = [];
@@ -390,6 +402,7 @@ const _loadAll = async () => {
       _sb.from("settings").select("*").eq("agency_id", uid).maybeSingle()
     ]);
     const ct = await _sb.from("client_tasks").select("*").eq("agency_id", uid).order("sort", { ascending: true });
+    const nt = await _sb.from("notifications").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
     _store.CLIENTS = (c.data || []).map(_mc);
     _store.PROJECTS = (p.data || []).map(_mp);
     _store.INVOICES = (i.data || []).map(_mi);
@@ -397,6 +410,7 @@ const _loadAll = async () => {
     _store.LEADS = (l.data || []).map(_ml);
     _store.CREDENTIALS = (cr.data || []).map(_mcr);
     _store.CLIENT_TASKS = (ct.data || []).map(_mct);
+    _store.NOTIFICATIONS = (nt.data || []).map(_mn);
     _store.SETTINGS = _ms(s.data) || { ...SETTINGS_DEFAULT };
     _store.TASKS = {};
     for (const row of t.data || []) {
@@ -416,7 +430,7 @@ const _setupRealtime = () => {
     _sb.removeChannel(_channel);
     _channel = null;
   }
-  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
+  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
   var _a, _b;
@@ -647,6 +661,7 @@ const addProject = (input) => {
   if (client) {
     _sb.from("clients").update({ projects_count: client.projects + 1 }).eq("id", client.id).then();
   }
+  if (p.clientId) notify(p.clientId, { title: "Nuevo proyecto", body: p.name, kind: "project" });
   return p;
 };
 const _insertAdaptive = async (table, rows) => {
@@ -1020,6 +1035,7 @@ const addClientTask = (clientId, input) => {
       _emit();
     }
   });
+  notify(cid, { title: "Nueva tarea para ti", body: t.title, kind: "task" });
   return t;
 };
 const updateClientTask = (id, changes) => {
@@ -1050,6 +1066,34 @@ const deleteClientTask = (id) => {
       _emit();
     }
   });
+};
+const notify = (clientId, input) => {
+  const uid = _uid();
+  if (!uid || !clientId) return;
+  const prof = _store._prof || {};
+  const agencyId = prof.agencyId || uid;
+  const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null };
+  _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS];
+  _emit();
+  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false }).then(({ error }) => {
+    if (error) {
+      _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter((x) => x.id !== n.id);
+      _emit();
+    }
+  });
+  return n;
+};
+const markNotificationRead = (id) => {
+  _store.NOTIFICATIONS = _store.NOTIFICATIONS.map((n) => n.id === id ? { ...n, read: true } : n);
+  _emit();
+  _sb.from("notifications").update({ read: true }).eq("id", id).then();
+};
+const markAllNotificationsRead = () => {
+  const ids = _store.NOTIFICATIONS.filter((n) => !n.read).map((n) => n.id);
+  if (!ids.length) return;
+  _store.NOTIFICATIONS = _store.NOTIFICATIONS.map((n) => ({ ...n, read: true }));
+  _emit();
+  _sb.from("notifications").update({ read: true }).in("id", ids).then();
 };
 const addLead = (input) => {
   const uid = _uid();
@@ -1541,6 +1585,9 @@ window.Data = {
   get CLIENT_TASKS() {
     return _store.CLIENT_TASKS;
   },
+  get NOTIFICATIONS() {
+    return _store.NOTIFICATIONS;
+  },
   get ROUTINES() {
     return _store.ROUTINES;
   },
@@ -1589,6 +1636,9 @@ window.Data = {
   updateClientTask,
   toggleClientTask,
   deleteClientTask,
+  notify,
+  markNotificationRead,
+  markAllNotificationsRead,
   addLead,
   addTask,
   moveTask,
