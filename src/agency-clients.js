@@ -273,7 +273,13 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "msg-circle", size: 13 }),
       " WhatsApp"
-    ), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: startEdit }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 13 }), " Editar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-dashboard") }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " Abrir portal"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: () => setMenuOpen((o) => !o) }, /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 14 })), menuOpen && /* @__PURE__ */ React.createElement("div", { style: {
+    ), /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: startEdit }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 13 }), " Editar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+      try {
+        sessionStorage.setItem("141_preview_client", c.id);
+      } catch (e) {
+      }
+      navigate("client-dashboard");
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " Abrir portal"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only", onClick: () => setMenuOpen((o) => !o) }, /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 14 })), menuOpen && /* @__PURE__ */ React.createElement("div", { style: {
       position: "absolute",
       right: 0,
       top: "calc(100% + 4px)",

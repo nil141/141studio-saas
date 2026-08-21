@@ -320,7 +320,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
                   <Icon name="msg-circle" size={13}/> WhatsApp
                 </a>
                 <button className="btn" onClick={startEdit}><Icon name="edit" size={13}/> Editar</button>
-                <button className="btn primary" onClick={() => navigate("client-dashboard")}><Icon name="external-link" size={13}/> Abrir portal</button>
+                <button className="btn primary" onClick={() => { try { sessionStorage.setItem("141_preview_client", c.id); } catch {} navigate("client-dashboard"); }}><Icon name="external-link" size={13}/> Abrir portal</button>
                 <div style={{position:"relative"}} onClick={e => e.stopPropagation()}>
                   <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}><Icon name="more-h" size={14}/></button>
                   {menuOpen && (

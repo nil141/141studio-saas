@@ -38,6 +38,30 @@ const ClientLogin = ({ onLogin }) => {
 
 const WhatsAppFloat = () => null;
 
+// Vista previa de la agencia: si un admin abre el portal de un cliente, se
+// guarda su id en sessionStorage y aquí filtramos los datos a ese cliente.
+const _previewClientId = (session) => {
+  try { return session?.role === "admin" ? (sessionStorage.getItem("141_preview_client") || null) : null; } catch { return null; }
+};
+const _portalScope = (session) => {
+  const D = window.Data;
+  const pcid = _previewClientId(session);
+  const projects = pcid ? (D.PROJECTS || []).filter(p => p.clientId === pcid) : (D.PROJECTS || []);
+  const pids = new Set(projects.map(p => p.id));
+  const find = (id) => (D.CLIENTS || []).find(c => c.id === id);
+  return {
+    pcid, projects,
+    invoices:    pcid ? (D.INVOICES || []).filter(i => i.clientId === pcid) : (D.INVOICES || []),
+    credentials: pcid ? (D.CREDENTIALS || []).filter(c => c.clientId === pcid) : (D.CREDENTIALS || []),
+    clientTasks: pcid ? (D.CLIENT_TASKS || []).filter(t => t.clientId === pcid) : (D.CLIENT_TASKS || []),
+    deliverables:pcid ? (D.DELIVERABLES || []).filter(d => pids.has(d.projectId)) : (D.DELIVERABLES || []),
+    me:          pcid ? find(pcid) : (D.CLIENTS || [])[0],
+    name:        pcid ? (find(pcid)?.name || "") : (session?.name || ""),
+    clientId:    pcid || session?.clientId,
+    preview:     !!pcid,
+  };
+};
+
 // ── Modelo real de fases + progreso (mismo que la vista de agencia) ──────────
 // Las fases son nombres libres guardados en project.service; cada tarea lleva
 // su fase en task.phase; el progreso se calcula desde las tareas hechas.
@@ -101,15 +125,16 @@ const RingStat = ({ pct = 0, label }) => {
 const ClientDashboard = ({ navigate, session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const projects = D.PROJECTS || [];
+  const S = _portalScope(session);
+  const projects = S.projects;
   const [selId, setSelId] = useState(null);
   const primary = projects.find(p => p.id === selId) || projects[0] || null;
 
-  const name = session?.name || "";
-  const pending = (D.DELIVERABLES || []).filter(d => d.status && d.status !== "approved");
+  const name = S.name;
+  const pending = S.deliverables.filter(d => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
   // "Qué te toca ahora": tareas de onboarding que el cliente debe realizar.
-  const clientTasks = D.CLIENT_TASKS || [];
+  const clientTasks = S.clientTasks;
   const myDone = clientTasks.filter(t => t.done).length;
   const myPct = clientTasks.length ? Math.round(myDone / clientTasks.length * 100) : 0;
 
@@ -256,8 +281,8 @@ const ClientDashboard = ({ navigate, session }) => {
       <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap: 16}}>
         {[
           { id:"client-status",      badge:"PROYECTO",  title:"Estado del proyecto", desc:"Fases, avance y entregables.",        status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
-          { id:"client-docs",        badge:"DOCUMENTOS", title:"Documentación",       desc:"Archivos y facturas del proyecto.",   status: (D.INVOICES||[]).length ? "Disponible" : "Sin empezar", pct: (D.INVOICES||[]).length ? 100 : 0 },
-          { id:"client-credentials", badge:"ACCESOS",    title:"Credenciales",        desc:"Accesos que compartes con el equipo.", status: (D.CREDENTIALS||[]).length ? `${(D.CREDENTIALS||[]).length} guardados` : "Sin empezar", pct: (D.CREDENTIALS||[]).length ? 100 : 0 },
+          { id:"client-docs",        badge:"DOCUMENTOS", title:"Documentación",       desc:"Archivos y facturas del proyecto.",   status: S.invoices.length ? "Disponible" : "Sin empezar", pct: S.invoices.length ? 100 : 0 },
+          { id:"client-credentials", badge:"ACCESOS",    title:"Credenciales",        desc:"Accesos que compartes con el equipo.", status: S.credentials.length ? `${S.credentials.length} guardados` : "Sin empezar", pct: S.credentials.length ? 100 : 0 },
         ].map(m => (
           <div key={m.id} className="card" style={{cursor:"pointer", overflow:"hidden"}} onClick={() => navigate(m.id)}>
             <div style={{height: 118, position:"relative", padding: 16,
@@ -287,10 +312,11 @@ const ClientDashboard = ({ navigate, session }) => {
   );
 };
 
-const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
+const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const projects = D.PROJECTS || [];
+  const S = _portalScope(session);
+  const projects = S.projects;
   const p = (projectId && projects.find(x => x.id === projectId)) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
   if (!p) return (
@@ -303,7 +329,7 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
     </div>
   );
   const plan = _planOf(p);
-  const deliverables = (D.DELIVERABLES || []).filter(d => d.projectId === p.id);
+  const deliverables = S.deliverables.filter(d => d.projectId === p.id);
 
   // Historial de eventos derivado de lo conocido (fases y hitos completados).
   const events = [];
@@ -481,10 +507,11 @@ const DriveLogo = ({ size = 24 }) => (
 const ClientDocs = ({ session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const invoices = D.INVOICES || [];
-  const me = (D.CLIENTS || [])[0] || null;
+  const S = _portalScope(session);
+  const invoices = S.invoices;
+  const me = S.me || null;
   const driveUrl = me?.driveUrl || "";
-  const p0 = (D.PROJECTS || [])[0];
+  const p0 = S.projects[0];
   const plan0 = p0 ? _planOf(p0) : null;
   const eyebrow = (plan0?.active ? plan0.active.name : "Documentación");
   const needs = [
@@ -668,8 +695,9 @@ const CredCard = ({ c, onEdit, onDelete }) => {
 const ClientCredentials = ({ session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const clientId = session?.clientId;
-  const creds = D.CREDENTIALS || [];
+  const S = _portalScope(session);
+  const clientId = S.clientId;
+  const creds = S.credentials;
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
 

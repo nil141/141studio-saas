@@ -7,6 +7,33 @@ const ClientLogin = ({ onLogin }) => {
   } }, "Enviar enlace m\xE1gico"), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 16, lineHeight: 1.5 } }, "Te enviaremos un enlace seguro a tu email. Sin contrase\xF1as.")) : /* @__PURE__ */ React.createElement("div", { style: { padding: 20, border: "0.5px solid var(--border)", borderRadius: 12, background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginBottom: 8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 14 }), /* @__PURE__ */ React.createElement("span", { style: { fontWeight: 500 } }, "Revisa tu correo")), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "Te hemos enviado un enlace a ", /* @__PURE__ */ React.createElement("b", null, email), ". Entrando\u2026"))), /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: "auto" } }, "\xA9 141'STUDIO \xB7 soporte@141.studio")), /* @__PURE__ */ React.createElement("div", { style: { background: "linear-gradient(160deg,#0f172a 0%,#020617 60%,#312e81 100%)", position: "relative", overflow: "hidden" } }));
 };
 const WhatsAppFloat = () => null;
+const _previewClientId = (session) => {
+  try {
+    return (session == null ? void 0 : session.role) === "admin" ? sessionStorage.getItem("141_preview_client") || null : null;
+  } catch (e) {
+    return null;
+  }
+};
+const _portalScope = (session) => {
+  var _a;
+  const D = window.Data;
+  const pcid = _previewClientId(session);
+  const projects = pcid ? (D.PROJECTS || []).filter((p) => p.clientId === pcid) : D.PROJECTS || [];
+  const pids = new Set(projects.map((p) => p.id));
+  const find = (id) => (D.CLIENTS || []).find((c) => c.id === id);
+  return {
+    pcid,
+    projects,
+    invoices: pcid ? (D.INVOICES || []).filter((i) => i.clientId === pcid) : D.INVOICES || [],
+    credentials: pcid ? (D.CREDENTIALS || []).filter((c) => c.clientId === pcid) : D.CREDENTIALS || [],
+    clientTasks: pcid ? (D.CLIENT_TASKS || []).filter((t) => t.clientId === pcid) : D.CLIENT_TASKS || [],
+    deliverables: pcid ? (D.DELIVERABLES || []).filter((d) => pids.has(d.projectId)) : D.DELIVERABLES || [],
+    me: pcid ? find(pcid) : (D.CLIENTS || [])[0],
+    name: pcid ? ((_a = find(pcid)) == null ? void 0 : _a.name) || "" : (session == null ? void 0 : session.name) || "",
+    clientId: pcid || (session == null ? void 0 : session.clientId),
+    preview: !!pcid
+  };
+};
 const _phaseStatus = (done, total) => total === 0 ? { label: "Sin tareas", cls: "" } : done === total ? { label: "Completada", cls: "green" } : done > 0 ? { label: "En curso", cls: "blue" } : { label: "Sin empezar", cls: "" };
 const _planOf = (p) => {
   const D = window.Data;
@@ -65,13 +92,14 @@ const RingStat = ({ pct = 0, label }) => {
 const ClientDashboard = ({ navigate, session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const projects = D.PROJECTS || [];
+  const S = _portalScope(session);
+  const projects = S.projects;
   const [selId, setSelId] = useState(null);
   const primary = projects.find((p) => p.id === selId) || projects[0] || null;
-  const name = (session == null ? void 0 : session.name) || "";
-  const pending = (D.DELIVERABLES || []).filter((d) => d.status && d.status !== "approved");
+  const name = S.name;
+  const pending = S.deliverables.filter((d) => d.status && d.status !== "approved");
   const plan = primary ? _planOf(primary) : { groups: [], pct: 0, done: 0, total: 0, active: null };
-  const clientTasks = D.CLIENT_TASKS || [];
+  const clientTasks = S.clientTasks;
   const myDone = clientTasks.filter((t) => t.done).length;
   const myPct = clientTasks.length ? Math.round(myDone / clientTasks.length * 100) : 0;
   const heroFade = "linear-gradient(to bottom, rgba(0,0,0,0) 55%, var(--bg) 100%)";
@@ -184,8 +212,8 @@ const ClientDashboard = ({ navigate, session }) => {
     t.done ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Realizado") : "Marcar como realizado"
   )), t.description && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 5, lineHeight: 1.5 } }, t.description))))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 34, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "M\xF3dulos de tu portal"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 } }, [
     { id: "client-status", badge: "PROYECTO", title: "Estado del proyecto", desc: "Fases, avance y entregables.", status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
-    { id: "client-docs", badge: "DOCUMENTOS", title: "Documentaci\xF3n", desc: "Archivos y facturas del proyecto.", status: (D.INVOICES || []).length ? "Disponible" : "Sin empezar", pct: (D.INVOICES || []).length ? 100 : 0 },
-    { id: "client-credentials", badge: "ACCESOS", title: "Credenciales", desc: "Accesos que compartes con el equipo.", status: (D.CREDENTIALS || []).length ? `${(D.CREDENTIALS || []).length} guardados` : "Sin empezar", pct: (D.CREDENTIALS || []).length ? 100 : 0 }
+    { id: "client-docs", badge: "DOCUMENTOS", title: "Documentaci\xF3n", desc: "Archivos y facturas del proyecto.", status: S.invoices.length ? "Disponible" : "Sin empezar", pct: S.invoices.length ? 100 : 0 },
+    { id: "client-credentials", badge: "ACCESOS", title: "Credenciales", desc: "Accesos que compartes con el equipo.", status: S.credentials.length ? `${S.credentials.length} guardados` : "Sin empezar", pct: S.credentials.length ? 100 : 0 }
   ].map((m) => /* @__PURE__ */ React.createElement("div", { key: m.id, className: "card", style: { cursor: "pointer", overflow: "hidden" }, onClick: () => navigate(m.id) }, /* @__PURE__ */ React.createElement("div", { style: {
     height: 118,
     position: "relative",
@@ -202,15 +230,16 @@ const ClientDashboard = ({ navigate, session }) => {
     color: "var(--text-muted)"
   } }, m.badge)), /* @__PURE__ */ React.createElement("div", { style: { padding: 18 } }, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing: "-0.5px" } }, m.title), /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 4 } }, m.desc), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 16, marginBottom: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--text-subtle)" } }, m.status), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)" } }, m.pct, "%")), /* @__PURE__ */ React.createElement("div", { style: { height: 3, borderRadius: 99, background: "var(--border)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: m.pct + "%", height: "100%", background: "var(--text-muted)", borderRadius: 99 } })), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, fontSize: 13, color: "var(--text)" } }, "Entrar en el m\xF3dulo ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })))))), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
 };
-const ClientStatus = ({ navigate, openModal, projectId, initialTab }) => {
+const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const projects = D.PROJECTS || [];
+  const S = _portalScope(session);
+  const projects = S.projects;
   const p = projectId && projects.find((x) => x.id === projectId) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
   if (!p) return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "El avance de tu proyecto aparecer\xE1 aqu\xED."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "40vh" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto", sub: "Cuando tu agencia cree un proyecto podr\xE1s seguir su avance aqu\xED." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
   const plan = _planOf(p);
-  const deliverables = (D.DELIVERABLES || []).filter((d) => d.projectId === p.id);
+  const deliverables = S.deliverables.filter((d) => d.projectId === p.id);
   const events = [];
   plan.groups.forEach((g) => {
     if (g.complete) events.push({ type: "Fase", title: `Fase completada: ${g.name}` });
@@ -285,10 +314,11 @@ const DriveLogo = ({ size = 24 }) => /* @__PURE__ */ React.createElement("svg", 
 const ClientDocs = ({ session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const invoices = D.INVOICES || [];
-  const me = (D.CLIENTS || [])[0] || null;
+  const S = _portalScope(session);
+  const invoices = S.invoices;
+  const me = S.me || null;
   const driveUrl = (me == null ? void 0 : me.driveUrl) || "";
-  const p0 = (D.PROJECTS || [])[0];
+  const p0 = S.projects[0];
   const plan0 = p0 ? _planOf(p0) : null;
   const eyebrow = (plan0 == null ? void 0 : plan0.active) ? plan0.active.name : "Documentaci\xF3n";
   const needs = [
@@ -344,8 +374,9 @@ const CredCard = ({ c, onEdit, onDelete }) => {
 const ClientCredentials = ({ session }) => {
   const D = window.Data;
   D.useStore && D.useStore();
-  const clientId = session == null ? void 0 : session.clientId;
-  const creds = D.CREDENTIALS || [];
+  const S = _portalScope(session);
+  const clientId = S.clientId;
+  const creds = S.credentials;
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
   const save = (f) => {
