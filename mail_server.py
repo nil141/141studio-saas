@@ -286,23 +286,23 @@ def api_send(body):
 # Contenido por tipo de aviso: encabezado, asunto, texto guía, botón y sección
 # del portal a la que enlaza el botón (?goto=…).
 _NOTIF_META = {
-    "task":       {"subject": "Nueva tarea en tu portal", "pre": "Nueva tarea pendiente",
+    "task":       {"subject": "Nueva tarea en tu portal", "subj_p": "tienes una nueva tarea", "pre": "Nueva tarea pendiente",
                    "lead": "Tienes una nueva tarea pendiente. Márcala como hecha cuando la completes.",
                    "cta": "Ver mis tareas", "route": "client-dashboard"},
-    "project":    {"subject": "Novedades en tu proyecto", "pre": "Novedad en tu proyecto",
+    "project":    {"subject": "Novedades en tu proyecto", "subj_p": "novedades en tu proyecto", "pre": "Novedad en tu proyecto",
                    "lead": "Hemos actualizado el estado de tu proyecto.",
                    "cta": "Ver el estado", "route": "client-status"},
-    "credential": {"subject": "Accesos pendientes en tu portal", "pre": "Accesos pendientes",
+    "credential": {"subject": "Accesos pendientes en tu portal", "subj_p": "tienes accesos pendientes", "pre": "Accesos pendientes",
                    "lead": "Necesitamos que completes unos accesos para poder trabajar.",
                    "cta": "Ir a credenciales", "route": "client-credentials"},
-    "document":   {"subject": "Novedad en tu documentación", "pre": "Novedad en documentación",
+    "document":   {"subject": "Novedad en tu documentación", "subj_p": "novedad en tu documentación", "pre": "Novedad en documentación",
                    "lead": "Hay una novedad en la documentación de tu proyecto.",
                    "cta": "Ir a documentación", "route": "client-docs"},
-    "invoice":    {"subject": "Novedad en tu facturación", "pre": "Novedad en facturación",
+    "invoice":    {"subject": "Novedad en tu facturación", "subj_p": "novedad en tu facturación", "pre": "Novedad en facturación",
                    "lead": "Tienes una novedad en la facturación de tu proyecto.",
                    "cta": "Ver facturación", "route": "client-docs"},
 }
-_NOTIF_DEFAULT = {"subject": "Novedad en tu portal 141'DIGITAL", "pre": "Novedad en tu portal",
+_NOTIF_DEFAULT = {"subject": "Novedad en tu portal 141'DIGITAL", "subj_p": "tienes una novedad en tu portal", "pre": "Novedad en tu portal",
                   "lead": "", "cta": "Abrir mi portal", "route": "client-dashboard"}
 
 def _notify_meta(kind):
@@ -312,12 +312,23 @@ def _notify_email_html(client_name, title, body_text, meta, cta_url):
     """Correo del aviso al cliente: fondo negro sin caja, tipografía Inter, directo."""
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
     first    = safe(client_name.split()[0]) if client_name and client_name.split() else ""
-    hello    = f"Hola {first}," if first else "Hola,"
     logo     = f"{PORTAL_URL}/logo-141digital-white.png"
     accent   = "#9e9ae5"
     font     = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
     lead     = safe(meta.get("lead", ""))
-    lead_block = f'<p style="margin:0 0 22px;color:#8b8b93;font-size:15px;line-height:1.6;font-weight:400;font-family:{font}">{lead}</p>' if lead else ""
+    # Saludo + frase en una sola línea: "Hola Nil, tienes una nueva tarea…"
+    if first and lead:
+        intro = f"Hola {first}, {lead[0].lower() + lead[1:]}"
+    elif first:
+        intro = f"Hola {first}."
+    else:
+        intro = lead or "Hola,"
+    lead_block = (
+        f'<p style="margin:0 0 24px;color:#e4e4e7;font-size:15px;line-height:1.6;font-weight:400;font-family:{font}">'
+        f'<span style="color:#f4f4f5">Hola {first},</span> {lead[0].lower() + lead[1:]}</p>'
+        if first and lead else
+        f'<p style="margin:0 0 24px;color:#e4e4e7;font-size:15px;line-height:1.6;font-weight:400;font-family:{font}">{intro}</p>'
+    )
     item_block = (
         f'<div style="border-left:2px solid {accent};padding:2px 0 2px 16px;margin:0 0 30px">'
         f'<div style="color:#f4f4f5;font-size:18px;line-height:1.45;font-weight:400;font-family:{font}">{safe(body_text)}</div>'
@@ -340,7 +351,6 @@ def _notify_email_html(client_name, title, body_text, meta, cta_url):
         </td></tr>
         <tr><td>
           <h1 style="margin:0 0 22px;font-size:28px;line-height:1.2;color:#f4f4f5;font-weight:300;letter-spacing:-0.6px;font-family:{font}">{safe(title)}</h1>
-          <p style="margin:0 0 6px;color:#e4e4e7;font-size:15px;line-height:1.6;font-weight:400;font-family:{font}">{hello}</p>
           {lead_block}
           {item_block}
         </td></tr>
@@ -369,7 +379,9 @@ def api_notify_client(body):
     if "@" not in to:
         return {"ok": False, "error": "destinatario no válido"}
     meta    = _notify_meta(kind)
-    subject = title or meta["subject"]
+    first   = cname.split()[0] if cname.split() else ""
+    # Asunto personalizado: "Nil, tienes una nueva tarea"
+    subject = f"{first}, {meta['subj_p']}" if first else (title or meta["subject"])
     cta_url = f"{PORTAL_URL}/?goto={meta['route']}"
     html    = _notify_email_html(cname, title, text, meta, cta_url)
     payload = json.dumps({
