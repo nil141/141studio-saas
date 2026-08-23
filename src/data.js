@@ -962,10 +962,15 @@ const addCredential = (clientId, input) => {
       _emit();
     }
   });
-  if (_isClientSession())
+  if (_isClientSession()) {
     notifyAgency({ clientId: cid, title: "Nuevo acceso a\xF1adido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
-  else
-    notify(cid, { title: "Acceso solicitado", body: cr.label || cr.platform || "Nuevo acceso", kind: "credential" });
+  } else {
+    addClientTask(cid, {
+      title: `Dar acceso: ${cr.label || cr.platform || "nuevo acceso"}`,
+      description: "Comparte con el equipo el acceso que te pedimos desde Credenciales.",
+      link: "client-credentials"
+    });
+  }
   return cr;
 };
 const updateCredential = (id, changes) => {

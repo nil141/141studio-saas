@@ -820,11 +820,18 @@ const addCredential = (clientId, input) => {
       _store.CREDENTIALS = _store.CREDENTIALS.filter(x => x.id !== cr.id); _emit();
     }
   });
-  if (_isClientSession())
+  if (_isClientSession()) {
     notifyAgency({ clientId: cid, title: "Nuevo acceso añadido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
-  else
-    // La agencia pide un acceso → avisa al cliente (botón directo a Credenciales).
-    notify(cid, { title: "Acceso solicitado", body: cr.label || cr.platform || "Nuevo acceso", kind: "credential" });
+  } else {
+    // La agencia pide un acceso → aparece como tarea en el Intake del cliente
+    // ("Qué te toca ahora"), con botón directo a Credenciales. addClientTask ya
+    // le manda el aviso in-app + correo, así que no duplicamos notificación.
+    addClientTask(cid, {
+      title: `Dar acceso: ${cr.label || cr.platform || "nuevo acceso"}`,
+      description: "Comparte con el equipo el acceso que te pedimos desde Credenciales.",
+      link: "client-credentials",
+    });
+  }
   return cr;
 };
 
