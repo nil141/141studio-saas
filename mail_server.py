@@ -342,9 +342,17 @@ def api_notify_client(body):
             data = json.loads(r.read().decode())
             return {"ok": True, "id": data.get("id")}
     except urllib.error.HTTPError as e:
-        try: msg = json.loads(e.read().decode()).get("message", str(e))
-        except Exception: msg = str(e)
-        return {"ok": False, "error": msg}
+        raw = ""
+        try: raw = e.read().decode()
+        except Exception: pass
+        msg = str(e)
+        try:
+            j = json.loads(raw)
+            msg = j.get("message") or j.get("error") or raw or str(e)
+        except Exception:
+            if raw: msg = raw
+        print(f"  [resend] {e.code} → {raw[:500]}")
+        return {"ok": False, "error": msg, "status": e.code}
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
