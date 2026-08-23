@@ -176,7 +176,9 @@ const OnboardingPage = ({ token }) => {
     }
     if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
     try {
-      const clientName = form.company.trim() || form.name.trim() || "Un cliente";
+      const _person = form.name.trim();
+      const _company = form.company.trim();
+      const clientName = _person ? _company ? `${_person} (${_company})` : _person : _company || "Un cliente";
       const body = clientName + " ha completado su registro y ya tiene acceso a su portal";
       const token2 = (await sb.auth.getSession()).data.session?.access_token;
       const { data: prof } = await sb.from("profiles").select("agency_id, client_db_id").eq("id", (await sb.auth.getUser()).data.user.id).single();

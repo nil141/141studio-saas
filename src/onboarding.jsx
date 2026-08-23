@@ -125,7 +125,8 @@ const OnboardingPage = ({ token }) => {
     // IMPORTANTE: esperamos (await) a que se cree el aviso y se envíe el correo
     // ANTES de cerrar sesión; si no, signOut() invalida el token a mitad y falla.
     try {
-      const clientName = form.company.trim() || form.name.trim() || "Un cliente";
+      const _person = form.name.trim(); const _company = form.company.trim();
+      const clientName = _person ? (_company ? `${_person} (${_company})` : _person) : (_company || "Un cliente");
       const body = clientName + " ha completado su registro y ya tiene acceso a su portal";
       const token = (await sb.auth.getSession()).data.session?.access_token;
       const { data: prof } = await sb.from("profiles").select("agency_id, client_db_id")
