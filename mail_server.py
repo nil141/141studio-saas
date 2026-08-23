@@ -26,7 +26,7 @@ SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 # en el servidor; nunca se expone al navegador. Si falta, el envío se omite sin
 # romper nada (el aviso in-app sigue funcionando).
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL <no-reply@141agency.com>")
+RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL · Portal de cliente <no-reply@141agency.com>")
 PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
@@ -321,13 +321,18 @@ def _notify_email_html(client_name, title, body_text, meta, cta_url):
         f'<tr><td style="background:#f6f5fb;border:1px solid #ecebf5;border-left:3px solid {accent};border-radius:10px;padding:14px 16px;color:#1f2937;font-size:15px;line-height:1.55">{safe(body_text)}</td></tr>'
         f'</table>'
     ) if body_text else ""
+    preheader = f"Un aviso de tu portal de cliente · {safe(title)}" if title else "Un aviso de tu portal de cliente de 141'DIGITAL"
     return f"""\
 <!doctype html><html lang="es"><body style="margin:0;background:#0b0b0d;padding:32px 14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;height:0;width:0;mso-hide:all">{preheader}</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)">
-        <tr><td style="background:#0b0b0d;padding:26px 34px">
-          <img src="{logo}" alt="141'DIGITAL" height="20" style="height:20px;width:auto;display:block;border:0;outline:none;text-decoration:none">
+        <tr><td style="background:#0b0b0d;padding:22px 34px">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="vertical-align:middle"><img src="{logo}" alt="141'DIGITAL" height="20" style="height:20px;width:auto;display:block;border:0;outline:none;text-decoration:none"></td>
+            <td style="vertical-align:middle;text-align:right"><span style="font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8b84e8;font-weight:600">Portal de cliente</span></td>
+          </tr></table>
         </td></tr>
         <tr><td style="padding:30px 34px 4px">
           <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:{accent};font-weight:700">{safe(meta['eyebrow'])}</div>
