@@ -166,3 +166,13 @@ const SiIcon = ({ name, size = 16, ...rest }) => {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...rest}><path d={d}/></svg>;
 };
 window.SiIcon = SiIcon;
+
+// Logo para una credencial: logo de marca en color si existe; monograma en color
+// (letra) para marcas sin glyph; icono genérico como último recurso.
+const CredGlyph = ({ meta, size = 19 }) => {
+  if (!meta) return <Icon name="key" size={size}/>;
+  if (meta.mono) return <span style={{ fontFamily: "var(--font-display)", fontWeight: 700, fontSize: size, lineHeight: 1, color: meta.color || "var(--text)" }}>{meta.mono}</span>;
+  if (SI_PATHS[meta.icon]) return <SiIcon name={meta.icon} size={size} style={{ color: meta.color || "var(--text)" }}/>;
+  return <Icon name={meta.icon || "key"} size={size}/>;
+};
+window.CredGlyph = CredGlyph;

@@ -278,19 +278,21 @@ const _mcr = (r) => r && {
   granted: !!r.granted
 };
 const CRED_CATALOG = [
-  { key: "instagram", name: "Instagram", mode: "login", icon: "instagram" },
-  { key: "meta", name: "Meta Business", mode: "access", icon: "meta" },
-  { key: "google", name: "Google / Analytics", mode: "access", icon: "google" },
-  { key: "shopify", name: "Shopify", mode: "access", icon: "shopify" },
-  { key: "stripe", name: "Stripe", mode: "access", icon: "stripe" },
-  { key: "wordpress", name: "WordPress", mode: "login", icon: "wordpress" },
-  { key: "hosting", name: "Hosting", mode: "login", icon: "hostinger" },
-  { key: "dominio", name: "Dominio", mode: "login", icon: "godaddy" },
-  { key: "gmail", name: "Correo", mode: "login", icon: "gmail" },
-  { key: "mailchimp", name: "Mailchimp", mode: "login", icon: "mailchimp" },
-  { key: "otro", name: "Otro acceso", mode: "login", icon: "key" }
+  { key: "instagram", name: "Instagram", mode: "login", icon: "instagram", color: "#E4405F" },
+  { key: "meta", name: "Meta Business", mode: "access", icon: "meta", color: "#0866FF" },
+  { key: "google", name: "Google / Analytics", mode: "access", icon: "google", color: "#4285F4" },
+  { key: "shopify", name: "Shopify", mode: "access", icon: "shopify", color: "#95BF47" },
+  { key: "stripe", name: "Stripe", mode: "access", icon: "stripe", color: "#635BFF" },
+  { key: "klaviyo", name: "Klaviyo", mode: "access", icon: "klaviyo", color: "#1B1B1B", mono: "K" },
+  { key: "clarity", name: "Microsoft Clarity", mode: "access", icon: "clarity", color: "#4A7DE0", mono: "C" },
+  { key: "wordpress", name: "WordPress", mode: "login", icon: "wordpress", color: "#3858E9" },
+  { key: "hosting", name: "Hosting", mode: "login", icon: "hostinger", color: "#673DE6" },
+  { key: "dominio", name: "Dominio", mode: "login", icon: "godaddy", color: "#1BDBDB" },
+  { key: "gmail", name: "Correo", mode: "login", icon: "gmail", color: "#EA4335" },
+  { key: "mailchimp", name: "Mailchimp", mode: "login", icon: "mailchimp", color: "#FFE01B" },
+  { key: "otro", name: "Otro acceso", mode: "login", icon: "key", color: "#8b8b93" }
 ];
-const _credMeta = (platform) => CRED_CATALOG.find((x) => x.key === platform) || { key: platform || "otro", name: platform || "Acceso", mode: "login", icon: "key" };
+const _credMeta = (platform) => CRED_CATALOG.find((x) => x.key === platform) || { key: platform || "otro", name: platform || "Acceso", mode: "login", icon: "key", color: "#8b8b93" };
 const credMode = (platform) => _credMeta(platform).mode;
 const _mct = (r) => r && {
   id: r.id,

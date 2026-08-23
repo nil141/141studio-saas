@@ -650,7 +650,7 @@ const AgencyCredentials = ({ clientId }) => {
             {cat.map(p => (
               <button key={p.key} onClick={() => add(p)}
                 style={{display:"flex", alignItems:"center", gap:9, padding:"10px 12px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:10, textAlign:"left", fontFamily:"inherit"}}>
-                <span style={brand}><Icon name={p.icon} size={16}/></span>
+                <span style={brand}><CredGlyph meta={p} size={16}/></span>
                 <span style={{minWidth:0}}><span style={{display:"block", fontWeight:500, fontSize:13, color:"var(--text)"}}>{p.name}</span><span className="muted xsmall">{p.mode === "access" ? "Dar acceso" : "Usuario y clave"}</span></span>
               </button>
             ))}
@@ -667,7 +667,7 @@ const AgencyCredentials = ({ clientId }) => {
             return (
               <div key={c.id} className="card"><div className="card-body" style={{padding: 15}}>
                 <div className="row between" style={{alignItems:"flex-start"}}>
-                  <div className="row tight"><span style={brand}><Icon name={meta.icon} size={15}/></span><div style={{fontWeight: 500, fontSize: 14}}>{c.label || meta.name}</div></div>
+                  <div className="row tight"><span style={brand}><CredGlyph meta={meta} size={15}/></span><div style={{fontWeight: 500, fontSize: 14}}>{c.label || meta.name}</div></div>
                   <div className="row tight">
                     {mode === "login" && !ed && <button className="btn ghost icon-only sm" onClick={() => startEdit(c)}><Icon name="edit" size={12}/></button>}
                     <button className="btn ghost icon-only sm" onClick={() => del(c)}><Icon name="trash" size={12}/></button>

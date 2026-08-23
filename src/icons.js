@@ -160,3 +160,10 @@ const SiIcon = ({ name, size = 16, ...rest }) => {
   return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, viewBox: "0 0 24 24", fill: "currentColor", ...rest }, /* @__PURE__ */ React.createElement("path", { d }));
 };
 window.SiIcon = SiIcon;
+const CredGlyph = ({ meta, size = 19 }) => {
+  if (!meta) return /* @__PURE__ */ React.createElement(Icon, { name: "key", size });
+  if (meta.mono) return /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontWeight: 700, fontSize: size, lineHeight: 1, color: meta.color || "var(--text)" } }, meta.mono);
+  if (SI_PATHS[meta.icon]) return /* @__PURE__ */ React.createElement(SiIcon, { name: meta.icon, size, style: { color: meta.color || "var(--text)" } });
+  return /* @__PURE__ */ React.createElement(Icon, { name: meta.icon || "key", size });
+};
+window.CredGlyph = CredGlyph;

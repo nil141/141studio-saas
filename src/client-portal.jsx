@@ -674,7 +674,7 @@ const CredCatalog = ({ onPick, onCancel }) => {
             {cat.filter(p => p.mode === g.mode).map(p => (
               <button key={p.key} className="cred-tile" onClick={() => onPick(p)}
                 style={{display:"flex", alignItems:"center", gap:11, padding:"11px 13px", cursor:"pointer", background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12, textAlign:"left", fontFamily:"inherit"}}>
-                <span style={_brandBox(34)}><Icon name={p.icon} size={17}/></span>
+                <span style={_brandBox(34)}><CredGlyph meta={p} size={17}/></span>
                 <span style={{minWidth:0, fontWeight:500, fontSize:13.5, color:"var(--text)", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{p.name}</span>
               </button>
             ))}
@@ -710,7 +710,7 @@ const CredItem = ({ c, agencyEmail, editable, onDelete }) => {
     <div className="card"><div className="card-body" style={{padding:18}}>
       <div className="row between" style={{alignItems:"flex-start", gap:10}}>
         <div style={{display:"flex", gap:12, minWidth:0}}>
-          <span style={_brandBox(40)}><Icon name={meta.icon} size={19}/></span>
+          <span style={_brandBox(40)}><CredGlyph meta={meta} size={19}/></span>
           <div style={{minWidth:0}}>
             <div style={{fontWeight:500, fontSize:15}}>{c.label || meta.name}</div>
             <div className="muted xsmall" style={{marginTop:2}}>{mode === "access" ? "Dar acceso" : "Usuario y contraseña"}</div>
