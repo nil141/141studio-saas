@@ -26,7 +26,7 @@ SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 # en el servidor; nunca se expone al navegador. Si falta, el envío se omite sin
 # romper nada (el aviso in-app sigue funcionando).
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM    = os.environ.get("RESEND_FROM", "141'STUDIO <no-reply@141agency.com>")
+RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL <no-reply@141agency.com>")
 PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
@@ -302,7 +302,7 @@ _NOTIF_META = {
                    "lead": "Tienes una novedad en la facturación de tu proyecto.",
                    "cta": "Ver facturación", "route": "client-docs"},
 }
-_NOTIF_DEFAULT = {"eyebrow": "Novedad en tu portal", "subject": "Novedad en tu portal 141'STUDIO",
+_NOTIF_DEFAULT = {"eyebrow": "Novedad en tu portal", "subject": "Novedad en tu portal 141'DIGITAL",
                   "lead": "", "cta": "Abrir mi portal", "route": "client-dashboard"}
 
 def _notify_meta(kind):
@@ -340,9 +340,9 @@ def _notify_email_html(client_name, title, body_text, meta, cta_url):
           <a href="{cta_url}" style="display:inline-block;background:#0b0b0d;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px">{safe(meta['cta'])} &rarr;</a>
         </td></tr>
         <tr><td style="padding:20px 34px 26px;border-top:1px solid #eee">
-          <div style="font-size:13px;color:#0b0b0d;font-weight:600">141'STUDIO <span style="color:#a1a1aa;font-weight:400">· Agencia digital</span></div>
+          <div style="font-size:13px;color:#0b0b0d;font-weight:600">141'DIGITAL <span style="color:#a1a1aa;font-weight:400">· Agencia digital</span></div>
           <div style="margin-top:4px;font-size:12.5px"><a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
-          <div style="margin-top:12px;font-size:11.5px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente con 141'STUDIO. Este buzón no admite respuestas; para cualquier duda, contacta con tu equipo de siempre.</div>
+          <div style="margin-top:12px;font-size:11.5px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente con 141'DIGITAL. Este buzón no admite respuestas; para cualquier duda, contacta con tu equipo de siempre.</div>
         </td></tr>
       </table>
     </td></tr>
