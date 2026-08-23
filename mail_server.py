@@ -337,6 +337,10 @@ def api_notify_client(body):
     req = urllib.request.Request("https://api.resend.com/emails", data=payload, method="POST")
     req.add_header("Authorization", f"Bearer {RESEND_API_KEY}")
     req.add_header("Content-Type", "application/json")
+    # Cloudflare (delante de Resend) banea el User-Agent por defecto de urllib
+    # (Python-urllib/…) devolviendo "error code: 1010". Con un UA normal pasa.
+    req.add_header("User-Agent", "141studio-portal/1.0 (+https://app.141agency.com)")
+    req.add_header("Accept", "application/json")
     try:
         with urllib.request.urlopen(req, timeout=15) as r:
             data = json.loads(r.read().decode())
