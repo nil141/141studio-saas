@@ -26,7 +26,7 @@ SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 # en el servidor; nunca se expone al navegador. Si falta, el envío se omite sin
 # romper nada (el aviso in-app sigue funcionando).
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
-RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL · Portal de cliente <no-reply@141agency.com>")
+RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL | Portal de Cliente <no-reply@141agency.com>")
 PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
@@ -309,45 +309,45 @@ def _notify_meta(kind):
     return _NOTIF_META.get((kind or "").strip(), _NOTIF_DEFAULT)
 
 def _notify_email_html(client_name, title, body_text, meta, cta_url):
-    """Correo del aviso al cliente con la marca 141'DIGITAL."""
+    """Correo del aviso al cliente (tema oscuro, tipografía Inter, marca 141'DIGITAL)."""
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    hello    = f"Hola {safe(client_name)}," if client_name else "Hola,"
+    first    = safe(client_name.split()[0]) if client_name and client_name.split() else ""
+    hello    = f"Hola {first}," if first else "Hola,"
     logo     = f"{PORTAL_URL}/logo-141digital-white.png"
-    accent   = "#7c74dd"
+    accent   = "#9e9ae5"
+    font     = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
     lead     = safe(meta.get("lead", ""))
-    lead_block = f'<p style="margin:0 0 18px;color:#52525b;font-size:15px;line-height:1.6">{lead}</p>' if lead else ""
+    lead_block = f'<p style="margin:0 0 20px;color:#8b8b93;font-size:15px;line-height:1.6;font-weight:300">{lead}</p>' if lead else ""
     body_block = (
-        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">'
-        f'<tr><td style="background:#f6f5fb;border:1px solid #ecebf5;border-left:3px solid {accent};border-radius:10px;padding:14px 16px;color:#1f2937;font-size:15px;line-height:1.55">{safe(body_text)}</td></tr>'
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 26px">'
+        f'<tr><td style="background:rgba(255,255,255,0.045);border:1px solid rgba(255,255,255,0.07);border-left:3px solid {accent};border-radius:11px;padding:15px 17px;color:#e4e4e7;font-size:15px;line-height:1.55;font-weight:400">{safe(body_text)}</td></tr>'
         f'</table>'
     ) if body_text else ""
     preheader = f"Un aviso de tu portal de cliente · {safe(title)}" if title else "Un aviso de tu portal de cliente de 141'DIGITAL"
     return f"""\
-<!doctype html><html lang="es"><body style="margin:0;background:#0b0b0d;padding:32px 14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');</style></head>
+<body style="margin:0;background:#000000;padding:34px 14px;font-family:{font}">
   <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;height:0;width:0;mso-hide:all">{preheader}</div>
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)">
-        <tr><td style="background:#0b0b0d;padding:22px 34px">
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td style="vertical-align:middle"><img src="{logo}" alt="141'DIGITAL" height="20" style="height:20px;width:auto;display:block;border:0;outline:none;text-decoration:none"></td>
-            <td style="vertical-align:middle;text-align:right"><span style="font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:#8b84e8;font-weight:600">Portal de cliente</span></td>
-          </tr></table>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#0d0d0f;border:1px solid rgba(255,255,255,0.08);border-radius:18px;overflow:hidden">
+        <tr><td style="padding:26px 34px 22px;border-bottom:1px solid rgba(255,255,255,0.07)">
+          <img src="{logo}" alt="141'DIGITAL" height="19" style="height:19px;width:auto;display:block;border:0;outline:none;text-decoration:none">
         </td></tr>
         <tr><td style="padding:30px 34px 4px">
-          <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:{accent};font-weight:700">{safe(meta['eyebrow'])}</div>
-          <h1 style="margin:10px 0 18px;font-size:23px;line-height:1.25;color:#0b0b0d;font-weight:600">{safe(title)}</h1>
-          <p style="margin:0 0 14px;color:#0b0b0d;font-size:15px;line-height:1.6">{hello}</p>
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:.13em;color:{accent};font-weight:600">{safe(meta['eyebrow'])}</div>
+          <h1 style="margin:12px 0 20px;font-size:27px;line-height:1.2;color:#f4f4f5;font-weight:300;letter-spacing:-0.5px">{safe(title)}</h1>
+          <p style="margin:0 0 16px;color:#e4e4e7;font-size:15px;line-height:1.6;font-weight:400">{hello}</p>
           {lead_block}
           {body_block}
         </td></tr>
-        <tr><td style="padding:0 34px 32px">
-          <a href="{cta_url}" style="display:inline-block;background:#0b0b0d;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px">{safe(meta['cta'])} &rarr;</a>
+        <tr><td style="padding:0 34px 34px">
+          <a href="{cta_url}" style="display:inline-block;background:#f4f4f5;color:#0a0a0a;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px;font-family:{font}">{safe(meta['cta'])} &rarr;</a>
         </td></tr>
-        <tr><td style="padding:20px 34px 26px;border-top:1px solid #eee">
-          <div style="font-size:13px;color:#0b0b0d;font-weight:600">141'DIGITAL <span style="color:#a1a1aa;font-weight:400">· Agencia digital</span></div>
-          <div style="margin-top:4px;font-size:12.5px"><a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
-          <div style="margin-top:12px;font-size:11.5px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente con 141'DIGITAL. Este buzón no admite respuestas; para cualquier duda, contacta con tu equipo de siempre.</div>
+        <tr><td style="padding:20px 34px 26px;border-top:1px solid rgba(255,255,255,0.07)">
+          <div style="font-size:13px;color:#e4e4e7;font-weight:500">141'DIGITAL <span style="color:#6b6b73;font-weight:300">· Agencia digital</span></div>
+          <div style="margin-top:5px;font-size:12.5px"><a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
+          <div style="margin-top:12px;font-size:11.5px;color:#6b6b73;line-height:1.5;font-weight:300">Recibes este correo porque tienes un portal de cliente con 141'DIGITAL. Este buzón no admite respuestas; para cualquier duda, contacta con tu equipo de siempre.</div>
         </td></tr>
       </table>
     </td></tr>
