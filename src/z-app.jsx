@@ -1,6 +1,13 @@
 // Root app: routing + theme + tweaks + auth gate
 const { useState: useStateA, useEffect: useEffectA } = React;
 
+// Enlace directo desde un correo (/?goto=client-status): lo guardamos al cargar
+// para que sobreviva al login por enlace mágico y se consuma tras iniciar sesión.
+try {
+  const _g = new URLSearchParams(window.location.search).get("goto");
+  if (_g && /^client-[a-z-]+$/.test(_g)) localStorage.setItem("141_goto", _g);
+} catch {}
+
 // ── Session storage helpers ───────────────────────────────────
 const _SK  = "141_session";
 const _SEK = "141_session_exp";
@@ -91,7 +98,15 @@ const App = () => {
     if (session.role === "admin") {
       setView({ name: "dashboard", side: "agency", params: {} });
     } else {
-      setView({ name: "client-dashboard", side: "client", params: {} });
+      // Enlace directo desde un correo: /?goto=client-status lleva a esa sección.
+      let goto = null;
+      try {
+        const g = new URLSearchParams(window.location.search).get("goto") || localStorage.getItem("141_goto");
+        if (g && /^client-[a-z-]+$/.test(g)) goto = g;
+      } catch {}
+      setView({ name: goto || "client-dashboard", side: "client", params: {} });
+      try { localStorage.removeItem("141_goto"); } catch {}
+      try { if (new URLSearchParams(window.location.search).get("goto")) window.history.replaceState({}, "", window.location.pathname); } catch {}
     }
   }, [session]);
 

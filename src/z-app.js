@@ -1,10 +1,14 @@
 (() => {
-  // src/z-app.jsx
-  var { useState: useStateA, useEffect: useEffectA } = React;
-  var _SK = "141_session";
-  var _SEK = "141_session_exp";
-  var _SDK = "141_session_dur";
-  var _saveSession = (sess, days) => {
+  const { useState: useStateA, useEffect: useEffectA } = React;
+  try {
+    const _g = new URLSearchParams(window.location.search).get("goto");
+    if (_g && /^client-[a-z-]+$/.test(_g)) localStorage.setItem("141_goto", _g);
+  } catch {
+  }
+  const _SK = "141_session";
+  const _SEK = "141_session_exp";
+  const _SDK = "141_session_dur";
+  const _saveSession = (sess, days) => {
     localStorage.setItem(_SDK, String(days));
     if (!days || days === 0) {
       sessionStorage.setItem(_SK, JSON.stringify(sess));
@@ -17,7 +21,7 @@
       sessionStorage.removeItem(_SK);
     }
   };
-  var _loadSession = () => {
+  const _loadSession = () => {
     try {
       const ls = localStorage.getItem(_SK);
       if (ls) {
@@ -27,21 +31,21 @@
         localStorage.removeItem(_SEK);
       }
       return JSON.parse(sessionStorage.getItem(_SK) || "null");
-    } catch (e) {
+    } catch {
       return null;
     }
   };
-  var _clearSession = () => {
+  const _clearSession = () => {
     sessionStorage.removeItem(_SK);
     localStorage.removeItem(_SK);
     localStorage.removeItem(_SEK);
   };
-  var _sessionInfo = () => ({
+  const _sessionInfo = () => ({
     days: parseInt(localStorage.getItem(_SDK) || "0"),
     exp: localStorage.getItem(_SEK)
   });
   window._sessionUtils = { save: _saveSession, info: _sessionInfo };
-  var App = () => {
+  const App = () => {
     const [session, setSession] = useState(_loadSession);
     const [view, setView] = useState({ name: "dashboard", side: "agency", params: {} });
     const [theme, setTheme] = useState("dark");
@@ -81,7 +85,21 @@
       if (session.role === "admin") {
         setView({ name: "dashboard", side: "agency", params: {} });
       } else {
-        setView({ name: "client-dashboard", side: "client", params: {} });
+        let goto = null;
+        try {
+          const g = new URLSearchParams(window.location.search).get("goto") || localStorage.getItem("141_goto");
+          if (g && /^client-[a-z-]+$/.test(g)) goto = g;
+        } catch {
+        }
+        setView({ name: goto || "client-dashboard", side: "client", params: {} });
+        try {
+          localStorage.removeItem("141_goto");
+        } catch {
+        }
+        try {
+          if (new URLSearchParams(window.location.search).get("goto")) window.history.replaceState({}, "", window.location.pathname);
+        } catch {
+        }
       }
     }, [session]);
     const navigate = (name, params = {}) => {
@@ -153,10 +171,12 @@
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":
           return null;
+        // rendered always below
         case "income":
           return /* @__PURE__ */ React.createElement(IncomePage, null);
         case "mail":
           return null;
+        // rendered always below
         case "settings":
           return /* @__PURE__ */ React.createElement(SettingsPage, null);
         default:
@@ -177,6 +197,7 @@
           return /* @__PURE__ */ React.createElement(ClientNotifications, { navigate, session });
         case "client-settings":
           return /* @__PURE__ */ React.createElement(ClientSettings, { navigate, session });
+        // compat con enlaces antiguos
         case "client-project":
           return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":
@@ -193,7 +214,7 @@
     const _previewId = (() => {
       try {
         return sessionStorage.getItem("141_preview_client");
-      } catch (e) {
+      } catch {
         return null;
       }
     })();
@@ -203,7 +224,7 @@
       const id = _previewId;
       try {
         sessionStorage.removeItem("141_preview_client");
-      } catch (e) {
+      } catch {
       }
       if (id) navigate("clientDetail", { clientId: id });
       else navigate("clients");
@@ -238,8 +259,7 @@
     }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal, editTask: quickCreateEdit }));
   };
   window.__initApp = () => {
-    var _a;
-    const _inviteToken = (_a = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)) == null ? void 0 : _a[1];
+    const _inviteToken = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)?.[1];
     ReactDOM.createRoot(document.getElementById("root")).render(
       _inviteToken ? /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(OnboardingPage, { token: _inviteToken })) : /* @__PURE__ */ React.createElement(ToastProvider, null, /* @__PURE__ */ React.createElement(ConfirmProvider, null, /* @__PURE__ */ React.createElement(App, null)))
     );

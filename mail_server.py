@@ -283,36 +283,68 @@ def api_send(body):
         try: smtp.quit()
         except: pass
 
-def _notify_email_html(client_name, title, body_text, kind):
-    """Plantilla HTML sobria para el aviso al cliente (marca 141'STUDIO)."""
-    labels = {
-        "project": "Novedad en tu proyecto",
-        "task":    "Tienes una tarea pendiente",
-        "credential": "Accesos de tu cuenta",
-        "document": "Documentación",
-        "invoice":  "Facturación",
-    }
-    eyebrow = labels.get(kind, "Novedad en tu portal")
-    hello   = f"Hola {client_name}," if client_name else "Hola,"
+# Contenido por tipo de aviso: encabezado, asunto, texto guía, botón y sección
+# del portal a la que enlaza el botón (?goto=…).
+_NOTIF_META = {
+    "task":       {"eyebrow": "Tienes una tarea pendiente", "subject": "Tienes una nueva tarea en tu portal",
+                   "lead": "Has recibido una nueva acción pendiente. Cuando la completes, márcala como hecha desde tu portal.",
+                   "cta": "Ver mis tareas", "route": "client-dashboard"},
+    "project":    {"eyebrow": "Novedad en tu proyecto", "subject": "Novedades en tu proyecto",
+                   "lead": "Hemos actualizado tu proyecto. Aquí tienes el detalle:",
+                   "cta": "Ver el estado", "route": "client-status"},
+    "credential": {"eyebrow": "Accesos de tu cuenta", "subject": "Accesos pendientes en tu portal",
+                   "lead": "Necesitamos que completes unos accesos para poder trabajar en tu proyecto.",
+                   "cta": "Ir a credenciales", "route": "client-credentials"},
+    "document":   {"eyebrow": "Documentación", "subject": "Novedad en tu documentación",
+                   "lead": "Hay una novedad en la documentación de tu proyecto.",
+                   "cta": "Ir a documentación", "route": "client-docs"},
+    "invoice":    {"eyebrow": "Facturación", "subject": "Novedad en tu facturación",
+                   "lead": "Tienes una novedad en la facturación de tu proyecto.",
+                   "cta": "Ver facturación", "route": "client-docs"},
+}
+_NOTIF_DEFAULT = {"eyebrow": "Novedad en tu portal", "subject": "Novedad en tu portal 141'STUDIO",
+                  "lead": "", "cta": "Abrir mi portal", "route": "client-dashboard"}
+
+def _notify_meta(kind):
+    return _NOTIF_META.get((kind or "").strip(), _NOTIF_DEFAULT)
+
+def _notify_email_html(client_name, title, body_text, meta, cta_url):
+    """Correo del aviso al cliente con la marca 141'DIGITAL."""
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
-    body_block = f'<p style="margin:0 0 22px;color:#3f3f46;font-size:15px;line-height:1.6">{safe(body_text)}</p>' if body_text else ""
+    hello    = f"Hola {safe(client_name)}," if client_name else "Hola,"
+    logo     = f"{PORTAL_URL}/logo-141digital-white.png"
+    accent   = "#7c74dd"
+    lead     = safe(meta.get("lead", ""))
+    lead_block = f'<p style="margin:0 0 18px;color:#52525b;font-size:15px;line-height:1.6">{lead}</p>' if lead else ""
+    body_block = (
+        f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px">'
+        f'<tr><td style="background:#f6f5fb;border:1px solid #ecebf5;border-left:3px solid {accent};border-radius:10px;padding:14px 16px;color:#1f2937;font-size:15px;line-height:1.55">{safe(body_text)}</td></tr>'
+        f'</table>'
+    ) if body_text else ""
     return f"""\
-<!doctype html><html lang="es"><body style="margin:0;background:#0b0b0d;padding:32px 16px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
-    <tr><td style="padding:30px 34px 8px">
-      <div style="font-size:15px;font-weight:700;letter-spacing:.5px;color:#0b0b0d">141'DIGITAL</div>
-    </td></tr>
-    <tr><td style="padding:12px 34px 6px">
-      <div style="font-size:12px;text-transform:uppercase;letter-spacing:.09em;color:#8b5cf6;font-weight:600">{safe(eyebrow)}</div>
-      <h1 style="margin:8px 0 14px;font-size:22px;line-height:1.25;color:#0b0b0d;font-weight:600">{safe(title)}</h1>
-      <p style="margin:0 0 6px;color:#3f3f46;font-size:15px;line-height:1.6">{safe(hello)}</p>
-      {body_block}
-    </td></tr>
-    <tr><td style="padding:8px 34px 34px">
-      <a href="{PORTAL_URL}" style="display:inline-block;background:#0b0b0d;color:#fff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 22px;border-radius:10px">Abrir mi portal &rarr;</a>
-    </td></tr>
-    <tr><td style="padding:18px 34px;border-top:1px solid #eee">
-      <div style="font-size:12px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente en 141'STUDIO.</div>
+<!doctype html><html lang="es"><body style="margin:0;background:#0b0b0d;padding:32px 14px;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:540px;background:#ffffff;border-radius:18px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.35)">
+        <tr><td style="background:#0b0b0d;padding:26px 34px">
+          <img src="{logo}" alt="141'DIGITAL" height="20" style="height:20px;width:auto;display:block;border:0;outline:none;text-decoration:none">
+        </td></tr>
+        <tr><td style="padding:30px 34px 4px">
+          <div style="font-size:11.5px;text-transform:uppercase;letter-spacing:.11em;color:{accent};font-weight:700">{safe(meta['eyebrow'])}</div>
+          <h1 style="margin:10px 0 18px;font-size:23px;line-height:1.25;color:#0b0b0d;font-weight:600">{safe(title)}</h1>
+          <p style="margin:0 0 14px;color:#0b0b0d;font-size:15px;line-height:1.6">{hello}</p>
+          {lead_block}
+          {body_block}
+        </td></tr>
+        <tr><td style="padding:0 34px 32px">
+          <a href="{cta_url}" style="display:inline-block;background:#0b0b0d;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px">{safe(meta['cta'])} &rarr;</a>
+        </td></tr>
+        <tr><td style="padding:20px 34px 26px;border-top:1px solid #eee">
+          <div style="font-size:13px;color:#0b0b0d;font-weight:600">141'STUDIO <span style="color:#a1a1aa;font-weight:400">· Agencia digital</span></div>
+          <div style="margin-top:4px;font-size:12.5px"><a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
+          <div style="margin-top:12px;font-size:11.5px;color:#a1a1aa;line-height:1.5">Recibes este correo porque tienes un portal de cliente con 141'STUDIO. Este buzón no admite respuestas; para cualquier duda, contacta con tu equipo de siempre.</div>
+        </td></tr>
+      </table>
     </td></tr>
   </table>
 </body></html>"""
@@ -329,8 +361,10 @@ def api_notify_client(body):
         return {"ok": False, "skipped": "no_api_key"}
     if "@" not in to:
         return {"ok": False, "error": "destinatario no válido"}
-    subject = title or "Novedad en tu portal 141'STUDIO"
-    html    = _notify_email_html(cname, title, text, kind)
+    meta    = _notify_meta(kind)
+    subject = title or meta["subject"]
+    cta_url = f"{PORTAL_URL}/?goto={meta['route']}"
+    html    = _notify_email_html(cname, title, text, meta, cta_url)
     payload = json.dumps({
         "from": RESEND_FROM, "to": [to], "subject": subject, "html": html,
     }).encode("utf-8")
