@@ -7,7 +7,7 @@
 Uso:  python3 mail_server.py
 URL:  http://localhost:8080
 """
-import os, sys, json, re, imaplib, smtplib, email, traceback, secrets, random
+import os, sys, json, re, imaplib, smtplib, email, traceback, secrets, random, threading
 import urllib.request, urllib.parse, urllib.error, base64, time, datetime
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from email.header  import decode_header as _dh
@@ -31,6 +31,15 @@ PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 # A dónde llegan los avisos de actividad de clientes (tú/la agencia). El cliente
 # NO decide el destinatario: siempre se envía aquí (evita relay de spam).
 AGENCY_NOTIFY_EMAIL = os.environ.get("AGENCY_NOTIFY_EMAIL", "nil@141agency.com")
+
+# Service role de Supabase (SECRETA, solo servidor). Necesaria para los
+# recordatorios automáticos (leer/actualizar tareas de todos los clientes).
+SB_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+# Recordatorios: días para el 1er aviso y entre repeticiones, máx. de avisos y
+# cada cuántas horas revisa el servidor.
+REMINDER_DAYS       = int(os.environ.get("REMINDER_DAYS", "3"))
+REMINDER_MAX        = int(os.environ.get("REMINDER_MAX", "3"))
+REMINDER_CHECK_HOURS= int(os.environ.get("REMINDER_CHECK_HOURS", "6"))
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
@@ -519,6 +528,101 @@ def api_notify_agency(body):
     subject = f"{cname} · {title}"
     html = _notify_email_html("", title, text, ameta, PORTAL_URL)
     return _resend_send(to, subject, html)
+
+# ── Recordatorios automáticos de tareas pendientes ──────────────────────────
+def _sb_service(method, path, body=None):
+    """Petición a la REST de Supabase con la service role (bypassa RLS)."""
+    req = urllib.request.Request(SB_URL + "/rest/v1/" + path, method=method,
+                                 data=(json.dumps(body).encode() if body is not None else None))
+    req.add_header("apikey", SB_SERVICE_KEY)
+    req.add_header("Authorization", "Bearer " + SB_SERVICE_KEY)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("Prefer", "return=representation")
+    with urllib.request.urlopen(req, timeout=20) as r:
+        raw = r.read().decode()
+        return json.loads(raw) if raw else []
+
+def _reminder_email_html(client_name, tasks):
+    safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    first = safe(client_name.split()[0]) if client_name and client_name.split() else ""
+    hello = f"Hola {first}," if first else "Hola,"
+    logo  = f"{PORTAL_URL}/logo-141digital-white.png"
+    accent= "#9e9ae5"
+    font  = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+    rows = ""
+    for t in tasks:
+        rows += (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 10px">'
+                 f'<tr><td style="border-left:2px solid {accent};padding:2px 0 2px 16px;color:#f4f4f5;font-size:15.5px;font-weight:500;line-height:1.4;font-family:{font}">{safe(t)}</td></tr></table>')
+    n = len(tasks)
+    pad = "&#847;&zwnj;&nbsp;" * 60
+    return f"""\
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');</style></head>
+<body style="margin:0;background:#000000;padding:0;font-family:{font}">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;height:0;width:0;mso-hide:all">Tienes {n} tarea(s) pendiente(s) en tu portal{pad}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000">
+    <tr><td align="center" style="padding:40px 22px 46px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+        <tr><td style="padding:0 0 34px"><img src="{logo}" alt="141'DIGITAL" height="18" style="height:18px;width:auto;display:block;border:0"></td></tr>
+        <tr><td>
+          <h1 style="margin:0 0 22px;font-size:28px;line-height:1.2;color:#f4f4f5;font-weight:300;letter-spacing:-0.6px;font-family:{font}">Tienes cosas pendientes</h1>
+          <p style="margin:0 0 24px;color:#e4e4e7;font-size:15px;line-height:1.6;font-family:{font}"><span style="color:#f4f4f5">{hello}</span> aún tienes {'esta tarea' if n==1 else 'estas tareas'} sin completar en tu portal:</p>
+          {rows}
+        </td></tr>
+        <tr><td style="padding:14px 0 40px">
+          <a href="{PORTAL_URL}/?goto=client-dashboard" style="display:inline-block;background:#f4f4f5;color:#0a0a0a;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px;font-family:{font}">Completar ahora &rarr;</a>
+        </td></tr>
+        <tr><td style="padding:22px 0 0;border-top:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:12.5px;color:#8b8b93;font-family:{font}">141'DIGITAL · <a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
+          <div style="margin-top:8px;font-size:11.5px;color:#5c5c63;line-height:1.5;font-family:{font}">Recibes este correo porque tienes tareas pendientes en tu portal de cliente. Este buzón no admite respuestas.</div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
+def _run_reminders():
+    """Busca tareas pendientes antiguas y manda un recordatorio por cliente."""
+    if not (SB_SERVICE_KEY and RESEND_API_KEY):
+        return
+    try:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        cutoff = (now - datetime.timedelta(days=REMINDER_DAYS)).isoformat()
+        q = ("client_tasks?select=id,client_id,title,reminder_count"
+             f"&done=eq.false&reminder_count=lt.{REMINDER_MAX}"
+             f"&created_at=lt.{urllib.parse.quote(cutoff)}"
+             f"&or=(reminded_at.is.null,reminded_at.lt.{urllib.parse.quote(cutoff)})")
+        tasks = _sb_service("GET", q)
+        if not tasks:
+            return
+        by_client = {}
+        for t in tasks:
+            by_client.setdefault(t["client_id"], []).append(t)
+        ids = list(by_client.keys())
+        id_list = ",".join('"' + str(i) + '"' for i in ids)
+        clients = _sb_service("GET", f"clients?select=id,name,email&id=in.({id_list})")
+        cmap = {c["id"]: c for c in clients}
+        stamp = now.isoformat()
+        for cid, ts in by_client.items():
+            c = cmap.get(cid)
+            if not c or not c.get("email") or "@" not in c["email"]:
+                continue
+            titles = [t.get("title") or "Tarea" for t in ts]
+            res = _resend_send(c["email"], f"Tienes {len(titles)} cosa(s) pendiente(s) en tu portal",
+                               _reminder_email_html(c.get("name") or "", titles))
+            if res.get("ok"):
+                for t in ts:
+                    _sb_service("PATCH", f"client_tasks?id=eq.{t['id']}",
+                                {"reminded_at": stamp, "reminder_count": (t.get("reminder_count") or 0) + 1})
+                print(f"  [reminders] enviado a {c['email']} ({len(titles)} tareas)")
+    except Exception as e:
+        print(f"  [reminders] error: {e}")
+
+def _reminder_loop():
+    import time as _t
+    _t.sleep(60)  # esperar a que el server arranque del todo
+    while True:
+        _run_reminders()
+        _t.sleep(max(1, REMINDER_CHECK_HOURS) * 3600)
 
 def api_action(body):
     c      = body.get("creds", {})
@@ -1369,6 +1473,11 @@ class Handler(SimpleHTTPRequestHandler):
 if __name__ == "__main__":
     server = HTTPServer(("", PORT), Handler)
     print(f"\n  141'STUDIO  →  http://localhost:{PORT}\n  Ctrl+C para parar\n")
+    if SB_SERVICE_KEY and RESEND_API_KEY:
+        threading.Thread(target=_reminder_loop, daemon=True).start()
+        print(f"  ⏰ Recordatorios activos (cada {REMINDER_CHECK_HOURS}h, {REMINDER_DAYS}d, máx {REMINDER_MAX}).")
+    else:
+        print("  ⏰ Recordatorios desactivados (falta SUPABASE_SERVICE_ROLE_KEY o RESEND_API_KEY).")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
