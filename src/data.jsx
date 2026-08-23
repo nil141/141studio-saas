@@ -94,6 +94,11 @@ const _store = {
 const subscribe = (fn) => { _store._subs.add(fn); return () => _store._subs.delete(fn); };
 const _emit = () => _store._subs.forEach(fn => fn());
 
+// Bandeja de avisos: persiste en el navegador para no perderse al recargar.
+const _OUTBOX_KEY = "141_outbox";
+try { _store._outbox = JSON.parse(localStorage.getItem(_OUTBOX_KEY) || "{}") || {}; } catch { _store._outbox = {}; }
+const _saveOutbox = () => { try { localStorage.setItem(_OUTBOX_KEY, JSON.stringify(_store._outbox)); } catch {} };
+
 const useStore = () => {
   const [, force] = React.useState(0);
   React.useEffect(() => subscribe(() => force(n => n + 1)), []);
@@ -935,7 +940,7 @@ const notify = (clientId, input) => {
     if (cli && cli.email) {
       if (!_store._outbox[clientId]) _store._outbox[clientId] = [];
       _store._outbox[clientId].push({ title: n.title, body: n.body, kind: n.kind, route: n.route || "" });
-      _emit();
+      _saveOutbox(); _emit();
     }
   } catch {}
   return n;
@@ -946,10 +951,10 @@ const pendingEmailsFor = (clientId) => (_store._outbox[clientId] || []);
 
 const clearPendingEmail = (clientId, idx) => {
   const arr = _store._outbox[clientId]; if (!arr) return;
-  arr.splice(idx, 1); if (!arr.length) delete _store._outbox[clientId]; _emit();
+  arr.splice(idx, 1); if (!arr.length) delete _store._outbox[clientId]; _saveOutbox(); _emit();
 };
 
-const discardPendingEmails = (clientId) => { delete _store._outbox[clientId]; _emit(); };
+const discardPendingEmails = (clientId) => { delete _store._outbox[clientId]; _saveOutbox(); _emit(); };
 
 const sendPendingEmails = (clientId) => {
   const items = (_store._outbox[clientId] || []).slice();
