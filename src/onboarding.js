@@ -48,11 +48,29 @@ const OnboardingPage = ({ token }) => {
   const [resendMsg, setResendMsg] = useState("");
   const _sb = () => window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
   useEffect(() => {
-    _sb().from("invites").select("service,used").eq("token", token).single().then(({ data, error }) => {
+    const sb = _sb();
+    sb.from("invites").select("service,used").eq("token", token).single().then(({ data, error }) => {
       if (!data || data.used || error) {
         setErrMsg("Enlace no v\xE1lido o ya utilizado");
         setStatus("error");
-      } else setStatus("form");
+        return;
+      }
+      setStatus("form");
+      sb.rpc("get_invite_prefill", { p_token: token }).then(({ data: pf }) => {
+        const c = pf && pf.ok && pf.client;
+        if (c) setForm((f) => ({
+          ...f,
+          name: c.name || f.name,
+          company: c.company || f.company,
+          phone: c.phone || f.phone,
+          website: c.website || f.website,
+          fiscalName: c.fiscal_name || f.fiscalName,
+          nif: c.nif || f.nif,
+          fiscalAddress: c.fiscal_address || f.fiscalAddress,
+          about: c.about || f.about
+        }));
+      }).catch(() => {
+      });
     }).catch(() => {
       setErrMsg("No se pudo conectar con el servidor.");
       setStatus("error");
@@ -156,7 +174,7 @@ const OnboardingPage = ({ token }) => {
     if (rpcError && /function|does not exist|schema cache|p_extra/i.test(rpcError.message || "")) {
       ({ data: result, error: rpcError } = await sb.rpc("complete_invite", base));
     }
-    if (rpcError || !(result == null ? void 0 : result.ok)) return (result == null ? void 0 : result.error) || (rpcError == null ? void 0 : rpcError.message) || "Error al completar el registro";
+    if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");
     localStorage.removeItem("141_session");
@@ -237,7 +255,7 @@ const OnboardingPage = ({ token }) => {
     try {
       const { error } = await _sb().auth.resend({ type: "signup", email: form.email.trim() });
       setResendMsg(error ? error.message || "No se pudo reenviar" : "C\xF3digo reenviado \u2713");
-    } catch (e) {
+    } catch {
       setResendMsg("No se pudo reenviar");
     }
   };

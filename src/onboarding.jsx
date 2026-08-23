@@ -32,10 +32,25 @@ const OnboardingPage = ({ token }) => {
   const _sb = () => window.supabase.createClient(window.Data._SB_URL, window.Data._SB_KEY);
 
   useEffect(() => {
-    _sb().from("invites").select("service,used").eq("token", token).single()
+    const sb = _sb();
+    sb.from("invites").select("service,used").eq("token", token).single()
       .then(({ data, error }) => {
-        if (!data || data.used || error) { setErrMsg("Enlace no válido o ya utilizado"); setStatus("error"); }
-        else setStatus("form");
+        if (!data || data.used || error) { setErrMsg("Enlace no válido o ya utilizado"); setStatus("error"); return; }
+        setStatus("form");
+        // Pre-rellenar con los datos que la agencia ya tenga en la ficha (si los hay).
+        sb.rpc("get_invite_prefill", { p_token: token }).then(({ data: pf }) => {
+          const c = pf && pf.ok && pf.client;
+          if (c) setForm(f => ({ ...f,
+            name:          c.name          || f.name,
+            company:       c.company       || f.company,
+            phone:         c.phone         || f.phone,
+            website:       c.website       || f.website,
+            fiscalName:    c.fiscal_name   || f.fiscalName,
+            nif:           c.nif           || f.nif,
+            fiscalAddress: c.fiscal_address|| f.fiscalAddress,
+            about:         c.about         || f.about,
+          }));
+        }).catch(() => {});
       })
       .catch(() => { setErrMsg("No se pudo conectar con el servidor."); setStatus("error"); });
   }, [token]);
