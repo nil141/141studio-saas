@@ -587,10 +587,11 @@ const deleteClient = async (id) => {
     delete _store.TASKS[pid];
   });
   _emit();
-  const { error } = await _sb.rpc("delete_client_full", {
-    p_client_id: id,
-    p_agency_id: uid
-  });
+  let { error } = await _sb.rpc("delete_client_full", { p_client_id: id, p_agency_id: uid });
+  if (error) {
+    const direct = await _sb.from("clients").delete().eq("id", id).eq("agency_id", uid);
+    error = direct.error;
+  }
   if (error) {
     _store.CLIENTS = prevClients;
     _store.PROJECTS = prevProjects;
@@ -598,6 +599,10 @@ const deleteClient = async (id) => {
     _store.TASKS = prevTasks;
     _emit();
     console.error("Error al eliminar cliente:", error.message);
+    try {
+      window.__pushToast && window.__pushToast("No se pudo eliminar: " + (error.message || "error"), "warn");
+    } catch {
+    }
   }
 };
 const addProject = (input) => {

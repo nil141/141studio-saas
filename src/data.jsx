@@ -512,12 +512,16 @@ const deleteClient = async (id) => {
   _store.INVOICES = _store.INVOICES.filter(i => i.clientId !== id);
   projectIds.forEach(pid => { delete _store.TASKS[pid]; });
   _emit();
-  // Persistir en Supabase: borra cliente + cuenta de login si tiene
-  // CASCADE borra proyectos/tareas/facturas/entregables automáticamente
-  const { error } = await _sb.rpc("delete_client_full", {
-    p_client_id: id,
-    p_agency_id: uid,
-  });
+  // Persistir en Supabase: borra cliente + cuenta de login si tiene.
+  // CASCADE borra proyectos/tareas/facturas/entregables/etc. automáticamente.
+  let { error } = await _sb.rpc("delete_client_full", { p_client_id: id, p_agency_id: uid });
+  if (error) {
+    // Plan B: si el RPC no existe o falla, borrado directo (las tablas hijas
+    // tienen ON DELETE CASCADE). No borra la cuenta de login, pero saca al
+    // cliente del CRM igualmente.
+    const direct = await _sb.from("clients").delete().eq("id", id).eq("agency_id", uid);
+    error = direct.error;
+  }
   if (error) {
     // Revertir si Supabase rechaza el delete
     _store.CLIENTS  = prevClients;
@@ -526,6 +530,7 @@ const deleteClient = async (id) => {
     _store.TASKS    = prevTasks;
     _emit();
     console.error("Error al eliminar cliente:", error.message);
+    try { window.__pushToast && window.__pushToast("No se pudo eliminar: " + (error.message || "error"), "warn"); } catch {}
   }
 };
 
