@@ -288,7 +288,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     justifyContent: "center",
     fontSize: 18,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     width: "200%",
     height: "100%",
@@ -519,14 +519,16 @@ const NotificationBell = ({ kind, onNavigate }) => {
     }
     setOpen((o) => !o);
   };
-  let list = [];
+  let list = D.NOTIFICATIONS || [];
   if (kind === "client") {
-    list = D.NOTIFICATIONS || [];
+    list = list.filter((n) => (n.target || "client") !== "agency");
     try {
       const pid = sessionStorage.getItem("141_preview_client");
       if (pid) list = list.filter((n) => n.clientId === pid);
     } catch {
     }
+  } else {
+    list = list.filter((n) => n.target === "agency");
   }
   const unread = list.filter((n) => !n.read).length;
   return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
@@ -563,7 +565,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
           boxShadow: "0 18px 44px rgba(0,0,0,0.45)"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, "Notificaciones"), unread > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => D.markAllNotificationsRead(), style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" } }, "Marcar le\xEDdas")),
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, "Notificaciones"), unread > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => list.filter((n) => !n.read).forEach((n) => D.markNotificationRead(n.id)), style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" } }, "Marcar le\xEDdas")),
       /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 380, overflowY: "auto" } }, list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin notificaciones") : list.slice(0, 25).map((n) => /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -571,7 +573,10 @@ const NotificationBell = ({ kind, onNavigate }) => {
           onClick: () => {
             D.markNotificationRead(n.id);
             setOpen(false);
-            onNavigate && onNavigate(_notifRoute(n));
+            if (!onNavigate) return;
+            if (kind === "agency") {
+              if (n.clientId) onNavigate("clientDetail", { clientId: n.clientId });
+            } else onNavigate(_notifRoute(n));
           },
           style: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }
         },

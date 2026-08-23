@@ -310,7 +310,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         }}>
           {(me.initials || "").charAt(0)}
         </div>
-        <div style={{minWidth:0}}>
+        <div style={{minWidth:0, flex:1}}>
           <div style={{fontSize:15, fontWeight:400, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {me.name}
           </div>
@@ -318,6 +318,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
           </div>
         </div>
+        <NotificationBell kind={kind} onNavigate={onNavigate}/>
       </div>
       )}
 
@@ -502,10 +503,14 @@ const NotificationBell = ({ kind, onNavigate }) => {
     setOpen(o => !o);
   };
 
-  let list = [];
+  let list = D.NOTIFICATIONS || [];
   if (kind === "client") {
-    list = D.NOTIFICATIONS || [];
+    // Portal del cliente: solo avisos dirigidos al cliente
+    list = list.filter(n => (n.target || "client") !== "agency");
     try { const pid = sessionStorage.getItem("141_preview_client"); if (pid) list = list.filter(n => n.clientId === pid); } catch {}
+  } else {
+    // Campana del CRM (agencia): solo avisos dirigidos a la agencia
+    list = list.filter(n => n.target === "agency");
   }
   const unread = list.filter(n => !n.read).length;
 
@@ -527,13 +532,13 @@ const NotificationBell = ({ kind, onNavigate }) => {
           boxShadow: "0 18px 44px rgba(0,0,0,0.45)" }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" }}>
             <div style={{ fontWeight: 600, fontSize: 14 }}>Notificaciones</div>
-            {unread > 0 && <button onClick={() => D.markAllNotificationsRead()} style={{ background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Marcar leídas</button>}
+            {unread > 0 && <button onClick={() => list.filter(n => !n.read).forEach(n => D.markNotificationRead(n.id))} style={{ background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" }}>Marcar leídas</button>}
           </div>
           <div style={{ maxHeight: 380, overflowY: "auto" }}>
             {list.length === 0 ? (
               <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 }}>Sin notificaciones</div>
             ) : list.slice(0, 25).map(n => (
-              <div key={n.id} onClick={() => { D.markNotificationRead(n.id); setOpen(false); onNavigate && onNavigate(_notifRoute(n)); }}
+              <div key={n.id} onClick={() => { D.markNotificationRead(n.id); setOpen(false); if (!onNavigate) return; if (kind === "agency") { if (n.clientId) onNavigate("clientDetail", { clientId: n.clientId }); } else onNavigate(_notifRoute(n)); }}
                 style={{ display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }}>
                 <span style={{ width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" }}/>
                 <div style={{ minWidth: 0, flex: 1 }}>

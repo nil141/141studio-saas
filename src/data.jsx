@@ -222,6 +222,7 @@ const _mct = r => r && ({
 const _mn = r => r && ({
   id: r.id, clientId: r.client_id, title: r.title || "", body: r.body || "",
   kind: r.kind || "", read: !!r.read, createdAt: r.created_at,
+  target: r.target || "client",
 });
 const _ml = r => r && ({
   id: r.id, name: r.name, company: r.company, channel: r.channel,
@@ -487,6 +488,8 @@ const updateClient = (id, changes) => {
   if (changes.driveUrl     !== undefined) dbChanges.drive_url      = changes.driveUrl || null;
   // Adaptativo: si alguna columna aún no existe, la quita y guarda el resto.
   _updateAdaptive("clients", id, dbChanges);
+  if (_isClientSession())
+    notifyAgency({ clientId: id, title: "Datos actualizados", body: "El cliente ha actualizado sus datos de cuenta", kind: "client-update" });
 };
 
 const deleteClient = async (id) => {
@@ -817,6 +820,8 @@ const addCredential = (clientId, input) => {
       _store.CREDENTIALS = _store.CREDENTIALS.filter(x => x.id !== cr.id); _emit();
     }
   });
+  if (_isClientSession())
+    notifyAgency({ clientId: cid, title: "Nuevo acceso añadido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
   return cr;
 };
 
@@ -827,6 +832,10 @@ const updateCredential = (id, changes) => {
   ["label","url","username","password","notes","platform"].forEach(k => { if (changes[k] !== undefined) db[k] = changes[k] || ""; });
   if (changes.granted !== undefined) db.granted = !!changes.granted;
   _updateAdaptive("credentials", id, db);
+  if (changes.granted === true && _isClientSession()) {
+    const cr = _store.CREDENTIALS.find(c => c.id === id);
+    if (cr) notifyAgency({ clientId: cr.clientId, title: "Acceso concedido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+  }
 };
 
 const deleteCredential = (id) => {
@@ -879,7 +888,10 @@ const updateClientTask = (id, changes) => {
 
 const toggleClientTask = (id) => {
   const t = _store.CLIENT_TASKS.find(x => x.id === id); if (!t) return;
-  updateClientTask(id, { done: !t.done });
+  const nowDone = !t.done;
+  updateClientTask(id, { done: nowDone });
+  if (nowDone && _isClientSession())
+    notifyAgency({ clientId: t.clientId, title: "Tarea completada", body: t.title, kind: "client-task" });
 };
 
 const deleteClientTask = (id) => {
@@ -900,7 +912,7 @@ const notify = (clientId, input) => {
   const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null };
   // En la sesión de la agencia también lo guardamos en memoria (para su propia campana futura).
   _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS]; _emit();
-  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false })
+  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false, target: "client" })
     .then(({ error }) => { if (error) { _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter(x => x.id !== n.id); _emit(); } });
   // Fase 2 — además del aviso in-app, mandamos un correo al cliente (Resend vía
   // nuestro servidor). Es "fire-and-forget": si el servidor no tiene la API key
@@ -926,6 +938,28 @@ const notify = (clientId, input) => {
   } catch {}
   return n;
 };
+
+// Aviso del CLIENTE hacia la AGENCIA (campana del CRM + correo a la agencia).
+// Se dispara desde el navegador del cliente cuando hace algo relevante.
+const notifyAgency = (input) => {
+  const prof = _store._prof || {};
+  const agencyId = prof.agencyId || _uid();
+  const cid = input.clientId || prof.clientDbId;
+  if (!agencyId || !cid) return;
+  const me = (_store.CLIENTS && _store.CLIENTS[0]) || null;
+  const clientName = input.clientName || (me && me.name) || "Un cliente";
+  const n = { id: _id(), clientId: cid, title: (input.title || "").trim(), body: (input.body || "").trim(),
+              kind: input.kind || "", read: false, createdAt: null, target: "agency" };
+  _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS]; _emit();
+  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: cid, title: n.title, body: n.body, kind: n.kind, read: false, target: "agency" })
+    .then(({ error }) => { if (error) { _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter(x => x.id !== n.id); _emit(); } });
+  // Correo a la agencia (el servidor decide el destinatario: AGENCY_NOTIFY_EMAIL).
+  apiFetch("/api/portal/notify_agency", { title: n.title, body: n.body, kind: n.kind, client_name: clientName }).catch(() => {});
+  return n;
+};
+
+// Solo avisamos a la agencia cuando quien actúa es el CLIENTE (no la propia agencia).
+const _isClientSession = () => !!(_store._prof && _store._prof.isClient);
 
 const markNotificationRead = (id) => {
   _store.NOTIFICATIONS = _store.NOTIFICATIONS.map(n => n.id === id ? { ...n, read: true } : n); _emit();

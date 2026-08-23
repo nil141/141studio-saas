@@ -28,6 +28,9 @@ SB_ANON = os.environ.get("SUPABASE_ANON_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXV
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
 RESEND_FROM    = os.environ.get("RESEND_FROM", "141'DIGITAL | Portal de Cliente <no-reply@141agency.com>")
 PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
+# A dónde llegan los avisos de actividad de clientes (tú/la agencia). El cliente
+# NO decide el destinatario: siempre se envía aquí (evita relay de spam).
+AGENCY_NOTIFY_EMAIL = os.environ.get("AGENCY_NOTIFY_EMAIL", "nil@141agency.com")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
@@ -366,24 +369,12 @@ def _notify_email_html(client_name, title, body_text, meta, cta_url):
   </table>
 </body></html>"""
 
-def api_notify_client(body):
-    """Envía por Resend el aviso al cliente. Protegido por _handle_api (solo
-    usuarios de agencia autenticados). Si no hay API key, se omite en silencio."""
-    to      = (body.get("to") or "").strip()
-    title   = (body.get("title") or "").strip()
-    text    = (body.get("body") or "").strip()
-    kind    = (body.get("kind") or "").strip()
-    cname   = (body.get("client_name") or "").strip()
+def _resend_send(to, subject, html):
+    """Envía un correo por Resend. Devuelve {ok:...} y captura el error real."""
     if not RESEND_API_KEY:
         return {"ok": False, "skipped": "no_api_key"}
-    if "@" not in to:
+    if "@" not in (to or ""):
         return {"ok": False, "error": "destinatario no válido"}
-    meta    = _notify_meta(kind)
-    first   = cname.split()[0] if cname.split() else ""
-    # Asunto personalizado: "Nil, tienes una nueva tarea"
-    subject = f"{first}, {meta['subj_p']}" if first else (title or meta["subject"])
-    cta_url = f"{PORTAL_URL}/?goto={meta['route']}"
-    html    = _notify_email_html(cname, title, text, meta, cta_url)
     payload = json.dumps({
         "from": RESEND_FROM, "to": [to], "subject": subject, "html": html,
     }).encode("utf-8")
@@ -412,6 +403,38 @@ def api_notify_client(body):
         return {"ok": False, "error": msg, "status": e.code}
     except Exception as e:
         return {"ok": False, "error": str(e)}
+
+def api_notify_client(body):
+    """Envía por Resend el aviso al cliente. Protegido por _handle_api (solo
+    usuarios de agencia autenticados). Si no hay API key, se omite en silencio."""
+    to      = (body.get("to") or "").strip()
+    title   = (body.get("title") or "").strip()
+    text    = (body.get("body") or "").strip()
+    kind    = (body.get("kind") or "").strip()
+    cname   = (body.get("client_name") or "").strip()
+    meta    = _notify_meta(kind)
+    first   = cname.split()[0] if cname.split() else ""
+    # Asunto personalizado: "Nil, tienes una nueva tarea"
+    subject = f"{first}, {meta['subj_p']}" if first else (title or meta["subject"])
+    cta_url = f"{PORTAL_URL}/?goto={meta['route']}"
+    html    = _notify_email_html(cname, title, text, meta, cta_url)
+    return _resend_send(to, subject, html)
+
+def api_notify_agency(body):
+    """Aviso del CLIENTE hacia la AGENCIA. Callable por cualquier usuario
+    autenticado (incl. clientes). El destinatario NO lo decide el cliente: es
+    siempre AGENCY_NOTIFY_EMAIL (evita que se use como relay de spam)."""
+    to = (AGENCY_NOTIFY_EMAIL or "").strip()
+    if not to or "@" not in to:
+        return {"ok": False, "skipped": "no_agency_email"}
+    title = (body.get("title") or "Novedad de un cliente").strip()
+    text  = (body.get("body") or "").strip()
+    cname = (body.get("client_name") or "Un cliente").strip()
+    ameta = {"lead": f"{cname} ha realizado una acción en su portal.",
+             "cta": "Abrir el CRM", "route": ""}
+    subject = f"{cname} · {title}"
+    html = _notify_email_html("", title, text, ameta, PORTAL_URL)
+    return _resend_send(to, subject, html)
 
 def api_action(body):
     c      = body.get("creds", {})
@@ -1077,6 +1100,12 @@ STRIPE_HANDLERS = {
     "create_subscription": api_stripe_create_subscription,
 }
 
+# Endpoints del PORTAL: los puede llamar cualquier usuario autenticado, INCLUIDO
+# un cliente (rol "client"). El destinatario de los correos lo fija el servidor.
+PORTAL_HANDLERS = {
+    "notify_agency": api_notify_agency,
+}
+
 # Requieren JWT del usuario (mismo esquema que MAIL/STRIPE)
 CAMPAIGN_HANDLERS = {
     "data":            api_campaigns_data,
@@ -1143,6 +1172,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_import()
         elif self.path.startswith("/api/campaigns/"):
             self._handle_api(self.path[len("/api/campaigns/"):], CAMPAIGN_HANDLERS)
+        elif self.path.startswith("/api/portal/"):
+            self._handle_api_any(self.path[len("/api/portal/"):], PORTAL_HANDLERS)
         elif self.path.startswith("/api/userdata/"):
             self._handle_userdata(self.path[len("/api/userdata/"):])
         elif self.path.startswith(("/api/store/", "/api/invite/", "/api/auth/")):
@@ -1211,6 +1242,27 @@ class Handler(SimpleHTTPRequestHandler):
         user  = _verify_supabase_token(token)
         role  = ((user or {}).get("user_metadata") or {}).get("role")
         if not user or role == "client":
+            self._json(401, {"ok": False, "error": "No autorizado"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 1_000_000:
+                self._json(413, {"ok": False, "error": "Payload demasiado grande"})
+                return
+            body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            fn   = handlers.get(endpoint)
+            result = fn(body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
+        except Exception as e:
+            traceback.print_exc()
+            result = {"ok": False, "error": str(e)}
+        self._json(200, result)
+
+    def _handle_api_any(self, endpoint, handlers):
+        # Como _handle_api pero permite cualquier usuario autenticado (incl. clientes).
+        auth  = self.headers.get("Authorization", "")
+        token = auth[7:] if auth.startswith("Bearer ") else ""
+        user  = _verify_supabase_token(token)
+        if not user:
             self._json(401, {"ok": False, "error": "No autorizado"})
             return
         try:
