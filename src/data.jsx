@@ -848,9 +848,16 @@ const updateCredential = (id, changes) => {
   ["label","url","username","password","notes","platform"].forEach(k => { if (changes[k] !== undefined) db[k] = changes[k] || ""; });
   if (changes.granted !== undefined) db.granted = !!changes.granted;
   _updateAdaptive("credentials", id, db);
-  if (changes.granted === true && _isClientSession()) {
+  if (changes.granted === true) {
     const cr = _store.CREDENTIALS.find(c => c.id === id);
-    if (cr) notifyAgency({ clientId: cr.clientId, title: "Acceso concedido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+    if (cr) {
+      // Auto-completar la tarea de Intake vinculada a este acceso ("Dar acceso: X").
+      const tt = "Dar acceso: " + (cr.label || cr.platform || "nuevo acceso");
+      const task = _store.CLIENT_TASKS.find(t => t.clientId === cr.clientId && !t.done && t.title === tt);
+      if (task) updateClientTask(task.id, { done: true });
+      // Si lo concede el cliente, avisar a la agencia.
+      if (_isClientSession()) notifyAgency({ clientId: cr.clientId, title: "Acceso concedido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+    }
   }
 };
 

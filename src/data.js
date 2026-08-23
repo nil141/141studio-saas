@@ -998,9 +998,14 @@ const updateCredential = (id, changes) => {
   });
   if (changes.granted !== void 0) db.granted = !!changes.granted;
   _updateAdaptive("credentials", id, db);
-  if (changes.granted === true && _isClientSession()) {
+  if (changes.granted === true) {
     const cr = _store.CREDENTIALS.find((c) => c.id === id);
-    if (cr) notifyAgency({ clientId: cr.clientId, title: "Acceso concedido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+    if (cr) {
+      const tt = "Dar acceso: " + (cr.label || cr.platform || "nuevo acceso");
+      const task = _store.CLIENT_TASKS.find((t) => t.clientId === cr.clientId && !t.done && t.title === tt);
+      if (task) updateClientTask(task.id, { done: true });
+      if (_isClientSession()) notifyAgency({ clientId: cr.clientId, title: "Acceso concedido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+    }
   }
 };
 const deleteCredential = (id) => {
