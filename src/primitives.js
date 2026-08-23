@@ -576,7 +576,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
             if (!onNavigate) return;
             if (kind === "agency") {
               if (n.clientId) onNavigate("clientDetail", { clientId: n.clientId });
-            } else onNavigate(_notifRoute(n));
+            } else onNavigate(n.route || _notifRoute(n));
           },
           style: { display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }
         },

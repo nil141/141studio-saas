@@ -1,5 +1,15 @@
 // Portal de cliente — datos reales: fases del proyecto (project.service) +
 // progreso desde las tareas (D.TASKS), entregables y facturas de SUS proyectos.
+
+// Etiqueta del botón según la sección de destino de una tarea/aviso.
+const _SECTION_CTA = {
+  "client-docs": "Ir a Documentación",
+  "client-credentials": "Ir a Credenciales",
+  "client-status": "Ver estado del proyecto",
+  "client-dashboard": "Ir al inicio",
+};
+const _sectionCta = (route) => _SECTION_CTA[route] || "Abrir";
+
 const ClientLogin = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -266,6 +276,11 @@ const ClientDashboard = ({ navigate, session }) => {
                       </button>
                     </div>
                     {t.description && <div className="muted small" style={{marginTop: 5, lineHeight: 1.5}}>{t.description}</div>}
+                    {t.link && !t.done && (
+                      <button className="btn ghost sm" style={{marginTop: 12}} onClick={() => navigate(t.link)}>
+                        {_sectionCta(t.link)} <Icon name="arrow" size={12}/>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

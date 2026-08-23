@@ -263,8 +263,42 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const pending     = invoices.filter(i => i.status === "pending").reduce((a, b) => a + b.amount, 0);
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // ── Compositor "Enviar aviso" ──
+  const NOTIFY_SECTIONS = [
+    { v:"client-dashboard",   label:"Inicio del portal" },
+    { v:"client-status",      label:"Estado del proyecto" },
+    { v:"client-docs",        label:"Documentación (subir archivos)" },
+    { v:"client-credentials", label:"Credenciales (dar accesos)" },
+  ];
+  const [notifyOpen, setNotifyOpen] = useState(false);
+  const [nf, setNf] = useState({ title:"", body:"", route:"client-dashboard" });
+  const openNotify = () => { setNf({ title:"", body:"", route:"client-dashboard" }); setNotifyOpen(true); };
+  const sendNotify = () => {
+    if (!nf.title.trim()) return;
+    D.notify(c.id, { title: nf.title.trim(), body: nf.body.trim(), kind: "general", route: nf.route });
+    setNotifyOpen(false);
+    toast(c.email ? "Aviso enviado al cliente" : "Aviso creado (el cliente no tiene email, no se envió correo)", "success");
+  };
+  const nInp = { width:"100%", borderRadius:9, padding:"9px 12px", background:"var(--bg-elev)",
+    border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:10 };
+
   return (
     <div className="page" onClick={() => setMenuOpen(false)}>
+      <Modal open={notifyOpen} onClose={() => setNotifyOpen(false)} title="Enviar aviso al cliente"
+        sub={c.email ? `Le llegará a su portal (campana) y por correo a ${c.email}` : "Le llegará a la campana de su portal (sin email, no se enviará correo)"}
+        footer={<>
+          <button className="btn" onClick={() => setNotifyOpen(false)}>Cancelar</button>
+          <button className="btn primary" disabled={!nf.title.trim()} onClick={sendNotify}><Icon name="bell" size={13}/> Enviar aviso</button>
+        </>}>
+        <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:5}}>Asunto</div>
+        <input style={nInp} placeholder="p. ej. Necesito tu logo en alta resolución" value={nf.title} onChange={e => setNf(s => ({...s, title:e.target.value}))} autoFocus/>
+        <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:5}}>Mensaje (opcional)</div>
+        <textarea style={{...nInp, height:90, resize:"vertical", lineHeight:1.5}} placeholder="Explica qué necesitas del cliente…" value={nf.body} onChange={e => setNf(s => ({...s, body:e.target.value}))}/>
+        <div style={{fontSize:12, color:"var(--text-subtle)", marginBottom:5}}>El botón del aviso lleva a</div>
+        <select style={{...nInp, appearance:"auto"}} value={nf.route} onChange={e => setNf(s => ({...s, route:e.target.value}))}>
+          {NOTIFY_SECTIONS.map(s => <option key={s.v} value={s.v}>{s.label}</option>)}
+        </select>
+      </Modal>
       {/* Back */}
       <button className="btn ghost sm" style={{marginBottom: 20}} onClick={() => navigate("clients")}>
         <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Clientes
@@ -309,7 +343,8 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
               </div>
             </div>
 
-            <div style={{position:"relative", flexShrink: 0}} onClick={e => e.stopPropagation()}>
+            <div style={{position:"relative", flexShrink: 0, display:"flex", alignItems:"center", gap:8}} onClick={e => e.stopPropagation()}>
+              <button className="btn ghost sm" onClick={openNotify}><Icon name="bell" size={13}/> Enviar aviso</button>
               <button className="btn ghost icon-only" onClick={() => setMenuOpen(o => !o)}><Icon name="more-h" size={16}/></button>
               {menuOpen && (
                 <div style={{position:"absolute", right: 0, top:"calc(100% + 4px)", zIndex: 20,
@@ -659,11 +694,18 @@ const AgencyClientTasks = ({ clientId }) => {
   const tasks = D.clientTasksFor ? D.clientTasksFor(clientId) : [];
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState(null);
-  const blank = { title:"", description:"" };
+  const blank = { title:"", description:"", link:"" };
   const [form, setForm] = useState(blank);
   const set = (k, v) => setForm(s => ({ ...s, [k]: v }));
   const startAdd  = () => { setForm(blank); setEditing(null); setAdding(true); };
-  const startEdit = (t) => { setForm({ title:t.title, description:t.description }); setEditing(t.id); setAdding(true); };
+  const startEdit = (t) => { setForm({ title:t.title, description:t.description, link:t.link||"" }); setEditing(t.id); setAdding(true); };
+  const SECTIONS = [
+    { v:"", label:"Sin destino (solo marcar hecho)" },
+    { v:"client-docs", label:"Documentación (subir archivos)" },
+    { v:"client-credentials", label:"Credenciales (dar accesos)" },
+    { v:"client-status", label:"Estado del proyecto" },
+  ];
+  const _sectLabel = (v) => (SECTIONS.find(s => s.v === v) || {}).label || "";
   const cancel = () => { setAdding(false); setEditing(null); setForm(blank); };
   const save = () => {
     if (!form.title.trim()) return;
@@ -684,7 +726,11 @@ const AgencyClientTasks = ({ clientId }) => {
       {adding && (
         <div className="card" style={{marginBottom: 14}}><div className="card-body" style={{padding: 16}}>
           <input style={inp} placeholder="Título (p.ej. Rellenar el cuestionario)" value={form.title} onChange={e => set("title", e.target.value)} autoFocus/>
-          <input style={{...inp, marginBottom: 12}} placeholder="Descripción (opcional)" value={form.description} onChange={e => set("description", e.target.value)}/>
+          <input style={inp} placeholder="Descripción (opcional)" value={form.description} onChange={e => set("description", e.target.value)}/>
+          <div style={{fontSize:11.5, color:"var(--text-subtle)", margin:"2px 0 5px"}}>¿A qué sección lleva el botón del cliente?</div>
+          <select style={{...inp, marginBottom: 12, appearance:"auto"}} value={form.link} onChange={e => set("link", e.target.value)}>
+            {SECTIONS.map(s => <option key={s.v} value={s.v}>{s.label}</option>)}
+          </select>
           <div className="row tight">
             <button className="btn primary sm" disabled={!form.title.trim()} onClick={save}>Guardar</button>
             <button className="btn ghost sm" onClick={cancel}>Cancelar</button>
@@ -709,6 +755,7 @@ const AgencyClientTasks = ({ clientId }) => {
                   </div>
                 </div>
                 {t.description && <div className="muted small" style={{marginTop:4, lineHeight:1.5}}>{t.description}</div>}
+                {t.link && <div className="row tight" style={{marginTop:6}}><Icon name="arrow" size={11}/><span className="xsmall muted">{_sectLabel(t.link)}</span></div>}
               </div>
             </div></div>
           ))}

@@ -217,12 +217,12 @@ const _credMeta = (platform) => CRED_CATALOG.find(x => x.key === platform) || { 
 const credMode = (platform) => _credMeta(platform).mode;
 const _mct = r => r && ({
   id: r.id, clientId: r.client_id, title: r.title || "", description: r.description || "",
-  done: !!r.done, sort: r.sort ?? 0,
+  done: !!r.done, sort: r.sort ?? 0, link: r.link || "",
 });
 const _mn = r => r && ({
   id: r.id, clientId: r.client_id, title: r.title || "", body: r.body || "",
   kind: r.kind || "", read: !!r.read, createdAt: r.created_at,
-  target: r.target || "client",
+  target: r.target || "client", route: r.route || "",
 });
 const _ml = r => r && ({
   id: r.id, name: r.name, company: r.company, channel: r.channel,
@@ -822,6 +822,9 @@ const addCredential = (clientId, input) => {
   });
   if (_isClientSession())
     notifyAgency({ clientId: cid, title: "Nuevo acceso añadido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+  else
+    // La agencia pide un acceso → avisa al cliente (botón directo a Credenciales).
+    notify(cid, { title: "Acceso solicitado", body: cr.label || cr.platform || "Nuevo acceso", kind: "credential" });
   return cr;
 };
 
@@ -861,18 +864,20 @@ const addClientTask = (clientId, input) => {
   const t = {
     id: _id(), clientId: cid, title: (input.title || "").trim(),
     description: (input.description || "").trim(), done: false, sort,
+    link: (input.link || "").trim(),
   };
   _store.CLIENT_TASKS = [..._store.CLIENT_TASKS, t]; _emit();
   _insertAdaptive("client_tasks", {
     id: t.id, agency_id: agencyId, client_id: cid,
-    title: t.title, description: t.description, done: false, sort,
+    title: t.title, description: t.description, done: false, sort, link: t.link || null,
   }).then(({ error }) => {
     if (error) {
       console.error("[addClientTask] Supabase error:", error.message);
       _store.CLIENT_TASKS = _store.CLIENT_TASKS.filter(x => x.id !== t.id); _emit();
     }
   });
-  notify(cid, { title: "Nueva tarea para ti", body: t.title, kind: "task" });
+  // Aviso al cliente; si la tarea lleva a una sección, el botón del correo/campana va allí.
+  notify(cid, { title: "Nueva tarea para ti", body: t.title, kind: "task", route: t.link || "" });
   return t;
 };
 
@@ -909,10 +914,10 @@ const notify = (clientId, input) => {
   const uid = _uid(); if (!uid || !clientId) return;
   const prof = _store._prof || {};
   const agencyId = prof.agencyId || uid;
-  const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null };
+  const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null, route: input.route || "" };
   // En la sesión de la agencia también lo guardamos en memoria (para su propia campana futura).
   _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS]; _emit();
-  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false, target: "client" })
+  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false, target: "client", route: n.route || null })
     .then(({ error }) => { if (error) { _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter(x => x.id !== n.id); _emit(); } });
   // Fase 2 — además del aviso in-app, mandamos un correo al cliente (Resend vía
   // nuestro servidor). Es "fire-and-forget": si el servidor no tiene la API key
@@ -925,7 +930,7 @@ const notify = (clientId, input) => {
       _toast("Aviso creado, pero el cliente no tiene email — no se envió correo", "warn");
     } else {
       apiFetch("/api/mail/notify_client", {
-        to, client_name: cli.name || "", title: n.title, body: n.body, kind: n.kind,
+        to, client_name: cli.name || "", title: n.title, body: n.body, kind: n.kind, route: n.route || "",
       })
         .then(r => r.json().catch(() => ({})))
         .then(j => {

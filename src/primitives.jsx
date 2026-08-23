@@ -538,7 +538,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
             {list.length === 0 ? (
               <div style={{ padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 }}>Sin notificaciones</div>
             ) : list.slice(0, 25).map(n => (
-              <div key={n.id} onClick={() => { D.markNotificationRead(n.id); setOpen(false); if (!onNavigate) return; if (kind === "agency") { if (n.clientId) onNavigate("clientDetail", { clientId: n.clientId }); } else onNavigate(_notifRoute(n)); }}
+              <div key={n.id} onClick={() => { D.markNotificationRead(n.id); setOpen(false); if (!onNavigate) return; if (kind === "agency") { if (n.clientId) onNavigate("clientDetail", { clientId: n.clientId }); } else onNavigate(n.route || _notifRoute(n)); }}
                 style={{ display: "flex", gap: 10, padding: "12px 16px", borderBottom: "0.5px solid var(--border)", cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)" }}>
                 <span style={{ width: 7, height: 7, borderRadius: 99, marginTop: 5, flexShrink: 0, background: n.read ? "transparent" : "var(--accent)" }}/>
                 <div style={{ minWidth: 0, flex: 1 }}>

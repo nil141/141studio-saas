@@ -284,7 +284,8 @@ const _mct = (r) => r && {
   title: r.title || "",
   description: r.description || "",
   done: !!r.done,
-  sort: r.sort ?? 0
+  sort: r.sort ?? 0,
+  link: r.link || ""
 };
 const _mn = (r) => r && {
   id: r.id,
@@ -294,7 +295,8 @@ const _mn = (r) => r && {
   kind: r.kind || "",
   read: !!r.read,
   createdAt: r.created_at,
-  target: r.target || "client"
+  target: r.target || "client",
+  route: r.route || ""
 };
 const _ml = (r) => r && {
   id: r.id,
@@ -962,6 +964,8 @@ const addCredential = (clientId, input) => {
   });
   if (_isClientSession())
     notifyAgency({ clientId: cid, title: "Nuevo acceso a\xF1adido", body: cr.label || cr.platform || "Credencial", kind: "credential" });
+  else
+    notify(cid, { title: "Acceso solicitado", body: cr.label || cr.platform || "Nuevo acceso", kind: "credential" });
   return cr;
 };
 const updateCredential = (id, changes) => {
@@ -1008,7 +1012,8 @@ const addClientTask = (clientId, input) => {
     title: (input.title || "").trim(),
     description: (input.description || "").trim(),
     done: false,
-    sort
+    sort,
+    link: (input.link || "").trim()
   };
   _store.CLIENT_TASKS = [..._store.CLIENT_TASKS, t];
   _emit();
@@ -1019,7 +1024,8 @@ const addClientTask = (clientId, input) => {
     title: t.title,
     description: t.description,
     done: false,
-    sort
+    sort,
+    link: t.link || null
   }).then(({ error }) => {
     if (error) {
       console.error("[addClientTask] Supabase error:", error.message);
@@ -1027,7 +1033,7 @@ const addClientTask = (clientId, input) => {
       _emit();
     }
   });
-  notify(cid, { title: "Nueva tarea para ti", body: t.title, kind: "task" });
+  notify(cid, { title: "Nueva tarea para ti", body: t.title, kind: "task", route: t.link || "" });
   return t;
 };
 const updateClientTask = (id, changes) => {
@@ -1067,10 +1073,10 @@ const notify = (clientId, input) => {
   if (!uid || !clientId) return;
   const prof = _store._prof || {};
   const agencyId = prof.agencyId || uid;
-  const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null };
+  const n = { id: _id(), clientId, title: (input.title || "").trim(), body: (input.body || "").trim(), kind: input.kind || "", read: false, createdAt: null, route: input.route || "" };
   _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS];
   _emit();
-  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false, target: "client" }).then(({ error }) => {
+  _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: clientId, title: n.title, body: n.body, kind: n.kind, read: false, target: "client", route: n.route || null }).then(({ error }) => {
     if (error) {
       _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter((x) => x.id !== n.id);
       _emit();
@@ -1093,7 +1099,8 @@ const notify = (clientId, input) => {
         client_name: cli.name || "",
         title: n.title,
         body: n.body,
-        kind: n.kind
+        kind: n.kind,
+        route: n.route || ""
       }).then((r) => r.json().catch(() => ({}))).then((j) => {
         if (j && j.ok) _toast("Correo enviado a " + to, "success");
         else if (j && j.skipped) _toast("Correo NO enviado: falta configurar Resend en el servidor", "warn");

@@ -311,6 +311,14 @@ _NOTIF_DEFAULT = {"subject": "Novedad en tu portal 141'DIGITAL", "subj_p": "tien
 def _notify_meta(kind):
     return _NOTIF_META.get((kind or "").strip(), _NOTIF_DEFAULT)
 
+# Etiqueta del botón según la sección de destino del portal.
+_CTA_FOR_ROUTE = {
+    "client-docs":        "Ir a documentación",
+    "client-credentials": "Ir a credenciales",
+    "client-status":      "Ver el estado",
+    "client-dashboard":   "Abrir mi portal",
+}
+
 def _notify_email_html(client_name, title, body_text, meta, cta_url):
     """Correo del aviso al cliente: fondo negro sin caja, tipografía Inter, directo."""
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -412,12 +420,21 @@ def api_notify_client(body):
     text    = (body.get("body") or "").strip()
     kind    = (body.get("kind") or "").strip()
     cname   = (body.get("client_name") or "").strip()
+    route   = (body.get("route") or "").strip()
     meta    = _notify_meta(kind)
     first   = cname.split()[0] if cname.split() else ""
-    # Asunto personalizado: "Nil, tienes una nueva tarea"
-    subject = f"{first}, {meta['subj_p']}" if first else (title or meta["subject"])
-    cta_url = f"{PORTAL_URL}/?goto={meta['route']}"
-    html    = _notify_email_html(cname, title, text, meta, cta_url)
+    # Aviso general (compositor del CRM): el asunto usa el título que escribió la agencia.
+    if kind == "general" and title:
+        subject = f"{first}, {title}" if first else title
+    else:
+        subject = f"{first}, {meta['subj_p']}" if first else (title or meta["subject"])
+    # El destino del botón: ruta explícita si viene, si no la del tipo.
+    target  = route or meta["route"]
+    cta_url = f"{PORTAL_URL}/?goto={target}" if target else PORTAL_URL
+    meta2   = dict(meta)
+    if route:
+        meta2["cta"] = _CTA_FOR_ROUTE.get(route, meta["cta"])
+    html    = _notify_email_html(cname, title, text, meta2, cta_url)
     return _resend_send(to, subject, html)
 
 def api_notify_agency(body):

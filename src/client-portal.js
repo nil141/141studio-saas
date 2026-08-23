@@ -1,3 +1,10 @@
+const _SECTION_CTA = {
+  "client-docs": "Ir a Documentaci\xF3n",
+  "client-credentials": "Ir a Credenciales",
+  "client-status": "Ver estado del proyecto",
+  "client-dashboard": "Ir al inicio"
+};
+const _sectionCta = (route) => _SECTION_CTA[route] || "Abrir";
 const ClientLogin = ({ onLogin }) => {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -9,13 +16,12 @@ const ClientLogin = ({ onLogin }) => {
 const WhatsAppFloat = () => null;
 const _previewClientId = (session) => {
   try {
-    return (session == null ? void 0 : session.role) === "admin" ? sessionStorage.getItem("141_preview_client") || null : null;
-  } catch (e) {
+    return session?.role === "admin" ? sessionStorage.getItem("141_preview_client") || null : null;
+  } catch {
     return null;
   }
 };
 const _portalScope = (session) => {
-  var _a;
   const D = window.Data;
   const pcid = _previewClientId(session);
   const projects = pcid ? (D.PROJECTS || []).filter((p) => p.clientId === pcid) : D.PROJECTS || [];
@@ -29,8 +35,8 @@ const _portalScope = (session) => {
     clientTasks: pcid ? (D.CLIENT_TASKS || []).filter((t) => t.clientId === pcid) : D.CLIENT_TASKS || [],
     deliverables: pcid ? (D.DELIVERABLES || []).filter((d) => pids.has(d.projectId)) : D.DELIVERABLES || [],
     me: pcid ? find(pcid) : (D.CLIENTS || [])[0],
-    name: pcid ? ((_a = find(pcid)) == null ? void 0 : _a.name) || "" : (session == null ? void 0 : session.name) || "",
-    clientId: pcid || (session == null ? void 0 : session.clientId),
+    name: pcid ? find(pcid)?.name || "" : session?.name || "",
+    clientId: pcid || session?.clientId,
     preview: !!pcid
   };
 };
@@ -210,7 +216,7 @@ const ClientDashboard = ({ navigate, session }) => {
       onClick: () => D.toggleClientTask(t.id)
     },
     t.done ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Realizado") : "Marcar como realizado"
-  )), t.description && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 5, lineHeight: 1.5 } }, t.description))))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 34, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "M\xF3dulos de tu portal"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 } }, [
+  )), t.description && /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginTop: 5, lineHeight: 1.5 } }, t.description), t.link && !t.done && /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", style: { marginTop: 12 }, onClick: () => navigate(t.link) }, _sectionCta(t.link), " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })))))))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 34, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "M\xF3dulos de tu portal"), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 16 } }, [
     { id: "client-status", badge: "PROYECTO", title: "Estado del proyecto", desc: "Fases, avance y entregables.", status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
     { id: "client-docs", badge: "DOCUMENTOS", title: "Documentaci\xF3n", desc: "Archivos y facturas del proyecto.", status: S.invoices.length ? "Disponible" : "Sin empezar", pct: S.invoices.length ? 100 : 0 },
     { id: "client-credentials", badge: "ACCESOS", title: "Credenciales", desc: "Accesos que compartes con el equipo.", status: S.credentials.length ? `${S.credentials.length} guardados` : "Sin empezar", pct: S.credentials.length ? 100 : 0 }
@@ -317,10 +323,10 @@ const ClientDocs = ({ session }) => {
   const S = _portalScope(session);
   const invoices = S.invoices;
   const me = S.me || null;
-  const driveUrl = (me == null ? void 0 : me.driveUrl) || "";
+  const driveUrl = me?.driveUrl || "";
   const p0 = S.projects[0];
   const plan0 = p0 ? _planOf(p0) : null;
-  const eyebrow = (plan0 == null ? void 0 : plan0.active) ? plan0.active.name : "Documentaci\xF3n";
+  const eyebrow = plan0?.active ? plan0.active.name : "Documentaci\xF3n";
   const needs = [
     { t: "Activos de marca", d: "Logos, tipograf\xEDas, colores, manual de marca y cualquier recurso gr\xE1fico que tengas." },
     { t: "Contenido y materiales", d: "Fotos, v\xEDdeos, textos, cat\xE1logos, presentaciones\u2026 lo que uses en tu negocio." },
@@ -389,7 +395,7 @@ const CredItem = ({ c, agencyEmail, editable, onDelete }) => {
       navigator.clipboard.writeText(val);
       setCopied(which);
       setTimeout(() => setCopied(""), 1200);
-    } catch (e) {
+    } catch {
     }
   };
   const inp = { width: "100%", height: 38, borderRadius: 9, padding: "8px 12px", background: "var(--bg-elev)", border: "0.5px solid var(--border)", color: "var(--text)", fontFamily: "inherit", fontSize: 13.5, marginBottom: 9 };
