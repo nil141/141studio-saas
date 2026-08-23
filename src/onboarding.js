@@ -255,7 +255,7 @@ const OnboardingPage = ({ token }) => {
     try {
       const sb = _sb();
       let vErr = null;
-      if (/^\d{6}$/.test(raw)) {
+      if (/^\d{6,8}$/.test(raw)) {
         ({ error: vErr } = await sb.auth.verifyOtp({ email: form.email.trim(), token: raw, type: "signup" }));
       } else {
         ({ error: vErr } = await sb.auth.verifyOtp({ token_hash: raw, type: "signup" }));
