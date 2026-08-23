@@ -122,27 +122,29 @@ const OnboardingPage = ({ token }) => {
     }
     if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
     // Avisar a la agencia (campana del CRM + correo) de que el cliente ya tiene portal.
+    // IMPORTANTE: esperamos (await) a que se cree el aviso y se envíe el correo
+    // ANTES de cerrar sesión; si no, signOut() invalida el token a mitad y falla.
     try {
       const clientName = form.company.trim() || form.name.trim() || "Un cliente";
+      const body = clientName + " ha completado su registro y ya tiene acceso a su portal";
+      const token = (await sb.auth.getSession()).data.session?.access_token;
       const { data: prof } = await sb.from("profiles").select("agency_id, client_db_id")
         .eq("id", (await sb.auth.getUser()).data.user.id).single();
       if (prof && prof.agency_id && prof.client_db_id) {
         const nid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-        sb.from("notifications").insert({
+        await sb.from("notifications").insert({
           id: nid, agency_id: prof.agency_id, client_id: prof.client_db_id,
-          title: "Portal creado", body: clientName + " ha completado su registro y ya tiene acceso a su portal",
-          kind: "client-portal", read: false, target: "agency",
-        }).then(() => {}, () => {});
+          title: "Portal creado", body, kind: "client-portal", read: false, target: "agency",
+        });
       }
-      const token = (await sb.auth.getSession()).data.session?.access_token;
       if (token) {
-        fetch("/api/portal/notify_agency", {
+        await fetch("/api/portal/notify_agency", {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-          body: JSON.stringify({ title: "Portal creado", body: clientName + " ha completado su registro y ya tiene acceso a su portal.", kind: "client-portal", client_name: clientName }),
-        }).catch(() => {});
+          body: JSON.stringify({ title: "Portal creado", body: body + ".", kind: "client-portal", client_name: clientName }),
+        });
       }
-    } catch {}
+    } catch (e) { /* no bloquear el registro si el aviso falla */ }
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");
     localStorage.removeItem("141_session");
