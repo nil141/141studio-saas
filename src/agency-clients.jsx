@@ -225,7 +225,8 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   };
 
   const startEdit = () => {
-    setForm({ name: c.name, company: c.company, email: c.email, whatsapp: c.whatsapp, service: c.service, status: c.status });
+    setForm({ name: c.name, company: c.company, email: c.email, whatsapp: c.whatsapp, service: c.service, status: c.status,
+      fiscalName: c.fiscalName || "", nif: c.nif || "", fiscalAddress: c.fiscalAddress || "", website: c.website || "", about: c.about || "" });
     setEditing(true);
   };
   const saveEdit = () => {
@@ -373,6 +374,13 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
                 <option value="paused">Pausado</option>
               </select>
             </div>
+            <div style={{gridColumn:"1 / -1", height:1, background:"var(--border)", margin:"2px 0"}}/>
+            <div><label className="label">Razón social</label><input className="input" {...field("fiscalName")}/></div>
+            <div><label className="label">NIF / CIF</label><input className="input" {...field("nif")}/></div>
+            <div><label className="label">Dirección fiscal</label><input className="input" {...field("fiscalAddress")}/></div>
+            <div><label className="label">Web</label><input className="input" {...field("website")}/></div>
+            <div style={{gridColumn:"1 / -1"}}><label className="label">A qué se dedica</label>
+              <textarea className="textarea" rows={3} {...field("about")}/></div>
           </div>
         </div>
       ) : (
