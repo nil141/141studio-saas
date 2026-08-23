@@ -1121,15 +1121,24 @@ const notifyAgency = (input) => {
     createdAt: null,
     target: "agency"
   };
+  const _toast = (m, k) => {
+    try {
+      window.__pushToast && window.__pushToast(m, k);
+    } catch {
+    }
+  };
   _store.NOTIFICATIONS = [n, ..._store.NOTIFICATIONS];
   _emit();
   _insertAdaptive("notifications", { id: n.id, agency_id: agencyId, client_id: cid, title: n.title, body: n.body, kind: n.kind, read: false, target: "agency" }).then(({ error }) => {
     if (error) {
       _store.NOTIFICATIONS = _store.NOTIFICATIONS.filter((x) => x.id !== n.id);
       _emit();
+      _toast("Aviso a la agencia NO guardado: " + (error.message || "error (\xBFfalta el SQL?)"), "warn");
     }
   });
-  apiFetch("/api/portal/notify_agency", { title: n.title, body: n.body, kind: n.kind, client_name: clientName }).catch(() => {
+  apiFetch("/api/portal/notify_agency", { title: n.title, body: n.body, kind: n.kind, client_name: clientName }).then((r) => r.json().catch(() => ({}))).then((j) => {
+    if (!j || !j.ok && !j.skipped) _toast("Correo a la agencia NO enviado: " + (j && j.error || "error"), "warn");
+  }).catch(() => {
   });
   return n;
 };
