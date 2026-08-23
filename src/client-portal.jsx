@@ -295,9 +295,9 @@ const ClientDashboard = ({ navigate, session }) => {
       </div>
       <div style={{display:"grid", gridTemplateColumns:"repeat(auto-fit, minmax(300px, 1fr))", gap: 16}}>
         {[
-          { id:"client-status",      badge:"PROYECTO",  title:"Estado del proyecto", desc:"Fases, avance y entregables.",        status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct },
-          { id:"client-docs",        badge:"DOCUMENTOS", title:"Documentación",       desc:"Archivos y facturas del proyecto.",   status: S.invoices.length ? "Disponible" : "Sin empezar", pct: S.invoices.length ? 100 : 0 },
-          { id:"client-credentials", badge:"ACCESOS",    title:"Credenciales",        desc:"Accesos que compartes con el equipo.", status: S.credentials.length ? `${S.credentials.length} guardados` : "Sin empezar", pct: S.credentials.length ? 100 : 0 },
+          { id:"client-status",      badge:"PROYECTO",  title:"Estado del proyecto", desc:"Fases, avance y entregables.",        status: plan.pct > 0 ? "En curso" : "Por empezar", pct: plan.pct, showPct: true },
+          { id:"client-docs",        badge:"DOCUMENTOS", title:"Documentación",       desc:"Archivos y facturas del proyecto." },
+          { id:"client-credentials", badge:"ACCESOS",    title:"Credenciales",        desc:"Accesos que compartes con el equipo." },
         ].map(m => (
           <div key={m.id} className="card" style={{cursor:"pointer", overflow:"hidden"}} onClick={() => navigate(m.id)}>
             <div style={{height: 118, position:"relative", padding: 16,
@@ -309,14 +309,18 @@ const ClientDashboard = ({ navigate, session }) => {
             <div style={{padding: 18}}>
               <div style={{fontFamily:"var(--font-display)", fontSize: 20, fontWeight: 400, letterSpacing:"-0.5px"}}>{m.title}</div>
               <div className="muted small" style={{marginTop: 4}}>{m.desc}</div>
-              <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop: 16, marginBottom: 6}}>
-                <span style={{fontSize: 10.5, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-subtle)"}}>{m.status}</span>
-                <span style={{fontSize: 12, color:"var(--text-muted)"}}>{m.pct}%</span>
-              </div>
-              <div style={{height: 3, borderRadius: 99, background:"var(--border)", overflow:"hidden"}}>
-                <div style={{width: m.pct + "%", height:"100%", background:"var(--text-muted)", borderRadius: 99}}/>
-              </div>
-              <div style={{marginTop: 14, fontSize: 13, color:"var(--text)"}}>Entrar en el módulo <Icon name="arrow" size={12}/></div>
+              {m.showPct && (
+                <>
+                  <div style={{display:"flex", justifyContent:"space-between", alignItems:"center", marginTop: 16, marginBottom: 6}}>
+                    <span style={{fontSize: 10.5, letterSpacing:"0.06em", textTransform:"uppercase", color:"var(--text-subtle)"}}>{m.status}</span>
+                    <span style={{fontSize: 12, color:"var(--text-muted)"}}>{m.pct}%</span>
+                  </div>
+                  <div style={{height: 3, borderRadius: 99, background:"var(--border)", overflow:"hidden"}}>
+                    <div style={{width: m.pct + "%", height:"100%", background:"var(--text-muted)", borderRadius: 99}}/>
+                  </div>
+                </>
+              )}
+              <div style={{marginTop: m.showPct ? 14 : 18, fontSize: 13, color:"var(--text)"}}>Entrar en el módulo <Icon name="arrow" size={12}/></div>
             </div>
           </div>
         ))}
