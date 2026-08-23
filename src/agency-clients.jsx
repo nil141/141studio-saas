@@ -193,6 +193,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
   const invoices = D.INVOICES.filter(i => i.clientId === c.id);
   const creds = D.credentialsForClient ? D.credentialsForClient(c.id) : [];
   const ctasks = D.clientTasksFor ? D.clientTasksFor(c.id) : [];
+  const pendingAvisos = D.pendingEmailsFor ? D.pendingEmailsFor(c.id) : [];
   const projectIdSet = new Set(projects.map(p => p.id));
   const clientDeliverables = (D.DELIVERABLES || []).filter(d => projectIdSet.has(d.projectId));
   const [tab, setTab] = useState("vista");
@@ -271,14 +272,16 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
     { v:"client-credentials", label:"Credenciales (dar accesos)" },
   ];
   const [notifyOpen, setNotifyOpen] = useState(false);
+  const [outboxOpen, setOutboxOpen] = useState(false);
   const [nf, setNf] = useState({ title:"", body:"", route:"client-dashboard" });
   const openNotify = () => { setNf({ title:"", body:"", route:"client-dashboard" }); setNotifyOpen(true); };
   const sendNotify = () => {
     if (!nf.title.trim()) return;
     D.notify(c.id, { title: nf.title.trim(), body: nf.body.trim(), kind: "general", route: nf.route });
     setNotifyOpen(false);
-    toast(c.email ? "Aviso enviado al cliente" : "Aviso creado (el cliente no tiene email, no se envió correo)", "success");
+    toast(c.email ? "Aviso añadido a la bandeja (revisa y envía abajo)" : "Aviso creado (el cliente no tiene email)", "success");
   };
+  const _sectShort = { "client-dashboard":"Inicio", "client-status":"Estado", "client-docs":"Documentación", "client-credentials":"Credenciales" };
   const nInp = { width:"100%", borderRadius:9, padding:"9px 12px", background:"var(--bg-elev)",
     border:"0.5px solid var(--border)", color:"var(--text)", fontFamily:"inherit", fontSize:13.5, marginBottom:10 };
 
@@ -298,11 +301,54 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
         <select style={{...nInp, appearance:"auto"}} value={nf.route} onChange={e => setNf(s => ({...s, route:e.target.value}))}>
           {NOTIFY_SECTIONS.map(s => <option key={s.v} value={s.v}>{s.label}</option>)}
         </select>
+        <div style={{fontSize:11.5, color:"var(--text-subtle)", marginTop:2, lineHeight:1.5}}>El aviso se añade a la bandeja; se enviará junto con los demás cuando pulses «Enviar».</div>
+      </Modal>
+
+      <Modal open={outboxOpen} onClose={() => setOutboxOpen(false)} title="Avisos por enviar"
+        sub={c.email ? `Se enviará UN correo a ${c.email} con todo lo de abajo` : "El cliente no tiene email; solo verá los avisos en su portal"}
+        footer={<>
+          <button className="btn" onClick={() => { D.discardPendingEmails(c.id); setOutboxOpen(false); }}>Descartar todo</button>
+          <button className="btn primary" disabled={!pendingAvisos.length} onClick={() => { D.sendPendingEmails(c.id); setOutboxOpen(false); }}>
+            <Icon name="mail" size={13}/> Enviar {pendingAvisos.length} en un correo
+          </button>
+        </>}>
+        {pendingAvisos.length === 0 ? (
+          <div className="muted small">No hay avisos pendientes.</div>
+        ) : (
+          <div style={{display:"flex", flexDirection:"column", gap:10}}>
+            {pendingAvisos.map((it, i) => (
+              <div key={i} style={{display:"flex", gap:10, alignItems:"flex-start", padding:"11px 13px", background:"var(--bg-elev)", border:"0.5px solid var(--border)", borderRadius:10}}>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontWeight:500, fontSize:13.5}}>{it.title}</div>
+                  {it.body && <div className="muted small" style={{marginTop:2, lineHeight:1.4}}>{it.body}</div>}
+                  {it.route && <div className="xsmall muted" style={{marginTop:4, display:"flex", alignItems:"center", gap:5}}><Icon name="arrow" size={10}/>{_sectShort[it.route] || "Portal"}</div>}
+                </div>
+                <button className="btn ghost icon-only sm" onClick={() => D.clearPendingEmail(c.id, i)}><Icon name="x" size={12}/></button>
+              </div>
+            ))}
+          </div>
+        )}
       </Modal>
       {/* Back */}
       <button className="btn ghost sm" style={{marginBottom: 20}} onClick={() => navigate("clients")}>
         <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Clientes
       </button>
+
+      {/* Bandeja de avisos pendientes de enviar por correo */}
+      {pendingAvisos.length > 0 && (
+        <div style={{display:"flex", alignItems:"center", gap:12, flexWrap:"wrap", marginBottom:18, padding:"12px 16px",
+          background:"var(--accent-soft)", border:"0.5px solid var(--accent)", borderRadius:12}}>
+          <Icon name="mail" size={16} style={{color:"var(--accent)"}}/>
+          <div style={{flex:1, minWidth:180}}>
+            <div style={{fontWeight:500, fontSize:13.5}}>{pendingAvisos.length} aviso{pendingAvisos.length===1?"":"s"} sin enviar a {c.name || "este cliente"}</div>
+            <div className="xsmall muted" style={{marginTop:1}}>Se agruparán en un solo correo. Revisa antes de enviar.</div>
+          </div>
+          <div className="row tight" style={{flexShrink:0}}>
+            <button className="btn ghost sm" onClick={() => D.discardPendingEmails(c.id)}>Descartar</button>
+            <button className="btn primary sm" onClick={() => setOutboxOpen(true)}>Revisar y enviar</button>
+          </div>
+        </div>
+      )}
 
       {/* ── HERO CARD ── */}
       {editing ? (

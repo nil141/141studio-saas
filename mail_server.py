@@ -412,14 +412,81 @@ def _resend_send(to, subject, html):
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
+def _digest_email_html(client_name, items):
+    """Un solo correo con varios avisos (fondo negro, Inter, marca 141'DIGITAL)."""
+    safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    first  = safe(client_name.split()[0]) if client_name and client_name.split() else ""
+    hello  = f"Hola {first}," if first else "Hola,"
+    logo   = f"{PORTAL_URL}/logo-141digital-white.png"
+    accent = "#9e9ae5"
+    font   = "'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif"
+    rows = ""
+    for it in items:
+        t = safe((it.get("title") or "").strip())
+        b = safe((it.get("body") or "").strip())
+        r = (it.get("route") or "").strip()
+        link = ""
+        if r:
+            label = _CTA_FOR_ROUTE.get(r, "Abrir")
+            link = (f'<div style="margin-top:8px"><a href="{PORTAL_URL}/?goto={r}" '
+                    f'style="color:{accent};text-decoration:none;font-size:13px;font-weight:500;font-family:{font}">{label} &rarr;</a></div>')
+        body_line = f'<div style="color:#a1a1aa;font-size:14px;line-height:1.5;margin-top:3px;font-family:{font}">{b}</div>' if b else ""
+        rows += (f'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 12px">'
+                 f'<tr><td style="border-left:2px solid {accent};padding:2px 0 2px 16px">'
+                 f'<div style="color:#f4f4f5;font-size:15.5px;font-weight:500;line-height:1.4;font-family:{font}">{t}</div>'
+                 f'{body_line}{link}</td></tr></table>')
+    n = len(items)
+    preheader = f"Tienes {n} novedades en tu portal"
+    pad = "&#847;&zwnj;&nbsp;" * 60
+    return f"""\
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><style>@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');</style></head>
+<body style="margin:0;background:#000000;padding:0;font-family:{font}">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;height:0;width:0;mso-hide:all">{preheader}{pad}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000">
+    <tr><td align="center" style="padding:40px 22px 46px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:480px">
+        <tr><td style="padding:0 0 34px">
+          <img src="{logo}" alt="141'DIGITAL" height="18" style="height:18px;width:auto;display:block;border:0;outline:none;text-decoration:none">
+        </td></tr>
+        <tr><td>
+          <h1 style="margin:0 0 22px;font-size:28px;line-height:1.2;color:#f4f4f5;font-weight:300;letter-spacing:-0.6px;font-family:{font}">Tienes {n} novedades</h1>
+          <p style="margin:0 0 24px;color:#e4e4e7;font-size:15px;line-height:1.6;font-weight:400;font-family:{font}"><span style="color:#f4f4f5">{hello}</span> esto es lo que necesitamos o hemos actualizado en tu portal:</p>
+          {rows}
+        </td></tr>
+        <tr><td style="padding:14px 0 40px">
+          <a href="{PORTAL_URL}" style="display:inline-block;background:#f4f4f5;color:#0a0a0a;text-decoration:none;font-size:14px;font-weight:600;padding:13px 26px;border-radius:11px;font-family:{font}">Abrir mi portal &rarr;</a>
+        </td></tr>
+        <tr><td style="padding:22px 0 0;border-top:1px solid rgba(255,255,255,0.08)">
+          <div style="font-size:12.5px;color:#8b8b93;line-height:1.6;font-weight:400;font-family:{font}">141'DIGITAL · <a href="{PORTAL_URL}" style="color:{accent};text-decoration:none">app.141agency.com</a></div>
+          <div style="margin-top:8px;font-size:11.5px;color:#5c5c63;line-height:1.5;font-weight:400;font-family:{font}">Recibes este correo porque tienes un portal de cliente con 141'DIGITAL. Este buzón no admite respuestas.</div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>"""
+
 def api_notify_client(body):
     """Envía por Resend el aviso al cliente. Protegido por _handle_api (solo
-    usuarios de agencia autenticados). Si no hay API key, se omite en silencio."""
+    usuarios de agencia autenticados). Si no hay API key, se omite en silencio.
+    Si viene `digest` (lista), envía UN solo correo con todos los avisos."""
     to      = (body.get("to") or "").strip()
+    cname   = (body.get("client_name") or "").strip()
+    first   = cname.split()[0] if cname.split() else ""
+    digest  = body.get("digest")
+    if isinstance(digest, list) and digest:
+        if len(digest) == 1:
+            it = digest[0]
+            body = {**body, "title": it.get("title", ""), "body": it.get("body", ""),
+                    "kind": it.get("kind", ""), "route": it.get("route", "")}
+            # cae al flujo normal de abajo (un solo aviso)
+        else:
+            n = len(digest)
+            subject = f"{first}, tienes {n} novedades en tu portal" if first else f"Tienes {n} novedades en tu portal"
+            html = _digest_email_html(cname, digest)
+            return _resend_send(to, subject, html)
     title   = (body.get("title") or "").strip()
     text    = (body.get("body") or "").strip()
     kind    = (body.get("kind") or "").strip()
-    cname   = (body.get("client_name") or "").strip()
     route   = (body.get("route") or "").strip()
     meta    = _notify_meta(kind)
     first   = cname.split()[0] if cname.split() else ""

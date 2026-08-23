@@ -79,6 +79,8 @@ const _store = {
   SETTINGS: { ...SETTINGS_DEFAULT },
   _user: null,
   _prof: null,
+  _outbox: {},
+  // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
   _subs: /* @__PURE__ */ new Set()
 };
 const subscribe = (fn) => {
@@ -1089,32 +1091,49 @@ const notify = (clientId, input) => {
   });
   try {
     const cli = (_store.CLIENTS || []).find((c) => c.id === clientId);
-    const to = cli && cli.email;
-    const _toast = (m, k) => {
-      try {
-        window.__pushToast && window.__pushToast(m, k);
-      } catch {
-      }
-    };
-    if (!to) {
-      _toast("Aviso creado, pero el cliente no tiene email \u2014 no se envi\xF3 correo", "warn");
-    } else {
-      apiFetch("/api/mail/notify_client", {
-        to,
-        client_name: cli.name || "",
-        title: n.title,
-        body: n.body,
-        kind: n.kind,
-        route: n.route || ""
-      }).then((r) => r.json().catch(() => ({}))).then((j) => {
-        if (j && j.ok) _toast("Correo enviado a " + to, "success");
-        else if (j && j.skipped) _toast("Correo NO enviado: falta configurar Resend en el servidor", "warn");
-        else _toast("Correo NO enviado: " + (j && j.error || "error desconocido"), "warn");
-      }).catch((e) => _toast("Correo NO enviado: " + (e && e.message || "sin conexi\xF3n al servidor"), "warn"));
+    if (cli && cli.email) {
+      if (!_store._outbox[clientId]) _store._outbox[clientId] = [];
+      _store._outbox[clientId].push({ title: n.title, body: n.body, kind: n.kind, route: n.route || "" });
+      _emit();
     }
   } catch {
   }
   return n;
+};
+const pendingEmailsFor = (clientId) => _store._outbox[clientId] || [];
+const clearPendingEmail = (clientId, idx) => {
+  const arr = _store._outbox[clientId];
+  if (!arr) return;
+  arr.splice(idx, 1);
+  if (!arr.length) delete _store._outbox[clientId];
+  _emit();
+};
+const discardPendingEmails = (clientId) => {
+  delete _store._outbox[clientId];
+  _emit();
+};
+const sendPendingEmails = (clientId) => {
+  const items = (_store._outbox[clientId] || []).slice();
+  const _toast = (m, k) => {
+    try {
+      window.__pushToast && window.__pushToast(m, k);
+    } catch {
+    }
+  };
+  if (!items.length) return;
+  const cli = (_store.CLIENTS || []).find((c) => c.id === clientId);
+  const to = cli && cli.email;
+  if (!to) {
+    _toast("El cliente no tiene email \u2014 no se envi\xF3 correo", "warn");
+    discardPendingEmails(clientId);
+    return;
+  }
+  apiFetch("/api/mail/notify_client", { to, client_name: cli.name || "", digest: items }).then((r) => r.json().catch(() => ({}))).then((j) => {
+    if (j && j.ok) _toast(`Correo enviado a ${to} (${items.length} aviso${items.length === 1 ? "" : "s"})`, "success");
+    else if (j && j.skipped) _toast("Correo NO enviado: falta configurar Resend", "warn");
+    else _toast("Correo NO enviado: " + (j && j.error || "error"), "warn");
+  }).catch((e) => _toast("Correo NO enviado: " + (e && e.message || "sin conexi\xF3n"), "warn"));
+  discardPendingEmails(clientId);
 };
 const notifyAgency = (input) => {
   const prof = _store._prof || {};
@@ -1709,6 +1728,10 @@ window.Data = {
   notify,
   markNotificationRead,
   markAllNotificationsRead,
+  pendingEmailsFor,
+  clearPendingEmail,
+  discardPendingEmails,
+  sendPendingEmails,
   addLead,
   addTask,
   moveTask,
