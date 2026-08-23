@@ -175,6 +175,35 @@ const OnboardingPage = ({ token }) => {
       ({ data: result, error: rpcError } = await sb.rpc("complete_invite", base));
     }
     if (rpcError || !result?.ok) return result?.error || rpcError?.message || "Error al completar el registro";
+    try {
+      const clientName = form.company.trim() || form.name.trim() || "Un cliente";
+      const { data: prof } = await sb.from("profiles").select("agency_id, client_db_id").eq("id", (await sb.auth.getUser()).data.user.id).single();
+      if (prof && prof.agency_id && prof.client_db_id) {
+        const nid = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+        sb.from("notifications").insert({
+          id: nid,
+          agency_id: prof.agency_id,
+          client_id: prof.client_db_id,
+          title: "Portal creado",
+          body: clientName + " ha completado su registro y ya tiene acceso a su portal",
+          kind: "client-portal",
+          read: false,
+          target: "agency"
+        }).then(() => {
+        }, () => {
+        });
+      }
+      const token2 = (await sb.auth.getSession()).data.session?.access_token;
+      if (token2) {
+        fetch("/api/portal/notify_agency", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token2 },
+          body: JSON.stringify({ title: "Portal creado", body: clientName + " ha completado su registro y ya tiene acceso a su portal.", kind: "client-portal", client_name: clientName })
+        }).catch(() => {
+        });
+      }
+    } catch {
+    }
     await sb.auth.signOut();
     sessionStorage.removeItem("141_session");
     localStorage.removeItem("141_session");
