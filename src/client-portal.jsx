@@ -652,9 +652,10 @@ const CredStatus = ({ ok, label }) => (
   </span>
 );
 
-const CredCatalog = ({ onPick, onCancel }) => {
+const CredCatalog = ({ onPick, onCancel, used }) => {
   const D = window.Data;
-  const cat = D.CRED_CATALOG || [];
+  const u = used || new Set();
+  const cat = (D.CRED_CATALOG || []).filter(p => p.key === "otro" || !u.has(p.key));
   const groups = [
     { mode:"login",  title:"Con usuario y contraseña", sub:"Nos das tus datos de acceso." },
     { mode:"access", title:"Dando acceso a nuestro correo", sub:"Nos añades como colaborador; no compartes contraseñas." },
@@ -794,7 +795,7 @@ const ClientCredentials = ({ session }) => {
         )}
       </div>
 
-      {picking && <CredCatalog onPick={add} onCancel={() => setPicking(false)}/>}
+      {picking && <CredCatalog onPick={add} onCancel={() => setPicking(false)} used={new Set(creds.map(c => c.platform))}/>}
 
       {creds.length === 0 && !picking ? (
         <div className="card"><div className="card-body" style={{padding:"40px 24px", textAlign:"center"}}>

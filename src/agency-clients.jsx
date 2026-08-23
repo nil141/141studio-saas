@@ -621,7 +621,8 @@ const AgencyCredentials = ({ clientId }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const creds = D.credentialsForClient ? D.credentialsForClient(clientId) : [];
-  const cat = D.CRED_CATALOG || [];
+  const _used = new Set(creds.map(c => c.platform));
+  const cat = (D.CRED_CATALOG || []).filter(p => p.key === "otro" || !_used.has(p.key));
   const agencyEmail = (D.SETTINGS && D.SETTINGS.email) || "tu correo";
   const [picking, setPicking] = useState(false);
   const [editId, setEditId] = useState(null);
