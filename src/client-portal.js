@@ -100,7 +100,14 @@ const ClientDashboard = ({ navigate, session }) => {
   D.useStore && D.useStore();
   const S = _portalScope(session);
   const projects = S.projects;
-  const [selId, setSelId] = useState(null);
+  const _projKey = "141_last_project_" + (S.clientId || "");
+  const [selId, setSelId] = useState(() => {
+    try {
+      return localStorage.getItem(_projKey);
+    } catch {
+      return null;
+    }
+  });
   const [projOpen, setProjOpen] = useState(false);
   React.useEffect(() => {
     if (!projOpen) return;
@@ -108,6 +115,13 @@ const ClientDashboard = ({ navigate, session }) => {
     window.addEventListener("click", c);
     return () => window.removeEventListener("click", c);
   }, [projOpen]);
+  const chooseProject = (id) => {
+    setSelId(id);
+    try {
+      localStorage.setItem(_projKey, id);
+    } catch {
+    }
+  };
   const primary = projects.find((p) => p.id === selId) || projects[0] || null;
   const name = S.name;
   const pending = S.deliverables.filter((d) => d.status && d.status !== "approved");
@@ -166,7 +180,7 @@ const ClientDashboard = ({ navigate, session }) => {
     {
       key: pr.id,
       onClick: () => {
-        setSelId(pr.id);
+        chooseProject(pr.id);
         setProjOpen(false);
       },
       style: {

@@ -139,9 +139,11 @@ const ClientDashboard = ({ navigate, session }) => {
   D.useStore && D.useStore();
   const S = _portalScope(session);
   const projects = S.projects;
-  const [selId, setSelId] = useState(null);
+  const _projKey = "141_last_project_" + (S.clientId || "");
+  const [selId, setSelId] = useState(() => { try { return localStorage.getItem(_projKey); } catch { return null; } });
   const [projOpen, setProjOpen] = useState(false);
   React.useEffect(() => { if (!projOpen) return; const c = () => setProjOpen(false); window.addEventListener("click", c); return () => window.removeEventListener("click", c); }, [projOpen]);
+  const chooseProject = (id) => { setSelId(id); try { localStorage.setItem(_projKey, id); } catch {} };
   const primary = projects.find(p => p.id === selId) || projects[0] || null;
 
   const name = S.name;
@@ -180,7 +182,7 @@ const ClientDashboard = ({ navigate, session }) => {
             boxShadow:"0 14px 34px rgba(0,0,0,0.45)"}}>
             <div style={{fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-subtle)", padding:"4px 10px 6px"}}>Tus proyectos</div>
             {projects.map(pr => (
-              <button key={pr.id} onClick={() => { setSelId(pr.id); setProjOpen(false); }}
+              <button key={pr.id} onClick={() => { chooseProject(pr.id); setProjOpen(false); }}
                 style={{display:"flex", alignItems:"center", gap:8, width:"100%", padding:"9px 10px", border:0, borderRadius:8,
                   cursor:"pointer", fontFamily:"inherit", textAlign:"left", fontSize:13.5,
                   background: pr.id === primary.id ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
