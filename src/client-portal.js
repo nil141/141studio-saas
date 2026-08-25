@@ -101,6 +101,13 @@ const ClientDashboard = ({ navigate, session }) => {
   const S = _portalScope(session);
   const projects = S.projects;
   const [selId, setSelId] = useState(null);
+  const [projOpen, setProjOpen] = useState(false);
+  React.useEffect(() => {
+    if (!projOpen) return;
+    const c = () => setProjOpen(false);
+    window.addEventListener("click", c);
+    return () => window.removeEventListener("click", c);
+  }, [projOpen]);
   const primary = projects.find((p) => p.id === selId) || projects[0] || null;
   const name = S.name;
   const pending = S.deliverables.filter((d) => d.status && d.status !== "approved");
@@ -119,21 +126,68 @@ const ClientDashboard = ({ navigate, session }) => {
     display: "flex",
     flexDirection: "column",
     justifyContent: "flex-end"
-  } }, /* @__PURE__ */ React.createElement("div", { style: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 7,
-    alignSelf: "flex-start",
-    padding: "5px 12px",
-    borderRadius: 99,
-    background: "rgba(255,255,255,0.1)",
-    border: "0.5px solid rgba(255,255,255,0.18)",
-    color: "rgba(255,255,255,0.9)",
-    fontSize: 11,
-    letterSpacing: "0.08em",
-    textTransform: "uppercase",
-    marginBottom: 18
-  } }, /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: "var(--green)" } }), "Portal", primary ? " \xB7 " + primary.name : ""), /* @__PURE__ */ React.createElement("h1", { style: {
+  } }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative", alignSelf: "flex-start", marginBottom: 18 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => projects.length > 1 && setProjOpen((o) => !o),
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 7,
+        padding: "5px 12px",
+        borderRadius: 99,
+        background: "rgba(255,255,255,0.1)",
+        border: "0.5px solid rgba(255,255,255,0.18)",
+        color: "rgba(255,255,255,0.9)",
+        fontSize: 11,
+        letterSpacing: "0.08em",
+        textTransform: "uppercase",
+        fontFamily: "inherit",
+        cursor: projects.length > 1 ? "pointer" : "default"
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: "var(--green)" } }),
+    "Portal",
+    primary ? " \xB7 " + primary.name : "",
+    projects.length > 1 && /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 12, style: { opacity: 0.85, marginLeft: 2 } })
+  ), projOpen && projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    zIndex: 30,
+    minWidth: 240,
+    background: "var(--bg-elev)",
+    border: "0.5px solid var(--border-strong)",
+    borderRadius: 12,
+    padding: 6,
+    boxShadow: "0 14px 34px rgba(0,0,0,0.45)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-subtle)", padding: "4px 10px 6px" } }, "Tus proyectos"), projects.map((pr) => /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      key: pr.id,
+      onClick: () => {
+        setSelId(pr.id);
+        setProjOpen(false);
+      },
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        width: "100%",
+        padding: "9px 10px",
+        border: 0,
+        borderRadius: 8,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+        fontSize: 13.5,
+        background: pr.id === primary.id ? "var(--bg-hover)" : "transparent",
+        color: "var(--text)"
+      }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13, style: { opacity: pr.id === primary.id ? 1 : 0 } }),
+    /* @__PURE__ */ React.createElement("span", null, pr.name)
+  )))), /* @__PURE__ */ React.createElement("h1", { style: {
     fontFamily: "var(--font-display)",
     fontWeight: 300,
     fontSize: "clamp(38px, 6vw, 58px)",
@@ -143,15 +197,7 @@ const ClientDashboard = ({ navigate, session }) => {
     margin: 0
   } }, "Hola, ", name || "bienvenido"), /* @__PURE__ */ React.createElement("p", { style: { color: "rgba(255,255,255,0.72)", fontSize: 14.5, lineHeight: 1.6, maxWidth: 560, marginTop: 14 } }, "Esta es tu \xE1rea de cliente. Desde aqu\xED sigues el estado del proyecto, subes documentaci\xF3n, das acceso a tus herramientas y ves todo lo importante en un solo sitio."), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 40, marginTop: 28, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(RingStat, { pct: plan.pct, label: "Progreso del proyecto" }), /* @__PURE__ */ React.createElement(RingStat, { pct: myPct, label: "Tus tareas completadas" })));
   if (!projects.length) return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 24 } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto activo", sub: "Cuando tu agencia cree tu proyecto, aqu\xED ver\xE1s su avance por fases." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
-  return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginTop: 18, flexWrap: "wrap" } }, projects.map((pr) => /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      key: pr.id,
-      className: "btn sm" + (pr.id === primary.id ? " primary" : " ghost"),
-      onClick: () => setSelId(pr.id)
-    },
-    pr.name
-  ))), pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, plan.groups.map((g, i) => {
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, hero, pending.length > 0 && /* @__PURE__ */ React.createElement("div", { className: "card", style: { marginTop: 22, borderColor: "var(--amber)", background: "var(--amber-soft)" } }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 16, display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 36, borderRadius: 10, background: "var(--amber-soft)", display: "grid", placeItems: "center", color: "var(--amber)", border: "0.5px solid var(--amber)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16 })), /* @__PURE__ */ React.createElement("div", { className: "grow" }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500 } }, "Tienes ", pending.length, " entregable", pending.length === 1 ? "" : "s", " pendiente", pending.length === 1 ? "" : "s", " de aprobar"), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginTop: 2 } }, pending.map((d) => d.title).slice(0, 3).join(" \xB7 "))), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => navigate("client-status", { projectId: pending[0].projectId }) }, "Revisar ahora"))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 30, marginBottom: 14, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.5px" } }, "El estado del proyecto"), plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases." }) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 12, overflowX: "auto", paddingBottom: 6 } }, plan.groups.map((g, i) => {
     const isDone = g.complete;
     const isActive = i === plan.activeIdx && !isDone;
     const chip = {

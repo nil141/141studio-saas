@@ -140,6 +140,8 @@ const ClientDashboard = ({ navigate, session }) => {
   const S = _portalScope(session);
   const projects = S.projects;
   const [selId, setSelId] = useState(null);
+  const [projOpen, setProjOpen] = useState(false);
+  React.useEffect(() => { if (!projOpen) return; const c = () => setProjOpen(false); window.addEventListener("click", c); return () => window.removeEventListener("click", c); }, [projOpen]);
   const primary = projects.find(p => p.id === selId) || projects[0] || null;
 
   const name = S.name;
@@ -161,12 +163,33 @@ const ClientDashboard = ({ navigate, session }) => {
     <div className="portal-hero" style={{position:"relative", overflow:"hidden", background: heroBg,
       minHeight: 420, padding: "clamp(32px, 5vw, 56px)", display:"flex", flexDirection:"column",
       justifyContent:"flex-end"}}>
-      <div style={{display:"inline-flex", alignItems:"center", gap: 7, alignSelf:"flex-start",
-        padding:"5px 12px", borderRadius: 99, background:"rgba(255,255,255,0.1)",
-        border:"0.5px solid rgba(255,255,255,0.18)", color:"rgba(255,255,255,0.9)",
-        fontSize: 11, letterSpacing:"0.08em", textTransform:"uppercase", marginBottom: 18}}>
-        <span style={{width:6, height:6, borderRadius:99, background:"var(--green)"}}/>
-        Portal{primary ? " · " + primary.name : ""}
+      <div style={{position:"relative", alignSelf:"flex-start", marginBottom: 18}} onClick={e => e.stopPropagation()}>
+        <button onClick={() => projects.length > 1 && setProjOpen(o => !o)}
+          style={{display:"inline-flex", alignItems:"center", gap: 7,
+            padding:"5px 12px", borderRadius: 99, background:"rgba(255,255,255,0.1)",
+            border:"0.5px solid rgba(255,255,255,0.18)", color:"rgba(255,255,255,0.9)",
+            fontSize: 11, letterSpacing:"0.08em", textTransform:"uppercase", fontFamily:"inherit",
+            cursor: projects.length > 1 ? "pointer" : "default"}}>
+          <span style={{width:6, height:6, borderRadius:99, background:"var(--green)"}}/>
+          Portal{primary ? " · " + primary.name : ""}
+          {projects.length > 1 && <Icon name="chevron-down" size={12} style={{opacity:0.85, marginLeft:2}}/>}
+        </button>
+        {projOpen && projects.length > 1 && (
+          <div style={{position:"absolute", top:"calc(100% + 6px)", left:0, zIndex:30, minWidth:240,
+            background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)", borderRadius:12, padding:6,
+            boxShadow:"0 14px 34px rgba(0,0,0,0.45)"}}>
+            <div style={{fontSize:10.5, letterSpacing:"0.08em", textTransform:"uppercase", color:"var(--text-subtle)", padding:"4px 10px 6px"}}>Tus proyectos</div>
+            {projects.map(pr => (
+              <button key={pr.id} onClick={() => { setSelId(pr.id); setProjOpen(false); }}
+                style={{display:"flex", alignItems:"center", gap:8, width:"100%", padding:"9px 10px", border:0, borderRadius:8,
+                  cursor:"pointer", fontFamily:"inherit", textAlign:"left", fontSize:13.5,
+                  background: pr.id === primary.id ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
+                <Icon name="check" size={13} style={{opacity: pr.id === primary.id ? 1 : 0}}/>
+                <span>{pr.name}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <h1 style={{fontFamily:"var(--font-display)", fontWeight: 300,
         fontSize:"clamp(38px, 6vw, 58px)", lineHeight:1.02, letterSpacing:"-1.5px", color:"#fff", margin:0}}>
@@ -196,15 +219,6 @@ const ClientDashboard = ({ navigate, session }) => {
   return (
     <div className="page">
       {hero}
-
-      {projects.length > 1 && (
-        <div style={{display:"flex", gap: 8, marginTop: 18, flexWrap:"wrap"}}>
-          {projects.map(pr => (
-            <button key={pr.id} className={"btn sm" + (pr.id === primary.id ? " primary" : " ghost")}
-              onClick={() => setSelId(pr.id)}>{pr.name}</button>
-          ))}
-        </div>
-      )}
 
       {pending.length > 0 && (
         <div className="card" style={{marginTop: 22, borderColor:"var(--amber)", background:"var(--amber-soft)"}}>
