@@ -98,14 +98,16 @@ const _planOf = (p) => {
   const groups = names.map(name => mk(name, tasks.filter(t => (t.phase || null) === name)));
   const otras = tasks.filter(t => !names.includes(t.phase || null));
   if (otras.length) groups.push(mk("Otras tareas", otras));
-  // Progreso del proyecto = fases completadas / total de fases.
   const totalPhases = groups.length;
   const donePhases = groups.filter(g => g.complete).length;
-  const pct = totalPhases ? Math.round(donePhases / totalPhases * 100) : (p.progress || 0);
   const activeIdx = (() => { const i = groups.findIndex(g => !g.complete); return i === -1 ? groups.length - 1 : i; })();
   const active = groups[activeIdx] || null;
   const total = tasks.length;
   const done = tasks.filter(t => t.column === "done").length;
+  // Progreso del proyecto = tareas completadas / total (se mueve al hacer cada
+  // tarea). Si aún no hay tareas, cae a fases completas o al progreso manual.
+  const pct = total ? Math.round(done / total * 100)
+            : (totalPhases ? Math.round(donePhases / totalPhases * 100) : (p.progress || 0));
   return { names, groups, total, done, pct, active, activeIdx, donePhases, totalPhases };
 };
 

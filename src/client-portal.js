@@ -65,7 +65,6 @@ const _planOf = (p) => {
   if (otras.length) groups.push(mk("Otras tareas", otras));
   const totalPhases = groups.length;
   const donePhases = groups.filter((g) => g.complete).length;
-  const pct = totalPhases ? Math.round(donePhases / totalPhases * 100) : p.progress || 0;
   const activeIdx = (() => {
     const i = groups.findIndex((g) => !g.complete);
     return i === -1 ? groups.length - 1 : i;
@@ -73,6 +72,7 @@ const _planOf = (p) => {
   const active = groups[activeIdx] || null;
   const total = tasks.length;
   const done = tasks.filter((t) => t.column === "done").length;
+  const pct = total ? Math.round(done / total * 100) : totalPhases ? Math.round(donePhases / totalPhases * 100) : p.progress || 0;
   return { names, groups, total, done, pct, active, activeIdx, donePhases, totalPhases };
 };
 const HERO_BG = "";
