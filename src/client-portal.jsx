@@ -356,7 +356,6 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
   const projects = S.projects;
   const p = (projectId && projects.find(x => x.id === projectId)) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
-  const [figmaOpen, setFigmaOpen] = useState(false);
   const [figmaFull, setFigmaFull] = useState(false);
   React.useEffect(() => {
     if (!figmaFull) return;
@@ -386,6 +385,14 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
 
   const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:10 };
 
+  // Fase donde mostrar el acceso al diseño de Figma: la que hable de diseño/figma,
+  // o si no, la fase activa (fallback: la primera).
+  let figmaGroupIdx = -1;
+  if (p.figmaUrl && plan.groups.length) {
+    figmaGroupIdx = plan.groups.findIndex(g => /dise[ñn]|figma/i.test(g.name || ""));
+    if (figmaGroupIdx < 0) figmaGroupIdx = plan.activeIdx >= 0 ? plan.activeIdx : 0;
+  }
+
   return (
     <div className="page">
       {projects.length > 1 && (
@@ -407,40 +414,6 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
           Aquí ves las fases del proyecto en detalle: qué ocurre en cada una, en cuál estás ahora y los hitos que ha definido tu equipo.
         </div>
       </div>
-
-      {/* Diseño (Figma) — barra fina plegable; se abre a pantalla completa */}
-      {p.figmaUrl && (
-        <div style={{marginBottom:24, borderRadius:14, overflow:"hidden", border:"0.5px solid var(--border)", background:"var(--bg-elev-2)"}}>
-          <button onClick={() => setFigmaOpen(o => !o)}
-            style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
-              padding:"13px 16px", background:"transparent", border:0, cursor:"pointer", textAlign:"left", color:"inherit"}}>
-            <div style={{display:"flex", alignItems:"center", gap:11, minWidth:0}}>
-              <SiIcon name="figma" size={16} style={{color:"#F24E1E", flexShrink:0}}/>
-              <div style={{fontFamily:"var(--font-display)", fontSize:15.5, fontWeight:500}}>Diseño en Figma</div>
-              <span className="muted xsmall" style={{marginLeft:2}}>Prototipo · navega y haz zoom</span>
-            </div>
-            <span style={{display:"flex", alignItems:"center", gap:8, flexShrink:0, color:"var(--text-muted)", fontSize:12.5}}>
-              {figmaOpen ? "Ocultar" : "Ver diseño"}
-              <Icon name="chevron-down" size={14} style={{transform: figmaOpen ? "rotate(180deg)" : "none", transition:"transform .2s"}}/>
-            </span>
-          </button>
-          {figmaOpen && (
-            <div style={{borderTop:"0.5px solid var(--border)"}}>
-              <div style={{display:"flex", alignItems:"center", justifyContent:"flex-end", gap:8, padding:"8px 12px"}}>
-                <button className="btn ghost sm" onClick={() => setFigmaFull(true)} style={{display:"inline-flex", alignItems:"center", gap:6}}>
-                  <Icon name="maximize" size={13}/> Pantalla completa
-                </button>
-                <a className="btn ghost sm" href={p.figmaUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6}}>
-                  Abrir en Figma <Icon name="arrow-up-right" size={12}/>
-                </a>
-              </div>
-              <iframe title="Diseño en Figma" src={figmaSrc}
-                style={{width:"100%", height:"clamp(360px, 52vh, 560px)", border:0, display:"block", background:"#1e1e1e"}}
-                allowFullScreen/>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Modal pantalla completa del diseño */}
       {figmaFull && p.figmaUrl && ReactDOM.createPortal(
@@ -499,6 +472,24 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
                     {isComplete ? "Completada" : isActive ? "En curso" : "Pendiente"}
                   </span>
                 </div>
+
+                {i === figmaGroupIdx && (
+                  <button onClick={() => setFigmaFull(true)}
+                    style={{marginTop:16, width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
+                      padding:"13px 15px", borderRadius:12, cursor:"pointer", textAlign:"left",
+                      border:"0.5px solid var(--border-strong)", background:"var(--bg-elev-1)", color:"inherit"}}>
+                    <span style={{display:"flex", alignItems:"center", gap:11, minWidth:0}}>
+                      <SiIcon name="figma" size={17} style={{color:"#F24E1E", flexShrink:0}}/>
+                      <span style={{minWidth:0}}>
+                        <span style={{display:"block", fontSize:14, fontWeight:500}}>Ver el diseño en Figma</span>
+                        <span className="muted xsmall">Prototipo interactivo · navega y haz zoom</span>
+                      </span>
+                    </span>
+                    <span style={{display:"inline-flex", alignItems:"center", gap:6, flexShrink:0, color:"var(--text-muted)", fontSize:12.5}}>
+                      Abrir <Icon name="maximize" size={14}/>
+                    </span>
+                  </button>
+                )}
 
                 {g.tasks.length > 0 && (
                   <div style={{marginTop:18}}>
