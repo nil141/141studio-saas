@@ -12,6 +12,7 @@ const EditProjectModal = ({ project, onClose }) => {
   const [clientId, setClientId]   = useState(project.clientId || "");
   const [recurring, setRecurring] = useState(!!project.recurring);
   const [deadline, setDeadline]   = useState("");   // ISO nuevo; vacío = mantener el actual
+  const [figmaUrl, setFigmaUrl]   = useState(project.figmaUrl || "");
   const [pickClient, setPickClient] = useState(false);
 
   const clients = D.CLIENTS || [];
@@ -25,6 +26,7 @@ const EditProjectModal = ({ project, onClose }) => {
       clientId: clientId || null,
       clientName: cl ? (cl.company || cl.name || "—") : "Interno",
       recurring,
+      figmaUrl: figmaUrl.trim(),
     };
     if (recurring) changes.deadline = "";
     else if (deadline) changes.deadline = _pmIsoToShort(deadline);
@@ -46,6 +48,16 @@ const EditProjectModal = ({ project, onClose }) => {
         <div>
           <div className="label">Nombre del proyecto</div>
           <input className="input" value={name} onChange={e => setName(e.target.value)} autoFocus/>
+        </div>
+
+        {/* Enlace de Figma */}
+        <div>
+          <div className="label">Enlace de Figma (diseño)</div>
+          <input className="input" value={figmaUrl} onChange={e => setFigmaUrl(e.target.value)}
+            placeholder="https://www.figma.com/file/…"/>
+          <div className="muted xsmall" style={{ marginTop:5, lineHeight:1.5 }}>
+            En Figma: Share → «Anyone with the link» → Copy link. El cliente verá el diseño incrustado en «Estado del proyecto».
+          </div>
         </div>
 
         {/* Cliente (opcional) */}

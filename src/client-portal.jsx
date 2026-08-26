@@ -398,6 +398,26 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
         </div>
       </div>
 
+      {/* Diseño (Figma incrustado) — solo si el proyecto tiene enlace */}
+      {p.figmaUrl && (
+        <div style={{marginBottom:24, borderRadius:16, overflow:"hidden", border:"0.5px solid var(--border)", background:"var(--bg-elev-2)"}}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"14px 18px", borderBottom:"0.5px solid var(--border)"}}>
+            <div style={{display:"flex", alignItems:"center", gap:10, minWidth:0}}>
+              <SiIcon name="figma" size={16} style={{color:"#F24E1E"}}/>
+              <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500}}>Diseño</div>
+              <span className="muted xsmall" style={{marginLeft:4}}>Prototipo en Figma · puedes navegar y hacer zoom</span>
+            </div>
+            <a className="btn ghost sm" href={p.figmaUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none", flexShrink:0}}>
+              Abrir en Figma <Icon name="arrow-up-right" size={12}/>
+            </a>
+          </div>
+          <iframe title="Diseño en Figma"
+            src={"https://www.figma.com/embed?embed_host=141portal&url=" + encodeURIComponent(p.figmaUrl)}
+            style={{width:"100%", height:"clamp(420px, 60vh, 680px)", border:0, display:"block", background:"#1e1e1e"}}
+            allowFullScreen/>
+        </div>
+      )}
+
       {/* Dos columnas: fases + historial */}
       <div style={{display:"flex", gap:20, alignItems:"flex-start", flexWrap:"wrap"}}>
         <div style={{flex:"1 1 460px", minWidth:0, display:"flex", flexDirection:"column", gap:16}}>

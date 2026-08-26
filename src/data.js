@@ -176,8 +176,10 @@ const _mp = (r) => r && {
   recurring: r.recurring ?? false,
   phasesDone: _parseArr(r.phases_done),
   // fases marcadas como completadas
-  phasesDesc: _parseObj(r.phases_desc)
+  phasesDesc: _parseObj(r.phases_desc),
   // { nombreFase: "descripción corta" }
+  figmaUrl: r.figma_url || ""
+  // enlace de Figma (diseño)
 };
 const _TASK_NOTES_KEY = "task_notes_v1";
 let _taskNotesLocal = {};
@@ -840,6 +842,7 @@ const updateProject = (id, changes) => {
   if (changes.clientName !== void 0) dbChanges.client_name = changes.clientName || null;
   if (changes.phasesDone !== void 0) dbChanges.phases_done = JSON.stringify(changes.phasesDone || []);
   if (changes.phasesDesc !== void 0) dbChanges.phases_desc = JSON.stringify(changes.phasesDesc || {});
+  if (changes.figmaUrl !== void 0) dbChanges.figma_url = changes.figmaUrl || null;
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);
