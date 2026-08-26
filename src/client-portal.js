@@ -332,7 +332,8 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
   const secLabel = { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.07em", color: "var(--text-subtle)", marginBottom: 10 };
   let figmaGroupIdx = -1;
   if (p.figmaUrl && plan.groups.length) {
-    figmaGroupIdx = plan.groups.findIndex((g) => /dise[ñn]|figma/i.test(g.name || ""));
+    if (p.figmaPhase) figmaGroupIdx = plan.groups.findIndex((g) => g.name === p.figmaPhase);
+    if (figmaGroupIdx < 0) figmaGroupIdx = plan.groups.findIndex((g) => /dise[ñn]|figma/i.test(g.name || ""));
     if (figmaGroupIdx < 0) figmaGroupIdx = plan.activeIdx >= 0 ? plan.activeIdx : 0;
   }
   return /* @__PURE__ */ React.createElement("div", { className: "page" }, projects.length > 1 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" } }, projects.map((pr) => /* @__PURE__ */ React.createElement(

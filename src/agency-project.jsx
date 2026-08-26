@@ -13,7 +13,11 @@ const EditProjectModal = ({ project, onClose }) => {
   const [recurring, setRecurring] = useState(!!project.recurring);
   const [deadline, setDeadline]   = useState("");   // ISO nuevo; vacío = mantener el actual
   const [figmaUrl, setFigmaUrl]   = useState(project.figmaUrl || "");
+  const [figmaPhase, setFigmaPhase] = useState(project.figmaPhase || "");
   const [pickClient, setPickClient] = useState(false);
+
+  const phaseNames = (project.service || "").split(",").map(s => s.trim())
+    .filter(n => n && n !== "libre" && n !== "—");
 
   const clients = D.CLIENTS || [];
   const selClient = clientId ? clients.find(c => c.id === clientId) : null;
@@ -27,6 +31,7 @@ const EditProjectModal = ({ project, onClose }) => {
       clientName: cl ? (cl.company || cl.name || "—") : "Interno",
       recurring,
       figmaUrl: figmaUrl.trim(),
+      figmaPhase: figmaUrl.trim() ? figmaPhase : "",
     };
     if (recurring) changes.deadline = "";
     else if (deadline) changes.deadline = _pmIsoToShort(deadline);
@@ -59,6 +64,20 @@ const EditProjectModal = ({ project, onClose }) => {
             En Figma: Share → «Anyone with the link» → Copy link. El cliente verá el diseño incrustado en «Estado del proyecto».
           </div>
         </div>
+
+        {/* Fase donde mostrar el diseño — solo si hay enlace */}
+        {figmaUrl.trim() && (
+          <div>
+            <div className="label">Mostrar el diseño en la fase</div>
+            <select className="input" value={figmaPhase} onChange={e => setFigmaPhase(e.target.value)}>
+              <option value="">Automático (fase de diseño o la fase en curso)</option>
+              {phaseNames.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <div className="muted xsmall" style={{ marginTop:5, lineHeight:1.5 }}>
+              Elige en qué fase del proyecto aparece el botón «Ver el diseño en Figma» para el cliente.
+            </div>
+          </div>
+        )}
 
         {/* Cliente (opcional) */}
         <div style={{ position:"relative" }}>

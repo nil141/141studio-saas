@@ -1,11 +1,12 @@
 (() => {
-  const _PM_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  const _pmIsoToShort = (iso) => {
+  // src/agency-project.jsx
+  var _PM_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  var _pmIsoToShort = (iso) => {
     if (!iso) return "";
     const d = /* @__PURE__ */ new Date(iso + "T12:00:00");
     return isNaN(d) ? "" : `${d.getDate()} ${_PM_MESES[d.getMonth()]}`;
   };
-  const EditProjectModal = ({ project, onClose }) => {
+  var EditProjectModal = ({ project, onClose }) => {
     const D = window.Data;
     const toast = useToast();
     const [name, setName] = useState(project.name || "");
@@ -13,7 +14,9 @@
     const [recurring, setRecurring] = useState(!!project.recurring);
     const [deadline, setDeadline] = useState("");
     const [figmaUrl, setFigmaUrl] = useState(project.figmaUrl || "");
+    const [figmaPhase, setFigmaPhase] = useState(project.figmaPhase || "");
     const [pickClient, setPickClient] = useState(false);
+    const phaseNames = (project.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");
     const clients = D.CLIENTS || [];
     const selClient = clientId ? clients.find((c) => c.id === clientId) : null;
     const save = () => {
@@ -27,7 +30,8 @@
         clientId: clientId || null,
         clientName: cl ? cl.company || cl.name || "\u2014" : "Interno",
         recurring,
-        figmaUrl: figmaUrl.trim()
+        figmaUrl: figmaUrl.trim(),
+        figmaPhase: figmaUrl.trim() ? figmaPhase : ""
       };
       if (recurring) changes.deadline = "";
       else if (deadline) changes.deadline = _pmIsoToShort(deadline);
@@ -51,7 +55,7 @@
           onChange: (e) => setFigmaUrl(e.target.value),
           placeholder: "https://www.figma.com/file/\u2026"
         }
-      ), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 5, lineHeight: 1.5 } }, "En Figma: Share \u2192 \xABAnyone with the link\xBB \u2192 Copy link. El cliente ver\xE1 el dise\xF1o incrustado en \xABEstado del proyecto\xBB.")), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "(opcional)")), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setPickClient((s) => !s) }, /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left", color: selClient ? "var(--text)" : "var(--text-muted)" } }, selClient ? selClient.company || selClient.name : "Sin cliente \xB7 proyecto interno"), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })), pickClient && /* @__PURE__ */ React.createElement("div", { style: {
+      ), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 5, lineHeight: 1.5 } }, "En Figma: Share \u2192 \xABAnyone with the link\xBB \u2192 Copy link. El cliente ver\xE1 el dise\xF1o incrustado en \xABEstado del proyecto\xBB.")), figmaUrl.trim() && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Mostrar el dise\xF1o en la fase"), /* @__PURE__ */ React.createElement("select", { className: "input", value: figmaPhase, onChange: (e) => setFigmaPhase(e.target.value) }, /* @__PURE__ */ React.createElement("option", { value: "" }, "Autom\xE1tico (fase de dise\xF1o o la fase en curso)"), phaseNames.map((n) => /* @__PURE__ */ React.createElement("option", { key: n, value: n }, n))), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 5, lineHeight: 1.5 } }, "Elige en qu\xE9 fase del proyecto aparece el bot\xF3n \xABVer el dise\xF1o en Figma\xBB para el cliente.")), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Cliente ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "(opcional)")), /* @__PURE__ */ React.createElement("button", { className: "input row tight", style: { textAlign: "left", height: 38 }, onClick: () => setPickClient((s) => !s) }, /* @__PURE__ */ React.createElement("span", { className: "grow", style: { textAlign: "left", color: selClient ? "var(--text)" : "var(--text-muted)" } }, selClient ? selClient.company || selClient.name : "Sin cliente \xB7 proyecto interno"), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { transform: "rotate(90deg)" } })), pickClient && /* @__PURE__ */ React.createElement("div", { style: {
         marginTop: 6,
         background: "var(--bg-elev-2)",
         border: "0.5px solid var(--border-strong)",
@@ -105,8 +109,8 @@
       }))), !recurring && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: deadline, onChange: (e) => setDeadline(e.target.value) }), project.deadline && project.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 5 } }, "Actual: ", project.deadline, deadline ? "" : " \xB7 d\xE9jalo vac\xEDo para mantenerla")))
     );
   };
-  const _eurP = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const ProjectPayments = ({ project }) => {
+  var _eurP = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  var ProjectPayments = ({ project }) => {
     const D = window.Data;
     const toast = useToast();
     const payments = project.payments || [];
@@ -208,7 +212,7 @@
       color: p.paid ? "var(--accent)" : "var(--text)"
     } }, _eurP(p.amount))))));
   };
-  const AgencyProject = ({ projectId, navigate, openModal }) => {
+  var AgencyProject = ({ projectId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();

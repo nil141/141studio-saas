@@ -141,6 +141,7 @@ const _mp = r => r && ({
   phasesDone: _parseArr(r.phases_done),                // fases marcadas como completadas
   phasesDesc: _parseObj(r.phases_desc),                // { nombreFase: "descripción corta" }
   figmaUrl: r.figma_url || "",                         // enlace de Figma (diseño)
+  figmaPhase: r.figma_phase || "",                     // fase donde se muestra el diseño ("" = automático)
 });
 // Notas de tarea con respaldo local: la descripción se guarda también en el
 // navegador, para que no se pierda al recargar aunque la columna 'notes' aún
@@ -726,6 +727,7 @@ const updateProject = (id, changes) => {
   if (changes.phasesDone  !== undefined) dbChanges.phases_done = JSON.stringify(changes.phasesDone || []);
   if (changes.phasesDesc  !== undefined) dbChanges.phases_desc = JSON.stringify(changes.phasesDesc || {});
   if (changes.figmaUrl    !== undefined) dbChanges.figma_url   = changes.figmaUrl || null;
+  if (changes.figmaPhase  !== undefined) dbChanges.figma_phase = changes.figmaPhase || null;
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);

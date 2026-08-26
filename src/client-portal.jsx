@@ -389,7 +389,10 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
   // o si no, la fase activa (fallback: la primera).
   let figmaGroupIdx = -1;
   if (p.figmaUrl && plan.groups.length) {
-    figmaGroupIdx = plan.groups.findIndex(g => /dise[ñn]|figma/i.test(g.name || ""));
+    // 1) Fase elegida a mano por la agencia.
+    if (p.figmaPhase) figmaGroupIdx = plan.groups.findIndex(g => g.name === p.figmaPhase);
+    // 2) Fallback: fase que hable de diseño/figma, o la fase en curso.
+    if (figmaGroupIdx < 0) figmaGroupIdx = plan.groups.findIndex(g => /dise[ñn]|figma/i.test(g.name || ""));
     if (figmaGroupIdx < 0) figmaGroupIdx = plan.activeIdx >= 0 ? plan.activeIdx : 0;
   }
 
