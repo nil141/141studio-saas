@@ -92,12 +92,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
       } else if (clientId) {
         const client = D.CLIENTS.find((c) => c.id === clientId);
-        const proj = D.PROJECTS.find((p) => p.clientId === clientId);
-        if (proj) {
-          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
-        } else {
-          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: (client == null ? void 0 : client.company) || (client == null ? void 0 : client.name) || "", deadline, time: time || null, frequency: freq, notes: desc || null });
-        }
+        D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time || null, frequency: freq, notes: desc || null });
       } else {
         D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
       }
@@ -106,7 +101,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       const prev = (() => {
         try {
           return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
-        } catch (e) {
+        } catch {
           return [];
         }
       })();
@@ -376,32 +371,29 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         }
       ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "Meet, Zoom, Teams\u2026 el enlace de la reuni\xF3n"))),
       /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => {
-        var _a;
-        return /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "8px 16px",
-          borderRadius: 99,
-          background: activeTab === tab.id ? accentHex + "22" : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
-          border: activeTab === tab.id ? `0.5px solid ${accentHex}55` : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
-          color: activeTab === tab.id ? accentHex : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
-          fontSize: 13,
-          letterSpacing: "-0.5px",
-          cursor: "pointer",
-          fontFamily: "var(--font-sans)",
-          transition: "all .12s"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "project" && curProject && /* @__PURE__ */ React.createElement("span", { style: {
-          fontSize: 10,
-          color: accentHex,
-          marginLeft: 2,
-          maxWidth: 90,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap"
-        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, (_a = FREQ_OPTS.find((f) => f.id === freq)) == null ? void 0 : _a.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && link.trim() && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)));
-      }))
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "8px 16px",
+        borderRadius: 99,
+        background: activeTab === tab.id ? accentHex + "22" : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+        border: activeTab === tab.id ? `0.5px solid ${accentHex}55` : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
+        color: activeTab === tab.id ? accentHex : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
+        fontSize: 13,
+        letterSpacing: "-0.5px",
+        cursor: "pointer",
+        fontFamily: "var(--font-sans)",
+        transition: "all .12s"
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "project" && curProject && /* @__PURE__ */ React.createElement("span", { style: {
+        fontSize: 10,
+        color: accentHex,
+        marginLeft: 2,
+        maxWidth: 90,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
+      } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, FREQ_OPTS.find((f) => f.id === freq)?.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && link.trim() && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)))))
     )
   ), pickerFor && /* @__PURE__ */ React.createElement(
     TimePicker,

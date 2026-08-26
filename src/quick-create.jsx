@@ -86,13 +86,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         // Proyecto elegido explícitamente → la tarea va a ese proyecto
         D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
       } else if (clientId) {
+        // Cliente pero SIN proyecto elegido → tarea interna de la agencia,
+        // ligada al cliente pero a ningún proyecto (el cliente NO la ve en su portal).
         const client = D.CLIENTS.find(c => c.id === clientId);
-        const proj   = D.PROJECTS.find(p => p.clientId === clientId);
-        if (proj) {
-          D.addTask({ projectId: proj.id, title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
-        } else {
-          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time||null, frequency: freq, notes: desc||null });
-        }
+        D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time||null, frequency: freq, notes: desc||null });
       } else {
         D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
       }
