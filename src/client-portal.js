@@ -303,6 +303,22 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
   const projects = S.projects;
   const p = projectId && projects.find((x) => x.id === projectId) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
+  const [figmaOpen, setFigmaOpen] = useState(false);
+  const [figmaFull, setFigmaFull] = useState(false);
+  React.useEffect(() => {
+    if (!figmaFull) return;
+    const onKey = (e) => {
+      if (e.key === "Escape") setFigmaFull(false);
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [figmaFull]);
+  const figmaSrc = p && p.figmaUrl ? "https://www.figma.com/embed?embed_host=141portal&url=" + encodeURIComponent(p.figmaUrl) : "";
   if (!p) return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "El avance de tu proyecto aparecer\xE1 aqu\xED."))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", minHeight: "40vh" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "folder", title: "Sin proyecto", sub: "Cuando tu agencia cree un proyecto podr\xE1s seguir su avance aqu\xED." })), /* @__PURE__ */ React.createElement(WhatsAppFloat, null));
   const plan = _planOf(p);
   const deliverables = S.deliverables.filter((d) => d.projectId === p.id);
@@ -323,15 +339,46 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
       onClick: () => navigate("client-status", { projectId: pr.id })
     },
     pr.name
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Proyecto", p.name ? " \xB7 " + p.name : ""), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, maxWidth: 640, color: "var(--text-muted)" } }, "Aqu\xED ves las fases del proyecto en detalle: qu\xE9 ocurre en cada una, en cu\xE1l est\xE1s ahora y los hitos que ha definido tu equipo.")), p.figmaUrl && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24, borderRadius: 16, overflow: "hidden", border: "0.5px solid var(--border)", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "14px 18px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, minWidth: 0 } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "figma", size: 16, style: { color: "#F24E1E" } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500 } }, "Dise\xF1o"), /* @__PURE__ */ React.createElement("span", { className: "muted xsmall", style: { marginLeft: 4 } }, "Prototipo en Figma \xB7 puedes navegar y hacer zoom")), /* @__PURE__ */ React.createElement("a", { className: "btn ghost sm", href: p.figmaUrl, target: "_blank", rel: "noreferrer", style: { textDecoration: "none", flexShrink: 0 } }, "Abrir en Figma ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 12 }))), /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8 } }, "Proyecto", p.name ? " \xB7 " + p.name : ""), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 400, fontSize: "clamp(26px,3.5vw,34px)", letterSpacing: "-1px" } }, "Estado del proyecto"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, maxWidth: 640, color: "var(--text-muted)" } }, "Aqu\xED ves las fases del proyecto en detalle: qu\xE9 ocurre en cada una, en cu\xE1l est\xE1s ahora y los hitos que ha definido tu equipo.")), p.figmaUrl && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24, borderRadius: 14, overflow: "hidden", border: "0.5px solid var(--border)", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => setFigmaOpen((o) => !o),
+      style: {
+        width: "100%",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 12,
+        padding: "13px 16px",
+        background: "transparent",
+        border: 0,
+        cursor: "pointer",
+        textAlign: "left",
+        color: "inherit"
+      }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "figma", size: 16, style: { color: "#F24E1E", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 15.5, fontWeight: 500 } }, "Dise\xF1o en Figma"), /* @__PURE__ */ React.createElement("span", { className: "muted xsmall", style: { marginLeft: 2 } }, "Prototipo \xB7 navega y haz zoom")),
+    /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8, flexShrink: 0, color: "var(--text-muted)", fontSize: 12.5 } }, figmaOpen ? "Ocultar" : "Ver dise\xF1o", /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 14, style: { transform: figmaOpen ? "rotate(180deg)" : "none", transition: "transform .2s" } }))
+  ), figmaOpen && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, padding: "8px 12px" } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setFigmaFull(true), style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "maximize", size: 13 }), " Pantalla completa"), /* @__PURE__ */ React.createElement("a", { className: "btn ghost sm", href: p.figmaUrl, target: "_blank", rel: "noreferrer", style: { textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 } }, "Abrir en Figma ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 12 }))), /* @__PURE__ */ React.createElement(
     "iframe",
     {
       title: "Dise\xF1o en Figma",
-      src: "https://www.figma.com/embed?embed_host=141portal&url=" + encodeURIComponent(p.figmaUrl),
-      style: { width: "100%", height: "clamp(420px, 60vh, 680px)", border: 0, display: "block", background: "#1e1e1e" },
+      src: figmaSrc,
+      style: { width: "100%", height: "clamp(360px, 52vh, 560px)", border: 0, display: "block", background: "#1e1e1e" },
       allowFullScreen: true
     }
-  )), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 460px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 } }, plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases. Vuelve pronto." }) : plan.groups.map((g, i) => {
+  ))), figmaFull && p.figmaUrl && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", inset: 0, zIndex: 9999, background: "rgba(6,6,8,0.94)", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "12px 18px", borderBottom: "0.5px solid rgba(255,255,255,0.1)" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, minWidth: 0, color: "#fff" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "figma", size: 16, style: { color: "#F24E1E" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500 } }, "Dise\xF1o", p.name ? " \xB7 " + p.name : "")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("a", { className: "btn ghost sm", href: p.figmaUrl, target: "_blank", rel: "noreferrer", style: { textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6 } }, "Abrir en Figma ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setFigmaFull(false), style: { display: "inline-flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 14 }), " Cerrar"))), /* @__PURE__ */ React.createElement(
+      "iframe",
+      {
+        title: "Dise\xF1o en Figma (pantalla completa)",
+        src: figmaSrc,
+        style: { flex: 1, width: "100%", border: 0, display: "block", background: "#1e1e1e" },
+        allowFullScreen: true
+      }
+    )),
+    document.body
+  ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 20, alignItems: "flex-start", flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: "1 1 460px", minWidth: 0, display: "flex", flexDirection: "column", gap: 16 } }, plan.groups.length === 0 ? /* @__PURE__ */ React.createElement(Empty, { icon: "list-todo", title: "Plan en preparaci\xF3n", sub: "Tu agencia est\xE1 organizando el proyecto en fases. Vuelve pronto." }) : plan.groups.map((g, i) => {
     const isComplete = g.complete;
     const isActive = i === plan.activeIdx && !isComplete;
     const nChip = {

@@ -356,6 +356,16 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
   const projects = S.projects;
   const p = (projectId && projects.find(x => x.id === projectId)) || projects[0];
   const [tab, setTab] = useState(initialTab || "plan");
+  const [figmaOpen, setFigmaOpen] = useState(false);
+  const [figmaFull, setFigmaFull] = useState(false);
+  React.useEffect(() => {
+    if (!figmaFull) return;
+    const onKey = (e) => { if (e.key === "Escape") setFigmaFull(false); };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow; document.body.style.overflow = "hidden";
+    return () => { window.removeEventListener("keydown", onKey); document.body.style.overflow = prev; };
+  }, [figmaFull]);
+  const figmaSrc = p && p.figmaUrl ? "https://www.figma.com/embed?embed_host=141portal&url=" + encodeURIComponent(p.figmaUrl) : "";
   if (!p) return (
     <div className="page">
       <div className="page-head"><div><h1>Estado del proyecto</h1><div className="sub">El avance de tu proyecto aparecerá aquí.</div></div></div>
@@ -398,25 +408,60 @@ const ClientStatus = ({ navigate, openModal, projectId, initialTab, session }) =
         </div>
       </div>
 
-      {/* Diseño (Figma incrustado) — solo si el proyecto tiene enlace */}
+      {/* Diseño (Figma) — barra fina plegable; se abre a pantalla completa */}
       {p.figmaUrl && (
-        <div style={{marginBottom:24, borderRadius:16, overflow:"hidden", border:"0.5px solid var(--border)", background:"var(--bg-elev-2)"}}>
-          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"14px 18px", borderBottom:"0.5px solid var(--border)"}}>
-            <div style={{display:"flex", alignItems:"center", gap:10, minWidth:0}}>
-              <SiIcon name="figma" size={16} style={{color:"#F24E1E"}}/>
-              <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500}}>Diseño</div>
-              <span className="muted xsmall" style={{marginLeft:4}}>Prototipo en Figma · puedes navegar y hacer zoom</span>
+        <div style={{marginBottom:24, borderRadius:14, overflow:"hidden", border:"0.5px solid var(--border)", background:"var(--bg-elev-2)"}}>
+          <button onClick={() => setFigmaOpen(o => !o)}
+            style={{width:"100%", display:"flex", alignItems:"center", justifyContent:"space-between", gap:12,
+              padding:"13px 16px", background:"transparent", border:0, cursor:"pointer", textAlign:"left", color:"inherit"}}>
+            <div style={{display:"flex", alignItems:"center", gap:11, minWidth:0}}>
+              <SiIcon name="figma" size={16} style={{color:"#F24E1E", flexShrink:0}}/>
+              <div style={{fontFamily:"var(--font-display)", fontSize:15.5, fontWeight:500}}>Diseño en Figma</div>
+              <span className="muted xsmall" style={{marginLeft:2}}>Prototipo · navega y haz zoom</span>
             </div>
-            <a className="btn ghost sm" href={p.figmaUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none", flexShrink:0}}>
-              Abrir en Figma <Icon name="arrow-up-right" size={12}/>
-            </a>
-          </div>
-          <iframe title="Diseño en Figma"
-            src={"https://www.figma.com/embed?embed_host=141portal&url=" + encodeURIComponent(p.figmaUrl)}
-            style={{width:"100%", height:"clamp(420px, 60vh, 680px)", border:0, display:"block", background:"#1e1e1e"}}
-            allowFullScreen/>
+            <span style={{display:"flex", alignItems:"center", gap:8, flexShrink:0, color:"var(--text-muted)", fontSize:12.5}}>
+              {figmaOpen ? "Ocultar" : "Ver diseño"}
+              <Icon name="chevron-down" size={14} style={{transform: figmaOpen ? "rotate(180deg)" : "none", transition:"transform .2s"}}/>
+            </span>
+          </button>
+          {figmaOpen && (
+            <div style={{borderTop:"0.5px solid var(--border)"}}>
+              <div style={{display:"flex", alignItems:"center", justifyContent:"flex-end", gap:8, padding:"8px 12px"}}>
+                <button className="btn ghost sm" onClick={() => setFigmaFull(true)} style={{display:"inline-flex", alignItems:"center", gap:6}}>
+                  <Icon name="maximize" size={13}/> Pantalla completa
+                </button>
+                <a className="btn ghost sm" href={p.figmaUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6}}>
+                  Abrir en Figma <Icon name="arrow-up-right" size={12}/>
+                </a>
+              </div>
+              <iframe title="Diseño en Figma" src={figmaSrc}
+                style={{width:"100%", height:"clamp(360px, 52vh, 560px)", border:0, display:"block", background:"#1e1e1e"}}
+                allowFullScreen/>
+            </div>
+          )}
         </div>
       )}
+
+      {/* Modal pantalla completa del diseño */}
+      {figmaFull && p.figmaUrl && ReactDOM.createPortal(
+        <div style={{position:"fixed", inset:0, zIndex:9999, background:"rgba(6,6,8,0.94)", display:"flex", flexDirection:"column"}}>
+          <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"12px 18px", borderBottom:"0.5px solid rgba(255,255,255,0.1)"}}>
+            <div style={{display:"flex", alignItems:"center", gap:10, minWidth:0, color:"#fff"}}>
+              <SiIcon name="figma" size={16} style={{color:"#F24E1E"}}/>
+              <span style={{fontFamily:"var(--font-display)", fontSize:15, fontWeight:500}}>Diseño{p.name ? " · " + p.name : ""}</span>
+            </div>
+            <div style={{display:"flex", alignItems:"center", gap:8}}>
+              <a className="btn ghost sm" href={p.figmaUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none", display:"inline-flex", alignItems:"center", gap:6}}>
+                Abrir en Figma <Icon name="arrow-up-right" size={12}/>
+              </a>
+              <button className="btn ghost sm" onClick={() => setFigmaFull(false)} style={{display:"inline-flex", alignItems:"center", gap:6}}>
+                <Icon name="x" size={14}/> Cerrar
+              </button>
+            </div>
+          </div>
+          <iframe title="Diseño en Figma (pantalla completa)" src={figmaSrc}
+            style={{flex:1, width:"100%", border:0, display:"block", background:"#1e1e1e"}} allowFullScreen/>
+        </div>, document.body)}
 
       {/* Dos columnas: fases + historial */}
       <div style={{display:"flex", gap:20, alignItems:"flex-start", flexWrap:"wrap"}}>
