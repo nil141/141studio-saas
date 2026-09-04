@@ -1472,7 +1472,7 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-Type", "text/calendar; charset=utf-8")
         self.send_header("Content-Disposition", 'inline; filename="141digital.ics"')
-        self.send_header("Cache-Control", "max-age=900")
+        self.send_header("Cache-Control", "no-cache, max-age=60")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()
         self.wfile.write(body)
