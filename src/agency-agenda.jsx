@@ -28,10 +28,6 @@ const EVENT_COLORS = {
   meeting: { bg:"rgba(220,91,93,0.14)",  text:"#e07678",  dot:"#dc5b5d" },
 };
 
-const CUSTOM_KEY = "agenda_custom_events";
-const loadCustom = () => { try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch{ return []; }};
-const saveCustom = evts => localStorage.setItem(CUSTOM_KEY, JSON.stringify(evts));
-
 const VIEW_KEY = "agenda_view";
 const loadView = () => { try { return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month"; } catch{ return "month"; }};
 
@@ -62,10 +58,11 @@ const AgendaPage = ({ navigate }) => {
   const [selected, setSelected] = useState(today);
   const [viewMode, setViewMode] = useState(loadView); // "month" | "week"
   const [panelOpen, setPanelOpen] = useState(true);   // detalle del día (siempre visible)
-  const [customEvents, setCustomEvents] = useState(loadCustom);
+  const customEvents = D.AGENDA_EVENTS || [];
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"", link:"" });
   const [pickerFor, setPickerFor] = useState(null); // null | "start" | "end"
+  const [calOpen, setCalOpen] = useState(false);
 
   // ── build event list from all sources ──────────────────────────────────────
   // NOTE: las tareas NO se listan como eventos sueltos (ensucia la agenda).
@@ -209,30 +206,23 @@ const AgendaPage = ({ navigate }) => {
   // ── add custom event ───────────────────────────────────────────────────────
   const addEvent = () => {
     if (!form.title.trim() || !form.date) return;
-    const evt = {
-      id: "custom-" + Date.now(),
-      date: form.date,
+    const date = form.date;
+    D.addAgendaEvent({
+      date,
       title: form.title.trim(),
-      sub: form.notes || "",
+      notes: form.notes || "",
       time: form.time || null,
       timeEnd: form.timeEnd || null,
       link: (form.link || "").trim() || null,
       type: form.type,
-    };
-    const updated = [...customEvents, evt];
-    setCustomEvents(updated);
-    saveCustom(updated);
+    });
     setShowForm(false);
     setPickerFor(null);
     setForm({ title:"", date: today, type:"custom", time:"", timeEnd:"", notes:"", link:"" });
-    setSelected(evt.date);
+    setSelected(date);
   };
 
-  const deleteCustom = (id) => {
-    const updated = customEvents.filter(e => e.id !== id);
-    setCustomEvents(updated);
-    saveCustom(updated);
-  };
+  const deleteCustom = (id) => { D.deleteAgendaEvent(id); };
 
   const numWeeks = Math.ceil(cells.length / 7);
   const isCurrentPeriod = viewMode === "week"
@@ -347,6 +337,10 @@ const AgendaPage = ({ navigate }) => {
           </div>
         </div>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
+          <button className="btn ghost sm" onClick={() => setCalOpen(true)}
+            style={{display:"inline-flex", alignItems:"center", gap:7}} data-tooltip="Conectar con Apple Calendar">
+            <Icon name="link" size={14}/> Conectar calendario
+          </button>
           <div className="seg">
             <button className={viewMode==="month"?"active":""} onClick={()=>setView("month")}>Mes</button>
             <button className={viewMode==="week"?"active":""} onClick={()=>setView("week")}>Semana</button>
@@ -814,6 +808,93 @@ const AgendaPage = ({ navigate }) => {
         )}
         </>
       )}
+
+      <CalendarConnect open={calOpen} onClose={() => setCalOpen(false)}/>
+    </div>
+  );
+};
+
+// ── Conectar con Apple Calendar (suscripción .ics) ──────────────────────────
+const CalendarConnect = ({ open, onClose }) => {
+  const [info, setInfo] = useState(null);
+  const [err, setErr]   = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setInfo(null); setErr(false); setCopied(false);
+    window.Data.calendarSubscribeUrl()
+      .then(r => { r ? setInfo(r) : setErr(true); })
+      .catch(() => setErr(true));
+  }, [open]);
+
+  if (!open) return null;
+
+  const copy = () => {
+    if (!info) return;
+    try { navigator.clipboard.writeText(info.httpUrl); } catch {}
+    setCopied(true); setTimeout(() => setCopied(false), 1600);
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position:"fixed", inset:0, background:"rgba(0,0,0,0.7)", backdropFilter:"blur(12px)",
+      zIndex:120, display:"flex", alignItems:"center", justifyContent:"center", padding:24,
+      animation:"fade .15s ease-out",
+    }}>
+      <div onClick={e => e.stopPropagation()} style={{
+        width:"100%", maxWidth:460, background:"#0f0f0f",
+        border:"0.5px solid rgba(255,255,255,0.1)", borderRadius:24, overflow:"hidden",
+        animation:"pop .2s cubic-bezier(.2,.8,.2,1)",
+      }}>
+        <div style={{padding:"22px 22px 6px", display:"flex", alignItems:"flex-start", justifyContent:"space-between", gap:12}}>
+          <div>
+            <div style={{fontFamily:"var(--font-display)", fontSize:18, fontWeight:500, letterSpacing:"-0.5px"}}>Conectar con tu calendario</div>
+            <div className="muted" style={{fontSize:13, marginTop:6, lineHeight:1.5, maxWidth:360}}>
+              Suscríbete una vez y tus eventos, entregas de proyectos y facturas aparecerán en Apple Calendar (o Google Calendar) y se actualizarán solos.
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            width:34, height:34, borderRadius:"50%", flexShrink:0, cursor:"pointer",
+            background:"rgba(255,255,255,0.07)", border:"0.5px solid rgba(255,255,255,0.1)",
+            color:"var(--text-muted)", display:"flex", alignItems:"center", justifyContent:"center",
+          }}><Icon name="x" size={15}/></button>
+        </div>
+
+        <div style={{padding:"14px 22px 22px"}}>
+          {err && (
+            <div style={{padding:"14px 16px", borderRadius:12, border:"0.5px solid var(--red-soft)", background:"var(--red-soft)", color:"var(--red)", fontSize:13, lineHeight:1.5}}>
+              No se pudo generar el enlace. Asegúrate de haber ejecutado la SQL de agenda en Supabase e inténtalo de nuevo.
+            </div>
+          )}
+          {!err && !info && (
+            <div className="muted" style={{fontSize:13, padding:"10px 0"}}>Generando tu enlace…</div>
+          )}
+          {!err && info && (
+            <>
+              <a href={info.webcalUrl} className="btn primary" style={{width:"100%", justifyContent:"center", display:"inline-flex", alignItems:"center", gap:8, textDecoration:"none"}}>
+                <Icon name="calendar" size={15}/> Añadir a Apple Calendar
+              </a>
+              <div className="muted xsmall" style={{textAlign:"center", margin:"10px 0 14px"}}>
+                Se abrirá el Calendario de tu Mac/iPhone para confirmar la suscripción.
+              </div>
+
+              <div className="label" style={{marginBottom:6}}>O copia el enlace (Google Calendar, Outlook…)</div>
+              <div style={{display:"flex", gap:8}}>
+                <input readOnly value={info.httpUrl} onFocus={e => e.target.select()}
+                  className="input" style={{flex:1, fontSize:12, fontFamily:"var(--font-mono)"}}/>
+                <button className="btn ghost" onClick={copy} style={{flexShrink:0}}>
+                  {copied ? "¡Copiado!" : "Copiar"}
+                </button>
+              </div>
+              <div className="muted xsmall" style={{marginTop:14, lineHeight:1.6}}>
+                <b>En Google Calendar:</b> Otros calendarios → «+» → Desde URL → pega el enlace.<br/>
+                Es de solo lectura: lo que crees en la app aparece en tu calendario, pero no al revés.
+              </div>
+            </>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

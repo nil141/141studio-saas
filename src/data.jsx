@@ -86,6 +86,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
+  AGENDA_EVENTS: [],
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
   _subs: new Set(),
@@ -142,6 +143,12 @@ const _mp = r => r && ({
   phasesDesc: _parseObj(r.phases_desc),                // { nombreFase: "descripción corta" }
   figmaUrl: r.figma_url || "",                         // enlace de Figma (diseño)
   figmaPhase: r.figma_phase || "",                     // fase donde se muestra el diseño ("" = automático)
+});
+// Evento de agenda (mismo shape que usa la vista de agenda)
+const _mae = (r) => ({
+  id: r.id, date: r.date, title: r.title,
+  sub: r.notes || "", time: r.time || null, timeEnd: r.time_end || null,
+  link: r.link || null, type: r.type || "custom",
 });
 // Notas de tarea con respaldo local: la descripción se guarda también en el
 // navegador, para que no se pierda al recargar aunque la columna 'notes' aún
@@ -333,6 +340,8 @@ const _loadAll = async () => {
     ]);
     const ct = await _sb.from("client_tasks").select("*").eq("agency_id", uid).order("sort", { ascending: true });
     const nt = await _sb.from("notifications").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
+    let ae = { data: [] };
+    try { ae = await _sb.from("agenda_events").select("*").eq("agency_id", uid).order("date", { ascending: true }); } catch {}
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
@@ -341,6 +350,7 @@ const _loadAll = async () => {
     _store.CREDENTIALS  = (cr.data || []).map(_mcr);
     _store.CLIENT_TASKS = (ct.data || []).map(_mct);
     _store.NOTIFICATIONS = (nt.data || []).map(_mn);
+    _store.AGENDA_EVENTS = ((ae && ae.data) || []).map(_mae);
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -370,6 +380,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "credentials",  filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "notifications",filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -1497,6 +1508,69 @@ const apiFetch = async (path, body = {}) => {
 };
 window.apiFetch = apiFetch;
 
+// ── Agenda: eventos en la nube + suscripción de calendario (.ics) ──────
+const addAgendaEvent = async (input) => {
+  const uid = _store._user?.id;
+  if (!uid) return { error: "no-auth" };
+  if (!input.title || !input.date) return { error: "faltan datos" };
+  const id = "custom-" + Date.now();
+  const evt = {
+    id, date: input.date, title: input.title.trim(),
+    sub: input.notes || "", time: input.time || null, timeEnd: input.timeEnd || null,
+    link: (input.link || "").trim() || null, type: input.type || "custom",
+  };
+  _store.AGENDA_EVENTS = [...(_store.AGENDA_EVENTS || []), evt]; _emit();
+  const { error } = await _insertAdaptive("agenda_events", {
+    id, agency_id: uid, title: evt.title, date: evt.date,
+    time: evt.time, time_end: evt.timeEnd, type: evt.type, notes: evt.sub, link: evt.link,
+  });
+  if (error) {
+    _store.AGENDA_EVENTS = _store.AGENDA_EVENTS.filter(e => e.id !== id); _emit();
+    return { error: error.message || "Error al guardar el evento" };
+  }
+  return { event: evt };
+};
+
+const deleteAgendaEvent = async (id) => {
+  const uid = _store._user?.id;
+  if (!uid) return;
+  const prev = _store.AGENDA_EVENTS || [];
+  _store.AGENDA_EVENTS = prev.filter(e => e.id !== id); _emit();
+  const { error } = await _sb.from("agenda_events").delete().eq("id", id).eq("agency_id", uid);
+  if (error) { _store.AGENDA_EVENTS = prev; _emit(); }
+};
+
+const _randToken = () => {
+  const a = new Uint8Array(24);
+  (window.crypto || {}).getRandomValues?.(a);
+  return Array.from(a, b => b.toString(16).padStart(2, "0")).join("");
+};
+
+// Devuelve la URL de suscripción del calendario, creando el token si no existe.
+const calendarSubscribeUrl = async () => {
+  const uid = _store._user?.id;
+  if (!uid) return null;
+  let token = null;
+  try {
+    const { data } = await _sb.from("agencies").select("calendar_token").eq("id", uid).maybeSingle();
+    token = data?.calendar_token || null;
+  } catch {}
+  if (!token) {
+    token = _randToken();
+    try {
+      const { error } = await _sb.from("agencies").update({ calendar_token: token }).eq("id", uid);
+      if (error) return null;
+    } catch { return null; }
+  }
+  const host = window.location.host;
+  const origin = window.location.origin;
+  return {
+    token,
+    httpUrl: `${origin}/api/calendar/${token}.ics`,
+    webcalUrl: `webcal://${host}/api/calendar/${token}.ics`,
+  };
+};
+
 window.Data = {
   // Static
   TEAM, ME, PHASES, ROADMAP_P1, LEAD_STAGES, CHANNELS,
@@ -1511,6 +1585,7 @@ window.Data = {
   get CREDENTIALS()  { return _store.CREDENTIALS; },
   get CLIENT_TASKS() { return _store.CLIENT_TASKS; },
   get NOTIFICATIONS(){ return _store.NOTIFICATIONS; },
+  get AGENDA_EVENTS(){ return _store.AGENDA_EVENTS; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1530,6 +1605,7 @@ window.Data = {
   CRED_CATALOG, credMode, credMeta: _credMeta,
   clientTasksFor, addClientTask, updateClientTask, toggleClientTask, deleteClientTask,
   notify, markNotificationRead, markAllNotificationsRead,
+  addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   pendingEmailsFor, clearPendingEmail, discardPendingEmails, sendPendingEmails,
   addLead,
   addTask, moveTask, updateTask, deleteTask,

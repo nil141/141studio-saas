@@ -19,20 +19,11 @@ const EVENT_COLORS = {
   custom: { bg: "rgba(96,165,250,0.14)", text: "#7db8f7", dot: "#60a5fa" },
   meeting: { bg: "rgba(220,91,93,0.14)", text: "#e07678", dot: "#dc5b5d" }
 };
-const CUSTOM_KEY = "agenda_custom_events";
-const loadCustom = () => {
-  try {
-    return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]");
-  } catch (e) {
-    return [];
-  }
-};
-const saveCustom = (evts) => localStorage.setItem(CUSTOM_KEY, JSON.stringify(evts));
 const VIEW_KEY = "agenda_view";
 const loadView = () => {
   try {
     return localStorage.getItem(VIEW_KEY) === "week" ? "week" : "month";
-  } catch (e) {
+  } catch {
     return "month";
   }
 };
@@ -63,10 +54,11 @@ const AgendaPage = ({ navigate }) => {
   const [selected, setSelected] = useState(today);
   const [viewMode, setViewMode] = useState(loadView);
   const [panelOpen, setPanelOpen] = useState(true);
-  const [customEvents, setCustomEvents] = useState(loadCustom);
+  const customEvents = D.AGENDA_EVENTS || [];
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "", link: "" });
   const [pickerFor, setPickerFor] = useState(null);
+  const [calOpen, setCalOpen] = useState(false);
   const allEvents = useMemo(() => {
     const evts = [];
     D.PROJECTS.forEach((p) => {
@@ -149,7 +141,7 @@ const AgendaPage = ({ navigate }) => {
     setViewMode(v);
     try {
       localStorage.setItem(VIEW_KEY, v);
-    } catch (e) {
+    } catch {
     }
   };
   const weekDays = useMemo(() => {
@@ -204,28 +196,23 @@ const AgendaPage = ({ navigate }) => {
   }, [allEvents, today]);
   const addEvent = () => {
     if (!form.title.trim() || !form.date) return;
-    const evt = {
-      id: "custom-" + Date.now(),
-      date: form.date,
+    const date = form.date;
+    D.addAgendaEvent({
+      date,
       title: form.title.trim(),
-      sub: form.notes || "",
+      notes: form.notes || "",
       time: form.time || null,
       timeEnd: form.timeEnd || null,
       link: (form.link || "").trim() || null,
       type: form.type
-    };
-    const updated = [...customEvents, evt];
-    setCustomEvents(updated);
-    saveCustom(updated);
+    });
     setShowForm(false);
     setPickerFor(null);
     setForm({ title: "", date: today, type: "custom", time: "", timeEnd: "", notes: "", link: "" });
-    setSelected(evt.date);
+    setSelected(date);
   };
   const deleteCustom = (id) => {
-    const updated = customEvents.filter((e) => e.id !== id);
-    setCustomEvents(updated);
-    saveCustom(updated);
+    D.deleteAgendaEvent(id);
   };
   const numWeeks = Math.ceil(cells.length / 7);
   const isCurrentPeriod = viewMode === "week" ? weekDays.some((d) => ymdOf(d) === today) : year === (/* @__PURE__ */ new Date()).getFullYear() && month === (/* @__PURE__ */ new Date()).getMonth();
@@ -330,7 +317,17 @@ const AgendaPage = ({ navigate }) => {
       style: { opacity: isCurrentPeriod ? 0.35 : 1, pointerEvents: isCurrentPeriod ? "none" : "auto" }
     },
     "Hoy"
-  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      className: "btn ghost sm",
+      onClick: () => setCalOpen(true),
+      style: { display: "inline-flex", alignItems: "center", gap: 7 },
+      "data-tooltip": "Conectar con Apple Calendar"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 14 }),
+    " Conectar calendario"
+  ), /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement(
     ActionPill,
     {
       plusActions: () => {
@@ -773,6 +770,71 @@ const AgendaPage = ({ navigate }) => {
       onChange: (v) => setForm((f) => pickerFor === "start" ? { ...f, time: v } : { ...f, timeEnd: v }),
       onClose: () => setPickerFor(null)
     }
-  )));
+  )), /* @__PURE__ */ React.createElement(CalendarConnect, { open: calOpen, onClose: () => setCalOpen(false) }));
+};
+const CalendarConnect = ({ open, onClose }) => {
+  const [info, setInfo] = useState(null);
+  const [err, setErr] = useState(false);
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    setInfo(null);
+    setErr(false);
+    setCopied(false);
+    window.Data.calendarSubscribeUrl().then((r) => {
+      r ? setInfo(r) : setErr(true);
+    }).catch(() => setErr(true));
+  }, [open]);
+  if (!open) return null;
+  const copy = () => {
+    if (!info) return;
+    try {
+      navigator.clipboard.writeText(info.httpUrl);
+    } catch {
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1600);
+  };
+  return /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: {
+    position: "fixed",
+    inset: 0,
+    background: "rgba(0,0,0,0.7)",
+    backdropFilter: "blur(12px)",
+    zIndex: 120,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+    animation: "fade .15s ease-out"
+  } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+    width: "100%",
+    maxWidth: 460,
+    background: "#0f0f0f",
+    border: "0.5px solid rgba(255,255,255,0.1)",
+    borderRadius: 24,
+    overflow: "hidden",
+    animation: "pop .2s cubic-bezier(.2,.8,.2,1)"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 22px 6px", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 18, fontWeight: 500, letterSpacing: "-0.5px" } }, "Conectar con tu calendario"), /* @__PURE__ */ React.createElement("div", { className: "muted", style: { fontSize: 13, marginTop: 6, lineHeight: 1.5, maxWidth: 360 } }, "Suscr\xEDbete una vez y tus eventos, entregas de proyectos y facturas aparecer\xE1n en Apple Calendar (o Google Calendar) y se actualizar\xE1n solos.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+    width: 34,
+    height: 34,
+    borderRadius: "50%",
+    flexShrink: 0,
+    cursor: "pointer",
+    background: "rgba(255,255,255,0.07)",
+    border: "0.5px solid rgba(255,255,255,0.1)",
+    color: "var(--text-muted)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 22px 22px" } }, err && /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 16px", borderRadius: 12, border: "0.5px solid var(--red-soft)", background: "var(--red-soft)", color: "var(--red)", fontSize: 13, lineHeight: 1.5 } }, "No se pudo generar el enlace. Aseg\xFArate de haber ejecutado la SQL de agenda en Supabase e int\xE9ntalo de nuevo."), !err && !info && /* @__PURE__ */ React.createElement("div", { className: "muted", style: { fontSize: 13, padding: "10px 0" } }, "Generando tu enlace\u2026"), !err && info && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("a", { href: info.webcalUrl, className: "btn primary", style: { width: "100%", justifyContent: "center", display: "inline-flex", alignItems: "center", gap: 8, textDecoration: "none" } }, /* @__PURE__ */ React.createElement(Icon, { name: "calendar", size: 15 }), " A\xF1adir a Apple Calendar"), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { textAlign: "center", margin: "10px 0 14px" } }, "Se abrir\xE1 el Calendario de tu Mac/iPhone para confirmar la suscripci\xF3n."), /* @__PURE__ */ React.createElement("div", { className: "label", style: { marginBottom: 6 } }, "O copia el enlace (Google Calendar, Outlook\u2026)"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      readOnly: true,
+      value: info.httpUrl,
+      onFocus: (e) => e.target.select(),
+      className: "input",
+      style: { flex: 1, fontSize: 12, fontFamily: "var(--font-mono)" }
+    }
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost", onClick: copy, style: { flexShrink: 0 } }, copied ? "\xA1Copiado!" : "Copiar")), /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 14, lineHeight: 1.6 } }, /* @__PURE__ */ React.createElement("b", null, "En Google Calendar:"), " Otros calendarios \u2192 \xAB+\xBB \u2192 Desde URL \u2192 pega el enlace.", /* @__PURE__ */ React.createElement("br", null), "Es de solo lectura: lo que crees en la app aparece en tu calendario, pero no al rev\xE9s.")))));
 };
 window.AgendaPage = AgendaPage;

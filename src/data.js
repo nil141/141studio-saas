@@ -77,6 +77,7 @@ const _store = {
   CLIENT_TASKS: [],
   NOTIFICATIONS: [],
   SETTINGS: { ...SETTINGS_DEFAULT },
+  AGENDA_EVENTS: [],
   _user: null,
   _prof: null,
   _outbox: {},
@@ -183,6 +184,16 @@ const _mp = (r) => r && {
   figmaPhase: r.figma_phase || ""
   // fase donde se muestra el diseño ("" = automático)
 };
+const _mae = (r) => ({
+  id: r.id,
+  date: r.date,
+  title: r.title,
+  sub: r.notes || "",
+  time: r.time || null,
+  timeEnd: r.time_end || null,
+  link: r.link || null,
+  type: r.type || "custom"
+});
 const _TASK_NOTES_KEY = "task_notes_v1";
 let _taskNotesLocal = {};
 try {
@@ -416,6 +427,11 @@ const _loadAll = async () => {
     ]);
     const ct = await _sb.from("client_tasks").select("*").eq("agency_id", uid).order("sort", { ascending: true });
     const nt = await _sb.from("notifications").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
+    let ae = { data: [] };
+    try {
+      ae = await _sb.from("agenda_events").select("*").eq("agency_id", uid).order("date", { ascending: true });
+    } catch {
+    }
     _store.CLIENTS = (c.data || []).map(_mc);
     _store.PROJECTS = (p.data || []).map(_mp);
     _store.INVOICES = (i.data || []).map(_mi);
@@ -424,6 +440,7 @@ const _loadAll = async () => {
     _store.CREDENTIALS = (cr.data || []).map(_mcr);
     _store.CLIENT_TASKS = (ct.data || []).map(_mct);
     _store.NOTIFICATIONS = (nt.data || []).map(_mn);
+    _store.AGENDA_EVENTS = (ae && ae.data || []).map(_mae);
     _store.SETTINGS = _ms(s.data) || { ...SETTINGS_DEFAULT };
     _store.TASKS = {};
     for (const row of t.data || []) {
@@ -442,7 +459,7 @@ const _setupRealtime = () => {
     _sb.removeChannel(_channel);
     _channel = null;
   }
-  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
+  _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
 };
 const authLogin = async (email, password) => {
   const { data, error } = await _sb.auth.signInWithPassword({ email, password });
@@ -1669,6 +1686,84 @@ const apiFetch = async (path, body = {}) => {
   });
 };
 window.apiFetch = apiFetch;
+const addAgendaEvent = async (input) => {
+  const uid = _store._user?.id;
+  if (!uid) return { error: "no-auth" };
+  if (!input.title || !input.date) return { error: "faltan datos" };
+  const id = "custom-" + Date.now();
+  const evt = {
+    id,
+    date: input.date,
+    title: input.title.trim(),
+    sub: input.notes || "",
+    time: input.time || null,
+    timeEnd: input.timeEnd || null,
+    link: (input.link || "").trim() || null,
+    type: input.type || "custom"
+  };
+  _store.AGENDA_EVENTS = [..._store.AGENDA_EVENTS || [], evt];
+  _emit();
+  const { error } = await _insertAdaptive("agenda_events", {
+    id,
+    agency_id: uid,
+    title: evt.title,
+    date: evt.date,
+    time: evt.time,
+    time_end: evt.timeEnd,
+    type: evt.type,
+    notes: evt.sub,
+    link: evt.link
+  });
+  if (error) {
+    _store.AGENDA_EVENTS = _store.AGENDA_EVENTS.filter((e) => e.id !== id);
+    _emit();
+    return { error: error.message || "Error al guardar el evento" };
+  }
+  return { event: evt };
+};
+const deleteAgendaEvent = async (id) => {
+  const uid = _store._user?.id;
+  if (!uid) return;
+  const prev = _store.AGENDA_EVENTS || [];
+  _store.AGENDA_EVENTS = prev.filter((e) => e.id !== id);
+  _emit();
+  const { error } = await _sb.from("agenda_events").delete().eq("id", id).eq("agency_id", uid);
+  if (error) {
+    _store.AGENDA_EVENTS = prev;
+    _emit();
+  }
+};
+const _randToken = () => {
+  const a = new Uint8Array(24);
+  (window.crypto || {}).getRandomValues?.(a);
+  return Array.from(a, (b) => b.toString(16).padStart(2, "0")).join("");
+};
+const calendarSubscribeUrl = async () => {
+  const uid = _store._user?.id;
+  if (!uid) return null;
+  let token = null;
+  try {
+    const { data } = await _sb.from("agencies").select("calendar_token").eq("id", uid).maybeSingle();
+    token = data?.calendar_token || null;
+  } catch {
+  }
+  if (!token) {
+    token = _randToken();
+    try {
+      const { error } = await _sb.from("agencies").update({ calendar_token: token }).eq("id", uid);
+      if (error) return null;
+    } catch {
+      return null;
+    }
+  }
+  const host = window.location.host;
+  const origin = window.location.origin;
+  return {
+    token,
+    httpUrl: `${origin}/api/calendar/${token}.ics`,
+    webcalUrl: `webcal://${host}/api/calendar/${token}.ics`
+  };
+};
 window.Data = {
   // Static
   TEAM,
@@ -1709,6 +1804,9 @@ window.Data = {
   },
   get NOTIFICATIONS() {
     return _store.NOTIFICATIONS;
+  },
+  get AGENDA_EVENTS() {
+    return _store.AGENDA_EVENTS;
   },
   get ROUTINES() {
     return _store.ROUTINES;
@@ -1761,6 +1859,9 @@ window.Data = {
   notify,
   markNotificationRead,
   markAllNotificationsRead,
+  addAgendaEvent,
+  deleteAgendaEvent,
+  calendarSubscribeUrl,
   pendingEmailsFor,
   clearPendingEmail,
   discardPendingEmails,

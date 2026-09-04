@@ -1305,6 +1305,109 @@ CAMPAIGN_HANDLERS = {
     "delete_campaign": api_campaigns_delete_campaign,
 }
 
+# ── Calendario (.ics) — suscripción de solo lectura para Apple/Google Calendar ─
+_CAL_MONTHS = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
+               "jul":7,"ago":8,"sep":9,"oct":10,"nov":11,"dic":12}
+
+def _cal_ymd(d):
+    """Normaliza una fecha a (Y, M, D) enteros. Acepta ISO o '15 jun 2026'."""
+    if not d:
+        return None
+    s = str(d).strip()
+    m = re.match(r"^(\d{4})-(\d{1,2})-(\d{1,2})", s)
+    if m:
+        return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    m = re.search(r"(\d{1,2})\s+([a-záéíóú]{3})[a-záéíóú]*\.?\s+(\d{4})", s.lower())
+    if m:
+        return (int(m.group(3)), _CAL_MONTHS.get(m.group(2), 1), int(m.group(1)))
+    return None
+
+def _ics_esc(s):
+    return (str(s or "").replace("\\", "\\\\").replace(";", "\\;")
+            .replace(",", "\\,").replace("\r", "").replace("\n", "\\n"))
+
+def _ics_feed(agency_id):
+    """Genera el texto .ics con proyectos, facturas y eventos de la agencia."""
+    now = datetime.datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    out = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//141DIGITAL//Agenda//ES",
+           "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
+           "X-WR-CALNAME:141'DIGITAL — Agenda", "X-WR-TIMEZONE:Europe/Madrid"]
+
+    def all_day(uid, ymd, summary, desc=""):
+        y, mo, da = ymd
+        start = datetime.date(y, mo, da)
+        end = start + datetime.timedelta(days=1)
+        out.extend(["BEGIN:VEVENT", f"UID:{uid}@141agency.com", f"DTSTAMP:{now}",
+                    f"DTSTART;VALUE=DATE:{start.strftime('%Y%m%d')}",
+                    f"DTEND;VALUE=DATE:{end.strftime('%Y%m%d')}",
+                    f"SUMMARY:{_ics_esc(summary)}"])
+        if desc:
+            out.append(f"DESCRIPTION:{_ics_esc(desc)}")
+        out.append("END:VEVENT")
+
+    def timed(uid, ymd, t_start, t_end, summary, desc=""):
+        y, mo, da = ymd
+        try:
+            hh, mm = [int(x) for x in (t_start.split(":") + ["0"])[:2]]
+        except Exception:
+            return all_day(uid, ymd, summary, desc)
+        base = f"{y:04d}{mo:02d}{da:02d}"
+        dstart = f"{base}T{hh:02d}{mm:02d}00"
+        if t_end:
+            try:
+                eh, em = [int(x) for x in (t_end.split(":") + ["0"])[:2]]
+                dend = f"{base}T{eh:02d}{em:02d}00"
+            except Exception:
+                dend = f"{base}T{(hh+1)%24:02d}{mm:02d}00"
+        else:
+            dend = f"{base}T{(hh+1)%24:02d}{mm:02d}00"
+        # Hora "flotante" (sin Z ni TZID): se muestra a esa hora local.
+        out.extend(["BEGIN:VEVENT", f"UID:{uid}@141agency.com", f"DTSTAMP:{now}",
+                    f"DTSTART:{dstart}", f"DTEND:{dend}", f"SUMMARY:{_ics_esc(summary)}"])
+        if desc:
+            out.append(f"DESCRIPTION:{_ics_esc(desc)}")
+        out.append("END:VEVENT")
+
+    try:
+        projects = _sb_service("GET", f"projects?agency_id=eq.{agency_id}&select=id,name,deadline,client_name")
+    except Exception:
+        projects = []
+    for p in projects or []:
+        ymd = _cal_ymd(p.get("deadline"))
+        if ymd:
+            all_day("proj-" + str(p.get("id")), ymd, "Entrega: " + (p.get("name") or ""),
+                    p.get("client_name") or "")
+
+    try:
+        invoices = _sb_service("GET", f"invoices?agency_id=eq.{agency_id}&select=id,client_name,amount,due")
+    except Exception:
+        invoices = []
+    for inv in invoices or []:
+        ymd = _cal_ymd(inv.get("due"))
+        if ymd:
+            all_day("inv-" + str(inv.get("id")), ymd,
+                    "Factura — " + (inv.get("client_name") or ""),
+                    f"Importe: €{inv.get('amount') or 0}")
+
+    try:
+        events = _sb_service("GET", f"agenda_events?agency_id=eq.{agency_id}&select=id,title,date,time,time_end,notes")
+    except Exception:
+        events = []
+    for e in events or []:
+        ymd = _cal_ymd(e.get("date"))
+        if not ymd:
+            continue
+        uid = "evt-" + str(e.get("id"))
+        if e.get("time"):
+            timed(uid, ymd, e.get("time"), e.get("time_end"), e.get("title") or "", e.get("notes") or "")
+        else:
+            all_day(uid, ymd, e.get("title") or "", e.get("notes") or "")
+
+    out.append("END:VCALENDAR")
+    # RFC 5545: líneas separadas por CRLF.
+    return "\r\n".join(out) + "\r\n"
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=BASE, **kwargs)
@@ -1341,10 +1444,38 @@ class Handler(SimpleHTTPRequestHandler):
     def do_GET(self):
         if self._path_blocked():
             self.send_error(404); return
+        gpath = urllib.parse.urlparse(self.path).path
+        # Suscripción de calendario: /api/calendar/<token>.ics
+        if gpath.startswith("/api/calendar/") and gpath.endswith(".ics"):
+            self._handle_calendar(gpath[len("/api/calendar/"):-len(".ics")]); return
         # SPA routing: serve index.html for /invite/* paths
         if self.path.startswith("/invite/"):
             self.path = "/index.html"
         super().do_GET()
+
+    def _handle_calendar(self, token):
+        """Sirve el feed .ics de una agencia identificada por su token secreto."""
+        if not SB_SERVICE_KEY:
+            self.send_error(503, "Calendar no configurado"); return
+        if not re.fullmatch(r"[0-9a-f]{16,64}", token or ""):
+            self.send_error(404); return
+        try:
+            rows = _sb_service("GET", f"agencies?calendar_token=eq.{token}&select=id")
+        except Exception:
+            traceback.print_exc(); self.send_error(502); return
+        if not rows:
+            self.send_error(404); return
+        try:
+            body = _ics_feed(rows[0]["id"]).encode("utf-8")
+        except Exception:
+            traceback.print_exc(); self.send_error(500); return
+        self.send_response(200)
+        self.send_header("Content-Type", "text/calendar; charset=utf-8")
+        self.send_header("Content-Disposition", 'inline; filename="141digital.ics"')
+        self.send_header("Cache-Control", "max-age=900")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def do_HEAD(self):
         if self._path_blocked():
