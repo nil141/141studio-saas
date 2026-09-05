@@ -34,8 +34,9 @@ const _NAV_OTROS = [
   { id: "billing",   label: "Gastos",      icon: "receipt" },
   { id: "mail",      label: "Correo",      icon: "mail" },
 ];
-const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.06em",
-  textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 };
+const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.01em",
+  textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 7,
+  whiteSpace: "nowrap" };
 
 const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
   const q = (navSearch || "").trim().toLowerCase();
