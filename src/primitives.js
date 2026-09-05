@@ -257,6 +257,28 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     });
   };
   const [navSearch, setNavSearch] = React.useState("");
+  const CREAR_VARIANTS = [
+    { name: "S\xF3lido", bg: "var(--accent)", color: "var(--accent-fg)", border: "1px solid var(--accent)", shadow: "none", hoverFilter: "brightness(0.92)" },
+    { name: "Vivo", bg: "#8b7ff2", color: "#fff", border: "1px solid #8b7ff2", shadow: "0 4px 16px rgba(139,127,242,0.40)", hoverFilter: "brightness(1.07)" },
+    { name: "Glow", bg: "var(--accent)", color: "#fff", border: "1px solid var(--accent)", shadow: "0 0 0 1px rgba(158,154,229,0.5), 0 6px 22px rgba(158,154,229,0.45)", hoverFilter: "brightness(1.05)" },
+    { name: "Borde", bg: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", shadow: "none", hoverBg: "var(--accent-soft)" },
+    { name: "Suave", bg: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)", shadow: "none", hoverBg: "rgba(158,154,229,0.28)" },
+    { name: "Avatar", bg: "rgba(255,255,255,0.05)", color: "var(--accent)", border: "1px solid rgba(255,255,255,0.06)", shadow: "none", hoverBg: "rgba(255,255,255,0.09)" }
+  ];
+  const [crearVar, setCrearVar] = React.useState(() => {
+    try {
+      return +localStorage.getItem("141_crear_var") || 0;
+    } catch {
+      return 0;
+    }
+  });
+  const pickCrear = (i) => {
+    setCrearVar(i);
+    try {
+      localStorage.setItem("141_crear_var", String(i));
+    } catch {
+    }
+  };
   const [otrosOpen, setOtrosOpen] = React.useState(() => {
     try {
       return localStorage.getItem("141_nav_otros") === "1";
@@ -435,33 +457,62 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     justifyContent: "center",
     fontSize: 16,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.2px" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.2px" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, (() => {
+    const v = CREAR_VARIANTS[crearVar] || CREAR_VARIANTS[0];
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => onQuickCreate && onQuickCreate(),
+        onMouseEnter: (e) => {
+          if (v.hoverBg) e.currentTarget.style.background = v.hoverBg;
+          if (v.hoverFilter) e.currentTarget.style.filter = v.hoverFilter;
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.background = v.bg;
+          e.currentTarget.style.filter = "none";
+        },
+        style: {
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          height: 40,
+          borderRadius: 12,
+          background: v.bg,
+          color: v.color,
+          border: v.border,
+          boxShadow: v.shadow,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 14,
+          fontWeight: 500,
+          letterSpacing: "-0.02em",
+          transition: "background .12s, filter .12s"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
+      " Crear"
+    );
+  })(), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap", padding: "2px 2px 0" } }, CREAR_VARIANTS.map((v, i) => /* @__PURE__ */ React.createElement(
     "button",
     {
-      onClick: () => onQuickCreate && onQuickCreate(),
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.09)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)",
+      key: i,
+      onClick: () => pickCrear(i),
+      title: v.name,
       style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 8,
-        height: 40,
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.05)",
-        color: "var(--accent)",
-        border: "1px solid rgba(255,255,255,0.06)",
-        cursor: "pointer",
         fontFamily: "inherit",
-        fontSize: 14,
-        fontWeight: 500,
-        letterSpacing: "-0.02em",
-        transition: "background .12s"
+        fontSize: 10,
+        letterSpacing: "-0.01em",
+        padding: "3px 7px",
+        borderRadius: 6,
+        cursor: "pointer",
+        border: "1px solid " + (crearVar === i ? "var(--accent)" : "rgba(255,255,255,0.1)"),
+        background: crearVar === i ? "var(--accent-soft)" : "transparent",
+        color: crearVar === i ? "var(--accent)" : "var(--text-subtle)"
       }
     },
-    /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
-    " Crear"
-  ), /* @__PURE__ */ React.createElement("div", { style: {
+    v.name
+  ))), /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
     gap: 8,
