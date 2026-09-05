@@ -139,14 +139,10 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
     /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
-  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: {
-    position: "relative",
-    margin: "2px 0 4px",
-    marginLeft: 8,
-    paddingLeft: 10,
-    borderLeft: "1px solid var(--border)",
-    animation: "sectionIn .2s ease-out"
-  } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, nested: true }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", marginLeft: 8, paddingLeft: 10 } }, _NAV_OTROS.map((it, i) => /* @__PURE__ */ React.createElement("div", { key: it.id, style: {
+    animation: "sectionIn .26s cubic-bezier(0.2,0.7,0.3,1) backwards",
+    animationDelay: i * 0.045 + "s"
+  } }, /* @__PURE__ */ React.createElement(NavItem, { id: it.id, icon: it.icon, label: it.label, nested: true })))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
