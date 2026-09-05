@@ -88,7 +88,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
           fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
         <Icon name="more-h" size={16} strokeWidth={1.7}/>
         <span style={{ flex: 1 }}>Otros</span>
-        <Icon name="chevron-down" size={15} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(180deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
+        <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
       {otrosOpen && (
         <div style={{ marginBottom: 2, animation: "sectionIn .2s ease-out" }}>
