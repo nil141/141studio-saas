@@ -101,10 +101,10 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       {/* En desarrollo activo */}
       {fp.length > 0 && (
         <div style={{ marginTop: 16 }}>
-          <div style={_navSecLabel}>
+          <div style={{ ..._navSecLabel, color: "var(--accent)" }}>
             <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
             <span>En desarrollo activo</span>
-            <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fp.length}</span>
+            <span style={{ color: "var(--accent)", fontWeight: 500, opacity: 0.7 }}>{fp.length}</span>
           </div>
           {fp.slice(0, 8).map((p, i) => (
             <ListRow key={p.id} label={p.clientName || p.name} color={pal[i % pal.length]}
