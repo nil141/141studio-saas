@@ -1501,19 +1501,25 @@ const AccesosChips = ({ navigate, openModal }) => {
 // "Mi lista" — tareas por día / semana, con navegador de día y añadir inline
 const MiListaBlock = ({ D, navigate, todayStr }) => {
   const [tab, setTab] = useState("dia");     // "dia" | "semana"
-  const [dayOffset, setDayOffset] = useState(0);  // 0 = hoy
+  const [dayOffset, setDayOffset] = useState(0);   // 0 = hoy
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = esta semana
   const [draft, setDraft] = useState("");
   const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
 
+  const fmt = (ds) => { const d = ds ? new Date(ds + "T00:00:00") : null; return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : ""; };
   const selDay = _ymdShift(todayStr, dayOffset);
-  const weekEnd = _ymdShift(todayStr, 7);
+  // Semana: lunes–domingo de la semana seleccionada.
+  const _dow = (new Date(todayStr + "T00:00:00").getDay() + 6) % 7;   // 0 = lunes
+  const weekStart = _ymdShift(todayStr, -_dow + weekOffset * 7);
+  const weekSun   = _ymdShift(weekStart, 6);
+
   const projIds = new Set((D.PROJECTS || []).map(p => p.id));
   const pend = Object.entries(D.TASKS)
     .filter(([pid]) => pid === "__none__" || projIds.has(pid))
     .flatMap(([pid, arr]) => arr.filter(t => t.column !== "done").map(t => ({ ...t, _pid: pid })))
     .filter(t => {
       if (!t.deadline) return false;
-      if (tab === "semana") return t.deadline >= todayStr && t.deadline <= weekEnd;
+      if (tab === "semana") return t.deadline >= weekStart && t.deadline <= weekSun;
       return dayOffset === 0 ? t.deadline <= todayStr : t.deadline === selDay;  // Hoy incluye atrasadas
     })
     .sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1)
@@ -1522,13 +1528,17 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
   const add = () => {
     const v = draft.trim();
     if (!v) return;
-    D.addTask({ title: v, deadline: tab === "semana" ? todayStr : selDay });
+    const dl = tab === "semana" ? (weekOffset === 0 ? todayStr : weekStart) : selDay;
+    D.addTask({ title: v, deadline: dl });
     setDraft("");
   };
-  const fmt = (ds) => { const d = ds ? new Date(ds + "T00:00:00") : null; return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : ""; };
-  const dayLabel = dayOffset === 0 ? "Hoy" : dayOffset === -1 ? "Ayer" : dayOffset === 1 ? "Mañana" : fmt(selDay);
-  const emptyMsg = tab === "semana" ? "Nada pendiente esta semana."
-    : dayOffset === 0 ? "Todo hecho para hoy 🎉" : `Nada para ${dayLabel.toLowerCase()}.`;
+  const dayLabel  = dayOffset === 0 ? "Hoy" : dayOffset === -1 ? "Ayer" : dayOffset === 1 ? "Mañana" : fmt(selDay);
+  const weekLabel = weekOffset === 0 ? "Esta semana" : weekOffset === 1 ? "Próx. semana" : weekOffset === -1 ? "Sem. pasada" : `${fmt(weekStart)}–${fmt(weekSun)}`;
+  const navLabel  = tab === "semana" ? weekLabel : dayLabel;
+  const stepNav   = (d) => tab === "semana" ? setWeekOffset(o => o + d) : setDayOffset(o => o + d);
+  const emptyMsg  = tab === "semana"
+    ? (weekOffset === 0 ? "Nada pendiente esta semana." : `Nada para ${weekLabel.toLowerCase()}.`)
+    : (dayOffset === 0 ? "Todo hecho para hoy 🎉" : `Nada para ${dayLabel.toLowerCase()}.`);
 
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)}
@@ -1556,13 +1566,11 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
                 {tabBtn("dia", "Día")}
                 {tabBtn("semana", "Semana")}
               </div>
-              {tab === "dia" && (
-                <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <button onClick={() => setDayOffset(o => o - 1)} style={navBtn} title="Anterior"><Icon name="chevron-left" size={14}/></button>
-                  <span style={{ fontSize: 12.5, color: "var(--text)", minWidth: 58, textAlign: "center", letterSpacing: "-0.2px" }}>{dayLabel}</span>
-                  <button onClick={() => setDayOffset(o => o + 1)} style={navBtn} title="Siguiente"><Icon name="chevron-right" size={14}/></button>
-                </div>
-              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <button onClick={() => stepNav(-1)} style={navBtn} title="Anterior"><Icon name="chevron-left" size={14}/></button>
+                <span style={{ fontSize: 12.5, color: "var(--text)", minWidth: tab === "semana" ? 84 : 58, textAlign: "center", letterSpacing: "-0.2px" }}>{navLabel}</span>
+                <button onClick={() => stepNav(1)} style={navBtn} title="Siguiente"><Icon name="chevron-right" size={14}/></button>
+              </div>
             </div>
           </div>
           {/* Añadir tarea inline */}

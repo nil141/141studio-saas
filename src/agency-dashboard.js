@@ -1375,28 +1375,35 @@
   var MiListaBlock = ({ D, navigate, todayStr }) => {
     const [tab, setTab] = useState("dia");
     const [dayOffset, setDayOffset] = useState(0);
+    const [weekOffset, setWeekOffset] = useState(0);
     const [draft, setDraft] = useState("");
     const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
+    const fmt = (ds) => {
+      const d = ds ? /* @__PURE__ */ new Date(ds + "T00:00:00") : null;
+      return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : "";
+    };
     const selDay = _ymdShift(todayStr, dayOffset);
-    const weekEnd = _ymdShift(todayStr, 7);
+    const _dow = ((/* @__PURE__ */ new Date(todayStr + "T00:00:00")).getDay() + 6) % 7;
+    const weekStart = _ymdShift(todayStr, -_dow + weekOffset * 7);
+    const weekSun = _ymdShift(weekStart, 6);
     const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
     const pend = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => arr.filter((t) => t.column !== "done").map((t) => ({ ...t, _pid: pid }))).filter((t) => {
       if (!t.deadline) return false;
-      if (tab === "semana") return t.deadline >= todayStr && t.deadline <= weekEnd;
+      if (tab === "semana") return t.deadline >= weekStart && t.deadline <= weekSun;
       return dayOffset === 0 ? t.deadline <= todayStr : t.deadline === selDay;
     }).sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1).slice(0, 10);
     const add = () => {
       const v = draft.trim();
       if (!v) return;
-      D.addTask({ title: v, deadline: tab === "semana" ? todayStr : selDay });
+      const dl = tab === "semana" ? weekOffset === 0 ? todayStr : weekStart : selDay;
+      D.addTask({ title: v, deadline: dl });
       setDraft("");
     };
-    const fmt = (ds) => {
-      const d = ds ? /* @__PURE__ */ new Date(ds + "T00:00:00") : null;
-      return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : "";
-    };
     const dayLabel = dayOffset === 0 ? "Hoy" : dayOffset === -1 ? "Ayer" : dayOffset === 1 ? "Ma\xF1ana" : fmt(selDay);
-    const emptyMsg = tab === "semana" ? "Nada pendiente esta semana." : dayOffset === 0 ? "Todo hecho para hoy \u{1F389}" : `Nada para ${dayLabel.toLowerCase()}.`;
+    const weekLabel = weekOffset === 0 ? "Esta semana" : weekOffset === 1 ? "Pr\xF3x. semana" : weekOffset === -1 ? "Sem. pasada" : `${fmt(weekStart)}\u2013${fmt(weekSun)}`;
+    const navLabel = tab === "semana" ? weekLabel : dayLabel;
+    const stepNav = (d) => tab === "semana" ? setWeekOffset((o) => o + d) : setDayOffset((o) => o + d);
+    const emptyMsg = tab === "semana" ? weekOffset === 0 ? "Nada pendiente esta semana." : `Nada para ${weekLabel.toLowerCase()}.` : dayOffset === 0 ? "Todo hecho para hoy \u{1F389}" : `Nada para ${dayLabel.toLowerCase()}.`;
     const tabBtn = (id, label) => /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -1424,7 +1431,7 @@
         onToggle: toggleOpen,
         right: /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))
       }
-    ), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(Icon, { name: "list-todo", size: 16, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Mi lista")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana")), tab === "dia" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setDayOffset((o) => o - 1), style: navBtn, title: "Anterior" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 14 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text)", minWidth: 58, textAlign: "center", letterSpacing: "-0.2px" } }, dayLabel), /* @__PURE__ */ React.createElement("button", { onClick: () => setDayOffset((o) => o + 1), style: navBtn, title: "Siguiente" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14 }))))), /* @__PURE__ */ React.createElement("div", { style: {
+    ), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(Icon, { name: "list-todo", size: 16, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Mi lista")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => stepNav(-1), style: navBtn, title: "Anterior" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 14 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text)", minWidth: tab === "semana" ? 84 : 58, textAlign: "center", letterSpacing: "-0.2px" } }, navLabel), /* @__PURE__ */ React.createElement("button", { onClick: () => stepNav(1), style: navBtn, title: "Siguiente" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14 }))))), /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
