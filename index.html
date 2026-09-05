@@ -520,17 +520,22 @@
   .progress.red > i { background: var(--red); }
 
   /* Page header */
-  /* Cabecera de página como panel/rectángulo, separada del contenido */
   .page-head {
     display: flex; align-items: center; justify-content: space-between;
     gap: 16px; margin-bottom: 20px;
-    background: var(--bg-elev-2);
-    border: 0.5px solid var(--border);
-    border-radius: 14px;
-    padding: 15px 20px;
   }
   .page-head h1 { font-size: 22px; font-weight: 400; letter-spacing: -0.96px; }
   .page-head .sub { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  /* En escritorio: cabecera como banda pegada arriba y a los lados (rompe el
+     padding del contenedor: -28 arriba, -32 lados), con hueco solo abajo. */
+  @media (min-width: 769px) {
+    .page-head {
+      margin: -28px -32px 22px;
+      padding: 18px 32px;
+      background: var(--bg-elev-2);
+      border-bottom: 0.5px solid var(--border);
+    }
+  }
 
   /* Grid helpers */
   .row { display: flex; gap: 12px; align-items: center; }
