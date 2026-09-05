@@ -1566,6 +1566,20 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
   );
 };
 
+// Fase activa de un proyecto (primera fase sin completar) → nombre para el chip.
+const _activePhaseOf = (p, D) => {
+  const names = (p.service || "").split(",").map(s => s.trim()).filter(n => n && n !== "libre" && n !== "—");
+  if (!names.length) return null;
+  const tasks = (D.TASKS && D.TASKS[p.id]) || [];
+  const doneSet = new Set(p.phasesDone || []);
+  const isComplete = (name) => {
+    const gt = tasks.filter(t => (t.phase || null) === name);
+    return doneSet.has(name) || (gt.length > 0 && gt.every(t => t.column === "done"));
+  };
+  const active = names.find(n => !isComplete(n));
+  return { name: active || names[names.length - 1], allDone: !active };
+};
+
 // "Entregas próximas" — filas con barra de progreso grande por proyecto
 const EntregasBlock = ({ D, navigate }) => {
   const projs = (D.PROJECTS || []).slice().sort((a, b) => {
@@ -1601,8 +1615,11 @@ const EntregasBlock = ({ D, navigate }) => {
           {projs.slice(0, 8).map(p => {
             const tks = D.TASKS[p.id] || [];
             const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
-            const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
-            const statusColor = pct >= 100 ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
+            // Chip = fase actual del proyecto (Diseño, Desarrollo…); si no hay fases, cae a estado por progreso.
+            const ph = _activePhaseOf(p, D);
+            const complete = pct >= 100 || (ph && ph.allDone);
+            const status = complete ? "Completado" : (ph ? ph.name : (pct > 0 ? "En curso" : "Sin empezar"));
+            const statusColor = complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
             return (
               <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
@@ -1613,7 +1630,9 @@ const EntregasBlock = ({ D, navigate }) => {
                     <span style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor, flexShrink: 0 }}/>
                     <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
                     <span style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 99, whiteSpace: "nowrap", flexShrink: 0,
-                      background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.09)", color: "var(--text-muted)", letterSpacing: "-0.1px" }}>{status}</span>
+                      background: complete ? "var(--green-soft)" : pct > 0 ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
+                      border: "0.5px solid " + (complete ? "rgba(0,255,140,0.3)" : pct > 0 ? "rgba(158,154,229,0.3)" : "rgba(255,255,255,0.09)"),
+                      color: complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-muted)", letterSpacing: "-0.1px" }}>{status}</span>
                   </div>
                   <span style={{ fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 }}>{_fmtDeliveryDate(p.deadline)}</span>
                 </div>

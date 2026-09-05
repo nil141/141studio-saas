@@ -1461,6 +1461,18 @@
       }
     ))));
   };
+  var _activePhaseOf = (p, D) => {
+    const names = (p.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");
+    if (!names.length) return null;
+    const tasks = D.TASKS && D.TASKS[p.id] || [];
+    const doneSet = new Set(p.phasesDone || []);
+    const isComplete = (name) => {
+      const gt = tasks.filter((t) => (t.phase || null) === name);
+      return doneSet.has(name) || gt.length > 0 && gt.every((t) => t.column === "done");
+    };
+    const active = names.find((n) => !isComplete(n));
+    return { name: active || names[names.length - 1], allDone: !active };
+  };
   var EntregasBlock = ({ D, navigate }) => {
     const projs = (D.PROJECTS || []).slice().sort((a, b) => {
       const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
@@ -1475,8 +1487,10 @@
     return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", open, onToggle: toggleOpen, right: arrow }), open && (projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.")) : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
-      const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
-      const statusColor = pct >= 100 ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
+      const ph = _activePhaseOf(p, D);
+      const complete = pct >= 100 || ph && ph.allDone;
+      const status = complete ? "Completado" : ph ? ph.name : pct > 0 ? "En curso" : "Sin empezar";
+      const statusColor = complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -1492,9 +1506,9 @@
           borderRadius: 99,
           whiteSpace: "nowrap",
           flexShrink: 0,
-          background: "rgba(255,255,255,0.05)",
-          border: "0.5px solid rgba(255,255,255,0.09)",
-          color: "var(--text-muted)",
+          background: complete ? "var(--green-soft)" : pct > 0 ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
+          border: "0.5px solid " + (complete ? "rgba(0,255,140,0.3)" : pct > 0 ? "rgba(158,154,229,0.3)" : "rgba(255,255,255,0.09)"),
+          color: complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-muted)",
           letterSpacing: "-0.1px"
         } }, status)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
