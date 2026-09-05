@@ -985,18 +985,16 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       {/* Tu status de hoy — plegable, cerrado por defecto */}
       <section>
         <CollapsibleHead title="Tu status de hoy" open={statusOpen} onToggle={toggleStatus}/>
-        {statusOpen && <div style={{ marginTop: 18 }}>{KpiRow}</div>}
+        {statusOpen && <div style={{ ...INICIO_CARD, marginTop: 12, padding: "22px 24px" }}>{KpiRow}</div>}
       </section>
 
       {/* Accesos directos — plegable, abierto por defecto */}
       <section>
         <CollapsibleHead title="Accesos directos" open={accesosOpen} onToggle={toggleAccesos}/>
-        {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
+        {accesosOpen && <div style={{ ...INICIO_CARD, marginTop: 12 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
 
-      <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }}/>
-
-      {/* Mi lista + Entregas próximas — apiladas, una columna */}
+      {/* Mi lista + Entregas próximas — apiladas, una columna, en cajita */}
       <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
       <EntregasBlock D={D} navigate={navigate}/>
     </>
@@ -1006,10 +1004,10 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", gap: 34,
+      display: "flex", flexDirection: "column", gap: 26,
       minHeight: "100vh", overflowY: "auto",
-      padding: "28px 36px 48px",
-      maxWidth: 1400, margin: "0 auto",
+      padding: "28px clamp(20px, 4vw, 56px) 48px",
+      width: "100%", maxWidth: 1600, margin: "0 auto",
     }}>
       {Header}
       {renderLayout()}
@@ -1437,6 +1435,13 @@ const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => (
 // ═══ Inicio (rediseño tipo referencia) ═══════════════════════════════════════
 const INICIO_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)",
   textTransform: "uppercase", letterSpacing: "0.08em" };
+// Cajita de sección del inicio (estilo referencia)
+const INICIO_CARD = {
+  background: "var(--bg-elev-2)",
+  border: "0.5px solid var(--border)",
+  borderRadius: 18,
+  padding: "18px 20px",
+};
 
 const _ymdShift = (ymd, days) => {
   const d = new Date(ymd + "T00:00:00");
@@ -1512,7 +1517,7 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
         background: tab === id ? "rgba(255,255,255,0.07)" : "transparent" }}>{label}</button>
   );
   return (
-    <section>
+    <section style={INICIO_CARD}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div style={INICIO_EYEBROW}>Mi lista</div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -1558,7 +1563,7 @@ const EntregasBlock = ({ D, navigate }) => {
     return 0;
   });
   return (
-    <section>
+    <section style={INICIO_CARD}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={INICIO_EYEBROW}>Entregas próximas</div>

@@ -861,16 +861,17 @@
       ),
       /* @__PURE__ */ React.createElement("span", { style: APPLE_SECTION }, title)
     );
-    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 18 } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
+    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, padding: "22px 24px" } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
     const renderLayout = () => LayoutInicio;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
-      gap: 34,
+      gap: 26,
       minHeight: "100vh",
       overflowY: "auto",
-      padding: "28px 36px 48px",
-      maxWidth: 1400,
+      padding: "28px clamp(20px, 4vw, 56px) 48px",
+      width: "100%",
+      maxWidth: 1600,
       margin: "0 auto"
     } }, Header, renderLayout());
   };
@@ -1301,6 +1302,12 @@
     textTransform: "uppercase",
     letterSpacing: "0.08em"
   };
+  var INICIO_CARD = {
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
+    borderRadius: 18,
+    padding: "18px 20px"
+  };
   var _ymdShift = (ymd, days) => {
     const d = /* @__PURE__ */ new Date(ymd + "T00:00:00");
     if (isNaN(d)) return ymd;
@@ -1398,7 +1405,7 @@
       },
       label
     );
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Mi lista"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("section", { style: INICIO_CARD }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Mi lista"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
@@ -1459,7 +1466,7 @@
       if (db) return 1;
       return 0;
     });
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 }))), projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
+    return /* @__PURE__ */ React.createElement("section", { style: INICIO_CARD }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 }))), projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
       const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
