@@ -439,7 +439,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     "button",
     {
       onClick: () => onQuickCreate && onQuickCreate(),
-      onMouseEnter: (e) => e.currentTarget.style.filter = "brightness(1.08)",
+      onMouseEnter: (e) => e.currentTarget.style.filter = "brightness(0.92)",
       onMouseLeave: (e) => e.currentTarget.style.filter = "none",
       style: {
         display: "flex",
@@ -448,15 +448,14 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         gap: 8,
         height: 40,
         borderRadius: 12,
-        background: "linear-gradient(135deg, #a7a3f0 0%, #7b83ec 100%)",
-        color: "#fff",
-        border: "none",
+        background: "var(--accent)",
+        color: "var(--accent-fg)",
+        border: "1px solid var(--accent)",
         cursor: "pointer",
         fontFamily: "inherit",
         fontSize: 14,
-        fontWeight: 600,
-        letterSpacing: "-0.3px",
-        boxShadow: "0 4px 14px rgba(123,131,236,0.28)",
+        fontWeight: 500,
+        letterSpacing: "-0.02em",
         transition: "filter .12s"
       }
     },
