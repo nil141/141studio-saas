@@ -276,22 +276,22 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           zIndex: 1,
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          height: 48,
-          padding: "0 12px",
-          borderRadius: 16,
+          gap: 11,
+          height: 38,
+          padding: "0 10px",
+          borderRadius: 10,
           cursor: "pointer",
           background: bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
           border: bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
           color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition: "color .15s, background .15s",
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: 400,
-          letterSpacing: "-0.06em",
+          letterSpacing: "-0.04em",
           userSelect: "none"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 17, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
       badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
       chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : isActive ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0 } }) : null
@@ -346,22 +346,22 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         style: {
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          height: 48,
-          padding: "0 12px",
-          borderRadius: 16,
+          gap: 11,
+          height: 38,
+          padding: "0 10px",
+          borderRadius: 10,
           cursor: "pointer",
           background: active ? "rgba(255,255,255,0.07)" : "transparent",
           border: active ? "1px solid #232324" : "1px solid transparent",
           color: active ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition: "color .15s, background .15s",
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: 400,
-          letterSpacing: "-0.06em",
+          letterSpacing: "-0.04em",
           userSelect: "none"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 17, strokeWidth: 1.6 }),
+      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.6 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
       kbd ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" } }, kbd) : null
     );
@@ -385,10 +385,10 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "4px 8px 24px 8px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: 40,
-    height: 40,
-    borderRadius: 16,
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "2px 6px 16px 6px" } }, /* @__PURE__ */ React.createElement("div", { style: {
+    width: 34,
+    height: 34,
+    borderRadius: 12,
     flexShrink: 0,
     background: "rgba(255,255,255,0.05)",
     border: "1px solid rgba(255,255,255,0.05)",
@@ -396,9 +396,9 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.2px" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => onQuickCreate && onQuickCreate(),

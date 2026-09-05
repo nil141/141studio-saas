@@ -297,16 +297,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseLeave={() => setHov(false)}
         style={{
           position:"relative", zIndex:1,
-          display:"flex", alignItems:"center", gap:12,
-          height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
+          display:"flex", alignItems:"center", gap:11,
+          height:38, padding:"0 10px", borderRadius:10, cursor:"pointer",
           background: bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent"),
           border: bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent"),
           color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition:"color .15s, background .15s",
-          fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
+          fontSize:14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
         }}
       >
-        <Icon name={icon} size={17} strokeWidth={1.7}/>
+        <Icon name={icon} size={16} strokeWidth={1.7}/>
         <span style={{flex:1}}>{label}</span>
         {badge ? (
           <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
@@ -364,16 +364,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
-          display:"flex", alignItems:"center", gap:12,
-          height:48, padding:"0 12px", borderRadius:16, cursor:"pointer",
+          display:"flex", alignItems:"center", gap:11,
+          height:38, padding:"0 10px", borderRadius:10, cursor:"pointer",
           background: active ? "rgba(255,255,255,0.07)" : "transparent",
           border: active ? "1px solid #232324" : "1px solid transparent",
           color: active ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
           transition:"color .15s, background .15s",
-          fontSize:16, fontWeight:400, letterSpacing:"-0.06em", userSelect:"none",
+          fontSize:14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
         }}
       >
-        <Icon name={icon} size={17} strokeWidth={1.6}/>
+        <Icon name={icon} size={16} strokeWidth={1.6}/>
         <span style={{flex:1}}>{label}</span>
         {kbd ? <span style={{fontSize:10, color:"var(--text-subtle)", fontFamily:"var(--font-mono)"}}>{kbd}</span> : null}
       </div>
@@ -406,21 +406,21 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           <NotificationBell kind={kind} onNavigate={onNavigate}/>
         </div>
       ) : (
-      <div style={{display:"flex", alignItems:"center", gap:12, padding:"4px 8px 24px 8px"}}>
+      <div style={{display:"flex", alignItems:"center", gap:10, padding:"2px 6px 16px 6px"}}>
         <div style={{
-          width: 40, height: 40, borderRadius: 16, flexShrink: 0,
+          width: 34, height: 34, borderRadius: 12, flexShrink: 0,
           background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)",
           color: "var(--accent)",
           display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 18, fontWeight: 400,
+          fontSize: 16, fontWeight: 400,
         }}>
           {(me.initials || "").charAt(0)}
         </div>
         <div style={{minWidth:0, flex:1}}>
-          <div style={{fontSize:15, fontWeight:400, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+          <div style={{fontSize:14, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", letterSpacing:"-0.2px"}}>
             {me.name}
           </div>
-          <div style={{fontSize:12, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
+          <div style={{fontSize:11.5, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
             {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
           </div>
         </div>
