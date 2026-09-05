@@ -325,8 +325,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
             {badge}
           </span>
         ) : null}
-        {chevron ? <Icon name="chevron" size={15} style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/>
-          : (isActive ? <Icon name="chevron" size={15} style={{flexShrink:0}}/> : null)}
+        {chevron ? <Icon name="chevron" size={15} style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/> : null}
       </div>
     );
   };
