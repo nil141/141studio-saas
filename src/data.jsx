@@ -147,7 +147,8 @@ const _mp = r => r && ({
 // Lead de outreach (captación por Instagram)
 const _mo = (r) => ({
   id: r.id, brand: r.brand, instagram: r.instagram || "", web: r.web || "",
-  status: r.status || "guardado", notes: r.notes || "", createdAt: r.created_at,
+  status: r.status || "guardado", notes: r.notes || "",
+  contact: r.contact || "", email: r.email || "", createdAt: r.created_at,
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -1555,10 +1556,12 @@ const addOutreach = async (input) => {
   if (!input.brand) return { error: "faltan datos" };
   const id = "out-" + Date.now();
   const o = { id, brand: input.brand.trim(), instagram: (input.instagram || "").trim(),
-    web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "", createdAt: new Date().toISOString() };
+    web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "",
+    contact: input.contact || "", email: input.email || "", createdAt: new Date().toISOString() };
   _store.OUTREACH = [o, ...(_store.OUTREACH || [])]; _emit();
   const { error } = await _insertAdaptive("outreach", {
     id, agency_id: uid, brand: o.brand, instagram: o.instagram, web: o.web, status: o.status, notes: o.notes,
+    contact: o.contact, email: o.email,
   });
   if (error) { _store.OUTREACH = _store.OUTREACH.filter(x => x.id !== id); _emit(); return { error: error.message }; }
   return { lead: o };
@@ -1573,6 +1576,8 @@ const updateOutreach = async (id, changes) => {
   if (changes.web !== undefined)       db.web = changes.web;
   if (changes.status !== undefined)    db.status = changes.status;
   if (changes.notes !== undefined)     db.notes = changes.notes;
+  if (changes.contact !== undefined)   db.contact = changes.contact;
+  if (changes.email !== undefined)     db.email = changes.email;
   const { error } = await _updateAdaptive("outreach", id, db);
   if (error) { _store.OUTREACH = prev; _emit(); }
 };

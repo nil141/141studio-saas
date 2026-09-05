@@ -192,6 +192,8 @@ const _mo = (r) => ({
   web: r.web || "",
   status: r.status || "guardado",
   notes: r.notes || "",
+  contact: r.contact || "",
+  email: r.email || "",
   createdAt: r.created_at
 });
 const _mae = (r) => ({
@@ -1761,6 +1763,8 @@ const addOutreach = async (input) => {
     web: (input.web || "").trim(),
     status: input.status || "guardado",
     notes: input.notes || "",
+    contact: input.contact || "",
+    email: input.email || "",
     createdAt: (/* @__PURE__ */ new Date()).toISOString()
   };
   _store.OUTREACH = [o, ..._store.OUTREACH || []];
@@ -1772,7 +1776,9 @@ const addOutreach = async (input) => {
     instagram: o.instagram,
     web: o.web,
     status: o.status,
-    notes: o.notes
+    notes: o.notes,
+    contact: o.contact,
+    email: o.email
   });
   if (error) {
     _store.OUTREACH = _store.OUTREACH.filter((x) => x.id !== id);
@@ -1793,6 +1799,8 @@ const updateOutreach = async (id, changes) => {
   if (changes.web !== void 0) db.web = changes.web;
   if (changes.status !== void 0) db.status = changes.status;
   if (changes.notes !== void 0) db.notes = changes.notes;
+  if (changes.contact !== void 0) db.contact = changes.contact;
+  if (changes.email !== void 0) db.email = changes.email;
   const { error } = await _updateAdaptive("outreach", id, db);
   if (error) {
     _store.OUTREACH = prev;
