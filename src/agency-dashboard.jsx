@@ -1472,25 +1472,16 @@ const _ACCESOS = [
   { label: "Agenda",      icon: "calendar",    nav: "agenda" },
 ];
 const AccesosChips = ({ navigate, openModal }) => {
-  const chip = (extra = {}) => ({
-    display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px",
-    borderRadius: 12, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
-    letterSpacing: "-0.2px", whiteSpace: "nowrap", transition: "background .12s, border-color .12s",
-    ...extra,
-  });
   return (
     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-      <button onClick={() => openModal("newTask")}
-        style={chip({ background: "var(--accent-soft)", border: "0.5px solid rgba(158,154,229,0.35)", color: "var(--accent)", fontWeight: 500 })}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.26)"}
-        onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}>
-        <Icon name="plus" size={14}/> Crear
-      </button>
       {_ACCESOS.map(a => (
         <button key={a.nav} onClick={() => navigate(a.nav)}
-          style={chip({ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", color: "var(--text-muted)" })}
-          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--text)"; }}
-          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px",
+            borderRadius: 10, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+            letterSpacing: "-0.2px", whiteSpace: "nowrap", transition: "background .12s, color .12s",
+            border: "none", background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.09)"; e.currentTarget.style.color = "var(--text)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
           <Icon name={a.icon} size={14} strokeWidth={1.7}/> {a.label}
         </button>
       ))}
@@ -1575,7 +1566,7 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
           </div>
           {/* Añadir tarea inline */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
-            background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.07)", marginBottom: 6 }}>
+            background: "rgba(255,255,255,0.04)", border: "none", marginBottom: 6 }}>
             <Icon name="plus" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0 }}/>
             <input value={draft} onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") add(); }}
