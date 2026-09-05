@@ -127,7 +127,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     ListRow,
     {
       key: p.id,
-      label: p.name,
+      label: p.clientName || p.name,
       color: pal[i % pal.length],
       active: current === "project",
       onClick: () => onNavigate("project", { projectId: p.id })

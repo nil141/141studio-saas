@@ -105,7 +105,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
             <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fp.length}</span>
           </div>
           {fp.slice(0, 8).map((p, i) => (
-            <ListRow key={p.id} label={p.name} color={pal[i % pal.length]}
+            <ListRow key={p.id} label={p.clientName || p.name} color={pal[i % pal.length]}
               active={current === "project"} onClick={() => onNavigate("project", { projectId: p.id })}/>
           ))}
         </div>
