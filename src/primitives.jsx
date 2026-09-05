@@ -407,10 +407,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     <>
     <aside className="sidebar" style={{
       width: 220,
-      background: "var(--bg)",
+      background: "var(--bg-elev)",
+      border: "0.5px solid var(--border)",
+      borderRadius: 18,
       display: "flex", flexDirection: "column",
-      height: "100vh", position: "sticky", top: 0,
-      padding: "20px 12px 16px",
+      height: "calc(100vh - 20px)", position: "sticky", top: 10,
+      margin: "10px 5px 10px 10px",
+      padding: "18px 12px 14px",
       overflow: "hidden",
       flexShrink: 0,
     }}>

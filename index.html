@@ -173,10 +173,17 @@
     .page-enter > *, .page-enter > * > * { animation: none; }
   }
 
-  /* App layout */
-  .app { display: grid; grid-template-columns: 220px 1fr; min-height: 100vh; }
-  .app.client { grid-template-columns: 220px 1fr; }
-  .main { min-width: 0; }
+  /* App layout — paneles flotantes (sidebar + contenido) sobre el fondo */
+  .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
+  .app.client { grid-template-columns: auto 1fr; }
+  .main {
+    min-width: 0;
+    margin: 10px 10px 10px 5px;
+    border-radius: 18px;
+    background: var(--bg-elev);
+    border: 0.5px solid var(--border);
+    min-height: calc(100vh - 20px);
+  }
   .topbar { display: none; }
   .topbar-hidden {
     height: 56px;
@@ -677,7 +684,7 @@
     /* Layout */
     .app, .app.client { grid-template-columns: 1fr; }
     .sidebar { display: none !important; }
-    .main { padding-bottom: 68px; }
+    .main { padding-bottom: 68px; margin: 0; border-radius: 0; border: none; min-height: 100vh; }
 
     /* Dashboard */
     .dash-wrap {
@@ -901,7 +908,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=11"></script>
 <script src="src/data.js?v=59"></script>
-<script src="src/primitives.js?v=61"></script>
+<script src="src/primitives.js?v=62"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=21"></script>
