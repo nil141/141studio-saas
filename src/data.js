@@ -194,7 +194,10 @@ const _mo = (r) => ({
   notes: r.notes || "",
   contact: r.contact || "",
   email: r.email || "",
-  createdAt: r.created_at
+  createdAt: r.created_at,
+  lastContacted: r.last_contacted || null,
+  nextFollowup: r.next_followup || null,
+  convertedClientId: r.converted_client_id || null
 });
 const _mae = (r) => ({
   id: r.id,
@@ -1765,7 +1768,10 @@ const addOutreach = async (input) => {
     notes: input.notes || "",
     contact: input.contact || "",
     email: input.email || "",
-    createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+    lastContacted: input.lastContacted || null,
+    nextFollowup: input.nextFollowup || null,
+    convertedClientId: null
   };
   _store.OUTREACH = [o, ..._store.OUTREACH || []];
   _emit();
@@ -1778,7 +1784,9 @@ const addOutreach = async (input) => {
     status: o.status,
     notes: o.notes,
     contact: o.contact,
-    email: o.email
+    email: o.email,
+    last_contacted: o.lastContacted,
+    next_followup: o.nextFollowup
   });
   if (error) {
     _store.OUTREACH = _store.OUTREACH.filter((x) => x.id !== id);
@@ -1801,11 +1809,33 @@ const updateOutreach = async (id, changes) => {
   if (changes.notes !== void 0) db.notes = changes.notes;
   if (changes.contact !== void 0) db.contact = changes.contact;
   if (changes.email !== void 0) db.email = changes.email;
+  if (changes.lastContacted !== void 0) db.last_contacted = changes.lastContacted;
+  if (changes.nextFollowup !== void 0) db.next_followup = changes.nextFollowup;
+  if (changes.convertedClientId !== void 0) db.converted_client_id = changes.convertedClientId;
   const { error } = await _updateAdaptive("outreach", id, db);
   if (error) {
     _store.OUTREACH = prev;
     _emit();
   }
+};
+const outreachMarkContacted = (id, days = 3) => {
+  const o = (_store.OUTREACH || []).find((x) => x.id === id);
+  if (!o) return;
+  const today = /* @__PURE__ */ new Date();
+  const next = /* @__PURE__ */ new Date();
+  next.setDate(today.getDate() + days);
+  const ymd = (d) => d.toISOString().split("T")[0];
+  const changes = { lastContacted: ymd(today), nextFollowup: ymd(next) };
+  if (o.status === "guardado") changes.status = "contactado";
+  updateOutreach(id, changes);
+};
+const convertOutreachToClient = (id) => {
+  const o = (_store.OUTREACH || []).find((x) => x.id === id);
+  if (!o) return null;
+  if (o.convertedClientId) return _store.CLIENTS.find((c2) => c2.id === o.convertedClientId) || null;
+  const c = addClient({ name: o.contact || o.brand, company: o.brand, email: o.email, website: o.web });
+  if (c) updateOutreach(id, { status: "cerrado", convertedClientId: c.id });
+  return c;
 };
 const deleteOutreach = async (id) => {
   const uid = _store._user?.id;
@@ -1954,6 +1984,8 @@ window.Data = {
   addOutreach,
   updateOutreach,
   deleteOutreach,
+  outreachMarkContacted,
+  convertOutreachToClient,
   pendingEmailsFor,
   clearPendingEmail,
   discardPendingEmails,

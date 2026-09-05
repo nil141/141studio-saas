@@ -14,9 +14,12 @@ create table if not exists public.outreach (
   created_at timestamptz default now()
 );
 
--- Columnas extra (ejecuta también estas dos si ya creaste la tabla antes):
-alter table public.outreach add column if not exists contact text;   -- persona de contacto
-alter table public.outreach add column if not exists email   text;   -- correo
+-- Columnas extra (ejecuta también estas si ya creaste la tabla antes):
+alter table public.outreach add column if not exists contact text;             -- persona de contacto
+alter table public.outreach add column if not exists email   text;             -- correo
+alter table public.outreach add column if not exists last_contacted date;      -- último contacto
+alter table public.outreach add column if not exists next_followup  date;      -- próximo seguimiento
+alter table public.outreach add column if not exists converted_client_id text; -- id del cliente creado al cerrar
 
 alter table public.outreach enable row level security;
 

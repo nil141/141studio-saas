@@ -149,6 +149,8 @@ const _mo = (r) => ({
   id: r.id, brand: r.brand, instagram: r.instagram || "", web: r.web || "",
   status: r.status || "guardado", notes: r.notes || "",
   contact: r.contact || "", email: r.email || "", createdAt: r.created_at,
+  lastContacted: r.last_contacted || null, nextFollowup: r.next_followup || null,
+  convertedClientId: r.converted_client_id || null,
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -1557,11 +1559,12 @@ const addOutreach = async (input) => {
   const id = "out-" + Date.now();
   const o = { id, brand: input.brand.trim(), instagram: (input.instagram || "").trim(),
     web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "",
-    contact: input.contact || "", email: input.email || "", createdAt: new Date().toISOString() };
+    contact: input.contact || "", email: input.email || "", createdAt: new Date().toISOString(),
+    lastContacted: input.lastContacted || null, nextFollowup: input.nextFollowup || null, convertedClientId: null };
   _store.OUTREACH = [o, ...(_store.OUTREACH || [])]; _emit();
   const { error } = await _insertAdaptive("outreach", {
     id, agency_id: uid, brand: o.brand, instagram: o.instagram, web: o.web, status: o.status, notes: o.notes,
-    contact: o.contact, email: o.email,
+    contact: o.contact, email: o.email, last_contacted: o.lastContacted, next_followup: o.nextFollowup,
   });
   if (error) { _store.OUTREACH = _store.OUTREACH.filter(x => x.id !== id); _emit(); return { error: error.message }; }
   return { lead: o };
@@ -1578,8 +1581,32 @@ const updateOutreach = async (id, changes) => {
   if (changes.notes !== undefined)     db.notes = changes.notes;
   if (changes.contact !== undefined)   db.contact = changes.contact;
   if (changes.email !== undefined)     db.email = changes.email;
+  if (changes.lastContacted !== undefined)     db.last_contacted = changes.lastContacted;
+  if (changes.nextFollowup !== undefined)      db.next_followup = changes.nextFollowup;
+  if (changes.convertedClientId !== undefined) db.converted_client_id = changes.convertedClientId;
   const { error } = await _updateAdaptive("outreach", id, db);
   if (error) { _store.OUTREACH = prev; _emit(); }
+};
+
+// Marca un lead como contactado hoy y programa el próximo seguimiento (+días).
+const outreachMarkContacted = (id, days = 3) => {
+  const o = (_store.OUTREACH || []).find(x => x.id === id); if (!o) return;
+  const today = new Date();
+  const next = new Date(); next.setDate(today.getDate() + days);
+  const ymd = (d) => d.toISOString().split("T")[0];
+  const changes = { lastContacted: ymd(today), nextFollowup: ymd(next) };
+  // Si aún estaba solo "guardado", avanza a "contactado".
+  if (o.status === "guardado") changes.status = "contactado";
+  updateOutreach(id, changes);
+};
+
+// Convierte un lead en cliente del CRM y lo marca como cerrado + convertido.
+const convertOutreachToClient = (id) => {
+  const o = (_store.OUTREACH || []).find(x => x.id === id); if (!o) return null;
+  if (o.convertedClientId) return _store.CLIENTS.find(c => c.id === o.convertedClientId) || null;
+  const c = addClient({ name: o.contact || o.brand, company: o.brand, email: o.email, website: o.web });
+  if (c) updateOutreach(id, { status: "cerrado", convertedClientId: c.id });
+  return c;
 };
 const deleteOutreach = async (id) => {
   const uid = _store._user?.id; if (!uid) return;
@@ -1656,7 +1683,7 @@ window.Data = {
   clientTasksFor, addClientTask, updateClientTask, toggleClientTask, deleteClientTask,
   notify, markNotificationRead, markAllNotificationsRead,
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
-  addOutreach, updateOutreach, deleteOutreach,
+  addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient,
   pendingEmailsFor, clearPendingEmail, discardPendingEmails, sendPendingEmails,
   addLead,
   addTask, moveTask, updateTask, deleteTask,

@@ -15,6 +15,18 @@ const _igUrl  = (h) => { const u = (h || "").trim().replace(/^@/, ""); return u 
 const _webUrl = (w) => { const u = (w || "").trim(); if (!u) return null; return /^https?:\/\//.test(u) ? u : "https://" + u; };
 const _OM = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const _fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${d.getDate()} ${_OM[d.getMonth()]}`; };
+const _todayYmd = () => new Date().toISOString().split("T")[0];
+const _DONE_ST = ["cerrado", "descartado"];
+// ¿Le toca seguimiento? (tiene fecha programada <= hoy y sigue activo)
+const _isDue = (o) => !!o.nextFollowup && o.nextFollowup <= _todayYmd() && !_DONE_ST.includes(o.status) && !o.convertedClientId;
+// Metadatos visuales del próximo seguimiento
+const _followMeta = (o) => {
+  if (o.convertedClientId || _DONE_ST.includes(o.status) || !o.nextFollowup) return null;
+  const t = _todayYmd();
+  if (o.nextFollowup < t)  return { color: "#dc5b5d", label: "Atrasado" };
+  if (o.nextFollowup === t) return { color: "#e2b45c", label: "Hoy" };
+  return { color: "var(--text-subtle)", label: _fmtDate(o.nextFollowup) };
+};
 
 // Casilla de selección
 const Check = ({ on, onToggle, dim }) => (
@@ -97,7 +109,9 @@ const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpa
 const OutreachRow = ({ o, D, sel, onSel, last }) => {
   const ig = _igUrl(o.instagram), web = _webUrl(o.web);
   const m = _stMeta(o.status);
+  const fm = _followMeta(o);
   const cell = { ..._cell, borderTop: "0.5px solid var(--border)" };
+  const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
   return (
     <tr onMouseEnter={e => e.currentTarget.style.background = sel ? "var(--accent-soft)" : "rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background = sel ? "var(--accent-active)" : "transparent"}
@@ -109,6 +123,13 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
         </span>
       </td>
       <td style={cell}><StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/></td>
+      <td style={cell}>
+        {fm ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: fm.color }}>
+            <Icon name="bell" size={11}/> {fm.label}
+          </span>
+        ) : <span style={{ fontSize: 12, color: "var(--text-subtle)" }}>—</span>}
+      </td>
       <td style={cell}><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></td>
       <td style={cell}>
         {ig ? <a href={ig} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
@@ -126,11 +147,29 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
       <td style={{ ...cell, whiteSpace: "normal", minWidth: 180 }}><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></td>
       <td style={{ ...cell, fontSize: 12, color: "var(--text-subtle)" }}>{_fmtDate(o.createdAt)}</td>
       <td style={{ ...cell, textAlign: "right", paddingRight: 12 }}>
-        <button onClick={() => D.deleteOutreach(o.id)} title="Eliminar"
-          style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6 }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--red)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
-          <Icon name="x" size={14}/>
-        </button>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
+          {!_DONE_ST.includes(o.status) && !o.convertedClientId && (
+            <button onClick={() => D.outreachMarkContacted(o.id)} title="Marcar contactado hoy (programa seguimiento en 3 días)"
+              style={iconBtn} onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+              <Icon name="send" size={13}/>
+            </button>
+          )}
+          {o.convertedClientId ? (
+            <span title="Ya es cliente" style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 500, color: "var(--green)", padding: "0 4px" }}>
+              <Icon name="check" size={12}/> Cliente
+            </span>
+          ) : o.status === "cerrado" ? (
+            <button onClick={() => D.convertOutreachToClient(o.id)} title="Convertir en cliente del CRM"
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 7, cursor: "pointer",
+                background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)", fontFamily: "inherit", fontSize: 11.5, fontWeight: 500, whiteSpace: "nowrap" }}>
+              <Icon name="arrow-up-right" size={12}/> Cliente
+            </button>
+          ) : null}
+          <button onClick={() => D.deleteOutreach(o.id)} title="Eliminar" style={iconBtn}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--red)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+            <Icon name="x" size={14}/>
+          </button>
+        </span>
       </td>
     </tr>
   );
@@ -142,6 +181,12 @@ const AgencyOutreach = ({ navigate }) => {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(() => new Set());
   const [showAdd, setShowAdd] = useState(false);
+  const [onlyDue, setOnlyDue] = useState(false);
+  const GOAL = 15;
+  const today = _todayYmd();
+  const contactedToday = all.filter(o => o.lastContacted === today).length;
+  const dueLeads = all.filter(_isDue);
+  const goalPct = Math.min(100, Math.round((contactedToday / GOAL) * 100));
   const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
   const [f, setF] = useState(_emptyF);
   const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
@@ -156,7 +201,8 @@ const AgencyOutreach = ({ navigate }) => {
   all.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
 
   const ql = q.trim().toLowerCase();
-  const rows = all.filter(o => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
+  let rows = all.filter(o => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
+  if (onlyDue) rows = rows.filter(_isDue);
 
   const toggle = (id) => setSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSel = rows.length > 0 && rows.every(o => sel.has(o.id));
@@ -201,15 +247,37 @@ const AgencyOutreach = ({ navigate }) => {
         </div>
       </div>
 
+      {/* Barra de seguimiento: meta diaria + seguimientos pendientes */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 14px", borderRadius: 10, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
+          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Hoy</span>
+          <span style={{ fontSize: 13.5, fontWeight: 600 }}>{contactedToday}<span style={{ color: "var(--text-subtle)", fontWeight: 400 }}>/{GOAL}</span></span>
+          <div style={{ width: 84, height: 5, borderRadius: 3, background: "var(--bg-hover)", overflow: "hidden" }}>
+            <div style={{ width: goalPct + "%", height: "100%", background: goalPct >= 100 ? "var(--green)" : "var(--accent)", borderRadius: 3, transition: "width .3s" }}/>
+          </div>
+          <span style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>contactados</span>
+        </div>
+        <button onClick={() => setOnlyDue(v => !v)}
+          style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 34, padding: "0 13px", borderRadius: 10, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap",
+            background: onlyDue ? "var(--accent-soft)" : "var(--bg-elev-2)",
+            border: onlyDue ? "1px solid rgba(158,154,229,0.35)" : "0.5px solid var(--border)",
+            color: onlyDue ? "var(--accent)" : (dueLeads.length ? "#e2b45c" : "var(--text-muted)") }}>
+          <Icon name="bell" size={13}/>
+          {dueLeads.length > 0 ? `${dueLeads.length} seguimiento${dueLeads.length > 1 ? "s" : ""} para hoy` : "Sin seguimientos pendientes"}
+        </button>
+        {onlyDue && <button onClick={() => setOnlyDue(false)} className="btn ghost sm" style={{ color: "var(--text-subtle)" }}>Ver todos</button>}
+      </div>
+
       {/* Tabla dentro de cajita */}
       <div style={{ border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" }}>
         <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1000 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
             <thead>
               <tr style={{ background: "var(--bg-elev-2)" }}>
                 <th style={{ ...th, paddingLeft: 16, paddingRight: 4, width: 34 }}><Check on={allSel} onToggle={toggleAll}/></th>
                 <th style={th}>Marca</th>
                 <th style={th}>Estado</th>
+                <th style={th}>Seguimiento</th>
                 <th style={th}>Contacto</th>
                 <th style={th}>Instagram</th>
                 <th style={th}>Web</th>
