@@ -190,8 +190,6 @@
           onClick: (e) => e.stopPropagation(),
           style: { color: "var(--accent)", textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }
         },
-        /* @__PURE__ */ React.createElement(SiIcon, { name: "instagram", size: 13 }),
-        " ",
         o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram
       ) : /* @__PURE__ */ React.createElement(InlineText, { value: "", placeholder: "@instagram", onSave: (v) => D.updateOutreach(o.id, { instagram: v }) })),
       /* @__PURE__ */ React.createElement("td", { style: cell }, web ? /* @__PURE__ */ React.createElement(

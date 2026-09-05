@@ -96,7 +96,7 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
       <td style={cell}>
         {ig ? <a href={ig} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
           style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}>
-          <SiIcon name="instagram" size={13}/> {o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram}</a>
+          {o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram}</a>
           : <InlineText value="" placeholder="@instagram" onSave={v => D.updateOutreach(o.id, { instagram: v })}/>}
       </td>
       <td style={cell}>
