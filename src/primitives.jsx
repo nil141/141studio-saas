@@ -92,9 +92,10 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
       {otrosOpen && (
-        <div style={{ marginBottom: 2, animation: "sectionIn .2s ease-out" }}>
+        <div style={{ position: "relative", margin: "2px 0 4px", marginLeft: 8, paddingLeft: 10,
+          borderLeft: "1px solid var(--border)", animation: "sectionIn .2s ease-out" }}>
           {_NAV_OTROS.map(it => (
-            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
+            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} nested/>
           ))}
         </div>
       )}
@@ -310,7 +311,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     return () => clearTimeout(t);
   }, [current, collapsed]);
 
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef }) => {
+  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = active != null ? active : (curNav === id);
     return (
@@ -322,12 +323,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         style={{
           position:"relative", zIndex:1,
           display:"flex", alignItems:"center", gap:11,
-          height:38, padding:"0 10px", borderRadius:10, cursor:"pointer",
+          height: nested ? 34 : 38, padding:"0 10px", borderRadius:10, cursor:"pointer",
           background: bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent"),
           border: bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent"),
           color: isActive || hov ? "var(--text)" : "var(--text-muted)",
-          transition:"color .15s, background .15s",
-          fontSize:14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
+          opacity: nested && !isActive && !hov ? 0.72 : 1,
+          transition:"color .15s, background .15s, opacity .15s",
+          fontSize: nested ? 13.5 : 14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
         }}
       >
         <Icon name={icon} size={16} strokeWidth={1.7}/>

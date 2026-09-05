@@ -139,7 +139,14 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
     /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
-  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 2, animation: "sectionIn .2s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: {
+    position: "relative",
+    margin: "2px 0 4px",
+    marginLeft: 8,
+    paddingLeft: 10,
+    borderLeft: "1px solid var(--border)",
+    animation: "sectionIn .2s ease-out"
+  } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, nested: true }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -345,7 +352,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     const t = setTimeout(measurePill, 280);
     return () => clearTimeout(t);
   }, [current, collapsed]);
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef }) => {
+  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = active != null ? active : curNav === id;
     return /* @__PURE__ */ React.createElement(
@@ -361,15 +368,16 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           display: "flex",
           alignItems: "center",
           gap: 11,
-          height: 38,
+          height: nested ? 34 : 38,
           padding: "0 10px",
           borderRadius: 10,
           cursor: "pointer",
           background: bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
           border: bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
           color: isActive || hov ? "var(--text)" : "var(--text-muted)",
-          transition: "color .15s, background .15s",
-          fontSize: 14,
+          opacity: nested && !isActive && !hov ? 0.72 : 1,
+          transition: "color .15s, background .15s, opacity .15s",
+          fontSize: nested ? 13.5 : 14,
           fontWeight: 400,
           letterSpacing: "-0.04em",
           userSelect: "none"
