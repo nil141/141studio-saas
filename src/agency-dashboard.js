@@ -1474,16 +1474,16 @@
     return { name: active || names[names.length - 1], allDone: !active };
   };
   var _PHASE_COLORS = [
-    [/dise[ñn]|design/, "#e879a6"],
-    // Diseño → rosa
-    [/desarroll|\bdev\b|program|shopify|maqueta|c[oó]digo|web/, "#60a5fa"],
+    [/dise[ñn]|design|prototip/, "#d98cc0"],
+    // Diseño → rosa suave
+    [/desarroll|\bdev\b|program|shopify|maqueta|c[oó]digo|web/, "#6ea8fe"],
     // Desarrollo → azul
-    [/audit|an[aá]lisis|research|investiga|quick|diagn/, "#eec06a"],
+    [/audit|an[aá]lisis|research|investiga|quick|diagn/, "#e2b45c"],
     // Auditoría → ámbar
-    [/lanz|launch|publica|final|deploy|entrega/, "#00d492"],
-    // Lanzamiento → verde
-    [/conten|redes|social|marketing|\bads\b|campañ|copy/, "#9e9ae5"]
-    // Contenido → morado
+    [/lanz|launch|publica|final|deploy|entrega/, "#4ecb8f"],
+    // Lanzamiento → verde menta
+    [/conten|redes|social|marketing|\bads\b|campañ|copy/, "#a99ff0"]
+    // Contenido → lila
   ];
   var _phaseColor = (name) => {
     const t = (name || "").toLowerCase();
@@ -1526,19 +1526,18 @@
           background: "var(--green)",
           display: "grid",
           placeItems: "center"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })) : /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, title), /* @__PURE__ */ React.createElement("span", { style: {
-          fontSize: 10.5,
-          padding: "3px 9px",
-          borderRadius: 99,
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })) : /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--border-strong)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, title), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10,
+          padding: "2px 8px",
+          borderRadius: 6,
           whiteSpace: "nowrap",
           flexShrink: 0,
-          background: col + "22",
-          border: "0.5px solid " + col + "55",
+          background: col + "1f",
           color: col,
-          letterSpacing: "-0.1px",
+          letterSpacing: "0.01em",
           fontWeight: 500
         } }, phName)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: col, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 7, borderRadius: 4, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: col, borderRadius: 4, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
       );
     })))));
   };
