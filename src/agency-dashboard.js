@@ -1374,21 +1374,29 @@
   };
   var MiListaBlock = ({ D, navigate, todayStr }) => {
     const [tab, setTab] = useState("dia");
+    const [dayOffset, setDayOffset] = useState(0);
     const [draft, setDraft] = useState("");
-    const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
+    const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
+    const selDay = _ymdShift(todayStr, dayOffset);
     const weekEnd = _ymdShift(todayStr, 7);
-    const pend = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => arr.filter((t) => t.column !== "done").map((t) => ({ ...t, _pid: pid }))).filter((t) => t.deadline && (tab === "dia" ? t.deadline <= todayStr : t.deadline <= weekEnd)).sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1).slice(0, 8);
+    const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
+    const pend = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => arr.filter((t) => t.column !== "done").map((t) => ({ ...t, _pid: pid }))).filter((t) => {
+      if (!t.deadline) return false;
+      if (tab === "semana") return t.deadline >= todayStr && t.deadline <= weekEnd;
+      return dayOffset === 0 ? t.deadline <= todayStr : t.deadline === selDay;
+    }).sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1).slice(0, 10);
     const add = () => {
       const v = draft.trim();
       if (!v) return;
-      D.addTask({ title: v, deadline: todayStr });
+      D.addTask({ title: v, deadline: tab === "semana" ? todayStr : selDay });
       setDraft("");
     };
     const fmt = (ds) => {
       const d = ds ? /* @__PURE__ */ new Date(ds + "T00:00:00") : null;
       return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : "";
     };
-    const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
+    const dayLabel = dayOffset === 0 ? "Hoy" : dayOffset === -1 ? "Ayer" : dayOffset === 1 ? "Ma\xF1ana" : fmt(selDay);
+    const emptyMsg = tab === "semana" ? "Nada pendiente esta semana." : dayOffset === 0 ? "Todo hecho para hoy \u{1F389}" : `Nada para ${dayLabel.toLowerCase()}.`;
     const tabBtn = (id, label) => /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -1407,8 +1415,16 @@
       },
       label
     );
-    const tabs = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })));
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Mi lista", open, onToggle: toggleOpen, right: tabs }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    const navBtn = { ...LINK_BTN, width: 22, height: 22, color: "var(--text-subtle)" };
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(
+      SectionHead,
+      {
+        title: "Mi lista",
+        open,
+        onToggle: toggleOpen,
+        right: /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))
+      }
+    ), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement(Icon, { name: "list-todo", size: 16, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Mi lista")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana")), tab === "dia" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setDayOffset((o) => o - 1), style: navBtn, title: "Anterior" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 14 })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text)", minWidth: 58, textAlign: "center", letterSpacing: "-0.2px" } }, dayLabel), /* @__PURE__ */ React.createElement("button", { onClick: () => setDayOffset((o) => o + 1), style: navBtn, title: "Siguiente" }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14 }))))), /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
@@ -1425,7 +1441,7 @@
         onKeyDown: (e) => {
           if (e.key === "Enter") add();
         },
-        placeholder: "A\xF1adir tarea para hoy\u2026",
+        placeholder: tab === "dia" && dayOffset !== 0 ? `A\xF1adir tarea para ${dayLabel.toLowerCase()}\u2026` : "A\xF1adir tarea para hoy\u2026",
         style: {
           flex: 1,
           background: "transparent",
@@ -1448,7 +1464,7 @@
       fontFamily: "inherit",
       fontSize: 12.5,
       fontWeight: 500
-    } }, "A\xF1adir")), pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, tab === "dia" ? "Todo hecho para hoy \u{1F389}" : "Nada pendiente esta semana.") : pend.map((t, i) => /* @__PURE__ */ React.createElement(
+    } }, "A\xF1adir")), pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, emptyMsg) : pend.map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         key: t.id,

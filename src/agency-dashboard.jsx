@@ -1498,26 +1498,38 @@ const AccesosChips = ({ navigate, openModal }) => {
   );
 };
 
-// "Mi lista" — tareas de hoy / semana con añadir inline y pestañas
+// "Mi lista" — tareas por día / semana, con navegador de día y añadir inline
 const MiListaBlock = ({ D, navigate, todayStr }) => {
-  const [tab, setTab] = useState("dia");   // "dia" | "semana"
+  const [tab, setTab] = useState("dia");     // "dia" | "semana"
+  const [dayOffset, setDayOffset] = useState(0);  // 0 = hoy
   const [draft, setDraft] = useState("");
-  const projIds = new Set((D.PROJECTS || []).map(p => p.id));
+  const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
+
+  const selDay = _ymdShift(todayStr, dayOffset);
   const weekEnd = _ymdShift(todayStr, 7);
+  const projIds = new Set((D.PROJECTS || []).map(p => p.id));
   const pend = Object.entries(D.TASKS)
     .filter(([pid]) => pid === "__none__" || projIds.has(pid))
     .flatMap(([pid, arr]) => arr.filter(t => t.column !== "done").map(t => ({ ...t, _pid: pid })))
-    .filter(t => t.deadline && (tab === "dia" ? t.deadline <= todayStr : t.deadline <= weekEnd))
+    .filter(t => {
+      if (!t.deadline) return false;
+      if (tab === "semana") return t.deadline >= todayStr && t.deadline <= weekEnd;
+      return dayOffset === 0 ? t.deadline <= todayStr : t.deadline === selDay;  // Hoy incluye atrasadas
+    })
     .sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1)
-    .slice(0, 8);
+    .slice(0, 10);
+
   const add = () => {
     const v = draft.trim();
     if (!v) return;
-    D.addTask({ title: v, deadline: todayStr });
+    D.addTask({ title: v, deadline: tab === "semana" ? todayStr : selDay });
     setDraft("");
   };
   const fmt = (ds) => { const d = ds ? new Date(ds + "T00:00:00") : null; return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : ""; };
-  const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
+  const dayLabel = dayOffset === 0 ? "Hoy" : dayOffset === -1 ? "Ayer" : dayOffset === 1 ? "Mañana" : fmt(selDay);
+  const emptyMsg = tab === "semana" ? "Nada pendiente esta semana."
+    : dayOffset === 0 ? "Todo hecho para hoy 🎉" : `Nada para ${dayLabel.toLowerCase()}.`;
+
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)}
       style={{ border: "none", cursor: "pointer", fontFamily: "inherit",
@@ -1525,25 +1537,41 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
         color: tab === id ? "var(--text)" : "var(--text-subtle)",
         background: tab === id ? "rgba(255,255,255,0.07)" : "transparent" }}>{label}</button>
   );
-  const tabs = (
-    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-      {tabBtn("dia", "Día")}
-      {tabBtn("semana", "Semana")}
-      <button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todas"><Icon name="arrow" size={12}/></button>
-    </div>
-  );
+  const navBtn = { ...LINK_BTN, width: 22, height: 22, color: "var(--text-subtle)" };
+
   return (
     <section>
-      <SectionHead title="Mi lista" open={open} onToggle={toggleOpen} right={tabs}/>
+      <SectionHead title="Mi lista" open={open} onToggle={toggleOpen}
+        right={<button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todas"><Icon name="arrow" size={12}/></button>}/>
       {open && (
         <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+          {/* Cabecera dentro de la cajita: icono + título + pestañas + navegador de día */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 14, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <Icon name="list-todo" size={16} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
+              <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" }}>Mi lista</span>
+            </div>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                {tabBtn("dia", "Día")}
+                {tabBtn("semana", "Semana")}
+              </div>
+              {tab === "dia" && (
+                <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+                  <button onClick={() => setDayOffset(o => o - 1)} style={navBtn} title="Anterior"><Icon name="chevron-left" size={14}/></button>
+                  <span style={{ fontSize: 12.5, color: "var(--text)", minWidth: 58, textAlign: "center", letterSpacing: "-0.2px" }}>{dayLabel}</span>
+                  <button onClick={() => setDayOffset(o => o + 1)} style={navBtn} title="Siguiente"><Icon name="chevron-right" size={14}/></button>
+                </div>
+              )}
+            </div>
+          </div>
           {/* Añadir tarea inline */}
           <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
             background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.07)", marginBottom: 6 }}>
             <Icon name="plus" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0 }}/>
             <input value={draft} onChange={e => setDraft(e.target.value)}
               onKeyDown={e => { if (e.key === "Enter") add(); }}
-              placeholder="Añadir tarea para hoy…"
+              placeholder={tab === "dia" && dayOffset !== 0 ? `Añadir tarea para ${dayLabel.toLowerCase()}…` : "Añadir tarea para hoy…"}
               style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text)",
                 fontSize: 14, fontFamily: "var(--font-sans)", letterSpacing: "-0.3px", caretColor: "var(--accent)" }}/>
             {draft.trim() && (
@@ -1552,9 +1580,7 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
             )}
           </div>
           {pend.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>
-              {tab === "dia" ? "Todo hecho para hoy 🎉" : "Nada pendiente esta semana."}
-            </div>
+            <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>{emptyMsg}</div>
           ) : pend.map((t, i) => (
             <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
               projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
