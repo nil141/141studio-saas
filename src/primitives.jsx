@@ -444,11 +444,11 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {kind === "agency" && (
         <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
           <button onClick={() => onQuickCreate && onQuickCreate()}
-            onMouseEnter={e => e.currentTarget.style.filter = "brightness(0.92)"}
-            onMouseLeave={e => e.currentTarget.style.filter = "none"}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.09)"}
+            onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.05)"}
             style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, height:40, borderRadius:12,
-              background:"var(--accent)", color:"var(--accent-fg)", border:"1px solid var(--accent)", cursor:"pointer",
-              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"filter .12s"}}>
+              background:"rgba(255,255,255,0.05)", color:"var(--accent)", border:"1px solid rgba(255,255,255,0.06)", cursor:"pointer",
+              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s"}}>
             <Icon name="plus" size={16}/> Crear
           </button>
           <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,

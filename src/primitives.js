@@ -439,8 +439,8 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     "button",
     {
       onClick: () => onQuickCreate && onQuickCreate(),
-      onMouseEnter: (e) => e.currentTarget.style.filter = "brightness(0.92)",
-      onMouseLeave: (e) => e.currentTarget.style.filter = "none",
+      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.09)",
+      onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.05)",
       style: {
         display: "flex",
         alignItems: "center",
@@ -448,15 +448,15 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
         gap: 8,
         height: 40,
         borderRadius: 12,
-        background: "var(--accent)",
-        color: "var(--accent-fg)",
-        border: "1px solid var(--accent)",
+        background: "rgba(255,255,255,0.05)",
+        color: "var(--accent)",
+        border: "1px solid rgba(255,255,255,0.06)",
         cursor: "pointer",
         fontFamily: "inherit",
         fontSize: 14,
         fontWeight: 500,
         letterSpacing: "-0.02em",
-        transition: "filter .12s"
+        transition: "background .12s"
       }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
