@@ -85,7 +85,8 @@
     const [editNotes, setEditNotes] = useState(false);
     const [draft, setDraft] = useState(o.notes || "");
     const ig = _igUrl(o.instagram), web = _webUrl(o.web);
-    const cell = { padding: "12px 14px", verticalAlign: "middle", borderBottom: last ? "none" : "0.5px solid var(--border)" };
+    const m = _stMeta(o.status);
+    const cell = { padding: "0 14px", height: 46, verticalAlign: "middle", borderBottom: last ? "none" : "0.5px solid var(--border)" };
     return /* @__PURE__ */ React.createElement(
       "tr",
       {
@@ -93,7 +94,8 @@
         onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
         style: { transition: "background .1s" }
       },
-      /* @__PURE__ */ React.createElement("td", { style: { ...cell, fontWeight: 500, fontSize: 14 } }, o.brand),
+      /* @__PURE__ */ React.createElement("td", { style: { ...cell, fontWeight: 500, fontSize: 14 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: m.color, flexShrink: 0 } }), o.brand)),
+      /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(StatusPill, { value: o.status, onChange: (s) => D.updateOutreach(o.id, { status: s }) })),
       /* @__PURE__ */ React.createElement("td", { style: cell }, ig ? /* @__PURE__ */ React.createElement(
         "a",
         {
@@ -119,7 +121,6 @@
         /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 12 }),
         " Web"
       ) : /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\u2014")),
-      /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(StatusPill, { value: o.status, onChange: (s) => D.updateOutreach(o.id, { status: s }) })),
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, minWidth: 200 } }, editNotes ? /* @__PURE__ */ React.createElement(
         "input",
         {
@@ -196,14 +197,28 @@
       setBrand("");
       setIg("");
     };
-    const activos = all.length - (counts.cerrado || 0) - (counts.descartado || 0);
-    const stats = [
-      { label: "Total", value: all.length },
-      { label: "En conversaci\xF3n", value: counts.conversacion || 0 },
-      { label: "Propuestas", value: counts.propuesta || 0 },
-      { label: "Cerrados", value: counts.cerrado || 0 }
-    ];
-    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, textTransform: "uppercase", letterSpacing: "0.09em", color: "var(--text-subtle)", marginBottom: 8, fontWeight: 600 } }, "Otros"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 500, fontSize: "clamp(24px,3vw,32px)", letterSpacing: "-0.8px" } }, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { marginTop: 8, maxWidth: 620, color: "var(--text-muted)", fontSize: 14, lineHeight: 1.5 } }, "Tu captaci\xF3n por Instagram. Guarda cuentas que veas, cont\xE1ctalas y sigue el estado de cada una hasta la propuesta.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 32, padding: "16px 0 20px", borderBottom: "0.5px solid var(--border)", marginBottom: 20 } }, stats.map((s, i) => /* @__PURE__ */ React.createElement("div", { key: i }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 26, fontWeight: 500, fontFamily: "var(--font-display)", letterSpacing: "-1px", fontVariantNumeric: "tabular-nums" } }, s.value), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, s.label)))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+    const th = {
+      textAlign: "left",
+      padding: "0 14px",
+      height: 34,
+      fontSize: 10.5,
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.05em",
+      color: "var(--text-subtle)",
+      borderBottom: "0.5px solid var(--border)",
+      whiteSpace: "nowrap",
+      background: "var(--bg)"
+    };
+    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 18 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(22px,2.6vw,28px)", letterSpacing: "-0.7px" } }, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 7, fontSize: 13, color: "var(--text-muted)", display: "flex", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, all.length), " marcas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.contactado || 0, " contactadas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.respondio || 0, " respuestas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.propuesta || 0, " propuestas"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 12, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setFilter("todos"), style: _chip(filter === "todos", "var(--text)") }, "Todos ", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55 } }, all.length)), OUTREACH_STATUS.map((s) => /* @__PURE__ */ React.createElement("button", { key: s.id, onClick: () => setFilter(s.id), style: _chip(filter === s.id, s.color) }, s.label, " ", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.55 } }, counts[s.id] || 0))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 12 } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, height: 32, padding: "0 11px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: q,
+        onChange: (e) => setQ(e.target.value),
+        placeholder: "Buscar\u2026",
+        style: { background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 130 }
+      }
+    ))), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 760 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px", height: 46 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 10, width: "100%" } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
       "input",
       {
         value: brand,
@@ -211,22 +226,20 @@
         onKeyDown: (e) => {
           if (e.key === "Enter") add();
         },
-        placeholder: "Marca / cuenta",
+        placeholder: "A\xF1adir cuenta\u2026",
         style: {
-          flex: "1 1 200px",
+          flex: 1,
           minWidth: 0,
-          height: 40,
-          padding: "0 14px",
-          borderRadius: 10,
-          background: "var(--bg-elev-2)",
-          border: "0.5px solid var(--border)",
+          background: "transparent",
+          border: "none",
+          outline: "none",
           color: "var(--text)",
           fontSize: 14,
           fontFamily: "inherit",
-          outline: "none"
+          fontWeight: 500
         }
       }
-    ), /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px" } }), /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px" } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         value: ig,
@@ -235,69 +248,31 @@
           if (e.key === "Enter") add();
         },
         placeholder: "@instagram",
-        style: {
-          flex: "1 1 160px",
-          minWidth: 0,
-          height: 40,
-          padding: "0 14px",
-          borderRadius: 10,
-          background: "var(--bg-elev-2)",
-          border: "0.5px solid var(--border)",
-          color: "var(--text)",
-          fontSize: 14,
-          fontFamily: "inherit",
-          outline: "none"
-        }
+        style: { width: "100%", background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit" }
       }
-    ), /* @__PURE__ */ React.createElement("button", { onClick: add, className: "btn primary", style: { height: 40, padding: "0 18px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15 }), " A\xF1adir")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => setFilter("todos"),
-        style: _chip(filter === "todos", "var(--text)")
-      },
-      "Todos ",
-      /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, all.length)
-    ), OUTREACH_STATUS.map((s) => /* @__PURE__ */ React.createElement("button", { key: s.id, onClick: () => setFilter(s.id), style: _chip(filter === s.id, s.color) }, s.label, " ", /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.6 } }, counts[s.id] || 0))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 11px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        value: q,
-        onChange: (e) => setQ(e.target.value),
-        placeholder: "Buscar\u2026",
-        style: { background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 140 }
-      }
-    ))), rows.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "48px 0", textAlign: "center", color: "var(--text-subtle)" } }, /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px" } }), /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px" } }), /* @__PURE__ */ React.createElement("td", { style: { padding: "0 14px", textAlign: "right" } }, brand.trim() && /* @__PURE__ */ React.createElement("button", { onClick: add, className: "btn primary sm", style: { height: 28 } }, "A\xF1adir"))), rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, last: i === rows.length - 1 })))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 0", textAlign: "center" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "megaphone-simple",
         title: all.length === 0 ? "A\xFAn no tienes leads" : "Sin resultados",
-        sub: all.length === 0 ? "A\xF1ade la primera cuenta que quieras contactar arriba." : "Prueba con otro filtro o b\xFAsqueda."
+        sub: all.length === 0 ? "Escribe la primera cuenta en la fila de arriba." : "Prueba con otro filtro o b\xFAsqueda."
       }
-    )) : /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", border: "0.5px solid var(--border)", borderRadius: 14, background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 720 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", null, ["Marca", "Instagram", "Web", "Estado", "Notas", ""].map((h, i) => /* @__PURE__ */ React.createElement("th", { key: i, style: {
-      textAlign: i === 5 ? "right" : "left",
-      padding: "11px 14px",
-      fontSize: 10.5,
-      fontWeight: 600,
-      textTransform: "uppercase",
-      letterSpacing: "0.06em",
-      color: "var(--text-subtle)",
-      borderBottom: "0.5px solid var(--border)",
-      whiteSpace: "nowrap"
-    } }, h)))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, last: i === rows.length - 1 }))))));
+    ))));
   };
   function _chip(active, color) {
     return {
       display: "inline-flex",
       alignItems: "center",
-      gap: 6,
-      padding: "6px 11px",
-      borderRadius: 8,
+      gap: 5,
+      padding: "5px 10px",
+      borderRadius: 7,
       cursor: "pointer",
       fontFamily: "inherit",
-      fontSize: 12.5,
+      fontSize: 12,
       letterSpacing: "-0.01em",
       whiteSpace: "nowrap",
       border: "none",
-      background: active ? color === "var(--text)" ? "rgba(255,255,255,0.09)" : color + "22" : "rgba(255,255,255,0.04)",
+      background: active ? color === "var(--text)" ? "rgba(255,255,255,0.09)" : color + "22" : "transparent",
       color: active ? color === "var(--text)" ? "var(--text)" : color : "var(--text-muted)"
     };
   }
