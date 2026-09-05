@@ -444,9 +444,12 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {kind === "agency" && (
         <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
           <button onClick={() => onQuickCreate && onQuickCreate()}
+            onMouseEnter={e => e.currentTarget.style.filter = "brightness(1.08)"}
+            onMouseLeave={e => e.currentTarget.style.filter = "none"}
             style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, height:40, borderRadius:12,
-              background:"var(--accent)", color:"var(--accent-fg)", border:"none", cursor:"pointer",
-              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.3px"}}>
+              background:"linear-gradient(135deg, #a7a3f0 0%, #7b83ec 100%)", color:"#fff", border:"none", cursor:"pointer",
+              fontFamily:"inherit", fontSize:14, fontWeight:600, letterSpacing:"-0.3px",
+              boxShadow:"0 4px 14px rgba(123,131,236,0.28)", transition:"filter .12s"}}>
             <Icon name="plus" size={16}/> Crear
           </button>
           <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
