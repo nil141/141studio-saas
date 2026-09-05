@@ -1,14 +1,15 @@
 (() => {
-  const { useState: useStateA, useEffect: useEffectA } = React;
+  // src/z-app.jsx
+  var { useState: useStateA, useEffect: useEffectA } = React;
   try {
     const _g = new URLSearchParams(window.location.search).get("goto");
     if (_g && /^client-[a-z-]+$/.test(_g)) localStorage.setItem("141_goto", _g);
   } catch {
   }
-  const _SK = "141_session";
-  const _SEK = "141_session_exp";
-  const _SDK = "141_session_dur";
-  const _saveSession = (sess, days) => {
+  var _SK = "141_session";
+  var _SEK = "141_session_exp";
+  var _SDK = "141_session_dur";
+  var _saveSession = (sess, days) => {
     localStorage.setItem(_SDK, String(days));
     if (!days || days === 0) {
       sessionStorage.setItem(_SK, JSON.stringify(sess));
@@ -21,7 +22,7 @@
       sessionStorage.removeItem(_SK);
     }
   };
-  const _loadSession = () => {
+  var _loadSession = () => {
     try {
       const ls = localStorage.getItem(_SK);
       if (ls) {
@@ -35,17 +36,17 @@
       return null;
     }
   };
-  const _clearSession = () => {
+  var _clearSession = () => {
     sessionStorage.removeItem(_SK);
     localStorage.removeItem(_SK);
     localStorage.removeItem(_SEK);
   };
-  const _sessionInfo = () => ({
+  var _sessionInfo = () => ({
     days: parseInt(localStorage.getItem(_SDK) || "0"),
     exp: localStorage.getItem(_SEK)
   });
   window._sessionUtils = { save: _saveSession, info: _sessionInfo };
-  const App = () => {
+  var App = () => {
     const [session, setSession] = useState(_loadSession);
     const [view, setView] = useState({ name: "dashboard", side: "agency", params: {} });
     const [theme, setTheme] = useState("dark");
@@ -163,6 +164,8 @@
           return /* @__PURE__ */ React.createElement(TasksBoard, { navigate, openModal, initialDate: view.params.date });
         case "campaigns":
           return /* @__PURE__ */ React.createElement(CampaignsPage, { navigate });
+        case "outreach":
+          return /* @__PURE__ */ React.createElement(AgencyOutreach, { navigate });
         case "campaign":
           return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate, initialAction: view.params.action });
         case "agenda":

@@ -86,7 +86,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
-  AGENDA_EVENTS: [],
+  AGENDA_EVENTS: [], OUTREACH: [],
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
   _subs: new Set(),
@@ -143,6 +143,11 @@ const _mp = r => r && ({
   phasesDesc: _parseObj(r.phases_desc),                // { nombreFase: "descripción corta" }
   figmaUrl: r.figma_url || "",                         // enlace de Figma (diseño)
   figmaPhase: r.figma_phase || "",                     // fase donde se muestra el diseño ("" = automático)
+});
+// Lead de outreach (captación por Instagram)
+const _mo = (r) => ({
+  id: r.id, brand: r.brand, instagram: r.instagram || "", web: r.web || "",
+  status: r.status || "guardado", notes: r.notes || "", createdAt: r.created_at,
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -342,6 +347,8 @@ const _loadAll = async () => {
     const nt = await _sb.from("notifications").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
     let ae = { data: [] };
     try { ae = await _sb.from("agenda_events").select("*").eq("agency_id", uid).order("date", { ascending: true }); } catch {}
+    let ou = { data: [] };
+    try { ou = await _sb.from("outreach").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
@@ -351,6 +358,7 @@ const _loadAll = async () => {
     _store.CLIENT_TASKS = (ct.data || []).map(_mct);
     _store.NOTIFICATIONS = (nt.data || []).map(_mn);
     _store.AGENDA_EVENTS = ((ae && ae.data) || []).map(_mae);
+    _store.OUTREACH     = ((ou && ou.data) || []).map(_mo);
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -381,6 +389,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "notifications",filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "outreach",      filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -1540,6 +1549,41 @@ const deleteAgendaEvent = async (id) => {
   if (error) { _store.AGENDA_EVENTS = prev; _emit(); }
 };
 
+// ── Outreach (captación Instagram) ────────────────────────────────────
+const addOutreach = async (input) => {
+  const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
+  if (!input.brand) return { error: "faltan datos" };
+  const id = "out-" + Date.now();
+  const o = { id, brand: input.brand.trim(), instagram: (input.instagram || "").trim(),
+    web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "", createdAt: new Date().toISOString() };
+  _store.OUTREACH = [o, ...(_store.OUTREACH || [])]; _emit();
+  const { error } = await _insertAdaptive("outreach", {
+    id, agency_id: uid, brand: o.brand, instagram: o.instagram, web: o.web, status: o.status, notes: o.notes,
+  });
+  if (error) { _store.OUTREACH = _store.OUTREACH.filter(x => x.id !== id); _emit(); return { error: error.message }; }
+  return { lead: o };
+};
+const updateOutreach = async (id, changes) => {
+  const uid = _store._user?.id; if (!uid) return;
+  const prev = _store.OUTREACH || [];
+  _store.OUTREACH = prev.map(o => o.id === id ? { ...o, ...changes } : o); _emit();
+  const db = {};
+  if (changes.brand !== undefined)     db.brand = changes.brand;
+  if (changes.instagram !== undefined) db.instagram = changes.instagram;
+  if (changes.web !== undefined)       db.web = changes.web;
+  if (changes.status !== undefined)    db.status = changes.status;
+  if (changes.notes !== undefined)     db.notes = changes.notes;
+  const { error } = await _updateAdaptive("outreach", id, db);
+  if (error) { _store.OUTREACH = prev; _emit(); }
+};
+const deleteOutreach = async (id) => {
+  const uid = _store._user?.id; if (!uid) return;
+  const prev = _store.OUTREACH || [];
+  _store.OUTREACH = prev.filter(o => o.id !== id); _emit();
+  const { error } = await _sb.from("outreach").delete().eq("id", id).eq("agency_id", uid);
+  if (error) { _store.OUTREACH = prev; _emit(); }
+};
+
 const _randToken = () => {
   const a = new Uint8Array(24);
   (window.crypto || {}).getRandomValues?.(a);
@@ -1586,6 +1630,7 @@ window.Data = {
   get CLIENT_TASKS() { return _store.CLIENT_TASKS; },
   get NOTIFICATIONS(){ return _store.NOTIFICATIONS; },
   get AGENDA_EVENTS(){ return _store.AGENDA_EVENTS; },
+  get OUTREACH()     { return _store.OUTREACH; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1606,6 +1651,7 @@ window.Data = {
   clientTasksFor, addClientTask, updateClientTask, toggleClientTask, deleteClientTask,
   notify, markNotificationRead, markAllNotificationsRead,
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
+  addOutreach, updateOutreach, deleteOutreach,
   pendingEmailsFor, clearPendingEmail, discardPendingEmails, sendPendingEmails,
   addLead,
   addTask, moveTask, updateTask, deleteTask,
