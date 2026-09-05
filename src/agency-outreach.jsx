@@ -123,8 +123,6 @@ const AgencyOutreach = ({ navigate }) => {
   const D = window.Data; D.useStore();
   const all = D.OUTREACH || [];
   const [q, setQ] = useState("");
-  const [brand, setBrand] = useState("");
-  const [ig, setIg] = useState("");
   const [sel, setSel] = useState(() => new Set());
   const [showAdd, setShowAdd] = useState(false);
   const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
@@ -143,7 +141,6 @@ const AgencyOutreach = ({ navigate }) => {
   const ql = q.trim().toLowerCase();
   const rows = all.filter(o => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
 
-  const add = () => { if (!brand.trim()) return; D.addOutreach({ brand: brand.trim(), instagram: ig.trim(), status: "guardado" }); setBrand(""); setIg(""); };
   const toggle = (id) => setSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSel = rows.length > 0 && rows.every(o => sel.has(o.id));
   const toggleAll = () => setSel(allSel ? new Set() : new Set(rows.map(o => o.id)));
@@ -176,7 +173,12 @@ const AgencyOutreach = ({ navigate }) => {
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
               style={{ background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }}/>
           </div>
-          <button onClick={() => setShowAdd(true)} className="btn primary sm" style={{ height: 34, gap: 6 }}>
+          <button onClick={() => setShowAdd(true)}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 34, padding: "0 14px", borderRadius: 9,
+              background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)",
+              cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", transition: "background .15s" }}>
             <Icon name="plus" size={14}/> Nuevo lead
           </button>
         </div>
@@ -201,27 +203,6 @@ const AgencyOutreach = ({ navigate }) => {
               </tr>
             </thead>
             <tbody>
-              {/* Fila para añadir (estilo Notion) */}
-              <tr style={{ borderTop: "0.5px solid var(--border)" }}>
-                <td style={{ ..._cell, paddingLeft: 16, paddingRight: 4 }}><Icon name="plus" size={14} style={{ color: "var(--text-subtle)" }}/></td>
-                <td style={_cell}>
-                  <input value={brand} onChange={e => setBrand(e.target.value)} onKeyDown={e => { if (e.key === "Enter") add(); }} placeholder="Añadir cuenta…"
-                    style={{ width: "100%", minWidth: 120, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 14, fontWeight: 500, fontFamily: "inherit" }}/>
-                </td>
-                <td style={_cell}></td>
-                <td style={_cell}></td>
-                <td style={_cell}>
-                  <input value={ig} onChange={e => setIg(e.target.value)} onKeyDown={e => { if (e.key === "Enter") add(); }} placeholder="@instagram"
-                    style={{ width: "100%", minWidth: 90, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit" }}/>
-                </td>
-                <td style={_cell}></td>
-                <td style={_cell}></td>
-                <td style={_cell}></td>
-                <td style={_cell}></td>
-                <td style={{ ..._cell, textAlign: "right", paddingRight: 12 }}>
-                  {brand.trim() && <button onClick={add} className="btn primary sm" style={{ height: 28 }}>Añadir</button>}
-                </td>
-              </tr>
               {rows.map(o => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} last={false}/>)}
             </tbody>
           </table>

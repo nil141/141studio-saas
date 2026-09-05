@@ -227,8 +227,6 @@
     D.useStore();
     const all = D.OUTREACH || [];
     const [q, setQ] = useState("");
-    const [brand, setBrand] = useState("");
-    const [ig, setIg] = useState("");
     const [sel, setSel] = useState(() => /* @__PURE__ */ new Set());
     const [showAdd, setShowAdd] = useState(false);
     const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
@@ -255,12 +253,6 @@
     });
     const ql = q.trim().toLowerCase();
     const rows = all.filter((o) => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
-    const add = () => {
-      if (!brand.trim()) return;
-      D.addOutreach({ brand: brand.trim(), instagram: ig.trim(), status: "guardado" });
-      setBrand("");
-      setIg("");
-    };
     const toggle = (id) => setSel((prev) => {
       const n = new Set(prev);
       n.has(id) ? n.delete(id) : n.add(id);
@@ -293,29 +285,33 @@
         placeholder: "Buscar\u2026",
         style: { background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }
       }
-    )), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowAdd(true), className: "btn primary sm", style: { height: 34, gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo lead"))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1e3 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, /* @__PURE__ */ React.createElement("tr", { style: { borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("td", { style: { ..._cell, paddingLeft: 16, paddingRight: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14, style: { color: "var(--text-subtle)" } })), /* @__PURE__ */ React.createElement("td", { style: _cell }, /* @__PURE__ */ React.createElement(
-      "input",
+    )), /* @__PURE__ */ React.createElement(
+      "button",
       {
-        value: brand,
-        onChange: (e) => setBrand(e.target.value),
-        onKeyDown: (e) => {
-          if (e.key === "Enter") add();
-        },
-        placeholder: "A\xF1adir cuenta\u2026",
-        style: { width: "100%", minWidth: 120, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 14, fontWeight: 500, fontFamily: "inherit" }
-      }
-    )), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }, /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        value: ig,
-        onChange: (e) => setIg(e.target.value),
-        onKeyDown: (e) => {
-          if (e.key === "Enter") add();
-        },
-        placeholder: "@instagram",
-        style: { width: "100%", minWidth: 90, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit" }
-      }
-    )), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: { ..._cell, textAlign: "right", paddingRight: 12 } }, brand.trim() && /* @__PURE__ */ React.createElement("button", { onClick: add, className: "btn primary sm", style: { height: 28 } }, "A\xF1adir"))), rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+        onClick: () => setShowAdd(true),
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.28)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "var(--accent-soft)",
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 34,
+          padding: "0 14px",
+          borderRadius: 9,
+          background: "var(--accent-soft)",
+          color: "var(--accent)",
+          border: "1px solid rgba(158,154,229,0.3)",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 13,
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          transition: "background .15s"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
+      " Nuevo lead"
+    ))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1e3 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
