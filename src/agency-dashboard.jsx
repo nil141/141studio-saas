@@ -1579,13 +1579,25 @@ const EntregasBlock = ({ D, navigate }) => {
   const arrow = (
     <button onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todos"><Icon name="arrow" size={12}/></button>
   );
+  const cardTitle = (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+      <Icon name="package" size={16} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" }}>Entregas próximas</span>
+      {projs.length > 0 && <span style={{ fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{projs.length}</span>}
+    </div>
+  );
   return (
     <section>
-      <SectionHead title="Entregas próximas" count={projs.length || null} open={open} onToggle={toggleOpen} right={arrow}/>
+      <SectionHead title="Entregas próximas" open={open} onToggle={toggleOpen} right={arrow}/>
       {open && (projs.length === 0 ? (
-        <div style={{ ...INICIO_CARD, marginTop: 12, fontSize: 13, color: "var(--text-subtle)" }}>Aún no tienes proyectos.</div>
+        <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+          {cardTitle}
+          <div style={{ fontSize: 13, color: "var(--text-subtle)" }}>Aún no tienes proyectos.</div>
+        </div>
       ) : (
-        <div style={{ ...INICIO_CARD, marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+          {cardTitle}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {projs.slice(0, 8).map(p => {
             const tks = D.TASKS[p.id] || [];
             const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
@@ -1614,6 +1626,7 @@ const EntregasBlock = ({ D, navigate }) => {
               </div>
             );
           })}
+          </div>
         </div>
       ))}
     </section>

@@ -1471,7 +1471,8 @@
     });
     const [open, toggleOpen] = _usePersistOpen("141_home_entregas", true);
     const arrow = /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }));
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", count: projs.length || null, open, onToggle: toggleOpen, right: arrow }), open && (projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
+    const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length));
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", open, onToggle: toggleOpen, right: arrow }), open && (projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.")) : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
       const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
@@ -1498,7 +1499,7 @@
         } }, status)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
       );
-    }))));
+    })))));
   };
   window.AgencyDashboard = AgencyDashboard;
 })();
