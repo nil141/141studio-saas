@@ -46,9 +46,11 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
     return pct < 100;
   });
-  const clients = D.CLIENTS || [];
-  const fp = q ? activeProjects.filter((p) => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q)) : activeProjects;
-  const fc = q ? clients.filter((c) => nameOf(c).toLowerCase().includes(q)) : clients;
+  const allProjects = D.PROJECTS || [];
+  const matchP = (p) => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q);
+  const fp = q ? activeProjects.filter(matchP) : activeProjects;
+  const fAll = q ? allProjects.filter(matchP) : allProjects;
+  const [otrosHov, setOtrosHov] = React.useState(false);
   const ListRow = ({ label, color, active, onClick }) => {
     const [hov, setHov] = React.useState(false);
     return /* @__PURE__ */ React.createElement(
@@ -83,10 +85,44 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         fontWeight: 600,
         fontFamily: "var(--font-display)"
       } }, (label || "?").trim().charAt(0).toUpperCase()),
-      /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, label)
+      /* @__PURE__ */ React.createElement("span", { style: {
+        flex: 1,
+        minWidth: 0,
+        fontSize: 13.5,
+        letterSpacing: "-0.2px",
+        overflow: "hidden",
+        whiteSpace: "nowrap",
+        maskImage: "linear-gradient(to right, #000 88%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, #000 88%, transparent)"
+      } }, label)
     );
   };
-  return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(NavItem, { id: "__otros", icon: "squares-four", label: "Otros", chevron: true, active: false, onClick: toggleOtros }), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 2 } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick: toggleOtros,
+      onMouseEnter: () => setOtrosHov(true),
+      onMouseLeave: () => setOtrosHov(false),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 11,
+        height: 38,
+        padding: "0 10px",
+        borderRadius: 10,
+        cursor: "pointer",
+        background: otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
+        color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)",
+        transition: "color .15s, background .15s",
+        fontSize: 14,
+        letterSpacing: "-0.04em",
+        userSelect: "none"
+      }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
+    /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 15, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(180deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
+  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 2, animation: "sectionIn .2s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -95,14 +131,14 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       active: current === "project",
       onClick: () => onNavigate("project", { projectId: p.id })
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "users", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los clientes"), fc.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fc.length)), fc.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" } }, q ? "Sin resultados." : "A\xFAn no tienes clientes.") : fc.map((c, i) => /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los proyectos"), fAll.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fAll.length)), fAll.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" } }, q ? "Sin resultados." : "A\xFAn no tienes proyectos.") : fAll.map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
-      key: c.id,
-      label: nameOf(c),
+      key: p.id,
+      label: p.name || "Proyecto",
       color: pal[i % pal.length],
       active: false,
-      onClick: () => onNavigate("clientDetail", { clientId: c.id })
+      onClick: () => onNavigate("project", { projectId: p.id })
     }
   ))));
 };
@@ -432,6 +468,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
     "input",
     {
+      className: "nav-search",
       value: navSearch,
       onChange: (e) => setNavSearch(e.target.value),
       placeholder: "Buscar clientes y proyectos\u2026",

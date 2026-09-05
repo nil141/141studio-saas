@@ -108,6 +108,7 @@
 
   /* Auth styles — aplicados desde el head para que el pre-render estático sea idéntico a React */
   .auth-input::placeholder { color: rgba(102,102,102,0.4); opacity: 1; }
+  .nav-search::placeholder { color: var(--text-subtle); opacity: 1; }
   .auth-input {
     width: 100%; height: 50px; font-size: 16px; border-radius: 16px;
     padding: 12px 20px; background: rgba(255,255,255,0.05); color: #fff;
@@ -896,7 +897,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=11"></script>
 <script src="src/data.js?v=57"></script>
-<script src="src/primitives.js?v=43"></script>
+<script src="src/primitives.js?v=44"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=20"></script>

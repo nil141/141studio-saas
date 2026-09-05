@@ -47,9 +47,11 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
     return pct < 100;
   });
-  const clients = D.CLIENTS || [];
-  const fp = q ? activeProjects.filter(p => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q)) : activeProjects;
-  const fc = q ? clients.filter(c => nameOf(c).toLowerCase().includes(q)) : clients;
+  const allProjects = D.PROJECTS || [];
+  const matchP = (p) => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q);
+  const fp = q ? activeProjects.filter(matchP) : activeProjects;
+  const fAll = q ? allProjects.filter(matchP) : allProjects;
+  const [otrosHov, setOtrosHov] = React.useState(false);
 
   const ListRow = ({ label, color, active, onClick }) => {
     const [hov, setHov] = React.useState(false);
@@ -62,7 +64,8 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
           background: color + "26", color: color, fontSize: 10.5, fontWeight: 600, fontFamily: "var(--font-display)" }}>
           {(label || "?").trim().charAt(0).toUpperCase()}
         </span>
-        <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", whiteSpace: "nowrap",
+          maskImage: "linear-gradient(to right, #000 88%, transparent)", WebkitMaskImage: "linear-gradient(to right, #000 88%, transparent)" }}>{label}</span>
       </div>
     );
   };
@@ -74,10 +77,18 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
       ))}
 
-      {/* Otros — desplegable de un nivel */}
-      <NavItem id="__otros" icon="squares-four" label="Otros" chevron active={false} onClick={toggleOtros}/>
+      {/* Otros — desplegable de un nivel (icono tres puntos + flecha animada) */}
+      <div onClick={toggleOtros} onMouseEnter={() => setOtrosHov(true)} onMouseLeave={() => setOtrosHov(false)}
+        style={{ display: "flex", alignItems: "center", gap: 11, height: 38, padding: "0 10px", borderRadius: 10, cursor: "pointer",
+          background: otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
+          color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s",
+          fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
+        <Icon name="more-h" size={16} strokeWidth={1.7}/>
+        <span style={{ flex: 1 }}>Otros</span>
+        <Icon name="chevron-down" size={15} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(180deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
+      </div>
       {otrosOpen && (
-        <div style={{ marginBottom: 2 }}>
+        <div style={{ marginBottom: 2, animation: "sectionIn .2s ease-out" }}>
           {_NAV_OTROS.map(it => (
             <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
           ))}
@@ -99,20 +110,20 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         </div>
       )}
 
-      {/* Todos los clientes */}
+      {/* Todos los proyectos */}
       <div style={{ marginTop: 16, paddingBottom: 8 }}>
         <div style={_navSecLabel}>
-          <Icon name="users" size={12} style={{ color: "var(--text-subtle)" }}/>
-          <span>Todos los clientes</span>
-          {fc.length > 0 && <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fc.length}</span>}
+          <Icon name="folder" size={12} style={{ color: "var(--text-subtle)" }}/>
+          <span>Todos los proyectos</span>
+          {fAll.length > 0 && <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fAll.length}</span>}
         </div>
-        {fc.length === 0 ? (
+        {fAll.length === 0 ? (
           <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" }}>
-            {q ? "Sin resultados." : "Aún no tienes clientes."}
+            {q ? "Sin resultados." : "Aún no tienes proyectos."}
           </div>
-        ) : fc.map((c, i) => (
-          <ListRow key={c.id} label={nameOf(c)} color={pal[i % pal.length]}
-            active={false} onClick={() => onNavigate("clientDetail", { clientId: c.id })}/>
+        ) : fAll.map((p, i) => (
+          <ListRow key={p.id} label={p.name || "Proyecto"} color={pal[i % pal.length]}
+            active={false} onClick={() => onNavigate("project", { projectId: p.id })}/>
         ))}
       </div>
     </div>
@@ -440,7 +451,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
             background:"rgba(255,255,255,0.05)"}}>
             <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
-            <input value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar clientes y proyectos…"
+            <input className="nav-search" value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar clientes y proyectos…"
               style={{flex:1, minWidth:0, background:"transparent", border:"none", outline:"none", color:"var(--text)",
                 fontSize:13, fontFamily:"var(--font-sans)", letterSpacing:"-0.2px", caretColor:"var(--accent)"}}/>
             {navSearch && <span onClick={() => setNavSearch("")} style={{cursor:"pointer", color:"var(--text-subtle)", display:"flex"}}><Icon name="x" size={13}/></span>}
