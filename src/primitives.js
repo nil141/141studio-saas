@@ -52,6 +52,21 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
   const fp = q ? activeProjects.filter(matchP) : activeProjects;
   const fAll = q ? allProjects.filter(matchP) : allProjects;
   const [otrosHov, setOtrosHov] = React.useState(false);
+  const [projOpen, setProjOpen] = React.useState(() => {
+    try {
+      return localStorage.getItem("141_nav_proj") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleProj = () => setProjOpen((v) => {
+    const n = !v;
+    try {
+      localStorage.setItem("141_nav_proj", n ? "1" : "0");
+    } catch {
+    }
+    return n;
+  });
   const ListRow = ({ label, color, active, onClick }) => {
     const [hov, setHov] = React.useState(false);
     return /* @__PURE__ */ React.createElement(
@@ -132,7 +147,38 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       active: current === "project",
       onClick: () => onNavigate("project", { projectId: p.id })
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los proyectos"), fAll.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fAll.length)), fAll.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" } }, q ? "Sin resultados." : "A\xFAn no tienes proyectos.") : fAll.map((p, i) => /* @__PURE__ */ React.createElement(
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick: toggleProj,
+      style: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        cursor: "pointer",
+        padding: "0 12px",
+        marginBottom: 6,
+        userSelect: "none"
+      }
+    },
+    /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 7,
+      fontSize: 11,
+      fontWeight: 600,
+      color: "var(--text-subtle)",
+      letterSpacing: "0.01em",
+      textTransform: "uppercase",
+      whiteSpace: "nowrap"
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los proyectos")),
+    /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13, style: {
+      color: "var(--text-subtle)",
+      flexShrink: 0,
+      transform: projOpen ? "rotate(45deg)" : "none",
+      transition: "transform .2s"
+    } })
+  ), projOpen && (fAll.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" } }, q ? "Sin resultados." : "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { animation: "sectionIn .2s ease-out" } }, fAll.map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -141,7 +187,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       active: false,
       onClick: () => onNavigate("project", { projectId: p.id })
     }
-  ))));
+  ))))));
 };
 const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
   const D = window.Data;

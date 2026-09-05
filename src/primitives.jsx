@@ -53,6 +53,8 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
   const fp = q ? activeProjects.filter(matchP) : activeProjects;
   const fAll = q ? allProjects.filter(matchP) : allProjects;
   const [otrosHov, setOtrosHov] = React.useState(false);
+  const [projOpen, setProjOpen] = React.useState(() => { try { return localStorage.getItem("141_nav_proj") === "1"; } catch { return false; } });
+  const toggleProj = () => setProjOpen(v => { const n = !v; try { localStorage.setItem("141_nav_proj", n ? "1" : "0"); } catch {} return n; });
 
   const ListRow = ({ label, color, active, onClick }) => {
     const [hov, setHov] = React.useState(false);
@@ -111,20 +113,30 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         </div>
       )}
 
-      {/* Todos los proyectos */}
+      {/* Todos los proyectos — plegable, cerrado por defecto, con "+" */}
       <div style={{ marginTop: 16, paddingBottom: 8 }}>
-        <div style={_navSecLabel}>
-          <Icon name="folder" size={12} style={{ color: "var(--text-subtle)" }}/>
-          <span>Todos los proyectos</span>
-          {fAll.length > 0 && <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fAll.length}</span>}
+        <div onClick={toggleProj}
+          style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
+            padding: "0 12px", marginBottom: 6, userSelect: "none" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 600,
+            color: "var(--text-subtle)", letterSpacing: "0.01em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
+            <Icon name="folder" size={12} style={{ color: "var(--text-subtle)" }}/>
+            <span>Todos los proyectos</span>
+          </div>
+          <Icon name="plus" size={13} style={{ color: "var(--text-subtle)", flexShrink: 0,
+            transform: projOpen ? "rotate(45deg)" : "none", transition: "transform .2s" }}/>
         </div>
-        {fAll.length === 0 ? (
+        {projOpen && (fAll.length === 0 ? (
           <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" }}>
             {q ? "Sin resultados." : "Aún no tienes proyectos."}
           </div>
-        ) : fAll.map((p, i) => (
-          <ListRow key={p.id} label={p.name || "Proyecto"} color={pal[i % pal.length]}
-            active={false} onClick={() => onNavigate("project", { projectId: p.id })}/>
+        ) : (
+          <div style={{ animation: "sectionIn .2s ease-out" }}>
+            {fAll.map((p, i) => (
+              <ListRow key={p.id} label={p.name || "Proyecto"} color={pal[i % pal.length]}
+                active={false} onClick={() => onNavigate("project", { projectId: p.id })}/>
+            ))}
+          </div>
         ))}
       </div>
     </div>
