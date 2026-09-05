@@ -44,22 +44,38 @@ const InlineText = ({ value, onSave, placeholder, mono }) => {
   );
 };
 
-// Chip de estado con menú
+// Chip de estado con menú (el menú se renderiza en un portal para que no lo
+// recorte el overflow de la tabla)
 const StatusPill = ({ value, onChange }) => {
   const [open, setOpen] = useState(false);
+  const [pos, setPos] = useState(null);
+  const btnRef = React.useRef(null);
   const m = _stMeta(value);
-  useEffect(() => { if (!open) return; const c = () => setOpen(false); window.addEventListener("click", c); return () => window.removeEventListener("click", c); }, [open]);
+  const openMenu = () => {
+    const r = btnRef.current.getBoundingClientRect();
+    setPos({ top: r.bottom + 5, left: r.left });
+    setOpen(true);
+  };
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    return () => { window.removeEventListener("click", close); window.removeEventListener("scroll", close, true); window.removeEventListener("resize", close); };
+  }, [open]);
   return (
-    <span style={{ position: "relative", display: "inline-block" }} onClick={e => e.stopPropagation()}>
-      <button onClick={() => setOpen(o => !o)}
+    <span style={{ display: "inline-block" }} onClick={e => e.stopPropagation()}>
+      <button ref={btnRef} onClick={() => open ? setOpen(false) : openMenu()}
         style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 7, cursor: "pointer",
           border: "none", fontFamily: "inherit", fontSize: 11.5, fontWeight: 500, whiteSpace: "nowrap", background: m.color + "22", color: m.color }}>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: m.color }}/>{m.label}
         <Icon name="chevron-down" size={11} style={{ opacity: 0.7 }}/>
       </button>
-      {open && (
-        <div style={{ position: "absolute", top: "calc(100% + 4px)", left: 0, zIndex: 30, minWidth: 175,
-          background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 12, padding: 5, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
+      {open && pos && ReactDOM.createPortal(
+        <div onClick={e => e.stopPropagation()}
+          style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 3000, minWidth: 190,
+            background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 12, padding: 5, boxShadow: "0 16px 40px rgba(0,0,0,0.5)" }}>
           {OUTREACH_STATUS.map(s => (
             <div key={s.id} onClick={() => { onChange(s.id); setOpen(false); }}
               onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}
@@ -69,7 +85,8 @@ const StatusPill = ({ value, onChange }) => {
               {s.id === value && <Icon name="check" size={13} style={{ color: "var(--accent)" }}/>}
             </div>
           ))}
-        </div>
+        </div>,
+        document.body
       )}
     </span>
   );
