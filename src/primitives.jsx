@@ -102,7 +102,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       {fp.length > 0 && (
         <div style={{ marginTop: 16 }}>
           <div style={_navSecLabel}>
-            <Icon name="activity" size={12} style={{ color: "var(--text-subtle)" }}/>
+            <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
             <span>En desarrollo activo</span>
             <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fp.length}</span>
           </div>
