@@ -297,12 +297,7 @@
     const [q, setQ] = useState("");
     const [sel, setSel] = useState(() => /* @__PURE__ */ new Set());
     const [showAdd, setShowAdd] = useState(false);
-    const [onlyDue, setOnlyDue] = useState(false);
-    const GOAL = 15;
     const today = _todayYmd();
-    const contactedToday = all.filter((o) => o.lastContacted === today).length;
-    const dueLeads = all.filter(_isDue);
-    const goalPct = Math.min(100, Math.round(contactedToday / GOAL * 100));
     const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
     const [f, setF] = useState(_emptyF);
     const upd = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -327,7 +322,8 @@
     });
     const ql = q.trim().toLowerCase();
     let rows = all.filter((o) => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
-    if (onlyDue) rows = rows.filter(_isDue);
+    const _dueRank = (o) => _isDue(o) ? o.nextFollowup < today ? 0 : 1 : 2;
+    rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
     const toggle = (id) => setSel((prev) => {
       const n = new Set(prev);
       n.has(id) ? n.delete(id) : n.add(id);
@@ -386,30 +382,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 14px", borderRadius: 10, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-muted)" } }, "Hoy"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 600 } }, contactedToday, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 400 } }, "/", GOAL)), /* @__PURE__ */ React.createElement("div", { style: { width: 84, height: 5, borderRadius: 3, background: "var(--bg-hover)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { width: goalPct + "%", height: "100%", background: goalPct >= 100 ? "var(--green)" : "var(--accent)", borderRadius: 3, transition: "width .3s" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "contactados")), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => setOnlyDue((v) => !v),
-        style: {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 7,
-          height: 34,
-          padding: "0 13px",
-          borderRadius: 10,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          fontSize: 12.5,
-          fontWeight: 500,
-          whiteSpace: "nowrap",
-          background: onlyDue ? "var(--accent-soft)" : "var(--bg-elev-2)",
-          border: onlyDue ? "1px solid rgba(158,154,229,0.35)" : "0.5px solid var(--border)",
-          color: onlyDue ? "var(--accent)" : dueLeads.length ? "#e2b45c" : "var(--text-muted)"
-        }
-      },
-      /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 13 }),
-      dueLeads.length > 0 ? `${dueLeads.length} seguimiento${dueLeads.length > 1 ? "s" : ""} para hoy` : "Sin seguimientos pendientes"
-    ), onlyDue && /* @__PURE__ */ React.createElement("button", { onClick: () => setOnlyDue(false), className: "btn ghost sm", style: { color: "var(--text-subtle)" } }, "Ver todos")), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",

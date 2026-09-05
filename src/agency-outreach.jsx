@@ -181,12 +181,7 @@ const AgencyOutreach = ({ navigate }) => {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(() => new Set());
   const [showAdd, setShowAdd] = useState(false);
-  const [onlyDue, setOnlyDue] = useState(false);
-  const GOAL = 15;
   const today = _todayYmd();
-  const contactedToday = all.filter(o => o.lastContacted === today).length;
-  const dueLeads = all.filter(_isDue);
-  const goalPct = Math.min(100, Math.round((contactedToday / GOAL) * 100));
   const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
   const [f, setF] = useState(_emptyF);
   const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
@@ -202,7 +197,9 @@ const AgencyOutreach = ({ navigate }) => {
 
   const ql = q.trim().toLowerCase();
   let rows = all.filter(o => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
-  if (onlyDue) rows = rows.filter(_isDue);
+  // Los que toca contactar suben arriba (atrasados primero, luego los de hoy).
+  const _dueRank = (o) => _isDue(o) ? (o.nextFollowup < today ? 0 : 1) : 2;
+  rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
 
   const toggle = (id) => setSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSel = rows.length > 0 && rows.every(o => sel.has(o.id));
@@ -245,27 +242,6 @@ const AgencyOutreach = ({ navigate }) => {
             <Icon name="plus" size={14}/> Nuevo lead
           </button>
         </div>
-      </div>
-
-      {/* Barra de seguimiento: meta diaria + seguimientos pendientes */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 14px", borderRadius: 10, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
-          <span style={{ fontSize: 12.5, color: "var(--text-muted)" }}>Hoy</span>
-          <span style={{ fontSize: 13.5, fontWeight: 600 }}>{contactedToday}<span style={{ color: "var(--text-subtle)", fontWeight: 400 }}>/{GOAL}</span></span>
-          <div style={{ width: 84, height: 5, borderRadius: 3, background: "var(--bg-hover)", overflow: "hidden" }}>
-            <div style={{ width: goalPct + "%", height: "100%", background: goalPct >= 100 ? "var(--green)" : "var(--accent)", borderRadius: 3, transition: "width .3s" }}/>
-          </div>
-          <span style={{ fontSize: 11.5, color: "var(--text-subtle)" }}>contactados</span>
-        </div>
-        <button onClick={() => setOnlyDue(v => !v)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 34, padding: "0 13px", borderRadius: 10, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap",
-            background: onlyDue ? "var(--accent-soft)" : "var(--bg-elev-2)",
-            border: onlyDue ? "1px solid rgba(158,154,229,0.35)" : "0.5px solid var(--border)",
-            color: onlyDue ? "var(--accent)" : (dueLeads.length ? "#e2b45c" : "var(--text-muted)") }}>
-          <Icon name="bell" size={13}/>
-          {dueLeads.length > 0 ? `${dueLeads.length} seguimiento${dueLeads.length > 1 ? "s" : ""} para hoy` : "Sin seguimientos pendientes"}
-        </button>
-        {onlyDue && <button onClick={() => setOnlyDue(false)} className="btn ghost sm" style={{ color: "var(--text-subtle)" }}>Ver todos</button>}
       </div>
 
       {/* Tabla dentro de cajita */}
