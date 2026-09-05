@@ -13,6 +13,99 @@ const Switch = ({ on, onChange }) => /* @__PURE__ */ React.createElement(
     style: { border: "0.5px solid var(--border-strong)" }
   }
 );
+const _NAV_MAIN = [
+  { id: "dashboard", label: "Inicio", icon: "home" },
+  { id: "tasks", label: "Tareas", icon: "list-todo" },
+  { id: "agenda", label: "Agenda", icon: "calendar" }
+];
+const _NAV_OTROS = [
+  { id: "projects", label: "Proyectos", icon: "folder" },
+  { id: "clients", label: "Clientes", icon: "users" },
+  { id: "campaigns", label: "Campa\xF1as", icon: "megaphone" },
+  { id: "income", label: "Facturaci\xF3n", icon: "trending-up" },
+  { id: "billing", label: "Gastos", icon: "receipt" },
+  { id: "mail", label: "Correo", icon: "mail" }
+];
+const _navSecLabel = {
+  fontSize: 11,
+  fontWeight: 600,
+  color: "var(--text-subtle)",
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  padding: "0 12px",
+  marginBottom: 6,
+  display: "flex",
+  alignItems: "center",
+  gap: 8
+};
+const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
+  const q = (navSearch || "").trim().toLowerCase();
+  const nameOf = (c) => c.company || c.name || "Cliente";
+  const activeProjects = (D.PROJECTS || []).filter((p) => {
+    const tks = D.TASKS && D.TASKS[p.id] || [];
+    const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
+    return pct < 100;
+  });
+  const clients = D.CLIENTS || [];
+  const fp = q ? activeProjects.filter((p) => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q)) : activeProjects;
+  const fc = q ? clients.filter((c) => nameOf(c).toLowerCase().includes(q)) : clients;
+  const ListRow = ({ label, color, active, onClick }) => {
+    const [hov, setHov] = React.useState(false);
+    return /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick,
+        onMouseEnter: () => setHov(true),
+        onMouseLeave: () => setHov(false),
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          height: 34,
+          padding: "0 10px",
+          borderRadius: 10,
+          cursor: "pointer",
+          background: active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          color: active ? "#fff" : hov ? "#fff" : "var(--text-muted)",
+          transition: "color .15s, background .15s"
+        }
+      },
+      /* @__PURE__ */ React.createElement("span", { style: {
+        width: 20,
+        height: 20,
+        borderRadius: 6,
+        flexShrink: 0,
+        display: "grid",
+        placeItems: "center",
+        background: color + "26",
+        color,
+        fontSize: 10.5,
+        fontWeight: 600,
+        fontFamily: "var(--font-display)"
+      } }, (label || "?").trim().charAt(0).toUpperCase()),
+      /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, label)
+    );
+  };
+  return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(NavItem, { id: "__otros", icon: "squares-four", label: "Otros", chevron: true, active: false, onClick: toggleOtros }), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 2 } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+    ListRow,
+    {
+      key: p.id,
+      label: p.name,
+      color: pal[i % pal.length],
+      active: current === "project",
+      onClick: () => onNavigate("project", { projectId: p.id })
+    }
+  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement("div", { style: _navSecLabel }, /* @__PURE__ */ React.createElement(Icon, { name: "users", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los clientes"), fc.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)", fontWeight: 500 } }, fc.length)), fc.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" } }, q ? "Sin resultados." : "A\xFAn no tienes clientes.") : fc.map((c, i) => /* @__PURE__ */ React.createElement(
+    ListRow,
+    {
+      key: c.id,
+      label: nameOf(c),
+      color: pal[i % pal.length],
+      active: false,
+      onClick: () => onNavigate("clientDetail", { clientId: c.id })
+    }
+  ))));
+};
 const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
   const D = window.Data;
   D.useStore();
@@ -126,6 +219,23 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       return next;
     });
   };
+  const [navSearch, setNavSearch] = React.useState("");
+  const [otrosOpen, setOtrosOpen] = React.useState(() => {
+    try {
+      return localStorage.getItem("141_nav_otros") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleOtros = () => setOtrosOpen((v) => {
+    const n = !v;
+    try {
+      localStorage.setItem("141_nav_otros", n ? "1" : "0");
+    } catch {
+    }
+    return n;
+  });
+  const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null);
@@ -288,89 +398,70 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     justifyContent: "center",
     fontSize: 18,
     fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement("div", { style: {
-    display: "flex",
-    width: "200%",
-    height: "100%",
-    transform: openCat != null ? "translateX(-50%)" : "translateX(0)",
-    transition: "transform .3s cubic-bezier(0.4,0,0.2,1)"
-  } }, /* @__PURE__ */ React.createElement("div", { ref: rootPaneRef, style: {
-    width: "50%",
-    flexShrink: 0,
-    paddingRight: 2,
-    height: "100%",
-    position: "relative",
-    overflowY: "auto",
-    scrollbarWidth: "none"
-  } }, renderPill(rootPill), /* @__PURE__ */ React.createElement(
-    NavItem,
+  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 400, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+    "button",
     {
-      bare: true,
-      rowRef: (el) => {
-        rootRefs.current["dashboard"] = el;
-      },
-      id: topItem.id,
-      icon: topItem.icon,
-      label: topItem.label,
-      active: current === "dashboard"
-    }
-  ), sections.map((section) => {
-    const inHere = section.items.some((it) => it.id === _activeId);
-    return /* @__PURE__ */ React.createElement(
-      NavItem,
-      {
-        bare: true,
-        key: section.title,
-        rowRef: (el) => {
-          rootRefs.current["__cat_" + section.title] = el;
-        },
-        id: "__cat_" + section.title,
-        icon: SECTION_ICONS[section.title] || "grid",
-        label: section.title,
-        onClick: () => openCategory(section.title),
-        chevron: true,
-        active: inHere
-      }
-    );
-  })), /* @__PURE__ */ React.createElement("div", { style: { width: "50%", flexShrink: 0, paddingLeft: 2, height: "100%", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      onClick: () => setOpenCat(null),
-      onMouseEnter: (e) => e.currentTarget.style.color = "#fff",
-      onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-muted)",
+      onClick: () => onQuickCreate && onQuickCreate(),
       style: {
         display: "flex",
         alignItems: "center",
+        justifyContent: "center",
         gap: 8,
-        height: 44,
-        padding: "0 10px",
-        flexShrink: 0,
+        height: 40,
+        borderRadius: 12,
+        background: "var(--accent)",
+        color: "var(--accent-fg)",
+        border: "none",
         cursor: "pointer",
-        color: "var(--text-muted)",
-        transition: "color .15s",
-        fontSize: 12,
+        fontFamily: "inherit",
+        fontSize: 14,
         fontWeight: 500,
-        letterSpacing: "0.04em",
-        textTransform: "uppercase"
+        letterSpacing: "-0.3px"
       }
     },
-    /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { transform: "rotate(180deg)", flexShrink: 0 } }),
-    /* @__PURE__ */ React.createElement("span", null, detailSection.title)
-  ), /* @__PURE__ */ React.createElement("div", { style: { height: 6, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { ref: detailPaneRef, style: { flex: 1, minHeight: 0, position: "relative", overflowY: "auto", scrollbarWidth: "none" } }, renderPill(detailPill), detailSection.items.map((it) => /* @__PURE__ */ React.createElement(
-    NavItem,
+    /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
+    " Crear"
+  ), /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    height: 36,
+    padding: "0 11px",
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.05)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+    "input",
     {
-      bare: true,
-      key: it.id,
-      rowRef: (el) => {
-        detailRefs.current[it.id] = el;
-      },
-      id: it.id,
-      icon: it.icon,
-      label: it.label,
-      badge: it.badge,
-      active: it.id === _activeId
+      value: navSearch,
+      onChange: (e) => setNavSearch(e.target.value),
+      placeholder: "Buscar clientes y proyectos\u2026",
+      style: {
+        flex: 1,
+        minWidth: 0,
+        background: "transparent",
+        border: "none",
+        outline: "none",
+        color: "var(--text)",
+        fontSize: 13,
+        fontFamily: "var(--font-sans)",
+        letterSpacing: "-0.2px",
+        caretColor: "var(--accent)"
+      }
     }
-  ))))) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ), navSearch && /* @__PURE__ */ React.createElement("span", { onClick: () => setNavSearch(""), style: { cursor: "pointer", color: "var(--text-subtle)", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement(
+    AgencyNav,
+    {
+      current,
+      curNav,
+      onNavigate,
+      NavItem,
+      D,
+      navSearch,
+      otrosOpen,
+      toggleOtros,
+      pal: _NAVPAL
+    }
+  ) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
     fontSize: 11,
     fontWeight: 500,
     color: "var(--text-subtle)",

@@ -20,6 +20,105 @@ const Switch = ({ on, onChange }) => (
   />
 );
 
+// ── Nav de la agencia (un nivel + "Otros" desplegable + listas) ───────────────
+const _NAV_MAIN = [
+  { id: "dashboard", label: "Inicio",  icon: "home" },
+  { id: "tasks",     label: "Tareas",  icon: "list-todo" },
+  { id: "agenda",    label: "Agenda",  icon: "calendar" },
+];
+const _NAV_OTROS = [
+  { id: "projects",  label: "Proyectos",   icon: "folder" },
+  { id: "clients",   label: "Clientes",    icon: "users" },
+  { id: "campaigns", label: "Campañas",    icon: "megaphone" },
+  { id: "income",    label: "Facturación", icon: "trending-up" },
+  { id: "billing",   label: "Gastos",      icon: "receipt" },
+  { id: "mail",      label: "Correo",      icon: "mail" },
+];
+const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.06em",
+  textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 8 };
+
+const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
+  const q = (navSearch || "").trim().toLowerCase();
+  const nameOf = (c) => c.company || c.name || "Cliente";
+
+  // Proyectos en desarrollo activo (no completados)
+  const activeProjects = (D.PROJECTS || []).filter(p => {
+    const tks = (D.TASKS && D.TASKS[p.id]) || [];
+    const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
+    return pct < 100;
+  });
+  const clients = D.CLIENTS || [];
+  const fp = q ? activeProjects.filter(p => (p.name || "").toLowerCase().includes(q) || (p.clientName || "").toLowerCase().includes(q)) : activeProjects;
+  const fc = q ? clients.filter(c => nameOf(c).toLowerCase().includes(q)) : clients;
+
+  const ListRow = ({ label, color, active, onClick }) => {
+    const [hov, setHov] = React.useState(false);
+    return (
+      <div onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+        style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px", borderRadius: 10, cursor: "pointer",
+          background: active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          color: active ? "#fff" : hov ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s" }}>
+        <span style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, display: "grid", placeItems: "center",
+          background: color + "26", color: color, fontSize: 10.5, fontWeight: 600, fontFamily: "var(--font-display)" }}>
+          {(label || "?").trim().charAt(0).toUpperCase()}
+        </span>
+        <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 }}>
+      {/* Nav plano principal */}
+      {_NAV_MAIN.map(it => (
+        <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
+      ))}
+
+      {/* Otros — desplegable de un nivel */}
+      <NavItem id="__otros" icon="squares-four" label="Otros" chevron active={false} onClick={toggleOtros}/>
+      {otrosOpen && (
+        <div style={{ marginBottom: 2 }}>
+          {_NAV_OTROS.map(it => (
+            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
+          ))}
+        </div>
+      )}
+
+      {/* En desarrollo activo */}
+      {fp.length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <div style={_navSecLabel}>
+            <Icon name="activity" size={12} style={{ color: "var(--text-subtle)" }}/>
+            <span>En desarrollo activo</span>
+            <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fp.length}</span>
+          </div>
+          {fp.slice(0, 8).map((p, i) => (
+            <ListRow key={p.id} label={p.name} color={pal[i % pal.length]}
+              active={current === "project"} onClick={() => onNavigate("project", { projectId: p.id })}/>
+          ))}
+        </div>
+      )}
+
+      {/* Todos los clientes */}
+      <div style={{ marginTop: 16, paddingBottom: 8 }}>
+        <div style={_navSecLabel}>
+          <Icon name="users" size={12} style={{ color: "var(--text-subtle)" }}/>
+          <span>Todos los clientes</span>
+          {fc.length > 0 && <span style={{ color: "var(--text-subtle)", fontWeight: 500 }}>{fc.length}</span>}
+        </div>
+        {fc.length === 0 ? (
+          <div style={{ fontSize: 12.5, color: "var(--text-subtle)", padding: "4px 12px" }}>
+            {q ? "Sin resultados." : "Aún no tienes clientes."}
+          </div>
+        ) : fc.map((c, i) => (
+          <ListRow key={c.id} label={nameOf(c)} color={pal[i % pal.length]}
+            active={false} onClick={() => onNavigate("clientDetail", { clientId: c.id })}/>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
   const D = window.Data;
   D.useStore();
@@ -149,6 +248,13 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       return next;
     });
   };
+
+  const [navSearch, setNavSearch] = React.useState("");
+  const [otrosOpen, setOtrosOpen] = React.useState(() => { try { return localStorage.getItem("141_nav_otros") === "1"; } catch { return false; } });
+  const toggleOtros = () => setOtrosOpen(v => { const n = !v; try { localStorage.setItem("141_nav_otros", n ? "1" : "0"); } catch {} return n; });
+
+  // Paleta para las iniciales de la lista de clientes/proyectos
+  const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
 
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
@@ -322,55 +428,32 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       </div>
       )}
 
+      {/* Crear + buscador (agencia) */}
+      {kind === "agency" && (
+        <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
+          <button onClick={() => onQuickCreate && onQuickCreate()}
+            style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, height:40, borderRadius:12,
+              background:"var(--accent)", color:"var(--accent-fg)", border:"none", cursor:"pointer",
+              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.3px"}}>
+            <Icon name="plus" size={16}/> Crear
+          </button>
+          <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
+            background:"rgba(255,255,255,0.05)"}}>
+            <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
+            <input value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar clientes y proyectos…"
+              style={{flex:1, minWidth:0, background:"transparent", border:"none", outline:"none", color:"var(--text)",
+                fontSize:13, fontFamily:"var(--font-sans)", letterSpacing:"-0.2px", caretColor:"var(--accent)"}}/>
+            {navSearch && <span onClick={() => setNavSearch("")} style={{cursor:"pointer", color:"var(--text-subtle)", display:"flex"}}><Icon name="x" size={13}/></span>}
+          </div>
+        </div>
+      )}
+
       {/* Nav con secciones */}
       <div ref={navContainerRef} style={{flex:1, overflow:"hidden", position:"relative"}}>
         {drilldown ? (
-          <div style={{
-            display:"flex", width:"200%", height:"100%",
-            transform: openCat != null ? "translateX(-50%)" : "translateX(0)",
-            transition:"transform .3s cubic-bezier(0.4,0,0.2,1)",
-          }}>
-            {/* ── Nivel 1: Inicio + categorías en cajas ── */}
-            <div ref={rootPaneRef} style={{width:"50%", flexShrink:0, paddingRight:2, height:"100%",
-              position:"relative", overflowY:"auto", scrollbarWidth:"none"}}>
-              {renderPill(rootPill)}
-              <NavItem bare rowRef={el => { rootRefs.current["dashboard"] = el; }}
-                id={topItem.id} icon={topItem.icon} label={topItem.label} active={current === "dashboard"}/>
-              {sections.map(section => {
-                const inHere = section.items.some(it => it.id === _activeId);
-                return (
-                  <NavItem bare key={section.title} rowRef={el => { rootRefs.current["__cat_" + section.title] = el; }}
-                    id={"__cat_" + section.title} icon={SECTION_ICONS[section.title] || "grid"} label={section.title}
-                    onClick={() => openCategory(section.title)} chevron active={inHere}/>
-                );
-              })}
-            </div>
-
-            {/* ── Nivel 2: items de la categoría abierta ── */}
-            <div style={{width:"50%", flexShrink:0, paddingLeft:2, height:"100%", display:"flex", flexDirection:"column"}}>
-              <div
-                onClick={() => setOpenCat(null)}
-                onMouseEnter={e => e.currentTarget.style.color = "#fff"}
-                onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
-                style={{
-                  display:"flex", alignItems:"center", gap:8, height:44, padding:"0 10px", flexShrink:0,
-                  cursor:"pointer", color:"var(--text-muted)", transition:"color .15s",
-                  fontSize:12, fontWeight:500, letterSpacing:"0.04em", textTransform:"uppercase",
-                }}>
-                <Icon name="chevron" size={14} style={{transform:"rotate(180deg)", flexShrink:0}}/>
-                <span>{detailSection.title}</span>
-              </div>
-              <div style={{height:6, flexShrink:0}}/>
-              <div ref={detailPaneRef} style={{flex:1, minHeight:0, position:"relative", overflowY:"auto", scrollbarWidth:"none"}}>
-                {renderPill(detailPill)}
-                {detailSection.items.map(it => (
-                  <NavItem bare key={it.id} rowRef={el => { detailRefs.current[it.id] = el; }}
-                    id={it.id} icon={it.icon} label={it.label} badge={it.badge}
-                    active={it.id === _activeId}/>
-                ))}
-              </div>
-            </div>
-          </div>
+          <AgencyNav
+            current={current} curNav={curNav} onNavigate={onNavigate} NavItem={NavItem}
+            D={D} navSearch={navSearch} otrosOpen={otrosOpen} toggleOtros={toggleOtros} pal={_NAVPAL}/>
         ) : (
           <div style={{overflowY:"auto", scrollbarWidth:"none", height:"100%"}}>
             {sections.map((section, si) => (
