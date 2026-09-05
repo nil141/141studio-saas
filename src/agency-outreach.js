@@ -230,6 +230,24 @@
     const [brand, setBrand] = useState("");
     const [ig, setIg] = useState("");
     const [sel, setSel] = useState(() => /* @__PURE__ */ new Set());
+    const [showAdd, setShowAdd] = useState(false);
+    const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
+    const [f, setF] = useState(_emptyF);
+    const upd = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+    const saveNew = () => {
+      if (!f.brand.trim()) return;
+      D.addOutreach({
+        brand: f.brand.trim(),
+        instagram: f.instagram.trim(),
+        contact: f.contact.trim(),
+        email: f.email.trim(),
+        web: f.web.trim(),
+        status: f.status,
+        notes: f.notes.trim()
+      });
+      setF(_emptyF);
+      setShowAdd(false);
+    };
     const counts = {};
     OUTREACH_STATUS.forEach((s) => counts[s.id] = 0);
     all.forEach((o) => {
@@ -275,7 +293,7 @@
         placeholder: "Buscar\u2026",
         style: { background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }
       }
-    )))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1e3 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, /* @__PURE__ */ React.createElement("tr", { style: { borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("td", { style: { ..._cell, paddingLeft: 16, paddingRight: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14, style: { color: "var(--text-subtle)" } })), /* @__PURE__ */ React.createElement("td", { style: _cell }, /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("button", { onClick: () => setShowAdd(true), className: "btn primary sm", style: { height: 34, gap: 6 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }), " Nuevo lead"))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1e3 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Correo"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, /* @__PURE__ */ React.createElement("tr", { style: { borderTop: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("td", { style: { ..._cell, paddingLeft: 16, paddingRight: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14, style: { color: "var(--text-subtle)" } })), /* @__PURE__ */ React.createElement("td", { style: _cell }, /* @__PURE__ */ React.createElement(
       "input",
       {
         value: brand,
@@ -300,10 +318,64 @@
     )), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: _cell }), /* @__PURE__ */ React.createElement("td", { style: { ..._cell, textAlign: "right", paddingRight: 12 } }, brand.trim() && /* @__PURE__ */ React.createElement("button", { onClick: add, className: "btn primary sm", style: { height: 28 } }, "A\xF1adir"))), rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
-        icon: "megaphone-simple",
+        icon: "send",
         title: all.length === 0 ? "A\xFAn no tienes leads" : "Sin resultados",
-        sub: all.length === 0 ? "Escribe la primera cuenta en la fila de arriba." : "Prueba con otra b\xFAsqueda."
+        sub: all.length === 0 ? "A\xF1ade la primera cuenta con \xABNuevo lead\xBB." : "Prueba con otra b\xFAsqueda."
       }
+    ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }));
+  };
+  var _fst = {
+    width: "100%",
+    height: 40,
+    background: "var(--bg-elev-2)",
+    border: "0.5px solid var(--border)",
+    borderRadius: 10,
+    padding: "0 12px",
+    color: "var(--text)",
+    fontSize: 14,
+    fontFamily: "inherit",
+    outline: "none"
+  };
+  var _lst = { fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" };
+  var Fld = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("label", { style: _lst }, label), children);
+  var NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
+    useEffect(() => {
+      const onKey = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, []);
+    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 540 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Nuevo lead"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Guarda una cuenta que quieras contactar.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 24px 4px", display: "grid", gap: 14 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Marca / cuenta *" }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        autoFocus: true,
+        value: f.brand,
+        onChange: upd("brand"),
+        placeholder: "Nombre de la marca",
+        onKeyDown: (e) => {
+          if (e.key === "Enter") onSave();
+        },
+        style: _fst
+      }
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Instagram" }, /* @__PURE__ */ React.createElement("input", { value: f.instagram, onChange: upd("instagram"), placeholder: "@usuario", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Persona de contacto" }, /* @__PURE__ */ React.createElement("input", { value: f.contact, onChange: upd("contact"), placeholder: "Nombre", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Correo" }, /* @__PURE__ */ React.createElement("input", { value: f.email, onChange: upd("email"), placeholder: "correo@marca.com", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Web" }, /* @__PURE__ */ React.createElement("input", { value: f.web, onChange: upd("web"), placeholder: "marca.com", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Estado" }, /* @__PURE__ */ React.createElement("select", { value: f.status, onChange: upd("status"), style: { ..._fst, cursor: "pointer" } }, OUTREACH_STATUS.map((s) => /* @__PURE__ */ React.createElement("option", { key: s.id, value: s.id }, s.label))))), /* @__PURE__ */ React.createElement(Fld, { label: "Notas" }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: f.notes,
+        onChange: upd("notes"),
+        placeholder: "Contexto, por qu\xE9 encaja, siguiente paso\u2026",
+        rows: 3,
+        style: { ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.45 }
+      }
+    ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 22px", display: "flex", justifyContent: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: onSave,
+        disabled: !f.brand.trim(),
+        className: "btn primary",
+        style: { opacity: f.brand.trim() ? 1 : 0.5, pointerEvents: f.brand.trim() ? "auto" : "none" }
+      },
+      "Guardar lead"
     ))));
   };
   window.AgencyOutreach = AgencyOutreach;

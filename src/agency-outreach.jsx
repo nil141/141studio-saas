@@ -126,6 +126,16 @@ const AgencyOutreach = ({ navigate }) => {
   const [brand, setBrand] = useState("");
   const [ig, setIg] = useState("");
   const [sel, setSel] = useState(() => new Set());
+  const [showAdd, setShowAdd] = useState(false);
+  const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
+  const [f, setF] = useState(_emptyF);
+  const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
+  const saveNew = () => {
+    if (!f.brand.trim()) return;
+    D.addOutreach({ brand: f.brand.trim(), instagram: f.instagram.trim(), contact: f.contact.trim(),
+      email: f.email.trim(), web: f.web.trim(), status: f.status, notes: f.notes.trim() });
+    setF(_emptyF); setShowAdd(false);
+  };
 
   const counts = {}; OUTREACH_STATUS.forEach(s => counts[s.id] = 0);
   all.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
@@ -166,6 +176,9 @@ const AgencyOutreach = ({ navigate }) => {
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
               style={{ background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }}/>
           </div>
+          <button onClick={() => setShowAdd(true)} className="btn primary sm" style={{ height: 34, gap: 6 }}>
+            <Icon name="plus" size={14}/> Nuevo lead
+          </button>
         </div>
       </div>
 
@@ -215,10 +228,79 @@ const AgencyOutreach = ({ navigate }) => {
         </div>
         {rows.length === 0 && (
           <div style={{ padding: "44px 0" }}>
-            <Empty icon="megaphone-simple" title={all.length === 0 ? "Aún no tienes leads" : "Sin resultados"}
-              sub={all.length === 0 ? "Escribe la primera cuenta en la fila de arriba." : "Prueba con otra búsqueda."}/>
+            <Empty icon="send" title={all.length === 0 ? "Aún no tienes leads" : "Sin resultados"}
+              sub={all.length === 0 ? "Añade la primera cuenta con «Nuevo lead»." : "Prueba con otra búsqueda."}/>
           </div>
         )}
+      </div>
+
+      {showAdd && <NewLeadModal f={f} upd={upd} setF={setF} onClose={() => setShowAdd(false)} onSave={saveNew}/>}
+    </div>
+  );
+};
+
+// Modal completo para dar de alta un lead
+const _fst = { width: "100%", height: 40, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
+  borderRadius: 10, padding: "0 12px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none" };
+const _lst = { fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" };
+const Fld = ({ label, children }) => (<div style={{ minWidth: 0 }}><label style={_lst}>{label}</label>{children}</div>);
+
+const NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 }}>Nuevo lead</h3>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Guarda una cuenta que quieras contactar.</div>
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 }}><Icon name="x" size={18}/></button>
+        </div>
+
+        <div style={{ padding: "20px 24px 4px", display: "grid", gap: 14 }}>
+          <Fld label="Marca / cuenta *">
+            <input autoFocus value={f.brand} onChange={upd("brand")} placeholder="Nombre de la marca"
+              onKeyDown={e => { if (e.key === "Enter") onSave(); }} style={_fst}/>
+          </Fld>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Fld label="Instagram">
+              <input value={f.instagram} onChange={upd("instagram")} placeholder="@usuario" style={_fst}/>
+            </Fld>
+            <Fld label="Persona de contacto">
+              <input value={f.contact} onChange={upd("contact")} placeholder="Nombre" style={_fst}/>
+            </Fld>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Fld label="Correo">
+              <input value={f.email} onChange={upd("email")} placeholder="correo@marca.com" style={_fst}/>
+            </Fld>
+            <Fld label="Web">
+              <input value={f.web} onChange={upd("web")} placeholder="marca.com" style={_fst}/>
+            </Fld>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <Fld label="Estado">
+              <select value={f.status} onChange={upd("status")} style={{ ..._fst, cursor: "pointer" }}>
+                {OUTREACH_STATUS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
+              </select>
+            </Fld>
+          </div>
+          <Fld label="Notas">
+            <textarea value={f.notes} onChange={upd("notes")} placeholder="Contexto, por qué encaja, siguiente paso…"
+              rows={3} style={{ ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.45 }}/>
+          </Fld>
+        </div>
+
+        <div style={{ padding: "18px 24px 22px", display: "flex", justifyContent: "flex-end", gap: 10 }}>
+          <button onClick={onClose} className="btn ghost">Cancelar</button>
+          <button onClick={onSave} disabled={!f.brand.trim()} className="btn primary"
+            style={{ opacity: f.brand.trim() ? 1 : 0.5, pointerEvents: f.brand.trim() ? "auto" : "none" }}>Guardar lead</button>
+        </div>
       </div>
     </div>
   );

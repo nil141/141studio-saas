@@ -492,9 +492,6 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
       {/* Footer */}
       <div style={{borderTop:"0.5px solid rgba(255,255,255,0.06)", paddingTop:8, display:"flex", flexDirection:"column", gap:0}}>
-        {kind === "agency" && session?.role === "admin" && (
-          <FooterItem icon="sparkles" label="Nora IA" onClick={onAssistant} active={current === "nora"}/>
-        )}
         {kind === "client" ? (
           <button onClick={() => onNavigate("client-settings")}
             style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
