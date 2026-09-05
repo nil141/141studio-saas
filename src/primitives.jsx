@@ -94,8 +94,8 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       {otrosOpen && (
         <div style={{ margin: "2px 0 4px", paddingLeft: 8 }}>
           {_NAV_OTROS.map((it, i) => (
-            <div key={it.id} style={{ animation: "pageIn .3s ease-out both",
-              animationDelay: (i * 0.03) + "s" }}>
+            <div key={it.id} style={{ animation: "pageIn .55s cubic-bezier(0.4,0,0.2,1) both",
+              animationDelay: (0.06 + i * 0.055) + "s" }}>
               <NavItem id={it.id} icon={it.icon} label={it.label} nested/>
             </div>
           ))}
