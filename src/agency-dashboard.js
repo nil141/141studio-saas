@@ -1473,6 +1473,23 @@
     const active = names.find((n) => !isComplete(n));
     return { name: active || names[names.length - 1], allDone: !active };
   };
+  var _PHASE_COLORS = [
+    [/dise[ñn]|design/, "#e879a6"],
+    // Diseño → rosa
+    [/desarroll|\bdev\b|program|shopify|maqueta|c[oó]digo|web/, "#60a5fa"],
+    // Desarrollo → azul
+    [/audit|an[aá]lisis|research|investiga|quick|diagn/, "#eec06a"],
+    // Auditoría → ámbar
+    [/lanz|launch|publica|final|deploy|entrega/, "#00d492"],
+    // Lanzamiento → verde
+    [/conten|redes|social|marketing|\bads\b|campañ|copy/, "#9e9ae5"]
+    // Contenido → morado
+  ];
+  var _phaseColor = (name) => {
+    const t = (name || "").toLowerCase();
+    for (const [re, c] of _PHASE_COLORS) if (re.test(t)) return c;
+    return "#9e9ae5";
+  };
   var EntregasBlock = ({ D, navigate }) => {
     const projs = (D.PROJECTS || []).slice().sort((a, b) => {
       const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
@@ -1489,8 +1506,9 @@
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
       const ph = _activePhaseOf(p, D);
       const complete = pct >= 100 || ph && ph.allDone;
-      const status = complete ? "Completado" : ph ? ph.name : pct > 0 ? "En curso" : "Sin empezar";
-      const statusColor = complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
+      const phName = complete ? "Completado" : ph ? ph.name : pct > 0 ? "En curso" : "Sin empezar";
+      const col = complete ? "var(--green)" : ph ? _phaseColor(ph.name) : pct > 0 ? "var(--accent)" : "#6b7280";
+      const title = p.clientName || p.name || "Proyecto";
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -1500,18 +1518,27 @@
           onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
           style: { cursor: "pointer", borderRadius: 12, padding: "14px 14px", transition: "background .1s" }
         },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: statusColor, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, p.name), /* @__PURE__ */ React.createElement("span", { style: {
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, complete ? /* @__PURE__ */ React.createElement("span", { style: {
+          width: 18,
+          height: 18,
+          borderRadius: "50%",
+          flexShrink: 0,
+          background: "var(--green)",
+          display: "grid",
+          placeItems: "center"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })) : /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--accent)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, title), /* @__PURE__ */ React.createElement("span", { style: {
           fontSize: 10.5,
           padding: "3px 9px",
           borderRadius: 99,
           whiteSpace: "nowrap",
           flexShrink: 0,
-          background: complete ? "var(--green-soft)" : pct > 0 ? "var(--accent-soft)" : "rgba(255,255,255,0.05)",
-          border: "0.5px solid " + (complete ? "rgba(0,255,140,0.3)" : pct > 0 ? "rgba(158,154,229,0.3)" : "rgba(255,255,255,0.09)"),
-          color: complete ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-muted)",
-          letterSpacing: "-0.1px"
-        } }, status)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
+          background: col + "22",
+          border: "0.5px solid " + col + "55",
+          color: col,
+          letterSpacing: "-0.1px",
+          fontWeight: 500
+        } }, phName)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: col, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
       );
     })))));
   };
