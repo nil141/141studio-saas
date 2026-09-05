@@ -1686,8 +1686,8 @@ const EntregasBlock = ({ D, navigate }) => {
                   <span style={{ fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 }}>{_fmtDeliveryDate(p.deadline)}</span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <div style={{ flex: 1, height: 7, borderRadius: 4, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: pct + "%", background: col, borderRadius: 4, transition: "width .6s cubic-bezier(.2,.8,.2,1)" }}/>
+                  <div style={{ flex: 1, height: 7, borderRadius: 2, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: pct + "%", background: col, borderRadius: 2, transition: "width .6s cubic-bezier(.2,.8,.2,1)" }}/>
                   </div>
                   <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 }}>{pct}%</span>
                 </div>
