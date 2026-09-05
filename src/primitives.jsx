@@ -92,12 +92,9 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
         <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
       {otrosOpen && (
-        <div style={{ margin: "2px 0 4px", paddingLeft: 8 }}>
-          {_NAV_OTROS.map((it, i) => (
-            <div key={it.id} style={{ animation: "pageIn .55s cubic-bezier(0.4,0,0.2,1) both",
-              animationDelay: (0.06 + i * 0.055) + "s" }}>
-              <NavItem id={it.id} icon={it.icon} label={it.label} nested/>
-            </div>
+        <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
+          {_NAV_OTROS.map(it => (
+            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} nested/>
           ))}
         </div>
       )}

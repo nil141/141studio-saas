@@ -960,7 +960,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=11"></script>
 <script src="src/data.js?v=59"></script>
-<script src="src/primitives.js?v=68"></script>
+<script src="src/primitives.js?v=69"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=21"></script>
@@ -983,67 +983,5 @@
 <!-- Todos los componentes cargados — arrancar React ahora -->
 <script>window.__initApp();</script>
 
-<!-- ════ Switcher temporal de "chrome" (marco) — solo para elegir diseño ════ -->
-<div id="chrome-switch"></div>
-<style>
-  #chrome-switch {
-    position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%);
-    display: flex; align-items: center; gap: 6px;
-    padding: 7px 9px; border-radius: 14px;
-    background: rgba(18,18,20,0.92); border: 0.5px solid var(--border);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(12px);
-    font-family: var(--font-sans);
-  }
-  #chrome-switch .cs-lbl { font-size: 10px; color: var(--text-subtle); letter-spacing: 0.04em; text-transform: uppercase; padding: 0 4px 0 2px; }
-  #chrome-switch button {
-    width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
-    background: transparent; border: 0.5px solid transparent; color: var(--text-muted);
-    font-size: 12px; font-weight: 600; font-family: var(--font-sans);
-    display: grid; place-items: center; transition: all .12s ease;
-  }
-  #chrome-switch button:hover { background: var(--bg-elev-2); color: var(--text); }
-  #chrome-switch button.active { background: var(--accent-soft); border-color: rgba(158,154,229,0.35); color: var(--accent); }
-  #chrome-switch .cs-x { margin-left: 2px; color: var(--text-subtle); border: none; }
-  @media (max-width: 768px) { #chrome-switch { display: none; } }
-</style>
-<script>
-(function(){
-  var host = document.getElementById('chrome-switch');
-  if (!host) return;
-  var KEY = '141_chrome';
-  var cur = '1';
-  try { cur = localStorage.getItem(KEY) || '1'; } catch(e){}
-  document.documentElement.setAttribute('data-chrome', cur);
-
-  var lbl = document.createElement('span');
-  lbl.className = 'cs-lbl'; lbl.textContent = 'Marco';
-  host.appendChild(lbl);
-
-  var btns = [];
-  function setActive(v){
-    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.v === v); });
-  }
-  for (var i = 1; i <= 10; i++) {
-    (function(n){
-      var b = document.createElement('button');
-      b.textContent = n; b.dataset.v = String(n);
-      b.title = 'Opción ' + n;
-      b.onclick = function(){
-        var v = String(n);
-        document.documentElement.setAttribute('data-chrome', v);
-        try { localStorage.setItem(KEY, v); } catch(e){}
-        setActive(v);
-      };
-      host.appendChild(b); btns.push(b);
-    })(i);
-  }
-  setActive(cur);
-
-  var x = document.createElement('button');
-  x.className = 'cs-x'; x.textContent = '×'; x.title = 'Ocultar (recarga para volver)';
-  x.onclick = function(){ host.style.display = 'none'; };
-  host.appendChild(x);
-})();
-</script>
 </body>
 </html>
