@@ -262,17 +262,6 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
   };
 
   const [navSearch, setNavSearch] = React.useState("");
-  // TEMPORAL: probador de estilos del botón Crear (se quitará al elegir)
-  const CREAR_VARIANTS = [
-    { name: "Sólido",  bg: "var(--accent)", color: "var(--accent-fg)", border: "1px solid var(--accent)", shadow: "none", hoverFilter: "brightness(0.92)" },
-    { name: "Vivo",    bg: "#8b7ff2", color: "#fff", border: "1px solid #8b7ff2", shadow: "0 4px 16px rgba(139,127,242,0.40)", hoverFilter: "brightness(1.07)" },
-    { name: "Glow",    bg: "var(--accent)", color: "#fff", border: "1px solid var(--accent)", shadow: "0 0 0 1px rgba(158,154,229,0.5), 0 6px 22px rgba(158,154,229,0.45)", hoverFilter: "brightness(1.05)" },
-    { name: "Borde",   bg: "transparent", color: "var(--accent)", border: "1px solid var(--accent)", shadow: "none", hoverBg: "var(--accent-soft)" },
-    { name: "Suave",   bg: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)", shadow: "none", hoverBg: "rgba(158,154,229,0.28)" },
-    { name: "Avatar",  bg: "rgba(255,255,255,0.05)", color: "var(--accent)", border: "1px solid rgba(255,255,255,0.06)", shadow: "none", hoverBg: "rgba(255,255,255,0.09)" },
-  ];
-  const [crearVar, setCrearVar] = React.useState(() => { try { return +localStorage.getItem("141_crear_var") || 0; } catch { return 0; } });
-  const pickCrear = (i) => { setCrearVar(i); try { localStorage.setItem("141_crear_var", String(i)); } catch {} };
   const [otrosOpen, setOtrosOpen] = React.useState(() => { try { return localStorage.getItem("141_nav_otros") === "1"; } catch { return false; } });
   const toggleOtros = () => setOtrosOpen(v => { const n = !v; try { localStorage.setItem("141_nav_otros", n ? "1" : "0"); } catch {} return n; });
 
@@ -454,25 +443,14 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       {/* Crear + buscador (agencia) */}
       {kind === "agency" && (
         <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
-          {(() => { const v = CREAR_VARIANTS[crearVar] || CREAR_VARIANTS[0]; return (
           <button onClick={() => onQuickCreate && onQuickCreate()}
-            onMouseEnter={e => { if (v.hoverBg) e.currentTarget.style.background = v.hoverBg; if (v.hoverFilter) e.currentTarget.style.filter = v.hoverFilter; }}
-            onMouseLeave={e => { e.currentTarget.style.background = v.bg; e.currentTarget.style.filter = "none"; }}
+            onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
+            onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
             style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, height:40, borderRadius:12,
-              background:v.bg, color:v.color, border:v.border, boxShadow:v.shadow, cursor:"pointer",
-              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s, filter .12s"}}>
+              background:"var(--accent-soft)", color:"var(--accent)", border:"1px solid rgba(158,154,229,0.3)", cursor:"pointer",
+              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s"}}>
             <Icon name="plus" size={16}/> Crear
-          </button> ); })()}
-          {/* TEMPORAL: selector de estilos — dime el número/nombre que prefieras */}
-          <div style={{display:"flex", alignItems:"center", gap:5, flexWrap:"wrap", padding:"2px 2px 0"}}>
-            {CREAR_VARIANTS.map((v, i) => (
-              <button key={i} onClick={() => pickCrear(i)} title={v.name}
-                style={{fontFamily:"inherit", fontSize:10, letterSpacing:"-0.01em", padding:"3px 7px", borderRadius:6, cursor:"pointer",
-                  border:"1px solid " + (crearVar === i ? "var(--accent)" : "rgba(255,255,255,0.1)"),
-                  background: crearVar === i ? "var(--accent-soft)" : "transparent",
-                  color: crearVar === i ? "var(--accent)" : "var(--text-subtle)"}}>{v.name}</button>
-            ))}
-          </div>
+          </button>
           <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
             background:"rgba(255,255,255,0.05)"}}>
             <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
