@@ -120,7 +120,6 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
             padding: "0 12px", marginBottom: 6, userSelect: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 600,
             color: "var(--text-subtle)", letterSpacing: "0.01em", textTransform: "uppercase", whiteSpace: "nowrap" }}>
-            <Icon name="folder" size={12} style={{ color: "var(--text-subtle)" }}/>
             <span>Todos los proyectos</span>
           </div>
           <Icon name="plus" size={13} style={{ color: "var(--text-subtle)", flexShrink: 0,

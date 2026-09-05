@@ -171,7 +171,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       letterSpacing: "0.01em",
       textTransform: "uppercase",
       whiteSpace: "nowrap"
-    } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 12, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement("span", null, "Todos los proyectos")),
+    } }, /* @__PURE__ */ React.createElement("span", null, "Todos los proyectos")),
     /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13, style: {
       color: "var(--text-subtle)",
       flexShrink: 0,
