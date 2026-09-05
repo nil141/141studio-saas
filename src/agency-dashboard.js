@@ -307,6 +307,36 @@
     })();
     const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr);
     const [hoverKpi, setHoverKpi] = useState(null);
+    const [statusOpen, setStatusOpen] = useState(() => {
+      try {
+        return localStorage.getItem("141_home_status") === "1";
+      } catch {
+        return false;
+      }
+    });
+    const [accesosOpen, setAccesosOpen] = useState(() => {
+      try {
+        return localStorage.getItem("141_home_accesos") !== "0";
+      } catch {
+        return true;
+      }
+    });
+    const toggleStatus = () => setStatusOpen((v) => {
+      const n = !v;
+      try {
+        localStorage.setItem("141_home_status", n ? "1" : "0");
+      } catch {
+      }
+      return n;
+    });
+    const toggleAccesos = () => setAccesosOpen((v) => {
+      const n = !v;
+      try {
+        localStorage.setItem("141_home_accesos", n ? "1" : "0");
+      } catch {
+      }
+      return n;
+    });
     const [hideMoney, setHideMoney] = useState(() => {
       try {
         return localStorage.getItem("141_hide_money") === "1";
@@ -408,13 +438,13 @@
       margin: 0,
       fontFamily: "var(--font-display)",
       color: "var(--text)"
-    } }, greeting, ", ", adminName, "."), /* @__PURE__ */ React.createElement("p", { style: {
+    } }, "Hola, ", adminName, "."), /* @__PURE__ */ React.createElement("p", { style: {
       margin: 0,
       fontSize: 14,
       color: "var(--text-muted)",
       letterSpacing: "-0.2px",
       lineHeight: 1.4
-    } }, dayMessage)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
+    } }, "Esto es lo que tienes entre manos hoy.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       padding: "3px 4px",
@@ -804,7 +834,34 @@
       background: c.tint,
       color: c.color
     } }, /* @__PURE__ */ React.createElement(Icon, { name: c.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, c.when))))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
-    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 18 } }, "Tu status de hoy"), KpiRow), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 14 } }, "Accesos directos"), /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal })), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 52, alignItems: "start" } }, /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate })));
+    const CollapsibleHead = ({ title, open, onToggle }) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: onToggle,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 9,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: "2px 0",
+          fontFamily: "inherit",
+          color: "inherit"
+        }
+      },
+      /* @__PURE__ */ React.createElement(
+        Icon,
+        {
+          name: "chevron-right",
+          size: 13,
+          strokeWidth: 2,
+          style: { color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }
+        }
+      ),
+      /* @__PURE__ */ React.createElement("span", { style: APPLE_SECTION }, title)
+    );
+    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 18 } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
     const renderLayout = () => LayoutInicio;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",

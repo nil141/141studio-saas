@@ -348,6 +348,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const _tasksDayDelta = _dayCompletion(_todayStr) - _dayCompletion(_yestStr); // puntos %
 
   const [hoverKpi, setHoverKpi] = useState(null);
+  // Desplegables del inicio (se recuerdan en el navegador)
+  const [statusOpen, setStatusOpen] = useState(() => { try { return localStorage.getItem("141_home_status") === "1"; } catch { return false; } });
+  const [accesosOpen, setAccesosOpen] = useState(() => { try { return localStorage.getItem("141_home_accesos") !== "0"; } catch { return true; } });
+  const toggleStatus  = () => setStatusOpen(v => { const n = !v; try { localStorage.setItem("141_home_status", n ? "1" : "0"); } catch {} return n; });
+  const toggleAccesos = () => setAccesosOpen(v => { const n = !v; try { localStorage.setItem("141_home_accesos", n ? "1" : "0"); } catch {} return n; });
   const [hideMoney, setHideMoney] = useState(() => {
     try { return localStorage.getItem("141_hide_money") === "1"; } catch { return false; }
   });
@@ -432,11 +437,11 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           <h1 style={{
             fontSize: 36, fontWeight: 400, letterSpacing: "-1.2px", lineHeight: 1.05,
             margin: 0, fontFamily: "var(--font-display)", color: "var(--text)",
-          }}>{greeting}, {adminName}.</h1>
+          }}>Hola, {adminName}.</h1>
           <p style={{
             margin: 0, fontSize: 14, color: "var(--text-muted)", letterSpacing: "-0.2px", lineHeight: 1.4,
           }}>
-            {dayMessage}
+            Esto es lo que tienes entre manos hoy.
           </p>
         </div>
 
@@ -964,21 +969,36 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   );
 
   // ═══ Diseño Inicio (tipo referencia) ══════════════════════════════════════
+  // Cabecera de sección plegable: chevron + etiqueta (estilo referencia).
+  const CollapsibleHead = ({ title, open, onToggle }) => (
+    <button onClick={onToggle}
+      style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent", border: "none",
+        cursor: "pointer", padding: "2px 0", fontFamily: "inherit", color: "inherit" }}>
+      <Icon name="chevron-right" size={13} strokeWidth={2}
+        style={{ color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }}/>
+      <span style={APPLE_SECTION}>{title}</span>
+    </button>
+  );
+
   const LayoutInicio = (
     <>
+      {/* Tu status de hoy — plegable, cerrado por defecto */}
       <section>
-        <div style={{ ...APPLE_SECTION, marginBottom: 18 }}>Tu status de hoy</div>
-        {KpiRow}
+        <CollapsibleHead title="Tu status de hoy" open={statusOpen} onToggle={toggleStatus}/>
+        {statusOpen && <div style={{ marginTop: 18 }}>{KpiRow}</div>}
       </section>
+
+      {/* Accesos directos — plegable, abierto por defecto */}
       <section>
-        <div style={{ ...APPLE_SECTION, marginBottom: 14 }}>Accesos directos</div>
-        <AccesosChips navigate={navigate} openModal={openModal}/>
+        <CollapsibleHead title="Accesos directos" open={accesosOpen} onToggle={toggleAccesos}/>
+        {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
+
       <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }}/>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 52, alignItems: "start" }}>
-        <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
-        <EntregasBlock D={D} navigate={navigate}/>
-      </div>
+
+      {/* Mi lista + Entregas próximas — apiladas, una columna */}
+      <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
+      <EntregasBlock D={D} navigate={navigate}/>
     </>
   );
 
