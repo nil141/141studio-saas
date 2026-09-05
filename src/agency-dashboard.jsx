@@ -431,7 +431,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   // ── Cabecera común (saludo + acción rápida) ──────────────────────────────
   const Header = (
     <header style={{ display: "flex", flexDirection: "column", gap: 20, flexShrink: 0,
-      paddingBottom: 24 }}>
+      paddingBottom: 6 }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           <h1 style={{
@@ -969,32 +969,21 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   );
 
   // ═══ Diseño Inicio (tipo referencia) ══════════════════════════════════════
-  // Cabecera de sección plegable: chevron + etiqueta (estilo referencia).
-  const CollapsibleHead = ({ title, open, onToggle }) => (
-    <button onClick={onToggle}
-      style={{ display: "flex", alignItems: "center", gap: 9, background: "transparent", border: "none",
-        cursor: "pointer", padding: "2px 0", fontFamily: "inherit", color: "inherit" }}>
-      <Icon name="chevron-right" size={13} strokeWidth={2}
-        style={{ color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }}/>
-      <span style={APPLE_SECTION}>{title}</span>
-    </button>
-  );
-
   const LayoutInicio = (
     <>
       {/* Tu status de hoy — plegable, cerrado por defecto */}
       <section>
-        <CollapsibleHead title="Tu status de hoy" open={statusOpen} onToggle={toggleStatus}/>
-        {statusOpen && <div style={{ ...INICIO_CARD, marginTop: 12, padding: "22px 24px" }}>{KpiRow}</div>}
+        <SectionHead title="Tu status de hoy" open={statusOpen} onToggle={toggleStatus}/>
+        {statusOpen && <div style={{ marginTop: 16 }}>{KpiRow}</div>}
       </section>
 
       {/* Accesos directos — plegable, abierto por defecto */}
       <section>
-        <CollapsibleHead title="Accesos directos" open={accesosOpen} onToggle={toggleAccesos}/>
-        {accesosOpen && <div style={{ ...INICIO_CARD, marginTop: 12 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
+        <SectionHead title="Accesos directos" open={accesosOpen} onToggle={toggleAccesos}/>
+        {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
 
-      {/* Mi lista + Entregas próximas — apiladas, una columna, en cajita */}
+      {/* Mi lista + Entregas próximas — apiladas, cada una en cajita */}
       <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
       <EntregasBlock D={D} navigate={navigate}/>
     </>
@@ -1004,7 +993,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
   return (
     <div style={{
-      display: "flex", flexDirection: "column", gap: 26,
+      display: "flex", flexDirection: "column", gap: 20,
       minHeight: "100vh", overflowY: "auto",
       padding: "28px clamp(20px, 4vw, 56px) 48px",
       width: "100%", maxWidth: 1600, margin: "0 auto",
@@ -1439,8 +1428,27 @@ const INICIO_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtl
 const INICIO_CARD = {
   background: "var(--bg-elev-2)",
   border: "0.5px solid var(--border)",
-  borderRadius: 18,
-  padding: "18px 20px",
+  borderRadius: 16,
+  padding: "16px 18px",
+};
+
+// Cabecera de sección: chevron + etiqueta + línea horizontal al lado (estilo referencia).
+const SectionHead = ({ title, count, open, onToggle, right }) => (
+  <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div onClick={onToggle} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none", flexShrink: 0 }}>
+      <Icon name="chevron-right" size={12} strokeWidth={2.2}
+        style={{ color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }}/>
+      <span style={INICIO_EYEBROW}>{title}</span>
+      {count != null && <span style={{ fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{count}</span>}
+    </div>
+    <div onClick={onToggle} style={{ flex: 1, height: "0.5px", background: "var(--border)", cursor: "pointer" }}/>
+    {right}
+  </div>
+);
+const _usePersistOpen = (key, def) => {
+  const [open, setOpen] = useState(() => { try { const v = localStorage.getItem(key); return v == null ? def : v === "1"; } catch { return def; } });
+  const toggle = () => setOpen(v => { const n = !v; try { localStorage.setItem(key, n ? "1" : "0"); } catch {} return n; });
+  return [open, toggle];
 };
 
 const _ymdShift = (ymd, days) => {
@@ -1509,46 +1517,51 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
     setDraft("");
   };
   const fmt = (ds) => { const d = ds ? new Date(ds + "T00:00:00") : null; return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : ""; };
+  const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
   const tabBtn = (id, label) => (
     <button onClick={() => setTab(id)}
       style={{ border: "none", cursor: "pointer", fontFamily: "inherit",
-        fontSize: 12.5, letterSpacing: "-0.2px", padding: "4px 10px", borderRadius: 8,
+        fontSize: 12, letterSpacing: "-0.2px", padding: "4px 10px", borderRadius: 8,
         color: tab === id ? "var(--text)" : "var(--text-subtle)",
         background: tab === id ? "rgba(255,255,255,0.07)" : "transparent" }}>{label}</button>
   );
+  const tabs = (
+    <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+      {tabBtn("dia", "Día")}
+      {tabBtn("semana", "Semana")}
+      <button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todas"><Icon name="arrow" size={12}/></button>
+    </div>
+  );
   return (
-    <section style={INICIO_CARD}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-        <div style={INICIO_EYEBROW}>Mi lista</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-          {tabBtn("dia", "Día")}
-          {tabBtn("semana", "Semana")}
-          <button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 24, height: 24 }} title="Ver todas"><Icon name="arrow" size={13}/></button>
+    <section>
+      <SectionHead title="Mi lista" open={open} onToggle={toggleOpen} right={tabs}/>
+      {open && (
+        <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+          {/* Añadir tarea inline */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 10,
+            background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.07)", marginBottom: 6 }}>
+            <Icon name="plus" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0 }}/>
+            <input value={draft} onChange={e => setDraft(e.target.value)}
+              onKeyDown={e => { if (e.key === "Enter") add(); }}
+              placeholder="Añadir tarea para hoy…"
+              style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text)",
+                fontSize: 14, fontFamily: "var(--font-sans)", letterSpacing: "-0.3px", caretColor: "var(--accent)" }}/>
+            {draft.trim() && (
+              <button onClick={add} style={{ background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer",
+                borderRadius: 8, padding: "5px 12px", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500 }}>Añadir</button>
+            )}
+          </div>
+          {pend.length === 0 ? (
+            <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>
+              {tab === "dia" ? "Todo hecho para hoy 🎉" : "Nada pendiente esta semana."}
+            </div>
+          ) : pend.map((t, i) => (
+            <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
+              projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
+              dateLabel={fmt(t.deadline)} overdue={t.deadline && t.deadline < todayStr}/>
+          ))}
         </div>
-      </div>
-      {/* Añadir tarea inline */}
-      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", borderRadius: 12,
-        background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.07)", marginBottom: 8 }}>
-        <Icon name="plus" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0 }}/>
-        <input value={draft} onChange={e => setDraft(e.target.value)}
-          onKeyDown={e => { if (e.key === "Enter") add(); }}
-          placeholder="Añadir tarea para hoy…"
-          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text)",
-            fontSize: 14, fontFamily: "var(--font-sans)", letterSpacing: "-0.3px", caretColor: "var(--accent)" }}/>
-        {draft.trim() && (
-          <button onClick={add} style={{ background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer",
-            borderRadius: 8, padding: "5px 12px", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500 }}>Añadir</button>
-        )}
-      </div>
-      {pend.length === 0 ? (
-        <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>
-          {tab === "dia" ? "Todo hecho para hoy 🎉" : "Nada pendiente esta semana."}
-        </div>
-      ) : pend.map((t, i) => (
-        <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
-          projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
-          dateLabel={fmt(t.deadline)} overdue={t.deadline && t.deadline < todayStr}/>
-      ))}
+      )}
     </section>
   );
 };
@@ -1562,19 +1575,17 @@ const EntregasBlock = ({ D, navigate }) => {
     if (db) return 1;
     return 0;
   });
+  const [open, toggleOpen] = _usePersistOpen("141_home_entregas", true);
+  const arrow = (
+    <button onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todos"><Icon name="arrow" size={12}/></button>
+  );
   return (
-    <section style={INICIO_CARD}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div style={INICIO_EYEBROW}>Entregas próximas</div>
-          {projs.length > 0 && <span style={{ fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{projs.length}</span>}
-        </div>
-        <button onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 24, height: 24 }} title="Ver todos"><Icon name="arrow" size={13}/></button>
-      </div>
-      {projs.length === 0 ? (
-        <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" }}>Aún no tienes proyectos.</div>
+    <section>
+      <SectionHead title="Entregas próximas" count={projs.length || null} open={open} onToggle={toggleOpen} right={arrow}/>
+      {open && (projs.length === 0 ? (
+        <div style={{ ...INICIO_CARD, marginTop: 12, fontSize: 13, color: "var(--text-subtle)" }}>Aún no tienes proyectos.</div>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ ...INICIO_CARD, marginTop: 12, display: "flex", flexDirection: "column", gap: 4 }}>
           {projs.slice(0, 8).map(p => {
             const tks = D.TASKS[p.id] || [];
             const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
@@ -1604,7 +1615,7 @@ const EntregasBlock = ({ D, navigate }) => {
             );
           })}
         </div>
-      )}
+      ))}
     </section>
   );
 };

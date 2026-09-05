@@ -429,7 +429,7 @@
       flexDirection: "column",
       gap: 20,
       flexShrink: 0,
-      paddingBottom: 24
+      paddingBottom: 6
     } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("h1", { style: {
       fontSize: 36,
       fontWeight: 400,
@@ -834,39 +834,12 @@
       background: c.tint,
       color: c.color
     } }, /* @__PURE__ */ React.createElement(Icon, { name: c.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, c.when))))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
-    const CollapsibleHead = ({ title, open, onToggle }) => /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: onToggle,
-        style: {
-          display: "flex",
-          alignItems: "center",
-          gap: 9,
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          padding: "2px 0",
-          fontFamily: "inherit",
-          color: "inherit"
-        }
-      },
-      /* @__PURE__ */ React.createElement(
-        Icon,
-        {
-          name: "chevron-right",
-          size: 13,
-          strokeWidth: 2,
-          style: { color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }
-        }
-      ),
-      /* @__PURE__ */ React.createElement("span", { style: APPLE_SECTION }, title)
-    );
-    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, padding: "22px 24px" } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(CollapsibleHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
+    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
     const renderLayout = () => LayoutInicio;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
-      gap: 26,
+      gap: 20,
       minHeight: "100vh",
       overflowY: "auto",
       padding: "28px clamp(20px, 4vw, 56px) 48px",
@@ -1305,8 +1278,36 @@
   var INICIO_CARD = {
     background: "var(--bg-elev-2)",
     border: "0.5px solid var(--border)",
-    borderRadius: 18,
-    padding: "18px 20px"
+    borderRadius: 16,
+    padding: "16px 18px"
+  };
+  var SectionHead = ({ title, count, open, onToggle, right }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { onClick: onToggle, style: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+    Icon,
+    {
+      name: "chevron-right",
+      size: 12,
+      strokeWidth: 2.2,
+      style: { color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }
+    }
+  ), /* @__PURE__ */ React.createElement("span", { style: INICIO_EYEBROW }, title), count != null && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, count)), /* @__PURE__ */ React.createElement("div", { onClick: onToggle, style: { flex: 1, height: "0.5px", background: "var(--border)", cursor: "pointer" } }), right);
+  var _usePersistOpen = (key, def) => {
+    const [open, setOpen] = useState(() => {
+      try {
+        const v = localStorage.getItem(key);
+        return v == null ? def : v === "1";
+      } catch {
+        return def;
+      }
+    });
+    const toggle = () => setOpen((v) => {
+      const n = !v;
+      try {
+        localStorage.setItem(key, n ? "1" : "0");
+      } catch {
+      }
+      return n;
+    });
+    return [open, toggle];
   };
   var _ymdShift = (ymd, days) => {
     const d = /* @__PURE__ */ new Date(ymd + "T00:00:00");
@@ -1387,6 +1388,7 @@
       const d = ds ? /* @__PURE__ */ new Date(ds + "T00:00:00") : null;
       return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : "";
     };
+    const [open, toggleOpen] = _usePersistOpen("141_home_milista", true);
     const tabBtn = (id, label) => /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -1395,7 +1397,7 @@
           border: "none",
           cursor: "pointer",
           fontFamily: "inherit",
-          fontSize: 12.5,
+          fontSize: 12,
           letterSpacing: "-0.2px",
           padding: "4px 10px",
           borderRadius: 8,
@@ -1405,15 +1407,16 @@
       },
       label
     );
-    return /* @__PURE__ */ React.createElement("section", { style: INICIO_CARD }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Mi lista"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: {
+    const tabs = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 })));
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Mi lista", open, onToggle: toggleOpen, right: tabs }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       alignItems: "center",
       gap: 10,
-      padding: "11px 14px",
-      borderRadius: 12,
+      padding: "10px 12px",
+      borderRadius: 10,
       background: "rgba(255,255,255,0.03)",
       border: "0.5px solid rgba(255,255,255,0.07)",
-      marginBottom: 8
+      marginBottom: 6
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
       "input",
       {
@@ -1456,7 +1459,7 @@
         dateLabel: fmt(t.deadline),
         overdue: t.deadline && t.deadline < todayStr
       }
-    )));
+    ))));
   };
   var EntregasBlock = ({ D, navigate }) => {
     const projs = (D.PROJECTS || []).slice().sort((a, b) => {
@@ -1466,7 +1469,9 @@
       if (db) return 1;
       return 0;
     });
-    return /* @__PURE__ */ React.createElement("section", { style: INICIO_CARD }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 }))), projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
+    const [open, toggleOpen] = _usePersistOpen("141_home_entregas", true);
+    const arrow = /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }));
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", count: projs.length || null, open, onToggle: toggleOpen, right: arrow }), open && (projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12, display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
       const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
@@ -1493,7 +1498,7 @@
         } }, status)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
       );
-    })));
+    }))));
   };
   window.AgencyDashboard = AgencyDashboard;
 })();
