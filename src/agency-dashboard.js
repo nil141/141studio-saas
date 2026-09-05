@@ -92,14 +92,8 @@
           return;
         }
         const paid = (res.invoices || []).filter((i) => i.status === "paid");
-        setStripeMonth(paid.filter((i) => i.created >= monthStart).reduce((a, b) => {
-          var _a, _b;
-          return a + ((_b = (_a = b.amount_paid) != null ? _a : b.amount) != null ? _b : 0);
-        }, 0));
-        setStripePrev(paid.filter((i) => i.created >= prevStart && i.created < monthStart).reduce((a, b) => {
-          var _a, _b;
-          return a + ((_b = (_a = b.amount_paid) != null ? _a : b.amount) != null ? _b : 0);
-        }, 0));
+        setStripeMonth(paid.filter((i) => i.created >= monthStart).reduce((a, b) => a + (b.amount_paid ?? b.amount ?? 0), 0));
+        setStripePrev(paid.filter((i) => i.created >= prevStart && i.created < monthStart).reduce((a, b) => a + (b.amount_paid ?? b.amount ?? 0), 0));
       }).catch(() => setStripeMonth(false));
     }, []);
     const upcomingEvents = React.useMemo(() => {
@@ -118,7 +112,7 @@
         });
       });
       try {
-        const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
+        const custom = D.AGENDA_EVENTS || [];
         custom.forEach((e) => {
           if (!e.date) return;
           const d = /* @__PURE__ */ new Date(e.date + "T00:00:00");
@@ -144,7 +138,7 @@
         const diff = Math.round((dMid - todayMid) / 864e5);
         return diff >= 0 && diff <= 7;
       }).sort((a, b) => a.date - b.date).slice(0, 8);
-    }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE]);
+    }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE, D.AGENDA_EVENTS]);
     const upcomingBills = React.useMemo(() => {
       const out = [];
       const todayMid = /* @__PURE__ */ new Date();
@@ -219,7 +213,7 @@
           return d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
         }).reduce((a, e) => a + (Number(e.amount) || 0), 0);
         return rec + exp;
-      } catch (e) {
+      } catch {
         return 0;
       }
     };
@@ -243,7 +237,7 @@
           return start <= key;
         }).reduce((a, r) => a + (r.cycle === "yearly" ? withVat(r) / 12 : withVat(r)), 0);
         return pun + rec;
-      } catch (e) {
+      } catch {
         return 0;
       }
     };
@@ -316,7 +310,7 @@
     const [hideMoney, setHideMoney] = useState(() => {
       try {
         return localStorage.getItem("141_hide_money") === "1";
-      } catch (e) {
+      } catch {
         return false;
       }
     });
@@ -324,14 +318,14 @@
       const n = !v;
       try {
         localStorage.setItem("141_hide_money", n ? "1" : "0");
-      } catch (e) {
+      } catch {
       }
       return n;
     });
     const [layout, setLayout] = useState(() => {
       try {
         return localStorage.getItem("141_home_layout") || "bento";
-      } catch (e) {
+      } catch {
         return "bento";
       }
     });
@@ -339,7 +333,7 @@
       setLayout(id);
       try {
         localStorage.setItem("141_home_layout", id);
-      } catch (e) {
+      } catch {
       }
     };
     const LAYOUTS = [{ id: "bento", label: "Bento" }, { id: "minimal", label: "Minimal" }, { id: "focus", label: "Focus" }];
@@ -810,7 +804,8 @@
       background: c.tint,
       color: c.color
     } }, /* @__PURE__ */ React.createElement(Icon, { name: c.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, c.when))))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
-    const renderLayout = () => LayoutBento;
+    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 18 } }, "Tu status de hoy"), KpiRow), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { ...APPLE_SECTION, marginBottom: 14 } }, "Accesos directos"), /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal })), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 52, alignItems: "start" } }, /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate })));
+    const renderLayout = () => LayoutInicio;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
       flexDirection: "column",
@@ -854,7 +849,7 @@
     const [goal, setGoal] = useState(() => {
       try {
         return Number(localStorage.getItem("141_month_goal")) || 3e3;
-      } catch (e) {
+      } catch {
         return 3e3;
       }
     });
@@ -872,7 +867,7 @@
         setGoal(n);
         try {
           localStorage.setItem("141_month_goal", String(n));
-        } catch (e) {
+        } catch {
         }
       }
       setEditing(false);
@@ -1241,6 +1236,200 @@
         fontVariantNumeric: "tabular-nums"
       } }, eur(b.amount)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", letterSpacing: "-0.1px", whiteSpace: "nowrap" } }, b.kind === "invoice" ? "Por cobrar" : "Programado"))
     );
+  };
+  var INICIO_EYEBROW = {
+    fontSize: 11,
+    fontWeight: 600,
+    color: "var(--text-subtle)",
+    textTransform: "uppercase",
+    letterSpacing: "0.08em"
+  };
+  var _ymdShift = (ymd, days) => {
+    const d = /* @__PURE__ */ new Date(ymd + "T00:00:00");
+    if (isNaN(d)) return ymd;
+    d.setDate(d.getDate() + days);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  var _fmtDeliveryDate = (raw) => {
+    const d = parseSpanishDate(raw);
+    if (!d) return raw || "\u2014";
+    return `${d.getDate()} ${_BILL_MESES[d.getMonth()]}`;
+  };
+  var _ACCESOS = [
+    { label: "Clientes", icon: "users", nav: "clients" },
+    { label: "Proyectos", icon: "folder", nav: "projects" },
+    { label: "Tareas", icon: "list-todo", nav: "tasks" },
+    { label: "Facturaci\xF3n", icon: "trending-up", nav: "income" },
+    { label: "Agenda", icon: "calendar", nav: "agenda" }
+  ];
+  var AccesosChips = ({ navigate, openModal }) => {
+    const chip = (extra = {}) => ({
+      display: "inline-flex",
+      alignItems: "center",
+      gap: 8,
+      padding: "9px 14px",
+      borderRadius: 12,
+      cursor: "pointer",
+      fontFamily: "inherit",
+      fontSize: 13,
+      letterSpacing: "-0.2px",
+      whiteSpace: "nowrap",
+      transition: "background .12s, border-color .12s",
+      ...extra
+    });
+    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => openModal("newTask"),
+        style: chip({ background: "var(--accent-soft)", border: "0.5px solid rgba(158,154,229,0.35)", color: "var(--accent)", fontWeight: 500 }),
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.26)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "var(--accent-soft)"
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
+      " Crear"
+    ), _ACCESOS.map((a) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: a.nav,
+        onClick: () => navigate(a.nav),
+        style: chip({ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", color: "var(--text-muted)" }),
+        onMouseEnter: (e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.08)";
+          e.currentTarget.style.color = "var(--text)";
+        },
+        onMouseLeave: (e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.04)";
+          e.currentTarget.style.color = "var(--text-muted)";
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: a.icon, size: 14, strokeWidth: 1.7 }),
+      " ",
+      a.label
+    )));
+  };
+  var MiListaBlock = ({ D, navigate, todayStr }) => {
+    const [tab, setTab] = useState("dia");
+    const [draft, setDraft] = useState("");
+    const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
+    const weekEnd = _ymdShift(todayStr, 7);
+    const pend = Object.entries(D.TASKS).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => arr.filter((t) => t.column !== "done").map((t) => ({ ...t, _pid: pid }))).filter((t) => t.deadline && (tab === "dia" ? t.deadline <= todayStr : t.deadline <= weekEnd)).sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1).slice(0, 8);
+    const add = () => {
+      const v = draft.trim();
+      if (!v) return;
+      D.addTask({ title: v, deadline: todayStr });
+      setDraft("");
+    };
+    const fmt = (ds) => {
+      const d = ds ? /* @__PURE__ */ new Date(ds + "T00:00:00") : null;
+      return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : "";
+    };
+    const tabBtn = (id, label) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setTab(id),
+        style: {
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 12.5,
+          letterSpacing: "-0.2px",
+          padding: "4px 10px",
+          borderRadius: 8,
+          color: tab === id ? "var(--text)" : "var(--text-subtle)",
+          background: tab === id ? "rgba(255,255,255,0.07)" : "transparent"
+        }
+      },
+      label
+    );
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Mi lista"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 4 } }, tabBtn("dia", "D\xEDa"), tabBtn("semana", "Semana"), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("tasks"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todas" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 })))), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      padding: "11px 14px",
+      borderRadius: 12,
+      background: "rgba(255,255,255,0.03)",
+      border: "0.5px solid rgba(255,255,255,0.07)",
+      marginBottom: 8
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: draft,
+        onChange: (e) => setDraft(e.target.value),
+        onKeyDown: (e) => {
+          if (e.key === "Enter") add();
+        },
+        placeholder: "A\xF1adir tarea para hoy\u2026",
+        style: {
+          flex: 1,
+          background: "transparent",
+          border: "none",
+          outline: "none",
+          color: "var(--text)",
+          fontSize: 14,
+          fontFamily: "var(--font-sans)",
+          letterSpacing: "-0.3px",
+          caretColor: "var(--accent)"
+        }
+      }
+    ), draft.trim() && /* @__PURE__ */ React.createElement("button", { onClick: add, style: {
+      background: "var(--accent)",
+      color: "#fff",
+      border: "none",
+      cursor: "pointer",
+      borderRadius: 8,
+      padding: "5px 12px",
+      fontFamily: "inherit",
+      fontSize: 12.5,
+      fontWeight: 500
+    } }, "A\xF1adir")), pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, tab === "dia" ? "Todo hecho para hoy \u{1F389}" : "Nada pendiente esta semana.") : pend.map((t, i) => /* @__PURE__ */ React.createElement(
+      QuickTaskRow,
+      {
+        key: t.id,
+        t,
+        D,
+        last: i === pend.length - 1,
+        projName: (D.PROJECTS.find((p) => p.id === t._pid) || {}).name || t.clientName || "General",
+        dateLabel: fmt(t.deadline),
+        overdue: t.deadline && t.deadline < todayStr
+      }
+    )));
+  };
+  var EntregasBlock = ({ D, navigate }) => {
+    const projs = (D.PROJECTS || []).slice().sort((a, b) => {
+      const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
+      if (da && db) return da - db;
+      if (da) return -1;
+      if (db) return 1;
+      return 0;
+    });
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: INICIO_EYEBROW }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length)), /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 24, height: 24 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 13 }))), projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" } }, "A\xFAn no tienes proyectos.") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
+      const tks = D.TASKS[p.id] || [];
+      const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
+      const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
+      const statusColor = pct >= 100 ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: p.id,
+          onClick: () => navigate("project", { projectId: p.id }),
+          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+          style: { cursor: "pointer", borderRadius: 12, padding: "14px 14px", transition: "background .1s" }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: statusColor, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, p.name), /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10.5,
+          padding: "3px 9px",
+          borderRadius: 99,
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+          background: "rgba(255,255,255,0.05)",
+          border: "0.5px solid rgba(255,255,255,0.09)",
+          color: "var(--text-muted)",
+          letterSpacing: "-0.1px"
+        } }, status)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 } }, _fmtDeliveryDate(p.deadline))),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" } })), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 } }, pct, "%"))
+      );
+    })));
   };
   window.AgencyDashboard = AgencyDashboard;
 })();

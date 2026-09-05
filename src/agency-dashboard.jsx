@@ -153,7 +153,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
 
     // Eventos personalizados de Agenda (reuniones, eventos, tareas) — colores neutros
     try {
-      const custom = JSON.parse(localStorage.getItem("agenda_custom_events") || "[]");
+      const custom = D.AGENDA_EVENTS || [];
       custom.forEach(e => {
         if (!e.date) return;
         const d = new Date(e.date + "T00:00:00");
@@ -180,7 +180,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
       })
       .sort((a,b) => a.date - b.date)
       .slice(0, 8);
-  }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE]);
+  }, [D.PROJECTS, D.INVOICES, D.TASKS, D.FINANCE, D.AGENDA_EVENTS]);
 
   // Próximos pagos: suscripciones (siguiente renovación) + facturas por cobrar
   const upcomingBills = React.useMemo(() => {
@@ -963,7 +963,26 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
     </>
   );
 
-  const renderLayout = () => LayoutBento;
+  // ═══ Diseño Inicio (tipo referencia) ══════════════════════════════════════
+  const LayoutInicio = (
+    <>
+      <section>
+        <div style={{ ...APPLE_SECTION, marginBottom: 18 }}>Tu status de hoy</div>
+        {KpiRow}
+      </section>
+      <section>
+        <div style={{ ...APPLE_SECTION, marginBottom: 14 }}>Accesos directos</div>
+        <AccesosChips navigate={navigate} openModal={openModal}/>
+      </section>
+      <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }}/>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 52, alignItems: "start" }}>
+        <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
+        <EntregasBlock D={D} navigate={navigate}/>
+      </div>
+    </>
+  );
+
+  const renderLayout = () => LayoutInicio;
 
   return (
     <div style={{
@@ -1394,5 +1413,175 @@ const ActiveProjects = ({ D, navigate, openModal, APPLE_SECTION }) => (
     })}
   </div>
 );
+
+// ═══ Inicio (rediseño tipo referencia) ═══════════════════════════════════════
+const INICIO_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)",
+  textTransform: "uppercase", letterSpacing: "0.08em" };
+
+const _ymdShift = (ymd, days) => {
+  const d = new Date(ymd + "T00:00:00");
+  if (isNaN(d)) return ymd;
+  d.setDate(d.getDate() + days);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+};
+const _fmtDeliveryDate = (raw) => {
+  const d = parseSpanishDate(raw);
+  if (!d) return raw || "—";
+  return `${d.getDate()} ${_BILL_MESES[d.getMonth()]}`;
+};
+
+// Fila de "Accesos directos" — chips que navegan a las secciones
+const _ACCESOS = [
+  { label: "Clientes",    icon: "users",       nav: "clients" },
+  { label: "Proyectos",   icon: "folder",      nav: "projects" },
+  { label: "Tareas",      icon: "list-todo",   nav: "tasks" },
+  { label: "Facturación", icon: "trending-up", nav: "income" },
+  { label: "Agenda",      icon: "calendar",    nav: "agenda" },
+];
+const AccesosChips = ({ navigate, openModal }) => {
+  const chip = (extra = {}) => ({
+    display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px",
+    borderRadius: 12, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
+    letterSpacing: "-0.2px", whiteSpace: "nowrap", transition: "background .12s, border-color .12s",
+    ...extra,
+  });
+  return (
+    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+      <button onClick={() => openModal("newTask")}
+        style={chip({ background: "var(--accent-soft)", border: "0.5px solid rgba(158,154,229,0.35)", color: "var(--accent)", fontWeight: 500 })}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.26)"}
+        onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}>
+        <Icon name="plus" size={14}/> Crear
+      </button>
+      {_ACCESOS.map(a => (
+        <button key={a.nav} onClick={() => navigate(a.nav)}
+          style={chip({ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.08)", color: "var(--text-muted)" })}
+          onMouseEnter={e => { e.currentTarget.style.background = "rgba(255,255,255,0.08)"; e.currentTarget.style.color = "var(--text)"; }}
+          onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.04)"; e.currentTarget.style.color = "var(--text-muted)"; }}>
+          <Icon name={a.icon} size={14} strokeWidth={1.7}/> {a.label}
+        </button>
+      ))}
+    </div>
+  );
+};
+
+// "Mi lista" — tareas de hoy / semana con añadir inline y pestañas
+const MiListaBlock = ({ D, navigate, todayStr }) => {
+  const [tab, setTab] = useState("dia");   // "dia" | "semana"
+  const [draft, setDraft] = useState("");
+  const projIds = new Set((D.PROJECTS || []).map(p => p.id));
+  const weekEnd = _ymdShift(todayStr, 7);
+  const pend = Object.entries(D.TASKS)
+    .filter(([pid]) => pid === "__none__" || projIds.has(pid))
+    .flatMap(([pid, arr]) => arr.filter(t => t.column !== "done").map(t => ({ ...t, _pid: pid })))
+    .filter(t => t.deadline && (tab === "dia" ? t.deadline <= todayStr : t.deadline <= weekEnd))
+    .sort((a, b) => (a.deadline || "9999") < (b.deadline || "9999") ? -1 : 1)
+    .slice(0, 8);
+  const add = () => {
+    const v = draft.trim();
+    if (!v) return;
+    D.addTask({ title: v, deadline: todayStr });
+    setDraft("");
+  };
+  const fmt = (ds) => { const d = ds ? new Date(ds + "T00:00:00") : null; return d && !isNaN(d) ? `${d.getDate()} ${_BILL_MESES[d.getMonth()]}` : ""; };
+  const tabBtn = (id, label) => (
+    <button onClick={() => setTab(id)}
+      style={{ border: "none", cursor: "pointer", fontFamily: "inherit",
+        fontSize: 12.5, letterSpacing: "-0.2px", padding: "4px 10px", borderRadius: 8,
+        color: tab === id ? "var(--text)" : "var(--text-subtle)",
+        background: tab === id ? "rgba(255,255,255,0.07)" : "transparent" }}>{label}</button>
+  );
+  return (
+    <section>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div style={INICIO_EYEBROW}>Mi lista</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          {tabBtn("dia", "Día")}
+          {tabBtn("semana", "Semana")}
+          <button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 24, height: 24 }} title="Ver todas"><Icon name="arrow" size={13}/></button>
+        </div>
+      </div>
+      {/* Añadir tarea inline */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", borderRadius: 12,
+        background: "rgba(255,255,255,0.03)", border: "0.5px solid rgba(255,255,255,0.07)", marginBottom: 8 }}>
+        <Icon name="plus" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0 }}/>
+        <input value={draft} onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") add(); }}
+          placeholder="Añadir tarea para hoy…"
+          style={{ flex: 1, background: "transparent", border: "none", outline: "none", color: "var(--text)",
+            fontSize: 14, fontFamily: "var(--font-sans)", letterSpacing: "-0.3px", caretColor: "var(--accent)" }}/>
+        {draft.trim() && (
+          <button onClick={add} style={{ background: "var(--accent)", color: "#fff", border: "none", cursor: "pointer",
+            borderRadius: 8, padding: "5px 12px", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500 }}>Añadir</button>
+        )}
+      </div>
+      {pend.length === 0 ? (
+        <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>
+          {tab === "dia" ? "Todo hecho para hoy 🎉" : "Nada pendiente esta semana."}
+        </div>
+      ) : pend.map((t, i) => (
+        <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
+          projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
+          dateLabel={fmt(t.deadline)} overdue={t.deadline && t.deadline < todayStr}/>
+      ))}
+    </section>
+  );
+};
+
+// "Entregas próximas" — filas con barra de progreso grande por proyecto
+const EntregasBlock = ({ D, navigate }) => {
+  const projs = (D.PROJECTS || []).slice().sort((a, b) => {
+    const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
+    if (da && db) return da - db;
+    if (da) return -1;
+    if (db) return 1;
+    return 0;
+  });
+  return (
+    <section>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={INICIO_EYEBROW}>Entregas próximas</div>
+          {projs.length > 0 && <span style={{ fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{projs.length}</span>}
+        </div>
+        <button onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 24, height: 24 }} title="Ver todos"><Icon name="arrow" size={13}/></button>
+      </div>
+      {projs.length === 0 ? (
+        <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px" }}>Aún no tienes proyectos.</div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {projs.slice(0, 8).map(p => {
+            const tks = D.TASKS[p.id] || [];
+            const pct = tks.length ? Math.round(tks.filter(t => t.column === "done").length / tks.length * 100) : (p.progress || 0);
+            const status = pct >= 100 ? "Completado" : pct > 0 ? "En curso" : "Sin empezar";
+            const statusColor = pct >= 100 ? "var(--green)" : pct > 0 ? "var(--accent)" : "var(--text-subtle)";
+            return (
+              <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                style={{ cursor: "pointer", borderRadius: 12, padding: "14px 14px", transition: "background .1s" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginBottom: 10 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+                    <span style={{ width: 7, height: 7, borderRadius: "50%", background: statusColor, flexShrink: 0 }}/>
+                    <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{p.name}</span>
+                    <span style={{ fontSize: 10.5, padding: "3px 9px", borderRadius: 99, whiteSpace: "nowrap", flexShrink: 0,
+                      background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.09)", color: "var(--text-muted)", letterSpacing: "-0.1px" }}>{status}</span>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text-subtle)", whiteSpace: "nowrap", flexShrink: 0 }}>{_fmtDeliveryDate(p.deadline)}</span>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{ flex: 1, height: 8, borderRadius: 99, background: "rgba(255,255,255,0.07)", overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: pct + "%", background: statusColor, borderRadius: 99, transition: "width .6s cubic-bezier(.2,.8,.2,1)" }}/>
+                  </div>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)", fontVariantNumeric: "tabular-nums", width: 34, textAlign: "right", flexShrink: 0 }}>{pct}%</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+};
 
 window.AgencyDashboard = AgencyDashboard;
