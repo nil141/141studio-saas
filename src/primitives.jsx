@@ -313,7 +313,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
           height:38, padding:"0 10px", borderRadius:10, cursor:"pointer",
           background: bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent"),
           border: bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent"),
-          color: isActive ? "var(--accent)" : hov ? "#fff" : "var(--text-muted)",
+          color: isActive ? "#fff" : hov ? "#fff" : "var(--text-muted)",
           transition:"color .15s, background .15s",
           fontSize:14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
         }}
