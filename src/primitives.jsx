@@ -30,7 +30,7 @@ const _NAV_OTROS = [
   { id: "projects",  label: "Proyectos",   icon: "folder" },
   { id: "clients",   label: "Clientes",    icon: "users" },
   { id: "campaigns", label: "Campañas",    icon: "megaphone" },
-  { id: "outreach",  label: "Propuestas Outreach", icon: "megaphone-simple" },
+  { id: "outreach",  label: "Propuestas Outreach", icon: "send" },
   { id: "income",    label: "Facturación", icon: "trending-up" },
   { id: "billing",   label: "Gastos",      icon: "receipt" },
   { id: "mail",      label: "Correo",      icon: "mail" },

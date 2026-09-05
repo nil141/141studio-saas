@@ -144,11 +144,11 @@ const AgencyOutreach = ({ navigate }) => {
 
   return (
     <div className="page">
-      {/* Cabecera */}
-      <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 16, marginBottom: 18, flexWrap: "wrap" }}>
+      {/* Cabecera — mismo formato .page-head que el resto de páginas */}
+      <div className="page-head">
         <div>
-          <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 600, fontSize: "clamp(22px,2.6vw,28px)", letterSpacing: "-0.7px" }}>Propuestas Outreach</h1>
-          <div style={{ marginTop: 7, fontSize: 13, color: "var(--text-muted)", display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <h1>Propuestas Outreach</h1>
+          <div className="sub" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <span><b style={{ color: "var(--text)", fontWeight: 600 }}>{all.length}</b> marcas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
             <span>{counts.contactado || 0} contactadas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
             <span>{counts.respondio || 0} respuestas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
