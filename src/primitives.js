@@ -450,21 +450,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
       kbd ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" } }, kbd) : null
     );
   };
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar", style: {
-    width: 220,
-    background: "var(--bg-elev)",
-    border: "0.5px solid var(--border)",
-    borderRadius: 18,
-    display: "flex",
-    flexDirection: "column",
-    height: "calc(100vh - 20px)",
-    position: "sticky",
-    top: 10,
-    margin: "10px 5px 10px 10px",
-    padding: "18px 12px 14px",
-    overflow: "hidden",
-    flexShrink: 0
-  } }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar" }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
     "img",
     {
       src: "/logo-141digital-white.png",

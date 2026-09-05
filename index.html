@@ -173,16 +173,60 @@
     .page-enter > *, .page-enter > * > * { animation: none; }
   }
 
-  /* App layout — paneles flotantes (sidebar + contenido) sobre el fondo */
+  /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
   .app.client { grid-template-columns: auto 1fr; }
+  /* Base neutra (equivale a la variante 2 si el switcher no cargara) */
   .main {
     min-width: 0;
-    margin: 10px 10px 10px 5px;
+    margin: 12px 12px 12px 10px;
+    border: 0.5px solid var(--border);
     border-radius: 18px;
     background: var(--bg-elev);
-    border: 0.5px solid var(--border);
-    min-height: calc(100vh - 20px);
+    min-height: calc(100vh - 24px);
+  }
+
+  /* ── CHROME · variantes del marco (solo escritorio) ──────── */
+  @media (min-width: 769px) {
+    /* 1 · Plano — todo a sangre, división por línea */
+    html[data-chrome="1"] .sidebar { border-right: 0.5px solid var(--border); }
+    html[data-chrome="1"] .main { margin: 0; border: none; border-radius: 0; background: transparent; min-height: 100vh; }
+
+    /* 2 · Panel — menú a sangre, contenido en tarjeta redonda con márgenes */
+    html[data-chrome="2"] .sidebar { border-right: none; }
+    html[data-chrome="2"] .main { margin: 12px 12px 12px 10px; border: 0.5px solid var(--border); border-radius: 18px; background: var(--bg-elev); min-height: calc(100vh - 24px); box-shadow: none; }
+
+    /* 3 · Panel pegado — contenido redondo pegado al menú (esquinas derechas) */
+    html[data-chrome="3"] .sidebar { border-right: 0.5px solid var(--border); }
+    html[data-chrome="3"] .main { margin: 12px 12px 12px 0; border: 0.5px solid var(--border); border-left: none; border-radius: 0 18px 18px 0; background: var(--bg-elev); min-height: calc(100vh - 24px); box-shadow: none; }
+
+    /* 4 · Plano inset — a sangre sobre el fondo base */
+    html[data-chrome="4"] .sidebar { border-right: 0.5px solid var(--border); }
+    html[data-chrome="4"] .main { margin: 0; border: none; border-radius: 0; background: var(--bg); min-height: 100vh; box-shadow: none; }
+
+    /* 5 · Doble flotante — menú y contenido flotan */
+    html[data-chrome="5"] .sidebar { margin: 12px 6px 12px 12px; height: calc(100vh - 24px); border: 0.5px solid var(--border); border-radius: 18px; }
+    html[data-chrome="5"] .main { margin: 12px 12px 12px 6px; border: 0.5px solid var(--border); border-radius: 18px; background: var(--bg-elev); min-height: calc(100vh - 24px); box-shadow: none; }
+
+    /* 6 · Amplio — radio grande, márgenes generosos */
+    html[data-chrome="6"] .sidebar { border-right: none; }
+    html[data-chrome="6"] .main { margin: 18px 18px 18px 14px; border: 0.5px solid var(--border); border-radius: 26px; background: var(--bg-elev); min-height: calc(100vh - 36px); box-shadow: none; }
+
+    /* 7 · Compacto — márgenes y radio pequeños */
+    html[data-chrome="7"] .sidebar { border-right: none; }
+    html[data-chrome="7"] .main { margin: 6px 6px 6px 5px; border: 0.5px solid var(--border); border-radius: 12px; background: var(--bg-elev); min-height: calc(100vh - 12px); box-shadow: none; }
+
+    /* 8 · Sombra suave — panel sin borde con sombra */
+    html[data-chrome="8"] .sidebar { border-right: none; }
+    html[data-chrome="8"] .main { margin: 12px 12px 12px 10px; border: none; border-radius: 18px; background: var(--bg-elev); box-shadow: 0 1px 30px rgba(0,0,0,0.4); min-height: calc(100vh - 24px); }
+
+    /* 9 · Costura elevada — menú más oscuro, contenido elevado */
+    html[data-chrome="9"] .sidebar { background: var(--bg); border-right: none; }
+    html[data-chrome="9"] .main { margin: 10px 10px 10px 8px; border: 0.5px solid var(--border); border-radius: 16px; background: var(--bg-elev); min-height: calc(100vh - 20px); box-shadow: none; }
+
+    /* 10 · Pestaña — contenido a sangre con esquina superior izquierda redondeada */
+    html[data-chrome="10"] .sidebar { border-right: 0.5px solid var(--border); }
+    html[data-chrome="10"] .main { margin: 10px 0 0 0; border: 0.5px solid var(--border); border-right: none; border-bottom: none; border-radius: 18px 0 0 0; background: var(--bg-elev); min-height: calc(100vh - 10px); box-shadow: none; }
   }
   .topbar { display: none; }
   .topbar-hidden {
@@ -349,15 +393,14 @@
 
   /* Sidebar */
   .sidebar {
-    border-right: 0.5px solid rgba(255,255,255,0.06);
-    background: rgba(5,5,5,0.92);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
     display: flex; flex-direction: column;
     height: 100vh; position: sticky; top: 0;
-    padding: 0;
+    padding: 18px 12px 14px;
     width: 220px;
     overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg-elev);
+    border-right: 0.5px solid var(--border);
   }
   .brand {
     display: flex; align-items: center; gap: 8px;
@@ -867,6 +910,13 @@
     }
   }
 </style>
+<script>
+  /* Aplica el "chrome" guardado antes de pintar para evitar parpadeo */
+  try {
+    var _c = localStorage.getItem('141_chrome') || '2';
+    document.documentElement.setAttribute('data-chrome', _c);
+  } catch(e) { document.documentElement.setAttribute('data-chrome', '2'); }
+</script>
 </head>
 <body>
 <div id="root"></div>
@@ -908,7 +958,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=11"></script>
 <script src="src/data.js?v=59"></script>
-<script src="src/primitives.js?v=62"></script>
+<script src="src/primitives.js?v=63"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=21"></script>
@@ -930,5 +980,68 @@
 <script src="src/routines.js?v=28"></script>
 <!-- Todos los componentes cargados — arrancar React ahora -->
 <script>window.__initApp();</script>
+
+<!-- ════ Switcher temporal de "chrome" (marco) — solo para elegir diseño ════ -->
+<div id="chrome-switch"></div>
+<style>
+  #chrome-switch {
+    position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 9px; border-radius: 14px;
+    background: rgba(18,18,20,0.92); border: 0.5px solid var(--border);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+    font-family: var(--font-sans);
+  }
+  #chrome-switch .cs-lbl { font-size: 10px; color: var(--text-subtle); letter-spacing: 0.04em; text-transform: uppercase; padding: 0 4px 0 2px; }
+  #chrome-switch button {
+    width: 26px; height: 26px; border-radius: 8px; cursor: pointer;
+    background: transparent; border: 0.5px solid transparent; color: var(--text-muted);
+    font-size: 12px; font-weight: 600; font-family: var(--font-sans);
+    display: grid; place-items: center; transition: all .12s ease;
+  }
+  #chrome-switch button:hover { background: var(--bg-elev-2); color: var(--text); }
+  #chrome-switch button.active { background: var(--accent-soft); border-color: rgba(158,154,229,0.35); color: var(--accent); }
+  #chrome-switch .cs-x { margin-left: 2px; color: var(--text-subtle); border: none; }
+  @media (max-width: 768px) { #chrome-switch { display: none; } }
+</style>
+<script>
+(function(){
+  var host = document.getElementById('chrome-switch');
+  if (!host) return;
+  var KEY = '141_chrome';
+  var cur = '2';
+  try { cur = localStorage.getItem(KEY) || '2'; } catch(e){}
+  document.documentElement.setAttribute('data-chrome', cur);
+
+  var lbl = document.createElement('span');
+  lbl.className = 'cs-lbl'; lbl.textContent = 'Marco';
+  host.appendChild(lbl);
+
+  var btns = [];
+  function setActive(v){
+    btns.forEach(function(b){ b.classList.toggle('active', b.dataset.v === v); });
+  }
+  for (var i = 1; i <= 10; i++) {
+    (function(n){
+      var b = document.createElement('button');
+      b.textContent = n; b.dataset.v = String(n);
+      b.title = 'Opción ' + n;
+      b.onclick = function(){
+        var v = String(n);
+        document.documentElement.setAttribute('data-chrome', v);
+        try { localStorage.setItem(KEY, v); } catch(e){}
+        setActive(v);
+      };
+      host.appendChild(b); btns.push(b);
+    })(i);
+  }
+  setActive(cur);
+
+  var x = document.createElement('button');
+  x.className = 'cs-x'; x.textContent = '×'; x.title = 'Ocultar (recarga para volver)';
+  x.onclick = function(){ host.style.display = 'none'; };
+  host.appendChild(x);
+})();
+</script>
 </body>
 </html>

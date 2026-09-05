@@ -405,18 +405,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
 
   return (
     <>
-    <aside className="sidebar" style={{
-      width: 220,
-      background: "var(--bg-elev)",
-      border: "0.5px solid var(--border)",
-      borderRadius: 18,
-      display: "flex", flexDirection: "column",
-      height: "calc(100vh - 20px)", position: "sticky", top: 10,
-      margin: "10px 5px 10px 10px",
-      padding: "18px 12px 14px",
-      overflow: "hidden",
-      flexShrink: 0,
-    }}>
+    <aside className="sidebar">
       {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
       {kind === "client" ? (
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 8px 30px 10px"}}>
