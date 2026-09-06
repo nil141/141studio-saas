@@ -847,8 +847,8 @@
     .main { padding-bottom: 24px; margin: 0; border-radius: 0; border: none; min-height: 100vh; background: var(--bg); }
     /* Inicio: menos margen lateral en móvil */
     .dash-root { padding: 16px 16px 48px !important; gap: 16px !important; }
-    /* Accesos directos: una sola fila que se arrastra, hasta el borde */
-    .accesos-chips { flex-wrap: nowrap !important; margin: 0 -16px; padding: 0 16px 2px; }
+    /* Accesos directos: en móvil ya están en la tira de pestañas de arriba */
+    .accesos-section { display: none !important; }
     /* Flechita "ver todo" de las cabeceras de sección: fuera en móvil */
     .section-go { display: none !important; }
 
@@ -1147,7 +1147,7 @@
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=36"></script>
 <!-- Non-critical: load after login screen is ready -->
-<script src="src/agency-dashboard.js?v=92"></script>
+<script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=29"></script>
 <script src="src/agency-project.js?v=34"></script>
 <script src="src/agency-other.js?v=135"></script>

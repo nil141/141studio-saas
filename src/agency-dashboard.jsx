@@ -951,8 +951,8 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {statusOpen && <div style={{ marginTop: 16 }}>{KpiRow}</div>}
       </section>
 
-      {/* Accesos directos — plegable, abierto por defecto */}
-      <section>
+      {/* Accesos directos — plegable, abierto por defecto (oculto en móvil: ya está en la tira superior) */}
+      <section className="accesos-section">
         <SectionHead title="Accesos directos" open={accesosOpen} onToggle={toggleAccesos}/>
         {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
