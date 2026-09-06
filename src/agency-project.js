@@ -709,11 +709,14 @@
       } }, /* @__PURE__ */ React.createElement("span", { style: { width: 9, height: 9, borderRadius: 99, background: info.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, letterSpacing: "-0.2px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, t.title), taskPhase(t) && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, taskPhase(t))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "right", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500 } }, info.label), info.tag && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: info.color, marginTop: 1 } }, info.tag)))))));
     })(), tab === "files" && (() => {
       const driveKey = "proj_drive_" + p.id;
-      const driveUrl = typeof localStorage !== "undefined" && localStorage.getItem(driveKey) || "";
+      const driveUrl = p.driveUrl || typeof localStorage !== "undefined" && localStorage.getItem(driveKey) || "";
       const saveDrive = (url) => {
         const v = (url || "").trim();
-        if (v) localStorage.setItem(driveKey, v);
-        else localStorage.removeItem(driveKey);
+        D.updateProject(p.id, { driveUrl: v });
+        try {
+          localStorage.removeItem(driveKey);
+        } catch {
+        }
         setDriveEditing(false);
         setDriveDraft("");
         setDriveTick((x) => x + 1);
@@ -763,12 +766,15 @@
         {
           icon: "folder",
           title: "Sin carpeta todav\xEDa",
-          sub: "Pega el enlace de la carpeta de Drive del proyecto para compartirla con el cliente."
+          sub: D.driveConfigured ? "Si acabas de crear el proyecto, la carpeta se crea sola en unos segundos. Tambi\xE9n puedes crearla ahora o pegar un enlace a mano." : "Pega el enlace de la carpeta de Drive del proyecto para compartirla con el cliente."
         }
-      ), /* @__PURE__ */ React.createElement("div", { className: "row", style: { justifyContent: "center", marginTop: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+      ), /* @__PURE__ */ React.createElement("div", { className: "row", style: { justifyContent: "center", marginTop: 12, gap: 8 } }, D.driveConfigured && /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: () => {
+        D.driveCreateFolderForProject(p.id);
+        toast("Creando carpeta en Drive\u2026", "success");
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 13 }), " Crear carpeta en Drive"), /* @__PURE__ */ React.createElement("button", { className: "btn" + (D.driveConfigured ? "" : " primary"), onClick: () => {
         setDriveDraft("");
         setDriveEditing(true);
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " A\xF1adir carpeta de Drive")))));
+      } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Pegar enlace")))));
     })(), tab === "pay" && /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }))), ctxMenu && (() => {
       const ctxTask = projectTasks.find((t) => t.id === ctxMenu.taskId);
       if (!ctxTask) return null;

@@ -734,10 +734,13 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
 
           {tab === "files" && (() => {
             const driveKey = "proj_drive_" + p.id;
-            const driveUrl = (typeof localStorage !== "undefined" && localStorage.getItem(driveKey)) || "";
+            // Preferimos la carpeta guardada en la BD (la crea Drive automáticamente
+            // o se pega a mano); respaldo al valor local antiguo si existiera.
+            const driveUrl = p.driveUrl || (typeof localStorage !== "undefined" && localStorage.getItem(driveKey)) || "";
             const saveDrive = (url) => {
               const v = (url || "").trim();
-              if (v) localStorage.setItem(driveKey, v); else localStorage.removeItem(driveKey);
+              D.updateProject(p.id, { driveUrl: v });
+              try { localStorage.removeItem(driveKey); } catch {}
               setDriveEditing(false); setDriveDraft(""); setDriveTick(x => x + 1);
             };
             return (
@@ -790,10 +793,17 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                 ) : (
                   <div style={{marginTop:8}}>
                     <Empty icon="folder" title="Sin carpeta todavía"
-                      sub="Pega el enlace de la carpeta de Drive del proyecto para compartirla con el cliente."/>
-                    <div className="row" style={{justifyContent:"center", marginTop:12}}>
-                      <button className="btn primary" onClick={() => { setDriveDraft(""); setDriveEditing(true); }}>
-                        <Icon name="plus" size={13}/> Añadir carpeta de Drive
+                      sub={D.driveConfigured
+                        ? "Si acabas de crear el proyecto, la carpeta se crea sola en unos segundos. También puedes crearla ahora o pegar un enlace a mano."
+                        : "Pega el enlace de la carpeta de Drive del proyecto para compartirla con el cliente."}/>
+                    <div className="row" style={{justifyContent:"center", marginTop:12, gap:8}}>
+                      {D.driveConfigured && (
+                        <button className="btn primary" onClick={() => { D.driveCreateFolderForProject(p.id); toast("Creando carpeta en Drive…", "success"); }}>
+                          <Icon name="folder" size={13}/> Crear carpeta en Drive
+                        </button>
+                      )}
+                      <button className={"btn" + (D.driveConfigured ? "" : " primary")} onClick={() => { setDriveDraft(""); setDriveEditing(true); }}>
+                        <Icon name="plus" size={13}/> Pegar enlace
                       </button>
                     </div>
                   </div>

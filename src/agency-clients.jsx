@@ -730,11 +730,16 @@ const AgencyDriveFolder = ({ client }) => {
         <div className="card-title">Carpeta de Google Drive del cliente</div>
       </div>
       <div className="small muted" style={{marginBottom: 14, lineHeight: 1.5}}>
-        Pega el enlace de la carpeta compartida. El cliente verá el botón «Abrir carpeta en Google Drive» en su portal → Documentación. Si lo dejas vacío, verá «Estamos preparando la carpeta».
+        {D.driveConfigured
+          ? "La carpeta se crea sola al dar de alta el cliente. Si falta, puedes crearla ahora o pegar el enlace a mano. El cliente verá «Abrir carpeta en Google Drive» en su portal → Documentación."
+          : "Pega el enlace de la carpeta compartida. El cliente verá el botón «Abrir carpeta en Google Drive» en su portal → Documentación. Si lo dejas vacío, verá «Estamos preparando la carpeta»."}
       </div>
       <input style={inp} placeholder="https://drive.google.com/drive/folders/…" value={url} onChange={e => setUrl(e.target.value)}/>
       <div className="row tight" style={{marginTop: 10}}>
         <button className="btn primary sm" onClick={save}>Guardar enlace</button>
+        {D.driveConfigured && !client.driveUrl && (
+          <button className="btn ghost sm" onClick={() => D.driveCreateFolderForClient(client.id)}><Icon name="folder" size={12}/> Crear carpeta en Drive</button>
+        )}
         {client.driveUrl && <a className="btn ghost sm" href={client.driveUrl} target="_blank" rel="noreferrer" style={{textDecoration:"none"}}><Icon name="external-link" size={12}/> Abrir</a>}
         {saved && <span className="small" style={{color:"var(--green)"}}>Guardado ✓</span>}
       </div>

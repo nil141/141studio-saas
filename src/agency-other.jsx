@@ -2100,6 +2100,41 @@ const SessionCard = () => {
   );
 };
 
+// Conexión con Google Drive (Apps Script) para crear carpetas automáticamente
+const DriveCard = () => {
+  const D = window.Data;
+  D.useStore();
+  const toast = useToast();
+  const cfg = D.getDriveConfig();
+  const [url, setUrl] = useState(cfg.url);
+  const [secret, setSecret] = useState(cfg.secret);
+  const save = () => { D.setDriveConfig({ url, secret }); toast(url.trim() ? "Conexión con Drive guardada" : "Conexión con Drive borrada", "success"); };
+  return (
+    <div className="card" style={{ gridColumn: "1/-1" }}>
+      <div className="card-header"><div className="card-title">Google Drive · carpetas automáticas</div></div>
+      <div className="card-body">
+        <div className="muted small" style={{ marginBottom: 14 }}>
+          Al crear un cliente se genera sola su carpeta en tu Drive (la que ve en su portal); por cada proyecto, una subcarpeta dentro. Necesita un pequeño Web App de Apps Script bajo tu cuenta de Google. Pega aquí su URL y el mismo secreto que pusiste en el script.
+        </div>
+        <div style={{ display: "grid", gap: 14 }}>
+          <div>
+            <label className="label">URL del Web App (Apps Script)</label>
+            <input className="input" value={url} onChange={e => setUrl(e.target.value)} placeholder="https://script.google.com/macros/s/…/exec"/>
+          </div>
+          <div>
+            <label className="label">Secreto compartido</label>
+            <input className="input" value={secret} onChange={e => setSecret(e.target.value)} placeholder="una-clave-larga-al-azar"/>
+          </div>
+          <div className="row tight" style={{ alignItems: "center", gap: 12 }}>
+            <button className="btn primary" onClick={save}><Icon name="check" size={12}/> Guardar conexión</button>
+            {D.driveConfigured && <span style={{ fontSize: 12, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12}/> Conectado</span>}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const SettingsPage = () => {
   const D = window.Data;
   D.useStore();
@@ -2173,6 +2208,8 @@ const SettingsPage = () => {
             </div>
           </div>
         </div>
+
+        <DriveCard/>
 
         <SessionCard/>
       </div>

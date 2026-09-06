@@ -121,6 +121,7 @@ const _mc = r => r && ({
   nif: r.nif || "", fiscalName: r.fiscal_name || "", fiscalAddress: r.fiscal_address || "",
   website: r.website || "", about: r.about || "",
   driveUrl: r.drive_url || "",       // carpeta de Google Drive del cliente
+  driveFolderId: r.drive_folder_id || "", // id de la carpeta (para anidar proyectos)
 });
 const _parseArr = (v) => {
   if (Array.isArray(v)) return v;
@@ -144,6 +145,8 @@ const _mp = r => r && ({
   phasesDesc: _parseObj(r.phases_desc),                // { nombreFase: "descripción corta" }
   figmaUrl: r.figma_url || "",                         // enlace de Figma (diseño)
   figmaPhase: r.figma_phase || "",                     // fase donde se muestra el diseño ("" = automático)
+  driveUrl: r.drive_url || "",                         // carpeta de Drive del proyecto
+  driveFolderId: r.drive_folder_id || "",              // id de esa carpeta
 });
 // Lead de outreach (captación por Instagram)
 const _mo = (r) => ({
@@ -475,6 +478,45 @@ const _initials = name =>
   (name || "??").split(/\s+/).filter(Boolean).slice(0,2).map(s => s[0]?.toUpperCase() || "").join("") || "??";
 
 // ── CLIENTS ─────────────────────────────────────────────────────────
+// ── Google Drive (vía Apps Script Web App del propio usuario) ─────────
+// El frontend NO puede crear carpetas en Drive por sí solo. Se llama a un
+// pequeño Web App de Apps Script (desplegado por el usuario bajo su Google),
+// que crea la carpeta y escribe la URL de vuelta en Supabase. Usamos
+// mode:"no-cors" + text/plain para evitar el preflight CORS (petición simple).
+const _driveCfg = () => {
+  try { return { url: localStorage.getItem("141_drive_url") || "", secret: localStorage.getItem("141_drive_secret") || "" }; }
+  catch { return { url: "", secret: "" }; }
+};
+const getDriveConfig = () => _driveCfg();
+const setDriveConfig = ({ url, secret }) => {
+  try {
+    if (url !== undefined) localStorage.setItem("141_drive_url", (url || "").trim());
+    if (secret !== undefined) localStorage.setItem("141_drive_secret", (secret || "").trim());
+  } catch {}
+  _emit();
+};
+const _driveCall = (payload) => {
+  const { url, secret } = _driveCfg();
+  if (!url) return;
+  try {
+    fetch(url, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({ ...payload, secret }),
+    }).catch(() => {});
+  } catch {}
+};
+const driveCreateFolderForClient = (id) => {
+  const c = _store.CLIENTS.find(x => x.id === id); if (!c) return;
+  _driveCall({ action: "client", clientId: c.id, name: c.company || c.name || "Cliente" });
+};
+const driveCreateFolderForProject = (id) => {
+  const p = _store.PROJECTS.find(x => x.id === id); if (!p) return;
+  const c = _store.CLIENTS.find(x => x.id === p.clientId);
+  _driveCall({ action: "project", projectId: p.id, name: p.name || "Proyecto",
+    parentId: c && c.driveFolderId ? c.driveFolderId : null });
+};
+
 const addClient = (input) => {
   const uid = _uid(); if (!uid) return;
   const c = {
@@ -501,6 +543,9 @@ const addClient = (input) => {
       // Revert optimistic update so UI reflects reality
       _store.CLIENTS = _store.CLIENTS.filter(x => x.id !== c.id);
       _emit();
+    } else {
+      // Crea la carpeta del cliente en Drive (si está configurado)
+      _driveCall({ action: "client", clientId: c.id, name: c.company || c.name || "Cliente" });
     }
   });
   return c;
@@ -521,6 +566,7 @@ const updateClient = (id, changes) => {
   if (changes.website      !== undefined) dbChanges.website        = changes.website || null;
   if (changes.about        !== undefined) dbChanges.about          = changes.about || null;
   if (changes.driveUrl     !== undefined) dbChanges.drive_url      = changes.driveUrl || null;
+  if (changes.driveFolderId!== undefined) dbChanges.drive_folder_id= changes.driveFolderId || null;
   // Adaptativo: si alguna columna aún no existe, la quita y guarda el resto.
   _updateAdaptive("clients", id, dbChanges);
   if (_isClientSession())
@@ -601,6 +647,10 @@ const addProject = (input) => {
       console.error("[addProject] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
       _store.PROJECTS = _store.PROJECTS.filter(x => x.id !== p.id);
       _emit();
+    } else {
+      // Subcarpeta del proyecto dentro de la carpeta del cliente (si hay Drive)
+      _driveCall({ action: "project", projectId: p.id, name: p.name,
+        parentId: client && client.driveFolderId ? client.driveFolderId : null });
     }
   });
   if (client) {
@@ -691,6 +741,9 @@ const addProjectAsync = async (input) => {
     return { error: error.message || "Error desconocido de Supabase", code: error.code };
   }
   if (client) _sb.from("clients").update({ projects_count: client.projects + 1 }).eq("id", client.id).then();
+  // Subcarpeta del proyecto dentro de la carpeta del cliente (si hay Drive)
+  _driveCall({ action: "project", projectId: p.id, name: p.name,
+    parentId: client && client.driveFolderId ? client.driveFolderId : null });
   if (p.clientId) notify(p.clientId, { title: "Nuevo proyecto", body: p.name, kind: "project" });
   return { project: p };
 };
@@ -753,6 +806,8 @@ const updateProject = (id, changes) => {
   if (changes.phasesDesc  !== undefined) dbChanges.phases_desc = JSON.stringify(changes.phasesDesc || {});
   if (changes.figmaUrl    !== undefined) dbChanges.figma_url   = changes.figmaUrl || null;
   if (changes.figmaPhase  !== undefined) dbChanges.figma_phase = changes.figmaPhase || null;
+  if (changes.driveUrl    !== undefined) dbChanges.drive_url   = changes.driveUrl || null;
+  if (changes.driveFolderId !== undefined) dbChanges.drive_folder_id = changes.driveFolderId || null;
   if (Object.keys(dbChanges).length) {
     _updateAdaptive("projects", id, dbChanges).then(({ error }) => {
       if (error) console.error("[updateProject] Supabase error:", error.message);
@@ -1687,6 +1742,9 @@ window.Data = {
   notify, markNotificationRead, markAllNotificationsRead,
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient,
+  // Google Drive (Apps Script)
+  getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
+  get driveConfigured() { return !!_driveCfg().url; },
   pendingEmailsFor, clearPendingEmail, discardPendingEmails, sendPendingEmails,
   addLead,
   addTask, moveTask, updateTask, deleteTask,
