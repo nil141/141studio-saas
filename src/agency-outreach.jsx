@@ -246,10 +246,6 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
               <Icon name="arrow-up-right" size={12}/> Cliente
             </button>
           ) : null}
-          <button onClick={() => D.deleteOutreach(o.id)} title="Eliminar" style={iconBtn}
-            onMouseEnter={e => e.currentTarget.style.color = "var(--red)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
-            <Icon name="x" size={14}/>
-          </button>
         </span>
       </td>
     </tr>
@@ -281,12 +277,47 @@ const AgencyOutreach = ({ navigate }) => {
 
   const counts = {}; OUTREACH_STATUS.forEach(s => counts[s.id] = 0);
   all.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
+  const dueCount = all.filter(_isDue).length;
+  const clientCount = all.filter(o => o.convertedClientId).length;
+
+  // ── Filtro rápido ─────────────────────────────────────────────
+  const [filter, setFilter] = useState("all");
+  const FILTERS = [
+    { id: "all", label: "Todas", n: all.length },
+    ...(dueCount ? [{ id: "due", label: "Seguimiento", n: dueCount, color: "#e2b45c" }] : []),
+    ...OUTREACH_STATUS.map(s => ({ id: s.id, label: s.label, n: counts[s.id] || 0, color: s.color })),
+    ...(clientCount ? [{ id: "clients", label: "Clientes", n: clientCount, color: "#34d399" }] : []),
+  ];
+  const matchFilter = (o) =>
+    filter === "all" ? true :
+    filter === "due" ? _isDue(o) :
+    filter === "clients" ? !!o.convertedClientId :
+    o.status === filter;
 
   const ql = q.trim().toLowerCase();
-  let rows = all.filter(o => !ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql));
+  let rows = all.filter(o => matchFilter(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql)));
   // Los que toca contactar suben arriba (atrasados primero, luego los de hoy).
   const _dueRank = (o) => _isDue(o) ? (o.nextFollowup < today ? 0 : 1) : 2;
   rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
+
+  // Exportar a CSV los leads seleccionados (o los visibles si no hay selección)
+  const exportSel = () => {
+    const chosen = sel.size ? all.filter(o => sel.has(o.id)) : rows;
+    if (!chosen.length) return;
+    const esc = (v) => { const s = v == null ? "" : String(v); return /[",\n;]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const head = ["Marca", "Estado", "Seguimiento", "Contacto", "Instagram", "Web", "Notas", "Fecha"];
+    const lines = [head.join(",")];
+    chosen.forEach(o => lines.push([
+      o.brand, _stMeta(o.status).label, o.nextFollowup || "", o.contact || "",
+      o.instagram || "", o.web || "", o.notes || "", _fmtDate(o.createdAt),
+    ].map(esc).join(",")));
+    const blob = new Blob(["﻿" + lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `outreach-${_todayYmd()}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
 
   const toggle = (id) => setSel(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
   const allSel = rows.length > 0 && rows.every(o => sel.has(o.id));
@@ -310,11 +341,6 @@ const AgencyOutreach = ({ navigate }) => {
           </div>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {sel.size > 0 && (
-            <button onClick={bulkDelete} className="btn ghost sm" style={{ color: "var(--red)" }}>
-              <Icon name="x" size={13}/> Eliminar ({sel.size})
-            </button>
-          )}
           <div style={{ display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
             <Icon name="search" size={14} style={{ color: "var(--text-subtle)" }}/>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
@@ -337,6 +363,26 @@ const AgencyOutreach = ({ navigate }) => {
             <Icon name="plus" size={14}/> Nuevo lead
           </button>
         </div>
+      </div>
+
+      {/* Filtros rápidos */}
+      <div style={{ display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 6 }}>
+        {FILTERS.map(fl => {
+          const on = filter === fl.id;
+          const c = fl.color || "var(--accent)";
+          return (
+            <button key={fl.id} onClick={() => setFilter(fl.id)}
+              style={{ display: "inline-flex", alignItems: "center", gap: 7, height: 30, padding: "0 12px", borderRadius: 99, cursor: "pointer",
+                fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap", transition: "all .12s",
+                background: on ? (fl.color ? fl.color + "22" : "var(--accent-soft)") : "var(--bg-elev-2)",
+                color: on ? c : "var(--text-muted)",
+                border: "0.5px solid " + (on ? (fl.color ? fl.color + "66" : "rgba(158,154,229,0.4)") : "var(--border)") }}>
+              {fl.color && <span style={{ width: 6, height: 6, borderRadius: "50%", background: fl.color, flexShrink: 0 }}/>}
+              {fl.label}
+              <span style={{ fontSize: 11, opacity: 0.7 }}>{fl.n}</span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
@@ -365,6 +411,34 @@ const AgencyOutreach = ({ navigate }) => {
         <div style={{ padding: "44px 0" }}>
           <Empty icon="send" title={all.length === 0 ? "Aún no tienes leads" : "Sin resultados"}
             sub={all.length === 0 ? "Añade la primera cuenta con «Nuevo lead»." : "Prueba con otra búsqueda."}/>
+        </div>
+      )}
+
+      {/* Barra de acciones para la selección — flotante abajo */}
+      {sel.size > 0 && (
+        <div style={{ position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)", zIndex: 120,
+          display: "flex", alignItems: "center", gap: 4, padding: "7px 7px 7px 16px", borderRadius: 99,
+          background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", boxShadow: "0 14px 44px rgba(0,0,0,0.5)",
+          animation: "pop .18s cubic-bezier(.2,.8,.2,1)" }}>
+          <span style={{ fontSize: 13, color: "var(--text)", fontWeight: 500, whiteSpace: "nowrap" }}>
+            {sel.size} seleccionada{sel.size === 1 ? "" : "s"}
+          </span>
+          <span style={{ width: 1, height: 20, background: "var(--border)", margin: "0 6px" }}/>
+          <button onClick={exportSel}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 13px", borderRadius: 99, cursor: "pointer",
+              background: "var(--bg-elev-2)", color: "var(--text)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 13, fontWeight: 500 }}>
+            <Icon name="download" size={13}/> Exportar
+          </button>
+          <button onClick={() => { bulkDelete(); }}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 32, padding: "0 13px", borderRadius: 99, cursor: "pointer",
+              background: "var(--red-soft)", color: "var(--red)", border: "0.5px solid rgba(220,91,93,0.35)", fontFamily: "inherit", fontSize: 13, fontWeight: 500 }}>
+            <Icon name="trash" size={13}/> Eliminar
+          </button>
+          <button onClick={() => setSel(new Set())} title="Deseleccionar"
+            style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 32, height: 32, borderRadius: 99, cursor: "pointer",
+              background: "transparent", color: "var(--text-subtle)", border: "none" }}>
+            <Icon name="x" size={15}/>
+          </button>
         </div>
       )}
 
