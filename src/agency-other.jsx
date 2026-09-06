@@ -931,7 +931,7 @@ const AgencyProjects = ({ navigate, openModal }) => {
 
   return (
     <div className="page">
-      <div className="page-head">
+      <div className="page-head hide-mobile">
         <div>
           <h1>Proyectos</h1>
           <div className="sub">{cap} en marcha · {capLabel}</div>

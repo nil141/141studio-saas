@@ -986,6 +986,8 @@
     .pg-pad { padding: 16px 16px 0 !important; }
     /* Tareas: la cabecera interna (título + fecha + +/⋯) sobra en móvil */
     .tasks-head { display: none !important; }
+    /* Cabeceras de página redundantes en móvil (el nombre ya está en las pestañas) */
+    .page-head.hide-mobile { display: none !important; }
     /* Agenda: cabecera que respira; el «+» ya está arriba */
     .agenda-toolbar { flex-wrap: wrap !important; gap: 10px !important; padding: 14px 16px 10px !important; }
     .agenda-title { font-size: 19px !important; letter-spacing: -0.6px !important; }
@@ -1175,7 +1177,7 @@
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=30"></script>
 <script src="src/agency-project.js?v=34"></script>
-<script src="src/agency-other.js?v=138"></script>
+<script src="src/agency-other.js?v=139"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=22"></script>

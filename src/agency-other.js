@@ -726,7 +726,7 @@
         toast("Proyecto eliminado", "success");
       }
     };
-    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Proyectos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, cap, " en marcha \xB7 ", capLabel)), /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head hide-mobile" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Proyectos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, cap, " en marcha \xB7 ", capLabel)), /* @__PURE__ */ React.createElement(
       ActionPill,
       {
         plusActions: () => openModal("newProject"),
