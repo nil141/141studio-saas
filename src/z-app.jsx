@@ -147,6 +147,9 @@ const App = () => {
       setView({ name, side: "agency", params });
     }
     window.scrollTo({ top: 0 });
+    // El contenido ahora hace scroll dentro de .main (no en la ventana),
+    // así que también reseteamos ese contenedor al navegar.
+    try { requestAnimationFrame(() => { const m = document.querySelector(".main"); if (m) m.scrollTop = 0; }); } catch {}
   };
 
   const openModal = (name, params = {}) => {

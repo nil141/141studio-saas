@@ -148,6 +148,13 @@
         setView({ name, side: "agency", params });
       }
       window.scrollTo({ top: 0 });
+      try {
+        requestAnimationFrame(() => {
+          const m = document.querySelector(".main");
+          if (m) m.scrollTop = 0;
+        });
+      } catch {
+      }
     };
     const openModal = (name, params = {}) => {
       if (name === "newTask") {

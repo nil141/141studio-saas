@@ -92,7 +92,7 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; }
+  html, body { margin: 0; padding: 0; overscroll-behavior: none; }
   body {
     font-family: var(--font-sans);
     font-size: 15px;
@@ -275,7 +275,7 @@
   @media (prefers-reduced-motion: reduce) { .lg { animation: none !important; opacity: 1 !important; } }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
-  .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
+  .app { display: grid; grid-template-columns: auto 1fr; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg); }
   .app.client { grid-template-columns: auto 1fr; }
   /* Base neutra (equivale a la variante 2 si el switcher no cargara) */
   .main {
@@ -285,6 +285,8 @@
     border-radius: 18px;
     background: var(--bg-elev);
     min-height: calc(100vh - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   /* ── CHROME · variantes del marco (solo escritorio) ──────── */
@@ -1078,7 +1080,7 @@
 <script src="src/primitives.js?v=84"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=34"></script>
+<script src="src/z-app.js?v=35"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=84"></script>
 <script src="src/agency-clients.js?v=28"></script>
