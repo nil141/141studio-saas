@@ -202,22 +202,9 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  /* Efecto "relleno": el logo relleno se revela de izquierda a derecha, en bucle */
-  .app-loader .lg {
-    width: 240px; height: auto;
-    animation: lgFill 2.4s ease-in-out infinite;
-  }
+  /* Efecto "relleno": el logo se revela de izquierda a derecha (clip SMIL en el SVG) */
+  .app-loader .lg { width: 240px; height: auto; animation: pageIn .3s ease-out; }
   .app-loader .lg path { fill: var(--text); stroke: none; }
-  @keyframes lgFill {
-    0%   { clip-path: inset(0 100% 0 0); opacity: 0; }
-    6%   { opacity: 1; }
-    36%  { clip-path: inset(0 0 0 0); }
-    82%  { clip-path: inset(0 0 0 0); opacity: 1; }
-    100% { clip-path: inset(0 0 0 0); opacity: 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .app-loader .lg { animation: none; clip-path: none; opacity: 1; }
-  }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
@@ -1007,7 +994,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=26"></script>
+<script src="src/z-app.js?v=27"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
