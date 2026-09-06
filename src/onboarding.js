@@ -344,7 +344,16 @@ const OnboardingPage = ({ token }) => {
     border: "0.5px solid var(--border)"
   };
   const btnLabel = busy ? cur.key === "verify" ? "Verificando\u2026" : cur.key === "access" ? "Creando cuenta\u2026" : "Un momento\u2026" : cur.key === "verify" ? "Verificar y entrar" : cur.key === "access" ? "Crear cuenta" : "Ir al siguiente paso";
-  return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100dvh", background: "var(--bg)", padding: "40px 24px 60px", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 1080, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 34 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 22, width: "auto", opacity: 0.95 } })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)", marginBottom: 12, letterSpacing: "-0.2px" } }, "\xA1Hola", first(form.name) ? `, ${first(form.name)}` : "", "! Bienvenido al onboarding"), /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${pct}%`, background: "var(--accent)", borderRadius: 99, transition: "width .4s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "onb-grid" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, STEPS.map((st, i) => {
+  return /* @__PURE__ */ React.createElement("div", { style: {
+    minHeight: "100dvh",
+    background: "var(--bg)",
+    padding: "40px 24px",
+    overflowY: "auto",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center"
+  } }, /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxWidth: 1080, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 34 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 22, width: "auto", opacity: 0.95 } })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)", marginBottom: 12, letterSpacing: "-0.2px" } }, "\xA1Hola", first(form.name) ? `, ${first(form.name)}` : "", "! Bienvenido al onboarding"), /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${pct}%`, background: "var(--accent)", borderRadius: 99, transition: "width .4s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "onb-grid" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, STEPS.map((st, i) => {
     const active = i === step;
     const done = i < step;
     return /* @__PURE__ */ React.createElement(
@@ -359,30 +368,37 @@ const OnboardingPage = ({ token }) => {
         },
         style: {
           display: "flex",
-          alignItems: "center",
-          gap: 14,
-          padding: "13px 15px",
-          borderRadius: 14,
-          cursor: i < step ? "pointer" : "default",
-          transition: "background .15s, border-color .15s",
-          background: active ? "var(--accent-soft)" : "var(--bg-elev-2)",
-          border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)"
+          alignItems: "stretch",
+          gap: 12,
+          cursor: i < step ? "pointer" : "default"
         }
       },
       /* @__PURE__ */ React.createElement("div", { style: {
-        width: 42,
-        height: 42,
-        borderRadius: 11,
+        width: 56,
         flexShrink: 0,
+        borderRadius: 14,
         display: "grid",
         placeItems: "center",
         fontWeight: 600,
-        fontSize: 14,
+        fontSize: 18,
         fontFamily: "var(--font-display)",
-        background: active ? "var(--accent)" : "rgba(255,255,255,0.05)",
+        transition: "background .15s, color .15s",
+        background: active ? "var(--accent)" : "var(--bg-elev-2)",
+        border: active ? "none" : "0.5px solid var(--border)",
         color: active ? "#fff" : done ? "var(--accent)" : "var(--text-muted)"
-      } }, done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 18 }) : String(i + 1).padStart(2, "0")),
-      /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: active ? "var(--accent)" : "var(--text-subtle)" } }, "Paso ", i + 1), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 500, color: active ? "#fff" : "var(--text)", letterSpacing: "-0.2px" } }, st.name))
+      } }, done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 20 }) : String(i + 1).padStart(2, "0")),
+      /* @__PURE__ */ React.createElement("div", { style: {
+        flex: 1,
+        minWidth: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "13px 16px",
+        borderRadius: 14,
+        transition: "background .15s, border-color .15s",
+        background: "var(--bg-elev-2)",
+        border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)"
+      } }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: active ? "var(--accent)" : "var(--text-subtle)" } }, "Paso ", i + 1), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 500, color: active ? "#fff" : "var(--text)", letterSpacing: "-0.2px" } }, st.name)), active && /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 16, style: { color: "var(--accent)", flexShrink: 0 } }))
     );
   })), /* @__PURE__ */ React.createElement("div", { key: step, style: { animation: "pop .22s ease" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 18, padding: "26px 28px" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 8, color: "#fff" } }, cur.head), /* @__PURE__ */ React.createElement("p", { style: { fontSize: 14, color: "var(--text-muted)", lineHeight: 1.55, marginBottom: cur.fields || cur.key === "verify" ? 22 : 4 } }, cur.desc), cur.fields && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, cur.fields.map((fd, idx) => /* @__PURE__ */ React.createElement("div", { key: fd.id }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: 12.5, color: "var(--text-muted)", marginBottom: 6 } }, fd.label), /* @__PURE__ */ React.createElement(
     "input",

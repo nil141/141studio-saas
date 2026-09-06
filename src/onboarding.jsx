@@ -266,8 +266,9 @@ const OnboardingPage = ({ token }) => {
     : (cur.key === "verify" ? "Verificar y entrar" : cur.key === "access" ? "Crear cuenta" : "Ir al siguiente paso");
 
   return (
-    <div style={{ minHeight:"100dvh", background:"var(--bg)", padding:"40px 24px 60px", overflowY:"auto" }}>
-      <div style={{ maxWidth:1080, margin:"0 auto" }}>
+    <div style={{ minHeight:"100dvh", background:"var(--bg)", padding:"40px 24px", overflowY:"auto",
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center" }}>
+      <div style={{ width:"100%", maxWidth:1080, margin:"0 auto" }}>
         {/* Logo */}
         <div style={{ display:"flex", justifyContent:"center", marginBottom:34 }}>
           <img src="/wordmark.svg" alt="141'DIGITAL" style={{ height:22, width:"auto", opacity:0.95 }}/>
@@ -293,19 +294,26 @@ const OnboardingPage = ({ token }) => {
               return (
                 <div key={st.key}
                   onClick={() => { if (i < step && !busy) { setErr(""); setStep(i); } }}
-                  style={{ display:"flex", alignItems:"center", gap:14, padding:"13px 15px", borderRadius:14,
-                    cursor: i < step ? "pointer" : "default", transition:"background .15s, border-color .15s",
-                    background: active ? "var(--accent-soft)" : "var(--bg-elev-2)",
-                    border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)" }}>
-                  <div style={{ width:42, height:42, borderRadius:11, flexShrink:0, display:"grid", placeItems:"center",
-                    fontWeight:600, fontSize:14, fontFamily:"var(--font-display)",
-                    background: active ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                  style={{ display:"flex", alignItems:"stretch", gap:12,
+                    cursor: i < step ? "pointer" : "default" }}>
+                  {/* Cuadrado del número (independiente) */}
+                  <div style={{ width:56, flexShrink:0, borderRadius:14, display:"grid", placeItems:"center",
+                    fontWeight:600, fontSize:18, fontFamily:"var(--font-display)", transition:"background .15s, color .15s",
+                    background: active ? "var(--accent)" : "var(--bg-elev-2)",
+                    border: active ? "none" : "0.5px solid var(--border)",
                     color: active ? "#fff" : (done ? "var(--accent)" : "var(--text-muted)") }}>
-                    {done ? <Icon name="check" size={18}/> : String(i + 1).padStart(2, "0")}
+                    {done ? <Icon name="check" size={20}/> : String(i + 1).padStart(2, "0")}
                   </div>
-                  <div style={{ minWidth:0 }}>
-                    <div style={{ fontSize:11.5, color: active ? "var(--accent)" : "var(--text-subtle)" }}>Paso {i + 1}</div>
-                    <div style={{ fontSize:15, fontWeight:500, color: active ? "#fff" : "var(--text)", letterSpacing:"-0.2px" }}>{st.name}</div>
+                  {/* Tarjeta de la etiqueta (independiente) */}
+                  <div style={{ flex:1, minWidth:0, display:"flex", alignItems:"center", justifyContent:"space-between",
+                    padding:"13px 16px", borderRadius:14, transition:"background .15s, border-color .15s",
+                    background: "var(--bg-elev-2)",
+                    border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)" }}>
+                    <div style={{ minWidth:0 }}>
+                      <div style={{ fontSize:11.5, color: active ? "var(--accent)" : "var(--text-subtle)" }}>Paso {i + 1}</div>
+                      <div style={{ fontSize:15, fontWeight:500, color: active ? "#fff" : "var(--text)", letterSpacing:"-0.2px" }}>{st.name}</div>
+                    </div>
+                    {active && <Icon name="chevron-right" size={16} style={{ color:"var(--accent)", flexShrink:0 }}/>}
                   </div>
                 </div>
               );
