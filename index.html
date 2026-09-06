@@ -996,14 +996,16 @@
     /* Gastos: la página entera fluye dentro de .main (no fija) */
     .gastos-root { height: auto !important; overflow: visible !important; padding: 16px 16px 96px !important; position: relative; }
     /* El botón "+" (añadir gasto/suscripción) ya no ocupa una fila entera:
-       pasa a botón flotante abajo a la derecha; las tarjetas suben arriba */
-    .gastos-root .page-head { position: fixed !important; bottom: 92px; right: 16px;
-      top: auto !important; left: auto !important; margin: 0 !important; width: auto !important; z-index: 40; }
+       pasa a botón flotante abajo a la izquierda; las tarjetas suben arriba */
+    .gastos-root .page-head { position: fixed !important; bottom: 108px; left: 16px;
+      top: auto !important; right: auto !important; margin: 0 !important; width: auto !important; z-index: 40; }
     .gastos-root .page-head > div:last-child { align-self: auto !important; width: auto !important; }
     .gastos-root .fin-kpis { padding-top: 4px !important; }
-    /* FAB: un poco más grande y con sombra, como acción principal de la página */
-    .gastos-root .action-pill-row > button:first-child { width: 52px !important; height: 52px !important;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+    /* FAB: no transparente — fondo acento sólido con blur y sombra */
+    .gastos-root .action-pill-row > button:first-child { width: 54px !important; height: 54px !important;
+      background: rgba(158,154,229,0.9) !important; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
+      border: 0.5px solid rgba(255,255,255,0.18) !important; color: #0a0a0a !important;
+      box-shadow: 0 10px 28px rgba(0,0,0,0.5); }
     .gastos-scroll { flex: none !important; overflow: visible !important; min-height: 0 !important;
       scrollbar-gutter: auto !important; padding-right: 0 !important;
       -webkit-mask-image: none !important; mask-image: none !important; }
