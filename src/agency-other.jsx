@@ -311,8 +311,8 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       style={{
         height:"100vh",
         display:"flex", flexDirection:"column",
-        padding:"28px 32px 0",
-        maxWidth:1400, margin:"0 auto",
+        padding:"28px 40px 0",
+        maxWidth:"none", margin:0,
         overflow:"hidden",
       }}
     >
@@ -1760,7 +1760,7 @@ const AgencyBilling = () => {
   return (
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
-      padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
+      padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
     }}>
       {/* Cabecera fija: título + hero de KPIs */}
       <div style={{ flexShrink:0 }}>
@@ -2898,7 +2898,7 @@ const IncomePage = () => {
   return (
     <div style={{
       height:"100vh", display:"flex", flexDirection:"column",
-      padding:"28px 32px 0", maxWidth:1400, margin:"0 auto", overflow:"hidden",
+      padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
     }}>
       {/* Cabecera fija: título + secciones + tira de KPIs */}
       <div style={{ flexShrink:0 }}>

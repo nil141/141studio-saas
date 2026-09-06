@@ -73,7 +73,7 @@
         const cl = D.CLIENTS.find((c) => c.id === p.clientId);
         groupMap[key] = {
           clientId: key,
-          clientName: (p.clientId ? (cl == null ? void 0 : cl.company) || p.clientName || "Sin cliente" : p.name || "Proyecto").toUpperCase(),
+          clientName: (p.clientId ? cl?.company || p.clientName || "Sin cliente" : p.name || "Proyecto").toUpperCase(),
           color: clientColorMap[p.clientId] || "#a78bfa",
           projects: []
         };
@@ -90,7 +90,7 @@
           const cl = D.CLIENTS.find((c) => c.id === t.clientId);
           grp = {
             clientId: t.clientId,
-            clientName: ((cl == null ? void 0 : cl.company) || (cl == null ? void 0 : cl.name) || t.clientName || "Sin cliente").toUpperCase(),
+            clientName: (cl?.company || cl?.name || t.clientName || "Sin cliente").toUpperCase(),
             color: clientColorMap[t.clientId] || "#a78bfa",
             projects: []
           };
@@ -124,9 +124,9 @@
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          padding: "28px 32px 0",
-          maxWidth: 1400,
-          margin: "0 auto",
+          padding: "28px 40px 0",
+          maxWidth: "none",
+          margin: 0,
           overflow: "hidden"
         }
       },
@@ -310,7 +310,7 @@
           onStep: (r, it) => setRoutineModal({ r, it })
         }
       ), visibleGroups.length === 0 && D.routinesForDay(selDateStr).length === 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", padding: "60px 0", color: "var(--text-subtle)", fontSize: 14, letterSpacing: "-0.5px" } }, "Sin tareas para este d\xEDa \u2014 ", /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => openModal("newTask", { date: selDateStr }) }, "crear una")), visibleGroups.map((group, gIdx) => /* @__PURE__ */ React.createElement("div", { key: group.clientId, style: { marginBottom: gIdx === visibleGroups.length - 1 ? 0 : 32 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 7, height: 7, borderRadius: "50%", background: group.color, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 400, letterSpacing: "0", textTransform: "uppercase", color: "#9e9e9e" } }, group.clientName)), group.projects.map(({ project, tasks }) => tasks.filter((t) => !hideCompleted || t.column !== "done").map((t, idx, arr) => {
-        const pid = (project == null ? void 0 : project.id) || "__none__";
+        const pid = project?.id || "__none__";
         const isDone = t.column === "done";
         const colLabel = { todo: "Por hacer", doing: "En curso", review: "Revisi\xF3n" }[t.column];
         const isLast = idx === arr.length - 1;
@@ -712,7 +712,7 @@
     const capColor = cap === 0 ? "green" : cap <= 3 ? "green" : cap === 4 ? "amber" : "red";
     const capLabel = cap === 0 ? "Sin proyectos" : cap <= 3 ? "Zona c\xF3moda" : cap === 4 ? "Zona de atenci\xF3n" : "Zona de riesgo";
     const removeProject = async (p, e) => {
-      e == null ? void 0 : e.stopPropagation();
+      e?.stopPropagation();
       const ok = await confirm({
         title: `Eliminar el proyecto "${p.name}"?`,
         body: "Se eliminar\xE1n tambi\xE9n sus entregables. Esta acci\xF3n no se puede deshacer.",
@@ -1163,9 +1163,9 @@
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      padding: "28px 32px 0",
-      maxWidth: 1400,
-      margin: "0 auto",
+      padding: "28px 40px 0",
+      maxWidth: "none",
+      margin: 0,
       overflow: "hidden"
     } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, activeSubs.length, " suscripci", activeSubs.length === 1 ? "\xF3n" : "ones", " activa", activeSubs.length === 1 ? "" : "s", " \xB7 ", _eur(recurringMo), " al mes recurrente")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
       setFinType("sub");
@@ -1401,9 +1401,8 @@
     { days: 30, label: "30 d\xEDas", sub: "Comodidad m\xE1xima" }
   ];
   var SessionCard = () => {
-    var _a;
     const toast = useToast();
-    const info = ((_a = window._sessionUtils) == null ? void 0 : _a.info()) || { days: 0, exp: null };
+    const info = window._sessionUtils?.info() || { days: 0, exp: null };
     const [days, setDays] = React.useState(info.days || 0);
     const expLabel = (() => {
       if (!info.exp || info.exp === "0") return "Solo esta sesi\xF3n (cierra con el navegador)";
@@ -1423,7 +1422,7 @@
         }
         window._sessionUtils.save(JSON.parse(raw), days);
         toast("Sesi\xF3n actualizada", "success");
-      } catch (e) {
+      } catch {
         toast("Error al guardar", "error");
       }
     };
@@ -2132,14 +2131,14 @@
     try {
       const d = JSON.parse(localStorage.getItem(INC_KEY));
       return d && typeof d === "object" ? { recs: d.recs || [], incomes: d.incomes || [] } : { recs: [], incomes: [] };
-    } catch (e) {
+    } catch {
       return { recs: [], incomes: [] };
     }
   };
   var _incSave = (d) => {
     try {
       localStorage.setItem(INC_KEY, JSON.stringify(d));
-    } catch (e) {
+    } catch {
     }
   };
   var IncomePage = () => {
@@ -2372,9 +2371,9 @@
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      padding: "28px 32px 0",
-      maxWidth: 1400,
-      margin: "0 auto",
+      padding: "28px 40px 0",
+      maxWidth: "none",
+      margin: 0,
       overflow: "hidden"
     } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Facturaci\xF3n"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, `${activeRecs.length} mensualidad${activeRecs.length === 1 ? "" : "es"} activa${activeRecs.length === 1 ? "" : "s"} \xB7 ${sortedInc.length} cobro${sortedInc.length === 1 ? "" : "s"}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: [
       {

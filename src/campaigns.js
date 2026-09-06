@@ -1269,10 +1269,7 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     setFilter("all");
     setQuery("");
     setOpenId(next.id);
-    setTimeout(() => {
-      var _a;
-      return (_a = document.getElementById("lead-" + next.id)) == null ? void 0 : _a.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 60);
+    setTimeout(() => document.getElementById("lead-" + next.id)?.scrollIntoView({ behavior: "smooth", block: "center" }), 60);
   };
   const exportCSV = (list) => {
     const data = list && list.length ? list : leads;
@@ -1330,9 +1327,9 @@ const CampaignDetail = ({ campaignId, navigate, initialAction }) => {
     height: "100vh",
     display: "flex",
     flexDirection: "column",
-    padding: "28px 32px 0",
-    maxWidth: 1400,
-    margin: "0 auto",
+    padding: "28px 40px 0",
+    maxWidth: "none",
+    margin: 0,
     overflow: "hidden",
     position: "relative"
   } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => navigate("campaigns"), style: { marginBottom: 14, marginLeft: -8 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 13 }), " Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, c.name), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", alignItems: "center", gap: 7 } }, /* @__PURE__ */ React.createElement(Icon, { name: ct.icon, size: 12, style: { color: "var(--accent)" } }), ct.label, " \xB7 desde ", (/* @__PURE__ */ new Date(c.createdAt + "T00:00:00")).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }))), /* @__PURE__ */ React.createElement(
@@ -1685,7 +1682,7 @@ const CampaignsPage = ({ navigate }) => {
   const confirm = useConfirm();
   const toast = useToast();
   const removeCampaign = async (c, e) => {
-    e == null ? void 0 : e.stopPropagation();
+    e?.stopPropagation();
     const n = (c.leads || []).length;
     const ok = await confirm({ title: "\xBFEliminar la campa\xF1a?", body: `Se eliminar\xE1 "${c.name}"${n ? ` con sus ${n} leads` : ""}. No se puede deshacer.`, danger: true, confirmLabel: "Eliminar campa\xF1a" });
     if (!ok) return;
@@ -1705,9 +1702,9 @@ const CampaignsPage = ({ navigate }) => {
     height: "100vh",
     display: "flex",
     flexDirection: "column",
-    padding: "28px 32px 0",
-    maxWidth: 1400,
-    margin: "0 auto",
+    padding: "28px 40px 0",
+    maxWidth: "none",
+    margin: 0,
     overflow: "hidden"
   } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Campa\xF1as"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, list.length === 0 ? "Sin campa\xF1as todav\xEDa" : `${list.length} ${list.length === 1 ? "campa\xF1a" : "campa\xF1as"} \xB7 ${totalLeads} leads${newToday ? ` \xB7 +${newToday} hoy` : ""}`)), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => setSetupOpen(true) })), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
     flex: 1,

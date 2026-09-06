@@ -1,5 +1,6 @@
 (() => {
-  const AgencyClientsList = ({ navigate, openModal }) => {
+  // src/agency-clients.jsx
+  var AgencyClientsList = ({ navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -33,9 +34,9 @@
       height: "100vh",
       display: "flex",
       flexDirection: "column",
-      padding: "28px 32px 0",
-      maxWidth: 1400,
-      margin: "0 auto",
+      padding: "28px 40px 0",
+      maxWidth: "none",
+      margin: 0,
       overflow: "hidden"
     } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Clientes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, clients.length, " en total")), /* @__PURE__ */ React.createElement(
       ActionPill,
@@ -182,7 +183,7 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
     ))));
   };
-  const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
+  var AgencyClientDetail = ({ clientId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const confirm2 = useConfirm();
@@ -449,7 +450,7 @@
 Prioridad: redise\xF1o antes del Q3.
 Pedido: factura siempre con CIF en cabecera.` }), /* @__PURE__ */ React.createElement("div", { className: "row", style: { marginTop: 12, justifyContent: "flex-end" } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm" }, "Guardar nota")))));
   };
-  const AgencyCredentials = ({ clientId }) => {
+  var AgencyCredentials = ({ clientId }) => {
     const D = window.Data;
     D.useStore && D.useStore();
     const creds = D.credentialsForClient ? D.credentialsForClient(clientId) : [];
@@ -502,7 +503,7 @@ Pedido: factura siempre con CIF en cabecera.` }), /* @__PURE__ */ React.createEl
       return /* @__PURE__ */ React.createElement("div", { key: c.id, className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 15 } }, /* @__PURE__ */ React.createElement("div", { className: "row between", style: { alignItems: "flex-start" } }, /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("span", { style: brand }, /* @__PURE__ */ React.createElement(CredGlyph, { meta, size: 15 })), /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14 } }, c.label || meta.name)), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, mode === "login" && !ed && /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => startEdit(c) }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 12 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => del(c) }, /* @__PURE__ */ React.createElement(Icon, { name: "trash", size: 12 })))), mode === "access" ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginBottom: 6 } }, "El cliente da acceso a:"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6 } }, /* @__PURE__ */ React.createElement("span", { style: { flex: 1, fontFamily: "var(--font-mono)", fontSize: 12.5, wordBreak: "break-all" } }, agencyEmail), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => copy(agencyEmail, c.id + "m") }, /* @__PURE__ */ React.createElement(Icon, { name: copied === c.id + "m" ? "check" : "copy", size: 11 }))), /* @__PURE__ */ React.createElement("div", { className: "xsmall", style: { marginTop: 8, color: c.granted ? "var(--green)" : "var(--text-subtle)" } }, c.granted ? "\u2713 Acceso concedido" : "Pendiente de acceso")) : ed ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "Usuario / email", value: form.username, onChange: (e) => setForm((s) => ({ ...s, username: e.target.value })), autoFocus: true }), /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "Contrase\xF1a", value: form.password, onChange: (e) => setForm((s) => ({ ...s, password: e.target.value })) }), /* @__PURE__ */ React.createElement("input", { style: { ...inp, marginBottom: 10 }, placeholder: "Notas", value: form.notes, onChange: (e) => setForm((s) => ({ ...s, notes: e.target.value })) }), /* @__PURE__ */ React.createElement("div", { className: "row tight" }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: saveEdit }, "Guardar"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => setEditId(null) }, "Cancelar"))) : /* @__PURE__ */ React.createElement("div", { style: { marginTop: 8 } }, c.username && /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4, wordBreak: "break-all" } }, /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Usuario: "), c.username, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", style: { marginLeft: 4 }, onClick: () => copy(c.username, c.id + "u") }, /* @__PURE__ */ React.createElement(Icon, { name: copied === c.id + "u" ? "check" : "copy", size: 11 }))), c.password && /* @__PURE__ */ React.createElement("div", { className: "small", style: { marginTop: 4, display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { className: "muted" }, "Clave: "), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-mono)" } }, reveal[c.id] ? c.password : "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => setReveal((r) => ({ ...r, [c.id]: !r[c.id] })) }, /* @__PURE__ */ React.createElement(Icon, { name: reveal[c.id] ? "eye-off" : "eye", size: 11 })), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => copy(c.password, c.id + "p") }, /* @__PURE__ */ React.createElement(Icon, { name: copied === c.id + "p" ? "check" : "copy", size: 11 }))), !c.username && !c.password && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 4 } }, "El cliente a\xFAn no lo ha rellenado."), c.notes && /* @__PURE__ */ React.createElement("div", { className: "muted xsmall", style: { marginTop: 8, lineHeight: 1.5 } }, c.notes))));
     })));
   };
-  const AgencyDriveFolder = ({ client }) => {
+  var AgencyDriveFolder = ({ client }) => {
     const D = window.Data;
     const [url, setUrl] = useState(client.driveUrl || "");
     const [saved, setSaved] = useState(false);
@@ -524,7 +525,7 @@ Pedido: factura siempre con CIF en cabecera.` }), /* @__PURE__ */ React.createEl
     };
     return /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginBottom: 6 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 24, height: 24, borderRadius: 6, background: "#fff", display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: "14", height: "14", viewBox: "0 0 24 24" }, /* @__PURE__ */ React.createElement("path", { fill: "#1FA463", d: "M7.71 3.5L1.15 15l3.27 5.5h13.16L21.85 15 14.29 3.5z" }), /* @__PURE__ */ React.createElement("path", { fill: "#FFD041", d: "M7.71 3.5h6.58L21.85 15l-3.27 5.5z", opacity: ".7" }))), /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Carpeta de Google Drive del cliente")), /* @__PURE__ */ React.createElement("div", { className: "small muted", style: { marginBottom: 14, lineHeight: 1.5 } }, "Pega el enlace de la carpeta compartida. El cliente ver\xE1 el bot\xF3n \xABAbrir carpeta en Google Drive\xBB en su portal \u2192 Documentaci\xF3n. Si lo dejas vac\xEDo, ver\xE1 \xABEstamos preparando la carpeta\xBB."), /* @__PURE__ */ React.createElement("input", { style: inp, placeholder: "https://drive.google.com/drive/folders/\u2026", value: url, onChange: (e) => setUrl(e.target.value) }), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { marginTop: 10 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save }, "Guardar enlace"), client.driveUrl && /* @__PURE__ */ React.createElement("a", { className: "btn ghost sm", href: client.driveUrl, target: "_blank", rel: "noreferrer", style: { textDecoration: "none" } }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 12 }), " Abrir"), saved && /* @__PURE__ */ React.createElement("span", { className: "small", style: { color: "var(--green)" } }, "Guardado \u2713"))));
   };
-  const AgencyClientTasks = ({ clientId }) => {
+  var AgencyClientTasks = ({ clientId }) => {
     const D = window.Data;
     D.useStore && D.useStore();
     const tasks = D.clientTasksFor ? D.clientTasksFor(clientId) : [];

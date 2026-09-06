@@ -39,8 +39,8 @@ const AgencyClientsList = ({ navigate, openModal }) => {
     <div style={{
       height:"100vh",
       display:"flex", flexDirection:"column",
-      padding:"28px 32px 0",
-      maxWidth:1400, margin:"0 auto",
+      padding:"28px 40px 0",
+      maxWidth:"none", margin:0,
       overflow:"hidden",
     }}>
       <div className="page-head" style={{ flexShrink:0 }}>
