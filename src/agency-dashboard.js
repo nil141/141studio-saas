@@ -444,46 +444,7 @@
       color: "var(--text-muted)",
       letterSpacing: "-0.2px",
       lineHeight: 1.4
-    } }, "Esto es lo que tienes entre manos hoy.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      display: "flex",
-      alignItems: "center",
-      padding: "3px 4px",
-      background: "rgba(255,255,255,0.07)",
-      border: "0.5px solid rgba(255,255,255,0.1)",
-      borderRadius: 99
-    } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: toggleMoney,
-        title: hideMoney ? "Mostrar importes" : "Ocultar importes",
-        style: {
-          width: 34,
-          height: 34,
-          borderRadius: "50%",
-          background: "transparent",
-          border: "none",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: hideMoney ? "var(--accent)" : "var(--text-muted)",
-          transition: "background .12s"
-        },
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.1)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
-      },
-      /* @__PURE__ */ React.createElement(Icon, { name: hideMoney ? "eye-off" : "eye", size: 16 })
-    )), /* @__PURE__ */ React.createElement(
-      ActionPill,
-      {
-        plusActions: [
-          { icon: "plus", label: "Nueva tarea", sub: "A\xF1ade una tarea r\xE1pida.", accent: true, onClick: () => openModal("newTask") },
-          { icon: "folder", label: "Nuevo proyecto", sub: "Crea un proyecto.", onClick: () => openModal("newProject") },
-          { icon: "users", label: "Nuevo cliente", sub: "A\xF1ade una ficha o portal.", onClick: () => openModal("newClient") },
-          { icon: "receipt", label: "Nueva factura", sub: "Se crea y env\xEDa desde Stripe.", onClick: () => openModal("newInvoice") }
-        ]
-      }
-    ))));
+    } }, "Esto es lo que tienes entre manos hoy."))));
     const EYEBROW = (txt) => /* @__PURE__ */ React.createElement("div", { style: APPLE_SECTION }, txt);
     const recentActivity = [
       ...D.PROJECTS.slice(0, 2).map((p) => ({ icon: "folder", text: p.name, sub: "Proyecto en curso" })),

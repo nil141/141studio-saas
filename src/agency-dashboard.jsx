@@ -445,32 +445,6 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
           </p>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          {/* Ocultar / mostrar importes */}
-          <div style={{ display: "flex", alignItems: "center", padding: "3px 4px",
-            background: "rgba(255,255,255,0.07)", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 99 }}>
-            <button
-              onClick={toggleMoney}
-              title={hideMoney ? "Mostrar importes" : "Ocultar importes"}
-              style={{ width: 34, height: 34, borderRadius: "50%", background: "transparent", border: "none",
-                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
-                color: hideMoney ? "var(--accent)" : "var(--text-muted)", transition: "background .12s" }}
-              onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.1)"}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}
-            >
-              <Icon name={hideMoney ? "eye-off" : "eye"} size={16}/>
-            </button>
-          </div>
-
-          <ActionPill
-            plusActions={[
-              { icon: "plus",    label: "Nueva tarea",    sub: "Añade una tarea rápida.",  accent: true, onClick: () => openModal("newTask") },
-              { icon: "folder",  label: "Nuevo proyecto", sub: "Crea un proyecto.",        onClick: () => openModal("newProject") },
-              { icon: "users",   label: "Nuevo cliente",  sub: "Añade una ficha o portal.", onClick: () => openModal("newClient") },
-              { icon: "receipt", label: "Nueva factura",  sub: "Se crea y envía desde Stripe.", onClick: () => openModal("newInvoice") },
-            ]}
-          />
-        </div>
       </div>
     </header>
   );
