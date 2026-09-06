@@ -22,9 +22,10 @@ const Switch = ({ on, onChange }) => (
 
 // ── Nav de la agencia (un nivel + "Otros" desplegable + listas) ───────────────
 const _NAV_MAIN = [
-  { id: "dashboard", label: "Inicio",  icon: "home" },
-  { id: "tasks",     label: "Tareas",  icon: "list-todo" },
-  { id: "agenda",    label: "Agenda",  icon: "calendar" },
+  { id: "dashboard",     label: "Inicio",        icon: "home" },
+  { id: "tasks",         label: "Tareas",        icon: "list-todo" },
+  { id: "agenda",        label: "Agenda",        icon: "calendar" },
+  { id: "notifications", label: "Notificaciones", icon: "bell" },
 ];
 const _NAV_OTROS = [
   { id: "projects",  label: "Proyectos",   icon: "folder" },
@@ -156,7 +157,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
   );
 };
 
-const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
+const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session, onAssistant, onQuickCreate, onToggleCollapse }) => {
   const D = window.Data;
   D.useStore();
 
@@ -437,8 +438,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       ) : (
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
         <img src="/wordmark.svg" alt="141'DIGITAL"
-          style={{height:18, width:"auto", maxWidth:160, display:"block", objectFit:"contain", opacity:0.95}} />
-        <NotificationBell kind={kind} onNavigate={onNavigate}/>
+          style={{height:18, width:"auto", maxWidth:150, display:"block", objectFit:"contain", opacity:0.95}} />
+        <button onClick={() => onToggleCollapse && onToggleCollapse()} title="Ocultar menú" aria-label="Ocultar menú"
+          style={{background:"transparent", border:"none", cursor:"pointer", color:"var(--text-subtle)", padding:6, borderRadius:8, display:"flex"}}
+          onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+          onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
+          <Icon name="panel-left" size={17} strokeWidth={1.7}/>
+        </button>
       </div>
       )}
 
@@ -665,6 +671,52 @@ const NotificationBell = ({ kind, onNavigate }) => {
     </div>
   );
 };
+
+// Página de Notificaciones (agencia) — mismo estilo que el resto de páginas
+const AgencyNotifications = ({ navigate }) => {
+  const D = window.Data; D.useStore();
+  const list = D.NOTIFICATIONS || [];
+  const unread = list.filter(n => !n.read).length;
+  return (
+    <div className="page">
+      <div className="page-head">
+        <div>
+          <h1>Notificaciones</h1>
+          <div className="sub">{unread > 0 ? `${unread} sin leer` : "Todo al día"}</div>
+        </div>
+        {unread > 0 && (
+          <button className="btn ghost sm" onClick={() => list.filter(n => !n.read).forEach(n => D.markNotificationRead(n.id))}>
+            Marcar todas leídas
+          </button>
+        )}
+      </div>
+      {list.length === 0 ? (
+        <div style={{ padding: "60px 0" }}>
+          <Empty icon="bell" title="Sin notificaciones" sub="Aquí verás la actividad de tu agencia."/>
+        </div>
+      ) : (
+        <div style={{ border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" }}>
+          {list.map((n, i) => (
+            <div key={n.id}
+              onClick={() => { D.markNotificationRead(n.id); if (n.clientId) navigate("clientDetail", { clientId: n.clientId }); }}
+              onMouseEnter={e => e.currentTarget.style.background = n.read ? "rgba(255,255,255,0.02)" : "var(--accent-active)"}
+              onMouseLeave={e => e.currentTarget.style.background = n.read ? "transparent" : "var(--accent-soft)"}
+              style={{ display: "flex", gap: 12, padding: "15px 18px", borderTop: i ? "0.5px solid var(--border)" : "none",
+                cursor: "pointer", background: n.read ? "transparent" : "var(--accent-soft)", transition: "background .1s" }}>
+              <span style={{ width: 8, height: 8, borderRadius: 99, marginTop: 6, flexShrink: 0, background: n.read ? "var(--text-subtle)" : "var(--accent)" }}/>
+              <div style={{ minWidth: 0, flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 500 }}>{n.title}</div>
+                {n.body && <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 }}>{n.body}</div>}
+                <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginTop: 4 }}>{_notifAgo(n.createdAt)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+window.AgencyNotifications = AgencyNotifications;
 
 const Topbar = ({ crumb, right, theme, setTheme, onSearch, kind = "agency" }) => (
   <div className="topbar">

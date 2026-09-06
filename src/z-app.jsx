@@ -69,6 +69,8 @@ const App = () => {
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [minSplash, setMinSplash] = useState(false);   // tiempo mínimo del loader
+  const [navCollapsed, setNavCollapsed] = useState(() => { try { return localStorage.getItem("141_nav_collapsed") === "1"; } catch { return false; } });
+  const toggleNav = () => setNavCollapsed(v => { const n = !v; try { localStorage.setItem("141_nav_collapsed", n ? "1" : "0"); } catch {} return n; });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -195,6 +197,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "outreach": return <AgencyOutreach navigate={navigate}/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate} initialAction={view.params.action}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
+      case "notifications": return <AgencyNotifications navigate={navigate}/>;
       case "nora": return <NoraPage/>;
       case "billing": return null; // rendered always below
       case "income": return <IncomePage/>;
@@ -238,8 +241,15 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         </div>
       )}
-      <div className={"app fade-in" + (isClient ? " client" : "")} data-screen-label={view.name}>
-        <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
+      <div className={"app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : "")} data-screen-label={view.name}>
+        {!navCollapsed && <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)} onToggleCollapse={toggleNav}/>}
+        {navCollapsed && (
+          <button onClick={toggleNav} title="Mostrar menú" aria-label="Mostrar menú"
+            style={{ position:"fixed", top:14, left:14, zIndex:50, width:34, height:34, borderRadius:10, cursor:"pointer",
+              display:"grid", placeItems:"center", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text-muted)" }}>
+            <Icon name="panel-left" size={16} strokeWidth={1.7}/>
+          </button>
+        )}
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           <div key={view.name} className="page-enter">

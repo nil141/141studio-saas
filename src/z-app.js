@@ -61,6 +61,21 @@
     const [quickCreateEdit, setQuickCreateEdit] = useState(null);
     const [loadTimedOut, setLoadTimedOut] = useState(false);
     const [minSplash, setMinSplash] = useState(false);
+    const [navCollapsed, setNavCollapsed] = useState(() => {
+      try {
+        return localStorage.getItem("141_nav_collapsed") === "1";
+      } catch {
+        return false;
+      }
+    });
+    const toggleNav = () => setNavCollapsed((v) => {
+      const n = !v;
+      try {
+        localStorage.setItem("141_nav_collapsed", n ? "1" : "0");
+      } catch {
+      }
+      return n;
+    });
     useEffect(() => {
       document.documentElement.setAttribute("data-theme", theme);
     }, [theme]);
@@ -186,6 +201,8 @@
           return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate, initialAction: view.params.action });
         case "agenda":
           return /* @__PURE__ */ React.createElement(AgendaPage, { navigate });
+        case "notifications":
+          return /* @__PURE__ */ React.createElement(AgencyNotifications, { navigate });
         case "nora":
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":
@@ -248,7 +265,30 @@
       if (id) navigate("clientDetail", { clientId: id });
       else navigate("clients");
     };
-    return /* @__PURE__ */ React.createElement(React.Fragment, null, isAdminPreview && /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 16px", background: "var(--amber-soft)", color: "var(--amber)", fontSize: 12.5, borderBottom: "0.5px solid var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, "Vista previa del portal", _previewName ? /* @__PURE__ */ React.createElement(React.Fragment, null, " de ", /* @__PURE__ */ React.createElement("b", null, _previewName)) : ""), /* @__PURE__ */ React.createElement("button", { onClick: _exitPreview, style: { padding: "3px 12px", borderRadius: 99, border: "0.5px solid var(--amber)", background: "transparent", color: "var(--amber)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 } }, "\u2190 Volver al panel")), /* @__PURE__ */ React.createElement("div", { className: "app fade-in" + (isClient ? " client" : ""), "data-screen-label": view.name }, /* @__PURE__ */ React.createElement(Sidebar, { current: view.name, currentParams: view.params, onNavigate: navigate, kind: isClient ? "client" : "agency", session, onAssistant: () => navigate("nora"), onQuickCreate: () => setQuickCreate(true) }), /* @__PURE__ */ React.createElement("div", { className: "main" }, /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, isAdminPreview && /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 16px", background: "var(--amber-soft)", color: "var(--amber)", fontSize: 12.5, borderBottom: "0.5px solid var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, "Vista previa del portal", _previewName ? /* @__PURE__ */ React.createElement(React.Fragment, null, " de ", /* @__PURE__ */ React.createElement("b", null, _previewName)) : ""), /* @__PURE__ */ React.createElement("button", { onClick: _exitPreview, style: { padding: "3px 12px", borderRadius: 99, border: "0.5px solid var(--amber)", background: "transparent", color: "var(--amber)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 } }, "\u2190 Volver al panel")), /* @__PURE__ */ React.createElement("div", { className: "app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : ""), "data-screen-label": view.name }, !navCollapsed && /* @__PURE__ */ React.createElement(Sidebar, { current: view.name, currentParams: view.params, onNavigate: navigate, kind: isClient ? "client" : "agency", session, onAssistant: () => navigate("nora"), onQuickCreate: () => setQuickCreate(true), onToggleCollapse: toggleNav }), navCollapsed && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: toggleNav,
+        title: "Mostrar men\xFA",
+        "aria-label": "Mostrar men\xFA",
+        style: {
+          position: "fixed",
+          top: 14,
+          left: 14,
+          zIndex: 50,
+          width: 34,
+          height: 34,
+          borderRadius: 10,
+          cursor: "pointer",
+          display: "grid",
+          placeItems: "center",
+          background: "var(--bg-elev)",
+          border: "0.5px solid var(--border)",
+          color: "var(--text-muted)"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "panel-left", size: 16, strokeWidth: 1.7 })
+    ), /* @__PURE__ */ React.createElement("div", { className: "main" }, /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
       { name: "dashboard", icon: "home", label: "Inicio" },
       { name: "projects", icon: "folder", label: "Proyectos" },
       { name: "tasks", icon: "list-todo", label: "Tareas" },

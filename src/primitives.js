@@ -16,7 +16,8 @@ const Switch = ({ on, onChange }) => /* @__PURE__ */ React.createElement(
 const _NAV_MAIN = [
   { id: "dashboard", label: "Inicio", icon: "home" },
   { id: "tasks", label: "Tareas", icon: "list-todo" },
-  { id: "agenda", label: "Agenda", icon: "calendar" }
+  { id: "agenda", label: "Agenda", icon: "calendar" },
+  { id: "notifications", label: "Notificaciones", icon: "bell" }
 ];
 const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
@@ -189,7 +190,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
     }
   ))))));
 };
-const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
+const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session, onAssistant, onQuickCreate, onToggleCollapse }) => {
   const D = window.Data;
   D.useStore();
   const pendingTasks = Object.values(D.TASKS).flat().filter((t) => t.column !== "done").length || null;
@@ -463,9 +464,20 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     {
       src: "/wordmark.svg",
       alt: "141'DIGITAL",
-      style: { height: 18, width: "auto", maxWidth: 160, display: "block", objectFit: "contain", opacity: 0.95 }
+      style: { height: 18, width: "auto", maxWidth: 150, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onToggleCollapse && onToggleCollapse(),
+      title: "Ocultar men\xFA",
+      "aria-label": "Ocultar men\xFA",
+      style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 6, borderRadius: 8, display: "flex" },
+      onMouseEnter: (e) => e.currentTarget.style.color = "var(--text)",
+      onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "panel-left", size: 17, strokeWidth: 1.7 })
+  )), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => onQuickCreate && onQuickCreate(),
@@ -777,6 +789,36 @@ const NotificationBell = ({ kind, onNavigate }) => {
     document.body
   ));
 };
+const AgencyNotifications = ({ navigate }) => {
+  const D = window.Data;
+  D.useStore();
+  const list = D.NOTIFICATIONS || [];
+  const unread = list.filter((n) => !n.read).length;
+  return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Notificaciones"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, unread > 0 ? `${unread} sin leer` : "Todo al d\xEDa")), unread > 0 && /* @__PURE__ */ React.createElement("button", { className: "btn ghost sm", onClick: () => list.filter((n) => !n.read).forEach((n) => D.markNotificationRead(n.id)) }, "Marcar todas le\xEDdas")), list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "60px 0" } }, /* @__PURE__ */ React.createElement(Empty, { icon: "bell", title: "Sin notificaciones", sub: "Aqu\xED ver\xE1s la actividad de tu agencia." })) : /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, list.map((n, i) => /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      key: n.id,
+      onClick: () => {
+        D.markNotificationRead(n.id);
+        if (n.clientId) navigate("clientDetail", { clientId: n.clientId });
+      },
+      onMouseEnter: (e) => e.currentTarget.style.background = n.read ? "rgba(255,255,255,0.02)" : "var(--accent-active)",
+      onMouseLeave: (e) => e.currentTarget.style.background = n.read ? "transparent" : "var(--accent-soft)",
+      style: {
+        display: "flex",
+        gap: 12,
+        padding: "15px 18px",
+        borderTop: i ? "0.5px solid var(--border)" : "none",
+        cursor: "pointer",
+        background: n.read ? "transparent" : "var(--accent-soft)",
+        transition: "background .1s"
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: 99, marginTop: 6, flexShrink: 0, background: n.read ? "var(--text-subtle)" : "var(--accent)" } }),
+    /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500 } }, n.title), n.body && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 2, lineHeight: 1.45 } }, n.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 4 } }, _notifAgo(n.createdAt)))
+  ))));
+};
+window.AgencyNotifications = AgencyNotifications;
 const Topbar = ({ crumb, right, theme, setTheme, onSearch, kind = "agency" }) => /* @__PURE__ */ React.createElement("div", { className: "topbar" }, /* @__PURE__ */ React.createElement("div", { className: "topbar-left grow" }, /* @__PURE__ */ React.createElement("div", { className: "search" }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14 }), /* @__PURE__ */ React.createElement("input", { placeholder: kind === "agency" ? "Buscar clientes, proyectos, tareas\u2026" : "Buscar en tu cuenta\u2026", onChange: (e) => onSearch && onSearch(e.target.value) }), /* @__PURE__ */ React.createElement("span", { className: "kbd" }, "\u2318K")), crumb ? /* @__PURE__ */ React.createElement("div", { className: "crumb", style: { marginLeft: 8 } }, crumb) : null), /* @__PURE__ */ React.createElement("div", { className: "topbar-right" }, right, /* @__PURE__ */ React.createElement(NotificationBell, { kind })));
 const Modal = ({ open, onClose, title, sub, footer, children, size }) => {
   useEffect(() => {
