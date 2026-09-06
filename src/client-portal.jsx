@@ -129,7 +129,7 @@ const RingStat = ({ pct = 0, label }) => {
         </svg>
         <div style={{position:"absolute", inset:0, display:"grid", placeItems:"center", fontSize:13, fontWeight:600, color:"#fff"}}>{v}%</div>
       </div>
-      <div style={{fontSize: 13.5, color:"rgba(255,255,255,0.82)", lineHeight:1.3, maxWidth: 130}}>{label}</div>
+      <div className="portal-ring-label" style={{fontSize: 13.5, color:"rgba(255,255,255,0.82)", lineHeight:1.3, maxWidth: 130}}>{label}</div>
     </div>
   );
 };
@@ -201,7 +201,7 @@ const ClientDashboard = ({ navigate, session }) => {
         Esta es tu área de cliente. Desde aquí sigues el estado del proyecto, subes documentación,
         das acceso a tus herramientas y ves todo lo importante en un solo sitio.
       </p>
-      <div style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
+      <div className="portal-rings" style={{display:"flex", gap: 40, marginTop: 28, flexWrap:"wrap"}}>
         <RingStat pct={plan.pct} label="Progreso del proyecto"/>
         <RingStat pct={myPct} label="Tus tareas completadas"/>
       </div>

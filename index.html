@@ -847,6 +847,9 @@
     .main { padding-bottom: 24px; margin: 0; border-radius: 0; border: none; min-height: 100vh; background: var(--bg); }
     /* Evita el zoom automático de iOS al enfocar un campo (necesita ≥16px) */
     input, textarea, select { font-size: 16px !important; }
+    /* Portal cliente: los dos anillos de progreso en una sola fila */
+    .portal-rings { gap: 14px !important; flex-wrap: nowrap !important; justify-content: space-between; }
+    .portal-ring-label { max-width: 92px !important; font-size: 12.5px !important; }
     /* Inicio: menos margen lateral en móvil */
     .dash-root { padding: 16px 16px 48px !important; gap: 16px !important; }
     /* Accesos directos: en móvil ya están en la tira de pestañas de arriba */
@@ -1186,7 +1189,7 @@
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=22"></script>
-<script src="src/client-portal.js?v=38"></script>
+<script src="src/client-portal.js?v=39"></script>
 <script src="src/onboarding.js?v=16"></script>
 <script src="src/assistant.js?v=2"></script>
 <script src="src/gmail.js?v=3"></script>
