@@ -94,14 +94,12 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
       }
     } else if (type === "event" || type === "meeting") {
-      const CUSTOM_KEY = "agenda_custom_events";
-      const prev = (() => { try { return JSON.parse(localStorage.getItem(CUSTOM_KEY) || "[]"); } catch { return []; } })();
-      localStorage.setItem(CUSTOM_KEY, JSON.stringify([...prev, {
-        id: "custom-" + Date.now(), date, title: t,
-        time: time||null, timeEnd: timeEnd||null,
+      D.addAgendaEvent({
+        title: t, date, notes: desc || null,
+        time: time || null, timeEnd: timeEnd || null,
         link: link.trim() || null,
-        frequency: freq, type: type === "meeting" ? "meeting" : "custom",
-      }]));
+        type: type === "meeting" ? "meeting" : "custom",
+      });
     }
     onClose();
   };

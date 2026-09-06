@@ -461,7 +461,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           <button onClick={() => onQuickCreate && onQuickCreate()}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
             onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
-            style={{display:"flex", alignItems:"center", justifyContent:"center", gap:8, height:40, borderRadius:12,
+            style={{display:"flex", alignItems:"center", justifyContent:"flex-start", gap:8, height:40, borderRadius:12, padding:"0 14px",
               background:"var(--accent-soft)", color:"var(--accent)", border:"1px solid rgba(158,154,229,0.3)", cursor:"pointer",
               fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s"}}>
             <Icon name="plus" size={16}/> Crear
