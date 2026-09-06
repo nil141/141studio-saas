@@ -28,6 +28,31 @@ const _followMeta = (o) => {
   return { color: "var(--text-subtle)", label: _fmtDate(o.nextFollowup) };
 };
 
+// Parseo de importación: una línea por lead. Campos separados por coma / tab /
+// punto y coma. Detecta @instagram y la web automáticamente; el resto es marca.
+const _looksUrl = (s) => /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(s) && !s.startsWith("@");
+const parseImport = (text) => {
+  const out = [];
+  (text || "").split(/\r?\n/).forEach(line => {
+    const raw = line.trim(); if (!raw) return;
+    const parts = raw.split(/\s*[,;\t|]\s*/).map(p => p.trim()).filter(Boolean);
+    let instagram = "", web = "";
+    const leftover = [];
+    parts.forEach(p => {
+      if (!instagram && p.startsWith("@")) instagram = p;
+      else if (!web && _looksUrl(p)) web = p;
+      else leftover.push(p);
+    });
+    let brand = leftover.shift() || "";
+    const contact = leftover.shift() || "";
+    if (!brand && instagram) brand = instagram.replace(/^@/, "");
+    if (!brand && web) brand = web.replace(/^https?:\/\//, "").split(/[./]/)[0];
+    if (!brand) return;
+    out.push({ brand, instagram, web, contact });
+  });
+  return out;
+};
+
 // Casilla de selección
 const Check = ({ on, onToggle, dim }) => (
   <span onClick={e => { e.stopPropagation(); onToggle(); }}
@@ -175,7 +200,12 @@ const AgencyOutreach = ({ navigate }) => {
   const [q, setQ] = useState("");
   const [sel, setSel] = useState(() => new Set());
   const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const today = _todayYmd();
+  const doImport = (leads) => {
+    leads.forEach(l => D.addOutreach({ brand: l.brand, instagram: l.instagram, web: l.web, contact: l.contact, status: "guardado" }));
+    setShowImport(false);
+  };
   const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
   const [f, setF] = useState(_emptyF);
   const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
@@ -227,6 +257,14 @@ const AgencyOutreach = ({ navigate }) => {
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
               style={{ background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }}/>
           </div>
+          <button onClick={() => setShowImport(true)} title="Importar varios leads pegando una lista"
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}
+            style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 34, padding: "0 12px", borderRadius: 9,
+              background: "var(--bg-elev-2)", color: "var(--text-muted)", border: "0.5px solid var(--border)",
+              cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, whiteSpace: "nowrap", transition: "color .15s" }}>
+            <Icon name="file-text" size={14}/> Importar
+          </button>
           <button onClick={() => setShowAdd(true)}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
             onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
@@ -270,6 +308,7 @@ const AgencyOutreach = ({ navigate }) => {
       </div>
 
       {showAdd && <NewLeadModal f={f} upd={upd} setF={setF} onClose={() => setShowAdd(false)} onSave={saveNew}/>}
+      {showImport && <ImportLeadsModal onClose={() => setShowImport(false)} onImport={doImport}/>}
     </div>
   );
 };
@@ -335,6 +374,55 @@ const NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
           <button onClick={onClose} className="btn ghost">Cancelar</button>
           <button onClick={onSave} disabled={!f.brand.trim()} className="btn primary"
             style={{ opacity: f.brand.trim() ? 1 : 0.5, pointerEvents: f.brand.trim() ? "auto" : "none" }}>Guardar lead</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal de importación masiva: pega una lista, un lead por línea
+const ImportLeadsModal = ({ onClose, onImport }) => {
+  const [text, setText] = useState("");
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const parsed = parseImport(text);
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
+        <div style={{ padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+          <div>
+            <h3 style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 }}>Importar leads</h3>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Pega una lista, <b style={{ color: "var(--text)" }}>un lead por línea</b>.</div>
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 }}><Icon name="x" size={18}/></button>
+        </div>
+
+        <div style={{ padding: "18px 24px 4px" }}>
+          <textarea value={text} onChange={e => setText(e.target.value)} autoFocus
+            placeholder={"Maktub, @maktub.wyt, maktub.store\nOtra marca, @otra\n@solo_instagram\nMarca sin nada más"}
+            rows={9} style={{ ..._fst, height: "auto", padding: "12px 14px", resize: "vertical", lineHeight: 1.5, fontSize: 13.5,
+              whiteSpace: "pre", overflowX: "auto" }}/>
+          <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 }}>
+            Separa los campos con comas: <b style={{ color: "var(--text-muted)" }}>Marca, @instagram, web, contacto</b>.
+            Detecto solo el <b style={{ color: "var(--text-muted)" }}>@usuario</b> y la <b style={{ color: "var(--text-muted)" }}>web</b>; el resto es la marca.
+            Si solo pegas nombres o @usuarios, también vale.
+          </div>
+        </div>
+
+        <div style={{ padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+          <span style={{ fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 }}>
+            {parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todavía"}
+          </span>
+          <div style={{ display: "flex", gap: 10 }}>
+            <button onClick={onClose} className="btn ghost">Cancelar</button>
+            <button onClick={() => onImport(parsed)} disabled={!parsed.length} className="btn primary"
+              style={{ opacity: parsed.length ? 1 : 0.5, pointerEvents: parsed.length ? "auto" : "none" }}>
+              Importar {parsed.length || ""}
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -36,6 +36,29 @@
     if (o.nextFollowup === t) return { color: "#e2b45c", label: "Hoy" };
     return { color: "var(--text-subtle)", label: _fmtDate(o.nextFollowup) };
   };
+  var _looksUrl = (s) => /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(s) && !s.startsWith("@");
+  var parseImport = (text) => {
+    const out = [];
+    (text || "").split(/\r?\n/).forEach((line) => {
+      const raw = line.trim();
+      if (!raw) return;
+      const parts = raw.split(/\s*[,;\t|]\s*/).map((p) => p.trim()).filter(Boolean);
+      let instagram = "", web = "";
+      const leftover = [];
+      parts.forEach((p) => {
+        if (!instagram && p.startsWith("@")) instagram = p;
+        else if (!web && _looksUrl(p)) web = p;
+        else leftover.push(p);
+      });
+      let brand = leftover.shift() || "";
+      const contact = leftover.shift() || "";
+      if (!brand && instagram) brand = instagram.replace(/^@/, "");
+      if (!brand && web) brand = web.replace(/^https?:\/\//, "").split(/[./]/)[0];
+      if (!brand) return;
+      out.push({ brand, instagram, web, contact });
+    });
+    return out;
+  };
   var Check = ({ on, onToggle, dim }) => /* @__PURE__ */ React.createElement(
     "span",
     {
@@ -295,7 +318,12 @@
     const [q, setQ] = useState("");
     const [sel, setSel] = useState(() => /* @__PURE__ */ new Set());
     const [showAdd, setShowAdd] = useState(false);
+    const [showImport, setShowImport] = useState(false);
     const today = _todayYmd();
+    const doImport = (leads) => {
+      leads.forEach((l) => D.addOutreach({ brand: l.brand, instagram: l.instagram, web: l.web, contact: l.contact, status: "guardado" }));
+      setShowImport(false);
+    };
     const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
     const [f, setF] = useState(_emptyF);
     const upd = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
@@ -357,6 +385,33 @@
     )), /* @__PURE__ */ React.createElement(
       "button",
       {
+        onClick: () => setShowImport(true),
+        title: "Importar varios leads pegando una lista",
+        onMouseEnter: (e) => e.currentTarget.style.color = "var(--text)",
+        onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-muted)",
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 34,
+          padding: "0 12px",
+          borderRadius: 9,
+          background: "var(--bg-elev-2)",
+          color: "var(--text-muted)",
+          border: "0.5px solid var(--border)",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 13,
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          transition: "color .15s"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 14 }),
+      " Importar"
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
         onClick: () => setShowAdd(true),
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.28)",
         onMouseLeave: (e) => e.currentTarget.style.background = "var(--accent-soft)",
@@ -387,7 +442,7 @@
         title: all.length === 0 ? "A\xFAn no tienes leads" : "Sin resultados",
         sub: all.length === 0 ? "A\xF1ade la primera cuenta con \xABNuevo lead\xBB." : "Prueba con otra b\xFAsqueda."
       }
-    ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }));
+    ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
   };
   var _fst = {
     width: "100%",
@@ -442,6 +497,47 @@
       },
       "Guardar lead"
     ))));
+  };
+  var ImportLeadsModal = ({ onClose, onImport }) => {
+    const [text, setText] = useState("");
+    useEffect(() => {
+      const onKey = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, []);
+    const parsed = parseImport(text);
+    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar leads"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Pega una lista, ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "un lead por l\xEDnea"), ".")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: text,
+        onChange: (e) => setText(e.target.value),
+        autoFocus: true,
+        placeholder: "Maktub, @maktub.wyt, maktub.store\nOtra marca, @otra\n@solo_instagram\nMarca sin nada m\xE1s",
+        rows: 9,
+        style: {
+          ..._fst,
+          height: "auto",
+          padding: "12px 14px",
+          resize: "vertical",
+          lineHeight: 1.5,
+          fontSize: 13.5,
+          whiteSpace: "pre",
+          overflowX: "auto"
+        }
+      }
+    ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Separa los campos con comas: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "Marca, @instagram, web, contacto"), ". Detecto solo el ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "@usuario"), " y la ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "web"), "; el resto es la marca. Si solo pegas nombres o @usuarios, tambi\xE9n vale.")), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => onImport(parsed),
+        disabled: !parsed.length,
+        className: "btn primary",
+        style: { opacity: parsed.length ? 1 : 0.5, pointerEvents: parsed.length ? "auto" : "none" }
+      },
+      "Importar ",
+      parsed.length || ""
+    )))));
   };
   window.AgencyOutreach = AgencyOutreach;
 })();

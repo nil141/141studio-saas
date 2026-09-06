@@ -1556,7 +1556,7 @@ const deleteAgendaEvent = async (id) => {
 const addOutreach = async (input) => {
   const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
   if (!input.brand) return { error: "faltan datos" };
-  const id = "out-" + Date.now();
+  const id = "out-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
   const o = { id, brand: input.brand.trim(), instagram: (input.instagram || "").trim(),
     web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "",
     contact: input.contact || "", email: input.email || "", createdAt: new Date().toISOString(),
