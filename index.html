@@ -1008,6 +1008,11 @@
     .agenda-cal-col { overflow-y: auto !important; }
     .agenda-mobile-day { display: block; margin-top: 10px; padding: 12px 4px 8px; border-top: 0.5px solid var(--border); }
     /* Outreach: se mantiene la tabla en móvil (scroll horizontal) */
+    /* Buscar + Importar + Nuevo lead en una sola fila deslizable */
+    .outreach-actions { flex-wrap: nowrap !important; overflow-x: auto; width: 100%; padding-bottom: 2px; }
+    .outreach-actions > * { flex-shrink: 0; }
+    .outreach-search { flex: 1 1 auto !important; min-width: 120px; }
+    .outreach-search input { width: 100% !important; }
     .mtn-bar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 14px 8px;
@@ -1188,7 +1193,7 @@
 <script src="src/agency-other.js?v=139"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
-<script src="src/agency-outreach.js?v=22"></script>
+<script src="src/agency-outreach.js?v=23"></script>
 <script src="src/client-portal.js?v=39"></script>
 <script src="src/onboarding.js?v=16"></script>
 <script src="src/assistant.js?v=2"></script>

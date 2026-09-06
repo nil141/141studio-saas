@@ -466,7 +466,7 @@ const AgencyOutreach = ({ navigate }) => {
     <div className="page">
       {/* Cabecera — mismo formato .page-head que el resto de páginas */}
       <div className="page-head">
-        <div>
+        <div className="hide-mobile">
           <h1>Propuestas Outreach</h1>
           <div className="sub" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             <span><b style={{ color: "var(--text)", fontWeight: 600 }}>{all.length}</b> marcas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
@@ -475,8 +475,8 @@ const AgencyOutreach = ({ navigate }) => {
             <span>{counts.propuesta || 0} propuestas</span>
           </div>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
+        <div className="outreach-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div className="outreach-search" style={{ display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
             <Icon name="search" size={14} style={{ color: "var(--text-subtle)" }}/>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
               style={{ background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 }}/>
