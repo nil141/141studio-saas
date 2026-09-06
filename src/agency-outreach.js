@@ -59,6 +59,73 @@
     });
     return out;
   };
+  var _norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  var _splitCsvLine = (line, delim) => {
+    const out = [];
+    let cur = "", inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (inQ) {
+        if (c === '"') {
+          if (line[i + 1] === '"') {
+            cur += '"';
+            i++;
+          } else inQ = false;
+        } else cur += c;
+      } else if (c === '"') inQ = true;
+      else if (c === delim) {
+        out.push(cur);
+        cur = "";
+      } else cur += c;
+    }
+    out.push(cur);
+    return out.map((s) => s.trim());
+  };
+  var parseCsv = (text) => {
+    let t = (text || "").replace(/^﻿/, "");
+    const lines = t.split(/\r?\n/).filter((l) => l.trim() !== "");
+    if (!lines.length) return [];
+    const first = lines[0];
+    const cnt = (re) => (first.match(re) || []).length;
+    const delim = cnt(/;/g) > cnt(/,/g) ? ";" : cnt(/\t/g) > cnt(/,/g) ? "	" : ",";
+    const rows = lines.map((l) => _splitCsvLine(l, delim));
+    const hdr = rows[0].map(_norm);
+    const known = ["marca", "brand", "nombre", "empresa", "instagram", "ig", "usuario", "user", "web", "url", "sitio", "website", "contacto", "contact", "persona", "correo", "email", "mail", "notas", "notes", "nota", "estado", "status"];
+    const hasHeader = hdr.some((h) => known.includes(h));
+    const colFor = (names) => hdr.findIndex((h) => names.includes(h));
+    const map = hasHeader ? {
+      brand: colFor(["marca", "brand", "nombre", "empresa"]),
+      instagram: colFor(["instagram", "ig", "usuario", "user"]),
+      web: colFor(["web", "url", "sitio", "website"]),
+      contact: colFor(["contacto", "contact", "persona"]),
+      email: colFor(["correo", "email", "mail"]),
+      notes: colFor(["notas", "notes", "nota"]),
+      status: colFor(["estado", "status"])
+    } : null;
+    const STATUS_IDS = OUTREACH_STATUS.map((s) => s.id);
+    const STATUS_BY_LABEL = {};
+    OUTREACH_STATUS.forEach((s) => STATUS_BY_LABEL[_norm(s.label)] = s.id);
+    const dataRows = hasHeader ? rows.slice(1) : rows;
+    const out = [];
+    dataRows.forEach((cols) => {
+      if (!cols.length || cols.every((c) => !c)) return;
+      if (hasHeader) {
+        const g = (i) => (i >= 0 && i < cols.length ? cols[i] : "") || "";
+        let brand = g(map.brand), instagram = g(map.instagram), web = g(map.web);
+        const contact = g(map.contact), email = g(map.email), notes = g(map.notes);
+        const sr = _norm(g(map.status));
+        const status = STATUS_IDS.includes(sr) ? sr : STATUS_BY_LABEL[sr] || "guardado";
+        if (!brand && instagram) brand = instagram.replace(/^@/, "");
+        if (!brand) return;
+        if (instagram && !instagram.startsWith("@")) instagram = "@" + instagram.replace(/^@/, "");
+        out.push({ brand, instagram, web, contact, email, notes, status });
+      } else {
+        const p = parseImport(cols.join(","));
+        if (p.length) out.push(p[0]);
+      }
+    });
+    return out;
+  };
   var Check = ({ on, onToggle, dim }) => /* @__PURE__ */ React.createElement(
     "span",
     {
@@ -321,7 +388,15 @@
     const [showImport, setShowImport] = useState(false);
     const today = _todayYmd();
     const doImport = (leads) => {
-      leads.forEach((l) => D.addOutreach({ brand: l.brand, instagram: l.instagram, web: l.web, contact: l.contact, status: "guardado" }));
+      leads.forEach((l) => D.addOutreach({
+        brand: l.brand,
+        instagram: l.instagram || "",
+        web: l.web || "",
+        contact: l.contact || "",
+        email: l.email || "",
+        notes: l.notes || "",
+        status: l.status || "guardado"
+      }));
       setShowImport(false);
     };
     const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
@@ -500,6 +575,10 @@
   };
   var ImportLeadsModal = ({ onClose, onImport }) => {
     const [text, setText] = useState("");
+    const [file, setFile] = useState(null);
+    const [drag, setDrag] = useState(false);
+    const [err, setErr] = useState("");
+    const inputRef = React.useRef(null);
     useEffect(() => {
       const onKey = (e) => {
         if (e.key === "Escape") onClose();
@@ -507,27 +586,92 @@
       window.addEventListener("keydown", onKey);
       return () => window.removeEventListener("keydown", onKey);
     }, []);
-    const parsed = parseImport(text);
-    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar leads"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Pega una lista, ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "un lead por l\xEDnea"), ".")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
+    const loadFile = (f) => {
+      if (!f) return;
+      setErr("");
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const leads = parseCsv(String(reader.result || ""));
+          if (!leads.length) {
+            setErr("No he encontrado ninguna fila v\xE1lida en el archivo.");
+            setFile(null);
+            return;
+          }
+          setFile({ name: f.name, leads });
+        } catch (_) {
+          setErr("No he podido leer el archivo. \xBFEs un CSV?");
+          setFile(null);
+        }
+      };
+      reader.onerror = () => setErr("No he podido leer el archivo.");
+      reader.readAsText(f);
+    };
+    const onDrop = (e) => {
+      e.preventDefault();
+      setDrag(false);
+      const f = e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) loadFile(f);
+    };
+    const parsed = file ? file.leads : parseImport(text);
+    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar leads"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Sube un ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "CSV"), " o pega una lista.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        ref: inputRef,
+        type: "file",
+        accept: ".csv,text/csv,text/plain",
+        style: { display: "none" },
+        onChange: (e) => loadFile(e.target.files && e.target.files[0])
+      }
+    ), file ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 12, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 18, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, file.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)" } }, file.leads.length, " lead", file.leads.length > 1 ? "s" : "", " detectados")), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setFile(null);
+          if (inputRef.current) inputRef.current.value = "";
+        },
+        style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 },
+        title: "Quitar archivo"
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 16 })
+    )) : /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        onClick: () => inputRef.current && inputRef.current.click(),
+        onDragOver: (e) => {
+          e.preventDefault();
+          setDrag(true);
+        },
+        onDragLeave: () => setDrag(false),
+        onDrop,
+        style: {
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 8,
+          padding: "26px 16px",
+          borderRadius: 12,
+          cursor: "pointer",
+          textAlign: "center",
+          border: "1px dashed " + (drag ? "var(--accent)" : "var(--border-strong)"),
+          background: drag ? "var(--accent-soft)" : "var(--bg-elev-2)",
+          transition: "all .15s"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 22, style: { color: drag ? "var(--accent)" : "var(--text-muted)" } }),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500 } }, "Arrastra un CSV aqu\xED o haz clic para elegirlo"),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Columnas: Marca \xB7 Instagram \xB7 Web \xB7 Contacto \xB7 Correo \xB7 Notas \xB7 Estado")
+    ), err && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--red)", marginTop: 10 } }, err), !file && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginBottom: 6 } }, "o pega una lista (un lead por l\xEDnea):"), /* @__PURE__ */ React.createElement(
       "textarea",
       {
         value: text,
         onChange: (e) => setText(e.target.value),
-        autoFocus: true,
-        placeholder: "Maktub, @maktub.wyt, maktub.store\nOtra marca, @otra\n@solo_instagram\nMarca sin nada m\xE1s",
-        rows: 9,
-        style: {
-          ..._fst,
-          height: "auto",
-          padding: "12px 14px",
-          resize: "vertical",
-          lineHeight: 1.5,
-          fontSize: 13.5,
-          whiteSpace: "pre",
-          overflowX: "auto"
-        }
+        placeholder: "Maktub, @maktub.wyt, maktub.store\n@solo_instagram\nMarca suelta",
+        rows: 5,
+        style: { ..._fst, height: "auto", padding: "12px 14px", resize: "vertical", lineHeight: 1.5, fontSize: 13.5, whiteSpace: "pre", overflowX: "auto" }
       }
-    ), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Separa los campos con comas: ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "Marca, @instagram, web, contacto"), ". Detecto solo el ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "@usuario"), " y la ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "web"), "; el resto es la marca. Si solo pegas nombres o @usuarios, tambi\xE9n vale.")), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => onImport(parsed),
