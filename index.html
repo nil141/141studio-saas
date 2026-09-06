@@ -202,29 +202,29 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  /* Efecto "relleno siguiendo el contorno": trazo finísimo que dibuja + relleno
-     entrando pegado, todas las letras a la vez (no direccional). */
+  /* Efecto "relleno siguiendo el trazo": un trazo grueso recortado a la forma de
+     las letras se dibuja con dash → las letras se rellenan siguiendo su forma,
+     todas a la vez, SIN contorno fino visible. */
   .app-loader .lg { width: 240px; height: auto; }
-  .app-loader .lg path {
-    fill: var(--text);
-    fill-opacity: 0;
+  .app-loader .lg .lgink path {
+    fill: none;
     stroke: var(--text);
-    stroke-width: 0.25;
-    vector-effect: non-scaling-stroke;
+    stroke-width: 130;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     stroke-dasharray: 1;
     stroke-dashoffset: 1;
-    animation: lgDraw 2.6s ease-in-out infinite;
+    animation: lgInk 2.5s ease-in-out infinite;
   }
-  @keyframes lgDraw {
-    0%   { stroke-dashoffset: 1; fill-opacity: 0; opacity: 0; }
+  @keyframes lgInk {
+    0%   { stroke-dashoffset: 1; opacity: 0; }
     6%   { opacity: 1; }
-    40%  { stroke-dashoffset: 0; fill-opacity: 0.15; }
-    55%  { fill-opacity: 1; }
-    85%  { fill-opacity: 1; opacity: 1; }
-    100% { stroke-dashoffset: 0; fill-opacity: 1; opacity: 0; }
+    58%  { stroke-dashoffset: 0; }
+    86%  { stroke-dashoffset: 0; opacity: 1; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .app-loader .lg path { animation: none; fill-opacity: 1; stroke: none; }
+    .app-loader .lg .lgink path { animation: none; stroke-dashoffset: 0; }
   }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
@@ -1015,7 +1015,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=29"></script>
+<script src="src/z-app.js?v=30"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
