@@ -205,14 +205,14 @@
   /* Efecto "relleno": el logo relleno se revela de izquierda a derecha, en bucle */
   .app-loader .lg {
     width: 240px; height: auto;
-    animation: lgFill 4s ease-in-out infinite;
+    animation: lgFill 2.4s ease-in-out infinite;
   }
   .app-loader .lg path { fill: var(--text); stroke: none; }
   @keyframes lgFill {
     0%   { clip-path: inset(0 100% 0 0); opacity: 0; }
-    8%   { opacity: 1; }
-    55%  { clip-path: inset(0 0 0 0); }
-    86%  { clip-path: inset(0 0 0 0); opacity: 1; }
+    6%   { opacity: 1; }
+    36%  { clip-path: inset(0 0 0 0); }
+    82%  { clip-path: inset(0 0 0 0); opacity: 1; }
     100% { clip-path: inset(0 0 0 0); opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -1007,7 +1007,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=25"></script>
+<script src="src/z-app.js?v=26"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>

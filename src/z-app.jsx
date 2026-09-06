@@ -68,6 +68,7 @@ const App = () => {
   const [quickCreateLock, setQuickCreateLock] = useState(false);
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
+  const [minSplash, setMinSplash] = useState(false);   // tiempo mínimo del loader
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -77,6 +78,13 @@ const App = () => {
   useEffect(() => {
     if (!session || window.Data.READY) return;
     const t = setTimeout(() => setLoadTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [session]);
+
+  // Mantén el loader un mínimo para que se aprecie la animación del logo.
+  useEffect(() => {
+    if (!session) return;
+    const t = setTimeout(() => setMinSplash(true), 1100);
     return () => clearTimeout(t);
   }, [session]);
 
@@ -167,7 +175,7 @@ const App = () => {
 
   // Cargar todo a la vez: hasta que la primera carga termina, un loader limpio
   // (evita que unas partes salgan cargadas y otras no).
-  if (!window.Data.READY && !loadTimedOut) {
+  if ((!window.Data.READY || !minSplash) && !loadTimedOut) {
     return (
       <div className="app-loader">
         <svg className="lg" viewBox="0 0 1233.86 193.24" xmlns="http://www.w3.org/2000/svg">
