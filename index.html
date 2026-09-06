@@ -1016,9 +1016,9 @@
   try {
     var _c = localStorage.getItem('141_chrome') || '1';
     document.documentElement.setAttribute('data-chrome', _c);
-    var _l = localStorage.getItem('141_loader') || '1';
+    var _l = localStorage.getItem('141_loader') || '5';
     document.documentElement.setAttribute('data-loader', _l);
-  } catch(e) { document.documentElement.setAttribute('data-chrome', '1'); document.documentElement.setAttribute('data-loader', '1'); }
+  } catch(e) { document.documentElement.setAttribute('data-chrome', '1'); document.documentElement.setAttribute('data-loader', '5'); }
 </script>
 </head>
 <body>
@@ -1118,7 +1118,7 @@
   var prev = document.getElementById('loader-prev');
   if (!host) return;
   var KEY = '141_loader';
-  var cur = '1';
+  var cur = '5';
   try { cur = localStorage.getItem(KEY) || '1'; } catch(e){}
   document.documentElement.setAttribute('data-loader', cur);
 
