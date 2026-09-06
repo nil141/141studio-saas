@@ -443,7 +443,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           style={{background:"transparent", border:"none", cursor:"pointer", color:"var(--text-subtle)", padding:6, borderRadius:8, display:"flex"}}
           onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
           onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
-          <Icon name="panel-left" size={17} strokeWidth={1.7}/>
+          <Icon name="chevrons-left" size={17} strokeWidth={1.7}/>
         </button>
       </div>
       )}

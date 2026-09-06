@@ -242,12 +242,14 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </div>
       )}
       <div className={"app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : "")} data-screen-label={view.name}>
-        {!navCollapsed && <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)} onToggleCollapse={toggleNav}/>}
-        {navCollapsed && (
+        <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)} onToggleCollapse={toggleNav}/>
+        {navCollapsed && !isClient && (
           <button onClick={toggleNav} title="Mostrar menú" aria-label="Mostrar menú"
             style={{ position:"fixed", top:14, left:14, zIndex:50, width:34, height:34, borderRadius:10, cursor:"pointer",
-              display:"grid", placeItems:"center", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text-muted)" }}>
-            <Icon name="panel-left" size={16} strokeWidth={1.7}/>
+              display:"grid", placeItems:"center", background:"var(--bg-elev)", border:"0.5px solid var(--border)", color:"var(--text-muted)" }}
+            onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
+            onMouseLeave={e => e.currentTarget.style.color = "var(--text-muted)"}>
+            <Icon name="chevrons-right" size={16} strokeWidth={1.7}/>
           </button>
         )}
         <div className="main">

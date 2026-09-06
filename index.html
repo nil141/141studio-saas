@@ -502,7 +502,15 @@
     flex-shrink: 0;
     background: var(--sidebar-bg);
     border-right: 0.5px solid var(--border);
+    transition: width .3s cubic-bezier(0.4,0,0.2,1), padding .3s cubic-bezier(0.4,0,0.2,1), opacity .2s ease;
   }
+  /* Menú colapsado: el sidebar encoge a 0 (animado) y el contenido se expande */
+  .app.nav-collapsed .sidebar {
+    width: 0; padding-left: 0; padding-right: 0; border-right: none; opacity: 0;
+  }
+  .app.nav-collapsed .main { transition: padding-top .2s ease; }
+  @media (min-width: 769px) { .app.nav-collapsed .main { padding-top: 20px; } }
+  @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
   .brand {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px 16px;
@@ -1059,12 +1067,12 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" crossorigin="anonymous"></script>
 
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
-<script src="src/icons.js?v=12"></script>
+<script src="src/icons.js?v=13"></script>
 <script src="src/data.js?v=63"></script>
-<script src="src/primitives.js?v=78"></script>
+<script src="src/primitives.js?v=79"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=33"></script>
+<script src="src/z-app.js?v=34"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=84"></script>
 <script src="src/agency-clients.js?v=28"></script>

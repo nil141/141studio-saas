@@ -476,7 +476,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       onMouseEnter: (e) => e.currentTarget.style.color = "var(--text)",
       onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
     },
-    /* @__PURE__ */ React.createElement(Icon, { name: "panel-left", size: 17, strokeWidth: 1.7 })
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevrons-left", size: 17, strokeWidth: 1.7 })
   )), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
