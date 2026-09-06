@@ -327,6 +327,136 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     return n;
   });
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
+  const _searchAll = (query) => {
+    const q = (query || "").trim().toLowerCase();
+    if (!q) return [];
+    const inc = (s) => (s || "").toString().toLowerCase().includes(q);
+    const go = (name, params) => {
+      onNavigate(name, params);
+      setNavSearch("");
+    };
+    const clients = (D.CLIENTS || []).filter((c) => inc(c.company) || inc(c.name) || inc(c.email)).map((c) => ({
+      key: "cl-" + c.id,
+      type: "Cliente",
+      icon: "users",
+      color: "#60a5fa",
+      label: c.company || c.name || "Cliente",
+      sub: c.company && c.name ? c.name : c.email || "",
+      onClick: () => go("clientDetail", { clientId: c.id })
+    }));
+    const projects = (D.PROJECTS || []).filter((p) => inc(p.name) || inc(p.clientName)).map((p) => ({
+      key: "pr-" + p.id,
+      type: "Proyecto",
+      icon: "folder",
+      color: "#9e9ae5",
+      label: p.name || "Proyecto",
+      sub: p.clientName || "",
+      onClick: () => go("project", { projectId: p.id })
+    }));
+    const outreach = (D.OUTREACH || []).filter((o) => inc(o.brand) || inc(o.instagram) || inc(o.contact) || inc(o.web) || inc(o.notes)).map((o) => ({
+      key: "ou-" + o.id,
+      type: "Outreach",
+      icon: "send",
+      color: "#34d399",
+      label: o.brand || o.instagram || "Lead",
+      sub: o.instagram ? "@" + o.instagram.replace(/^@/, "") : o.contact || o.web || "",
+      onClick: () => go("outreach")
+    }));
+    const tasks = [];
+    Object.entries(D.TASKS || {}).forEach(([pid, arr]) => (arr || []).forEach((t) => {
+      if (inc(t.title) || inc(t.notes)) {
+        const proj = (D.PROJECTS || []).find((p) => p.id === pid);
+        tasks.push({
+          key: "tk-" + (t.id || Math.random()),
+          type: "Tarea",
+          icon: "list-todo",
+          color: "#f6a15b",
+          label: t.title || "Tarea",
+          sub: proj ? proj.name : t.clientName || "",
+          onClick: () => proj ? go("project", { projectId: pid }) : go("tasks")
+        });
+      }
+    }));
+    const events = (D.AGENDA_EVENTS || []).filter((e) => inc(e.title) || inc(e.sub)).map((e) => ({
+      key: "ev-" + e.id,
+      type: "Agenda",
+      icon: "calendar",
+      color: "#e879a6",
+      label: e.title || "Evento",
+      sub: e.date || "",
+      onClick: () => go("agenda")
+    }));
+    return [...clients, ...projects, ...outreach, ...tasks, ...events];
+  };
+  const SearchResults = ({ query }) => {
+    const results = _searchAll(query);
+    const order = [];
+    const byType = {};
+    results.forEach((r) => {
+      if (!byType[r.type]) {
+        byType[r.type] = [];
+        order.push(r.type);
+      }
+      byType[r.type].push(r);
+    });
+    if (results.length === 0) {
+      return /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 14px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin resultados para \u201C", query.trim(), "\u201D");
+    }
+    const Row = ({ r }) => {
+      const [hov, setHov] = React.useState(false);
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          onClick: r.onClick,
+          onMouseEnter: () => setHov(true),
+          onMouseLeave: () => setHov(false),
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 10,
+            padding: "8px 10px",
+            borderRadius: 10,
+            cursor: "pointer",
+            background: hov ? "rgba(255,255,255,0.05)" : "transparent",
+            transition: "background .12s"
+          }
+        },
+        /* @__PURE__ */ React.createElement("div", { style: {
+          width: 26,
+          height: 26,
+          borderRadius: 8,
+          flexShrink: 0,
+          display: "grid",
+          placeItems: "center",
+          background: r.color + "22",
+          color: r.color
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: r.icon, size: 14, strokeWidth: 1.7 })),
+        /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: 13,
+          color: "var(--text)",
+          letterSpacing: "-0.3px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        } }, r.label), r.sub ? /* @__PURE__ */ React.createElement("div", { style: {
+          fontSize: 11,
+          color: "var(--text-subtle)",
+          letterSpacing: "-0.2px",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        } }, r.sub) : null)
+      );
+    };
+    return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", padding: "2px 2px 8px" } }, order.map((type) => /* @__PURE__ */ React.createElement("div", { key: type, style: { marginBottom: 10 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 10.5,
+      fontWeight: 600,
+      color: "var(--text-subtle)",
+      letterSpacing: "0.08em",
+      textTransform: "uppercase",
+      padding: "6px 10px 4px"
+    } }, type, " \xB7 ", byType[type].length), byType[type].slice(0, 8).map((r) => /* @__PURE__ */ React.createElement(Row, { key: r.key, r })), byType[type].length > 8 && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", padding: "2px 10px" } }, "+", byType[type].length - 8, " m\xE1s\u2026"))));
+  };
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null);
@@ -527,7 +657,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       className: "nav-search",
       value: navSearch,
       onChange: (e) => setNavSearch(e.target.value),
-      placeholder: "Buscar clientes y proyectos\u2026",
+      placeholder: "Buscar en todo\u2026",
       style: {
         flex: 1,
         minWidth: 0,
@@ -541,7 +671,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         caretColor: "var(--accent)"
       }
     }
-  ), navSearch && /* @__PURE__ */ React.createElement("span", { onClick: () => setNavSearch(""), style: { cursor: "pointer", color: "var(--text-subtle)", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? /* @__PURE__ */ React.createElement(
+  ), navSearch && /* @__PURE__ */ React.createElement("span", { onClick: () => setNavSearch(""), style: { cursor: "pointer", color: "var(--text-subtle)", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? navSearch.trim() ? /* @__PURE__ */ React.createElement(SearchResults, { query: navSearch }) : /* @__PURE__ */ React.createElement(
     AgencyNav,
     {
       current,

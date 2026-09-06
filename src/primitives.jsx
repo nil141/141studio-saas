@@ -301,6 +301,102 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   // Paleta para las iniciales de la lista de clientes/proyectos
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
 
+  // ── Buscador global — busca en clientes, proyectos, outreach, tareas y agenda ──
+  const _searchAll = (query) => {
+    const q = (query || "").trim().toLowerCase();
+    if (!q) return [];
+    const inc = (s) => (s || "").toString().toLowerCase().includes(q);
+    const go = (name, params) => { onNavigate(name, params); setNavSearch(""); };
+
+    const clients = (D.CLIENTS || [])
+      .filter(c => inc(c.company) || inc(c.name) || inc(c.email))
+      .map(c => ({ key: "cl-" + c.id, type: "Cliente", icon: "users", color: "#60a5fa",
+        label: c.company || c.name || "Cliente",
+        sub: (c.company && c.name) ? c.name : (c.email || ""),
+        onClick: () => go("clientDetail", { clientId: c.id }) }));
+
+    const projects = (D.PROJECTS || [])
+      .filter(p => inc(p.name) || inc(p.clientName))
+      .map(p => ({ key: "pr-" + p.id, type: "Proyecto", icon: "folder", color: "#9e9ae5",
+        label: p.name || "Proyecto", sub: p.clientName || "",
+        onClick: () => go("project", { projectId: p.id }) }));
+
+    const outreach = (D.OUTREACH || [])
+      .filter(o => inc(o.brand) || inc(o.instagram) || inc(o.contact) || inc(o.web) || inc(o.notes))
+      .map(o => ({ key: "ou-" + o.id, type: "Outreach", icon: "send", color: "#34d399",
+        label: o.brand || o.instagram || "Lead",
+        sub: o.instagram ? ("@" + o.instagram.replace(/^@/, "")) : (o.contact || o.web || ""),
+        onClick: () => go("outreach") }));
+
+    const tasks = [];
+    Object.entries(D.TASKS || {}).forEach(([pid, arr]) => (arr || []).forEach(t => {
+      if (inc(t.title) || inc(t.notes)) {
+        const proj = (D.PROJECTS || []).find(p => p.id === pid);
+        tasks.push({ key: "tk-" + (t.id || Math.random()), type: "Tarea", icon: "list-todo", color: "#f6a15b",
+          label: t.title || "Tarea", sub: proj ? proj.name : (t.clientName || ""),
+          onClick: () => proj ? go("project", { projectId: pid }) : go("tasks") });
+      }
+    }));
+
+    const events = (D.AGENDA_EVENTS || [])
+      .filter(e => inc(e.title) || inc(e.sub))
+      .map(e => ({ key: "ev-" + e.id, type: "Agenda", icon: "calendar", color: "#e879a6",
+        label: e.title || "Evento", sub: e.date || "",
+        onClick: () => go("agenda") }));
+
+    return [...clients, ...projects, ...outreach, ...tasks, ...events];
+  };
+
+  const SearchResults = ({ query }) => {
+    const results = _searchAll(query);
+    // Agrupar por tipo, respetando el orden de aparición de los grupos
+    const order = [];
+    const byType = {};
+    results.forEach(r => { if (!byType[r.type]) { byType[r.type] = []; order.push(r.type); } byType[r.type].push(r); });
+    if (results.length === 0) {
+      return (
+        <div style={{ padding: "28px 14px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 }}>
+          Sin resultados para “{query.trim()}”
+        </div>
+      );
+    }
+    const Row = ({ r }) => {
+      const [hov, setHov] = React.useState(false);
+      return (
+        <div onClick={r.onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+          style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer",
+            background: hov ? "rgba(255,255,255,0.05)" : "transparent", transition: "background .12s" }}>
+          <div style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center",
+            background: r.color + "22", color: r.color }}>
+            <Icon name={r.icon} size={14} strokeWidth={1.7}/>
+          </div>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <div style={{ fontSize: 13, color: "var(--text)", letterSpacing: "-0.3px",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.label}</div>
+            {r.sub ? <div style={{ fontSize: 11, color: "var(--text-subtle)", letterSpacing: "-0.2px",
+              overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.sub}</div> : null}
+          </div>
+        </div>
+      );
+    };
+    return (
+      <div style={{ overflowY: "auto", scrollbarWidth: "none", height: "100%", padding: "2px 2px 8px" }}>
+        {order.map(type => (
+          <div key={type} style={{ marginBottom: 10 }}>
+            <div style={{ fontSize: 10.5, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.08em",
+              textTransform: "uppercase", padding: "6px 10px 4px" }}>{type} · {byType[type].length}</div>
+            {byType[type].slice(0, 8).map(r => <Row key={r.key} r={r}/>)}
+            {byType[type].length > 8 && (
+              <div style={{ fontSize: 11, color: "var(--text-subtle)", padding: "2px 10px" }}>
+                +{byType[type].length - 8} más…
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const navContainerRef = useRef(null);
   const itemRefs = useRef({});
   const [pill, setPill] = React.useState(null); // { top, height, animated, visible }
@@ -473,7 +569,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
             background:"rgba(255,255,255,0.05)"}}>
             <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
-            <input className="nav-search" value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar clientes y proyectos…"
+            <input className="nav-search" value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar en todo…"
               style={{flex:1, minWidth:0, background:"transparent", border:"none", outline:"none", color:"var(--text)",
                 fontSize:13, fontFamily:"var(--font-sans)", letterSpacing:"-0.2px", caretColor:"var(--accent)"}}/>
             {navSearch && <span onClick={() => setNavSearch("")} style={{cursor:"pointer", color:"var(--text-subtle)", display:"flex"}}><Icon name="x" size={13}/></span>}
@@ -484,9 +580,11 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       {/* Nav con secciones */}
       <div ref={navContainerRef} style={{flex:1, overflow:"hidden", position:"relative"}}>
         {drilldown ? (
-          <AgencyNav
-            current={current} curNav={curNav} activePid={currentParams && currentParams.projectId} onNavigate={onNavigate} NavItem={NavItem}
-            D={D} navSearch={navSearch} otrosOpen={otrosOpen} toggleOtros={toggleOtros} pal={_NAVPAL}/>
+          navSearch.trim()
+            ? <SearchResults query={navSearch}/>
+            : <AgencyNav
+                current={current} curNav={curNav} activePid={currentParams && currentParams.projectId} onNavigate={onNavigate} NavItem={NavItem}
+                D={D} navSearch={navSearch} otrosOpen={otrosOpen} toggleOtros={toggleOtros} pal={_NAVPAL}/>
         ) : (
           <div style={{overflowY:"auto", scrollbarWidth:"none", height:"100%"}}>
             {sections.map((section, si) => (
