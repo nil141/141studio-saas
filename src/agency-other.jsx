@@ -1768,7 +1768,7 @@ const AgencyBilling = () => {
       {/* Cabecera fija: título + hero de KPIs */}
       <div style={{ flexShrink:0 }}>
         <div className="page-head" style={{ marginBottom:22 }}>
-          <div>
+          <div className="hide-mobile">
             <h1>Gastos</h1>
             <div className="sub">
               {activeSubs.length} suscripci{activeSubs.length === 1 ? "ón" : "ones"} activa{activeSubs.length === 1 ? "" : "s"} · {_eur(recurringMo)} al mes recurrente
@@ -1778,7 +1778,7 @@ const AgencyBilling = () => {
         </div>
 
         {/* Hero de KPIs — rejilla de 3 columnas fijas: misma posición que Facturación */}
-        <div style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", alignItems:"center", gap:32,
+        <div className="fin-kpis" style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", alignItems:"center", gap:32,
           padding:"20px 4px 24px" }}>
           {[
             { label:"Gastado este mes", value:_eur(totalMonth),
