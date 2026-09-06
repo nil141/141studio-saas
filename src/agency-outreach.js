@@ -290,10 +290,10 @@
     ));
   };
   var _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap" };
-  var OutreachRow = ({ o, D, sel, onSel, last }) => {
+  var OutreachRow = ({ o, D, sel, onSel, first }) => {
     const ig = _igUrl(o.instagram), web = _webUrl(o.web);
     const fm = _followMeta(o);
-    const cell = { ..._cell, borderTop: "0.5px solid var(--border)" };
+    const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
     const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
     return /* @__PURE__ */ React.createElement(
       "tr",
@@ -439,15 +439,13 @@
     const th = {
       textAlign: "left",
       padding: "0 14px",
-      height: 38,
+      height: 34,
       fontSize: 10.5,
       fontWeight: 600,
       textTransform: "uppercase",
       letterSpacing: "0.05em",
       color: "var(--text-subtle)",
-      whiteSpace: "nowrap",
-      position: "sticky",
-      top: 0
+      whiteSpace: "nowrap"
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, all.length), " marcas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.contactado || 0, " contactadas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.respondio || 0, " respuestas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.propuesta || 0, " propuestas"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, sel.size > 0 && /* @__PURE__ */ React.createElement("button", { onClick: bulkDelete, className: "btn ghost sm", style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 }), " Eliminar (", sel.size, ")"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
       "input",
@@ -510,14 +508,14 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto" } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { background: "var(--bg-elev-2)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), last: false }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
         title: all.length === 0 ? "A\xFAn no tienes leads" : "Sin resultados",
         sub: all.length === 0 ? "A\xF1ade la primera cuenta con \xABNuevo lead\xBB." : "Prueba con otra b\xFAsqueda."
       }
-    ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
+    )), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
   };
   var _fst = {
     width: "100%",

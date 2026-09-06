@@ -193,10 +193,10 @@ const StatusPill = ({ value, onChange }) => {
 
 const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap" };
 
-const OutreachRow = ({ o, D, sel, onSel, last }) => {
+const OutreachRow = ({ o, D, sel, onSel, first }) => {
   const ig = _igUrl(o.instagram), web = _webUrl(o.web);
   const fm = _followMeta(o);
-  const cell = { ..._cell, borderTop: "0.5px solid var(--border)" };
+  const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
   const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
   return (
     <tr onMouseEnter={e => e.currentTarget.style.background = sel ? "var(--accent-soft)" : "rgba(255,255,255,0.02)"}
@@ -293,8 +293,8 @@ const AgencyOutreach = ({ navigate }) => {
   const toggleAll = () => setSel(allSel ? new Set() : new Set(rows.map(o => o.id)));
   const bulkDelete = () => { sel.forEach(id => D.deleteOutreach(id)); setSel(new Set()); };
 
-  const th = { textAlign: "left", padding: "0 14px", height: 38, fontSize: 10.5, fontWeight: 600, textTransform: "uppercase",
-    letterSpacing: "0.05em", color: "var(--text-subtle)", whiteSpace: "nowrap", position: "sticky", top: 0 };
+  const th = { textAlign: "left", padding: "0 14px", height: 34, fontSize: 10.5, fontWeight: 600, textTransform: "uppercase",
+    letterSpacing: "0.05em", color: "var(--text-subtle)", whiteSpace: "nowrap" };
 
   return (
     <div className="page">
@@ -339,12 +339,11 @@ const AgencyOutreach = ({ navigate }) => {
         </div>
       </div>
 
-      {/* Tabla dentro de cajita */}
-      <div style={{ border: "0.5px solid var(--border)", borderRadius: 16, overflow: "hidden", background: "var(--bg-elev-2)" }}>
-        <div style={{ overflowX: "auto" }}>
+      {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
+      <div style={{ overflowX: "auto", marginTop: 4 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
             <thead>
-              <tr style={{ background: "var(--bg-elev-2)" }}>
+              <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
                 <th style={{ ...th, paddingLeft: 16, paddingRight: 4, width: 34 }}><Check on={allSel} onToggle={toggleAll}/></th>
                 <th style={th}>Marca</th>
                 <th style={th}>Estado</th>
@@ -358,17 +357,16 @@ const AgencyOutreach = ({ navigate }) => {
               </tr>
             </thead>
             <tbody>
-              {rows.map(o => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} last={false}/>)}
+              {rows.map((o, i) => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} first={i === 0}/>)}
             </tbody>
           </table>
-        </div>
-        {rows.length === 0 && (
-          <div style={{ padding: "44px 0" }}>
-            <Empty icon="send" title={all.length === 0 ? "Aún no tienes leads" : "Sin resultados"}
-              sub={all.length === 0 ? "Añade la primera cuenta con «Nuevo lead»." : "Prueba con otra búsqueda."}/>
-          </div>
-        )}
       </div>
+      {rows.length === 0 && (
+        <div style={{ padding: "44px 0" }}>
+          <Empty icon="send" title={all.length === 0 ? "Aún no tienes leads" : "Sin resultados"}
+            sub={all.length === 0 ? "Añade la primera cuenta con «Nuevo lead»." : "Prueba con otra búsqueda."}/>
+        </div>
+      )}
 
       {showAdd && <NewLeadModal f={f} upd={upd} setF={setF} onClose={() => setShowAdd(false)} onSave={saveNew}/>}
       {showImport && <ImportLeadsModal onClose={() => setShowImport(false)} onImport={doImport}/>}
