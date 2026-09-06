@@ -643,6 +643,7 @@
   }
   .page-head h1 { font-size: 22px; font-weight: 400; letter-spacing: -0.96px; }
   .page-head .sub { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+  .fin-add-mobile { display: none; }
 
   /* Grid helpers */
   .row { display: flex; gap: 12px; align-items: center; }
@@ -995,17 +996,20 @@
     .hide-mobile { display: none !important; }
     /* Gastos: la página entera fluye dentro de .main (no fija) */
     .gastos-root { height: auto !important; overflow: visible !important; padding: 16px 16px 96px !important; position: relative; }
-    /* El botón "+" (añadir gasto/suscripción) ya no ocupa una fila entera:
-       pasa a botón flotante abajo a la izquierda; las tarjetas suben arriba */
-    .gastos-root .page-head { position: fixed !important; bottom: 108px; left: 16px;
-      top: auto !important; right: auto !important; margin: 0 !important; width: auto !important; z-index: 40; }
-    .gastos-root .page-head > div:last-child { align-self: auto !important; width: auto !important; }
+    /* El botón "+" ya no ocupa una fila entera: la cabecera se colapsa y el
+       alta se hace desde una píldora flotante centrada abajo (estilo Outreach) */
+    .gastos-root .page-head { margin: 0 !important; min-height: 0 !important; }
     .gastos-root .fin-kpis { padding-top: 4px !important; }
-    /* FAB: no transparente — fondo acento sólido con blur y sombra */
-    .gastos-root .action-pill-row > button:first-child { width: 54px !important; height: 54px !important;
-      background: rgba(158,154,229,0.9) !important; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px);
-      border: 0.5px solid rgba(255,255,255,0.18) !important; color: #0a0a0a !important;
-      box-shadow: 0 10px 28px rgba(0,0,0,0.5); }
+    /* Píldora flotante "Añadir gasto" — mismo lenguaje que la barra de selección de Outreach */
+    .fin-add-mobile { display: inline-flex !important; align-items: center; gap: 9px;
+      position: fixed; left: 50%; transform: translateX(-50%); bottom: 26px; z-index: 120;
+      height: 46px; padding: 0 20px 0 8px; border-radius: 99px; cursor: pointer;
+      background: var(--bg-elev); border: 0.5px solid var(--border-strong);
+      -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px);
+      box-shadow: 0 14px 44px rgba(0,0,0,0.55);
+      color: var(--text); font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: -0.2px; }
+    .fin-add-mobile .fin-add-ico { display: inline-flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px; border-radius: 50%; background: var(--accent); color: #0a0a0a; }
     .gastos-scroll { flex: none !important; overflow: visible !important; min-height: 0 !important;
       scrollbar-gutter: auto !important; padding-right: 0 !important;
       -webkit-mask-image: none !important; mask-image: none !important; }
@@ -1221,7 +1225,7 @@
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=32"></script>
 <script src="src/agency-project.js?v=34"></script>
-<script src="src/agency-other.js?v=142"></script>
+<script src="src/agency-other.js?v=143"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=23"></script>

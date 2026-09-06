@@ -1774,8 +1774,16 @@ const AgencyBilling = () => {
               {activeSubs.length} suscripci{activeSubs.length === 1 ? "ón" : "ones"} activa{activeSubs.length === 1 ? "" : "s"} · {_eur(recurringMo)} al mes recurrente
             </div>
           </div>
-          <ActionPill plusActions={() => { setFinType("sub"); setAddOpen(true); }}/>
+          <div className="hide-mobile">
+            <ActionPill plusActions={() => { setFinType("sub"); setAddOpen(true); }}/>
+          </div>
         </div>
+
+        {/* Botón añadir — móvil: píldora flotante centrada abajo (estilo barra de Outreach) */}
+        <button className="fin-add-mobile" onClick={() => { setFinType("sub"); setAddOpen(true); }}>
+          <span className="fin-add-ico"><Icon name="plus" size={15} strokeWidth={2.2}/></span>
+          Añadir gasto
+        </button>
 
         {/* Hero de KPIs — rejilla de 3 columnas fijas: misma posición que Facturación */}
         <div className="fin-kpis" style={{ display:"grid", gridTemplateColumns:"repeat(3, 1fr)", alignItems:"center", gap:32,

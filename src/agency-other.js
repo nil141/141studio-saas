@@ -1168,10 +1168,13 @@
       maxWidth: "none",
       margin: 0,
       overflow: "hidden"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, activeSubs.length, " suscripci", activeSubs.length === 1 ? "\xF3n" : "ones", " activa", activeSubs.length === 1 ? "" : "s", " \xB7 ", _eur(recurringMo), " al mes recurrente")), /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
+    } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Gastos"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, activeSubs.length, " suscripci", activeSubs.length === 1 ? "\xF3n" : "ones", " activa", activeSubs.length === 1 ? "" : "s", " \xB7 ", _eur(recurringMo), " al mes recurrente")), /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement(ActionPill, { plusActions: () => {
       setFinType("sub");
       setAddOpen(true);
-    } })), /* @__PURE__ */ React.createElement("div", { className: "fin-kpis", style: {
+    } }))), /* @__PURE__ */ React.createElement("button", { className: "fin-add-mobile", onClick: () => {
+      setFinType("sub");
+      setAddOpen(true);
+    } }, /* @__PURE__ */ React.createElement("span", { className: "fin-add-ico" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 15, strokeWidth: 2.2 })), "A\xF1adir gasto"), /* @__PURE__ */ React.createElement("div", { className: "fin-kpis", style: {
       display: "grid",
       gridTemplateColumns: "repeat(3, 1fr)",
       alignItems: "center",
