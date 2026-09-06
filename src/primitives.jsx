@@ -42,6 +42,12 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
   const q = (navSearch || "").trim().toLowerCase();
   const nameOf = (c) => c.company || c.name || "Cliente";
 
+  // Seguimientos de Outreach que tocan hoy o están atrasados → badge en el menú
+  const _todayYmd = new Date().toISOString().split("T")[0];
+  const outreachDue = (D.OUTREACH || []).filter(o =>
+    o.nextFollowup && o.nextFollowup <= _todayYmd && !["cerrado", "descartado"].includes(o.status) && !o.convertedClientId
+  ).length;
+
   // Proyectos en desarrollo activo (no completados)
   const activeProjects = (D.PROJECTS || []).filter(p => {
     const tks = (D.TASKS && D.TASKS[p.id]) || [];
@@ -95,12 +101,17 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
           fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
         <Icon name="more-h" size={16} strokeWidth={1.7}/>
         <span style={{ flex: 1 }}>Otros</span>
+        {!otrosOpen && outreachDue > 0 && (
+          <span style={{ fontSize: 11, fontWeight: 600, minWidth: 18, textAlign: "center", padding: "1px 6px", borderRadius: 99,
+            background: "var(--accent-soft)", color: "var(--accent)" }}>{outreachDue}</span>
+        )}
         <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
       {otrosOpen && (
         <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
           {_NAV_OTROS.map(it => (
-            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href} nested/>
+            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href}
+              badge={it.id === "outreach" && outreachDue ? outreachDue : undefined} nested/>
           ))}
         </div>
       )}

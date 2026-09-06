@@ -957,6 +957,9 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
 
+      {/* Seguimientos de Outreach que vencen hoy (solo si los hay) */}
+      <SeguimientosBlock D={D} navigate={navigate}/>
+
       {/* Mi lista + Entregas próximas — apiladas, cada una en cajita */}
       <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
       <EntregasBlock D={D} navigate={navigate}/>
@@ -1695,6 +1698,60 @@ const EntregasBlock = ({ D, navigate }) => {
           </div>
         </div>
       ))}
+    </section>
+  );
+};
+
+// Bloque "Seguimientos de hoy" — leads de Outreach cuyo seguimiento vence hoy
+// o está atrasado. Solo se muestra si hay alguno (si no, no ensucia Inicio).
+const SeguimientosBlock = ({ D, navigate }) => {
+  const today = new Date().toISOString().split("T")[0];
+  const DONE = ["cerrado", "descartado"];
+  const due = (D.OUTREACH || [])
+    .filter(o => o.nextFollowup && o.nextFollowup <= today && !DONE.includes(o.status) && !o.convertedClientId)
+    .sort((a, b) => (a.nextFollowup < b.nextFollowup ? -1 : a.nextFollowup > b.nextFollowup ? 1 : 0));
+  const [open, toggleOpen] = _usePersistOpen("141_home_segui", true);
+  if (!due.length) return null;
+  const arrow = (
+    <button onClick={() => navigate("outreach")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver Outreach"><Icon name="arrow" size={12}/></button>
+  );
+  const cardTitle = (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+      <Icon name="send" size={15} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
+      <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" }}>Seguimientos de hoy</span>
+      <span style={{ fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{due.length}</span>
+    </div>
+  );
+  return (
+    <section>
+      <SectionHead title="Seguimientos de hoy" open={open} onToggle={toggleOpen} right={arrow}/>
+      {open && (
+        <div style={{ ...INICIO_CARD, marginTop: 12 }} className="fade-in">
+          {cardTitle}
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {due.slice(0, 8).map(o => {
+              const overdue = o.nextFollowup < today;
+              const igLabel = o.instagram ? (o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram) : "";
+              return (
+                <div key={o.id} onClick={() => navigate("outreach")}
+                  onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
+                  onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ cursor: "pointer", borderRadius: 12, padding: "12px 14px", transition: "background .1s",
+                    display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
+                    <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: overdue ? "var(--red)" : "var(--amber)" }}/>
+                    <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.brand}</span>
+                    {igLabel && <span style={{ fontSize: 12, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{igLabel}</span>}
+                  </div>
+                  <span style={{ fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: overdue ? "var(--red)" : "var(--amber)" }}>
+                    {overdue ? "Atrasado" : "Hoy"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 };
