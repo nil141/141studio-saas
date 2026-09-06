@@ -413,6 +413,27 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
                       transition:"transform .25s cubic-bezier(0.34,1.2,0.46,1)",
                       transform: isSel ? "scale(1.06)" : "scale(1)",
                     }}>
+                      <svg width={sz} height={sz} style={{ position:"absolute", inset:0, transform:"rotate(-90deg)" }}>
+                        {/* Track completo */}
+                        <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                          stroke={trackCol} strokeWidth={sw}/>
+                        {/* Progreso (sólo si hay carga) */}
+                        {hasLoad && (
+                          <circle cx={sz/2} cy={sz/2} r={r} fill="none"
+                            stroke={ringCol} strokeWidth={sw} strokeLinecap="round"
+                            strokeDasharray={`${(loadPct/100)*c} ${c}`}
+                            style={{
+                              transition:"stroke-dasharray .5s ease, stroke .25s",
+                              filter: isSel ? "drop-shadow(0 0 6px rgba(158,154,229,0.55))" : "none",
+                            }}/>
+                        )}
+                        {/* Punto "hoy" sobre el ring si está vacío */}
+                        {!hasLoad && isToday && (
+                          <circle cx={sz/2} cy={sz/2 - r} r={2.5}
+                            fill="var(--accent)" transform={`rotate(90 ${sz/2} ${sz/2})`}/>
+                        )}
+                      </svg>
+
                       {/* Fondo del centro: tintado si seleccionado */}
                       {isSel && (
                         <div style={{

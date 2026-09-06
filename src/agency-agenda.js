@@ -390,8 +390,7 @@ const AgendaPage = ({ navigate }) => {
         letterSpacing: "-0.3px",
         marginBottom: 5
       } }, cell.dayNum),
-      stats && /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 4 } }, /* @__PURE__ */ React.createElement(TaskChip, { stats })),
-      /* @__PURE__ */ React.createElement(DayEventList, { events: cell.events, max: stats ? 2 : 3 })
+      /* @__PURE__ */ React.createElement(DayEventList, { events: cell.events, max: 3 })
     );
   })), viewMode === "week" && /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: 6, paddingTop: 6, minHeight: 0 } }, weekDays.map((dayDate) => {
     const ymd = ymdOf(dayDate);

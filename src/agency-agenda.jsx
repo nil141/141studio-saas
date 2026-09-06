@@ -402,8 +402,7 @@ const AgendaPage = ({ navigate }) => {
                       fontSize:13, fontWeight: isToday ? 600 : 400, letterSpacing:"-0.3px",
                       marginBottom:5,
                     }}>{cell.dayNum}</div>
-                    {stats && <div style={{marginBottom:4}}><TaskChip stats={stats}/></div>}
-                    <DayEventList events={cell.events} max={stats ? 2 : 3}/>
+                    <DayEventList events={cell.events} max={3}/>
                   </div>
                 );
               })}

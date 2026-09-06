@@ -230,7 +230,42 @@
             justifyContent: "center",
             transition: "transform .25s cubic-bezier(0.34,1.2,0.46,1)",
             transform: isSel ? "scale(1.06)" : "scale(1)"
-          } }, isSel && /* @__PURE__ */ React.createElement("div", { style: {
+          } }, /* @__PURE__ */ React.createElement("svg", { width: sz, height: sz, style: { position: "absolute", inset: 0, transform: "rotate(-90deg)" } }, /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: sz / 2,
+              cy: sz / 2,
+              r,
+              fill: "none",
+              stroke: trackCol,
+              strokeWidth: sw
+            }
+          ), hasLoad && /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: sz / 2,
+              cy: sz / 2,
+              r,
+              fill: "none",
+              stroke: ringCol,
+              strokeWidth: sw,
+              strokeLinecap: "round",
+              strokeDasharray: `${loadPct / 100 * c} ${c}`,
+              style: {
+                transition: "stroke-dasharray .5s ease, stroke .25s",
+                filter: isSel ? "drop-shadow(0 0 6px rgba(158,154,229,0.55))" : "none"
+              }
+            }
+          ), !hasLoad && isToday2 && /* @__PURE__ */ React.createElement(
+            "circle",
+            {
+              cx: sz / 2,
+              cy: sz / 2 - r,
+              r: 2.5,
+              fill: "var(--accent)",
+              transform: `rotate(90 ${sz / 2} ${sz / 2})`
+            }
+          )), isSel && /* @__PURE__ */ React.createElement("div", { style: {
             position: "absolute",
             width: sz - sw * 2 - 4,
             height: sz - sw * 2 - 4,
