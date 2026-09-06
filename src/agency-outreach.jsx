@@ -138,7 +138,7 @@ const InlineText = ({ value, onSave, placeholder, mono }) => {
   );
   return (
     <span onClick={e => { e.stopPropagation(); setD(value || ""); setEdit(true); }}
-      style={{ fontSize: 13, color: value ? "var(--text-muted)" : "var(--text-subtle)", cursor: "text",
+      style={{ fontSize: 13, color: value ? "var(--text)" : "var(--text-subtle)", cursor: "text",
         fontFamily: mono ? "var(--font-mono)" : "inherit", whiteSpace: "nowrap" }}>{value || placeholder}</span>
   );
 };
@@ -215,13 +215,13 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
       <td style={cell}><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></td>
       <td style={cell}>
         {ig ? <a href={ig} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-          style={{ color: "var(--accent)", textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}>
+          style={{ color: "var(--text)", textDecoration: "none", fontSize: 13, display: "inline-flex", alignItems: "center", gap: 5 }}>
           {o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram}</a>
           : <InlineText value="" placeholder="@instagram" onSave={v => D.updateOutreach(o.id, { instagram: v })}/>}
       </td>
       <td style={cell}>
         {web ? <a href={web} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title={o.web}
-          style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12.5, display: "inline-block", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "middle" }}>
+          style={{ color: "var(--text)", textDecoration: "none", fontSize: 12.5, display: "inline-block", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "middle" }}>
           {o.web.replace(/^https?:\/\//, "")}</a>
           : <InlineText value="" placeholder="URL" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
       </td>
