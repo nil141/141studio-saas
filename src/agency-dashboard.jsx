@@ -1532,7 +1532,7 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
   return (
     <section>
       <SectionHead title="Mi lista" open={open} onToggle={toggleOpen}
-        right={<button onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todas"><Icon name="arrow" size={12}/></button>}/>
+        right={<button className="section-go" onClick={() => navigate("tasks")} style={{ ...LINK_BTN, width: 22, height: 22, color: "var(--text-subtle)" }} title="Ver todas"><Icon name="arrow" size={12}/></button>}/>
       {open && (
         <div style={{ ...INICIO_CARD, marginTop: 12 }}>
           {/* Cabecera dentro de la cajita: icono + título + pestañas + navegador de día */}
@@ -1632,7 +1632,7 @@ const EntregasBlock = ({ D, navigate }) => {
   });
   const [open, toggleOpen] = _usePersistOpen("141_home_entregas", true);
   const arrow = (
-    <button onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver todos"><Icon name="arrow" size={12}/></button>
+    <button className="section-go" onClick={() => navigate("projects")} style={{ ...LINK_BTN, width: 22, height: 22, color: "var(--text-subtle)" }} title="Ver todos"><Icon name="arrow" size={12}/></button>
   );
   const cardTitle = (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
@@ -1723,7 +1723,7 @@ const SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
   if (!list.length) return null;
 
   const arrow = (
-    <button onClick={() => navigate("outreach")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver Outreach"><Icon name="arrow" size={12}/></button>
+    <button className="section-go" onClick={() => navigate("outreach")} style={{ ...LINK_BTN, width: 22, height: 22, color: "var(--text-subtle)" }} title="Ver Outreach"><Icon name="arrow" size={12}/></button>
   );
   const cardTitle = (
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
