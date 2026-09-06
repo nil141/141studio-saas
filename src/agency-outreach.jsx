@@ -138,12 +138,11 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
           : <InlineText value="" placeholder="@instagram" onSave={v => D.updateOutreach(o.id, { instagram: v })}/>}
       </td>
       <td style={cell}>
-        {web ? <a href={web} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
-          style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12.5, display: "inline-flex", alignItems: "center", gap: 5 }}>
-          <Icon name="link" size={12}/> Web</a>
-          : <InlineText value="" placeholder="web" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
+        {web ? <a href={web} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} title={o.web}
+          style={{ color: "var(--text-muted)", textDecoration: "none", fontSize: 12.5, display: "inline-block", maxWidth: 180, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", verticalAlign: "middle" }}>
+          {o.web.replace(/^https?:\/\//, "")}</a>
+          : <InlineText value="" placeholder="URL" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
       </td>
-      <td style={cell}><InlineText value={o.email} placeholder="correo" mono onSave={v => D.updateOutreach(o.id, { email: v })}/></td>
       <td style={{ ...cell, whiteSpace: "normal", minWidth: 180 }}><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></td>
       <td style={{ ...cell, fontSize: 12, color: "var(--text-subtle)" }}>{_fmtDate(o.createdAt)}</td>
       <td style={{ ...cell, textAlign: "right", paddingRight: 12 }}>
@@ -257,7 +256,6 @@ const AgencyOutreach = ({ navigate }) => {
                 <th style={th}>Contacto</th>
                 <th style={th}>Instagram</th>
                 <th style={th}>Web</th>
-                <th style={th}>Correo</th>
                 <th style={th}>Notas</th>
                 <th style={th}>Fecha</th>
                 <th style={{ ...th, textAlign: "right" }}></th>
