@@ -436,8 +436,8 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         </div>
       ) : (
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
-        <img src="/logo.svg" alt="141'DIGITAL"
-          style={{height:22, width:"auto", display:"block", objectFit:"contain", opacity:0.95}} />
+        <img src="/wordmark.svg" alt="141'DIGITAL"
+          style={{height:15, width:"auto", maxWidth:150, display:"block", objectFit:"contain", opacity:0.95}} />
         <NotificationBell kind={kind} onNavigate={onNavigate}/>
       </div>
       )}

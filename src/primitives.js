@@ -461,9 +461,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 16px 8px" } }, /* @__PURE__ */ React.createElement(
     "img",
     {
-      src: "/logo.svg",
+      src: "/wordmark.svg",
       alt: "141'DIGITAL",
-      style: { height: 22, width: "auto", display: "block", objectFit: "contain", opacity: 0.95 }
+      style: { height: 15, width: "auto", maxWidth: 150, display: "block", objectFit: "contain", opacity: 0.95 }
     }
   ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
