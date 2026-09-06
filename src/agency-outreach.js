@@ -368,6 +368,111 @@
       ) : null))
     );
   };
+  var OutreachFilterHead = ({ filter, setFilter, counts, dueCount, clientCount, total }) => {
+    const [open, setOpen] = useState(false);
+    const [pos, setPos] = useState(null);
+    const ref = React.useRef(null);
+    const openMenu = () => {
+      const r = ref.current.getBoundingClientRect();
+      setPos({ left: r.left, top: r.bottom + 6 });
+      setOpen(true);
+    };
+    useEffect(() => {
+      if (!open) return;
+      const close = () => setOpen(false);
+      window.addEventListener("click", close);
+      window.addEventListener("scroll", close, true);
+      window.addEventListener("resize", close);
+      return () => {
+        window.removeEventListener("click", close);
+        window.removeEventListener("scroll", close, true);
+        window.removeEventListener("resize", close);
+      };
+    }, [open]);
+    const active = filter !== "all";
+    const curLabel = filter === "all" ? "Estado" : filter === "due" ? "Seguimiento" : filter === "clients" ? "Clientes" : _stMeta(filter).label;
+    const items = [
+      { id: "all", label: "Todas", n: total },
+      ...dueCount ? [{ id: "due", label: "Seguimiento", n: dueCount, color: "#e2b45c" }] : [],
+      ...clientCount ? [{ id: "clients", label: "Clientes", n: clientCount, color: "#34d399" }] : [],
+      ...OUTREACH_STATUS.map((s) => ({ id: s.id, label: s.label, n: counts[s.id] || 0, color: s.color }))
+    ];
+    return /* @__PURE__ */ React.createElement("span", { ref, style: { position: "relative", display: "inline-block" } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: (e) => {
+          e.stopPropagation();
+          open ? setOpen(false) : openMenu();
+        },
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 5,
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 10.5,
+          fontWeight: 600,
+          textTransform: "uppercase",
+          letterSpacing: "0.05em",
+          color: active ? "var(--accent)" : "var(--text-subtle)",
+          padding: 0
+        }
+      },
+      curLabel,
+      /* @__PURE__ */ React.createElement(Icon, { name: active ? "filter" : "chevron", size: active ? 11 : 12, style: { opacity: 0.8 } })
+    ), open && pos && ReactDOM.createPortal(
+      /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: {
+        position: "fixed",
+        left: pos.left,
+        top: pos.top,
+        zIndex: 400,
+        minWidth: 200,
+        background: "var(--bg-elev)",
+        border: "0.5px solid var(--border-strong)",
+        borderRadius: 12,
+        padding: 5,
+        boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+        maxHeight: 360,
+        overflowY: "auto"
+      } }, items.map((it) => {
+        const on = filter === it.id;
+        return /* @__PURE__ */ React.createElement(
+          "button",
+          {
+            key: it.id,
+            onClick: () => {
+              setFilter(it.id);
+              setOpen(false);
+            },
+            onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+            onMouseLeave: (e) => e.currentTarget.style.background = on ? "var(--bg-elev-2)" : "transparent",
+            style: {
+              display: "flex",
+              alignItems: "center",
+              gap: 9,
+              width: "100%",
+              padding: "8px 10px",
+              borderRadius: 8,
+              cursor: "pointer",
+              fontSize: 13,
+              textAlign: "left",
+              border: "none",
+              background: on ? "var(--bg-elev-2)" : "transparent",
+              color: "var(--text)",
+              fontFamily: "inherit"
+            }
+          },
+          it.color ? /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: it.color, flexShrink: 0 } }) : /* @__PURE__ */ React.createElement("span", { style: { width: 8, flexShrink: 0 } }),
+          /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, it.label),
+          /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, it.n),
+          on && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13, style: { color: "var(--accent)" } })
+        );
+      })),
+      document.body
+    ));
+  };
   var AgencyOutreach = ({ navigate }) => {
     const D = window.Data;
     D.useStore();
@@ -414,12 +519,6 @@
     const dueCount = all.filter(_isDue).length;
     const clientCount = all.filter((o) => o.convertedClientId).length;
     const [filter, setFilter] = useState("all");
-    const FILTERS = [
-      { id: "all", label: "Todas", n: all.length },
-      ...dueCount ? [{ id: "due", label: "Seguimiento", n: dueCount, color: "#e2b45c" }] : [],
-      ...OUTREACH_STATUS.map((s) => ({ id: s.id, label: s.label, n: counts[s.id] || 0, color: s.color })),
-      ...clientCount ? [{ id: "clients", label: "Clientes", n: clientCount, color: "#34d399" }] : []
-    ];
     const matchFilter = (o) => filter === "all" ? true : filter === "due" ? _isDue(o) : filter === "clients" ? !!o.convertedClientId : o.status === filter;
     const ql = q.trim().toLowerCase();
     let rows = all.filter((o) => matchFilter(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql)));
@@ -537,37 +636,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7, flexWrap: "wrap", marginBottom: 6 } }, FILTERS.map((fl) => {
-      const on = filter === fl.id;
-      const c = fl.color || "var(--accent)";
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: fl.id,
-          onClick: () => setFilter(fl.id),
-          style: {
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 7,
-            height: 30,
-            padding: "0 12px",
-            borderRadius: 99,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: 12.5,
-            fontWeight: 500,
-            whiteSpace: "nowrap",
-            transition: "all .12s",
-            background: on ? fl.color ? fl.color + "22" : "var(--accent-soft)" : "var(--bg-elev-2)",
-            color: on ? c : "var(--text-muted)",
-            border: "0.5px solid " + (on ? fl.color ? fl.color + "66" : "rgba(158,154,229,0.4)" : "var(--border)")
-          }
-        },
-        fl.color && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: fl.color, flexShrink: 0 } }),
-        fl.label,
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, opacity: 0.7 } }, fl.n)
-      );
-    })), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, "Estado"), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
@@ -576,10 +645,15 @@
       }
     )), sel.size > 0 && /* @__PURE__ */ React.createElement("div", { style: {
       position: "fixed",
+      left: 0,
+      right: 0,
       bottom: 24,
-      left: "50%",
-      transform: "translateX(-50%)",
       zIndex: 120,
+      display: "flex",
+      justifyContent: "center",
+      pointerEvents: "none"
+    } }, /* @__PURE__ */ React.createElement("div", { style: {
+      pointerEvents: "auto",
       display: "flex",
       alignItems: "center",
       gap: 4,
@@ -654,7 +728,7 @@
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })
-    )), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
+    ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
   };
   var _fst = {
     width: "100%",
