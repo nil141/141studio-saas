@@ -986,8 +986,8 @@
     .pg-pad { padding: 16px 16px 0 !important; }
     /* Tareas: la cabecera interna (título + fecha + +/⋯) sobra en móvil */
     .tasks-head { display: none !important; }
-    /* Cabeceras de página redundantes en móvil (el nombre ya está en las pestañas) */
-    .page-head.hide-mobile { display: none !important; }
+    /* Elementos redundantes en móvil (el nombre de página ya está en las pestañas) */
+    .hide-mobile { display: none !important; }
     /* Agenda: cabecera que respira; el «+» ya está arriba */
     .agenda-toolbar { flex-wrap: wrap !important; gap: 10px !important; padding: 14px 16px 10px !important; }
     .agenda-title { font-size: 19px !important; letter-spacing: -0.6px !important; }
@@ -997,9 +997,7 @@
     .agenda-month-grid { flex: none !important; grid-template-rows: none !important; grid-auto-rows: 60px !important; }
     .agenda-cal-col { overflow-y: auto !important; }
     .agenda-mobile-day { display: block; margin-top: 10px; padding: 12px 4px 8px; border-top: 0.5px solid var(--border); }
-    /* Outreach: tabla → tarjetas en móvil */
-    .outreach-table { display: none !important; }
-    .outreach-cards { display: flex !important; flex-direction: column; gap: 10px; padding-bottom: 8px; }
+    /* Outreach: se mantiene la tabla en móvil (scroll horizontal) */
     .mtn-bar {
       display: flex; align-items: center; justify-content: space-between;
       padding: 10px 14px 8px;
@@ -1175,7 +1173,7 @@
 <script src="src/z-app.js?v=37"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=93"></script>
-<script src="src/agency-clients.js?v=30"></script>
+<script src="src/agency-clients.js?v=31"></script>
 <script src="src/agency-project.js?v=34"></script>
 <script src="src/agency-other.js?v=139"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
