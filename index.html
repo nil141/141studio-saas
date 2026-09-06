@@ -202,30 +202,77 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  /* Efecto "relleno siguiendo el trazo": un trazo grueso recortado a la forma de
-     las letras se dibuja con dash → las letras se rellenan siguiendo su forma,
-     todas a la vez, SIN contorno fino visible. */
-  .app-loader .lg { width: 240px; height: auto; }
-  .app-loader .lg .lgink path {
-    fill: none;
-    stroke: var(--text);
-    stroke-width: 130;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: lgInk 2.5s ease-in-out infinite;
+  /* Wordmark del loader como forma (máscara) rellena de color; el efecto lo
+     controla html[data-loader="N"] (1..10). Se previsualiza con el switcher. */
+  .lg {
+    width: 240px; height: 40px;
+    background: var(--text);
+    -webkit-mask: url("/wordmark.svg") center / contain no-repeat;
+            mask: url("/wordmark.svg") center / contain no-repeat;
   }
-  @keyframes lgInk {
-    0%   { stroke-dashoffset: 1; opacity: 0; }
-    6%   { opacity: 1; }
-    58%  { stroke-dashoffset: 0; }
-    86%  { stroke-dashoffset: 0; opacity: 1; }
-    100% { stroke-dashoffset: 0; opacity: 0; }
+  /* 1 · Fundido */
+  html[data-loader="1"] .lg { animation: lgFade 2.4s ease-in-out infinite; }
+  @keyframes lgFade { 0%{opacity:0} 16%{opacity:1} 82%{opacity:1} 100%{opacity:0} }
+  /* 2 · Escala + fundido */
+  html[data-loader="2"] .lg { animation: lgScale 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
+  @keyframes lgScale { 0%{opacity:0;transform:scale(.9)} 22%{opacity:1;transform:scale(1)} 82%{opacity:1;transform:scale(1)} 100%{opacity:0} }
+  /* 3 · Sube + fundido */
+  html[data-loader="3"] .lg { animation: lgRise 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
+  @keyframes lgRise { 0%{opacity:0;transform:translateY(12px)} 22%{opacity:1;transform:translateY(0)} 82%{opacity:1} 100%{opacity:0} }
+  /* 4 · Desenfoque → nítido */
+  html[data-loader="4"] .lg { animation: lgBlur 2.6s ease-in-out infinite; }
+  @keyframes lgBlur { 0%{opacity:0;filter:blur(11px)} 28%{opacity:1;filter:blur(0)} 82%{opacity:1;filter:blur(0)} 100%{opacity:0;filter:blur(0)} }
+  /* 5 · Latido */
+  html[data-loader="5"] .lg { animation: lgPulse 1.6s ease-in-out infinite; }
+  @keyframes lgPulse { 0%,100%{opacity:.32} 50%{opacity:1} }
+  /* 6 · Brillo que barre (dark → claro) */
+  html[data-loader="6"] .lg {
+    background: linear-gradient(100deg, var(--text-subtle) 30%, var(--text) 50%, var(--text-subtle) 70%);
+    background-size: 220% 100%;
+    animation: lgShim 1.9s linear infinite;
   }
-  @media (prefers-reduced-motion: reduce) {
-    .app-loader .lg .lgink path { animation: none; stroke-dashoffset: 0; }
+  @keyframes lgShim { 0%{background-position:130% 0} 100%{background-position:-30% 0} }
+  /* 7 · Latido con halo lila */
+  html[data-loader="7"] .lg { animation: lgGlow 2.2s ease-in-out infinite; }
+  @keyframes lgGlow {
+    0%,100%{opacity:.5; filter:drop-shadow(0 0 0 transparent)}
+    50%    {opacity:1; filter:drop-shadow(0 0 9px rgba(158,154,229,0.55))}
   }
+  /* 8 · Revelado de izquierda a derecha (dentro de la forma) */
+  html[data-loader="8"] .lg {
+    -webkit-mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(90deg,#000 50%,transparent 50%);
+            mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(90deg,#000 50%,transparent 50%);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    -webkit-mask-size: contain, 200% 100%; mask-size: contain, 200% 100%;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    animation: lgWipeX 2.6s ease-in-out infinite;
+  }
+  @keyframes lgWipeX {
+    0%  { -webkit-mask-position: center, 100% 0; mask-position: center, 100% 0; opacity:1; }
+    46% { -webkit-mask-position: center, 0% 0;   mask-position: center, 0% 0; }
+    84% { -webkit-mask-position: center, 0% 0;   mask-position: center, 0% 0; opacity:1; }
+    100%{ -webkit-mask-position: center, 0% 0;   mask-position: center, 0% 0; opacity:0; }
+  }
+  /* 9 · Revelado de abajo a arriba */
+  html[data-loader="9"] .lg {
+    -webkit-mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(0deg,#000 50%,transparent 50%);
+            mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(0deg,#000 50%,transparent 50%);
+    -webkit-mask-composite: source-in; mask-composite: intersect;
+    -webkit-mask-size: contain, 100% 200%; mask-size: contain, 100% 200%;
+    -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+    animation: lgWipeY 2.6s ease-in-out infinite;
+  }
+  @keyframes lgWipeY {
+    0%  { -webkit-mask-position: center, 0 100%; mask-position: center, 0 100%; opacity:1; }
+    46% { -webkit-mask-position: center, 0 0%;   mask-position: center, 0 0%; }
+    84% { -webkit-mask-position: center, 0 0%;   mask-position: center, 0 0%; opacity:1; }
+    100%{ -webkit-mask-position: center, 0 0%;   mask-position: center, 0 0%; opacity:0; }
+  }
+  /* 10 · Fundido + zoom muy suave (elegante) */
+  html[data-loader="10"] .lg { animation: lgSoft 3s ease-in-out infinite; }
+  @keyframes lgSoft { 0%{opacity:0;transform:scale(1.05)} 30%{opacity:1;transform:scale(1)} 80%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1)} }
+
+  @media (prefers-reduced-motion: reduce) { .lg { animation: none !important; opacity: 1 !important; } }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
@@ -969,7 +1016,9 @@
   try {
     var _c = localStorage.getItem('141_chrome') || '1';
     document.documentElement.setAttribute('data-chrome', _c);
-  } catch(e) { document.documentElement.setAttribute('data-chrome', '1'); }
+    var _l = localStorage.getItem('141_loader') || '1';
+    document.documentElement.setAttribute('data-loader', _l);
+  } catch(e) { document.documentElement.setAttribute('data-chrome', '1'); document.documentElement.setAttribute('data-loader', '1'); }
 </script>
 </head>
 <body>
@@ -1015,7 +1064,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=30"></script>
+<script src="src/z-app.js?v=31"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
@@ -1035,5 +1084,74 @@
 <!-- Todos los componentes cargados — arrancar React ahora -->
 <script>window.__initApp();</script>
 
+<!-- ════ Previsualizador de animaciones del loader (temporal, para elegir) ════ -->
+<div id="loader-prev" hidden><div class="lg"></div></div>
+<div id="loader-switch"></div>
+<style>
+  #loader-prev {
+    position: fixed; inset: 0; z-index: 9998;
+    background: var(--bg); display: grid; place-items: center;
+  }
+  #loader-switch {
+    position: fixed; z-index: 9999; bottom: 16px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 6px;
+    padding: 7px 9px; border-radius: 14px;
+    background: rgba(18,18,20,0.92); border: 0.5px solid var(--border);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5); backdrop-filter: blur(12px);
+    font-family: var(--font-sans);
+  }
+  #loader-switch .ls-lbl { font-size: 10px; color: var(--text-subtle); letter-spacing: 0.04em; text-transform: uppercase; padding: 0 4px 0 2px; }
+  #loader-switch button {
+    height: 26px; min-width: 26px; padding: 0 6px; border-radius: 8px; cursor: pointer;
+    background: transparent; border: 0.5px solid transparent; color: var(--text-muted);
+    font-size: 12px; font-weight: 600; font-family: var(--font-sans);
+    display: grid; place-items: center; transition: all .12s ease;
+  }
+  #loader-switch button:hover { background: var(--bg-elev-2); color: var(--text); }
+  #loader-switch button.active { background: var(--accent-soft); border-color: rgba(158,154,229,0.35); color: var(--accent); }
+  #loader-switch .ls-eye { color: var(--text-subtle); }
+  @media (max-width: 768px) { #loader-switch { display: none; } }
+</style>
+<script>
+(function(){
+  var host = document.getElementById('loader-switch');
+  var prev = document.getElementById('loader-prev');
+  if (!host) return;
+  var KEY = '141_loader';
+  var cur = '1';
+  try { cur = localStorage.getItem(KEY) || '1'; } catch(e){}
+  document.documentElement.setAttribute('data-loader', cur);
+
+  var lbl = document.createElement('span');
+  lbl.className = 'ls-lbl'; lbl.textContent = 'Loader';
+  host.appendChild(lbl);
+
+  var btns = [];
+  function setActive(v){ btns.forEach(function(b){ b.classList.toggle('active', b.dataset.v === v); }); }
+  for (var i = 1; i <= 10; i++) {
+    (function(n){
+      var b = document.createElement('button');
+      b.textContent = n; b.dataset.v = String(n); b.title = 'Animación ' + n;
+      b.onclick = function(){
+        var v = String(n);
+        document.documentElement.setAttribute('data-loader', v);
+        try { localStorage.setItem(KEY, v); } catch(e){}
+        setActive(v);
+        prev.hidden = false;   // mostrar la vista previa al elegir
+      };
+      host.appendChild(b); btns.push(b);
+    })(i);
+  }
+  setActive(cur);
+
+  var eye = document.createElement('button');
+  eye.className = 'ls-eye'; eye.textContent = '👁'; eye.title = 'Ver / ocultar vista previa';
+  eye.onclick = function(){ prev.hidden = !prev.hidden; };
+  host.appendChild(eye);
+
+  // Cerrar la vista previa haciendo clic en ella
+  prev.addEventListener('click', function(){ prev.hidden = true; });
+})();
+</script>
 </body>
 </html>
