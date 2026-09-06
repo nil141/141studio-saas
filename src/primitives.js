@@ -1155,7 +1155,7 @@ const ActionPill = ({ plusActions, moreActions, plusIcon = "plus" }) => {
     if (!moreActions || !moreActions.length) return;
     setOpen((o) => o === "more" ? null : "more");
   };
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { className: "action-pill", style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "action-pill-row", style: {
     display: "flex",
     alignItems: "center",
     gap: 2,

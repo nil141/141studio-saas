@@ -990,6 +990,11 @@
     .tasks-head { display: none !important; }
     /* Elementos redundantes en móvil (el nombre de página ya está en las pestañas) */
     .hide-mobile { display: none !important; }
+    /* ActionPill en móvil: botones redondos como los de la barra superior */
+    .action-pill-row { background: transparent !important; border: none !important; padding: 0 !important; gap: 8px !important; }
+    .action-pill-row > button { width: 40px !important; height: 40px !important; border-radius: 50% !important;
+      background: var(--bg-elev-2) !important; border: 0.5px solid var(--border) !important; }
+    .action-pill-row > button:first-child { background: var(--accent-soft) !important; border-color: rgba(158,154,229,0.3) !important; color: var(--accent) !important; }
     /* Agenda: cabecera que respira; el «+» ya está arriba */
     .agenda-toolbar { flex-wrap: wrap !important; gap: 10px !important; padding: 14px 16px 10px !important; }
     .agenda-title { font-size: 19px !important; letter-spacing: -0.6px !important; }

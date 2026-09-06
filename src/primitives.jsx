@@ -1003,8 +1003,8 @@ const ActionPill = ({ plusActions, moreActions, plusIcon = "plus" }) => {
   };
 
   return (
-    <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
-      <div style={{
+    <div className="action-pill" style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
+      <div className="action-pill-row" style={{
         display: "flex", alignItems: "center", gap: 2, padding: "3px 4px",
         background: "rgba(255,255,255,0.07)",
         border: "0.5px solid rgba(255,255,255,0.1)",
