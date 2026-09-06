@@ -29,11 +29,9 @@ const _NAV_MAIN = [
 const _NAV_OTROS = [
   { id: "projects",  label: "Proyectos",   icon: "folder" },
   { id: "clients",   label: "Clientes",    icon: "users" },
-  { id: "campaigns", label: "Campañas",    icon: "megaphone" },
   { id: "outreach",  label: "Propuestas Outreach", icon: "send" },
   { id: "income",    label: "Facturación", icon: "trending-up" },
   { id: "billing",   label: "Gastos",      icon: "receipt" },
-  { id: "mail",      label: "Correo",      icon: "mail" },
 ];
 const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.01em",
   textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 7,

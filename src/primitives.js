@@ -21,11 +21,9 @@ const _NAV_MAIN = [
 const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
   { id: "clients", label: "Clientes", icon: "users" },
-  { id: "campaigns", label: "Campa\xF1as", icon: "megaphone" },
   { id: "outreach", label: "Propuestas Outreach", icon: "send" },
   { id: "income", label: "Facturaci\xF3n", icon: "trending-up" },
-  { id: "billing", label: "Gastos", icon: "receipt" },
-  { id: "mail", label: "Correo", icon: "mail" }
+  { id: "billing", label: "Gastos", icon: "receipt" }
 ];
 const _navSecLabel = {
   fontSize: 11,
