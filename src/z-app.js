@@ -1,15 +1,14 @@
 (() => {
-  // src/z-app.jsx
-  var { useState: useStateA, useEffect: useEffectA } = React;
+  const { useState: useStateA, useEffect: useEffectA } = React;
   try {
     const _g = new URLSearchParams(window.location.search).get("goto");
     if (_g && /^client-[a-z-]+$/.test(_g)) localStorage.setItem("141_goto", _g);
   } catch {
   }
-  var _SK = "141_session";
-  var _SEK = "141_session_exp";
-  var _SDK = "141_session_dur";
-  var _saveSession = (sess, days) => {
+  const _SK = "141_session";
+  const _SEK = "141_session_exp";
+  const _SDK = "141_session_dur";
+  const _saveSession = (sess, days) => {
     localStorage.setItem(_SDK, String(days));
     if (!days || days === 0) {
       sessionStorage.setItem(_SK, JSON.stringify(sess));
@@ -22,7 +21,7 @@
       sessionStorage.removeItem(_SK);
     }
   };
-  var _loadSession = () => {
+  const _loadSession = () => {
     try {
       const ls = localStorage.getItem(_SK);
       if (ls) {
@@ -36,17 +35,17 @@
       return null;
     }
   };
-  var _clearSession = () => {
+  const _clearSession = () => {
     sessionStorage.removeItem(_SK);
     localStorage.removeItem(_SK);
     localStorage.removeItem(_SEK);
   };
-  var _sessionInfo = () => ({
+  const _sessionInfo = () => ({
     days: parseInt(localStorage.getItem(_SDK) || "0"),
     exp: localStorage.getItem(_SEK)
   });
   window._sessionUtils = { save: _saveSession, info: _sessionInfo };
-  var _MOBILE_TABS = [
+  const _MOBILE_TABS = [
     { name: "dashboard", label: "Inicio" },
     { name: "tasks", label: "Tareas" },
     { name: "agenda", label: "Agenda" },
@@ -54,10 +53,11 @@
     { name: "clients", label: "Clientes" },
     { name: "outreach", label: "Outreach" },
     { name: "billing", label: "Gastos" },
+    { name: "income", label: "Facturaci\xF3n", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
     { name: "notifications", label: "Notificaciones" }
   ];
-  var _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
-  var MobileTopNav = ({ view, navigate, session, onCreate }) => {
+  const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
+  const MobileTopNav = ({ view, navigate, session, onCreate }) => {
     const [menu, setMenu] = React.useState(false);
     const tabsRef = React.useRef(null);
     React.useEffect(() => {
@@ -93,12 +93,12 @@
         key: t.name,
         "data-active": cur === t.name ? "1" : void 0,
         className: "mtn-tab" + (cur === t.name ? " active" : ""),
-        onClick: () => navigate(t.name)
+        onClick: () => t.href ? window.open(t.href, "_blank", "noopener") : navigate(t.name)
       },
       t.label
     ))));
   };
-  var App = () => {
+  const App = () => {
     window.Data.useStore();
     const [session, setSession] = useState(_loadSession);
     const [view, setView] = useState({ name: "dashboard", side: "agency", params: {} });
@@ -266,12 +266,10 @@
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":
           return null;
-        // rendered always below
         case "income":
           return /* @__PURE__ */ React.createElement(IncomePage, null);
         case "mail":
           return null;
-        // rendered always below
         case "settings":
           return /* @__PURE__ */ React.createElement(SettingsPage, null);
         default:
@@ -292,7 +290,6 @@
           return /* @__PURE__ */ React.createElement(ClientNotifications, { navigate, session });
         case "client-settings":
           return /* @__PURE__ */ React.createElement(ClientSettings, { navigate, session });
-        // compat con enlaces antiguos
         case "client-project":
           return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":

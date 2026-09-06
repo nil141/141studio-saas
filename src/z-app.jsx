@@ -62,6 +62,7 @@ const _MOBILE_TABS = [
   { name: "clients",       label: "Clientes" },
   { name: "outreach",      label: "Outreach" },
   { name: "billing",       label: "Gastos" },
+  { name: "income",        label: "Facturación", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
   { name: "notifications", label: "Notificaciones" },
 ];
 const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
@@ -115,7 +116,7 @@ const MobileTopNav = ({ view, navigate, session, onCreate }) => {
         {_MOBILE_TABS.map(t => (
           <button key={t.name} data-active={cur === t.name ? "1" : undefined}
             className={"mtn-tab" + (cur === t.name ? " active" : "")}
-            onClick={() => navigate(t.name)}>{t.label}</button>
+            onClick={() => t.href ? window.open(t.href, "_blank", "noopener") : navigate(t.name)}>{t.label}</button>
         ))}
       </div>
     </div>
