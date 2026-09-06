@@ -845,6 +845,8 @@
     .app, .app.client { grid-template-columns: 1fr; }
     .sidebar { display: none !important; }
     .main { padding-bottom: 24px; margin: 0; border-radius: 0; border: none; min-height: 100vh; background: var(--bg); }
+    /* Evita el zoom automático de iOS al enfocar un campo (necesita ≥16px) */
+    input, textarea, select { font-size: 16px !important; }
     /* Inicio: menos margen lateral en móvil */
     .dash-root { padding: 16px 16px 48px !important; gap: 16px !important; }
     /* Accesos directos: en móvil ya están en la tira de pestañas de arriba */
