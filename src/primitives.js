@@ -114,6 +114,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       } }, label)
     );
   };
+  const SkelRow = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px" } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 20, height: 20, borderRadius: 6, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 9, borderRadius: 5, flex: 1, maxWidth: 130 } }));
   return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(
     "div",
     {
@@ -139,7 +140,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
     /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
-  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, nested: true }))), fp.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, nested: true }))), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -148,7 +149,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       active: current === "project",
       onClick: () => onNavigate("project", { projectId: p.id })
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
+  ))) : null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
     "div",
     {
       onClick: toggleProj,

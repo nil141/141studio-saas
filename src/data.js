@@ -79,6 +79,8 @@ const _store = {
   SETTINGS: { ...SETTINGS_DEFAULT },
   AGENDA_EVENTS: [],
   OUTREACH: [],
+  _loaded: false,
+  // true tras la primera carga completa (para skeletons)
   _user: null,
   _prof: null,
   _outbox: {},
@@ -470,6 +472,7 @@ const _loadAll = async () => {
       _store.TASKS[pid].push(_mt(row));
     }
   }
+  _store._loaded = true;
   _emit();
 };
 let _channel = null;
@@ -1894,6 +1897,9 @@ window.Data = {
   INTAKE_SECTIONS,
   CALL_PREP,
   // Live getters
+  get READY() {
+    return _store._loaded;
+  },
   get CLIENTS() {
     return _store.CLIENTS;
   },

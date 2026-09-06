@@ -87,6 +87,7 @@ const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
   AGENDA_EVENTS: [], OUTREACH: [],
+  _loaded: false,   // true tras la primera carga completa (para skeletons)
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
   _subs: new Set(),
@@ -371,6 +372,7 @@ const _loadAll = async () => {
       _store.TASKS[pid].push(_mt(row));
     }
   }
+  _store._loaded = true;
   _emit();
 };
 
@@ -1652,6 +1654,7 @@ window.Data = {
   TEAM, ME, PHASES, ROADMAP_P1, LEAD_STAGES, CHANNELS,
   KPIS_WEEK, ACTIVITY, DRIVE_FOLDERS, INTAKE_SECTIONS, CALL_PREP,
   // Live getters
+  get READY()        { return _store._loaded; },
   get CLIENTS()      { return _store.CLIENTS; },
   get PROJECTS()     { return _store.PROJECTS; },
   get INVOICES()     { return _store.INVOICES; },

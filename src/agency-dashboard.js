@@ -1363,6 +1363,7 @@
       a.label
     )));
   };
+  var ListaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "12px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, flex: 1, maxWidth: 230 } }));
   var MiListaBlock = ({ D, navigate, todayStr }) => {
     const [tab, setTab] = useState("dia");
     const [dayOffset, setDayOffset] = useState(0);
@@ -1462,7 +1463,7 @@
       fontFamily: "inherit",
       fontSize: 12.5,
       fontWeight: 500
-    } }, "A\xF1adir")), pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, emptyMsg) : pend.map((t, i) => /* @__PURE__ */ React.createElement(
+    } }, "A\xF1adir")), !D.READY ? [0, 1, 2].map((i) => /* @__PURE__ */ React.createElement(ListaSkel, { key: i })) : pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, emptyMsg) : pend.map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         key: t.id,
@@ -1504,6 +1505,7 @@
     for (const [re, c] of _PHASE_COLORS) if (re.test(t)) return c;
     return "#9e9ae5";
   };
+  var EntregaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, width: 140 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 16, borderRadius: 6, width: 64 } })), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { display: "block", height: 4, borderRadius: 2, width: "100%" } }));
   var EntregasBlock = ({ D, navigate }) => {
     const projs = (D.PROJECTS || []).slice().sort((a, b) => {
       const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
@@ -1515,7 +1517,7 @@
     const [open, toggleOpen] = _usePersistOpen("141_home_entregas", true);
     const arrow = /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("projects"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver todos" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }));
     const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "package", size: 16, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Entregas pr\xF3ximas"), projs.length > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, projs.length));
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", open, onToggle: toggleOpen, right: arrow }), open && (projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.")) : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Entregas pr\xF3ximas", open, onToggle: toggleOpen, right: arrow }), open && (!D.READY ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, [0, 1, 2].map((i) => /* @__PURE__ */ React.createElement(EntregaSkel, { key: i })))) : projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 } }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)" } }, "A\xFAn no tienes proyectos.")) : /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 4 } }, projs.slice(0, 8).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
       const ph = _activePhaseOf(p, D);

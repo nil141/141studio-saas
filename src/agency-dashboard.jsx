@@ -1490,6 +1490,13 @@ const AccesosChips = ({ navigate, openModal }) => {
 };
 
 // "Mi lista" — tareas por día / semana, con navegador de día y añadir inline
+const ListaSkel = () => (
+  <div style={{ display: "flex", alignItems: "center", gap: 11, padding: "12px 6px" }}>
+    <span className="skel" style={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0 }}/>
+    <span className="skel" style={{ height: 11, borderRadius: 5, flex: 1, maxWidth: 230 }}/>
+  </div>
+);
+
 const MiListaBlock = ({ D, navigate, todayStr }) => {
   const [tab, setTab] = useState("dia");     // "dia" | "semana"
   const [dayOffset, setDayOffset] = useState(0);   // 0 = hoy
@@ -1578,7 +1585,9 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
                 borderRadius: 8, padding: "5px 12px", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500 }}>Añadir</button>
             )}
           </div>
-          {pend.length === 0 ? (
+          {!D.READY ? (
+            [0, 1, 2].map(i => <ListaSkel key={i}/>)
+          ) : pend.length === 0 ? (
             <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>{emptyMsg}</div>
           ) : pend.map((t, i) => (
             <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
@@ -1616,6 +1625,17 @@ const _PHASE_COLORS = [
 const _phaseColor = (name) => { const t = (name || "").toLowerCase(); for (const [re, c] of _PHASE_COLORS) if (re.test(t)) return c; return "#9e9ae5"; };
 
 // "Entregas próximas" — filas con barra de progreso grande por proyecto
+const EntregaSkel = () => (
+  <div style={{ padding: "14px 14px" }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 10 }}>
+      <span className="skel" style={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0 }}/>
+      <span className="skel" style={{ height: 11, borderRadius: 5, width: 140 }}/>
+      <span className="skel" style={{ height: 16, borderRadius: 6, width: 64 }}/>
+    </div>
+    <span className="skel" style={{ display: "block", height: 4, borderRadius: 2, width: "100%" }}/>
+  </div>
+);
+
 const EntregasBlock = ({ D, navigate }) => {
   const projs = (D.PROJECTS || []).slice().sort((a, b) => {
     const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
@@ -1638,13 +1658,20 @@ const EntregasBlock = ({ D, navigate }) => {
   return (
     <section>
       <SectionHead title="Entregas próximas" open={open} onToggle={toggleOpen} right={arrow}/>
-      {open && (projs.length === 0 ? (
+      {open && (!D.READY ? (
+        <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+          {cardTitle}
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {[0, 1, 2].map(i => <EntregaSkel key={i}/>)}
+          </div>
+        </div>
+      ) : projs.length === 0 ? (
         <div style={{ ...INICIO_CARD, marginTop: 12 }}>
           {cardTitle}
           <div style={{ fontSize: 13, color: "var(--text-subtle)" }}>Aún no tienes proyectos.</div>
         </div>
       ) : (
-        <div style={{ ...INICIO_CARD, marginTop: 12 }}>
+        <div style={{ ...INICIO_CARD, marginTop: 12 }} className="fade-in">
           {cardTitle}
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           {projs.slice(0, 8).map(p => {

@@ -74,6 +74,13 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
     );
   };
 
+  const SkelRow = () => (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px" }}>
+      <span className="skel" style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0 }}/>
+      <span className="skel" style={{ height: 9, borderRadius: 5, flex: 1, maxWidth: 130 }}/>
+    </div>
+  );
+
   return (
     <div style={{ overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 }}>
       {/* Nav plano principal */}
@@ -100,8 +107,16 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       )}
 
       {/* En desarrollo activo */}
-      {fp.length > 0 && (
+      {!D.READY ? (
         <div style={{ marginTop: 16 }}>
+          <div style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
+            <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
+            <span>En desarrollo activo</span>
+          </div>
+          <SkelRow/><SkelRow/>
+        </div>
+      ) : fp.length > 0 ? (
+        <div style={{ marginTop: 16 }} className="fade-in">
           <div style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
             <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
             <span>En desarrollo activo</span>
@@ -112,7 +127,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
               active={current === "project"} onClick={() => onNavigate("project", { projectId: p.id })}/>
           ))}
         </div>
-      )}
+      ) : null}
 
       {/* Todos los proyectos — plegable, cerrado por defecto, con "+" */}
       <div style={{ marginTop: 16, paddingBottom: 8 }}>
