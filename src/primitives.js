@@ -428,8 +428,8 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           flexShrink: 0,
           display: "grid",
           placeItems: "center",
-          background: r.color + "22",
-          color: r.color
+          background: "rgba(255,255,255,0.05)",
+          color: "var(--text-muted)"
         } }, /* @__PURE__ */ React.createElement(Icon, { name: r.icon, size: 14, strokeWidth: 1.7 })),
         /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: {
           fontSize: 13,

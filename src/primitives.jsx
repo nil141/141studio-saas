@@ -367,7 +367,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", borderRadius: 10, cursor: "pointer",
             background: hov ? "rgba(255,255,255,0.05)" : "transparent", transition: "background .12s" }}>
           <div style={{ width: 26, height: 26, borderRadius: 8, flexShrink: 0, display: "grid", placeItems: "center",
-            background: r.color + "22", color: r.color }}>
+            background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}>
             <Icon name={r.icon} size={14} strokeWidth={1.7}/>
           </div>
           <div style={{ minWidth: 0, flex: 1 }}>
