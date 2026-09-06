@@ -1841,7 +1841,7 @@ const AgencyBilling = () => {
         </div>
 
         {/* ── Suscripciones + Gastos puntuales — dos columnas estilo outdomode ── */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"start",
+        <div className="fin-lists" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:48, alignItems:"start",
           borderTop:"0.5px solid var(--border)", marginTop:30, paddingTop:26 }}>
         <div style={{ minWidth:0 }}>
           <div style={{ fontSize:17, color:"var(--text)", letterSpacing:"-0.4px" }}>Suscripciones</div>

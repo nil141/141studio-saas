@@ -1244,7 +1244,7 @@
         fontWeight: on ? 500 : 400,
         transition: "all .12s"
       } }, lbl);
-    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { style: {
+    })), /* @__PURE__ */ React.createElement("div", { style: { height: 192, display: "flex", flexDirection: "column", margin: "24px 0 4px" } }, /* @__PURE__ */ React.createElement(FinTrendChart, { trend, single: true }))), /* @__PURE__ */ React.createElement("div", { className: "fin-lists", style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 48,

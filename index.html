@@ -993,11 +993,14 @@
     .tasks-head { display: none !important; }
     /* Elementos redundantes en móvil (el nombre de página ya está en las pestañas) */
     .hide-mobile { display: none !important; }
-    /* KPIs de Gastos: más compactos en móvil (3 columnas) */
-    .fin-kpis { gap: 12px !important; padding: 8px 2px 18px !important; }
-    .fin-kpis > div { gap: 8px !important; }
-    .fin-kpis > div > span { font-size: 12.5px !important; }
-    .fin-kpis > div > div > span { font-size: 21px !important; }
+    /* KPIs de Gastos: en móvil una sola columna (se leen sin cortes) */
+    .fin-kpis { grid-template-columns: 1fr !important; gap: 16px !important; padding: 4px 2px 18px !important; }
+    .fin-kpis > div { gap: 4px !important; }
+    .fin-kpis > div > span { font-size: 13.5px !important; }
+    .fin-kpis > div > div { flex-direction: row !important; align-items: baseline; gap: 10px !important; flex-wrap: wrap; }
+    .fin-kpis > div > div > span { font-size: 26px !important; }
+    /* Gastos: las dos listas (Suscripciones / Gastos puntuales) apiladas */
+    .fin-lists { grid-template-columns: 1fr !important; gap: 28px !important; }
     /* ActionPill en móvil: botones redondos como los de la barra superior */
     .action-pill-row { background: transparent !important; border: none !important; padding: 0 !important; gap: 8px !important; }
     .action-pill-row > button { width: 40px !important; height: 40px !important; border-radius: 50% !important;
@@ -1196,7 +1199,7 @@
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=32"></script>
 <script src="src/agency-project.js?v=34"></script>
-<script src="src/agency-other.js?v=140"></script>
+<script src="src/agency-other.js?v=141"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=23"></script>
