@@ -1455,10 +1455,10 @@ const _ACCESOS = [
 ];
 const AccesosChips = ({ navigate, openModal }) => {
   return (
-    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+    <div className="accesos-chips" style={{ display: "flex", gap: 10, flexWrap: "wrap", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
       {_ACCESOS.map(a => (
         <button key={a.nav} onClick={() => navigate(a.nav)}
-          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px",
+          style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "9px 14px", flexShrink: 0,
             borderRadius: 10, cursor: "pointer", fontFamily: "inherit", fontSize: 13,
             letterSpacing: "-0.2px", whiteSpace: "nowrap", transition: "background .12s, color .12s",
             border: "none", background: "rgba(255,255,255,0.05)", color: "var(--text-muted)" }}

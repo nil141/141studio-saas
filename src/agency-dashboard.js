@@ -1291,7 +1291,7 @@
     { label: "Gastos", icon: "receipt", nav: "billing" }
   ];
   var AccesosChips = ({ navigate, openModal }) => {
-    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } }, _ACCESOS.map((a) => /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "accesos-chips", style: { display: "flex", gap: 10, flexWrap: "wrap", overflowX: "auto", WebkitOverflowScrolling: "touch" } }, _ACCESOS.map((a) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: a.nav,
@@ -1301,6 +1301,7 @@
           alignItems: "center",
           gap: 8,
           padding: "9px 14px",
+          flexShrink: 0,
           borderRadius: 10,
           cursor: "pointer",
           fontFamily: "inherit",
