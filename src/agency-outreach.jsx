@@ -193,9 +193,43 @@ const StatusPill = ({ value, onChange }) => {
 
 const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap" };
 
+// Celda de seguimiento — editable: fija/cambia/quita la fecha del próximo seguimiento
+const FollowupCell = ({ o, D }) => {
+  const [editing, setEditing] = useState(false);
+  const fm = _followMeta(o);
+  if (o.convertedClientId) return <span style={{ fontSize: 12, color: "var(--text-subtle)" }}>—</span>;
+  if (editing) {
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }} onClick={e => e.stopPropagation()}>
+        <input type="date" autoFocus defaultValue={o.nextFollowup || ""}
+          onChange={e => { D.updateOutreach(o.id, { nextFollowup: e.target.value || null }); setEditing(false); }}
+          onBlur={() => setEditing(false)}
+          style={{ background: "var(--bg-elev-2)", border: "0.5px solid var(--accent)", borderRadius: 6, color: "var(--text)",
+            fontSize: 12, fontFamily: "inherit", padding: "3px 6px", outline: "none", colorScheme: "dark" }}/>
+        {o.nextFollowup && (
+          <button onClick={() => { D.updateOutreach(o.id, { nextFollowup: null }); setEditing(false); }} title="Quitar seguimiento"
+            style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 2, display: "inline-flex" }}>
+            <Icon name="x" size={12}/>
+          </button>
+        )}
+      </span>
+    );
+  }
+  return (
+    <button onClick={e => { e.stopPropagation(); setEditing(true); }} title="Programar / cambiar seguimiento"
+      onMouseEnter={e => { if (!fm) e.currentTarget.style.color = "var(--text-muted)"; }}
+      onMouseLeave={e => { if (!fm) e.currentTarget.style.color = "var(--text-subtle)"; }}
+      style={{ background: "transparent", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit",
+        display: "inline-flex", alignItems: "center", gap: 6, transition: "color .12s",
+        fontSize: 12, fontWeight: fm ? 500 : 400, color: fm ? fm.color : "var(--text-subtle)" }}>
+      <Icon name={fm ? "bell" : "calendar"} size={11}/>
+      {fm ? fm.label : "Programar"}
+    </button>
+  );
+};
+
 const OutreachRow = ({ o, D, sel, onSel, first }) => {
   const ig = _igUrl(o.instagram), web = _webUrl(o.web);
-  const fm = _followMeta(o);
   const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
   const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
   return (
@@ -205,13 +239,7 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
       <td style={{ ...cell, paddingLeft: 16, paddingRight: 4 }}><Check on={sel} onToggle={onSel} dim/></td>
       <td style={{ ...cell, fontWeight: 500, fontSize: 14 }}>{o.brand}</td>
       <td style={cell}><StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/></td>
-      <td style={cell}>
-        {fm ? (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: fm.color }}>
-            <Icon name="bell" size={11}/> {fm.label}
-          </span>
-        ) : <span style={{ fontSize: 12, color: "var(--text-subtle)" }}>—</span>}
-      </td>
+      <td style={cell}><FollowupCell o={o} D={D}/></td>
       <td style={cell}><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></td>
       <td style={cell}>
         {ig ? <a href={ig} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
@@ -226,7 +254,10 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
           : <InlineText value="" placeholder="URL" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
       </td>
       <td style={{ ...cell, whiteSpace: "normal", minWidth: 180 }}><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></td>
-      <td style={{ ...cell, fontSize: 12, color: "var(--text-subtle)" }}>{_fmtDate(o.createdAt)}</td>
+      <td style={{ ...cell, fontSize: 12, color: "var(--text-subtle)" }}
+        title={o.createdAt ? "Añadido el " + new Date(o.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : ""}>
+        {_fmtDate(o.createdAt)}
+      </td>
       <td style={{ ...cell, textAlign: "right", paddingRight: 12 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
           {!_DONE_ST.includes(o.status) && !o.convertedClientId && (
@@ -430,7 +461,7 @@ const AgencyOutreach = ({ navigate }) => {
                 <th style={th}>Instagram</th>
                 <th style={th}>Web</th>
                 <th style={th}>Notas</th>
-                <th style={th}>Fecha</th>
+                <th style={th}>Añadido</th>
                 <th style={{ ...th, textAlign: "right" }}></th>
               </tr>
             </thead>

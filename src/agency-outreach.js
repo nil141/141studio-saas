@@ -290,9 +290,82 @@
     ));
   };
   var _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap" };
+  var FollowupCell = ({ o, D }) => {
+    const [editing, setEditing] = useState(false);
+    const fm = _followMeta(o);
+    if (o.convertedClientId) return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "\u2014");
+    if (editing) {
+      return /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          type: "date",
+          autoFocus: true,
+          defaultValue: o.nextFollowup || "",
+          onChange: (e) => {
+            D.updateOutreach(o.id, { nextFollowup: e.target.value || null });
+            setEditing(false);
+          },
+          onBlur: () => setEditing(false),
+          style: {
+            background: "var(--bg-elev-2)",
+            border: "0.5px solid var(--accent)",
+            borderRadius: 6,
+            color: "var(--text)",
+            fontSize: 12,
+            fontFamily: "inherit",
+            padding: "3px 6px",
+            outline: "none",
+            colorScheme: "dark"
+          }
+        }
+      ), o.nextFollowup && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: () => {
+            D.updateOutreach(o.id, { nextFollowup: null });
+            setEditing(false);
+          },
+          title: "Quitar seguimiento",
+          style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 2, display: "inline-flex" }
+        },
+        /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 12 })
+      ));
+    }
+    return /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: (e) => {
+          e.stopPropagation();
+          setEditing(true);
+        },
+        title: "Programar / cambiar seguimiento",
+        onMouseEnter: (e) => {
+          if (!fm) e.currentTarget.style.color = "var(--text-muted)";
+        },
+        onMouseLeave: (e) => {
+          if (!fm) e.currentTarget.style.color = "var(--text-subtle)";
+        },
+        style: {
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          padding: 0,
+          fontFamily: "inherit",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          transition: "color .12s",
+          fontSize: 12,
+          fontWeight: fm ? 500 : 400,
+          color: fm ? fm.color : "var(--text-subtle)"
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: fm ? "bell" : "calendar", size: 11 }),
+      fm ? fm.label : "Programar"
+    );
+  };
   var OutreachRow = ({ o, D, sel, onSel, first }) => {
     const ig = _igUrl(o.instagram), web = _webUrl(o.web);
-    const fm = _followMeta(o);
     const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
     const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
     return /* @__PURE__ */ React.createElement(
@@ -305,7 +378,7 @@
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, paddingLeft: 16, paddingRight: 4 } }, /* @__PURE__ */ React.createElement(Check, { on: sel, onToggle: onSel, dim: true })),
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, fontWeight: 500, fontSize: 14 } }, o.brand),
       /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(StatusPill, { value: o.status, onChange: (s) => D.updateOutreach(o.id, { status: s }) })),
-      /* @__PURE__ */ React.createElement("td", { style: cell }, fm ? /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, fontWeight: 500, color: fm.color } }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 11 }), " ", fm.label) : /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "\u2014")),
+      /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(FollowupCell, { o, D })),
       /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(InlineText, { value: o.contact, placeholder: "\u2014", onSave: (v) => D.updateOutreach(o.id, { contact: v }) })),
       /* @__PURE__ */ React.createElement("td", { style: cell }, ig ? /* @__PURE__ */ React.createElement(
         "a",
@@ -331,7 +404,14 @@
         o.web.replace(/^https?:\/\//, "")
       ) : /* @__PURE__ */ React.createElement(InlineText, { value: "", placeholder: "URL", onSave: (v) => D.updateOutreach(o.id, { web: v }) })),
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, whiteSpace: "normal", minWidth: 180 } }, /* @__PURE__ */ React.createElement(InlineText, { value: o.notes, placeholder: "A\xF1adir nota\u2026", onSave: (v) => D.updateOutreach(o.id, { notes: v }) })),
-      /* @__PURE__ */ React.createElement("td", { style: { ...cell, fontSize: 12, color: "var(--text-subtle)" } }, _fmtDate(o.createdAt)),
+      /* @__PURE__ */ React.createElement(
+        "td",
+        {
+          style: { ...cell, fontSize: 12, color: "var(--text-subtle)" },
+          title: o.createdAt ? "A\xF1adido el " + new Date(o.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : ""
+        },
+        _fmtDate(o.createdAt)
+      ),
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, textAlign: "right", paddingRight: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" } }, !_DONE_ST.includes(o.status) && !o.convertedClientId && /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -636,7 +716,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "Fecha"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1120 } }, /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
