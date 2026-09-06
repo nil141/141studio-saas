@@ -324,6 +324,11 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
   const [driveEditing, setDriveEditing] = useState(false);
   const [driveDraft, setDriveDraft] = useState("");
   const [hoverId, setHoverId] = useState(null); // fase resaltada en el Plan
+  // Fases plegadas en el Plan combinado (ausencia = abierta por defecto)
+  const [collapsedPhases, setCollapsedPhases] = useState(() => new Set());
+  const togglePhaseOpen = (name) => setCollapsedPhases(prev => {
+    const n = new Set(prev); n.has(name) ? n.delete(name) : n.add(name); return n;
+  });
 
   // Close context menu on outside click
   React.useEffect(() => {
@@ -422,7 +427,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           <Icon name="chevron" size={12} style={{transform:"rotate(180deg)"}}/> Proyectos
         </button>
         <ActionPill
-          plusActions={() => { setTab("tasks"); setAdding("add:" + ((aiPhases && aiPhases[0]) ? aiPhases[0].name : "__otras__")); setDraft(""); }}
+          plusActions={() => { const fn = (aiPhases && aiPhases[0]) ? aiPhases[0].name : "__otras__"; setTab("plan"); setCollapsedPhases(prev => { const n = new Set(prev); n.delete(fn); return n; }); setAdding("add:" + fn); setDraft(""); }}
           moreActions={[
             { icon:"edit", label:"Editar proyecto", sub:"Cambia nombre, cliente, tipo o fecha.", onClick: () => setEditOpen(true) },
             { icon:"trash", label:"Eliminar proyecto", sub:"Borra el proyecto y sus tareas.", onClick: removeProjectFromHere },
@@ -461,7 +466,6 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
       <div className="tabs">
         {[
           {id:"plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan"},
-          {id:"tasks", label:"Tablero"},
           {id:"files", label:"Archivos"},
           {id:"pay", label:"Cobro"},
         ].map(t => (
@@ -510,130 +514,27 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
               return { label:"Sin empezar", cls:"" };
             };
 
-            const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:4 };
-            return (
-              <div style={{display:"flex", flexDirection:"column", gap:34}}>
-                {/* Fases del proyecto — lista plana estilo del resto del SaaS */}
-                <div>
-                  <div style={secLabel}>Fases del proyecto</div>
-                  {planGroups.length === 0 ? (
-                    <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:14, padding:"20px 0"}}>
-                      <Empty icon="list-todo" title="Sin fases" sub="Organiza el proyecto en fases y añade tareas dentro de cada una."/>
-                      <button className="btn primary sm" onClick={() => setTab("tasks")}>
-                        <Icon name="plus" size={13}/> Crear fases y tareas
-                      </button>
-                    </div>
-                  ) : (
-                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
-                      {planGroups.map((g, i) => {
-                        const gDone = g.tasks.filter(t => t.column === "done").length;
-                        const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
-                        const isReal = g.name !== "__otras__";
-                        const doneSet = new Set(p.phasesDone || []);
-                        const isComplete = isReal && (doneSet.has(g.name) || (g.tasks.length > 0 && gDone === g.tasks.length));
-                        const desc = (p.phasesDesc || {})[g.name] || "";
-                        const on = hoverId === g.name;
-                        const editDesc = (e) => { e.stopPropagation(); const v = prompt(`Descripción de la fase «${g.label}» (la ve el cliente):`, desc); if (v !== null) D.setProjectPhaseDesc(p.id, g.name, v); };
-                        const toggleDone = (e) => { e.stopPropagation(); D.toggleProjectPhase(p.id, g.name); toast(isComplete ? "Fase reabierta" : "Fase completada", "success"); };
-                        return (
-                          <div key={g.name}
-                            onClick={() => { if (isReal) { setTab("tasks"); setPhaseTab(g.name); } }}
-                            onMouseEnter={() => setHoverId(g.name)} onMouseLeave={() => setHoverId(null)}
-                            style={{display:"flex", flexDirection:"column", gap:12, padding:"18px 6px", cursor: isReal ? "pointer" : "default"}}>
-                            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12}}>
-                              <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
-                                <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
-                                  fontSize:12, fontWeight:600, background:"transparent",
-                                  color: isComplete ? "var(--accent)" : "var(--text-muted)",
-                                  border: "1.5px solid " + (isComplete ? "var(--accent)" : "var(--border-strong)")}}>
-                                  {isComplete ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
-                                </span>
-                                <div style={{minWidth:0}}>
-                                  <div style={{fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
-                                    whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{g.label}</div>
-                                  <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
-                                    {desc || (g.tasks.length ? `${gDone}/${g.tasks.length} tareas · ${gPct}%` : "Sin descripción")}
-                                  </div>
-                                </div>
-                              </div>
-                              {isReal && (
-                                <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
-                                  <button className="btn ghost icon-only sm" onClick={editDesc} title="Editar descripción"><Icon name="edit" size={12}/></button>
-                                  <button className={"btn sm" + (isComplete ? " ghost" : "")} onClick={toggleDone} title={isComplete ? "Reabrir fase" : "Marcar fase completada"}>
-                                    {isComplete ? "Reabrir" : "Completar"}
-                                  </button>
-                                  <Icon name="chevron-right" size={18}
-                                    style={{color: on ? "var(--text)" : "var(--text-muted)", transform: on ? "translateX(3px)" : "none",
-                                      transition:"all .2s"}}/>
-                                </div>
-                              )}
-                            </div>
-                            <div style={{height:1, width:"100%", background:"var(--border)"}}/>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* Próximos vencimientos — lista plana */}
-                <div>
-                  <div style={secLabel}>Próximos vencimientos</div>
-                  {upcoming.length === 0 ? (
-                    <div className="muted small" style={{padding:"14px 6px", color:"var(--text-subtle)"}}>
-                      No hay tareas con fecha pendientes. Añade fechas a las tareas desde el Tablero (clic derecho en la tarjeta).
-                    </div>
-                  ) : (
-                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
-                      {upcoming.map(({t, info}, i) => (
-                        <div key={t.id} style={{display:"flex", alignItems:"center", gap:14, padding:"16px 6px",
-                          borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
-                          <span style={{width:9, height:9, borderRadius:99, background:info.color, flexShrink:0}}/>
-                          <div style={{flex:1, minWidth:0}}>
-                            <div style={{fontSize:15, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
-                            {taskPhase(t) && <div style={{fontSize:12, color:"var(--text-muted)", marginTop:2}}>{taskPhase(t)}</div>}
-                          </div>
-                          <div style={{textAlign:"right", flexShrink:0}}>
-                            <div style={{fontSize:14, fontWeight:500}}>{info.label}</div>
-                            {info.tag && <div style={{fontSize:11.5, color:info.color, marginTop:1}}>{info.tag}</div>}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
-
-          {tab === "tasks" && (() => {
-            const ORDER = { todo:0, doing:1, review:2, done:3 };
+            // ── Gestión de tareas inline (fusiona el antiguo Tablero) ──────────
             const STATE = { todo:"Por hacer", doing:"En curso", review:"Revisión", done:"Hecho" };
             const ARC   = { todo:0, doing:0.34, review:0.7, done:1 };
             const cycle = (t) => {
               const seq = ["todo","doing","review","done"];
               D.moveTask(p.id, t.id, seq[(seq.indexOf(t.column) + 1) % 4]);
             };
-            // Grupos por fase + "Otras tareas"
-            const phaseNames = (aiPhases || []).map(ph => ph.name);
-            const groups = phaseNames.map(name => ({ name, label:name, tasks: projectTasks.filter(t => taskPhase(t) === name) }));
-            const otras = projectTasks.filter(t => !phaseNames.includes(taskPhase(t)));
-            if (otras.length || !phaseNames.length) groups.push({ name:"__otras__", label:"Otras tareas", tasks: otras });
             const addTo = (phaseName) => {
               if (!draft.trim()) { setAdding(null); setDraft(""); return; }
               D.addTask({ projectId: p.id, title: draft.trim(), column: "todo",
                 phase: phaseName === "__otras__" ? null : phaseName });
               setDraft(""); setAdding(null);
             };
-            // Una fila de tarea (reutilizable)
             const renderRow = (t, last) => {
               const isDone = t.column === "done";
-              const sz = 38, r = 16, circ = 2 * Math.PI * r;
+              const sz = 34, r = 14, circ = 2 * Math.PI * r;
               const frac = ARC[t.column] || 0;
               return (
                 <div key={t.id} className="task-row"
                   onContextMenu={e => { e.preventDefault(); setCtxMenu({x:e.clientX, y:e.clientY, taskId:t.id}); }}
-                  style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px",
+                  style={{display:"flex", alignItems:"center", gap:12, padding:"10px 4px",
                     borderBottom: last ? "none" : "0.5px solid var(--border)"}}>
                   <button onClick={() => cycle(t)} title={"Estado: " + STATE[t.column] + " (clic para avanzar)"}
                     style={{width:sz, height:sz, flexShrink:0, position:"relative", display:"grid", placeItems:"center",
@@ -647,7 +548,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                       )}
                     </svg>
                     {isDone
-                      ? <Icon name="check" size={15} style={{color:"var(--accent)", position:"relative"}}/>
+                      ? <Icon name="check" size={14} style={{color:"var(--accent)", position:"relative"}}/>
                       : <span style={{width:5, height:5, borderRadius:99, background:"rgba(255,255,255,0.25)", position:"relative"}}/>}
                   </button>
                   <div style={{flex:1, minWidth:0}}>
@@ -690,62 +591,141 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
                 </div>
               );
             };
+            const ORDER = { todo:0, doing:1, review:2, done:3 };
+
+            const secLabel = { fontSize:11, textTransform:"uppercase", letterSpacing:"0.07em", color:"var(--text-subtle)", marginBottom:4 };
             return (
-              <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
-                {groups.map((g, gi) => {
-                  const gTasks = [...g.tasks].sort((a,b) => ORDER[a.column] - ORDER[b.column]);
-                  const gDone = g.tasks.filter(t => t.column === "done").length;
-                  const addKey = "add:" + g.name;
-                  const isAdding = adding === addKey;
-                  return (
-                    <div key={g.name} style={{marginTop: gi === 0 ? 0 : 26}}>
-                      {/* Encabezado de fase */}
-                      <div className="phase-head" style={{display:"flex", alignItems:"center", gap:8, marginBottom:2,
-                        paddingBottom:8, borderBottom:"0.5px solid var(--border)"}}>
-                        <span style={{fontSize:11.5, textTransform:"uppercase", letterSpacing:"0.06em", color:"var(--text-subtle)", fontWeight:600}}>{g.label}</span>
-                        <span style={{fontSize:11, color:"var(--text-subtle)", opacity:0.7}}>{gDone}/{g.tasks.length}</span>
-                        {g.name !== "__otras__" && (
-                          <button className="phase-del btn ghost icon-only sm" title="Eliminar fase"
-                            onClick={() => removePhase(g.name)}
-                            style={{marginLeft:"auto", color:"var(--text-subtle)"}}>
-                            <Icon name="trash" size={12}/>
+              <div style={{display:"flex", flexDirection:"column", gap:34}}>
+                {/* Fases del proyecto — lista plana estilo del resto del SaaS */}
+                <div>
+                  <div style={secLabel}>Fases del proyecto</div>
+                  {planGroups.length === 0 && !phaseAdding ? (
+                    <div style={{display:"flex", flexDirection:"column", alignItems:"center", gap:14, padding:"20px 0"}}>
+                      <Empty icon="list-todo" title="Sin fases" sub="Organiza el proyecto en fases y añade tareas dentro de cada una."/>
+                      <button className="btn primary sm" onClick={() => { setPhaseAdding(true); setPhaseDraft(""); }}>
+                        <Icon name="plus" size={13}/> Crear primera fase
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
+                      {planGroups.map((g, i) => {
+                        const gDone = g.tasks.filter(t => t.column === "done").length;
+                        const gPct = g.tasks.length ? Math.round(gDone / g.tasks.length * 100) : 0;
+                        const isReal = g.name !== "__otras__";
+                        const doneSet = new Set(p.phasesDone || []);
+                        const isComplete = isReal && (doneSet.has(g.name) || (g.tasks.length > 0 && gDone === g.tasks.length));
+                        const desc = (p.phasesDesc || {})[g.name] || "";
+                        const isOpen = !collapsedPhases.has(g.name);
+                        const gTasks = [...g.tasks].sort((a,b) => ORDER[a.column] - ORDER[b.column]);
+                        const addKey = "add:" + g.name;
+                        const isAdding = adding === addKey;
+                        const editDesc = (e) => { e.stopPropagation(); const v = prompt(`Descripción de la fase «${g.label}» (la ve el cliente):`, desc); if (v !== null) D.setProjectPhaseDesc(p.id, g.name, v); };
+                        const toggleDone = (e) => { e.stopPropagation(); D.toggleProjectPhase(p.id, g.name); toast(isComplete ? "Fase reabierta" : "Fase completada", "success"); };
+                        return (
+                          <div key={g.name} style={{borderBottom:"0.5px solid var(--border)"}}>
+                            {/* Cabecera de la fase — clic para plegar/desplegar */}
+                            <div onClick={() => togglePhaseOpen(g.name)}
+                              style={{display:"flex", alignItems:"center", justifyContent:"space-between", gap:12, padding:"16px 6px", cursor:"pointer"}}>
+                              <div style={{display:"flex", alignItems:"center", gap:14, minWidth:0}}>
+                                <span style={{width:26, height:26, borderRadius:99, flexShrink:0, display:"grid", placeItems:"center",
+                                  fontSize:12, fontWeight:600, background:"transparent",
+                                  color: isComplete ? "var(--accent)" : "var(--text-muted)",
+                                  border: "1.5px solid " + (isComplete ? "var(--accent)" : "var(--border-strong)")}}>
+                                  {isComplete ? <Icon name="check" size={13}/> : (isReal ? i+1 : "·")}
+                                </span>
+                                <div style={{minWidth:0}}>
+                                  <div style={{fontSize:17, color:"var(--text)", letterSpacing:"-0.4px", lineHeight:1.2,
+                                    whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{g.label}</div>
+                                  <div style={{fontSize:12.5, color:"var(--text-muted)", marginTop:3, whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>
+                                    {desc || (g.tasks.length ? `${gDone}/${g.tasks.length} tareas · ${gPct}%` : "Sin tareas todavía")}
+                                  </div>
+                                </div>
+                              </div>
+                              <div style={{display:"flex", alignItems:"center", gap:6, flexShrink:0}}>
+                                {isReal && <button className="btn ghost icon-only sm" onClick={editDesc} title="Editar descripción"><Icon name="edit" size={12}/></button>}
+                                {isReal && (
+                                  <button className={"btn sm" + (isComplete ? " ghost" : "")} onClick={toggleDone} title={isComplete ? "Reabrir fase" : "Marcar fase completada"}>
+                                    {isComplete ? "Reabrir" : "Completar"}
+                                  </button>
+                                )}
+                                {isReal && (
+                                  <button className="btn ghost icon-only sm" title="Eliminar fase"
+                                    onClick={(e) => { e.stopPropagation(); removePhase(g.name); }}
+                                    style={{color:"var(--text-subtle)"}}>
+                                    <Icon name="trash" size={12}/>
+                                  </button>
+                                )}
+                                <Icon name="chevron-right" size={18}
+                                  style={{color:"var(--text-muted)", transform: isOpen ? "rotate(90deg)" : "none", transition:"transform .2s"}}/>
+                              </div>
+                            </div>
+                            {/* Tareas de la fase (desplegable) */}
+                            {isOpen && (
+                              <div style={{paddingLeft:40, paddingBottom:8}}>
+                                {gTasks.map(t => renderRow(t, false))}
+                                {isAdding ? (
+                                  <div style={{display:"flex", alignItems:"center", gap:12, padding:"10px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none"}}>
+                                    <span style={{width:34, height:34, flexShrink:0, display:"grid", placeItems:"center"}}>
+                                      <span style={{width:18, height:18, borderRadius:99, border:"1.5px dashed var(--border-strong)"}}/>
+                                    </span>
+                                    <input autoFocus className="input" placeholder="Nombre de la tarea…"
+                                      value={draft} onChange={e => setDraft(e.target.value)}
+                                      onKeyDown={e => { if(e.key==="Enter") addTo(g.name); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
+                                      onBlur={() => addTo(g.name)} style={{flex:1, padding:"5px 8px", fontSize:14}}/>
+                                  </div>
+                                ) : (
+                                  <button className="btn ghost sm" onClick={(e) => { e.stopPropagation(); setAdding(addKey); setDraft(""); }}
+                                    style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop:2, padding:"8px 4px"}}>
+                                    <Icon name="plus" size={13}/> Añadir tarea
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      {/* Añadir una fase nueva */}
+                      <div style={{paddingTop:14}}>
+                        {phaseAdding ? (
+                          <input autoFocus className="input" placeholder="Nombre de la fase…"
+                            value={phaseDraft} onChange={e => setPhaseDraft(e.target.value)}
+                            onKeyDown={e => { if(e.key==="Enter") addPhase(phaseDraft); if(e.key==="Escape"){setPhaseAdding(false);setPhaseDraft("");} }}
+                            onBlur={() => addPhase(phaseDraft)} style={{maxWidth:320, padding:"7px 10px", fontSize:14}}/>
+                        ) : (
+                          <button className="btn ghost sm" onClick={() => { setPhaseAdding(true); setPhaseDraft(""); }}
+                            style={{justifyContent:"flex-start", color:"var(--accent)", padding:"9px 4px"}}>
+                            <Icon name="plus" size={13}/> Añadir fase
                           </button>
                         )}
                       </div>
-                      {/* Tareas de la fase */}
-                      {gTasks.map(t => renderRow(t, false))}
-                      {/* Añadir tarea a la fase */}
-                      {isAdding ? (
-                        <div style={{display:"flex", alignItems:"center", gap:13, padding:"12px 4px", borderTop: gTasks.length ? "0.5px solid var(--border)" : "none"}}>
-                          <span style={{width:38, height:38, flexShrink:0, display:"grid", placeItems:"center"}}>
-                            <span style={{width:20, height:20, borderRadius:99, border:"1.5px dashed var(--border-strong)"}}/>
-                          </span>
-                          <input autoFocus className="input" placeholder="Nombre de la tarea…"
-                            value={draft} onChange={e => setDraft(e.target.value)}
-                            onKeyDown={e => { if(e.key==="Enter") addTo(g.name); if(e.key==="Escape"){setAdding(null);setDraft("");} }}
-                            onBlur={() => addTo(g.name)} style={{flex:1, padding:"5px 8px", fontSize:14}}/>
-                        </div>
-                      ) : (
-                        <button className="btn ghost sm" onClick={() => { setAdding(addKey); setDraft(""); }}
-                          style={{justifyContent:"flex-start", color:"var(--text-subtle)", marginTop: 4, padding:"9px 4px"}}>
-                          <Icon name="plus" size={13}/> Añadir tarea
-                        </button>
-                      )}
                     </div>
-                  );
-                })}
-                {/* Añadir una fase nueva */}
-                <div style={{marginTop: groups.length ? 26 : 0, paddingTop: 14, borderTop:"0.5px solid var(--border)"}}>
-                  {phaseAdding ? (
-                    <input autoFocus className="input" placeholder="Nombre de la fase…"
-                      value={phaseDraft} onChange={e => setPhaseDraft(e.target.value)}
-                      onKeyDown={e => { if(e.key==="Enter") addPhase(phaseDraft); if(e.key==="Escape"){setPhaseAdding(false);setPhaseDraft("");} }}
-                      onBlur={() => addPhase(phaseDraft)} style={{maxWidth:320, padding:"7px 10px", fontSize:14}}/>
+                  )}
+                </div>
+
+                {/* Próximos vencimientos — lista plana */}
+                <div>
+                  <div style={secLabel}>Próximos vencimientos</div>
+                  {upcoming.length === 0 ? (
+                    <div className="muted small" style={{padding:"14px 6px", color:"var(--text-subtle)"}}>
+                      No hay tareas con fecha pendientes. Añade una fecha a cualquier tarea con el icono de calendario (o clic derecho en la tarea).
+                    </div>
                   ) : (
-                    <button className="btn ghost sm" onClick={() => { setPhaseAdding(true); setPhaseDraft(""); }}
-                      style={{justifyContent:"flex-start", color:"var(--accent)", padding:"9px 4px"}}>
-                      <Icon name="plus" size={13}/> Añadir fase
-                    </button>
+                    <div style={{display:"flex", flexDirection:"column", width:"100%"}}>
+                      {upcoming.map(({t, info}, i) => (
+                        <div key={t.id} style={{display:"flex", alignItems:"center", gap:14, padding:"16px 6px",
+                          borderTop: i===0 ? "none" : "0.5px solid var(--border)"}}>
+                          <span style={{width:9, height:9, borderRadius:99, background:info.color, flexShrink:0}}/>
+                          <div style={{flex:1, minWidth:0}}>
+                            <div style={{fontSize:15, letterSpacing:"-0.2px", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"}}>{t.title}</div>
+                            {taskPhase(t) && <div style={{fontSize:12, color:"var(--text-muted)", marginTop:2}}>{taskPhase(t)}</div>}
+                          </div>
+                          <div style={{textAlign:"right", flexShrink:0}}>
+                            <div style={{fontSize:14, fontWeight:500}}>{info.label}</div>
+                            {info.tag && <div style={{fontSize:11.5, color:info.color, marginTop:1}}>{info.tag}</div>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
