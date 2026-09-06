@@ -203,15 +203,15 @@
     display: grid; place-items: center;
   }
   .app-loader .lg {
-    width: 118px; aspect-ratio: 635.81 / 366.91;
-    /* barrido de oscuro → claro → oscuro (efecto "cargando") sobre el logo real */
+    width: 238px; aspect-ratio: 1233.86 / 193.24;
+    /* barrido de oscuro → claro → oscuro (efecto "cargando") sobre el wordmark real */
     background: linear-gradient(100deg,
       var(--text-subtle) 20%, var(--text-subtle) 38%,
       var(--text) 50%,
       var(--text-subtle) 62%, var(--text-subtle) 80%);
     background-size: 220% 100%;
-    -webkit-mask: url("/logo.svg") center / contain no-repeat;
-            mask: url("/logo.svg") center / contain no-repeat;
+    -webkit-mask: url("/wordmark.svg") center / contain no-repeat;
+            mask: url("/wordmark.svg") center / contain no-repeat;
     animation: wmShimmer 1.7s ease-in-out infinite;
   }
   @keyframes wmShimmer {
