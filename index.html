@@ -366,6 +366,8 @@
 
   /* Onboarding del cliente — rejilla de dos columnas (pasos + panel) */
   .onb-grid { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
+  /* Altura mínima estable: al cambiar de paso no salta el layout */
+  @media (min-width: 761px) { .onb-grid { min-height: 490px; } }
   @media (max-width: 760px) { .onb-grid { grid-template-columns: 1fr; gap: 16px; } }
 
   /* Botón discreto "ver todo" (solo icono) en cabeceras de sección del Inicio */
