@@ -43,8 +43,8 @@ const AgencyClientsList = ({ navigate, openModal }) => {
       maxWidth:"none", margin:0,
       overflow:"hidden",
     }}>
-      <div className="page-head" style={{ flexShrink:0 }}>
-        <div className="hide-mobile">
+      <div className="page-head hide-mobile" style={{ flexShrink:0 }}>
+        <div>
           <h1>Clientes</h1>
           <div className="sub">{clients.length} en total</div>
         </div>
