@@ -54,6 +54,7 @@ const TWEAKS_DEFAULTS = /*EDITMODE-BEGIN*/{
 }/*EDITMODE-END*/;
 
 const App = () => {
+  window.Data.useStore();   // re-render cuando termina la carga inicial (READY)
   // session: null = logged out (show AuthGate); { role, name, ... } = logged in
   const [session, setSession] = useState(_loadSession);
   const [view, setView] = useState({ name: "dashboard", side: "agency", params: {} });
@@ -66,10 +67,18 @@ const App = () => {
   const [quickCreateDate, setQuickCreateDate] = useState("");
   const [quickCreateLock, setQuickCreateLock] = useState(false);
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
+  const [loadTimedOut, setLoadTimedOut] = useState(false);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  // Salvavidas: si la carga inicial tarda demasiado, mostrar la app igualmente.
+  useEffect(() => {
+    if (!session || window.Data.READY) return;
+    const t = setTimeout(() => setLoadTimedOut(true), 6000);
+    return () => clearTimeout(t);
+  }, [session]);
 
   // Si Supabase detecta sesión caducada, cerrar sesión y mandar al login
   useEffect(() => {
@@ -156,6 +165,16 @@ const App = () => {
     return <AuthGate onAuth={(acc, days) => { _saveSession(acc, days); setSession(acc); }}/>;
   }
 
+  // Cargar todo a la vez: hasta que la primera carga termina, un loader limpio
+  // (evita que unas partes salgan cargadas y otras no).
+  if (!window.Data.READY && !loadTimedOut) {
+    return (
+      <div className="app-loader">
+        <div className="mk">141</div>
+      </div>
+    );
+  }
+
   const renderAgency = () => {
     switch (view.name) {
       case "dashboard": return <AgencyDashboard navigate={navigate} openModal={openModal} session={session}/>;
@@ -211,7 +230,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         </div>
       )}
-      <div className={"app" + (isClient ? " client" : "")} data-screen-label={view.name}>
+      <div className={"app fade-in" + (isClient ? " client" : "")} data-screen-label={view.name}>
         <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>

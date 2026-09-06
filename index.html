@@ -196,6 +196,25 @@
     .fade-in { animation: none; }
   }
 
+  /* Loader de arranque: se muestra hasta que toda la carga inicial termina */
+  .app-loader {
+    position: fixed; inset: 0; z-index: 60;
+    background: var(--bg);
+    display: grid; place-items: center;
+  }
+  .app-loader .mk {
+    width: 46px; height: 46px; border-radius: 13px;
+    background: var(--text); color: var(--bg);
+    display: grid; place-items: center;
+    font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.04em;
+    animation: loaderPulse 1.15s ease-in-out infinite;
+  }
+  @keyframes loaderPulse {
+    0%, 100% { opacity: 0.35; transform: scale(0.94); }
+    50%      { opacity: 1;    transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { .app-loader .mk { animation: none; opacity: 0.85; } }
+
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
   .app.client { grid-template-columns: auto 1fr; }
@@ -984,7 +1003,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=21"></script>
+<script src="src/z-app.js?v=22"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
