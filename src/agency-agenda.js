@@ -144,6 +144,9 @@ const AgendaPage = ({ navigate }) => {
     } catch {
     }
   };
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 768 && viewMode !== "month") setViewMode("month");
+  }, []);
   const weekDays = useMemo(() => {
     const base = /* @__PURE__ */ new Date(selected + "T12:00:00");
     const dow = (base.getDay() + 6) % 7;
@@ -317,7 +320,7 @@ const AgendaPage = ({ navigate }) => {
       style: { opacity: isCurrentPeriod ? 0.35 : 1, pointerEvents: isCurrentPeriod ? "none" : "auto" }
     },
     "Hoy"
-  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement("span", { className: "agenda-add" }, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg agenda-viewseg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement("span", { className: "agenda-add" }, /* @__PURE__ */ React.createElement(
     ActionPill,
     {
       plusActions: () => {

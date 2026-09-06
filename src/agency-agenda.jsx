@@ -151,6 +151,8 @@ const AgendaPage = ({ navigate }) => {
   const nextMonth = () => { if (month === 11) { setMonth(0);  setYear(y=>y+1); } else setMonth(m=>m+1); };
 
   const setView = (v) => { setViewMode(v); try { localStorage.setItem(VIEW_KEY, v); } catch{} };
+  // En móvil solo hay vista de mes (el toggle se oculta)
+  useEffect(() => { if (typeof window !== "undefined" && window.innerWidth <= 768 && viewMode !== "month") setViewMode("month"); }, []);
 
   // ── week view: 7 days (Mon-first) of the week containing the selected day ────
   const weekDays = useMemo(() => {
@@ -337,7 +339,7 @@ const AgendaPage = ({ navigate }) => {
           </div>
         </div>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
-          <div className="seg">
+          <div className="seg agenda-viewseg">
             <button className={viewMode==="month"?"active":""} onClick={()=>setView("month")}>Mes</button>
             <button className={viewMode==="week"?"active":""} onClick={()=>setView("week")}>Semana</button>
           </div>
