@@ -156,7 +156,7 @@
       } });
     }
     if (!window.Data.READY && !loadTimedOut) {
-      return /* @__PURE__ */ React.createElement("div", { className: "app-loader" }, /* @__PURE__ */ React.createElement("div", { className: "wm" }, "141'DIGITAL"));
+      return /* @__PURE__ */ React.createElement("div", { className: "app-loader" }, /* @__PURE__ */ React.createElement("div", { className: "lg" }));
     }
     const renderAgency = () => {
       switch (view.name) {

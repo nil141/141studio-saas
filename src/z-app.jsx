@@ -170,7 +170,7 @@ const App = () => {
   if (!window.Data.READY && !loadTimedOut) {
     return (
       <div className="app-loader">
-        <div className="wm">141'DIGITAL</div>
+        <div className="lg"/>
       </div>
     );
   }

@@ -202,17 +202,16 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  .app-loader .wm {
-    font-family: var(--font-display);
-    font-weight: 600; font-size: 30px; letter-spacing: -1px;
-    /* barrido de oscuro → claro → oscuro (efecto "cargando") */
+  .app-loader .lg {
+    width: 118px; aspect-ratio: 635.81 / 366.91;
+    /* barrido de oscuro → claro → oscuro (efecto "cargando") sobre el logo real */
     background: linear-gradient(100deg,
       var(--text-subtle) 20%, var(--text-subtle) 38%,
       var(--text) 50%,
       var(--text-subtle) 62%, var(--text-subtle) 80%);
     background-size: 220% 100%;
-    -webkit-background-clip: text; background-clip: text;
-    -webkit-text-fill-color: transparent; color: transparent;
+    -webkit-mask: url("/logo.svg") center / contain no-repeat;
+            mask: url("/logo.svg") center / contain no-repeat;
     animation: wmShimmer 1.7s ease-in-out infinite;
   }
   @keyframes wmShimmer {
@@ -220,7 +219,7 @@
     100% { background-position: -30% 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .app-loader .wm { animation: none; -webkit-text-fill-color: var(--text-muted); color: var(--text-muted); }
+    .app-loader .lg { animation: none; background: var(--text-muted); }
   }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
@@ -1011,7 +1010,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=23"></script>
+<script src="src/z-app.js?v=24"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
