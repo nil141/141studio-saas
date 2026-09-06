@@ -982,6 +982,8 @@
     /* Páginas de alto completo (scroll interno): que quepan bajo la barra fija */
     .pg-full { height: calc(100dvh - 98px) !important; }
     .pg-pad { padding: 16px 16px 0 !important; }
+    /* Tareas: la cabecera interna (título + fecha + +/⋯) sobra en móvil */
+    .tasks-head { display: none !important; }
     /* Outreach: tabla → tarjetas en móvil */
     .outreach-table { display: none !important; }
     .outreach-cards { display: flex !important; flex-direction: column; gap: 10px; padding-bottom: 8px; }
@@ -1162,7 +1164,7 @@
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=30"></script>
 <script src="src/agency-project.js?v=34"></script>
-<script src="src/agency-other.js?v=137"></script>
+<script src="src/agency-other.js?v=138"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=22"></script>

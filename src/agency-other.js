@@ -131,7 +131,7 @@
           overflow: "hidden"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "page-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { className: "page-head tasks-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
         "div",
         {
           onClick: () => {

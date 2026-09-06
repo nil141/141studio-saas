@@ -318,8 +318,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       }}
     >
 
-      {/* Header — title + ActionPill (igual que el resto de páginas) */}
-      <div className="page-head" style={{ flexShrink:0 }}>
+      {/* Header — title + ActionPill (oculto en móvil: el título ya está en la
+          tira de pestañas y se crea desde el botón «+» de arriba) */}
+      <div className="page-head tasks-head" style={{ flexShrink:0 }}>
         <div onClick={() => { if (!isToday) setSelectedDay(D.todayDate ? D.todayDate() : new Date()); }}
           data-tooltip={!isToday ? "Volver a hoy" : undefined}
           style={{ cursor: isToday ? "default" : "pointer" }}>
