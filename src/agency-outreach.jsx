@@ -108,7 +108,6 @@ const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpa
 
 const OutreachRow = ({ o, D, sel, onSel, last }) => {
   const ig = _igUrl(o.instagram), web = _webUrl(o.web);
-  const m = _stMeta(o.status);
   const fm = _followMeta(o);
   const cell = { ..._cell, borderTop: "0.5px solid var(--border)" };
   const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
@@ -117,11 +116,7 @@ const OutreachRow = ({ o, D, sel, onSel, last }) => {
         onMouseLeave={e => e.currentTarget.style.background = sel ? "var(--accent-active)" : "transparent"}
         style={{ transition: "background .1s", background: sel ? "var(--accent-active)" : "transparent" }}>
       <td style={{ ...cell, paddingLeft: 16, paddingRight: 4 }}><Check on={sel} onToggle={onSel} dim/></td>
-      <td style={{ ...cell, fontWeight: 500, fontSize: 14 }}>
-        <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", background: m.color, flexShrink: 0 }}/>{o.brand}
-        </span>
-      </td>
+      <td style={{ ...cell, fontWeight: 500, fontSize: 14 }}>{o.brand}</td>
       <td style={cell}><StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/></td>
       <td style={cell}>
         {fm ? (
