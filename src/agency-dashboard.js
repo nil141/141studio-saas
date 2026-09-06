@@ -1463,7 +1463,7 @@
       fontFamily: "inherit",
       fontSize: 12.5,
       fontWeight: 500
-    } }, "A\xF1adir")), !D.READY ? [0, 1, 2].map((i) => /* @__PURE__ */ React.createElement(ListaSkel, { key: i })) : pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, emptyMsg) : pend.map((t, i) => /* @__PURE__ */ React.createElement(
+    } }, "A\xF1adir")), !D.READY ? [0, 1, 2].map((i) => /* @__PURE__ */ React.createElement(ListaSkel, { key: i })) : /* @__PURE__ */ React.createElement("div", { className: "fade-in" }, pend.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" } }, emptyMsg) : pend.map((t, i) => /* @__PURE__ */ React.createElement(
       QuickTaskRow,
       {
         key: t.id,
@@ -1474,7 +1474,7 @@
         dateLabel: fmt(t.deadline),
         overdue: t.deadline && t.deadline < todayStr
       }
-    ))));
+    )))));
   };
   var _activePhaseOf = (p, D) => {
     const names = (p.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");

@@ -1587,13 +1587,17 @@ const MiListaBlock = ({ D, navigate, todayStr }) => {
           </div>
           {!D.READY ? (
             [0, 1, 2].map(i => <ListaSkel key={i}/>)
-          ) : pend.length === 0 ? (
-            <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>{emptyMsg}</div>
-          ) : pend.map((t, i) => (
-            <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
-              projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
-              dateLabel={fmt(t.deadline)} overdue={t.deadline && t.deadline < todayStr}/>
-          ))}
+          ) : (
+            <div className="fade-in">
+              {pend.length === 0 ? (
+                <div style={{ fontSize: 13, color: "var(--text-subtle)", padding: "16px 4px", textAlign: "center" }}>{emptyMsg}</div>
+              ) : pend.map((t, i) => (
+                <QuickTaskRow key={t.id} t={t} D={D} last={i === pend.length - 1}
+                  projName={(D.PROJECTS.find(p => p.id === t._pid) || {}).name || t.clientName || "General"}
+                  dateLabel={fmt(t.deadline)} overdue={t.deadline && t.deadline < todayStr}/>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </section>

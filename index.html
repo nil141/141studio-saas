@@ -186,7 +186,11 @@
     background-size: 520px 100%;
     animation: skelShimmer 1.25s ease-in-out infinite;
   }
-  .fade-in { animation: pageIn .4s ease-out; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .fade-in { animation: fadeInUp .42s cubic-bezier(0.2, 0.7, 0.3, 1); }
   @media (prefers-reduced-motion: reduce) {
     .skel { animation: none; }
     .fade-in { animation: none; }
@@ -982,7 +986,7 @@
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=21"></script>
 <!-- Non-critical: load after login screen is ready -->
-<script src="src/agency-dashboard.js?v=81"></script>
+<script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
 <script src="src/agency-project.js?v=32"></script>
 <script src="src/agency-other.js?v=130"></script>
