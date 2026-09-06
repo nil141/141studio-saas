@@ -845,6 +845,8 @@
     .app, .app.client { grid-template-columns: 1fr; }
     .sidebar { display: none !important; }
     .main { padding-bottom: 68px; margin: 0; border-radius: 0; border: none; min-height: 100vh; }
+    /* Inicio: menos margen lateral y hueco para la barra inferior */
+    .dash-root { padding: 16px 16px 104px !important; gap: 16px !important; }
 
     /* Dashboard */
     .dash-wrap {
@@ -1082,7 +1084,7 @@
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=35"></script>
 <!-- Non-critical: load after login screen is ready -->
-<script src="src/agency-dashboard.js?v=89"></script>
+<script src="src/agency-dashboard.js?v=90"></script>
 <script src="src/agency-clients.js?v=29"></script>
 <script src="src/agency-project.js?v=34"></script>
 <script src="src/agency-other.js?v=135"></script>

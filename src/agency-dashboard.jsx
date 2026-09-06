@@ -972,7 +972,7 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
   const renderLayout = () => LayoutInicio;
 
   return (
-    <div style={{
+    <div className="dash-root" style={{
       display: "flex", flexDirection: "column", gap: 20,
       minHeight: "100vh", overflowY: "auto",
       padding: "28px 40px 48px",
