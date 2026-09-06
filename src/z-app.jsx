@@ -84,7 +84,7 @@ const App = () => {
   // Mantén el loader un mínimo para que se aprecie la animación del logo.
   useEffect(() => {
     if (!session) return;
-    const t = setTimeout(() => setMinSplash(true), 1100);
+    const t = setTimeout(() => setMinSplash(true), 1400);
     return () => clearTimeout(t);
   }, [session]);
 
@@ -180,9 +180,11 @@ const App = () => {
       <div className="app-loader">
         <svg className="lg" viewBox="0 0 1233.86 193.24" xmlns="http://www.w3.org/2000/svg">
           <clipPath id="lgWipe">
-            <rect x="0" y="0" width="0" height="193.24">
-              <animate attributeName="width" from="0" to="1233.86" dur="0.9s" begin="0.15s"
-                fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.3 0 0.2 1"/>
+            <rect x="0" y="193.24" width="1233.86" height="0">
+              <animate attributeName="y" from="193.24" to="0" dur="1s" begin="0.15s"
+                fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.25 0 0.15 1"/>
+              <animate attributeName="height" from="0" to="193.24" dur="1s" begin="0.15s"
+                fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.25 0 0.15 1"/>
             </rect>
           </clipPath>
           <g clipPath="url(#lgWipe)">
