@@ -319,12 +319,12 @@ const AgendaPage = ({ navigate }) => {
     <div className="pg-full" style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
 
       {/* ── Toolbar ── */}
-      <div style={{
+      <div className="agenda-toolbar" style={{
         display:"flex", alignItems:"center", justifyContent:"space-between",
         padding:"18px 24px 14px", flexShrink:0,
       }}>
         <div style={{display:"flex", alignItems:"center", gap:16}}>
-          <h1 style={{fontSize:24, fontWeight:400, letterSpacing:"-1px", margin:0, color:"var(--text)"}}>
+          <h1 className="agenda-title" style={{fontSize:24, fontWeight:400, letterSpacing:"-1px", margin:0, color:"var(--text)"}}>
             {navTitle}
           </h1>
           <div style={{display:"flex", alignItems:"center", gap:2}}>
@@ -341,13 +341,15 @@ const AgendaPage = ({ navigate }) => {
             <button className={viewMode==="month"?"active":""} onClick={()=>setView("month")}>Mes</button>
             <button className={viewMode==="week"?"active":""} onClick={()=>setView("week")}>Semana</button>
           </div>
-          <ActionPill
-            plusActions={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}
-            moreActions={[
-              { icon: "calendar", label: "Ir a hoy", onClick: goToday },
-              { icon: "link", label: "Conectar calendario", sub: "Suscríbete a la agenda desde tu calendario", onClick: () => setCalOpen(true) },
-            ]}
-          />
+          <span className="agenda-add">
+            <ActionPill
+              plusActions={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}
+              moreActions={[
+                { icon: "calendar", label: "Ir a hoy", onClick: goToday },
+                { icon: "link", label: "Conectar calendario", sub: "Suscríbete a la agenda desde tu calendario", onClick: () => setCalOpen(true) },
+              ]}
+            />
+          </span>
         </div>
       </div>
 

@@ -303,13 +303,13 @@ const AgendaPage = ({ navigate }) => {
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 11 })
   ));
-  return /* @__PURE__ */ React.createElement("div", { className: "pg-full", style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  return /* @__PURE__ */ React.createElement("div", { className: "pg-full", style: { display: "flex", flexDirection: "column", height: "100vh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "agenda-toolbar", style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "18px 24px 14px",
     flexShrink: 0
-  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("h1", { style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", margin: 0, color: "var(--text)" } }, navTitle), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goPrev }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 15 })), /* @__PURE__ */ React.createElement(
+  } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("h1", { className: "agenda-title", style: { fontSize: 24, fontWeight: 400, letterSpacing: "-1px", margin: 0, color: "var(--text)" } }, navTitle), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 2 } }, /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goPrev }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 15 })), /* @__PURE__ */ React.createElement(
     "button",
     {
       className: "btn ghost sm",
@@ -317,7 +317,7 @@ const AgendaPage = ({ navigate }) => {
       style: { opacity: isCurrentPeriod ? 0.35 : 1, pointerEvents: isCurrentPeriod ? "none" : "auto" }
     },
     "Hoy"
-  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: goNext }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15 })))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "seg" }, /* @__PURE__ */ React.createElement("button", { className: viewMode === "month" ? "active" : "", onClick: () => setView("month") }, "Mes"), /* @__PURE__ */ React.createElement("button", { className: viewMode === "week" ? "active" : "", onClick: () => setView("week") }, "Semana")), /* @__PURE__ */ React.createElement("span", { className: "agenda-add" }, /* @__PURE__ */ React.createElement(
     ActionPill,
     {
       plusActions: () => {
@@ -329,7 +329,7 @@ const AgendaPage = ({ navigate }) => {
         { icon: "link", label: "Conectar calendario", sub: "Suscr\xEDbete a la agenda desde tu calendario", onClick: () => setCalOpen(true) }
       ]
     }
-  ))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+  )))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
     fontSize: 11,
     fontWeight: 500,
