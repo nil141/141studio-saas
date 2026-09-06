@@ -445,7 +445,6 @@ const NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
 
 // Modal de importación masiva: sube un CSV o pega una lista
 const ImportLeadsModal = ({ onClose, onImport }) => {
-  const [text, setText] = useState("");
   const [file, setFile] = useState(null);      // { name, leads }
   const [drag, setDrag] = useState(false);
   const [err, setErr] = useState("");
@@ -472,7 +471,7 @@ const ImportLeadsModal = ({ onClose, onImport }) => {
   };
   const onDrop = (e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); };
 
-  const parsed = file ? file.leads : parseImport(text);
+  const parsed = file ? file.leads : [];
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
@@ -510,15 +509,6 @@ const ImportLeadsModal = ({ onClose, onImport }) => {
           )}
 
           {err && <div style={{ fontSize: 12.5, color: "var(--red)", marginTop: 10 }}>{err}</div>}
-
-          {!file && (
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontSize: 12, color: "var(--text-subtle)", marginBottom: 6 }}>o pega una lista (un lead por línea):</div>
-              <textarea value={text} onChange={e => setText(e.target.value)}
-                placeholder={"Maktub, @maktub.wyt, maktub.store\n@solo_instagram\nMarca suelta"}
-                rows={5} style={{ ..._fst, height: "auto", padding: "12px 14px", resize: "vertical", lineHeight: 1.5, fontSize: 13.5, whiteSpace: "pre", overflowX: "auto" }}/>
-            </div>
-          )}
         </div>
 
         <div style={{ padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>

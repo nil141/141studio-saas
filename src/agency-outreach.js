@@ -574,7 +574,6 @@
     ))));
   };
   var ImportLeadsModal = ({ onClose, onImport }) => {
-    const [text, setText] = useState("");
     const [file, setFile] = useState(null);
     const [drag, setDrag] = useState(false);
     const [err, setErr] = useState("");
@@ -613,7 +612,7 @@
       const f = e.dataTransfer.files && e.dataTransfer.files[0];
       if (f) loadFile(f);
     };
-    const parsed = file ? file.leads : parseImport(text);
+    const parsed = file ? file.leads : [];
     return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar leads"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Sube un ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "CSV"), " o pega una lista.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
       "input",
       {
@@ -662,16 +661,7 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 22, style: { color: drag ? "var(--accent)" : "var(--text-muted)" } }),
       /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500 } }, "Arrastra un CSV aqu\xED o haz clic para elegirlo"),
       /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Columnas: Marca \xB7 Instagram \xB7 Web \xB7 Contacto \xB7 Correo \xB7 Notas \xB7 Estado")
-    ), err && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--red)", marginTop: 10 } }, err), !file && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginBottom: 6 } }, "o pega una lista (un lead por l\xEDnea):"), /* @__PURE__ */ React.createElement(
-      "textarea",
-      {
-        value: text,
-        onChange: (e) => setText(e.target.value),
-        placeholder: "Maktub, @maktub.wyt, maktub.store\n@solo_instagram\nMarca suelta",
-        rows: 5,
-        style: { ..._fst, height: "auto", padding: "12px 14px", resize: "vertical", lineHeight: 1.5, fontSize: 13.5, whiteSpace: "pre", overflowX: "auto" }
-      }
-    ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
+    ), err && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--red)", marginTop: 10 } }, err)), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => onImport(parsed),
