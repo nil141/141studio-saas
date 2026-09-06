@@ -239,7 +239,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </div>
       )}
       <div className={"app fade-in" + (isClient ? " client" : "")} data-screen-label={view.name}>
-        <Sidebar current={view.name} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
+        <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)}/>
         <div className="main">
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           <div key={view.name} className="page-enter">

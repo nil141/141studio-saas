@@ -38,7 +38,7 @@ const _navSecLabel = {
   gap: 7,
   whiteSpace: "nowrap"
 };
-const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
+const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
   const q = (navSearch || "").trim().toLowerCase();
   const nameOf = (c) => c.company || c.name || "Cliente";
   const activeProjects = (D.PROJECTS || []).filter((p) => {
@@ -144,7 +144,7 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       key: p.id,
       label: p.clientName || p.name,
       color: pal[i % pal.length],
-      active: current === "project",
+      active: current === "project" && p.id === activePid,
       onClick: () => onNavigate("project", { projectId: p.id })
     }
   ))) : null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
@@ -184,12 +184,12 @@ const AgencyNav = ({ current, curNav, onNavigate, NavItem, D, navSearch, otrosOp
       key: p.id,
       label: p.name || "Proyecto",
       color: pal[i % pal.length],
-      active: false,
+      active: current === "project" && p.id === activePid,
       onClick: () => onNavigate("project", { projectId: p.id })
     }
   ))))));
 };
-const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
+const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session, onAssistant, onQuickCreate }) => {
   const D = window.Data;
   D.useStore();
   const pendingTasks = Object.values(D.TASKS).flat().filter((t) => t.column !== "done").length || null;
@@ -530,6 +530,7 @@ const Sidebar = ({ current, onNavigate, kind = "agency", session, onAssistant, o
     {
       current,
       curNav,
+      activePid: currentParams && currentParams.projectId,
       onNavigate,
       NavItem,
       D,
