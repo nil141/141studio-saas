@@ -364,6 +364,10 @@
   .cred-tile:hover { border-color: var(--border-strong) !important; background: var(--bg-hover) !important; }
   .page.wide { max-width: none; }
 
+  /* Onboarding del cliente — rejilla de dos columnas (pasos + panel) */
+  .onb-grid { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
+  @media (max-width: 760px) { .onb-grid { grid-template-columns: 1fr; gap: 16px; } }
+
   /* Botón discreto "ver todo" (solo icono) en cabeceras de sección del Inicio */
   .go-btn { color: var(--text-subtle); transition: color .12s, background .12s; }
   .go-btn:hover { color: var(--text); background: rgba(255,255,255,0.07); }
@@ -1082,7 +1086,7 @@
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=16"></script>
 <script src="src/client-portal.js?v=38"></script>
-<script src="src/onboarding.js?v=13"></script>
+<script src="src/onboarding.js?v=14"></script>
 <script src="src/assistant.js?v=2"></script>
 <script src="src/gmail.js?v=3"></script>
 <script src="src/z-modals2.js?v=4"></script>

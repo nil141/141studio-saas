@@ -59,40 +59,44 @@ const OnboardingPage = ({ token }) => {
   const first = (n) => (n || "").trim().split(/\s+/)[0] || "";
 
   const STEPS = [
-    { key:"name",    title: () => "¿Cómo te llamas?", sub:"Tu nombre y apellidos.",
-      fields:[{ id:"name", ph:"Juan García", autoC:"name" }] },
-    { key:"company", title: (f) => first(f.name) ? `Encantado, ${first(f.name)}.` : "¿Cuál es tu empresa?",
-      sub:"El nombre de tu empresa o marca.",
-      fields:[{ id:"company", ph:"Mi Empresa S.L.", autoC:"organization" }] },
-    { key:"about",   title: () => "¿A qué os dedicáis?", sub:"Cuéntanos brevemente tu negocio y tu web (opcional).",
+    { key:"welcome", name:"Bienvenida", head:"Bienvenido a tu portal",
+      desc:"Antes de empezar vas a completar unos pasos rápidos para dejar tu portal de cliente listo. Solo te llevará un minuto." },
+    { key:"about", name:"Déjanos conocerte", head:"Déjanos conocerte",
+      desc:"Cuéntanos quién eres y a qué os dedicáis.",
       fields:[
-        { id:"about",   ph:"Ej. Restaurante de cocina mediterránea" },
-        { id:"website", ph:"tuweb.com", autoC:"url" },
+        { id:"name",    label:"Nombre y apellidos", ph:"Juan García", autoC:"name" },
+        { id:"company", label:"Empresa o marca",    ph:"Mi Empresa S.L.", autoC:"organization" },
+        { id:"about",   label:"¿A qué os dedicáis?", ph:"Ej. Restaurante de cocina mediterránea" },
+        { id:"website", label:"Web (opcional)",     ph:"tuweb.com", autoC:"url" },
       ] },
-    { key:"fiscal",  title: () => "Datos de facturación", sub:"Para poder emitirte las facturas (opcional).",
+    { key:"fiscal", name:"Facturación", head:"Datos de facturación",
+      desc:"Para poder emitirte las facturas. Puedes rellenarlo ahora o dejarlo para más tarde.",
       fields:[
-        { id:"fiscalName",    ph:"Razón social (Mi Empresa S.L.)", autoC:"organization" },
-        { id:"nif",           ph:"NIF / CIF" },
-        { id:"fiscalAddress", ph:"Dirección fiscal" },
+        { id:"fiscalName",    label:"Razón social",       ph:"Mi Empresa S.L.", autoC:"organization" },
+        { id:"nif",           label:"NIF / CIF",          ph:"B12345678" },
+        { id:"fiscalAddress", label:"Dirección fiscal",   ph:"Calle, nº, ciudad, CP" },
+        { id:"phone",         label:"Teléfono o WhatsApp", ph:"+34 600 000 000", type:"tel", autoC:"tel" },
       ] },
-    { key:"phone",   title: () => "¿Cómo te contactamos?", sub:"Teléfono o WhatsApp (opcional).",
-      fields:[{ id:"phone", ph:"+34 600 000 000", type:"tel", autoC:"tel" }] },
-    { key:"email",   title: () => "Tu email de acceso", sub:"Te enviaremos un código para confirmarlo.",
-      fields:[{ id:"email", ph:"tu@empresa.com", type:"email", autoC:"email" }] },
-    { key:"pw",      title: () => "Crea una contraseña", sub:"Mínimo 6 caracteres.",
+    { key:"access", name:"Crea tu acceso", head:"Crea tu acceso",
+      desc:"Con esto entrarás a tu portal a partir de ahora. Te enviaremos un código para confirmar el correo.",
       fields:[
-        { id:"pw",  ph:"Contraseña", type:"password", autoC:"new-password" },
-        { id:"pw2", ph:"Repite la contraseña", type:"password", autoC:"new-password" },
+        { id:"email", label:"Email de acceso",      ph:"tu@empresa.com", type:"email", autoC:"email" },
+        { id:"pw",    label:"Contraseña",           ph:"Mínimo 6 caracteres", type:"password", autoC:"new-password" },
+        { id:"pw2",   label:"Repite la contraseña", ph:"Repite la contraseña", type:"password", autoC:"new-password" },
       ] },
+    { key:"verify", name:"A por todas", head:"Confirma tu cuenta",
+      desc:"Te hemos enviado un código de verificación a tu correo. Introdúcelo para activar tu portal." },
   ];
-  const isLast = step === STEPS.length - 1;
+  const verifyIndex = STEPS.length - 1;
 
   const validateStep = () => {
     const k = STEPS[step].key;
-    if (k === "name"    && !form.name.trim())    return "Escribe tu nombre";
-    if (k === "company" && !form.company.trim()) return "Escribe el nombre de tu empresa";
-    if (k === "email"   && (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))) return "Email no válido";
-    if (k === "pw") {
+    if (k === "about") {
+      if (!form.name.trim())    return "Escribe tu nombre";
+      if (!form.company.trim()) return "Escribe el nombre de tu empresa";
+    }
+    if (k === "access") {
+      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) return "Email no válido";
       if (form.pw.length < 6) return "Mínimo 6 caracteres";
       if (form.pw !== form.pw2) return "Las contraseñas no coinciden";
     }
@@ -100,11 +104,13 @@ const OnboardingPage = ({ token }) => {
   };
 
   const next = () => {
+    const k = STEPS[step].key;
+    if (k === "verify") { verifyAndComplete(); return; }
     const e = validateStep();
     if (e) { setErr(e); return; }
     setErr("");
-    if (!isLast) { setStep(step + 1); return; }
-    startSignup();
+    if (k === "access") { startSignup(); return; }
+    setStep(step + 1);
   };
   const back = () => { setErr(""); setStep(s => Math.max(0, s - 1)); };
 
@@ -167,7 +173,7 @@ const OnboardingPage = ({ token }) => {
         if (e) { setTopErr(e); setBusy(false); return; }
         setStatus("done");
       } else {
-        setCode(""); setCodeErr(""); setResendMsg(""); setStatus("verify");
+        setCode(""); setCodeErr(""); setResendMsg(""); setStep(verifyIndex);
       }
     } catch (e) { setTopErr("No se pudo conectar con el servidor"); }
     setBusy(false);
@@ -249,86 +255,134 @@ const OnboardingPage = ({ token }) => {
     </div>
   );
 
-  // Barra de progreso fina (morado del login)
-  const Progress = ({ pct }) => (
-    <div style={{height:3, background:"rgba(255,255,255,0.06)", borderRadius:99, overflow:"hidden", marginBottom:26}}>
-      <div style={{height:"100%", width:`${pct}%`, background:_PURP, borderRadius:99, transition:"width .35s ease"}}/>
-    </div>
-  );
+  // ── Onboarding en dos columnas (lista de pasos + panel del paso) ──
+  const cur = STEPS[step];
+  const pct = Math.max(6, (step / (STEPS.length - 1)) * 100);
+  const fieldStyle = { ..._AUTH_INPUT, height:46, fontSize:15, marginBottom:0,
+    background:"var(--bg-elev)", border:"0.5px solid var(--border)" };
 
-  if (status === "verify") return wrap(
-    <div style={{animation:"pop .25s ease"}}>
-      <Progress pct={100}/>
-      <Title>Confirma tu cuenta</Title>
-      <Sub mb={24}>
-        Te hemos enviado un código de verificación a <b style={{color:"#fff"}}>{form.email}</b>.
-      </Sub>
-      <input className="auth-input" maxLength={128} autoFocus placeholder="Código del correo"
-        value={code}
-        onChange={e => { setCode(e.target.value.replace(/\s/g, "")); if (codeErr) setCodeErr(""); }}
-        onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); verifyAndComplete(); } }}
-        style={{..._AUTH_INPUT, height:56, textAlign:"center",
-          fontSize: code.length > 8 ? 15 : 26,
-          letterSpacing: code.length > 8 ? "0.5px" : "10px",
-          fontFamily:"var(--font-mono)", marginBottom:16, borderColor: codeErr ? "var(--red)" : undefined}}/>
-      {codeErr && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
-        <Icon name="alert-triangle" size={12}/> {codeErr}
-      </div>}
-      <button type="button" className="btn full auth-btn" onClick={verifyAndComplete} disabled={busy}
-        style={{..._AUTH_BTN, opacity: busy ? 0.5 : 1}}>
-        {busy ? "Verificando…" : "Verificar y entrar"}
-      </button>
-      <div style={{textAlign:"center", marginTop:18}}>
-        <button type="button" onClick={resendCode} disabled={busy}
-          style={{background:"transparent", border:0, color:"#999999", fontSize:13, cursor:"pointer",
-            fontFamily:"inherit", textDecoration:"underline"}}>
-          ¿No te llega? Reenviar código
-        </button>
-        {resendMsg && <div className="subtle xsmall" style={{marginTop:6}}>{resendMsg}</div>}
-      </div>
-    </div>
-  );
+  const btnLabel = busy
+    ? (cur.key === "verify" ? "Verificando…" : cur.key === "access" ? "Creando cuenta…" : "Un momento…")
+    : (cur.key === "verify" ? "Verificar y entrar" : cur.key === "access" ? "Crear cuenta" : "Ir al siguiente paso");
 
-  // ── Asistente paso a paso ──
-  const s = STEPS[step];
-  const title = typeof s.title === "function" ? s.title(form) : s.title;
-  const pct = ((step + 1) / (STEPS.length + 1)) * 100;
-
-  return wrap(
-    <div key={step} style={{animation:"pop .25s ease"}}>
-      <Progress pct={pct}/>
-      <Title>{title}</Title>
-      <Sub mb={26}>{s.sub}</Sub>
-
-      {s.fields.map((fd, idx) => (
-        <input key={fd.id} className="auth-input" autoFocus={idx === 0}
-          type={fd.type || "text"} autoComplete={fd.autoC} placeholder={fd.ph}
-          value={form[fd.id]} onChange={e => { setField(fd.id, e.target.value); if (err) setErr(""); }}
-          onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); next(); } }}
-          style={{..._AUTH_INPUT, marginBottom:16, borderColor: err ? "var(--red)" : undefined}}/>
-      ))}
-
-      {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
-        <Icon name="alert-triangle" size={12}/> {err}
-      </div>}
-      {topErr && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
-        <Icon name="alert-triangle" size={12}/> {topErr}
-      </div>}
-
-      <button type="button" className="btn full auth-btn" onClick={next} disabled={busy}
-        style={{..._AUTH_BTN, opacity: busy ? 0.5 : 1}}>
-        {busy ? "Enviando código…" : isLast ? "Crear cuenta" : "Continuar"}
-      </button>
-
-      {step > 0 && (
-        <div style={{textAlign:"center", marginTop:16}}>
-          <button type="button" onClick={back} disabled={busy}
-            style={{background:"transparent", border:0, color:"#999999", fontSize:13, cursor:"pointer",
-              fontFamily:"inherit"}}>
-            ← Atrás
-          </button>
+  return (
+    <div style={{ minHeight:"100dvh", background:"var(--bg)", padding:"40px 24px 60px", overflowY:"auto" }}>
+      <div style={{ maxWidth:1080, margin:"0 auto" }}>
+        {/* Logo */}
+        <div style={{ display:"flex", justifyContent:"center", marginBottom:34 }}>
+          <img src="/wordmark.svg" alt="141'DIGITAL" style={{ height:22, width:"auto", opacity:0.95 }}/>
         </div>
-      )}
+
+        {/* Título + barra de progreso */}
+        <div style={{ marginBottom:26 }}>
+          <div style={{ fontSize:15, color:"var(--text-muted)", marginBottom:12, letterSpacing:"-0.2px" }}>
+            ¡Hola{first(form.name) ? `, ${first(form.name)}` : ""}! Bienvenido al onboarding
+          </div>
+          <div style={{ height:3, background:"rgba(255,255,255,0.06)", borderRadius:99, overflow:"hidden" }}>
+            <div style={{ height:"100%", width:`${pct}%`, background:"var(--accent)", borderRadius:99, transition:"width .4s ease" }}/>
+          </div>
+        </div>
+
+        {/* Dos columnas */}
+        <div className="onb-grid">
+          {/* Lista de pasos */}
+          <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+            {STEPS.map((st, i) => {
+              const active = i === step;
+              const done = i < step;
+              return (
+                <div key={st.key}
+                  onClick={() => { if (i < step && !busy) { setErr(""); setStep(i); } }}
+                  style={{ display:"flex", alignItems:"center", gap:14, padding:"13px 15px", borderRadius:14,
+                    cursor: i < step ? "pointer" : "default", transition:"background .15s, border-color .15s",
+                    background: active ? "var(--accent-soft)" : "var(--bg-elev-2)",
+                    border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)" }}>
+                  <div style={{ width:42, height:42, borderRadius:11, flexShrink:0, display:"grid", placeItems:"center",
+                    fontWeight:600, fontSize:14, fontFamily:"var(--font-display)",
+                    background: active ? "var(--accent)" : "rgba(255,255,255,0.05)",
+                    color: active ? "#fff" : (done ? "var(--accent)" : "var(--text-muted)") }}>
+                    {done ? <Icon name="check" size={18}/> : String(i + 1).padStart(2, "0")}
+                  </div>
+                  <div style={{ minWidth:0 }}>
+                    <div style={{ fontSize:11.5, color: active ? "var(--accent)" : "var(--text-subtle)" }}>Paso {i + 1}</div>
+                    <div style={{ fontSize:15, fontWeight:500, color: active ? "#fff" : "var(--text)", letterSpacing:"-0.2px" }}>{st.name}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Panel del paso */}
+          <div key={step} style={{ animation:"pop .22s ease" }}>
+            <div style={{ background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:18, padding:"26px 28px" }}>
+              <h2 style={{ fontFamily:"var(--font-display)", fontSize:20, fontWeight:500, letterSpacing:"-0.5px", marginBottom:8, color:"#fff" }}>{cur.head}</h2>
+              <p style={{ fontSize:14, color:"var(--text-muted)", lineHeight:1.55, marginBottom: (cur.fields || cur.key === "verify") ? 22 : 4 }}>{cur.desc}</p>
+
+              {cur.fields && (
+                <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+                  {cur.fields.map((fd, idx) => (
+                    <div key={fd.id}>
+                      <label style={{ display:"block", fontSize:12.5, color:"var(--text-muted)", marginBottom:6 }}>{fd.label}</label>
+                      <input className="auth-input" autoFocus={idx === 0}
+                        type={fd.type || "text"} autoComplete={fd.autoC} placeholder={fd.ph}
+                        value={form[fd.id]} onChange={e => { setField(fd.id, e.target.value); if (err) setErr(""); }}
+                        onKeyDown={e => { if (e.key === "Enter" && cur.fields.length === 1) { e.preventDefault(); next(); } }}
+                        style={{ ...fieldStyle, borderColor: err ? "var(--red)" : "var(--border)" }}/>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {cur.key === "verify" && (
+                <div>
+                  <input className="auth-input" maxLength={128} autoFocus placeholder="Código del correo"
+                    value={code}
+                    onChange={e => { setCode(e.target.value.replace(/\s/g, "")); if (codeErr) setCodeErr(""); }}
+                    onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); verifyAndComplete(); } }}
+                    style={{ ..._AUTH_INPUT, height:54, textAlign:"center",
+                      fontSize: code.length > 8 ? 15 : 24, letterSpacing: code.length > 8 ? "0.5px" : "8px",
+                      fontFamily:"var(--font-mono)", background:"var(--bg-elev)", border:"0.5px solid var(--border)",
+                      borderColor: codeErr ? "var(--red)" : "var(--border)" }}/>
+                  <button type="button" onClick={resendCode} disabled={busy}
+                    style={{ marginTop:12, background:"transparent", border:0, color:"var(--text-muted)", fontSize:13, cursor:"pointer", fontFamily:"inherit", textDecoration:"underline" }}>
+                    ¿No te llega? Reenviar código
+                  </button>
+                  {resendMsg && <div style={{ marginTop:6, fontSize:12, color:"var(--text-subtle)" }}>{resendMsg}</div>}
+                </div>
+              )}
+
+              {(err || topErr || codeErr) && (
+                <div style={{ display:"flex", alignItems:"center", gap:7, marginTop:16, padding:"8px 12px", borderRadius:10,
+                  background:"var(--red-soft)", color:"var(--red)", fontSize:12.5 }}>
+                  <Icon name="alert-triangle" size={13}/> {err || topErr || codeErr}
+                </div>
+              )}
+            </div>
+
+            {/* Botón + atrás */}
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginTop:18 }}>
+              <button type="button" onClick={next} disabled={busy}
+                onMouseEnter={e => { if (!busy) e.currentTarget.style.background = "rgba(158,154,229,0.28)"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-soft)"; }}
+                style={{ display:"inline-flex", alignItems:"center", gap:8, height:44, padding:"0 20px", borderRadius:12, cursor:"pointer",
+                  background:"var(--accent-soft)", color:"var(--accent)", border:"1px solid rgba(158,154,229,0.35)",
+                  fontFamily:"inherit", fontSize:14, fontWeight:500, opacity: busy ? 0.6 : 1, transition:"background .15s" }}>
+                {btnLabel} {!busy && cur.key !== "verify" && <Icon name="arrow" size={15}/>}
+              </button>
+              {step > 0 && cur.key !== "verify" && (
+                <button type="button" onClick={back} disabled={busy}
+                  style={{ background:"transparent", border:0, color:"var(--text-muted)", fontSize:13, cursor:"pointer", fontFamily:"inherit" }}>
+                  ← Atrás
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        <div style={{ textAlign:"center", marginTop:40, fontSize:11, color:"var(--text-subtle)" }}>
+          © 141'DIGITAL · nil@141agency.com
+        </div>
+      </div>
     </div>
   );
 };

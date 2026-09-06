@@ -80,86 +80,88 @@ const OnboardingPage = ({ token }) => {
   const first = (n) => (n || "").trim().split(/\s+/)[0] || "";
   const STEPS = [
     {
-      key: "name",
-      title: () => "\xBFC\xF3mo te llamas?",
-      sub: "Tu nombre y apellidos.",
-      fields: [{ id: "name", ph: "Juan Garc\xEDa", autoC: "name" }]
-    },
-    {
-      key: "company",
-      title: (f) => first(f.name) ? `Encantado, ${first(f.name)}.` : "\xBFCu\xE1l es tu empresa?",
-      sub: "El nombre de tu empresa o marca.",
-      fields: [{ id: "company", ph: "Mi Empresa S.L.", autoC: "organization" }]
+      key: "welcome",
+      name: "Bienvenida",
+      head: "Bienvenido a tu portal",
+      desc: "Antes de empezar vas a completar unos pasos r\xE1pidos para dejar tu portal de cliente listo. Solo te llevar\xE1 un minuto."
     },
     {
       key: "about",
-      title: () => "\xBFA qu\xE9 os dedic\xE1is?",
-      sub: "Cu\xE9ntanos brevemente tu negocio y tu web (opcional).",
+      name: "D\xE9janos conocerte",
+      head: "D\xE9janos conocerte",
+      desc: "Cu\xE9ntanos qui\xE9n eres y a qu\xE9 os dedic\xE1is.",
       fields: [
-        { id: "about", ph: "Ej. Restaurante de cocina mediterr\xE1nea" },
-        { id: "website", ph: "tuweb.com", autoC: "url" }
+        { id: "name", label: "Nombre y apellidos", ph: "Juan Garc\xEDa", autoC: "name" },
+        { id: "company", label: "Empresa o marca", ph: "Mi Empresa S.L.", autoC: "organization" },
+        { id: "about", label: "\xBFA qu\xE9 os dedic\xE1is?", ph: "Ej. Restaurante de cocina mediterr\xE1nea" },
+        { id: "website", label: "Web (opcional)", ph: "tuweb.com", autoC: "url" }
       ]
     },
     {
       key: "fiscal",
-      title: () => "Datos de facturaci\xF3n",
-      sub: "Para poder emitirte las facturas (opcional).",
+      name: "Facturaci\xF3n",
+      head: "Datos de facturaci\xF3n",
+      desc: "Para poder emitirte las facturas. Puedes rellenarlo ahora o dejarlo para m\xE1s tarde.",
       fields: [
-        { id: "fiscalName", ph: "Raz\xF3n social (Mi Empresa S.L.)", autoC: "organization" },
-        { id: "nif", ph: "NIF / CIF" },
-        { id: "fiscalAddress", ph: "Direcci\xF3n fiscal" }
+        { id: "fiscalName", label: "Raz\xF3n social", ph: "Mi Empresa S.L.", autoC: "organization" },
+        { id: "nif", label: "NIF / CIF", ph: "B12345678" },
+        { id: "fiscalAddress", label: "Direcci\xF3n fiscal", ph: "Calle, n\xBA, ciudad, CP" },
+        { id: "phone", label: "Tel\xE9fono o WhatsApp", ph: "+34 600 000 000", type: "tel", autoC: "tel" }
       ]
     },
     {
-      key: "phone",
-      title: () => "\xBFC\xF3mo te contactamos?",
-      sub: "Tel\xE9fono o WhatsApp (opcional).",
-      fields: [{ id: "phone", ph: "+34 600 000 000", type: "tel", autoC: "tel" }]
-    },
-    {
-      key: "email",
-      title: () => "Tu email de acceso",
-      sub: "Te enviaremos un c\xF3digo para confirmarlo.",
-      fields: [{ id: "email", ph: "tu@empresa.com", type: "email", autoC: "email" }]
-    },
-    {
-      key: "pw",
-      title: () => "Crea una contrase\xF1a",
-      sub: "M\xEDnimo 6 caracteres.",
+      key: "access",
+      name: "Crea tu acceso",
+      head: "Crea tu acceso",
+      desc: "Con esto entrar\xE1s a tu portal a partir de ahora. Te enviaremos un c\xF3digo para confirmar el correo.",
       fields: [
-        { id: "pw", ph: "Contrase\xF1a", type: "password", autoC: "new-password" },
-        { id: "pw2", ph: "Repite la contrase\xF1a", type: "password", autoC: "new-password" }
+        { id: "email", label: "Email de acceso", ph: "tu@empresa.com", type: "email", autoC: "email" },
+        { id: "pw", label: "Contrase\xF1a", ph: "M\xEDnimo 6 caracteres", type: "password", autoC: "new-password" },
+        { id: "pw2", label: "Repite la contrase\xF1a", ph: "Repite la contrase\xF1a", type: "password", autoC: "new-password" }
       ]
+    },
+    {
+      key: "verify",
+      name: "A por todas",
+      head: "Confirma tu cuenta",
+      desc: "Te hemos enviado un c\xF3digo de verificaci\xF3n a tu correo. Introd\xFAcelo para activar tu portal."
     }
   ];
-  const isLast = step === STEPS.length - 1;
+  const verifyIndex = STEPS.length - 1;
   const validateStep = () => {
     const k = STEPS[step].key;
-    if (k === "name" && !form.name.trim()) return "Escribe tu nombre";
-    if (k === "company" && !form.company.trim()) return "Escribe el nombre de tu empresa";
-    if (k === "email" && (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))) return "Email no v\xE1lido";
-    if (k === "pw") {
+    if (k === "about") {
+      if (!form.name.trim()) return "Escribe tu nombre";
+      if (!form.company.trim()) return "Escribe el nombre de tu empresa";
+    }
+    if (k === "access") {
+      if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email)) return "Email no v\xE1lido";
       if (form.pw.length < 6) return "M\xEDnimo 6 caracteres";
       if (form.pw !== form.pw2) return "Las contrase\xF1as no coinciden";
     }
     return "";
   };
   const next = () => {
+    const k = STEPS[step].key;
+    if (k === "verify") {
+      verifyAndComplete();
+      return;
+    }
     const e = validateStep();
     if (e) {
       setErr(e);
       return;
     }
     setErr("");
-    if (!isLast) {
-      setStep(step + 1);
+    if (k === "access") {
+      startSignup();
       return;
     }
-    startSignup();
+    setStep(step + 1);
   };
   const back = () => {
     setErr("");
-    setStep((s2) => Math.max(0, s2 - 1));
+    setStep((s) => Math.max(0, s - 1));
   };
   const finishSignup = async (sb) => {
     const base = { p_token: token, p_name: form.name.trim(), p_company: form.company.trim(), p_phone: form.phone.trim() };
@@ -237,7 +239,7 @@ const OnboardingPage = ({ token }) => {
         setCode("");
         setCodeErr("");
         setResendMsg("");
-        setStatus("verify");
+        setStep(verifyIndex);
       }
     } catch (e) {
       setTopErr("No se pudo conectar con el servidor");
@@ -331,119 +333,169 @@ const OnboardingPage = ({ token }) => {
       gap: 8
     } }, "Entrar al portal"))
   );
-  const Progress = ({ pct: pct2 }) => /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden", marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${pct2}%`, background: _PURP, borderRadius: 99, transition: "width .35s ease" } }));
-  if (status === "verify") return wrap(
-    /* @__PURE__ */ React.createElement("div", { style: { animation: "pop .25s ease" } }, /* @__PURE__ */ React.createElement(Progress, { pct: 100 }), /* @__PURE__ */ React.createElement(Title, null, "Confirma tu cuenta"), /* @__PURE__ */ React.createElement(Sub, { mb: 24 }, "Te hemos enviado un c\xF3digo de verificaci\xF3n a ", /* @__PURE__ */ React.createElement("b", { style: { color: "#fff" } }, form.email), "."), /* @__PURE__ */ React.createElement(
-      "input",
+  const cur = STEPS[step];
+  const pct = Math.max(6, step / (STEPS.length - 1) * 100);
+  const fieldStyle = {
+    ..._AUTH_INPUT,
+    height: 46,
+    fontSize: 15,
+    marginBottom: 0,
+    background: "var(--bg-elev)",
+    border: "0.5px solid var(--border)"
+  };
+  const btnLabel = busy ? cur.key === "verify" ? "Verificando\u2026" : cur.key === "access" ? "Creando cuenta\u2026" : "Un momento\u2026" : cur.key === "verify" ? "Verificar y entrar" : cur.key === "access" ? "Crear cuenta" : "Ir al siguiente paso";
+  return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "100dvh", background: "var(--bg)", padding: "40px 24px 60px", overflowY: "auto" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 1080, margin: "0 auto" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 34 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 22, width: "auto", opacity: 0.95 } })), /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 26 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)", marginBottom: 12, letterSpacing: "-0.2px" } }, "\xA1Hola", first(form.name) ? `, ${first(form.name)}` : "", "! Bienvenido al onboarding"), /* @__PURE__ */ React.createElement("div", { style: { height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 99, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { height: "100%", width: `${pct}%`, background: "var(--accent)", borderRadius: 99, transition: "width .4s ease" } }))), /* @__PURE__ */ React.createElement("div", { className: "onb-grid" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, STEPS.map((st, i) => {
+    const active = i === step;
+    const done = i < step;
+    return /* @__PURE__ */ React.createElement(
+      "div",
       {
-        className: "auth-input",
-        maxLength: 128,
-        autoFocus: true,
-        placeholder: "C\xF3digo del correo",
-        value: code,
-        onChange: (e) => {
-          setCode(e.target.value.replace(/\s/g, ""));
-          if (codeErr) setCodeErr("");
-        },
-        onKeyDown: (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            verifyAndComplete();
+        key: st.key,
+        onClick: () => {
+          if (i < step && !busy) {
+            setErr("");
+            setStep(i);
           }
         },
         style: {
-          ..._AUTH_INPUT,
-          height: 56,
-          textAlign: "center",
-          fontSize: code.length > 8 ? 15 : 26,
-          letterSpacing: code.length > 8 ? "0.5px" : "10px",
-          fontFamily: "var(--font-mono)",
-          marginBottom: 16,
-          borderColor: codeErr ? "var(--red)" : void 0
+          display: "flex",
+          alignItems: "center",
+          gap: 14,
+          padding: "13px 15px",
+          borderRadius: 14,
+          cursor: i < step ? "pointer" : "default",
+          transition: "background .15s, border-color .15s",
+          background: active ? "var(--accent-soft)" : "var(--bg-elev-2)",
+          border: active ? "1px solid rgba(158,154,229,0.4)" : "0.5px solid var(--border)"
         }
+      },
+      /* @__PURE__ */ React.createElement("div", { style: {
+        width: 42,
+        height: 42,
+        borderRadius: 11,
+        flexShrink: 0,
+        display: "grid",
+        placeItems: "center",
+        fontWeight: 600,
+        fontSize: 14,
+        fontFamily: "var(--font-display)",
+        background: active ? "var(--accent)" : "rgba(255,255,255,0.05)",
+        color: active ? "#fff" : done ? "var(--accent)" : "var(--text-muted)"
+      } }, done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 18 }) : String(i + 1).padStart(2, "0")),
+      /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: active ? "var(--accent)" : "var(--text-subtle)" } }, "Paso ", i + 1), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, fontWeight: 500, color: active ? "#fff" : "var(--text)", letterSpacing: "-0.2px" } }, st.name))
+    );
+  })), /* @__PURE__ */ React.createElement("div", { key: step, style: { animation: "pop .22s ease" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 18, padding: "26px 28px" } }, /* @__PURE__ */ React.createElement("h2", { style: { fontFamily: "var(--font-display)", fontSize: 20, fontWeight: 500, letterSpacing: "-0.5px", marginBottom: 8, color: "#fff" } }, cur.head), /* @__PURE__ */ React.createElement("p", { style: { fontSize: 14, color: "var(--text-muted)", lineHeight: 1.55, marginBottom: cur.fields || cur.key === "verify" ? 22 : 4 } }, cur.desc), cur.fields && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 16 } }, cur.fields.map((fd, idx) => /* @__PURE__ */ React.createElement("div", { key: fd.id }, /* @__PURE__ */ React.createElement("label", { style: { display: "block", fontSize: 12.5, color: "var(--text-muted)", marginBottom: 6 } }, fd.label), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "auth-input",
+      autoFocus: idx === 0,
+      type: fd.type || "text",
+      autoComplete: fd.autoC,
+      placeholder: fd.ph,
+      value: form[fd.id],
+      onChange: (e) => {
+        setField(fd.id, e.target.value);
+        if (err) setErr("");
+      },
+      onKeyDown: (e) => {
+        if (e.key === "Enter" && cur.fields.length === 1) {
+          e.preventDefault();
+          next();
+        }
+      },
+      style: { ...fieldStyle, borderColor: err ? "var(--red)" : "var(--border)" }
+    }
+  )))), cur.key === "verify" && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "auth-input",
+      maxLength: 128,
+      autoFocus: true,
+      placeholder: "C\xF3digo del correo",
+      value: code,
+      onChange: (e) => {
+        setCode(e.target.value.replace(/\s/g, ""));
+        if (codeErr) setCodeErr("");
+      },
+      onKeyDown: (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          verifyAndComplete();
+        }
+      },
+      style: {
+        ..._AUTH_INPUT,
+        height: 54,
+        textAlign: "center",
+        fontSize: code.length > 8 ? 15 : 24,
+        letterSpacing: code.length > 8 ? "0.5px" : "8px",
+        fontFamily: "var(--font-mono)",
+        background: "var(--bg-elev)",
+        border: "0.5px solid var(--border)",
+        borderColor: codeErr ? "var(--red)" : "var(--border)"
       }
-    ), codeErr && /* @__PURE__ */ React.createElement("div", { className: "chip red", style: { display: "flex", padding: "6px 10px", marginBottom: 12, fontSize: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "alert-triangle", size: 12 }), " ", codeErr), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        className: "btn full auth-btn",
-        onClick: verifyAndComplete,
-        disabled: busy,
-        style: { ..._AUTH_BTN, opacity: busy ? 0.5 : 1 }
+    }
+  ), /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: resendCode,
+      disabled: busy,
+      style: { marginTop: 12, background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit", textDecoration: "underline" }
+    },
+    "\xBFNo te llega? Reenviar c\xF3digo"
+  ), resendMsg && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 6, fontSize: 12, color: "var(--text-subtle)" } }, resendMsg)), (err || topErr || codeErr) && /* @__PURE__ */ React.createElement("div", { style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 16,
+    padding: "8px 12px",
+    borderRadius: 10,
+    background: "var(--red-soft)",
+    color: "var(--red)",
+    fontSize: 12.5
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "alert-triangle", size: 13 }), " ", err || topErr || codeErr)), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 14, marginTop: 18 } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: next,
+      disabled: busy,
+      onMouseEnter: (e) => {
+        if (!busy) e.currentTarget.style.background = "rgba(158,154,229,0.28)";
       },
-      busy ? "Verificando\u2026" : "Verificar y entrar"
-    ), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 18 } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: resendCode,
-        disabled: busy,
-        style: {
-          background: "transparent",
-          border: 0,
-          color: "#999999",
-          fontSize: 13,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          textDecoration: "underline"
-        }
+      onMouseLeave: (e) => {
+        e.currentTarget.style.background = "var(--accent-soft)";
       },
-      "\xBFNo te llega? Reenviar c\xF3digo"
-    ), resendMsg && /* @__PURE__ */ React.createElement("div", { className: "subtle xsmall", style: { marginTop: 6 } }, resendMsg)))
-  );
-  const s = STEPS[step];
-  const title = typeof s.title === "function" ? s.title(form) : s.title;
-  const pct = (step + 1) / (STEPS.length + 1) * 100;
-  return wrap(
-    /* @__PURE__ */ React.createElement("div", { key: step, style: { animation: "pop .25s ease" } }, /* @__PURE__ */ React.createElement(Progress, { pct }), /* @__PURE__ */ React.createElement(Title, null, title), /* @__PURE__ */ React.createElement(Sub, { mb: 26 }, s.sub), s.fields.map((fd, idx) => /* @__PURE__ */ React.createElement(
-      "input",
-      {
-        key: fd.id,
-        className: "auth-input",
-        autoFocus: idx === 0,
-        type: fd.type || "text",
-        autoComplete: fd.autoC,
-        placeholder: fd.ph,
-        value: form[fd.id],
-        onChange: (e) => {
-          setField(fd.id, e.target.value);
-          if (err) setErr("");
-        },
-        onKeyDown: (e) => {
-          if (e.key === "Enter") {
-            e.preventDefault();
-            next();
-          }
-        },
-        style: { ..._AUTH_INPUT, marginBottom: 16, borderColor: err ? "var(--red)" : void 0 }
+      style: {
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 8,
+        height: 44,
+        padding: "0 20px",
+        borderRadius: 12,
+        cursor: "pointer",
+        background: "var(--accent-soft)",
+        color: "var(--accent)",
+        border: "1px solid rgba(158,154,229,0.35)",
+        fontFamily: "inherit",
+        fontSize: 14,
+        fontWeight: 500,
+        opacity: busy ? 0.6 : 1,
+        transition: "background .15s"
       }
-    )), err && /* @__PURE__ */ React.createElement("div", { className: "chip red", style: { display: "flex", padding: "6px 10px", marginBottom: 12, fontSize: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "alert-triangle", size: 12 }), " ", err), topErr && /* @__PURE__ */ React.createElement("div", { className: "chip red", style: { display: "flex", padding: "6px 10px", marginBottom: 12, fontSize: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "alert-triangle", size: 12 }), " ", topErr), /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        className: "btn full auth-btn",
-        onClick: next,
-        disabled: busy,
-        style: { ..._AUTH_BTN, opacity: busy ? 0.5 : 1 }
-      },
-      busy ? "Enviando c\xF3digo\u2026" : isLast ? "Crear cuenta" : "Continuar"
-    ), step > 0 && /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 16 } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        type: "button",
-        onClick: back,
-        disabled: busy,
-        style: {
-          background: "transparent",
-          border: 0,
-          color: "#999999",
-          fontSize: 13,
-          cursor: "pointer",
-          fontFamily: "inherit"
-        }
-      },
-      "\u2190 Atr\xE1s"
-    )))
-  );
+    },
+    btnLabel,
+    " ",
+    !busy && cur.key !== "verify" && /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 15 })
+  ), step > 0 && cur.key !== "verify" && /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      type: "button",
+      onClick: back,
+      disabled: busy,
+      style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 13, cursor: "pointer", fontFamily: "inherit" }
+    },
+    "\u2190 Atr\xE1s"
+  )))), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center", marginTop: 40, fontSize: 11, color: "var(--text-subtle)" } }, "\xA9 141'DIGITAL \xB7 nil@141agency.com")));
 };
 window.OnboardingPage = OnboardingPage;
