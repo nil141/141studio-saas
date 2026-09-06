@@ -202,18 +202,26 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  .app-loader .mk {
-    width: 46px; height: 46px; border-radius: 13px;
-    background: var(--text); color: var(--bg);
-    display: grid; place-items: center;
-    font-family: var(--font-display); font-weight: 600; font-size: 17px; letter-spacing: -0.04em;
-    animation: loaderPulse 1.15s ease-in-out infinite;
+  .app-loader .wm {
+    font-family: var(--font-display);
+    font-weight: 600; font-size: 30px; letter-spacing: -1px;
+    /* barrido de oscuro → claro → oscuro (efecto "cargando") */
+    background: linear-gradient(100deg,
+      var(--text-subtle) 20%, var(--text-subtle) 38%,
+      var(--text) 50%,
+      var(--text-subtle) 62%, var(--text-subtle) 80%);
+    background-size: 220% 100%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    animation: wmShimmer 1.7s ease-in-out infinite;
   }
-  @keyframes loaderPulse {
-    0%, 100% { opacity: 0.35; transform: scale(0.94); }
-    50%      { opacity: 1;    transform: scale(1); }
+  @keyframes wmShimmer {
+    0%   { background-position: 130% 0; }
+    100% { background-position: -30% 0; }
   }
-  @media (prefers-reduced-motion: reduce) { .app-loader .mk { animation: none; opacity: 0.85; } }
+  @media (prefers-reduced-motion: reduce) {
+    .app-loader .wm { animation: none; -webkit-text-fill-color: var(--text-muted); color: var(--text-muted); }
+  }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; min-height: 100vh; background: var(--bg); }
@@ -1003,7 +1011,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=22"></script>
+<script src="src/z-app.js?v=23"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
