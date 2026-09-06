@@ -321,7 +321,7 @@ const OnboardingPage = ({ token }) => {
           </div>
 
           {/* Panel del paso */}
-          <div key={step} style={{ animation:"pop .22s ease" }}>
+          <div key={step} style={{ animation:"pop .22s ease", display:"flex", flexDirection:"column" }}>
             <div style={{ background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:18, padding:"26px 28px" }}>
               <h2 style={{ fontFamily:"var(--font-display)", fontSize:20, fontWeight:500, letterSpacing:"-0.5px", marginBottom:8, color:"#fff" }}>{cur.head}</h2>
               <p style={{ fontSize:14, color:"var(--text-muted)", lineHeight:1.55, marginBottom: (cur.fields || cur.key === "verify") ? 22 : 4 }}>{cur.desc}</p>
@@ -367,8 +367,8 @@ const OnboardingPage = ({ token }) => {
               )}
             </div>
 
-            {/* Botón + atrás */}
-            <div style={{ display:"flex", alignItems:"center", gap:14, marginTop:18 }}>
+            {/* Botón + atrás (anclado abajo para que no salte entre pasos) */}
+            <div style={{ display:"flex", alignItems:"center", gap:14, marginTop:"auto", paddingTop:18 }}>
               <button type="button" onClick={next} disabled={busy}
                 onMouseEnter={e => { if (!busy) e.currentTarget.style.background = "rgba(158,154,229,0.28)"; }}
                 onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-soft)"; }}

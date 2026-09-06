@@ -365,10 +365,10 @@
   .page.wide { max-width: none; }
 
   /* Onboarding del cliente — rejilla de dos columnas (pasos + panel) */
-  .onb-grid { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: start; }
-  /* Altura mínima estable: al cambiar de paso no salta el layout */
-  @media (min-width: 761px) { .onb-grid { min-height: 490px; } }
-  @media (max-width: 760px) { .onb-grid { grid-template-columns: 1fr; gap: 16px; } }
+  .onb-grid { display: grid; grid-template-columns: 300px 1fr; gap: 28px; align-items: stretch; }
+  /* Altura fija estable: al cambiar de paso no salta el layout (el botón va anclado abajo) */
+  @media (min-width: 761px) { .onb-grid { min-height: 560px; } }
+  @media (max-width: 760px) { .onb-grid { grid-template-columns: 1fr; gap: 16px; align-items: start; min-height: 0; } }
 
   /* Botón discreto "ver todo" (solo icono) en cabeceras de sección del Inicio */
   .go-btn { color: var(--text-subtle); transition: color .12s, background .12s; }
@@ -1088,7 +1088,7 @@
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=16"></script>
 <script src="src/client-portal.js?v=38"></script>
-<script src="src/onboarding.js?v=15"></script>
+<script src="src/onboarding.js?v=16"></script>
 <script src="src/assistant.js?v=2"></script>
 <script src="src/gmail.js?v=3"></script>
 <script src="src/z-modals2.js?v=4"></script>
