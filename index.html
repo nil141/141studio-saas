@@ -202,24 +202,28 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  .app-loader .lg {
-    width: 238px; aspect-ratio: 1233.86 / 193.24;
-    /* barrido de oscuro → claro → oscuro (efecto "cargando") sobre el wordmark real */
-    background: linear-gradient(100deg,
-      var(--text-subtle) 20%, var(--text-subtle) 38%,
-      var(--text) 50%,
-      var(--text-subtle) 62%, var(--text-subtle) 80%);
-    background-size: 220% 100%;
-    -webkit-mask: url("/wordmark.svg") center / contain no-repeat;
-            mask: url("/wordmark.svg") center / contain no-repeat;
-    animation: wmShimmer 1.7s ease-in-out infinite;
+  .app-loader .lg { width: 240px; height: auto; }
+  /* Efecto "dibujado de trazo": el contorno se traza y luego se rellena, en bucle */
+  .app-loader .lg path {
+    fill: var(--text);
+    fill-opacity: 0;
+    stroke: var(--text);
+    stroke-width: 1.4;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: lgDraw 2.7s ease-in-out infinite;
   }
-  @keyframes wmShimmer {
-    0%   { background-position: 130% 0; }
-    100% { background-position: -30% 0; }
+  @keyframes lgDraw {
+    0%   { stroke-dashoffset: 1; fill-opacity: 0; opacity: 0; }
+    8%   { opacity: 1; }
+    46%  { stroke-dashoffset: 0; fill-opacity: 0; }
+    62%  { fill-opacity: 1; }
+    88%  { fill-opacity: 1; opacity: 1; }
+    100% { stroke-dashoffset: 0; fill-opacity: 1; opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .app-loader .lg { animation: none; background: var(--text-muted); }
+    .app-loader .lg path { animation: none; fill-opacity: 1; stroke: none; }
   }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
@@ -1010,7 +1014,7 @@
 <script src="src/primitives.js?v=71"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=24"></script>
+<script src="src/z-app.js?v=25"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=82"></script>
 <script src="src/agency-clients.js?v=27"></script>
