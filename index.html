@@ -993,11 +993,22 @@
     .tasks-head { display: none !important; }
     /* Elementos redundantes en móvil (el nombre de página ya está en las pestañas) */
     .hide-mobile { display: none !important; }
-    /* KPIs de Gastos: en móvil una sola columna (se leen sin cortes) */
-    .fin-kpis { grid-template-columns: 1fr !important; gap: 16px !important; padding: 4px 2px 18px !important; }
-    .fin-kpis > div { gap: 4px !important; }
-    .fin-kpis > div > span { font-size: 13.5px !important; }
-    .fin-kpis > div > div { flex-direction: row !important; align-items: baseline; gap: 10px !important; flex-wrap: wrap; }
+    /* Gastos: la página entera fluye dentro de .main (no fija) */
+    .gastos-root { height: auto !important; overflow: visible !important; padding: 16px 16px 0 !important; }
+    .gastos-scroll { flex: none !important; overflow: visible !important; min-height: 0 !important;
+      scrollbar-gutter: auto !important; padding-right: 0 !important;
+      -webkit-mask-image: none !important; mask-image: none !important; }
+    /* KPIs de Gastos: fila única deslizable horizontalmente (tarjetas) */
+    .fin-kpis { display: flex !important; grid-template-columns: none !important;
+      flex-wrap: nowrap !important; overflow-x: auto !important; gap: 12px !important;
+      padding: 4px 2px 16px !important; margin: 0 -2px; scroll-snap-type: x proximity;
+      -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .fin-kpis::-webkit-scrollbar { display: none; }
+    .fin-kpis > div { flex: 0 0 auto !important; min-width: 156px !important; gap: 10px !important;
+      scroll-snap-align: start; padding: 14px 16px !important;
+      background: var(--bg-elev) !important; border: 1px solid var(--border) !important; border-radius: 14px; }
+    .fin-kpis > div > span { font-size: 13px !important; }
+    .fin-kpis > div > div { gap: 6px !important; }
     .fin-kpis > div > div > span { font-size: 26px !important; }
     /* Gastos: las dos listas (Suscripciones / Gastos puntuales) apiladas */
     .fin-lists { grid-template-columns: 1fr !important; gap: 28px !important; }
@@ -1199,7 +1210,7 @@
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=32"></script>
 <script src="src/agency-project.js?v=34"></script>
-<script src="src/agency-other.js?v=141"></script>
+<script src="src/agency-other.js?v=142"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
 <script src="src/agency-outreach.js?v=23"></script>

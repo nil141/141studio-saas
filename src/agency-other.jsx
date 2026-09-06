@@ -1761,7 +1761,7 @@ const AgencyBilling = () => {
   };
 
   return (
-    <div className="pg-full pg-pad" style={{
+    <div className="pg-full pg-pad gastos-root" style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
     }}>
@@ -1808,7 +1808,7 @@ const AgencyBilling = () => {
       </div>
 
       {/* Zona scrollable — gráfico + listas */}
-      <div className="tasks-scroll" style={{
+      <div className="tasks-scroll gastos-scroll" style={{
         flex:1, minHeight:0, overflowY:"auto", overflowX:"hidden", scrollbarGutter:"stable",
         paddingRight:10, paddingTop:16, paddingBottom:8,
         WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 16px, #000 calc(100% - 24px), transparent 100%)",

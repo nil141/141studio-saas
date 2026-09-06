@@ -1,6 +1,5 @@
 (() => {
-  // src/agency-other.jsx
-  var TasksBoard = ({ navigate, openModal, initialDate }) => {
+  const TasksBoard = ({ navigate, openModal, initialDate }) => {
     const D = window.Data;
     D.useStore();
     const [selectedDay, setSelectedDay] = useState(initialDate ? /* @__PURE__ */ new Date(initialDate + "T12:00:00") : D.todayDate ? D.todayDate() : /* @__PURE__ */ new Date());
@@ -417,7 +416,7 @@
       })()
     );
   };
-  var ProjectTaskColumn = ({ project: p, navigate, toast }) => {
+  const ProjectTaskColumn = ({ project: p, navigate, toast }) => {
     const D = window.Data;
     const [draft, setDraft] = useState("");
     const [adding, setAdding] = useState(false);
@@ -523,7 +522,7 @@
       ")"
     ), doneOpen && done.map((t) => /* @__PURE__ */ React.createElement(TaskRow, { key: t.id, task: t, onToggle: () => toggleDone(t), onDelete: () => remove(t), onUpdate: (ch) => update(t, ch), COL_COLORS, COL_LABELS, isDone: true, projectId: p.id })))));
   };
-  var TaskDotsMenu = ({ task: t, onDelete, onUpdate }) => {
+  const TaskDotsMenu = ({ task: t, onDelete, onUpdate }) => {
     const [open, setOpen] = useState(false);
     const [mode, setMode] = useState(null);
     const [dateVal, setDateVal] = useState(t.deadline || "");
@@ -648,7 +647,7 @@
       flexShrink: 0
     } }, "\xB7\xB7\xB7"), panel);
   };
-  var TaskRow = ({ task: t, onToggle, onDelete, onUpdate, COL_COLORS, COL_LABELS, isDone, projectId }) => {
+  const TaskRow = ({ task: t, onToggle, onDelete, onUpdate, COL_COLORS, COL_LABELS, isDone, projectId }) => {
     const [hover, setHover] = useState(false);
     return /* @__PURE__ */ React.createElement(
       "div",
@@ -703,7 +702,7 @@
       hover && /* @__PURE__ */ React.createElement(TaskDotsMenu, { task: t, onDelete, onUpdate, projectId })
     );
   };
-  var AgencyProjects = ({ navigate, openModal }) => {
+  const AgencyProjects = ({ navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const confirm = useConfirm();
@@ -818,40 +817,40 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
     )));
   };
-  var _stripeApi = async (endpoint, body = {}) => {
+  const _stripeApi = async (endpoint, body = {}) => {
     const res = await window.apiFetch(`/api/stripe/${endpoint}`, body);
     return res.json();
   };
-  var FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
-  var _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  var _finLoad = () => {
+  const FIN_CATS = ["Software", "Hosting", "Marketing", "Publicidad", "Oficina", "Impuestos", "Freelance", "Otros"];
+  const _eur = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const _finLoad = () => {
     const d = window.Data && window.Data.FINANCE || {};
     return { subs: d.subs || [], expenses: d.expenses || [] };
   };
-  var _finSave = (d) => {
+  const _finSave = (d) => {
     try {
       window.Data.saveFinance(d);
     } catch (e) {
     }
   };
-  var _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
-  var _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
-  var _sameMonth = (iso) => {
+  const _finId = () => window.crypto && crypto.randomUUID ? crypto.randomUUID() : "id" + Date.now() + Math.floor(Math.random() * 1e6);
+  const _subMonthly = (s) => s.cycle === "yearly" ? (Number(s.amount) || 0) / 12 : Number(s.amount) || 0;
+  const _sameMonth = (iso) => {
     if (!iso) return false;
     const d = new Date(iso);
     const n = /* @__PURE__ */ new Date();
     return d.getFullYear() === n.getFullYear() && d.getMonth() === n.getMonth();
   };
-  var _todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
-  var _finDate = (iso) => {
+  const _todayISO = () => (/* @__PURE__ */ new Date()).toISOString().slice(0, 10);
+  const _finDate = (iso) => {
     if (!iso) return "\u2014";
     const d = new Date(iso);
     const M = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     return isNaN(d) ? "\u2014" : `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()}`;
   };
-  var FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
-  var FIN_SERIES = { rec: "#8277db", pun: "#199e70" };
-  var _finSmooth = (pts) => {
+  const FIN_CYCLES = [{ id: "monthly", label: "Mensual" }, { id: "yearly", label: "Anual" }];
+  const FIN_SERIES = { rec: "#8277db", pun: "#199e70" };
+  const _finSmooth = (pts) => {
     if (pts.length < 2) return "";
     let d = `M${pts[0][0]},${pts[0][1]}`;
     for (let i = 0; i < pts.length - 1; i++) {
@@ -864,8 +863,8 @@
     }
     return d;
   };
-  var _finChartSeq = 0;
-  var FinTrendChart = ({ trend, single = false }) => {
+  let _finChartSeq = 0;
+  const FinTrendChart = ({ trend, single = false }) => {
     const [hov, setHov] = useState(null);
     const W = 600, H = 150, PX = 10, PY = 14;
     const drawnRef = useRef(false);
@@ -1050,7 +1049,7 @@
     window.FinTrendChart = FinTrendChart;
   } catch (e) {
   }
-  var AgencyBilling = () => {
+  const AgencyBilling = () => {
     const toast = useToast();
     const [data, setData] = useState(_finLoad);
     const [addOpen, setAddOpen] = useState(false);
@@ -1161,7 +1160,7 @@
       gap: 8,
       letterSpacing: "-0.2px"
     };
-    return /* @__PURE__ */ React.createElement("div", { className: "pg-full pg-pad", style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "pg-full pg-pad gastos-root", style: {
       height: "100vh",
       display: "flex",
       flexDirection: "column",
@@ -1218,7 +1217,7 @@
       lineHeight: 1,
       fontFamily: "var(--font-display)",
       fontVariantNumeric: "tabular-nums"
-    } }, k.value), k.delta))))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll", style: {
+    } }, k.value), k.delta))))), /* @__PURE__ */ React.createElement("div", { className: "tasks-scroll gastos-scroll", style: {
       flex: 1,
       minHeight: 0,
       overflowY: "auto",
@@ -1395,14 +1394,14 @@
       }
     ));
   };
-  var SimplePage = ({ title, sub, icon }) => /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, title), sub && /* @__PURE__ */ React.createElement("div", { className: "sub" }, sub))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon, title: "Pr\xF3ximamente", sub: "Esta secci\xF3n est\xE1 en construcci\xF3n" }))));
-  var SESSION_OPTS = [
+  const SimplePage = ({ title, sub, icon }) => /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, title), sub && /* @__PURE__ */ React.createElement("div", { className: "sub" }, sub))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { padding: 60 } }, /* @__PURE__ */ React.createElement(Empty, { icon, title: "Pr\xF3ximamente", sub: "Esta secci\xF3n est\xE1 en construcci\xF3n" }))));
+  const SESSION_OPTS = [
     { days: 0, label: "Solo esta sesi\xF3n", sub: "Se cerrar\xE1 al cerrar el navegador" },
     { days: 1, label: "1 d\xEDa", sub: "Hasta ma\xF1ana a esta hora" },
     { days: 7, label: "7 d\xEDas", sub: "Una semana sin volver a entrar" },
     { days: 30, label: "30 d\xEDas", sub: "Comodidad m\xE1xima" }
   ];
-  var SessionCard = () => {
+  const SessionCard = () => {
     const toast = useToast();
     const info = window._sessionUtils?.info() || { days: 0, exp: null };
     const [days, setDays] = React.useState(info.days || 0);
@@ -1457,7 +1456,7 @@
       /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500, color: days === opt.days ? "var(--accent)" : "var(--text)" } }, opt.label), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, opt.sub))
     ))), /* @__PURE__ */ React.createElement("button", { className: "btn primary sm", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Aplicar")));
   };
-  var DriveCard = () => {
+  const DriveCard = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -1483,7 +1482,7 @@
     };
     return /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Google Drive \xB7 carpetas autom\xE1ticas")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Al crear un cliente se genera sola su carpeta en tu Drive (la que ve en su portal); por cada proyecto, una subcarpeta dentro. Necesita un peque\xF1o Web App de Apps Script bajo tu cuenta de Google. Pega aqu\xED su URL y el mismo secreto que pusiste en el script."), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gap: 14 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "URL del Web App (Apps Script)"), /* @__PURE__ */ React.createElement("input", { className: "input", value: url, onChange: (e) => setUrl(e.target.value), placeholder: "https://script.google.com/macros/s/\u2026/exec" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Secreto compartido"), /* @__PURE__ */ React.createElement("input", { className: "input", value: secret, onChange: (e) => setSecret(e.target.value), placeholder: "una-clave-larga-al-azar" })), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Guardar conexi\xF3n"), D.driveConfigured && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Conectado")), D.driveConfigured && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid var(--border)", paddingTop: 14, marginTop: 2 } }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 10 } }, "Clientes existentes (creados antes de conectar Drive): crea de golpe las carpetas que falten."), /* @__PURE__ */ React.createElement("div", { className: "row tight", style: { alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: backfill, disabled: !missing.length }, /* @__PURE__ */ React.createElement(Icon, { name: "folder", size: 12 }), " Crear carpetas que faltan"), /* @__PURE__ */ React.createElement("span", { className: "muted small" }, missing.length ? `${missing.length} cliente${missing.length === 1 ? "" : "s"} sin carpeta` : "Todos tienen carpeta \u2713"))))));
   };
-  var SettingsPage = () => {
+  const SettingsPage = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -1503,14 +1502,14 @@
     };
     return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h1", null, "Ajustes"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Informaci\xF3n de la agencia y preferencias generales")), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Guardar cambios")), /* @__PURE__ */ React.createElement("div", { className: "rg-settings" }, /* @__PURE__ */ React.createElement("div", { className: "card", style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Informaci\xF3n de la agencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Nombre de la agencia"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("name"), placeholder: "141'STUDIO" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tagline"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("tagline"), placeholder: "Agencia digital" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Email de contacto"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "email", ...field("email"), placeholder: "hello@tuagencia.com" })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Tel\xE9fono / WhatsApp"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("phone"), placeholder: "+34 600 000 000" })), /* @__PURE__ */ React.createElement("div", { style: { gridColumn: "1/-1" } }, /* @__PURE__ */ React.createElement("label", { className: "label" }, "Web"), /* @__PURE__ */ React.createElement("input", { className: "input", ...field("website"), placeholder: "https://tuagencia.com" })))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Credenciales de acceso")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small", style: { marginBottom: 14 } }, "Las credenciales de acceso se gestionan directamente en el c\xF3digo fuente por seguridad."), /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 8, padding: "10px 14px", fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--text-muted)" } }, "Email: nil@141agency.com"))), /* @__PURE__ */ React.createElement("div", { className: "card" }, /* @__PURE__ */ React.createElement("div", { className: "card-header" }, /* @__PURE__ */ React.createElement("div", { className: "card-title" }, "Apariencia")), /* @__PURE__ */ React.createElement("div", { className: "card-body" }, /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "El tema claro/oscuro se controla con el bot\xF3n en la barra superior derecha."), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14, padding: "10px 14px", background: "var(--accent-soft)", borderRadius: 8, fontSize: 12, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "sparkles", size: 12 }), " Pr\xF3ximamente: colores de acento personalizables, logo de la agencia y dominio del portal cliente."))), /* @__PURE__ */ React.createElement(DriveCard, null), /* @__PURE__ */ React.createElement(SessionCard, null)));
   };
-  var _routineMetric = (text) => {
+  const _routineMetric = (text) => {
     const t = (text || "").toLowerCase();
     if (t.includes("peso")) return "weight";
     if (t.includes("macro")) return "macros";
     if (t.includes("paso")) return "steps";
     return null;
   };
-  var _LogModalShell = ({ title, subtitle, onClose, onConfirm, onClear, canClear, children }) => ReactDOM.createPortal(
+  const _LogModalShell = ({ title, subtitle, onClose, onConfirm, onClear, canClear, children }) => ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -1584,9 +1583,9 @@
     ),
     document.body
   );
-  var _numClean = (s) => String(s).replace(/[^0-9.,]/g, "");
-  var _numParse = (s) => parseFloat(String(s).replace(",", "."));
-  var WeightLogModal = ({ routineId, day, itemId, onClose }) => {
+  const _numClean = (s) => String(s).replace(/[^0-9.,]/g, "");
+  const _numParse = (s) => parseFloat(String(s).replace(",", "."));
+  const WeightLogModal = ({ routineId, day, itemId, onClose }) => {
     const D = window.Data;
     const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
     const [w, setW] = useState(existing && existing.weight != null ? String(existing.weight).replace(".", ",") : "");
@@ -1642,7 +1641,7 @@
       ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 22, color: "var(--text-subtle)" } }, "kg"))
     );
   };
-  var StepsLogModal = ({ routineId, day, itemId, text, onClose }) => {
+  const StepsLogModal = ({ routineId, day, itemId, text, onClose }) => {
     const D = window.Data;
     const goal = D.parseStepsGoal ? D.parseStepsGoal(text) : 1e4;
     const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
@@ -1700,13 +1699,13 @@
       ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 20, color: "var(--text-subtle)" } }, "pasos"))
     );
   };
-  var _MACROS = [
+  const _MACROS = [
     { key: "kcal", label: "Calor\xEDas", unit: "kcal", goal: 2500 },
     { key: "protein", label: "Prote\xEDna", unit: "g", goal: 140 },
     { key: "fat", label: "Grasas", unit: "g", goal: 70 },
     { key: "carbs", label: "Carbohidratos", unit: "g", goal: 330 }
   ];
-  var _macrosProgress = (data) => {
+  const _macrosProgress = (data) => {
     let sum = 0;
     _MACROS.forEach((m) => {
       const v = Number(data[m.key]) || 0;
@@ -1714,7 +1713,7 @@
     });
     return Math.round(sum / _MACROS.length * 100);
   };
-  var MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
+  const MacrosLogModal = ({ routineId, day, itemId, onClose }) => {
     const D = window.Data;
     const existing = D.routineItemLog ? D.routineItemLog(routineId, day, itemId) : null;
     const [vals, setVals] = useState(() => {
@@ -1794,7 +1793,7 @@
       }))
     );
   };
-  var TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, onEdit, routineMode }) => {
+  const TaskProgressModal = ({ task, projectId, open, onClose, onDelete, onUpdate, onEdit, routineMode }) => {
     const [progress, setProgress] = useState(0);
     const [dotsOpen, setDotsOpen] = useState(false);
     const [dragging, setDragging] = useState(false);
@@ -2154,8 +2153,8 @@
       document.body
     );
   };
-  var INC_KEY = "141_income_v1";
-  var _incLoad = () => {
+  const INC_KEY = "141_income_v1";
+  const _incLoad = () => {
     try {
       const d = JSON.parse(localStorage.getItem(INC_KEY));
       return d && typeof d === "object" ? { recs: d.recs || [], incomes: d.incomes || [] } : { recs: [], incomes: [] };
@@ -2163,13 +2162,13 @@
       return { recs: [], incomes: [] };
     }
   };
-  var _incSave = (d) => {
+  const _incSave = (d) => {
     try {
       localStorage.setItem(INC_KEY, JSON.stringify(d));
     } catch {
     }
   };
-  var IncomePage = () => {
+  const IncomePage = () => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -2801,7 +2800,7 @@
       }
     ));
   };
-  var FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
+  const FieldSelect = ({ value, placeholder, icon, options, onChange, up = false }) => {
     const [open, setOpen] = useState(false);
     useEffect(() => {
       if (!open) return;
@@ -2883,7 +2882,7 @@
       );
     })));
   };
-  var StripeInvoiceModal = ({ open, onClose, onCreated }) => {
+  const StripeInvoiceModal = ({ open, onClose, onCreated }) => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
