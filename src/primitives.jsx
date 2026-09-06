@@ -270,6 +270,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
 
   // ── Sliding pill refs ──────────────────────────────────────────────
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [profileMenu, setProfileMenu] = React.useState(false);
+  useEffect(() => {
+    if (!profileMenu) return;
+    const c = () => setProfileMenu(false);
+    window.addEventListener("click", c);
+    return () => window.removeEventListener("click", c);
+  }, [profileMenu]);
   const [logoErr, setLogoErr] = React.useState(false);
 
   // Secciones plegables del menú (se recuerda en el navegador)
@@ -495,35 +502,54 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       </div>
 
       {/* Footer */}
-      <div style={{borderTop:"0.5px solid rgba(255,255,255,0.06)", paddingTop:8, display:"flex", flexDirection:"column", gap:0}}>
+      <div style={{borderTop:"0.5px solid rgba(255,255,255,0.06)", paddingTop:8, display:"flex", flexDirection:"column", gap:0, position:"relative"}}>
         {kind === "client" ? (
-          <button onClick={() => onNavigate("client-settings")}
-            style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
-              background: current === "client-settings" ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
-            <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(clientAccount.initials || "").charAt(0)}</span>
-            <span style={{minWidth:0}}>
-              <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{clientAccount.name}</span>
-              <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)"}}>Ver tu cuenta</span>
-            </span>
-          </button>
+          <>
+            <button onClick={() => onNavigate("client-settings")}
+              style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
+                background: current === "client-settings" ? "var(--bg-hover)" : "transparent", color:"var(--text)"}}>
+              <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(clientAccount.initials || "").charAt(0)}</span>
+              <span style={{minWidth:0}}>
+                <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{clientAccount.name}</span>
+                <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)"}}>Ver tu cuenta</span>
+              </span>
+            </button>
+            <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => setLogoutOpen(true)}/>
+          </>
         ) : (
           <>
-            {/* Cuenta iniciada */}
-            <button onClick={() => onNavigate("settings")}
-              style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left", marginBottom:2,
-                background: current === "settings" ? "var(--bg-hover)" : "transparent"}}
-              onMouseEnter={e => { if (current !== "settings") e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
-              onMouseLeave={e => { if (current !== "settings") e.currentTarget.style.background = "transparent"; }}>
+            {/* Menú del perfil: Configuración y Cerrar sesión dentro */}
+            {profileMenu && (
+              <div onClick={e => e.stopPropagation()}
+                style={{ position:"absolute", left:6, right:6, bottom:"calc(100% + 6px)", zIndex:40,
+                  background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)", borderRadius:12, padding:5,
+                  boxShadow:"0 16px 40px rgba(0,0,0,0.5)", animation:"pop .14s ease" }}>
+                <button onClick={() => { setProfileMenu(false); onNavigate("settings"); }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"9px 10px", border:0, borderRadius:8, cursor:"pointer", fontFamily:"inherit", fontSize:13.5, color:"var(--text)", background:"transparent" }}>
+                  <Icon name="settings" size={16}/> Configuración
+                </button>
+                <button onClick={() => { setProfileMenu(false); setLogoutOpen(true); }}
+                  onMouseEnter={e => e.currentTarget.style.background = "var(--bg-hover)"} onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  style={{ display:"flex", alignItems:"center", gap:10, width:"100%", padding:"9px 10px", border:0, borderRadius:8, cursor:"pointer", fontFamily:"inherit", fontSize:13.5, color:"var(--red)", background:"transparent" }}>
+                  <Icon name="log-out" size={16}/> Cerrar sesión
+                </button>
+              </div>
+            )}
+            <button onClick={e => { e.stopPropagation(); setProfileMenu(v => !v); }}
+              style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
+                background: profileMenu ? "var(--bg-hover)" : "transparent"}}
+              onMouseEnter={e => { if (!profileMenu) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+              onMouseLeave={e => { if (!profileMenu) e.currentTarget.style.background = "transparent"; }}>
               <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(me.initials || "").charAt(0)}</span>
               <span style={{minWidth:0, flex:1}}>
                 <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.name}</span>
                 <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.email || ("@" + (me.name || "").toLowerCase())}</span>
               </span>
+              <Icon name="chevron" size={15} style={{flexShrink:0, color:"var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition:"transform .18s"}}/>
             </button>
-            <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
           </>
         )}
-        <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => setLogoutOpen(true)}/>
       </div>
     </aside>
 

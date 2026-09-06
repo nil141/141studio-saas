@@ -283,6 +283,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     }
   }
   const [logoutOpen, setLogoutOpen] = React.useState(false);
+  const [profileMenu, setProfileMenu] = React.useState(false);
+  useEffect(() => {
+    if (!profileMenu) return;
+    const c = () => setProfileMenu(false);
+    window.addEventListener("click", c);
+    return () => window.removeEventListener("click", c);
+  }, [profileMenu]);
   const [logoErr, setLogoErr] = React.useState(false);
   const COLLAPSE_KEY = "sidebar_collapsed_v1";
   const [collapsed, setCollapsed] = React.useState(() => {
@@ -553,7 +560,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     textTransform: "uppercase",
     padding: "0 12px",
     marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0 } }, kind === "client" ? /* @__PURE__ */ React.createElement(
+  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0, position: "relative" } }, kind === "client" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => onNavigate("client-settings"),
@@ -574,10 +581,59 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     },
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
-  ) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) })) : /* @__PURE__ */ React.createElement(React.Fragment, null, profileMenu && /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick: (e) => e.stopPropagation(),
+      style: {
+        position: "absolute",
+        left: 6,
+        right: 6,
+        bottom: "calc(100% + 6px)",
+        zIndex: 40,
+        background: "var(--bg-elev)",
+        border: "0.5px solid var(--border-strong)",
+        borderRadius: 12,
+        padding: 5,
+        boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+        animation: "pop .14s ease"
+      }
+    },
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setProfileMenu(false);
+          onNavigate("settings");
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+        style: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", border: 0, borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13.5, color: "var(--text)", background: "transparent" }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "settings", size: 16 }),
+      " Configuraci\xF3n"
+    ),
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => {
+          setProfileMenu(false);
+          setLogoutOpen(true);
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "var(--bg-hover)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
+        style: { display: "flex", alignItems: "center", gap: 10, width: "100%", padding: "9px 10px", border: 0, borderRadius: 8, cursor: "pointer", fontFamily: "inherit", fontSize: 13.5, color: "var(--red)", background: "transparent" }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }),
+      " Cerrar sesi\xF3n"
+    )
+  ), /* @__PURE__ */ React.createElement(
     "button",
     {
-      onClick: () => onNavigate("settings"),
+      onClick: (e) => {
+        e.stopPropagation();
+        setProfileMenu((v) => !v);
+      },
       style: {
         display: "flex",
         alignItems: "center",
@@ -589,19 +645,19 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         cursor: "pointer",
         fontFamily: "inherit",
         textAlign: "left",
-        marginBottom: 2,
-        background: current === "settings" ? "var(--bg-hover)" : "transparent"
+        background: profileMenu ? "var(--bg-hover)" : "transparent"
       },
       onMouseEnter: (e) => {
-        if (current !== "settings") e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        if (!profileMenu) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
       },
       onMouseLeave: (e) => {
-        if (current !== "settings") e.currentTarget.style.background = "transparent";
+        if (!profileMenu) e.currentTarget.style.background = "transparent";
       }
     },
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
-    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase()))
-  ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" })), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
+  )))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
