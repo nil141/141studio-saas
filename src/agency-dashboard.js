@@ -1539,7 +1539,7 @@
     const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, titleTxt), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, list.length));
     const Row = ({ o }) => {
       const overdue = o.nextFollowup < today;
-      const dotCol = mode === "due" ? overdue ? "var(--red)" : "var(--amber)" : "var(--text-subtle)";
+      const dotCol = "var(--text-subtle)";
       let rLabel, rColor;
       if (mode === "due") {
         rLabel = overdue ? "Atrasado" : "Hoy";

@@ -1734,7 +1734,7 @@ const SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
   );
   const Row = ({ o }) => {
     const overdue = o.nextFollowup < today;
-    const dotCol = mode === "due" ? (overdue ? "var(--red)" : "var(--amber)") : "var(--text-subtle)";
+    const dotCol = "var(--text-subtle)";
     let rLabel, rColor;
     if (mode === "due") { rLabel = overdue ? "Atrasado" : "Hoy"; rColor = overdue ? "var(--red)" : "var(--amber)"; }
     else { const d = daysTo(o.nextFollowup); rLabel = d === 1 ? "Mañana" : fmt(o.nextFollowup); rColor = "var(--text-subtle)"; }
