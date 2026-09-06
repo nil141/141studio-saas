@@ -1282,11 +1282,13 @@
     return `${d.getDate()} ${_BILL_MESES[d.getMonth()]}`;
   };
   var _ACCESOS = [
-    { label: "Clientes", icon: "users", nav: "clients" },
-    { label: "Proyectos", icon: "folder", nav: "projects" },
     { label: "Tareas", icon: "list-todo", nav: "tasks" },
+    { label: "Agenda", icon: "calendar", nav: "agenda" },
+    { label: "Proyectos", icon: "folder", nav: "projects" },
+    { label: "Clientes", icon: "users", nav: "clients" },
+    { label: "Propuestas Outreach", icon: "send", nav: "outreach" },
     { label: "Facturaci\xF3n", icon: "trending-up", nav: "income" },
-    { label: "Agenda", icon: "calendar", nav: "agenda" }
+    { label: "Gastos", icon: "receipt", nav: "billing" }
   ];
   var AccesosChips = ({ navigate, openModal }) => {
     return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, flexWrap: "wrap" } }, _ACCESOS.map((a) => /* @__PURE__ */ React.createElement(

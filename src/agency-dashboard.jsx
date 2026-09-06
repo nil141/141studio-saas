@@ -1439,11 +1439,13 @@ const _fmtDeliveryDate = (raw) => {
 
 // Fila de "Accesos directos" — chips que navegan a las secciones
 const _ACCESOS = [
-  { label: "Clientes",    icon: "users",       nav: "clients" },
-  { label: "Proyectos",   icon: "folder",      nav: "projects" },
-  { label: "Tareas",      icon: "list-todo",   nav: "tasks" },
-  { label: "Facturación", icon: "trending-up", nav: "income" },
-  { label: "Agenda",      icon: "calendar",    nav: "agenda" },
+  { label: "Tareas",              icon: "list-todo",   nav: "tasks" },
+  { label: "Agenda",              icon: "calendar",    nav: "agenda" },
+  { label: "Proyectos",           icon: "folder",      nav: "projects" },
+  { label: "Clientes",            icon: "users",       nav: "clients" },
+  { label: "Propuestas Outreach", icon: "send",        nav: "outreach" },
+  { label: "Facturación",         icon: "trending-up", nav: "income" },
+  { label: "Gastos",              icon: "receipt",     nav: "billing" },
 ];
 const AccesosChips = ({ navigate, openModal }) => {
   return (
