@@ -316,7 +316,7 @@ const AgendaPage = ({ navigate }) => {
   );
 
   return (
-    <div style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
+    <div className="pg-full" style={{display:"flex", flexDirection:"column", height:"100vh", overflow:"hidden"}}>
 
       {/* ── Toolbar ── */}
       <div style={{

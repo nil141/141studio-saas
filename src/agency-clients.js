@@ -30,7 +30,7 @@
         setTimeout(() => setInviteCopied(false), 2e3);
       });
     };
-    return /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "pg-full pg-pad", style: {
       height: "100vh",
       display: "flex",
       flexDirection: "column",

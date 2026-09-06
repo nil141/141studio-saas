@@ -36,7 +36,7 @@ const AgencyClientsList = ({ navigate, openModal }) => {
   };
 
   return (
-    <div style={{
+    <div className="pg-full pg-pad" style={{
       height:"100vh",
       display:"flex", flexDirection:"column",
       padding:"28px 40px 0",

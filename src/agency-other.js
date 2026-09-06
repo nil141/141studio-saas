@@ -120,6 +120,7 @@
       "div",
       {
         onClick: () => setOptionsOpen(false),
+        className: "pg-full pg-pad",
         style: {
           height: "100vh",
           display: "flex",
@@ -1159,7 +1160,7 @@
       gap: 8,
       letterSpacing: "-0.2px"
     };
-    return /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "pg-full pg-pad", style: {
       height: "100vh",
       display: "flex",
       flexDirection: "column",
@@ -2393,7 +2394,7 @@
       gap: 8,
       letterSpacing: "-0.2px"
     };
-    return /* @__PURE__ */ React.createElement("div", { style: {
+    return /* @__PURE__ */ React.createElement("div", { className: "pg-full pg-pad", style: {
       height: "100vh",
       display: "flex",
       flexDirection: "column",

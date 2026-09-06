@@ -283,6 +283,58 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
   );
 };
 
+// Tarjeta de lead para móvil (sustituye la fila de tabla en pantallas pequeñas)
+const _OcRow = ({ label, children }) => (
+  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minWidth: 0 }}>
+    <span style={{ fontSize: 12, color: "var(--text-subtle)", flexShrink: 0 }}>{label}</span>
+    <span style={{ fontSize: 13, color: "var(--text)", minWidth: 0, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{children}</span>
+  </div>
+);
+const OutreachCard = ({ o, D, sel, onSel }) => {
+  const ig = _igUrl(o.instagram), web = _webUrl(o.web);
+  const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 6, borderRadius: 8, display: "inline-flex" };
+  return (
+    <div style={{ background: sel ? "var(--accent-active)" : "var(--bg-elev)", border: "0.5px solid " + (sel ? "rgba(158,154,229,0.4)" : "var(--border)"), borderRadius: 14, padding: "13px 14px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 11, marginBottom: 12 }}>
+        <Check on={sel} onToggle={onSel} dim/>
+        <span style={{ fontSize: 15.5, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.brand}</span>
+        <StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 9 }}>
+        <_OcRow label="Seguimiento"><FollowupCell o={o} D={D}/></_OcRow>
+        <_OcRow label="Instagram">
+          {ig ? <a href={ig} target="_blank" rel="noreferrer" style={{ color: "var(--text)", textDecoration: "none" }}>{o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram}</a>
+            : <InlineText value="" placeholder="@instagram" onSave={v => D.updateOutreach(o.id, { instagram: v })}/>}
+        </_OcRow>
+        <_OcRow label="Web">
+          {web ? <a href={web} target="_blank" rel="noreferrer" style={{ color: "var(--text)", textDecoration: "none" }}>{o.web.replace(/^https?:\/\//, "")}</a>
+            : <InlineText value="" placeholder="URL" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
+        </_OcRow>
+        <_OcRow label="Contacto"><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></_OcRow>
+        <_OcRow label="Notas"><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></_OcRow>
+      </div>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 11, borderTop: "0.5px solid var(--border)" }}>
+        {!_DONE_ST.includes(o.status) && !o.convertedClientId && (
+          <button onClick={() => D.outreachMarkContacted(o.id)}
+            style={{ ...iconBtn, display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)", fontFamily: "inherit" }}>
+            <Icon name="send" size={14}/> Contactado hoy
+          </button>
+        )}
+        <div style={{ flex: 1 }}/>
+        {o.convertedClientId ? (
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 500, color: "var(--green)" }}><Icon name="check" size={13}/> Cliente</span>
+        ) : o.status === "cerrado" ? (
+          <button onClick={() => D.convertOutreachToClient(o.id)}
+            style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 8, cursor: "pointer",
+              background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500 }}>
+            <Icon name="arrow-up-right" size={13}/> Hacer cliente
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
 // Cabecera de la columna Estado con filtro desplegable
 const OutreachFilterHead = ({ filter, setFilter, counts, dueCount, clientCount, total }) => {
   const [open, setOpen] = useState(false);
@@ -449,7 +501,7 @@ const AgencyOutreach = ({ navigate }) => {
       </div>
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
-      <div style={{ overflowX: "auto", marginTop: 4 }}>
+      <div className="outreach-table" style={{ overflowX: "auto", marginTop: 4 }}>
           <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200, tableLayout: "fixed" }}>
             <colgroup>
               <col style={{ width: 44 }}/>
@@ -481,6 +533,10 @@ const AgencyOutreach = ({ navigate }) => {
               {rows.map((o, i) => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} first={i === 0}/>)}
             </tbody>
           </table>
+      </div>
+      {/* Lista de tarjetas — solo móvil */}
+      <div className="outreach-cards">
+        {rows.map(o => <OutreachCard key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)}/>)}
       </div>
       {rows.length === 0 && (
         <div style={{ padding: "44px 0" }}>

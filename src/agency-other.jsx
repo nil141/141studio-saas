@@ -308,6 +308,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
   return (
     <div
       onClick={() => setOptionsOpen(false)}
+      className="pg-full pg-pad"
       style={{
         height:"100vh",
         display:"flex", flexDirection:"column",
@@ -1758,7 +1759,7 @@ const AgencyBilling = () => {
   };
 
   return (
-    <div style={{
+    <div className="pg-full pg-pad" style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
     }}>
@@ -2956,7 +2957,7 @@ const IncomePage = () => {
   };
 
   return (
-    <div style={{
+    <div className="pg-full pg-pad" style={{
       height:"100vh", display:"flex", flexDirection:"column",
       padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
     }}>
