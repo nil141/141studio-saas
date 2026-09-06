@@ -122,7 +122,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
           </div>
           {fp.slice(0, 8).map((p, i) => (
             <ListRow key={p.id} label={p.clientName || p.name} color={pal[i % pal.length]}
-              active={current === "project" && p.id === activePid} onClick={() => onNavigate("project", { projectId: p.id })}/>
+              active={false} onClick={() => onNavigate("project", { projectId: p.id })}/>
           ))}
         </div>
       ) : null}
@@ -147,7 +147,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
           <div style={{ animation: "sectionIn .2s ease-out" }}>
             {fAll.map((p, i) => (
               <ListRow key={p.id} label={p.name || "Proyecto"} color={pal[i % pal.length]}
-                active={current === "project" && p.id === activePid} onClick={() => onNavigate("project", { projectId: p.id })}/>
+                active={false} onClick={() => onNavigate("project", { projectId: p.id })}/>
             ))}
           </div>
         ))}

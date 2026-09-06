@@ -144,7 +144,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       key: p.id,
       label: p.clientName || p.name,
       color: pal[i % pal.length],
-      active: current === "project" && p.id === activePid,
+      active: false,
       onClick: () => onNavigate("project", { projectId: p.id })
     }
   ))) : null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
@@ -184,7 +184,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       key: p.id,
       label: p.name || "Proyecto",
       color: pal[i % pal.length],
-      active: current === "project" && p.id === activePid,
+      active: false,
       onClick: () => onNavigate("project", { projectId: p.id })
     }
   ))))));
