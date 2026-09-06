@@ -1523,17 +1523,37 @@
   var SeguimientosBlock = ({ D, navigate }) => {
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
     const DONE = ["cerrado", "descartado"];
-    const due = (D.OUTREACH || []).filter((o) => o.nextFollowup && o.nextFollowup <= today && !DONE.includes(o.status) && !o.convertedClientId).sort((a, b) => a.nextFollowup < b.nextFollowup ? -1 : a.nextFollowup > b.nextFollowup ? 1 : 0);
+    const _MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const fmt = (ymd) => {
+      const p = ymd.split("-");
+      return `${+p[2]} ${_MES[+p[1] - 1]}`;
+    };
+    const daysTo = (ymd) => Math.round((/* @__PURE__ */ new Date(ymd + "T00:00:00") - /* @__PURE__ */ new Date(today + "T00:00:00")) / 864e5);
+    const active = (D.OUTREACH || []).filter((o) => o.nextFollowup && !DONE.includes(o.status) && !o.convertedClientId);
+    const cmp = (a, b) => a.nextFollowup < b.nextFollowup ? -1 : a.nextFollowup > b.nextFollowup ? 1 : 0;
+    const due = active.filter((o) => o.nextFollowup <= today).sort(cmp);
+    const upcoming = active.filter((o) => o.nextFollowup > today).sort(cmp);
     const [open, toggleOpen] = _usePersistOpen("141_home_segui", true);
-    if (!due.length) return null;
+    if (!due.length && !upcoming.length) return null;
+    const titleTxt = due.length ? "Seguimientos de hoy" : "Seguimientos pr\xF3ximos";
+    const headCount = due.length || upcoming.length;
     const arrow = /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("outreach"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver Outreach" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }));
-    const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Seguimientos de hoy"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, due.length));
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Seguimientos de hoy", open, onToggle: toggleOpen, right: arrow }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, due.slice(0, 8).map((o) => {
+    const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, titleTxt), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, headCount));
+    const Row = ({ o, kind }) => {
       const overdue = o.nextFollowup < today;
+      const dot = kind === "due" ? overdue ? "var(--red)" : "var(--amber)" : "var(--text-subtle)";
+      let rLabel, rColor;
+      if (kind === "due") {
+        rLabel = overdue ? "Atrasado" : "Hoy";
+        rColor = overdue ? "var(--red)" : "var(--amber)";
+      } else {
+        const d = daysTo(o.nextFollowup);
+        rLabel = d === 1 ? "Ma\xF1ana" : fmt(o.nextFollowup);
+        rColor = "var(--text-subtle)";
+      }
       return /* @__PURE__ */ React.createElement(
         "div",
         {
-          key: o.id,
           onClick: () => navigate("outreach"),
           onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
           onMouseLeave: (e) => e.currentTarget.style.background = "transparent",
@@ -1548,10 +1568,19 @@
             gap: 12
           }
         },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: overdue ? "var(--red)" : "var(--amber)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand)),
-        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: overdue ? "var(--red)" : "var(--amber)" } }, overdue ? "Atrasado" : "Hoy")
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: dot } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand)),
+        /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: rColor } }, rLabel)
       );
-    }))));
+    };
+    const subHead = (txt) => /* @__PURE__ */ React.createElement("div", { style: {
+      fontSize: 11,
+      fontWeight: 600,
+      textTransform: "uppercase",
+      letterSpacing: "0.06em",
+      color: "var(--text-subtle)",
+      padding: "10px 14px 4px"
+    } }, txt);
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: titleTxt, open, onToggle: toggleOpen, right: arrow }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, due.slice(0, 8).map((o) => /* @__PURE__ */ React.createElement(Row, { key: o.id, o, kind: "due" })), upcoming.length > 0 && due.length > 0 && subHead("Pr\xF3ximos"), upcoming.slice(0, 8).map((o) => /* @__PURE__ */ React.createElement(Row, { key: o.id, o, kind: "up" })))));
   };
   window.AgencyDashboard = AgencyDashboard;
 })();

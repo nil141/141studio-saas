@@ -532,7 +532,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       },
       /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
-      dot ? /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: "var(--accent)", flexShrink: 0 } }) : badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
+      dot ? /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", width: 7, height: 7, borderRadius: 99, background: "var(--accent)" } }) : badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
       href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
       chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : null
     );

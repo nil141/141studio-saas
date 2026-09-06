@@ -464,7 +464,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         <Icon name={icon} size={16} strokeWidth={1.7}/>
         <span style={{flex:1}}>{label}</span>
         {dot ? (
-          <span style={{width:7, height:7, borderRadius:99, background:"var(--accent)", flexShrink:0}}/>
+          <span style={{position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", width:7, height:7, borderRadius:99, background:"var(--accent)"}}/>
         ) : badge ? (
           <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
             {badge}
