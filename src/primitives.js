@@ -463,7 +463,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     {
       src: "/wordmark.svg",
       alt: "141'DIGITAL",
-      style: { height: 15, width: "auto", maxWidth: 150, display: "block", objectFit: "contain", opacity: 0.95 }
+      style: { height: 18, width: "auto", maxWidth: 160, display: "block", objectFit: "contain", opacity: 0.95 }
     }
   ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
@@ -721,7 +721,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
     list = list.filter((n) => n.target === "agency");
   }
   const unread = list.filter((n) => !n.read).length;
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 15 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 13 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
     position: "absolute",
     top: 3,
     right: 3,

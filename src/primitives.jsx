@@ -437,7 +437,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       ) : (
       <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
         <img src="/wordmark.svg" alt="141'DIGITAL"
-          style={{height:15, width:"auto", maxWidth:150, display:"block", objectFit:"contain", opacity:0.95}} />
+          style={{height:18, width:"auto", maxWidth:160, display:"block", objectFit:"contain", opacity:0.95}} />
         <NotificationBell kind={kind} onNavigate={onNavigate}/>
       </div>
       )}
@@ -627,7 +627,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
   return (
     <div style={{ position: "relative" }} onClick={e => e.stopPropagation()}>
       <button ref={btnRef} className="btn ghost icon-only" aria-label="Notificaciones" onClick={toggle}>
-        <Icon name="bell" size={15}/>
+        <Icon name="bell" size={13}/>
         {unread > 0 && (
           <span style={{ position: "absolute", top: 3, right: 3, minWidth: 15, height: 15, padding: "0 3px", borderRadius: 99,
             background: "var(--red)", color: "#fff", fontSize: 9.5, fontWeight: 700, display: "grid", placeItems: "center", lineHeight: 1 }}>
