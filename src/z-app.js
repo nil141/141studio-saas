@@ -46,6 +46,58 @@
     exp: localStorage.getItem(_SEK)
   });
   window._sessionUtils = { save: _saveSession, info: _sessionInfo };
+  var _MOBILE_TABS = [
+    { name: "dashboard", label: "Inicio" },
+    { name: "tasks", label: "Tareas" },
+    { name: "agenda", label: "Agenda" },
+    { name: "projects", label: "Proyectos" },
+    { name: "clients", label: "Clientes" },
+    { name: "outreach", label: "Outreach" },
+    { name: "billing", label: "Gastos" },
+    { name: "notifications", label: "Notificaciones" }
+  ];
+  var _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
+  var MobileTopNav = ({ view, navigate, session }) => {
+    const [menu, setMenu] = React.useState(false);
+    const tabsRef = React.useRef(null);
+    React.useEffect(() => {
+      if (!menu) return;
+      const c = () => setMenu(false);
+      window.addEventListener("click", c);
+      return () => window.removeEventListener("click", c);
+    }, [menu]);
+    const cur = _mapMobileTab(view.name);
+    React.useEffect(() => {
+      try {
+        const el = tabsRef.current && tabsRef.current.querySelector('[data-active="1"]');
+        if (el) el.scrollIntoView({ inline: "center", block: "nearest" });
+      } catch {
+      }
+    }, [cur]);
+    const raw = session && (session.name || session.email) || "Nil";
+    const nm = raw.includes("@") ? raw.split("@")[0] : raw;
+    const name = nm.charAt(0).toUpperCase() + nm.slice(1);
+    const initial = name.charAt(0).toUpperCase();
+    return /* @__PURE__ */ React.createElement("div", { className: "mobile-topnav" }, /* @__PURE__ */ React.createElement("div", { className: "mtn-bar" }, /* @__PURE__ */ React.createElement("div", { style: { position: "relative" } }, /* @__PURE__ */ React.createElement("button", { className: "mtn-acct", onClick: (e) => {
+      e.stopPropagation();
+      setMenu((v) => !v);
+    } }, /* @__PURE__ */ React.createElement("span", { className: "mtn-ava" }, initial), /* @__PURE__ */ React.createElement("span", { className: "mtn-name" }, name), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 14, style: { transform: menu ? "rotate(90deg)" : "none", transition: "transform .15s", color: "var(--text-muted)" } })), menu && /* @__PURE__ */ React.createElement("div", { className: "mtn-menu", onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setMenu(false);
+      navigate("settings");
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "settings", size: 16 }), " Configuraci\xF3n"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
+      setMenu(false);
+      navigate("__logout");
+    }, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }), " Cerrar sesi\xF3n"))), /* @__PURE__ */ React.createElement("button", { className: "mtn-bell", onClick: () => navigate("notifications"), "aria-label": "Notificaciones" }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 19 }))), /* @__PURE__ */ React.createElement("div", { className: "mtn-tabs", ref: tabsRef }, _MOBILE_TABS.map((t) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: t.name,
+        "data-active": cur === t.name ? "1" : void 0,
+        className: "mtn-tab" + (cur === t.name ? " active" : ""),
+        onClick: () => navigate(t.name)
+      },
+      t.label
+    ))));
+  };
   var App = () => {
     window.Data.useStore();
     const [session, setSession] = useState(_loadSession);
@@ -297,7 +349,7 @@
         onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-muted)"
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "chevrons-right", size: 16, strokeWidth: 1.7 })
-    ), /* @__PURE__ */ React.createElement("div", { className: "main" }, /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
+    ), /* @__PURE__ */ React.createElement("div", { className: "main" }, !isClient && /* @__PURE__ */ React.createElement(MobileTopNav, { view, navigate, session }), /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
       { name: "dashboard", icon: "home", label: "Inicio" },
       { name: "projects", icon: "folder", label: "Proyectos" },
       { name: "tasks", icon: "list-todo", label: "Tareas" },

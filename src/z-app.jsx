@@ -53,6 +53,70 @@ const TWEAKS_DEFAULTS = /*EDITMODE-BEGIN*/{
   "agencyName": "141'STUDIO"
 }/*EDITMODE-END*/;
 
+// ── Navegación móvil superior (estilo app: cuenta + pestañas deslizables) ──
+const _MOBILE_TABS = [
+  { name: "dashboard",     label: "Inicio" },
+  { name: "tasks",         label: "Tareas" },
+  { name: "agenda",        label: "Agenda" },
+  { name: "projects",      label: "Proyectos" },
+  { name: "clients",       label: "Clientes" },
+  { name: "outreach",      label: "Outreach" },
+  { name: "billing",       label: "Gastos" },
+  { name: "notifications", label: "Notificaciones" },
+];
+const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
+
+const MobileTopNav = ({ view, navigate, session }) => {
+  const [menu, setMenu] = React.useState(false);
+  const tabsRef = React.useRef(null);
+  React.useEffect(() => {
+    if (!menu) return;
+    const c = () => setMenu(false);
+    window.addEventListener("click", c);
+    return () => window.removeEventListener("click", c);
+  }, [menu]);
+  const cur = _mapMobileTab(view.name);
+  React.useEffect(() => {
+    try {
+      const el = tabsRef.current && tabsRef.current.querySelector('[data-active="1"]');
+      if (el) el.scrollIntoView({ inline: "center", block: "nearest" });
+    } catch {}
+  }, [cur]);
+  const raw = (session && (session.name || session.email)) || "Nil";
+  const nm = raw.includes("@") ? raw.split("@")[0] : raw;
+  const name = nm.charAt(0).toUpperCase() + nm.slice(1);
+  const initial = name.charAt(0).toUpperCase();
+  return (
+    <div className="mobile-topnav">
+      <div className="mtn-bar">
+        <div style={{ position: "relative" }}>
+          <button className="mtn-acct" onClick={e => { e.stopPropagation(); setMenu(v => !v); }}>
+            <span className="mtn-ava">{initial}</span>
+            <span className="mtn-name">{name}</span>
+            <Icon name="chevron" size={14} style={{ transform: menu ? "rotate(90deg)" : "none", transition: "transform .15s", color: "var(--text-muted)" }}/>
+          </button>
+          {menu && (
+            <div className="mtn-menu" onClick={e => e.stopPropagation()}>
+              <button onClick={() => { setMenu(false); navigate("settings"); }}><Icon name="settings" size={16}/> Configuración</button>
+              <button onClick={() => { setMenu(false); navigate("__logout"); }} style={{ color: "var(--red)" }}><Icon name="log-out" size={16}/> Cerrar sesión</button>
+            </div>
+          )}
+        </div>
+        <button className="mtn-bell" onClick={() => navigate("notifications")} aria-label="Notificaciones">
+          <Icon name="bell" size={19}/>
+        </button>
+      </div>
+      <div className="mtn-tabs" ref={tabsRef}>
+        {_MOBILE_TABS.map(t => (
+          <button key={t.name} data-active={cur === t.name ? "1" : undefined}
+            className={"mtn-tab" + (cur === t.name ? " active" : "")}
+            onClick={() => navigate(t.name)}>{t.label}</button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const App = () => {
   window.Data.useStore();   // re-render cuando termina la carga inicial (READY)
   // session: null = logged out (show AuthGate); { role, name, ... } = logged in
@@ -256,6 +320,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         )}
         <div className="main">
+          {!isClient && <MobileTopNav view={view} navigate={navigate} session={session}/>}
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           <div key={view.name} className="page-enter">
             {isClient ? renderClient() : renderAgency()}

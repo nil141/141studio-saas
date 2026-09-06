@@ -844,9 +844,9 @@
     /* Layout */
     .app, .app.client { grid-template-columns: 1fr; }
     .sidebar { display: none !important; }
-    .main { padding-bottom: 68px; margin: 0; border-radius: 0; border: none; min-height: 100vh; }
-    /* Inicio: menos margen lateral y hueco para la barra inferior */
-    .dash-root { padding: 16px 16px 104px !important; gap: 16px !important; }
+    .main { padding-bottom: 24px; margin: 0; border-radius: 0; border: none; min-height: 100vh; }
+    /* Inicio: menos margen lateral en móvil */
+    .dash-root { padding: 16px 16px 48px !important; gap: 16px !important; }
     /* Accesos directos: una sola fila que se arrastra, hasta el borde */
     .accesos-chips { flex-wrap: nowrap !important; margin: 0 -16px; padding: 0 16px 2px; }
     /* Flechita "ver todo" de las cabeceras de sección: fuera en móvil */
@@ -878,7 +878,7 @@
     .search { max-width: 100%; flex: 1; }
 
     /* Page */
-    .page { padding: 16px 14px 80px; max-width: 100%; }
+    .page { padding: 16px 14px 40px; max-width: 100%; }
     .portal-hero { margin: -16px -14px 0; }
     .page-head {
       flex-direction: column; gap: 10px; margin-bottom: 16px;
@@ -965,6 +965,65 @@
     }
   }
 
+  /* Navegación móvil superior (cuenta + pestañas deslizables) */
+  .mobile-topnav { display: none; }
+  @media (max-width: 768px) {
+    .mobile-topnav {
+      display: block;
+      position: sticky; top: 0; z-index: 30;
+      background: var(--bg);
+      border-bottom: 0.5px solid var(--border);
+    }
+    .mtn-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 14px 8px;
+    }
+    .mtn-acct {
+      display: inline-flex; align-items: center; gap: 9px;
+      background: transparent; border: 0; cursor: pointer; padding: 4px 6px 4px 4px;
+      border-radius: 99px; font-family: inherit; color: var(--text); max-width: 62vw;
+    }
+    .mtn-ava {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      display: grid; place-items: center; font-size: 13px; font-weight: 600;
+      background: var(--accent-soft); color: var(--accent);
+    }
+    .mtn-name {
+      font-size: 17px; font-weight: 600; letter-spacing: -0.4px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .mtn-menu {
+      position: absolute; top: calc(100% + 6px); left: 0; z-index: 40; min-width: 210px;
+      background: var(--bg-elev); border: 0.5px solid var(--border-strong);
+      border-radius: 14px; padding: 6px; box-shadow: 0 16px 40px rgba(0,0,0,0.5);
+    }
+    .mtn-menu button {
+      display: flex; align-items: center; gap: 11px; width: 100%;
+      padding: 11px 12px; border-radius: 10px; border: 0; cursor: pointer;
+      background: transparent; color: var(--text); font-family: inherit;
+      font-size: 14.5px; text-align: left;
+    }
+    .mtn-menu button:active { background: var(--bg-hover); }
+    .mtn-bell {
+      width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+      display: grid; place-items: center; cursor: pointer;
+      background: var(--bg-elev-2); border: 0.5px solid var(--border); color: var(--text-muted);
+    }
+    .mtn-tabs {
+      display: flex; gap: 4px; overflow-x: auto; -webkit-overflow-scrolling: touch;
+      padding: 0 10px; scroll-behavior: smooth;
+    }
+    .mtn-tab {
+      flex-shrink: 0; background: transparent; border: 0; cursor: pointer;
+      font-family: inherit; font-size: 15px; font-weight: 500; letter-spacing: -0.3px;
+      color: var(--text-subtle); padding: 10px 10px 12px; position: relative;
+      border-bottom: 2px solid transparent; transition: color .15s;
+    }
+    .mtn-tab.active {
+      color: var(--text); border-bottom-color: var(--accent);
+    }
+  }
+
   /* Mobile bottom navigation bar */
   .mobile-nav { display: none; }
   .tasks-mobile-header { display: none; }
@@ -974,7 +1033,7 @@
   @media (max-width: 1240px) { .agenda-drawer { width: 232px !important; } }
   @media (max-width: 768px) {
     .tasks-left { display: none !important; }
-    .tasks-right { padding: 20px 16px 100px !important; }
+    .tasks-right { padding: 20px 16px 40px !important; }
     .agenda-drawer { display: none !important; }
     .tasks-mobile-header { display: block; }
     .tasks-desktop-header { display: none !important; }
@@ -984,7 +1043,7 @@
   }
   @media (max-width: 768px) {
     .mobile-nav {
-      display: flex;
+      display: none; /* sustituido por la navegación superior (.mobile-topnav) */
       position: fixed;
       bottom: calc(12px + env(safe-area-inset-bottom));
       left: 50%;
@@ -1086,7 +1145,7 @@
 <script src="src/primitives.js?v=89"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=35"></script>
+<script src="src/z-app.js?v=36"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=92"></script>
 <script src="src/agency-clients.js?v=29"></script>
