@@ -191,7 +191,7 @@ const StatusPill = ({ value, onChange }) => {
   );
 };
 
-const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap" };
+const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
 
 // Celda de seguimiento — editable: fija/cambia/quita la fecha del próximo seguimiento
 const FollowupCell = ({ o, D }) => {
@@ -207,7 +207,7 @@ const FollowupCell = ({ o, D }) => {
           style={{ background: "var(--bg-elev-2)", border: "0.5px solid var(--accent)", borderRadius: 6, color: "var(--text)",
             fontSize: 12, fontFamily: "inherit", padding: "3px 6px", outline: "none", colorScheme: "dark" }}/>
         {o.nextFollowup && (
-          <button onClick={() => { D.updateOutreach(o.id, { nextFollowup: null }); setEditing(false); }} title="Quitar seguimiento"
+          <button onMouseDown={e => { e.preventDefault(); e.stopPropagation(); D.updateOutreach(o.id, { nextFollowup: null }); setEditing(false); }} title="Quitar seguimiento"
             style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 2, display: "inline-flex" }}>
             <Icon name="x" size={12}/>
           </button>
@@ -239,7 +239,7 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
       <td style={{ ...cell, paddingLeft: 16, paddingRight: 4 }}><Check on={sel} onToggle={onSel} dim/></td>
       <td style={{ ...cell, fontWeight: 500, fontSize: 14 }}>{o.brand}</td>
       <td style={cell}><StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/></td>
-      <td style={cell}><FollowupCell o={o} D={D}/></td>
+      <td style={{ ...cell, overflow: "visible" }}><FollowupCell o={o} D={D}/></td>
       <td style={cell}><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></td>
       <td style={cell}>
         {ig ? <a href={ig} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}
@@ -450,7 +450,19 @@ const AgencyOutreach = ({ navigate }) => {
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
       <div style={{ overflowX: "auto", marginTop: 4 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1120 }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200, tableLayout: "fixed" }}>
+            <colgroup>
+              <col style={{ width: 44 }}/>
+              <col style={{ width: 150 }}/>
+              <col style={{ width: 170 }}/>
+              <col style={{ width: 150 }}/>
+              <col style={{ width: 140 }}/>
+              <col style={{ width: 160 }}/>
+              <col style={{ width: 160 }}/>
+              <col style={{ width: 190 }}/>
+              <col style={{ width: 85 }}/>
+              <col style={{ width: 90 }}/>
+            </colgroup>
             <thead>
               <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
                 <th style={{ ...th, paddingLeft: 16, paddingRight: 4, width: 34 }}><Check on={allSel} onToggle={toggleAll}/></th>
