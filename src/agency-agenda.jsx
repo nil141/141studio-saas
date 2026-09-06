@@ -357,7 +357,7 @@ const AgendaPage = ({ navigate }) => {
       <div style={{flex:1, display:"flex", minHeight:0, overflow:"hidden"}}>
 
         {/* ── Calendar ── */}
-        <div style={{flex:1, display:"flex", flexDirection:"column", minWidth:0, padding:"0 10px 12px"}}>
+        <div className="agenda-cal-col" style={{flex:1, display:"flex", flexDirection:"column", minWidth:0, padding:"0 10px 12px"}}>
 
           {/* MONTH: weekday header row */}
           {viewMode === "month" && (
@@ -452,6 +452,38 @@ const AgendaPage = ({ navigate }) => {
               })}
             </div>
           )}
+
+          {/* Lista del día seleccionado — solo móvil (el panel lateral se oculta) */}
+          <div className="agenda-mobile-day">
+            <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", margin:"4px 4px 10px"}}>
+              <div style={{fontSize:14, fontWeight:600, letterSpacing:"-0.3px", color:"var(--text)"}}>
+                {selectedDate ? selectedDate.toLocaleDateString("es-ES", {weekday:"long", day:"numeric", month:"long"}).replace(/^\w/, c => c.toUpperCase()) : "Selecciona un día"}
+              </div>
+              <button className="btn ghost icon-only sm" onClick={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}><Icon name="plus" size={14}/></button>
+            </div>
+            {taskStatsByDate[selected] && (
+              <div onClick={() => navigate("tasks", { date: selected })}
+                style={{display:"flex", alignItems:"center", gap:12, padding:"11px 13px", marginBottom:10,
+                  background:"var(--bg-elev-2)", border:"0.5px solid var(--border)", borderRadius:12}}>
+                <MiniRing pct={taskStatsByDate[selected].pct} size={30} stroke={3}/>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{fontSize:13, fontWeight:500}}>Tareas del día</div>
+                  <div style={{fontSize:11, color:"var(--text-muted)", marginTop:2}}>{taskStatsByDate[selected].done}/{taskStatsByDate[selected].total} · {taskStatsByDate[selected].pct}%</div>
+                </div>
+                <Icon name="chevron-right" size={15} style={{color:"var(--text-subtle)"}}/>
+              </div>
+            )}
+            {selectedEvents.length === 0 ? (
+              <div style={{padding:"16px 0 8px", textAlign:"center", color:"var(--text-subtle)", fontSize:13}}>Sin eventos este día</div>
+            ) : (
+              <div style={{display:"flex", flexDirection:"column", gap:8}}>
+                {selectedEvents.map(ev => {
+                  const isCustom = ev.id.startsWith("custom-");
+                  return <EventCard key={ev.id} ev={ev} onDelete={isCustom ? () => deleteCustom(ev.id) : null}/>;
+                })}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* ── Detail drawer — siempre visible (ancho fijo, en .agenda-drawer) ── */}

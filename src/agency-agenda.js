@@ -329,7 +329,7 @@ const AgendaPage = ({ navigate }) => {
         { icon: "link", label: "Conectar calendario", sub: "Suscr\xEDbete a la agenda desde tu calendario", onClick: () => setCalOpen(true) }
       ]
     }
-  )))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
+  )))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("div", { className: "agenda-cal-col", style: { flex: 1, display: "flex", flexDirection: "column", minWidth: 0, padding: "0 10px 12px" } }, viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(7,1fr)", columnGap: 6, padding: "2px 4px 8px", flexShrink: 0 } }, DAYS_ES.map((d) => /* @__PURE__ */ React.createElement("div", { key: d, style: {
     textAlign: "center",
     fontSize: 11,
     fontWeight: 500,
@@ -433,7 +433,31 @@ const AgendaPage = ({ navigate }) => {
       } }, dayDate.getDate())),
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", padding: "0 11px 11px", display: "flex", flexDirection: "column", gap: 6 } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement(TaskChip, { stats: stats || { total: 0, done: 0, pct: 0 } })), evts.map((ev) => /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev })))
     );
-  }))), panelOpen && /* @__PURE__ */ React.createElement("div", { className: "agenda-drawer", style: {
+  })), /* @__PURE__ */ React.createElement("div", { className: "agenda-mobile-day" }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", margin: "4px 4px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 600, letterSpacing: "-0.3px", color: "var(--text)" } }, selectedDate ? selectedDate.toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long" }).replace(/^\w/, (c) => c.toUpperCase()) : "Selecciona un d\xEDa"), /* @__PURE__ */ React.createElement("button", { className: "btn ghost icon-only sm", onClick: () => {
+    setForm((f) => ({ ...f, date: selected }));
+    setShowForm(true);
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }))), taskStatsByDate[selected] && /* @__PURE__ */ React.createElement(
+    "div",
+    {
+      onClick: () => navigate("tasks", { date: selected }),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        padding: "11px 13px",
+        marginBottom: 10,
+        background: "var(--bg-elev-2)",
+        border: "0.5px solid var(--border)",
+        borderRadius: 12
+      }
+    },
+    /* @__PURE__ */ React.createElement(MiniRing, { pct: taskStatsByDate[selected].pct, size: 30, stroke: 3 }),
+    /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, fontWeight: 500 } }, "Tareas del d\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-muted)", marginTop: 2 } }, taskStatsByDate[selected].done, "/", taskStatsByDate[selected].total, " \xB7 ", taskStatsByDate[selected].pct, "%")),
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 15, style: { color: "var(--text-subtle)" } })
+  ), selectedEvents.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 0 8px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin eventos este d\xEDa") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, selectedEvents.map((ev) => {
+    const isCustom = ev.id.startsWith("custom-");
+    return /* @__PURE__ */ React.createElement(EventCard, { key: ev.id, ev, onDelete: isCustom ? () => deleteCustom(ev.id) : null });
+  })))), panelOpen && /* @__PURE__ */ React.createElement("div", { className: "agenda-drawer", style: {
     width: 280,
     flexShrink: 0,
     overflowY: "auto",

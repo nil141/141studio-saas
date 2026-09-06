@@ -967,6 +967,8 @@
 
   /* Outreach: la lista de tarjetas solo se ve en móvil */
   .outreach-cards { display: none; }
+  /* Agenda: la lista del día bajo el calendario solo se ve en móvil */
+  .agenda-mobile-day { display: none; }
 
   /* Navegación móvil superior (cuenta + pestañas deslizables) */
   .mobile-topnav { display: none; }
@@ -990,6 +992,8 @@
     .agenda-add { display: none !important; }
     /* Calendario: filas compactas en móvil (no estirar a toda la pantalla) */
     .agenda-month-grid { flex: none !important; grid-template-rows: none !important; grid-auto-rows: 60px !important; }
+    .agenda-cal-col { overflow-y: auto !important; }
+    .agenda-mobile-day { display: block; margin-top: 10px; padding: 12px 4px 8px; border-top: 0.5px solid var(--border); }
     /* Outreach: tabla → tarjetas en móvil */
     .outreach-table { display: none !important; }
     .outreach-cards { display: flex !important; flex-direction: column; gap: 10px; padding-bottom: 8px; }
@@ -1179,7 +1183,7 @@
 <script src="src/assistant.js?v=2"></script>
 <script src="src/gmail.js?v=3"></script>
 <script src="src/z-modals2.js?v=4"></script>
-<script src="src/agency-agenda.js?v=14"></script>
+<script src="src/agency-agenda.js?v=15"></script>
 <script src="src/quick-create.js?v=16"></script>
 <script src="src/routines.js?v=28"></script>
 <!-- Todos los componentes cargados — arrancar React ahora -->
