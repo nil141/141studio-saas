@@ -1731,7 +1731,6 @@ const SeguimientosBlock = ({ D, navigate }) => {
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
             {due.slice(0, 8).map(o => {
               const overdue = o.nextFollowup < today;
-              const igLabel = o.instagram ? (o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram) : "";
               return (
                 <div key={o.id} onClick={() => navigate("outreach")}
                   onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
@@ -1741,7 +1740,6 @@ const SeguimientosBlock = ({ D, navigate }) => {
                   <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
                     <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: overdue ? "var(--red)" : "var(--amber)" }}/>
                     <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.brand}</span>
-                    {igLabel && <span style={{ fontSize: 12, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{igLabel}</span>}
                   </div>
                   <span style={{ fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: overdue ? "var(--red)" : "var(--amber)" }}>
                     {overdue ? "Atrasado" : "Hoy"}

@@ -142,16 +142,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
     /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
-    !otrosOpen && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { style: {
-      fontSize: 11,
-      fontWeight: 600,
-      minWidth: 18,
-      textAlign: "center",
-      padding: "1px 6px",
-      borderRadius: 99,
-      background: "var(--accent-soft)",
-      color: "var(--accent)"
-    } }, outreachDue),
+    !otrosOpen && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: "var(--accent)", flexShrink: 0 } }),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
   ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(
     NavItem,
@@ -161,7 +152,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       icon: it.icon,
       label: it.label,
       href: it.href,
-      badge: it.id === "outreach" && outreachDue ? outreachDue : void 0,
+      dot: it.id === "outreach" && outreachDue > 0,
       nested: true
     }
   ))), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
@@ -507,7 +498,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     const t = setTimeout(measurePill, 280);
     return () => clearTimeout(t);
   }, [current, collapsed]);
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested, href }) => {
+  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = href ? false : active != null ? active : curNav === id;
     const handleClick = href ? (() => window.open(href, "_blank", "noopener,noreferrer")) : onClick || (() => onNavigate(id));
@@ -541,7 +532,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       },
       /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
-      badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
+      dot ? /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: "var(--accent)", flexShrink: 0 } }) : badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
       href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
       chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : null
     );

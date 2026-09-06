@@ -102,8 +102,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         <Icon name="more-h" size={16} strokeWidth={1.7}/>
         <span style={{ flex: 1 }}>Otros</span>
         {!otrosOpen && outreachDue > 0 && (
-          <span style={{ fontSize: 11, fontWeight: 600, minWidth: 18, textAlign: "center", padding: "1px 6px", borderRadius: 99,
-            background: "var(--accent-soft)", color: "var(--accent)" }}>{outreachDue}</span>
+          <span style={{ width: 7, height: 7, borderRadius: 99, background: "var(--accent)", flexShrink: 0 }}/>
         )}
         <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
@@ -111,7 +110,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
           {_NAV_OTROS.map(it => (
             <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href}
-              badge={it.id === "outreach" && outreachDue ? outreachDue : undefined} nested/>
+              dot={it.id === "outreach" && outreachDue > 0} nested/>
           ))}
         </div>
       )}
@@ -438,7 +437,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     return () => clearTimeout(t);
   }, [current, collapsed]);
 
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested, href }) => {
+  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = href ? false : (active != null ? active : (curNav === id));
     const handleClick = href
@@ -464,7 +463,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       >
         <Icon name={icon} size={16} strokeWidth={1.7}/>
         <span style={{flex:1}}>{label}</span>
-        {badge ? (
+        {dot ? (
+          <span style={{width:7, height:7, borderRadius:99, background:"var(--accent)", flexShrink:0}}/>
+        ) : badge ? (
           <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
             {badge}
           </span>

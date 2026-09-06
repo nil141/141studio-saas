@@ -1530,7 +1530,6 @@
     const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, "Seguimientos de hoy"), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, due.length));
     return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Seguimientos de hoy", open, onToggle: toggleOpen, right: arrow }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, due.slice(0, 8).map((o) => {
       const overdue = o.nextFollowup < today;
-      const igLabel = o.instagram ? o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram : "";
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -1549,7 +1548,7 @@
             gap: 12
           }
         },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: overdue ? "var(--red)" : "var(--amber)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand), igLabel && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, igLabel)),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: overdue ? "var(--red)" : "var(--amber)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand)),
         /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: overdue ? "var(--red)" : "var(--amber)" } }, overdue ? "Atrasado" : "Hoy")
       );
     }))));
