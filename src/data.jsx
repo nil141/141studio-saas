@@ -477,7 +477,7 @@ const addClient = (input) => {
   const uid = _uid(); if (!uid) return;
   const c = {
     id: _id(),
-    name:        input.name    || "Sin nombre",
+    name:        input.name    || "",
     company:     input.company || input.name || "Sin empresa",
     email:       input.email   || "",
     whatsapp:    input.phone   || input.whatsapp || "",
@@ -1604,7 +1604,7 @@ const outreachMarkContacted = (id, days = 3) => {
 const convertOutreachToClient = (id) => {
   const o = (_store.OUTREACH || []).find(x => x.id === id); if (!o) return null;
   if (o.convertedClientId) return _store.CLIENTS.find(c => c.id === o.convertedClientId) || null;
-  const c = addClient({ name: o.contact || o.brand, company: o.brand, email: o.email, website: o.web });
+  const c = addClient({ name: (o.contact || "").trim(), company: o.brand, email: o.email, website: o.web });
   if (c) updateOutreach(id, { status: "cerrado", convertedClientId: c.id });
   return c;
 };
