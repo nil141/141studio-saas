@@ -337,10 +337,6 @@ const AgendaPage = ({ navigate }) => {
           </div>
         </div>
         <div style={{display:"flex", alignItems:"center", gap:10}}>
-          <button className="btn ghost sm" onClick={() => setCalOpen(true)}
-            style={{display:"inline-flex", alignItems:"center", gap:7}} data-tooltip="Conectar con Apple Calendar">
-            <Icon name="link" size={14}/> Conectar calendario
-          </button>
           <div className="seg">
             <button className={viewMode==="month"?"active":""} onClick={()=>setView("month")}>Mes</button>
             <button className={viewMode==="week"?"active":""} onClick={()=>setView("week")}>Semana</button>
@@ -349,6 +345,7 @@ const AgendaPage = ({ navigate }) => {
             plusActions={() => { setForm(f=>({...f, date:selected})); setShowForm(true); }}
             moreActions={[
               { icon: "calendar", label: "Ir a hoy", onClick: goToday },
+              { icon: "link", label: "Conectar calendario", sub: "Suscríbete a la agenda desde tu calendario", onClick: () => setCalOpen(true) },
             ]}
           />
         </div>
