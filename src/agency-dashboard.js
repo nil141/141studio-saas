@@ -795,7 +795,7 @@
       background: c.tint,
       color: c.color
     } }, /* @__PURE__ */ React.createElement(Icon, { name: c.icon, size: 14, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.title), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, color: "var(--text-subtle)", marginTop: 1 } }, c.when))))))), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, height: 320, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(QueuesBlock, { height: "100%" }), /* @__PURE__ */ React.createElement(ProjectsBlock, { height: "100%" })), /* @__PURE__ */ React.createElement("section", { style: { display: "grid", gridTemplateColumns: "1.7fr 1fr", gap: 16, height: 192, flexShrink: 0 } }, /* @__PURE__ */ React.createElement(MiniFinanceBlock, null), /* @__PURE__ */ React.createElement(QueuesCountBlock, null)));
-    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement(SeguimientosBlock, { D, navigate }), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }));
+    const LayoutInicio = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Tu status de hoy", open: statusOpen, onToggle: toggleStatus }), statusOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, KpiRow)), /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: "Accesos directos", open: accesosOpen, onToggle: toggleAccesos }), accesosOpen && /* @__PURE__ */ React.createElement("div", { style: { marginTop: 14 } }, /* @__PURE__ */ React.createElement(AccesosChips, { navigate, openModal }))), /* @__PURE__ */ React.createElement(SeguimientosBlock, { D, navigate, mode: "due" }), /* @__PURE__ */ React.createElement(MiListaBlock, { D, navigate, todayStr: _todayStr }), /* @__PURE__ */ React.createElement(EntregasBlock, { D, navigate }), /* @__PURE__ */ React.createElement(SeguimientosBlock, { D, navigate, mode: "upcoming" }));
     const renderLayout = () => LayoutInicio;
     return /* @__PURE__ */ React.createElement("div", { style: {
       display: "flex",
@@ -1520,7 +1520,7 @@
       );
     })))));
   };
-  var SeguimientosBlock = ({ D, navigate }) => {
+  var SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
     const DONE = ["cerrado", "descartado"];
     const _MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -1531,19 +1531,17 @@
     const daysTo = (ymd) => Math.round((/* @__PURE__ */ new Date(ymd + "T00:00:00") - /* @__PURE__ */ new Date(today + "T00:00:00")) / 864e5);
     const active = (D.OUTREACH || []).filter((o) => o.nextFollowup && !DONE.includes(o.status) && !o.convertedClientId);
     const cmp = (a, b) => a.nextFollowup < b.nextFollowup ? -1 : a.nextFollowup > b.nextFollowup ? 1 : 0;
-    const due = active.filter((o) => o.nextFollowup <= today).sort(cmp);
-    const upcoming = active.filter((o) => o.nextFollowup > today).sort(cmp);
-    const [open, toggleOpen] = _usePersistOpen("141_home_segui", true);
-    if (!due.length && !upcoming.length) return null;
-    const titleTxt = due.length ? "Seguimientos de hoy" : "Seguimientos pr\xF3ximos";
-    const headCount = due.length || upcoming.length;
+    const list = active.filter((o) => mode === "due" ? o.nextFollowup <= today : o.nextFollowup > today).sort(cmp);
+    const titleTxt = mode === "due" ? "Seguimientos de hoy" : "Seguimientos pr\xF3ximos";
+    const [open, toggleOpen] = _usePersistOpen("141_home_segui_" + mode, true);
+    if (!list.length) return null;
     const arrow = /* @__PURE__ */ React.createElement("button", { onClick: () => navigate("outreach"), style: { ...LINK_BTN, width: 22, height: 22 }, title: "Ver Outreach" }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }));
-    const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, titleTxt), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, headCount));
-    const Row = ({ o, kind }) => {
+    const cardTitle = /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 15, strokeWidth: 1.7, style: { color: "var(--text-muted)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" } }, titleTxt), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, list.length));
+    const Row = ({ o }) => {
       const overdue = o.nextFollowup < today;
-      const dot = kind === "due" ? overdue ? "var(--red)" : "var(--amber)" : "var(--text-subtle)";
+      const dotCol = mode === "due" ? overdue ? "var(--red)" : "var(--amber)" : "var(--text-subtle)";
       let rLabel, rColor;
-      if (kind === "due") {
+      if (mode === "due") {
         rLabel = overdue ? "Atrasado" : "Hoy";
         rColor = overdue ? "var(--red)" : "var(--amber)";
       } else {
@@ -1568,19 +1566,11 @@
             gap: 12
           }
         },
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: dot } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand)),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: dotCol } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand)),
         /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: rColor } }, rLabel)
       );
     };
-    const subHead = (txt) => /* @__PURE__ */ React.createElement("div", { style: {
-      fontSize: 11,
-      fontWeight: 600,
-      textTransform: "uppercase",
-      letterSpacing: "0.06em",
-      color: "var(--text-subtle)",
-      padding: "10px 14px 4px"
-    } }, txt);
-    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: titleTxt, open, onToggle: toggleOpen, right: arrow }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, due.slice(0, 8).map((o) => /* @__PURE__ */ React.createElement(Row, { key: o.id, o, kind: "due" })), upcoming.length > 0 && due.length > 0 && subHead("Pr\xF3ximos"), upcoming.slice(0, 8).map((o) => /* @__PURE__ */ React.createElement(Row, { key: o.id, o, kind: "up" })))));
+    return /* @__PURE__ */ React.createElement("section", null, /* @__PURE__ */ React.createElement(SectionHead, { title: titleTxt, open, onToggle: toggleOpen, right: arrow }), open && /* @__PURE__ */ React.createElement("div", { style: { ...INICIO_CARD, marginTop: 12 }, className: "fade-in" }, cardTitle, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 2 } }, list.slice(0, 12).map((o) => /* @__PURE__ */ React.createElement(Row, { key: o.id, o })))));
   };
   window.AgencyDashboard = AgencyDashboard;
 })();

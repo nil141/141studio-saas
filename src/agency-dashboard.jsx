@@ -957,12 +957,15 @@ const AgencyDashboard = ({ openModal, navigate, session }) => {
         {accesosOpen && <div style={{ marginTop: 14 }}><AccesosChips navigate={navigate} openModal={openModal}/></div>}
       </section>
 
-      {/* Seguimientos de Outreach que vencen hoy (solo si los hay) */}
-      <SeguimientosBlock D={D} navigate={navigate}/>
+      {/* Seguimientos de Outreach que vencen hoy — arriba, tras Accesos */}
+      <SeguimientosBlock D={D} navigate={navigate} mode="due"/>
 
       {/* Mi lista + Entregas próximas — apiladas, cada una en cajita */}
       <MiListaBlock D={D} navigate={navigate} todayStr={_todayStr}/>
       <EntregasBlock D={D} navigate={navigate}/>
+
+      {/* Seguimientos próximos (futuros) — al final del todo */}
+      <SeguimientosBlock D={D} navigate={navigate} mode="upcoming"/>
     </>
   );
 
@@ -1702,10 +1705,11 @@ const EntregasBlock = ({ D, navigate }) => {
   );
 };
 
-// Bloque de seguimientos de Outreach en Inicio. Muestra los que vencen hoy /
-// están atrasados y, además, los "próximos" (fechas futuras) — desplegable.
-// Solo aparece si hay al menos uno programado.
-const SeguimientosBlock = ({ D, navigate }) => {
+// Bloque de seguimientos de Outreach en Inicio.
+//  mode="due"      → los que vencen hoy o están atrasados (va tras Accesos)
+//  mode="upcoming" → los futuros, "Seguimientos próximos" (va al final)
+// Cada uno solo aparece si tiene elementos.
+const SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
   const today = new Date().toISOString().split("T")[0];
   const DONE = ["cerrado", "descartado"];
   const _MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
@@ -1713,13 +1717,11 @@ const SeguimientosBlock = ({ D, navigate }) => {
   const daysTo = (ymd) => Math.round((new Date(ymd + "T00:00:00") - new Date(today + "T00:00:00")) / 86400000);
   const active = (D.OUTREACH || []).filter(o => o.nextFollowup && !DONE.includes(o.status) && !o.convertedClientId);
   const cmp = (a, b) => (a.nextFollowup < b.nextFollowup ? -1 : a.nextFollowup > b.nextFollowup ? 1 : 0);
-  const due = active.filter(o => o.nextFollowup <= today).sort(cmp);
-  const upcoming = active.filter(o => o.nextFollowup > today).sort(cmp);
-  const [open, toggleOpen] = _usePersistOpen("141_home_segui", true);
-  if (!due.length && !upcoming.length) return null;
+  const list = active.filter(o => mode === "due" ? o.nextFollowup <= today : o.nextFollowup > today).sort(cmp);
+  const titleTxt = mode === "due" ? "Seguimientos de hoy" : "Seguimientos próximos";
+  const [open, toggleOpen] = _usePersistOpen("141_home_segui_" + mode, true);
+  if (!list.length) return null;
 
-  const titleTxt = due.length ? "Seguimientos de hoy" : "Seguimientos próximos";
-  const headCount = due.length || upcoming.length;
   const arrow = (
     <button onClick={() => navigate("outreach")} style={{ ...LINK_BTN, width: 22, height: 22 }} title="Ver Outreach"><Icon name="arrow" size={12}/></button>
   );
@@ -1727,14 +1729,14 @@ const SeguimientosBlock = ({ D, navigate }) => {
     <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
       <Icon name="send" size={15} strokeWidth={1.7} style={{ color: "var(--text-muted)" }}/>
       <span style={{ fontFamily: "var(--font-display)", fontSize: 15, fontWeight: 500, letterSpacing: "-0.4px" }}>{titleTxt}</span>
-      <span style={{ fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{headCount}</span>
+      <span style={{ fontSize: 12, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" }}>{list.length}</span>
     </div>
   );
-  const Row = ({ o, kind }) => {
+  const Row = ({ o }) => {
     const overdue = o.nextFollowup < today;
-    const dot = kind === "due" ? (overdue ? "var(--red)" : "var(--amber)") : "var(--text-subtle)";
+    const dotCol = mode === "due" ? (overdue ? "var(--red)" : "var(--amber)") : "var(--text-subtle)";
     let rLabel, rColor;
-    if (kind === "due") { rLabel = overdue ? "Atrasado" : "Hoy"; rColor = overdue ? "var(--red)" : "var(--amber)"; }
+    if (mode === "due") { rLabel = overdue ? "Atrasado" : "Hoy"; rColor = overdue ? "var(--red)" : "var(--amber)"; }
     else { const d = daysTo(o.nextFollowup); rLabel = d === 1 ? "Mañana" : fmt(o.nextFollowup); rColor = "var(--text-subtle)"; }
     return (
       <div onClick={() => navigate("outreach")}
@@ -1743,17 +1745,13 @@ const SeguimientosBlock = ({ D, navigate }) => {
         style={{ cursor: "pointer", borderRadius: 12, padding: "12px 14px", transition: "background .1s",
           display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 11, minWidth: 0 }}>
-          <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: dot }}/>
+          <span style={{ width: 8, height: 8, borderRadius: "50%", flexShrink: 0, background: dotCol }}/>
           <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{o.brand}</span>
         </div>
         <span style={{ fontSize: 12, fontWeight: 500, whiteSpace: "nowrap", flexShrink: 0, color: rColor }}>{rLabel}</span>
       </div>
     );
   };
-  const subHead = (txt) => (
-    <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em",
-      color: "var(--text-subtle)", padding: "10px 14px 4px" }}>{txt}</div>
-  );
   return (
     <section>
       <SectionHead title={titleTxt} open={open} onToggle={toggleOpen} right={arrow}/>
@@ -1761,9 +1759,7 @@ const SeguimientosBlock = ({ D, navigate }) => {
         <div style={{ ...INICIO_CARD, marginTop: 12 }} className="fade-in">
           {cardTitle}
           <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {due.slice(0, 8).map(o => <Row key={o.id} o={o} kind="due"/>)}
-            {upcoming.length > 0 && due.length > 0 && subHead("Próximos")}
-            {upcoming.slice(0, 8).map(o => <Row key={o.id} o={o} kind="up"/>)}
+            {list.slice(0, 12).map(o => <Row key={o.id} o={o}/>)}
           </div>
         </div>
       )}
