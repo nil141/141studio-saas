@@ -458,20 +458,14 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "2px 6px 16px 6px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-    width: 34,
-    height: 34,
-    borderRadius: 12,
-    flexShrink: 0,
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.05)",
-    color: "var(--accent)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontSize: 16,
-    fontWeight: 400
-  } }, (me.initials || "").charAt(0)), /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.2px" } }, me.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, "@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase()))), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 16px 8px" } }, /* @__PURE__ */ React.createElement(
+    "img",
+    {
+      src: "/logo.svg",
+      alt: "141'DIGITAL",
+      style: { height: 22, width: "auto", display: "block", objectFit: "contain", opacity: 0.95 }
+    }
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
       onClick: () => onQuickCreate && onQuickCreate(),
@@ -568,7 +562,34 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     },
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
-  ) : /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" }), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
+  ) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onNavigate("settings"),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: "8px 10px",
+        border: 0,
+        borderRadius: 10,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+        marginBottom: 2,
+        background: current === "settings" ? "var(--bg-hover)" : "transparent"
+      },
+      onMouseEnter: (e) => {
+        if (current !== "settings") e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+      },
+      onMouseLeave: (e) => {
+        if (current !== "settings") e.currentTarget.style.background = "transparent";
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
+    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase()))
+  ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "settings", label: "Configuraci\xF3n", onClick: () => onNavigate("settings"), active: current === "settings" })), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,

@@ -435,24 +435,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           <NotificationBell kind={kind} onNavigate={onNavigate}/>
         </div>
       ) : (
-      <div style={{display:"flex", alignItems:"center", gap:10, padding:"2px 6px 16px 6px"}}>
-        <div style={{
-          width: 34, height: 34, borderRadius: 12, flexShrink: 0,
-          background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)",
-          color: "var(--accent)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: 16, fontWeight: 400,
-        }}>
-          {(me.initials || "").charAt(0)}
-        </div>
-        <div style={{minWidth:0, flex:1}}>
-          <div style={{fontSize:14, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", letterSpacing:"-0.2px"}}>
-            {me.name}
-          </div>
-          <div style={{fontSize:11.5, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>
-            {"@" + (me.email ? me.email.split("@")[0] : me.name.toLowerCase())}
-          </div>
-        </div>
+      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
+        <img src="/logo.svg" alt="141'DIGITAL"
+          style={{height:22, width:"auto", display:"block", objectFit:"contain", opacity:0.95}} />
         <NotificationBell kind={kind} onNavigate={onNavigate}/>
       </div>
       )}
@@ -516,7 +501,21 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
             </span>
           </button>
         ) : (
-          <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
+          <>
+            {/* Cuenta iniciada */}
+            <button onClick={() => onNavigate("settings")}
+              style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left", marginBottom:2,
+                background: current === "settings" ? "var(--bg-hover)" : "transparent"}}
+              onMouseEnter={e => { if (current !== "settings") e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
+              onMouseLeave={e => { if (current !== "settings") e.currentTarget.style.background = "transparent"; }}>
+              <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(me.initials || "").charAt(0)}</span>
+              <span style={{minWidth:0, flex:1}}>
+                <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.name}</span>
+                <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.email || ("@" + (me.name || "").toLowerCase())}</span>
+              </span>
+            </button>
+            <FooterItem icon="settings" label="Configuración" onClick={() => onNavigate("settings")} active={current === "settings"}/>
+          </>
         )}
         <FooterItem icon="log-out" label="Cerrar sesión" onClick={() => setLogoutOpen(true)}/>
       </div>
