@@ -31,7 +31,7 @@ const _NAV_OTROS = [
   { id: "projects",  label: "Proyectos",   icon: "folder" },
   { id: "clients",   label: "Clientes",    icon: "users" },
   { id: "outreach",  label: "Propuestas Outreach", icon: "send" },
-  { id: "income",    label: "Facturación", icon: "trending-up" },
+  { id: "income",    label: "Facturación", icon: "trending-up", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
   { id: "billing",   label: "Gastos",      icon: "receipt" },
 ];
 const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.01em",
@@ -100,7 +100,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       {otrosOpen && (
         <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
           {_NAV_OTROS.map(it => (
-            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} nested/>
+            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href} nested/>
           ))}
         </div>
       )}
@@ -331,13 +331,16 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     return () => clearTimeout(t);
   }, [current, collapsed]);
 
-  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested }) => {
+  const NavItem = ({ id, icon, label, badge, onClick, chevron, active, bare, rowRef, nested, href }) => {
     const [hov, setHov] = React.useState(false);
-    const isActive = active != null ? active : (curNav === id);
+    const isActive = href ? false : (active != null ? active : (curNav === id));
+    const handleClick = href
+      ? (() => window.open(href, "_blank", "noopener,noreferrer"))
+      : (onClick || (() => onNavigate(id)));
     return (
       <div
         ref={rowRef}
-        onClick={onClick || (() => onNavigate(id))}
+        onClick={handleClick}
         onMouseEnter={() => setHov(true)}
         onMouseLeave={() => setHov(false)}
         style={{
@@ -359,6 +362,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
             {badge}
           </span>
         ) : null}
+        {href ? <Icon name="arrow-up-right" size={14} style={{flexShrink:0, opacity: hov ? 0.9 : 0.4, transition:"opacity .15s"}}/> : null}
         {chevron ? <Icon name="chevron" size={15} style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/> : null}
       </div>
     );
