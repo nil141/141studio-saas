@@ -2109,6 +2109,13 @@ const DriveCard = () => {
   const [url, setUrl] = useState(cfg.url);
   const [secret, setSecret] = useState(cfg.secret);
   const save = () => { D.setDriveConfig({ url, secret }); toast(url.trim() ? "Conexión con Drive guardada" : "Conexión con Drive borrada", "success"); };
+  const missing = (D.CLIENTS || []).filter(c => !c.driveUrl);
+  const backfill = () => {
+    if (!D.driveConfigured) { toast("Conecta Drive primero", "error"); return; }
+    if (!missing.length) { toast("Todos los clientes ya tienen carpeta", "success"); return; }
+    missing.forEach((c, i) => setTimeout(() => D.driveCreateFolderForClient(c.id), i * 600));
+    toast("Creando " + missing.length + " carpeta" + (missing.length === 1 ? "" : "s") + "…", "success");
+  };
   return (
     <div className="card" style={{ gridColumn: "1/-1" }}>
       <div className="card-header"><div className="card-title">Google Drive · carpetas automáticas</div></div>
@@ -2129,6 +2136,22 @@ const DriveCard = () => {
             <button className="btn primary" onClick={save}><Icon name="check" size={12}/> Guardar conexión</button>
             {D.driveConfigured && <span style={{ fontSize: 12, color: "var(--green)", display: "inline-flex", alignItems: "center", gap: 5 }}><Icon name="check" size={12}/> Conectado</span>}
           </div>
+
+          {D.driveConfigured && (
+            <div style={{ borderTop: "0.5px solid var(--border)", paddingTop: 14, marginTop: 2 }}>
+              <div className="muted small" style={{ marginBottom: 10 }}>
+                Clientes existentes (creados antes de conectar Drive): crea de golpe las carpetas que falten.
+              </div>
+              <div className="row tight" style={{ alignItems: "center", gap: 12 }}>
+                <button className="btn" onClick={backfill} disabled={!missing.length}>
+                  <Icon name="folder" size={12}/> Crear carpetas que faltan
+                </button>
+                <span className="muted small">
+                  {missing.length ? `${missing.length} cliente${missing.length === 1 ? "" : "s"} sin carpeta` : "Todos tienen carpeta ✓"}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
