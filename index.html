@@ -202,28 +202,21 @@
     background: var(--bg);
     display: grid; place-items: center;
   }
-  .app-loader .lg { width: 240px; height: auto; }
-  /* Efecto "dibujado de trazo": el contorno se traza y luego se rellena, en bucle */
-  .app-loader .lg path {
-    fill: var(--text);
-    fill-opacity: 0;
-    stroke: var(--text);
-    stroke-width: 0.2;
-    vector-effect: non-scaling-stroke;
-    stroke-dasharray: 1;
-    stroke-dashoffset: 1;
-    animation: lgDraw 4s ease-in-out infinite;
+  /* Efecto "relleno": el logo relleno se revela de izquierda a derecha, en bucle */
+  .app-loader .lg {
+    width: 240px; height: auto;
+    animation: lgFill 4s ease-in-out infinite;
   }
-  @keyframes lgDraw {
-    0%   { stroke-dashoffset: 1; fill-opacity: 0; opacity: 0; }
+  .app-loader .lg path { fill: var(--text); stroke: none; }
+  @keyframes lgFill {
+    0%   { clip-path: inset(0 100% 0 0); opacity: 0; }
     8%   { opacity: 1; }
-    46%  { stroke-dashoffset: 0; fill-opacity: 0; }
-    62%  { fill-opacity: 1; }
-    88%  { fill-opacity: 1; opacity: 1; }
-    100% { stroke-dashoffset: 0; fill-opacity: 1; opacity: 0; }
+    55%  { clip-path: inset(0 0 0 0); }
+    86%  { clip-path: inset(0 0 0 0); opacity: 1; }
+    100% { clip-path: inset(0 0 0 0); opacity: 0; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .app-loader .lg path { animation: none; fill-opacity: 1; stroke: none; }
+    .app-loader .lg { animation: none; clip-path: none; opacity: 1; }
   }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
