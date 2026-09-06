@@ -336,7 +336,7 @@ const AgendaPage = ({ navigate }) => {
     letterSpacing: "0.04em",
     textTransform: "uppercase",
     color: "var(--text-subtle)"
-  } }, d))), viewMode === "month" && /* @__PURE__ */ React.createElement("div", { style: {
+  } }, d))), viewMode === "month" && /* @__PURE__ */ React.createElement("div", { className: "agenda-month-grid", style: {
     flex: 1,
     display: "grid",
     gridTemplateColumns: "repeat(7,1fr)",

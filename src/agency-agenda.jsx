@@ -373,7 +373,7 @@ const AgendaPage = ({ navigate }) => {
 
           {/* ── MONTH grid — rounded tiles, no inner lines ── */}
           {viewMode === "month" && (
-            <div style={{
+            <div className="agenda-month-grid" style={{
               flex:1, display:"grid",
               gridTemplateColumns:"repeat(7,1fr)",
               gridTemplateRows:`repeat(${numWeeks}, 1fr)`,
