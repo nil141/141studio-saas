@@ -57,7 +57,7 @@
     { name: "notifications", label: "Notificaciones" }
   ];
   var _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
-  var MobileTopNav = ({ view, navigate, session }) => {
+  var MobileTopNav = ({ view, navigate, session, onCreate }) => {
     const [menu, setMenu] = React.useState(false);
     const tabsRef = React.useRef(null);
     React.useEffect(() => {
@@ -87,7 +87,7 @@
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "settings", size: 16 }), " Configuraci\xF3n"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setMenu(false);
       navigate("__logout");
-    }, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }), " Cerrar sesi\xF3n"))), /* @__PURE__ */ React.createElement("button", { className: "mtn-bell", onClick: () => navigate("notifications"), "aria-label": "Notificaciones" }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 19 }))), /* @__PURE__ */ React.createElement("div", { className: "mtn-tabs", ref: tabsRef }, _MOBILE_TABS.map((t) => /* @__PURE__ */ React.createElement(
+    }, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }), " Cerrar sesi\xF3n"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "mtn-bell mtn-create", onClick: () => onCreate && onCreate(), "aria-label": "Crear" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 20 })), /* @__PURE__ */ React.createElement("button", { className: "mtn-bell", onClick: () => navigate("notifications"), "aria-label": "Notificaciones" }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 19 })))), /* @__PURE__ */ React.createElement("div", { className: "mtn-tabs", ref: tabsRef }, _MOBILE_TABS.map((t) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: t.name,
@@ -349,7 +349,7 @@
         onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-muted)"
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "chevrons-right", size: 16, strokeWidth: 1.7 })
-    ), /* @__PURE__ */ React.createElement("div", { className: "main" }, !isClient && /* @__PURE__ */ React.createElement(MobileTopNav, { view, navigate, session }), /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
+    ), /* @__PURE__ */ React.createElement("div", { className: "main" }, !isClient && /* @__PURE__ */ React.createElement(MobileTopNav, { view, navigate, session, onCreate: () => setQuickCreate(true) }), /* @__PURE__ */ React.createElement(Topbar, { theme, setTheme, kind: isClient ? "client" : "agency", right: null }), /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, isClient ? renderClient() : renderAgency()), !isClient && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal }))))), !isClient && /* @__PURE__ */ React.createElement("nav", { className: "mobile-nav" }, [
       { name: "dashboard", icon: "home", label: "Inicio" },
       { name: "projects", icon: "folder", label: "Proyectos" },
       { name: "tasks", icon: "list-todo", label: "Tareas" },

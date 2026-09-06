@@ -66,7 +66,7 @@ const _MOBILE_TABS = [
 ];
 const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
 
-const MobileTopNav = ({ view, navigate, session }) => {
+const MobileTopNav = ({ view, navigate, session, onCreate }) => {
   const [menu, setMenu] = React.useState(false);
   const tabsRef = React.useRef(null);
   React.useEffect(() => {
@@ -102,9 +102,14 @@ const MobileTopNav = ({ view, navigate, session }) => {
             </div>
           )}
         </div>
-        <button className="mtn-bell" onClick={() => navigate("notifications")} aria-label="Notificaciones">
-          <Icon name="bell" size={19}/>
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <button className="mtn-bell mtn-create" onClick={() => onCreate && onCreate()} aria-label="Crear">
+            <Icon name="plus" size={20}/>
+          </button>
+          <button className="mtn-bell" onClick={() => navigate("notifications")} aria-label="Notificaciones">
+            <Icon name="bell" size={19}/>
+          </button>
+        </div>
       </div>
       <div className="mtn-tabs" ref={tabsRef}>
         {_MOBILE_TABS.map(t => (
@@ -320,7 +325,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         )}
         <div className="main">
-          {!isClient && <MobileTopNav view={view} navigate={navigate} session={session}/>}
+          {!isClient && <MobileTopNav view={view} navigate={navigate} session={session} onCreate={() => setQuickCreate(true)}/>}
           <Topbar theme={theme} setTheme={setTheme} kind={isClient ? "client" : "agency"} right={null}/>
           <div key={view.name} className="page-enter">
             {isClient ? renderClient() : renderAgency()}

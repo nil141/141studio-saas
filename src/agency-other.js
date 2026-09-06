@@ -196,8 +196,9 @@
           }));
           const loadPct = totalToday ? Math.min(100, Math.round(doneToday / totalToday * 100)) : 0;
           const hasLoad = totalToday > 0;
-          const sz = 56;
-          const r = 24;
+          const _mobStrip = typeof window !== "undefined" && window.innerWidth <= 640;
+          const sz = _mobStrip ? 44 : 56;
+          const r = _mobStrip ? 19 : 24;
           const sw = 3;
           const c = 2 * Math.PI * r;
           const trackCol = isSel ? "rgba(158,154,229,0.18)" : isToday2 ? "rgba(158,154,229,0.10)" : "rgba(255,255,255,0.06)";
@@ -275,7 +276,7 @@
           } }), /* @__PURE__ */ React.createElement("span", { style: {
             position: "relative",
             zIndex: 1,
-            fontSize: 18,
+            fontSize: _mobStrip ? 15 : 18,
             fontWeight: isToday2 || isSel ? 500 : 400,
             color: isToday2 ? "var(--accent)" : isSel ? "#f0eeff" : "var(--text-muted)",
             letterSpacing: "-0.6px",
