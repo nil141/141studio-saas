@@ -204,42 +204,42 @@
   }
   /* Wordmark del loader como forma (máscara) rellena de color; el efecto lo
      controla html[data-loader="N"] (1..10). Se previsualiza con el switcher. */
-  .lg {
+  .loader-mark {
     width: 240px; height: 40px;
     background: var(--text);
     -webkit-mask: url("/wordmark.svg") center / contain no-repeat;
             mask: url("/wordmark.svg") center / contain no-repeat;
   }
   /* 1 · Fundido */
-  html[data-loader="1"] .lg { animation: lgFade 2.4s ease-in-out infinite; }
+  html[data-loader="1"] .loader-mark { animation: lgFade 2.4s ease-in-out infinite; }
   @keyframes lgFade { 0%{opacity:0} 16%{opacity:1} 82%{opacity:1} 100%{opacity:0} }
   /* 2 · Escala + fundido */
-  html[data-loader="2"] .lg { animation: lgScale 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
+  html[data-loader="2"] .loader-mark { animation: lgScale 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
   @keyframes lgScale { 0%{opacity:0;transform:scale(.9)} 22%{opacity:1;transform:scale(1)} 82%{opacity:1;transform:scale(1)} 100%{opacity:0} }
   /* 3 · Sube + fundido */
-  html[data-loader="3"] .lg { animation: lgRise 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
+  html[data-loader="3"] .loader-mark { animation: lgRise 2.4s cubic-bezier(0.2,0.7,0.3,1) infinite; }
   @keyframes lgRise { 0%{opacity:0;transform:translateY(12px)} 22%{opacity:1;transform:translateY(0)} 82%{opacity:1} 100%{opacity:0} }
   /* 4 · Desenfoque → nítido */
-  html[data-loader="4"] .lg { animation: lgBlur 2.6s ease-in-out infinite; }
+  html[data-loader="4"] .loader-mark { animation: lgBlur 2.6s ease-in-out infinite; }
   @keyframes lgBlur { 0%{opacity:0;filter:blur(11px)} 28%{opacity:1;filter:blur(0)} 82%{opacity:1;filter:blur(0)} 100%{opacity:0;filter:blur(0)} }
   /* 5 · Latido */
-  html[data-loader="5"] .lg { animation: lgPulse 1.6s ease-in-out infinite; }
+  html[data-loader="5"] .loader-mark { animation: lgPulse 1.6s ease-in-out infinite; }
   @keyframes lgPulse { 0%,100%{opacity:.32} 50%{opacity:1} }
   /* 6 · Brillo que barre (dark → claro) */
-  html[data-loader="6"] .lg {
+  html[data-loader="6"] .loader-mark {
     background: linear-gradient(100deg, var(--text-subtle) 30%, var(--text) 50%, var(--text-subtle) 70%);
     background-size: 220% 100%;
     animation: lgShim 1.9s linear infinite;
   }
   @keyframes lgShim { 0%{background-position:130% 0} 100%{background-position:-30% 0} }
   /* 7 · Latido con halo lila */
-  html[data-loader="7"] .lg { animation: lgGlow 2.2s ease-in-out infinite; }
+  html[data-loader="7"] .loader-mark { animation: lgGlow 2.2s ease-in-out infinite; }
   @keyframes lgGlow {
     0%,100%{opacity:.5; filter:drop-shadow(0 0 0 transparent)}
     50%    {opacity:1; filter:drop-shadow(0 0 9px rgba(158,154,229,0.55))}
   }
   /* 8 · Revelado de izquierda a derecha (dentro de la forma) */
-  html[data-loader="8"] .lg {
+  html[data-loader="8"] .loader-mark {
     -webkit-mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(90deg,#000 50%,transparent 50%);
             mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(90deg,#000 50%,transparent 50%);
     -webkit-mask-composite: source-in; mask-composite: intersect;
@@ -254,7 +254,7 @@
     100%{ -webkit-mask-position: center, 0% 0;   mask-position: center, 0% 0; opacity:0; }
   }
   /* 9 · Revelado de abajo a arriba */
-  html[data-loader="9"] .lg {
+  html[data-loader="9"] .loader-mark {
     -webkit-mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(0deg,#000 50%,transparent 50%);
             mask: url("/wordmark.svg") center/contain no-repeat, linear-gradient(0deg,#000 50%,transparent 50%);
     -webkit-mask-composite: source-in; mask-composite: intersect;
@@ -269,10 +269,10 @@
     100%{ -webkit-mask-position: center, 0 0%;   mask-position: center, 0 0%; opacity:0; }
   }
   /* 10 · Fundido + zoom muy suave (elegante) */
-  html[data-loader="10"] .lg { animation: lgSoft 3s ease-in-out infinite; }
+  html[data-loader="10"] .loader-mark { animation: lgSoft 3s ease-in-out infinite; }
   @keyframes lgSoft { 0%{opacity:0;transform:scale(1.05)} 30%{opacity:1;transform:scale(1)} 80%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1)} }
 
-  @media (prefers-reduced-motion: reduce) { .lg { animation: none !important; opacity: 1 !important; } }
+  @media (prefers-reduced-motion: reduce) { .loader-mark { animation: none !important; opacity: 1 !important; } }
 
   /* App layout — el "chrome" (marco) se controla con html[data-chrome] */
   .app { display: grid; grid-template-columns: auto 1fr; height: 100vh; height: 100dvh; overflow: hidden; background: var(--bg); }
@@ -1227,7 +1227,7 @@
 <script src="src/primitives.js?v=90"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=39"></script>
+<script src="src/z-app.js?v=40"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=93"></script>
 <script src="src/agency-clients.js?v=32"></script>

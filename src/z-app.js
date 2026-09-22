@@ -238,7 +238,7 @@
     }
     if (window.Data.READY && minSplash) bootedRef.current = true;
     if (!bootedRef.current && !loadTimedOut) {
-      return /* @__PURE__ */ React.createElement("div", { className: "app-loader" }, /* @__PURE__ */ React.createElement("div", { className: "lg" }));
+      return /* @__PURE__ */ React.createElement("div", { className: "app-loader" }, /* @__PURE__ */ React.createElement("div", { className: "loader-mark" }));
     }
     const renderAgency = () => {
       switch (view.name) {

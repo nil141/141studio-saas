@@ -258,7 +258,7 @@ const App = () => {
   if (!bootedRef.current && !loadTimedOut) {
     return (
       <div className="app-loader">
-        <div className="lg"/>
+        <div className="loader-mark"/>
       </div>
     );
   }
