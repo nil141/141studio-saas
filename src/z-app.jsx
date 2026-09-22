@@ -139,6 +139,7 @@ const App = () => {
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [minSplash, setMinSplash] = useState(false);   // tiempo mínimo del loader
+  const bootedRef = useRef(false);                      // true tras el primer arranque real
   const [navCollapsed, setNavCollapsed] = useState(() => { try { return localStorage.getItem("141_nav_collapsed") === "1"; } catch { return false; } });
   const toggleNav = () => setNavCollapsed(v => { const n = !v; try { localStorage.setItem("141_nav_collapsed", n ? "1" : "0"); } catch {} return n; });
 
@@ -250,7 +251,11 @@ const App = () => {
 
   // Cargar todo a la vez: hasta que la primera carga termina, un loader limpio
   // (evita que unas partes salgan cargadas y otras no).
-  if ((!window.Data.READY || !minSplash) && !loadTimedOut) {
+  // Una vez arrancado, NO volver a mostrar el loader: si los datos se recargan
+  // (realtime, navegación, abrir un modal), se mantiene la UI en vez de que la
+  // animación de carga reaparezca y se mezcle con la pantalla.
+  if (window.Data.READY && minSplash) bootedRef.current = true;
+  if (!bootedRef.current && !loadTimedOut) {
     return (
       <div className="app-loader">
         <div className="lg"/>

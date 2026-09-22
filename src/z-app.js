@@ -113,6 +113,7 @@
     const [quickCreateEdit, setQuickCreateEdit] = useState(null);
     const [loadTimedOut, setLoadTimedOut] = useState(false);
     const [minSplash, setMinSplash] = useState(false);
+    const bootedRef = useRef(false);
     const [navCollapsed, setNavCollapsed] = useState(() => {
       try {
         return localStorage.getItem("141_nav_collapsed") === "1";
@@ -235,7 +236,8 @@
         setSession(acc);
       } });
     }
-    if ((!window.Data.READY || !minSplash) && !loadTimedOut) {
+    if (window.Data.READY && minSplash) bootedRef.current = true;
+    if (!bootedRef.current && !loadTimedOut) {
       return /* @__PURE__ */ React.createElement("div", { className: "app-loader" }, /* @__PURE__ */ React.createElement("div", { className: "lg" }));
     }
     const renderAgency = () => {
