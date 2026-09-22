@@ -685,14 +685,21 @@
   /* Modal */
   .modal-overlay {
     position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    backdrop-filter: blur(4px);
     z-index: 100;
     display: grid; place-items: center;
     padding: 32px;
+  }
+  /* El desenfoque va en una capa aparte DETRÁS de la tarjeta. En Safari, una
+     tarjeta hija de un elemento con backdrop-filter a veces no se compone
+     (se ve el velo pero no el modal); separándolo, la tarjeta siempre pinta. */
+  .modal-overlay::before {
+    content: ""; position: absolute; inset: 0; z-index: 0;
+    background: rgba(0,0,0,0.55);
+    -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
     animation: fade .15s ease-out;
   }
-  html[data-theme="light"] .modal-overlay { background: rgba(10,10,11,0.30); }
+  .modal-overlay > * { position: relative; z-index: 1; }
+  html[data-theme="light"] .modal-overlay::before { background: rgba(10,10,11,0.30); }
   /* Modal — panel estilo outdomode (radius grande, borde gris, sin divisorias) */
   .modal {
     background: #0e0e10;
