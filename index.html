@@ -600,6 +600,14 @@
     color: var(--text-muted);
     border: var(--hairline) solid var(--border);
   }
+  /* Subrayado deslizante: una barra que se anima entre pestañas */
+  .tabs-slide { position: relative; }
+  .tabs-slide .tab.active { border-bottom-color: transparent; }
+  .tab-underline {
+    position: absolute; bottom: -0.5px; left: 0; height: 1.5px;
+    background: var(--text); border-radius: 2px; pointer-events: none;
+    transition: transform .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1);
+  }
 
   /* Tables */
   .table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -1235,7 +1243,7 @@
 <script src="src/agency-other.js?v=143"></script>
 <script src="src/agency-pipeline.js?v=3"></script>
 <script src="src/campaigns.js?v=32"></script>
-<script src="src/agency-outreach.js?v=27"></script>
+<script src="src/agency-outreach.js?v=28"></script>
 <script src="src/client-portal.js?v=39"></script>
 <script src="src/onboarding.js?v=16"></script>
 <script src="src/assistant.js?v=2"></script>

@@ -582,6 +582,25 @@ const AgencyOutreach = ({ navigate }) => {
   const _dueRank = (o) => _isDue(o) ? (o.nextFollowup < today ? 0 : 1) : 2;
   rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
 
+  // ── Pestañas de estado + subrayado deslizante ────────────────────
+  const tabItems = [
+    { id: "all", label: "Todas", count: scope.length },
+    ...(dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : []),
+    ...OUTREACH_STATUS.map(s => ({ id: s.id, label: s.label, count: counts[s.id] || 0 })),
+  ];
+  const tabsRef = React.useRef(null);
+  const [indic, setIndic] = useState({ left: 0, width: 0 });
+  React.useLayoutEffect(() => {
+    const cont = tabsRef.current; if (!cont) return;
+    const el = cont.querySelector(".tab.active");
+    if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth });
+  }, [filter, campFilter, dueCount, scope.length, JSON.stringify(counts)]);
+  useEffect(() => {
+    const onResize = () => { const cont = tabsRef.current; if (!cont) return; const el = cont.querySelector(".tab.active"); if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth }); };
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
   // Exportar a CSV los leads seleccionados (o los visibles si no hay selección)
   const exportSel = () => {
     const chosen = sel.size ? all.filter(o => sel.has(o.id)) : rows;
@@ -655,16 +674,14 @@ const AgencyOutreach = ({ navigate }) => {
         </div>
       </div>
 
-      {/* Pestañas de estado — mismo estilo que la ficha de cliente */}
-      <div className="tabs">
-        {[{ id: "all", label: "Todas", count: scope.length },
-          ...(dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : []),
-          ...OUTREACH_STATUS.map(s => ({ id: s.id, label: s.label, count: counts[s.id] || 0 }))
-        ].map(t => (
+      {/* Pestañas de estado — mismo estilo que la ficha de cliente, con subrayado deslizante */}
+      <div className="tabs tabs-slide" ref={tabsRef}>
+        {tabItems.map(t => (
           <div key={t.id} className={"tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
           </div>
         ))}
+        <span className="tab-underline" style={{ width: indic.width, transform: `translateX(${indic.left}px)` }}/>
       </div>
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}

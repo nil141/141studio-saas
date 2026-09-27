@@ -793,6 +793,29 @@
     let rows = all.filter((o) => matchFilter(o) && matchCamp(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql) || (o.niche || "").toLowerCase().includes(ql)));
     const _dueRank = (o) => _isDue(o) ? o.nextFollowup < today ? 0 : 1 : 2;
     rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
+    const tabItems = [
+      { id: "all", label: "Todas", count: scope.length },
+      ...dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : [],
+      ...OUTREACH_STATUS.map((s) => ({ id: s.id, label: s.label, count: counts[s.id] || 0 }))
+    ];
+    const tabsRef = React.useRef(null);
+    const [indic, setIndic] = useState({ left: 0, width: 0 });
+    React.useLayoutEffect(() => {
+      const cont = tabsRef.current;
+      if (!cont) return;
+      const el = cont.querySelector(".tab.active");
+      if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth });
+    }, [filter, campFilter, dueCount, scope.length, JSON.stringify(counts)]);
+    useEffect(() => {
+      const onResize = () => {
+        const cont = tabsRef.current;
+        if (!cont) return;
+        const el = cont.querySelector(".tab.active");
+        if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth });
+      };
+      window.addEventListener("resize", onResize);
+      return () => window.removeEventListener("resize", onResize);
+    }, []);
     const exportSel = () => {
       const chosen = sel.size ? all.filter((o) => sel.has(o.id)) : rows;
       if (!chosen.length) return;
@@ -929,11 +952,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
-      { id: "all", label: "Todas", count: scope.length },
-      ...dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : [],
-      ...OUTREACH_STATUS.map((s) => ({ id: s.id, label: s.label, count: counts[s.id] || 0 }))
-    ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (filter === t.id ? " active" : ""), onClick: () => setFilter(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 40 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 158 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 118 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 148 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 130 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 70 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { className: "tabs tabs-slide", ref: tabsRef }, tabItems.map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (filter === t.id ? " active" : ""), onClick: () => setFilter(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null)), /* @__PURE__ */ React.createElement("span", { className: "tab-underline", style: { width: indic.width, transform: `translateX(${indic.left}px)` } })), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 40 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 158 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 118 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 148 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 130 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 70 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
