@@ -86,7 +86,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
-  AGENDA_EVENTS: [], OUTREACH: [],
+  AGENDA_EVENTS: [], OUTREACH: [], RESOURCES: [],
   _loaded: false,   // true tras la primera carga completa (para skeletons)
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
@@ -156,6 +156,11 @@ const _mo = (r) => ({
   lastContacted: r.last_contacted || null, nextFollowup: r.next_followup || null,
   convertedClientId: r.converted_client_id || null,
   message: r.message || "", niche: r.niche || "", campaign: r.campaign || "",
+});
+// Recurso de la biblioteca (herramienta, referencia, estrategia…)
+const _mr = (r) => ({
+  id: r.id, title: r.title || "", url: r.url || "", description: r.description || "",
+  type: r.type || "herramienta", sector: r.sector || "", createdAt: r.created_at,
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -357,6 +362,8 @@ const _loadAll = async () => {
     try { ae = await _sb.from("agenda_events").select("*").eq("agency_id", uid).order("date", { ascending: true }); } catch {}
     let ou = { data: [] };
     try { ou = await _sb.from("outreach").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
+    let re = { data: [] };
+    try { re = await _sb.from("resources").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
@@ -367,6 +374,7 @@ const _loadAll = async () => {
     _store.NOTIFICATIONS = (nt.data || []).map(_mn);
     _store.AGENDA_EVENTS = ((ae && ae.data) || []).map(_mae);
     _store.OUTREACH     = ((ou && ou.data) || []).map(_mo);
+    _store.RESOURCES    = ((re && re.data) || []).map(_mr);
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -399,6 +407,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "notifications",filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "outreach",      filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "resources",     filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -1702,6 +1711,38 @@ const deleteOutreach = async (id) => {
   if (error) { _store.OUTREACH = prev; _emit(); }
 };
 
+// ── Recursos (biblioteca de herramientas / referencias / estrategias) ──
+const addResource = async (input) => {
+  const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
+  const url = (input.url || "").trim();
+  if (!url && !input.title) return { error: "faltan datos" };
+  const id = "res-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+  const r = { id, title: (input.title || "").trim(), url, description: (input.description || "").trim(),
+    type: input.type || "herramienta", sector: (input.sector || "").trim(), createdAt: new Date().toISOString() };
+  _store.RESOURCES = [r, ...(_store.RESOURCES || [])]; _emit();
+  const { error } = await _insertAdaptive("resources", {
+    id, agency_id: uid, title: r.title, url: r.url, description: r.description, type: r.type, sector: r.sector,
+  });
+  if (error) { _store.RESOURCES = _store.RESOURCES.filter(x => x.id !== id); _emit(); return { error: error.message }; }
+  return { resource: r };
+};
+const updateResource = async (id, changes) => {
+  const uid = _store._user?.id; if (!uid) return;
+  const prev = _store.RESOURCES || [];
+  _store.RESOURCES = prev.map(r => r.id === id ? { ...r, ...changes } : r); _emit();
+  const db = {};
+  ["title", "url", "description", "type", "sector"].forEach(k => { if (changes[k] !== undefined) db[k] = changes[k]; });
+  const { error } = await _updateAdaptive("resources", id, db);
+  if (error) { _store.RESOURCES = prev; _emit(); }
+};
+const deleteResource = async (id) => {
+  const uid = _store._user?.id; if (!uid) return;
+  const prev = _store.RESOURCES || [];
+  _store.RESOURCES = prev.filter(r => r.id !== id); _emit();
+  const { error } = await _sb.from("resources").delete().eq("id", id).eq("agency_id", uid);
+  if (error) { _store.RESOURCES = prev; _emit(); }
+};
+
 const _randToken = () => {
   const a = new Uint8Array(24);
   (window.crypto || {}).getRandomValues?.(a);
@@ -1750,6 +1791,7 @@ window.Data = {
   get NOTIFICATIONS(){ return _store.NOTIFICATIONS; },
   get AGENDA_EVENTS(){ return _store.AGENDA_EVENTS; },
   get OUTREACH()     { return _store.OUTREACH; },
+  get RESOURCES()    { return _store.RESOURCES; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1771,6 +1813,7 @@ window.Data = {
   notify, markNotificationRead, markAllNotificationsRead,
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
+  addResource, updateResource, deleteResource,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
   get driveConfigured() { return !!_driveCfg().url; },

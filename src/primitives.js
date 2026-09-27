@@ -23,6 +23,7 @@ const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
   { id: "clients", label: "Clientes", icon: "users" },
   { id: "outreach", label: "Propuestas Outreach", icon: "send" },
+  { id: "resources", label: "Recursos", icon: "sparkles" },
   { id: "income", label: "Facturaci\xF3n", icon: "trending-up", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
   { id: "billing", label: "Gastos", icon: "receipt" }
 ];
@@ -501,7 +502,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = href ? false : active != null ? active : curNav === id;
-    const handleClick = href ? (() => window.open(href, "_blank", "noopener,noreferrer")) : onClick || (() => onNavigate(id));
+    const handleClick = href ? () => window.open(href, "_blank", "noopener,noreferrer") : onClick || (() => onNavigate(id));
     return /* @__PURE__ */ React.createElement(
       "div",
       {

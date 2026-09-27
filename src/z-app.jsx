@@ -273,6 +273,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "tasks": return <TasksBoard navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
       case "campaigns": return <CampaignsPage navigate={navigate}/>;
       case "outreach": return <AgencyOutreach navigate={navigate}/>;
+      case "resources": return <AgencyResources navigate={navigate}/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate} initialAction={view.params.action}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
       case "notifications": return <AgencyNotifications navigate={navigate}/>;

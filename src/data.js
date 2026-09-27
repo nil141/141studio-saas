@@ -80,6 +80,7 @@
     SETTINGS: { ...SETTINGS_DEFAULT },
     AGENDA_EVENTS: [],
     OUTREACH: [],
+    RESOURCES: [],
     _loaded: false,
     // true tras la primera carga completa (para skeletons)
     _user: null,
@@ -210,6 +211,15 @@
     message: r.message || "",
     niche: r.niche || "",
     campaign: r.campaign || ""
+  });
+  const _mr = (r) => ({
+    id: r.id,
+    title: r.title || "",
+    url: r.url || "",
+    description: r.description || "",
+    type: r.type || "herramienta",
+    sector: r.sector || "",
+    createdAt: r.created_at
   });
   const _mae = (r) => ({
     id: r.id,
@@ -464,6 +474,11 @@
         ou = await _sb.from("outreach").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
       } catch {
       }
+      let re = { data: [] };
+      try {
+        re = await _sb.from("resources").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
+      } catch {
+      }
       _store.CLIENTS = (c.data || []).map(_mc);
       _store.PROJECTS = (p.data || []).map(_mp);
       _store.INVOICES = (i.data || []).map(_mi);
@@ -474,6 +489,7 @@
       _store.NOTIFICATIONS = (nt.data || []).map(_mn);
       _store.AGENDA_EVENTS = (ae && ae.data || []).map(_mae);
       _store.OUTREACH = (ou && ou.data || []).map(_mo);
+      _store.RESOURCES = (re && re.data || []).map(_mr);
       _store.SETTINGS = _ms(s.data) || { ...SETTINGS_DEFAULT };
       _store.TASKS = {};
       for (const row of t.data || []) {
@@ -493,7 +509,7 @@
       _sb.removeChannel(_channel);
       _channel = null;
     }
-    _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "outreach", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
+    _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "outreach", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "resources", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
   };
   const authLogin = async (email, password) => {
     const { data, error } = await _sb.auth.signInWithPassword({ email, password });
@@ -1966,6 +1982,67 @@
       _emit();
     }
   };
+  const addResource = async (input) => {
+    const uid = _store._user?.id;
+    if (!uid) return { error: "no-auth" };
+    const url = (input.url || "").trim();
+    if (!url && !input.title) return { error: "faltan datos" };
+    const id = "res-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+    const r = {
+      id,
+      title: (input.title || "").trim(),
+      url,
+      description: (input.description || "").trim(),
+      type: input.type || "herramienta",
+      sector: (input.sector || "").trim(),
+      createdAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    _store.RESOURCES = [r, ..._store.RESOURCES || []];
+    _emit();
+    const { error } = await _insertAdaptive("resources", {
+      id,
+      agency_id: uid,
+      title: r.title,
+      url: r.url,
+      description: r.description,
+      type: r.type,
+      sector: r.sector
+    });
+    if (error) {
+      _store.RESOURCES = _store.RESOURCES.filter((x) => x.id !== id);
+      _emit();
+      return { error: error.message };
+    }
+    return { resource: r };
+  };
+  const updateResource = async (id, changes) => {
+    const uid = _store._user?.id;
+    if (!uid) return;
+    const prev = _store.RESOURCES || [];
+    _store.RESOURCES = prev.map((r) => r.id === id ? { ...r, ...changes } : r);
+    _emit();
+    const db = {};
+    ["title", "url", "description", "type", "sector"].forEach((k) => {
+      if (changes[k] !== void 0) db[k] = changes[k];
+    });
+    const { error } = await _updateAdaptive("resources", id, db);
+    if (error) {
+      _store.RESOURCES = prev;
+      _emit();
+    }
+  };
+  const deleteResource = async (id) => {
+    const uid = _store._user?.id;
+    if (!uid) return;
+    const prev = _store.RESOURCES || [];
+    _store.RESOURCES = prev.filter((r) => r.id !== id);
+    _emit();
+    const { error } = await _sb.from("resources").delete().eq("id", id).eq("agency_id", uid);
+    if (error) {
+      _store.RESOURCES = prev;
+      _emit();
+    }
+  };
   const _randToken = () => {
     const a = new Uint8Array(24);
     (window.crypto || {}).getRandomValues?.(a);
@@ -2047,6 +2124,9 @@
     get OUTREACH() {
       return _store.OUTREACH;
     },
+    get RESOURCES() {
+      return _store.RESOURCES;
+    },
     get ROUTINES() {
       return _store.ROUTINES;
     },
@@ -2107,6 +2187,9 @@
     outreachMarkContacted,
     convertOutreachToClient,
     addOutreachBulk,
+    addResource,
+    updateResource,
+    deleteResource,
     // Google Drive (Apps Script)
     getDriveConfig,
     setDriveConfig,

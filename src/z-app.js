@@ -258,6 +258,8 @@
           return /* @__PURE__ */ React.createElement(CampaignsPage, { navigate });
         case "outreach":
           return /* @__PURE__ */ React.createElement(AgencyOutreach, { navigate });
+        case "resources":
+          return /* @__PURE__ */ React.createElement(AgencyResources, { navigate });
         case "campaign":
           return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate, initialAction: view.params.action });
         case "agenda":
