@@ -8,7 +8,22 @@ const RES_TYPES = [
   { id: "inspiracion", label: "Inspiración", color: "#e879a6", icon: "sparkles" },
   { id: "otro",        label: "Otro",        color: "#f6a15b", icon: "link" },
 ];
-const _rtMeta = (id) => RES_TYPES.find(t => t.id === id) || RES_TYPES[0];
+// Categorías libres: el usuario puede crear las suyas (p. ej. "Shopify").
+// Sugerencias por defecto + colores fijos; el resto recibe un color estable.
+const _DEFAULT_CATS = [
+  { key: "Herramienta", color: "#9e9ae5" },
+  { key: "Referencia",  color: "#60a5fa" },
+  { key: "Estrategia",  color: "#34d399" },
+  { key: "Inspiración", color: "#e879a6" },
+  { key: "Shopify",     color: "#95bf47" },
+  { key: "Otro",        color: "#f6a15b" },
+];
+const _ID2LABEL = { herramienta: "Herramienta", referencia: "Referencia", estrategia: "Estrategia", inspiracion: "Inspiración", otro: "Otro" };
+const _CAT_PALETTE = ["#9e9ae5", "#60a5fa", "#34d399", "#e879a6", "#95bf47", "#f6a15b", "#22d3ee", "#fbbf24", "#f472b6", "#a78bfa"];
+const _hashStr = (s) => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+const _catLabel = (t) => { const s = (t || "").trim(); if (!s) return "Otro"; return _ID2LABEL[s.toLowerCase()] || s; };
+const _catColor = (label) => { const d = _DEFAULT_CATS.find(c => c.key.toLowerCase() === (label || "").toLowerCase()); return d ? d.color : _CAT_PALETTE[_hashStr(label || "") % _CAT_PALETTE.length]; };
+const _catMeta = (type) => { const label = _catLabel(type); return { label, color: _catColor(label) }; };
 const _resUrl = (u) => { const s = (u || "").trim(); if (!s) return null; return /^https?:\/\//.test(s) ? s : "https://" + s; };
 const _resDomain = (u) => {
   const full = _resUrl(u); if (!full) return "";
@@ -36,7 +51,7 @@ const Favicon = ({ url, size = 22 }) => {
 // Tarjeta de recurso
 const ResourceCard = ({ r, D, onEdit }) => {
   const [hover, setHover] = useState(false);
-  const meta = _rtMeta(r.type);
+  const meta = _catMeta(r.type);
   const url = _resUrl(r.url);
   const domain = _resDomain(r.url);
   const open = () => { if (url) window.open(url, "_blank", "noopener"); };
@@ -90,12 +105,12 @@ const ResourceCard = ({ r, D, onEdit }) => {
 // Modal para añadir / editar un recurso
 const _rfst = { width: "100%", height: 40, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)",
   borderRadius: 10, padding: "0 12px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none" };
-const ResourceModal = ({ initial, sectors, onClose }) => {
+const ResourceModal = ({ initial, sectors, categories, onClose }) => {
   const D = window.Data;
   const editing = initial && initial.id;
   const [f, setF] = useState(() => ({
     title: (initial && initial.title) || "", url: (initial && initial.url) || "",
-    type: (initial && initial.type) || "herramienta", sector: (initial && initial.sector) || "",
+    type: (initial && initial.id) ? _catLabel(initial.type) : ((initial && initial.presetCat) || ""), sector: (initial && initial.sector) || "",
     description: (initial && initial.description) || "",
   }));
   const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
@@ -108,10 +123,12 @@ const ResourceModal = ({ initial, sectors, onClose }) => {
   const onUrlBlur = () => { if (!f.title.trim() && f.url.trim()) setF(p => ({ ...p, title: _resDomain(p.url) })); };
   const save = () => {
     if (!f.url.trim() && !f.title.trim()) return;
-    if (editing) D.updateResource(initial.id, { title: f.title.trim(), url: f.url.trim(), type: f.type, sector: f.sector.trim(), description: f.description.trim() });
-    else D.addResource({ title: f.title.trim(), url: f.url.trim(), type: f.type, sector: f.sector.trim(), description: f.description.trim() });
+    const cat = (f.type || "").trim() || "Otro";
+    if (editing) D.updateResource(initial.id, { title: f.title.trim(), url: f.url.trim(), type: cat, sector: f.sector.trim(), description: f.description.trim() });
+    else D.addResource({ title: f.title.trim(), url: f.url.trim(), type: cat, sector: f.sector.trim(), description: f.description.trim() });
     onClose();
   };
+  const catOptions = [...new Set([..._DEFAULT_CATS.map(c => c.key), ...(categories || [])])];
   return ReactDOM.createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 540 }} onClick={e => e.stopPropagation()}>
@@ -133,10 +150,9 @@ const ResourceModal = ({ initial, sectors, onClose }) => {
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Categoría</div>
-              <select value={f.type} onChange={upd("type")} style={{ ..._rfst, cursor: "pointer" }}>
-                {RES_TYPES.map(t => <option key={t.id} value={t.id}>{t.label}</option>)}
-              </select>
+              <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Categoría <span style={{ color: "var(--text-subtle)" }}>(crea la tuya)</span></div>
+              <input value={f.type} onChange={upd("type")} placeholder="Ej. Shopify, Herramienta…" list="res-cats" style={_rfst}/>
+              <datalist id="res-cats">{catOptions.map(c => <option key={c} value={c}/>)}</datalist>
             </div>
             <div>
               <div style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6 }}>Sector <span style={{ color: "var(--text-subtle)" }}>(opcional)</span></div>
@@ -171,19 +187,21 @@ const AgencyResources = ({ navigate }) => {
   const [sectorF, setSectorF] = useState("all");
   const [modal, setModal] = useState(null);   // null | {} (nuevo) | recurso (editar)
 
-  const counts = {}; RES_TYPES.forEach(t => counts[t.id] = 0);
-  all.forEach(r => { counts[r.type] = (counts[r.type] || 0) + 1; });
+  // Categorías presentes (creadas por el usuario) → pestañas
+  const catCounts = {};
+  all.forEach(r => { const c = _catLabel(r.type); catCounts[c] = (catCounts[c] || 0) + 1; });
+  const categories = Object.keys(catCounts).sort((a, b) => a.localeCompare(b, "es"));
   const sectors = [...new Set(all.map(r => (r.sector || "").trim()).filter(Boolean))].sort();
 
   const ql = q.trim().toLowerCase();
   const rows = all.filter(r =>
-    (type === "all" || r.type === type) &&
+    (type === "all" || _catLabel(r.type) === type) &&
     (sectorF === "all" || (r.sector || "").trim() === sectorF) &&
-    (!ql || (r.title || "").toLowerCase().includes(ql) || (r.description || "").toLowerCase().includes(ql) || (r.url || "").toLowerCase().includes(ql) || (r.sector || "").toLowerCase().includes(ql))
+    (!ql || (r.title || "").toLowerCase().includes(ql) || (r.description || "").toLowerCase().includes(ql) || (r.url || "").toLowerCase().includes(ql) || (r.sector || "").toLowerCase().includes(ql) || (_catLabel(r.type)).toLowerCase().includes(ql))
   );
 
   // Subrayado deslizante de las pestañas
-  const tabItems = [{ id: "all", label: "Todos", count: all.length }, ...RES_TYPES.map(t => ({ id: t.id, label: t.label, count: counts[t.id] || 0 }))];
+  const tabItems = [{ id: "all", label: "Todos", count: all.length }, ...categories.map(c => ({ id: c, label: c, count: catCounts[c] || 0 }))];
   const tabsRef = React.useRef(null);
   const [indic, setIndic] = useState({ left: 0, width: 0 });
   const [, startTransition] = React.useTransition();
@@ -192,7 +210,7 @@ const AgencyResources = ({ navigate }) => {
     const cont = tabsRef.current; if (!cont) return;
     const el = cont.querySelector(".tab.active");
     if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth });
-  }, [type, all.length, JSON.stringify(counts)]);
+  }, [type, all.length, JSON.stringify(catCounts)]);
 
   const inputStyle = { background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit", width: 150 };
   return (
@@ -219,7 +237,7 @@ const AgencyResources = ({ navigate }) => {
             <Icon name="search" size={14} style={{ color: "var(--text-subtle)" }}/>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…" style={inputStyle}/>
           </div>
-          <button onClick={() => setModal({})}
+          <button onClick={() => setModal({ presetCat: type !== "all" ? type : "" })}
             onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
             onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 34, padding: "0 14px", borderRadius: 9,
@@ -251,7 +269,7 @@ const AgencyResources = ({ navigate }) => {
         </div>
       )}
 
-      {modal && <ResourceModal initial={modal} sectors={sectors} onClose={() => setModal(null)}/>}
+      {modal && <ResourceModal initial={modal} sectors={sectors} categories={categories} onClose={() => setModal(null)}/>}
     </div>
   );
 };
