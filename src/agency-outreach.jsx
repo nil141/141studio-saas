@@ -608,6 +608,21 @@ const AgencyOutreach = ({ navigate }) => {
     return () => window.removeEventListener("resize", onResize);
   }, []);
 
+  // ── Carga incremental: solo se renderizan N filas; se añaden más al bajar ──
+  const PAGE = 40;
+  const [visN, setVisN] = useState(PAGE);
+  useEffect(() => { setVisN(PAGE); }, [filter, campFilter, ql]);   // vuelve arriba al cambiar de filtro/búsqueda
+  const shown = rows.slice(0, visN);
+  const sentinelRef = React.useRef(null);
+  useEffect(() => {
+    const el = sentinelRef.current; if (!el || visN >= rows.length) return;
+    const io = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) setVisN(n => Math.min(n + PAGE, rows.length));
+    }, { rootMargin: "600px 0px" });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [visN, rows.length]);
+
   // Exportar a CSV los leads seleccionados (o los visibles si no hay selección)
   const exportSel = () => {
     const chosen = sel.size ? all.filter(o => sel.has(o.id)) : rows;
@@ -721,13 +736,22 @@ const AgencyOutreach = ({ navigate }) => {
               </tr>
             </thead>
             <tbody>
-              {rows.map((o, i) => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} first={i === 0}/>)}
+              {shown.map((o, i) => <OutreachRow key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)} first={i === 0}/>)}
             </tbody>
           </table>
       </div>
+      {/* Sentinela: al acercarse, carga el siguiente tramo */}
+      {visN < rows.length && (
+        <div ref={sentinelRef} style={{ height: 1 }}/>
+      )}
+      {visN < rows.length && (
+        <div style={{ textAlign: "center", padding: "14px 0", fontSize: 12, color: "var(--text-subtle)" }}>
+          Mostrando {shown.length} de {rows.length}…
+        </div>
+      )}
       {/* Lista de tarjetas — solo móvil */}
       <div className="outreach-cards">
-        {rows.map(o => <OutreachCard key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)}/>)}
+        {shown.map(o => <OutreachCard key={o.id} o={o} D={D} sel={sel.has(o.id)} onSel={() => toggle(o.id)}/>)}
       </div>
       {rows.length === 0 && (
         <div style={{ padding: "44px 0" }}>
