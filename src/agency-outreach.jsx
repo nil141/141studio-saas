@@ -590,6 +590,13 @@ const AgencyOutreach = ({ navigate }) => {
   ];
   const tabsRef = React.useRef(null);
   const [indic, setIndic] = useState({ left: 0, width: 0 });
+  const [, startTransition] = React.useTransition();
+  // Mueve el subrayado al instante (desde la pestaña pulsada) y actualiza la
+  // tabla en segundo plano, para que la animación no espere al re-render.
+  const pickTab = (id, el) => {
+    if (el) setIndic({ left: el.offsetLeft, width: el.offsetWidth });
+    startTransition(() => setFilter(id));
+  };
   React.useLayoutEffect(() => {
     const cont = tabsRef.current; if (!cont) return;
     const el = cont.querySelector(".tab.active");
@@ -677,7 +684,7 @@ const AgencyOutreach = ({ navigate }) => {
       {/* Pestañas de estado — mismo estilo que la ficha de cliente, con subrayado deslizante */}
       <div className="tabs tabs-slide" ref={tabsRef}>
         {tabItems.map(t => (
-          <div key={t.id} className={"tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
+          <div key={t.id} className={"tab" + (filter === t.id ? " active" : "")} onClick={e => pickTab(t.id, e.currentTarget)}>
             {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
           </div>
         ))}
