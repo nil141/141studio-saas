@@ -86,7 +86,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
-  AGENDA_EVENTS: [], OUTREACH: [], RESOURCES: [],
+  AGENDA_EVENTS: [], OUTREACH: [], RESOURCES: [], BOARDS: {},
   _loaded: false,   // true tras la primera carga completa (para skeletons)
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
@@ -364,6 +364,8 @@ const _loadAll = async () => {
     try { ou = await _sb.from("outreach").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
     let re = { data: [] };
     try { re = await _sb.from("resources").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
+    let bd = { data: [] };
+    try { bd = await _sb.from("client_boards").select("*").eq("agency_id", uid); } catch {}
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
@@ -375,6 +377,8 @@ const _loadAll = async () => {
     _store.AGENDA_EVENTS = ((ae && ae.data) || []).map(_mae);
     _store.OUTREACH     = ((ou && ou.data) || []).map(_mo);
     _store.RESOURCES    = ((re && re.data) || []).map(_mr);
+    _store.BOARDS = {};
+    ((bd && bd.data) || []).forEach(row => { _store.BOARDS[row.client_id] = Array.isArray(row.items) ? row.items : (row.items || []); });
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
     // Tasks: flat array → { projectId: [tasks] }
     _store.TASKS = {};
@@ -1743,6 +1747,22 @@ const deleteResource = async (id) => {
   if (error) { _store.RESOURCES = prev; _emit(); }
 };
 
+// ── Tablero por cliente (pizarra estilo Miro) ──────────────────────────
+const getClientBoard = (clientId) => (_store.BOARDS && _store.BOARDS[clientId]) || [];
+// Guarda el tablero (lista de elementos). Actualiza el store local al instante
+// y persiste en Supabase. No pasa por realtime para no interrumpir el arrastre.
+const saveClientBoard = async (clientId, items) => {
+  const uid = _store._user?.id; if (!uid || !clientId) return;
+  if (!_store.BOARDS) _store.BOARDS = {};
+  _store.BOARDS[clientId] = items;   // no _emit(): el componente ya tiene su estado
+  try {
+    await _sb.from("client_boards").upsert(
+      { client_id: clientId, agency_id: uid, items, updated_at: new Date().toISOString() },
+      { onConflict: "client_id" }
+    );
+  } catch (_) {}
+};
+
 const _randToken = () => {
   const a = new Uint8Array(24);
   (window.crypto || {}).getRandomValues?.(a);
@@ -1814,6 +1834,7 @@ window.Data = {
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
   addResource, updateResource, deleteResource,
+  getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
   get driveConfigured() { return !!_driveCfg().url; },

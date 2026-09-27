@@ -81,6 +81,7 @@
     AGENDA_EVENTS: [],
     OUTREACH: [],
     RESOURCES: [],
+    BOARDS: {},
     _loaded: false,
     // true tras la primera carga completa (para skeletons)
     _user: null,
@@ -479,6 +480,11 @@
         re = await _sb.from("resources").select("*").eq("agency_id", uid).order("created_at", { ascending: false });
       } catch {
       }
+      let bd = { data: [] };
+      try {
+        bd = await _sb.from("client_boards").select("*").eq("agency_id", uid);
+      } catch {
+      }
       _store.CLIENTS = (c.data || []).map(_mc);
       _store.PROJECTS = (p.data || []).map(_mp);
       _store.INVOICES = (i.data || []).map(_mi);
@@ -490,6 +496,10 @@
       _store.AGENDA_EVENTS = (ae && ae.data || []).map(_mae);
       _store.OUTREACH = (ou && ou.data || []).map(_mo);
       _store.RESOURCES = (re && re.data || []).map(_mr);
+      _store.BOARDS = {};
+      (bd && bd.data || []).forEach((row) => {
+        _store.BOARDS[row.client_id] = Array.isArray(row.items) ? row.items : row.items || [];
+      });
       _store.SETTINGS = _ms(s.data) || { ...SETTINGS_DEFAULT };
       _store.TASKS = {};
       for (const row of t.data || []) {
@@ -2043,6 +2053,20 @@
       _emit();
     }
   };
+  const getClientBoard = (clientId) => _store.BOARDS && _store.BOARDS[clientId] || [];
+  const saveClientBoard = async (clientId, items) => {
+    const uid = _store._user?.id;
+    if (!uid || !clientId) return;
+    if (!_store.BOARDS) _store.BOARDS = {};
+    _store.BOARDS[clientId] = items;
+    try {
+      await _sb.from("client_boards").upsert(
+        { client_id: clientId, agency_id: uid, items, updated_at: (/* @__PURE__ */ new Date()).toISOString() },
+        { onConflict: "client_id" }
+      );
+    } catch (_) {
+    }
+  };
   const _randToken = () => {
     const a = new Uint8Array(24);
     (window.crypto || {}).getRandomValues?.(a);
@@ -2190,6 +2214,8 @@
     addResource,
     updateResource,
     deleteResource,
+    getClientBoard,
+    saveClientBoard,
     // Google Drive (Apps Script)
     getDriveConfig,
     setDriveConfig,

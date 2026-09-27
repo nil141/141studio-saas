@@ -431,6 +431,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
           {id:"billing",     label:"Financiero", count:invoices.length || null},
           {id:"credentials", label:"Credenciales", count:creds.length || null},
           {id:"files",       label:"Documentación"},
+          {id:"board",       label:"Tablero"},
           {id:"eventos",     label:"Eventos"},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
@@ -599,6 +600,7 @@ const AgencyClientDetail = ({ clientId, navigate, openModal }) => {
       })()}
 
       {tab === "files" && <AgencyDriveFolder client={c}/>}
+      {tab === "board" && <window.ClientBoard clientId={c.id}/>}
 
       {tab === "clienttasks" && <AgencyClientTasks clientId={c.id}/>}
 
