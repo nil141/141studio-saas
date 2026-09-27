@@ -1,6 +1,5 @@
 (() => {
-  // src/agency-dashboard.jsx
-  var AnimatedValue = ({ num, fmt }) => {
+  const AnimatedValue = ({ num, fmt }) => {
     const [disp, setDisp] = React.useState(0);
     const raf = React.useRef();
     useEffect(() => {
@@ -21,7 +20,7 @@
     }, [num]);
     return fmt ? fmt(disp) : Math.round(disp);
   };
-  var parseSpanishDate = (str) => {
+  const parseSpanishDate = (str) => {
     if (!str || str === "\u2014") return null;
     const M = { ene: 0, feb: 1, mar: 2, abr: 3, may: 4, jun: 5, jul: 6, ago: 7, sep: 8, oct: 9, nov: 10, dic: 11 };
     const parts = str.trim().toLowerCase().split(/[\s\/\-]+/);
@@ -31,7 +30,7 @@
     if (isNaN(day) || mon === void 0) return null;
     return new Date((/* @__PURE__ */ new Date()).getFullYear(), mon, day);
   };
-  var AgencyDashboard = ({ openModal, navigate, session }) => {
+  const AgencyDashboard = ({ openModal, navigate, session }) => {
     const D = window.Data;
     D.useStore();
     const [now, setNow] = useState(/* @__PURE__ */ new Date());
@@ -809,7 +808,7 @@
       margin: 0
     } }, Header, renderLayout());
   };
-  var LINK_BTN = {
+  const LINK_BTN = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -822,22 +821,22 @@
     cursor: "pointer",
     fontFamily: "inherit"
   };
-  var DASH_CARD = {
+  const DASH_CARD = {
     background: "transparent",
     border: "none",
     borderRadius: 0,
     boxShadow: "none"
   };
-  var DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em" };
-  var DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => /* @__PURE__ */ React.createElement("div", { style: { ...DASH_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: {
+  const DASH_EYEBROW = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", textTransform: "uppercase", letterSpacing: "0.08em" };
+  const DashCardShell = ({ eyebrow, title, action, onAction, children, pad = "16px 20px" }) => /* @__PURE__ */ React.createElement("div", { style: { ...DASH_CARD, display: "flex", flexDirection: "column", overflow: "hidden", height: "100%" } }, /* @__PURE__ */ React.createElement("div", { style: {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
     padding: "2px 4px 12px",
     borderBottom: "0.5px solid rgba(255,255,255,0.06)"
   } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: DASH_EYEBROW }, eyebrow), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 4, fontSize: 15, fontWeight: 500, letterSpacing: "-0.5px" } }, title)), action && /* @__PURE__ */ React.createElement("button", { onClick: onAction, style: LINK_BTN }, action, " ", /* @__PURE__ */ React.createElement(Icon, { name: "arrow", size: 12 }))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, padding: pad, display: "flex" } }, children));
-  var _goalSkel = (w) => /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: w, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.09)", verticalAlign: "middle" } });
-  var GoalBlock = ({ billed, eur, hideMoney }) => {
+  const _goalSkel = (w) => /* @__PURE__ */ React.createElement("span", { style: { display: "inline-block", width: w, height: 13, borderRadius: 999, background: "rgba(255,255,255,0.09)", verticalAlign: "middle" } });
+  const GoalBlock = ({ billed, eur, hideMoney }) => {
     const [goal, setGoal] = useState(() => {
       try {
         return Number(localStorage.getItem("141_month_goal")) || 3e3;
@@ -909,7 +908,7 @@
       gap: 5
     } }, "meta ", hideMoney ? _goalSkel(40) : eur(goal), " ", /* @__PURE__ */ React.createElement(Icon, { name: "edit-2", size: 11 }))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: done ? "var(--accent)" : "var(--text-subtle)", letterSpacing: "-0.2px" } }, done ? "Objetivo cumplido este mes \u{1F3AF}" : hideMoney ? "Progreso del mes" : `Faltan ${eur(remaining)} para la meta`)));
   };
-  var ProjectsProgressBlock = ({ D, navigate, openModal }) => {
+  const ProjectsProgressBlock = ({ D, navigate, openModal }) => {
     const projs = D.PROJECTS || [];
     return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "En curso", title: "Proyectos", action: "Ver todo", onAction: () => navigate("projects"), pad: "8px 4px" }, projs.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", fontSize: 12.5, color: "var(--text-subtle)" } }, "Sin proyectos. ", /* @__PURE__ */ React.createElement(
       "button",
@@ -953,11 +952,11 @@
       );
     })));
   };
-  var FinanceChartBlock = ({ finTrend, hideMoney, navigate }) => {
+  const FinanceChartBlock = ({ finTrend, hideMoney, navigate }) => {
     const FinTrend = window.FinTrendChart;
     return /* @__PURE__ */ React.createElement(DashCardShell, { eyebrow: "\xDAltimos 6 meses", title: "Facturado", action: "Ver", onAction: () => navigate("billing"), pad: "10px 4px 4px" }, hideMoney ? /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", textAlign: "center", color: "var(--text-subtle)", fontSize: 12.5 } }, "Importes ocultos") : FinTrend ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", width: "100%", minHeight: 0 } }, /* @__PURE__ */ React.createElement(FinTrend, { trend: finTrend, single: true })) : /* @__PURE__ */ React.createElement("div", { style: { margin: "auto", color: "var(--text-subtle)", fontSize: 12.5 } }, "\u2026"));
   };
-  var EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
+  const EventRow = ({ ev, last, formatEventDate }) => /* @__PURE__ */ React.createElement(
     "div",
     {
       onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.025)",
@@ -1032,7 +1031,7 @@
       fontWeight: 500
     } }, ev.type)
   );
-  var QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
+  const QuickTaskRow = ({ t, D, projName, dateLabel, overdue, last }) => {
     const [checking, setChecking] = useState(false);
     const complete = (e) => {
       e.stopPropagation();
@@ -1103,8 +1102,8 @@
       } }, projName, dateLabel ? /* @__PURE__ */ React.createElement("span", { style: { color: overdue ? "var(--red)" : "var(--text-muted)" } }, " \xB7 ", dateLabel) : ""))
     );
   };
-  var _BILL_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  var _CATS = [
+  const _BILL_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const _CATS = [
     [/claude|anthropic|openai|chatgpt|\bgpt\b|magnific|midjourney|eleven\s?labs|perplexity|cursor|runway|\bia\b|\bai\b/, "sparkle", "#9e9ae5"],
     // IA
     [/figma|adobe|canva|dribbble|behance|photoshop|illustrat|dise[ñn]|design/, "palette", "#e879a6"],
@@ -1126,12 +1125,12 @@
     [/cuota|autonom|aut[oó]nom|irpf|gestor|stripe|paypal|impuesto|seguro|banco|\biva\b|n[oó]mina/, "receipt", "#9e9ae5"]
     // Finanzas / impuestos
   ];
-  var _catFor = (name) => {
+  const _catFor = (name) => {
     const t = (name || "").toLowerCase();
     for (const [re, ic, co] of _CATS) if (re.test(t)) return { icon: ic, color: co };
     return { icon: "package", color: "#9e9ae5" };
   };
-  var _SLUGS = [
+  const _SLUGS = [
     [/claude|anthropic/, "claude"],
     [/magnific|freepik/, "freepik"],
     [/railway/, "railway"],
@@ -1171,12 +1170,12 @@
     [/eleven\s?labs/, "elevenlabs"],
     [/perplexity/, "perplexity"]
   ];
-  var _slugFor = (name) => {
+  const _slugFor = (name) => {
     const t = (name || "").toLowerCase();
     for (const [re, s] of _SLUGS) if (re.test(t)) return s;
     return null;
   };
-  var BillRow = ({ b, hideMoney, eur, onClick, last }) => {
+  const BillRow = ({ b, hideMoney, eur, onClick, last }) => {
     const d = b.date;
     const dateStr = `${d.getDate()} ${_BILL_MESES[d.getMonth()]} ${d.getFullYear()}`;
     const cat = b.kind === "invoice" ? { icon: "receipt", color: "#9e9ae5" } : _catFor(b.name);
@@ -1229,20 +1228,20 @@
       } }, eur(b.amount)), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", letterSpacing: "-0.1px", whiteSpace: "nowrap" } }, b.kind === "invoice" ? "Por cobrar" : "Programado"))
     );
   };
-  var INICIO_EYEBROW = {
+  const INICIO_EYEBROW = {
     fontSize: 11,
     fontWeight: 600,
     color: "var(--text-subtle)",
     textTransform: "uppercase",
     letterSpacing: "0.08em"
   };
-  var INICIO_CARD = {
+  const INICIO_CARD = {
     background: "var(--bg-elev-2)",
     border: "0.5px solid var(--border)",
     borderRadius: 16,
     padding: "16px 18px"
   };
-  var SectionHead = ({ title, count, open, onToggle, right }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { onClick: onToggle, style: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+  const SectionHead = ({ title, count, open, onToggle, right }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("div", { onClick: onToggle, style: { display: "flex", alignItems: "center", gap: 8, cursor: "pointer", userSelect: "none", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     Icon,
     {
       name: "chevron-right",
@@ -1251,7 +1250,7 @@
       style: { color: "var(--text-subtle)", transform: open ? "rotate(90deg)" : "none", transition: "transform .2s" }
     }
   ), /* @__PURE__ */ React.createElement("span", { style: INICIO_EYEBROW }, title), count != null && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", fontVariantNumeric: "tabular-nums" } }, count)), /* @__PURE__ */ React.createElement("div", { onClick: onToggle, style: { flex: 1, height: "0.5px", background: "var(--border)", cursor: "pointer" } }), right);
-  var _usePersistOpen = (key, def) => {
+  const _usePersistOpen = (key, def) => {
     const [open, setOpen] = useState(() => {
       try {
         const v = localStorage.getItem(key);
@@ -1270,18 +1269,18 @@
     });
     return [open, toggle];
   };
-  var _ymdShift = (ymd, days) => {
+  const _ymdShift = (ymd, days) => {
     const d = /* @__PURE__ */ new Date(ymd + "T00:00:00");
     if (isNaN(d)) return ymd;
     d.setDate(d.getDate() + days);
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
   };
-  var _fmtDeliveryDate = (raw) => {
+  const _fmtDeliveryDate = (raw) => {
     const d = parseSpanishDate(raw);
     if (!d) return raw || "\u2014";
     return `${d.getDate()} ${_BILL_MESES[d.getMonth()]}`;
   };
-  var _ACCESOS = [
+  const _ACCESOS = [
     { label: "Tareas", icon: "list-todo", nav: "tasks" },
     { label: "Agenda", icon: "calendar", nav: "agenda" },
     { label: "Proyectos", icon: "folder", nav: "projects" },
@@ -1290,7 +1289,7 @@
     { label: "Facturaci\xF3n", icon: "trending-up", nav: "income" },
     { label: "Gastos", icon: "receipt", nav: "billing" }
   ];
-  var AccesosChips = ({ navigate, openModal }) => {
+  const AccesosChips = ({ navigate, openModal }) => {
     return /* @__PURE__ */ React.createElement("div", { className: "accesos-chips", style: { display: "flex", gap: 10, flexWrap: "wrap", overflowX: "auto", WebkitOverflowScrolling: "touch" } }, _ACCESOS.map((a) => /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -1327,8 +1326,8 @@
       a.label
     )));
   };
-  var ListaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "12px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, flex: 1, maxWidth: 230 } }));
-  var MiListaBlock = ({ D, navigate, todayStr }) => {
+  const ListaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "12px 6px" } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, flex: 1, maxWidth: 230 } }));
+  const MiListaBlock = ({ D, navigate, todayStr }) => {
     const [tab, setTab] = useState("dia");
     const [dayOffset, setDayOffset] = useState(0);
     const [weekOffset, setWeekOffset] = useState(0);
@@ -1440,7 +1439,7 @@
       }
     )))));
   };
-  var _activePhaseOf = (p, D) => {
+  const _activePhaseOf = (p, D) => {
     const names = (p.service || "").split(",").map((s) => s.trim()).filter((n) => n && n !== "libre" && n !== "\u2014");
     if (!names.length) return null;
     const tasks = D.TASKS && D.TASKS[p.id] || [];
@@ -1452,7 +1451,7 @@
     const active = names.find((n) => !isComplete(n));
     return { name: active || names[names.length - 1], allDone: !active };
   };
-  var _PHASE_COLORS = [
+  const _PHASE_COLORS = [
     [/dise[ñn]|design|prototip/, "#d98cc0"],
     // Diseño → rosa suave
     [/desarroll|\bdev\b|program|shopify|maqueta|c[oó]digo|web/, "#6ea8fe"],
@@ -1464,13 +1463,13 @@
     [/conten|redes|social|marketing|\bads\b|campañ|copy/, "#a99ff0"]
     // Contenido → lila
   ];
-  var _phaseColor = (name) => {
+  const _phaseColor = (name) => {
     const t = (name || "").toLowerCase();
     for (const [re, c] of _PHASE_COLORS) if (re.test(t)) return c;
     return "#9e9ae5";
   };
-  var EntregaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, width: 140 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 16, borderRadius: 6, width: 64 } })), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { display: "block", height: 4, borderRadius: 2, width: "100%" } }));
-  var EntregasBlock = ({ D, navigate }) => {
+  const EntregaSkel = () => /* @__PURE__ */ React.createElement("div", { style: { padding: "14px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, marginBottom: 10 } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 11, borderRadius: 5, width: 140 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 16, borderRadius: 6, width: 64 } })), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { display: "block", height: 4, borderRadius: 2, width: "100%" } }));
+  const EntregasBlock = ({ D, navigate }) => {
     const projs = (D.PROJECTS || []).slice().sort((a, b) => {
       const da = parseSpanishDate(a.deadline), db = parseSpanishDate(b.deadline);
       if (da && db) return da - db;
@@ -1488,7 +1487,9 @@
       const complete = pct >= 100 || ph && ph.allDone;
       const phName = complete ? "Completado" : ph ? ph.name : pct > 0 ? "En curso" : "Sin empezar";
       const col = complete ? "var(--green)" : ph ? _phaseColor(ph.name) : pct > 0 ? "var(--accent)" : "#6b7280";
-      const title = p.clientName || p.name || "Proyecto";
+      const _cli = (p.clientName || "").trim();
+      const client = _cli && !["\u2014", "-", "Interno"].includes(_cli) ? _cli : "";
+      const projName = p.name || "Proyecto";
       return /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -1506,7 +1507,7 @@
           background: "var(--green)",
           display: "grid",
           placeItems: "center"
-        } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })) : /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--border-strong)" } }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, title), /* @__PURE__ */ React.createElement("span", { style: {
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#000" } })) : /* @__PURE__ */ React.createElement("span", { style: { width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--border-strong)" } }), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "baseline", gap: 6, minWidth: 0, overflow: "hidden" } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0, maxWidth: "55%" } }, client || projName), client && projName && client !== projName && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, fontWeight: 400, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 } }, "\xB7 ", projName)), /* @__PURE__ */ React.createElement("span", { style: {
           fontSize: 10,
           padding: "2px 8px",
           borderRadius: 6,
@@ -1521,7 +1522,7 @@
       );
     })))));
   };
-  var SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
+  const SeguimientosBlock = ({ D, navigate, mode = "due" }) => {
     const today = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
     const DONE = ["cerrado", "descartado"];
     const _MES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];

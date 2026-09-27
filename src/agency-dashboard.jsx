@@ -1668,7 +1668,9 @@ const EntregasBlock = ({ D, navigate }) => {
             const complete = pct >= 100 || (ph && ph.allDone);
             const phName = complete ? "Completado" : (ph ? ph.name : (pct > 0 ? "En curso" : "Sin empezar"));
             const col = complete ? "var(--green)" : (ph ? _phaseColor(ph.name) : (pct > 0 ? "var(--accent)" : "#6b7280"));
-            const title = p.clientName || p.name || "Proyecto";
+            const _cli = (p.clientName || "").trim();
+            const client = (_cli && !["—", "-", "Interno"].includes(_cli)) ? _cli : "";
+            const projName = p.name || "Proyecto";
             return (
               <div key={p.id} onClick={() => navigate("project", { projectId: p.id })}
                 onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.025)"}
@@ -1683,7 +1685,12 @@ const EntregasBlock = ({ D, navigate }) => {
                     ) : (
                       <span style={{ width: 18, height: 18, borderRadius: "50%", flexShrink: 0, border: "1.6px solid var(--border-strong)" }}/>
                     )}
-                    <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{title}</span>
+                    <span style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0, overflow: "hidden" }}>
+                      <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0, maxWidth: "55%" }}>{client || projName}</span>
+                      {client && projName && client !== projName && (
+                        <span style={{ fontSize: 12.5, fontWeight: 400, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>· {projName}</span>
+                      )}
+                    </span>
                     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, whiteSpace: "nowrap", flexShrink: 0,
                       background: col + "1f", color: col, letterSpacing: "0.01em", fontWeight: 500 }}>{phName}</span>
                   </div>
