@@ -1,12 +1,11 @@
 (() => {
-  // src/agency-project.jsx
-  var _PM_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  var _pmIsoToShort = (iso) => {
+  const _PM_MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const _pmIsoToShort = (iso) => {
     if (!iso) return "";
     const d = /* @__PURE__ */ new Date(iso + "T12:00:00");
     return isNaN(d) ? "" : `${d.getDate()} ${_PM_MESES[d.getMonth()]}`;
   };
-  var EditProjectModal = ({ project, onClose }) => {
+  const EditProjectModal = ({ project, onClose }) => {
     const D = window.Data;
     const toast = useToast();
     const [name, setName] = useState(project.name || "");
@@ -109,8 +108,8 @@
       }))), !recurring && /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { className: "label" }, "Fecha de entrega"), /* @__PURE__ */ React.createElement("input", { className: "input", type: "date", value: deadline, onChange: (e) => setDeadline(e.target.value) }), project.deadline && project.deadline !== "\u2014" && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 5 } }, "Actual: ", project.deadline, deadline ? "" : " \xB7 d\xE9jalo vac\xEDo para mantenerla")))
     );
   };
-  var _eurP = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  var ProjectPayments = ({ project }) => {
+  const _eurP = (n) => "\u20AC" + (Number(n) || 0).toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const ProjectPayments = ({ project }) => {
     const D = window.Data;
     const toast = useToast();
     const payments = project.payments || [];
@@ -212,7 +211,46 @@
       color: p.paid ? "var(--accent)" : "var(--text)"
     } }, _eurP(p.amount))))));
   };
-  var AgencyProject = ({ projectId, navigate, openModal }) => {
+  const ProjectFigmaBoard = ({ p, D }) => {
+    const [editing, setEditing] = useState(!p.figmaUrl);
+    const [val, setVal] = useState(p.figmaUrl || "");
+    const url = (p.figmaUrl || "").trim();
+    const embed = url ? "https://www.figma.com/embed?embed_host=141crm&url=" + encodeURIComponent(url) : "";
+    const save = () => {
+      const v = val.trim();
+      D.updateProject(p.id, { figmaUrl: v });
+      setEditing(false);
+    };
+    if (!url || editing) {
+      return /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560, margin: "18px auto", textAlign: "center", padding: "36px 24px", borderRadius: 16, border: "1px dashed var(--border-strong)", background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 46, height: 46, borderRadius: 12, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-soft)", color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "layers", size: 22 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, marginBottom: 6 } }, "Conecta el Figma del proyecto"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.5 } }, "Pega el enlace del archivo de Figma. Podr\xE1s verlo y navegarlo aqu\xED; para editar se abre en Figma."), /* @__PURE__ */ React.createElement(
+        "input",
+        {
+          className: "input",
+          value: val,
+          onChange: (e) => setVal(e.target.value),
+          placeholder: "https://www.figma.com/file/\u2026",
+          onKeyDown: (e) => {
+            if (e.key === "Enter") save();
+          },
+          style: { marginBottom: 12, textAlign: "center" }
+        }
+      ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, justifyContent: "center" } }, url && /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
+        setVal(url);
+        setEditing(false);
+      } }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save, disabled: !val.trim(), style: { opacity: val.trim() ? 1 : 0.5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Conectar")));
+    }
+    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "calc(100dvh - 250px)", minHeight: 440 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "layers", size: 14, style: { color: "var(--accent)" } }), " ", (() => {
+      try {
+        return new URL(url).pathname.split("/").filter(Boolean).slice(-1)[0] || "Figma";
+      } catch {
+        return "Figma";
+      }
+    })()), /* @__PURE__ */ React.createElement("div", { style: { marginLeft: "auto", display: "flex", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "btn", onClick: () => {
+      setVal(url);
+      setEditing(true);
+    } }, /* @__PURE__ */ React.createElement(Icon, { name: "edit", size: 13 }), " Cambiar enlace"), /* @__PURE__ */ React.createElement("a", { className: "btn primary", href: url, target: "_blank", rel: "noreferrer", style: { textDecoration: "none" } }, /* @__PURE__ */ React.createElement(Icon, { name: "external-link", size: 13 }), " Abrir en Figma (editar)"))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minHeight: 0, borderRadius: 16, overflow: "hidden", border: "0.5px solid var(--border)", background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("iframe", { title: "Figma", src: embed, allowFullScreen: true, style: { width: "100%", height: "100%", border: "none", display: "block" } })));
+  };
+  const AgencyProject = ({ projectId, navigate, openModal }) => {
     const D = window.Data;
     D.useStore();
     const toast = useToast();
@@ -368,6 +406,7 @@
     } })), /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text)", fontWeight: 600 } }, liveProgress, "%"), /* @__PURE__ */ React.createElement("span", { style: { margin: "0 6px", opacity: 0.4 } }, "\xB7"), tasksByCol.done.length, "/", projectTasks.length, " tareas")), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
       { id: "plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan" },
       { id: "files", label: "Archivos" },
+      { id: "board", label: "Tablero" },
       { id: "pay", label: "Cobro" }
     ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (tab === t.id ? " active" : ""), onClick: () => setTab(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), /* @__PURE__ */ React.createElement("div", null, tab === "plan" && (() => {
       const phaseNames = (aiPhases || []).map((ph) => ph.name);
@@ -775,7 +814,7 @@
         setDriveDraft("");
         setDriveEditing(true);
       } }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 13 }), " Pegar enlace")))));
-    })(), tab === "pay" && /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }))), ctxMenu && (() => {
+    })(), tab === "pay" && /* @__PURE__ */ React.createElement(ProjectPayments, { project: p }), tab === "board" && /* @__PURE__ */ React.createElement(ProjectFigmaBoard, { p, D }))), ctxMenu && (() => {
       const ctxTask = projectTasks.find((t) => t.id === ctxMenu.taskId);
       if (!ctxTask) return null;
       return /* @__PURE__ */ React.createElement(

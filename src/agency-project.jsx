@@ -282,6 +282,54 @@ const ProjectPayments = ({ project }) => {
   );
 };
 
+// Tablero del proyecto — diseño en Figma embebido (ver/navegar) + abrir para editar
+const ProjectFigmaBoard = ({ p, D }) => {
+  const [editing, setEditing] = useState(!p.figmaUrl);
+  const [val, setVal] = useState(p.figmaUrl || "");
+  const url = (p.figmaUrl || "").trim();
+  const embed = url ? "https://www.figma.com/embed?embed_host=141crm&url=" + encodeURIComponent(url) : "";
+  const save = () => { const v = val.trim(); D.updateProject(p.id, { figmaUrl: v }); setEditing(false); };
+  if (!url || editing) {
+    return (
+      <div style={{ maxWidth: 560, margin: "18px auto", textAlign: "center", padding: "36px 24px", borderRadius: 16, border: "1px dashed var(--border-strong)", background: "var(--bg-elev)" }}>
+        <div style={{ width: 46, height: 46, borderRadius: 12, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-soft)", color: "var(--accent)" }}>
+          <Icon name="layers" size={22}/>
+        </div>
+        <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>Conecta el Figma del proyecto</div>
+        <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.5 }}>
+          Pega el enlace del archivo de Figma. Podrás verlo y navegarlo aquí; para editar se abre en Figma.
+        </div>
+        <input className="input" value={val} onChange={e => setVal(e.target.value)} placeholder="https://www.figma.com/file/…"
+          onKeyDown={e => { if (e.key === "Enter") save(); }} style={{ marginBottom: 12, textAlign: "center" }}/>
+        <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+          {url && <button className="btn" onClick={() => { setVal(url); setEditing(false); }}>Cancelar</button>}
+          <button className="btn primary" onClick={save} disabled={!val.trim()} style={{ opacity: val.trim() ? 1 : 0.5 }}>
+            <Icon name="check" size={13}/> Conectar
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 250px)", minHeight: 440 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
+        <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)" }}>
+          <Icon name="layers" size={14} style={{ color: "var(--accent)" }}/> {(() => { try { return new URL(url).pathname.split("/").filter(Boolean).slice(-1)[0] || "Figma"; } catch { return "Figma"; } })()}
+        </span>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <button className="btn" onClick={() => { setVal(url); setEditing(true); }}><Icon name="edit" size={13}/> Cambiar enlace</button>
+          <a className="btn primary" href={url} target="_blank" rel="noreferrer" style={{ textDecoration: "none" }}>
+            <Icon name="external-link" size={13}/> Abrir en Figma (editar)
+          </a>
+        </div>
+      </div>
+      <div style={{ flex: 1, minHeight: 0, borderRadius: 16, overflow: "hidden", border: "0.5px solid var(--border)", background: "var(--bg-elev)" }}>
+        <iframe title="Figma" src={embed} allowFullScreen style={{ width: "100%", height: "100%", border: "none", display: "block" }}/>
+      </div>
+    </div>
+  );
+};
+
 // Agency Project detail with 6-week roadmap
 const AgencyProject = ({ projectId, navigate, openModal }) => {
   const D = window.Data;
@@ -467,6 +515,7 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
         {[
           {id:"plan", label: aiPhases ? `Plan (${aiPhases.length} fases)` : "Plan"},
           {id:"files", label:"Archivos"},
+          {id:"board", label:"Tablero"},
           {id:"pay", label:"Cobro"},
         ].map(t => (
           <div key={t.id} className={"tab" + (tab === t.id ? " active" : "")} onClick={() => setTab(t.id)}>
@@ -813,6 +862,8 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
           })()}
 
           {tab === "pay" && <ProjectPayments project={p}/>}
+
+          {tab === "board" && <ProjectFigmaBoard p={p} D={D}/>}
 
       </div>
     </div>
