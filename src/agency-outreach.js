@@ -1,11 +1,11 @@
 (() => {
   const { useState, useEffect } = React;
   const OUTREACH_STATUS = [
-    { id: "guardado", label: "Guardado", color: "#8b8b93" },
+    { id: "guardado", label: "Por contactar", color: "#8b8b93" },
     { id: "contactado", label: "Contactado", color: "#60a5fa" },
     { id: "respondio", label: "Respondi\xF3", color: "#9e9ae5" },
-    { id: "conversacion", label: "En conversaci\xF3n", color: "#e2b45c" },
-    { id: "propuesta", label: "Propuesta enviada", color: "#d98cc0" },
+    { id: "propuesta", label: "Loom enviado", color: "#d98cc0" },
+    { id: "conversacion", label: "Reuni\xF3n / precio", color: "#e2b45c" },
     { id: "cerrado", label: "Cerrado", color: "#34d399" },
     { id: "descartado", label: "Descartado", color: "#dc5b5d" }
   ];
@@ -776,18 +776,19 @@
       setF(_emptyF);
       setShowAdd(false);
     };
-    const counts = {};
-    OUTREACH_STATUS.forEach((s) => counts[s.id] = 0);
-    all.forEach((o) => {
-      counts[o.status] = (counts[o.status] || 0) + 1;
-    });
-    const dueCount = all.filter(_isDue).length;
-    const clientCount = all.filter((o) => o.convertedClientId).length;
-    const [filter, setFilter] = useState("all");
-    const matchFilter = (o) => filter === "all" ? true : filter === "due" ? _isDue(o) : filter === "clients" ? !!o.convertedClientId : o.status === filter;
     const [campFilter, setCampFilter] = useState("all");
     const campaigns = [...new Set(all.map((o) => (o.campaign || "").trim()).filter(Boolean))];
     const matchCamp = (o) => campFilter === "all" ? true : (o.campaign || "").trim() === campFilter;
+    const scope = all.filter(matchCamp);
+    const counts = {};
+    OUTREACH_STATUS.forEach((s) => counts[s.id] = 0);
+    scope.forEach((o) => {
+      counts[o.status] = (counts[o.status] || 0) + 1;
+    });
+    const dueCount = scope.filter(_isDue).length;
+    const clientCount = scope.filter((o) => o.convertedClientId).length;
+    const [filter, setFilter] = useState("all");
+    const matchFilter = (o) => filter === "all" ? true : filter === "due" ? _isDue(o) : filter === "clients" ? !!o.convertedClientId : o.status === filter;
     const ql = q.trim().toLowerCase();
     let rows = all.filter((o) => matchFilter(o) && matchCamp(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql) || (o.niche || "").toLowerCase().includes(ql)));
     const _dueRank = (o) => _isDue(o) ? o.nextFollowup < today ? 0 : 1 : 2;
@@ -843,7 +844,68 @@
       color: "var(--text-subtle)",
       whiteSpace: "nowrap"
     };
-    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, all.length), " marcas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.contactado || 0, " contactadas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.respondio || 0, " respuestas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.propuesta || 0, " propuestas"))), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, campaigns.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginTop: 8 } }, /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => setFilter("all"),
+        title: "Ver todas",
+        style: {
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          height: 26,
+          padding: "0 11px",
+          borderRadius: 99,
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 12.5,
+          fontWeight: 500,
+          background: filter === "all" ? "var(--text)" : "var(--bg-elev-2)",
+          color: filter === "all" ? "var(--bg)" : "var(--text-muted)",
+          border: "0.5px solid " + (filter === "all" ? "var(--text)" : "var(--border)"),
+          transition: "all .12s"
+        }
+      },
+      /* @__PURE__ */ React.createElement("b", { style: { fontWeight: 700 } }, scope.length),
+      " ",
+      campFilter === "all" ? "en total" : campFilter
+    ), OUTREACH_STATUS.map((s) => {
+      const active = filter === s.id;
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: s.id,
+          onClick: () => setFilter(active ? "all" : s.id),
+          title: `Ver \xAB${s.label}\xBB`,
+          style: {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            height: 26,
+            padding: "0 11px",
+            borderRadius: 99,
+            cursor: "pointer",
+            fontFamily: "inherit",
+            fontSize: 12.5,
+            fontWeight: 500,
+            background: active ? s.color + "26" : "transparent",
+            color: active ? "var(--text)" : "var(--text-muted)",
+            border: "0.5px solid " + (active ? s.color + "66" : "var(--border)"),
+            transition: "all .12s"
+          },
+          onMouseEnter: (e) => {
+            if (!active) e.currentTarget.style.background = "var(--bg-elev-2)";
+          },
+          onMouseLeave: (e) => {
+            if (!active) e.currentTarget.style.background = "transparent";
+          }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: s.color, flexShrink: 0 } }),
+        s.label,
+        " ",
+        /* @__PURE__ */ React.createElement("b", { style: { fontWeight: 700, color: active ? "var(--text)" : "var(--text)" } }, counts[s.id] || 0)
+      );
+    }))), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, campaigns.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "select",
       {
         value: campFilter,

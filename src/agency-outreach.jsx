@@ -2,11 +2,11 @@
 const { useState, useEffect } = React;
 
 const OUTREACH_STATUS = [
-  { id: "guardado",     label: "Guardado",         color: "#8b8b93" },
+  { id: "guardado",     label: "Por contactar",    color: "#8b8b93" },
   { id: "contactado",   label: "Contactado",       color: "#60a5fa" },
   { id: "respondio",    label: "Respondió",        color: "#9e9ae5" },
-  { id: "conversacion", label: "En conversación",  color: "#e2b45c" },
-  { id: "propuesta",    label: "Propuesta enviada",color: "#d98cc0" },
+  { id: "propuesta",    label: "Loom enviado",     color: "#d98cc0" },
+  { id: "conversacion", label: "Reunión / precio", color: "#e2b45c" },
   { id: "cerrado",      label: "Cerrado",          color: "#34d399" },
   { id: "descartado",   label: "Descartado",       color: "#dc5b5d" },
 ];
@@ -556,10 +556,17 @@ const AgencyOutreach = ({ navigate }) => {
     setF(_emptyF); setShowAdd(false);
   };
 
+  // ── Filtro por campaña / tanda ────────────────────────────────────
+  const [campFilter, setCampFilter] = useState("all");
+  const campaigns = [...new Set(all.map(o => (o.campaign || "").trim()).filter(Boolean))];
+  const matchCamp = (o) => campFilter === "all" ? true : (o.campaign || "").trim() === campFilter;
+
+  // Recuentos del embudo (dentro de la campaña seleccionada, si la hay)
+  const scope = all.filter(matchCamp);
   const counts = {}; OUTREACH_STATUS.forEach(s => counts[s.id] = 0);
-  all.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
-  const dueCount = all.filter(_isDue).length;
-  const clientCount = all.filter(o => o.convertedClientId).length;
+  scope.forEach(o => { counts[o.status] = (counts[o.status] || 0) + 1; });
+  const dueCount = scope.filter(_isDue).length;
+  const clientCount = scope.filter(o => o.convertedClientId).length;
 
   // ── Filtro rápido (desde la cabecera de la columna Estado) ────────
   const [filter, setFilter] = useState("all");
@@ -568,11 +575,6 @@ const AgencyOutreach = ({ navigate }) => {
     filter === "due" ? _isDue(o) :
     filter === "clients" ? !!o.convertedClientId :
     o.status === filter;
-
-  // ── Filtro por campaña / tanda ────────────────────────────────────
-  const [campFilter, setCampFilter] = useState("all");
-  const campaigns = [...new Set(all.map(o => (o.campaign || "").trim()).filter(Boolean))];
-  const matchCamp = (o) => campFilter === "all" ? true : (o.campaign || "").trim() === campFilter;
 
   const ql = q.trim().toLowerCase();
   let rows = all.filter(o => matchFilter(o) && matchCamp(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql) || (o.niche || "").toLowerCase().includes(ql)));
@@ -613,11 +615,27 @@ const AgencyOutreach = ({ navigate }) => {
       <div className="page-head">
         <div className="hide-mobile">
           <h1>Propuestas Outreach</h1>
-          <div className="sub" style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-            <span><b style={{ color: "var(--text)", fontWeight: 600 }}>{all.length}</b> marcas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
-            <span>{counts.contactado || 0} contactadas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
-            <span>{counts.respondio || 0} respuestas</span><span style={{ color: "var(--text-subtle)" }}>·</span>
-            <span>{counts.propuesta || 0} propuestas</span>
+          <div className="sub" style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
+            <button onClick={() => setFilter("all")} title="Ver todas"
+              style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 26, padding: "0 11px", borderRadius: 99, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500,
+                background: filter === "all" ? "var(--text)" : "var(--bg-elev-2)", color: filter === "all" ? "var(--bg)" : "var(--text-muted)",
+                border: "0.5px solid " + (filter === "all" ? "var(--text)" : "var(--border)"), transition: "all .12s" }}>
+              <b style={{ fontWeight: 700 }}>{scope.length}</b> {campFilter === "all" ? "en total" : campFilter}
+            </button>
+            {OUTREACH_STATUS.map(s => {
+              const active = filter === s.id;
+              return (
+                <button key={s.id} onClick={() => setFilter(active ? "all" : s.id)} title={`Ver «${s.label}»`}
+                  style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 26, padding: "0 11px", borderRadius: 99, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500,
+                    background: active ? s.color + "26" : "transparent", color: active ? "var(--text)" : "var(--text-muted)",
+                    border: "0.5px solid " + (active ? s.color + "66" : "var(--border)"), transition: "all .12s" }}
+                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg-elev-2)"; }}
+                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
+                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: s.color, flexShrink: 0 }}/>
+                  {s.label} <b style={{ fontWeight: 700, color: active ? "var(--text)" : "var(--text)" }}>{counts[s.id] || 0}</b>
+                </button>
+              );
+            })}
           </div>
         </div>
         <div className="outreach-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
