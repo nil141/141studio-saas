@@ -287,7 +287,7 @@ const ProjectFigmaBoard = ({ p, D }) => {
   const [editing, setEditing] = useState(!p.figmaUrl);
   const [val, setVal] = useState(p.figmaUrl || "");
   const url = (p.figmaUrl || "").trim();
-  const embed = url ? "https://www.figma.com/embed?embed_host=141crm&url=" + encodeURIComponent(url) : "";
+  const embed = url ? "https://www.figma.com/embed?embed_host=share&url=" + encodeURIComponent(url) : "";
   const save = () => { const v = val.trim(); D.updateProject(p.id, { figmaUrl: v }); setEditing(false); };
   if (!url || editing) {
     return (
@@ -296,8 +296,11 @@ const ProjectFigmaBoard = ({ p, D }) => {
           <Icon name="layers" size={22}/>
         </div>
         <div style={{ fontSize: 16, fontWeight: 500, marginBottom: 6 }}>Conecta el Figma del proyecto</div>
-        <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 18, lineHeight: 1.5 }}>
+        <div style={{ fontSize: 13, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.5 }}>
           Pega el enlace del archivo de Figma. Podrás verlo y navegarlo aquí; para editar se abre en Figma.
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text-subtle)", background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5, textAlign: "left" }}>
+          <b style={{ color: "var(--amber)" }}>Importante:</b> en Figma, abre <b style={{ color: "var(--text-muted)" }}>Share</b> y pon <b style={{ color: "var(--text-muted)" }}>«Anyone with the link → can view»</b>. Si no, aquí pedirá iniciar sesión.
         </div>
         <input className="input" value={val} onChange={e => setVal(e.target.value)} placeholder="https://www.figma.com/file/…"
           onKeyDown={e => { if (e.key === "Enter") save(); }} style={{ marginBottom: 12, textAlign: "center" }}/>
@@ -322,6 +325,9 @@ const ProjectFigmaBoard = ({ p, D }) => {
             <Icon name="external-link" size={13}/> Abrir en Figma (editar)
           </a>
         </div>
+      </div>
+      <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 8, lineHeight: 1.45 }}>
+        ¿Te pide iniciar sesión? En Figma → <b style={{ color: "var(--text-muted)" }}>Share</b> → «Anyone with the link → can view». (Safari bloquea la sesión de Figma dentro del recuadro.)
       </div>
       <div style={{ flex: 1, minHeight: 0, borderRadius: 16, overflow: "hidden", border: "0.5px solid var(--border)", background: "var(--bg-elev)" }}>
         <iframe title="Figma" src={embed} allowFullScreen style={{ width: "100%", height: "100%", border: "none", display: "block" }}/>
