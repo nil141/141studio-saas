@@ -1688,7 +1688,7 @@ const EntregasBlock = ({ D, navigate }) => {
                     <span style={{ display: "flex", alignItems: "baseline", gap: 6, minWidth: 0, overflow: "hidden" }}>
                       <span style={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.3px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", flexShrink: 0, maxWidth: "55%" }}>{client || projName}</span>
                       {client && projName && client !== projName && (
-                        <span style={{ fontSize: 12.5, fontWeight: 400, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>· {projName}</span>
+                        <span style={{ fontSize: 12.5, fontWeight: 400, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", minWidth: 0 }}>| {projName}</span>
                       )}
                     </span>
                     <span style={{ fontSize: 10, padding: "2px 8px", borderRadius: 6, whiteSpace: "nowrap", flexShrink: 0,
