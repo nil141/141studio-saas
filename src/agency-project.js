@@ -215,13 +215,34 @@
     const [editing, setEditing] = useState(!p.figmaUrl);
     const [val, setVal] = useState(p.figmaUrl || "");
     const url = (p.figmaUrl || "").trim();
+    const embedded = !!url && !editing;
     const embed = url ? "https://www.figma.com/embed?embed_host=share&url=" + encodeURIComponent(url) : "";
     const save = () => {
       const v = val.trim();
       D.updateProject(p.id, { figmaUrl: v });
       setEditing(false);
     };
-    if (!url || editing) {
+    const rootRef = useRef(null);
+    const [h, setH] = useState(null);
+    useEffect(() => {
+      if (!embedded) return;
+      const el = rootRef.current;
+      if (!el) return;
+      const main = el.closest(".main");
+      const compute = () => {
+        const top = el.getBoundingClientRect().top;
+        setH(Math.max(360, Math.round(window.innerHeight - top - 16)));
+      };
+      compute();
+      const prev = main ? main.style.overflowY : null;
+      if (main) main.style.overflowY = "hidden";
+      window.addEventListener("resize", compute);
+      return () => {
+        window.removeEventListener("resize", compute);
+        if (main) main.style.overflowY = prev || "";
+      };
+    }, [embedded]);
+    if (!embedded) {
       return /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 560, margin: "18px auto", textAlign: "center", padding: "36px 24px", borderRadius: 16, border: "1px dashed var(--border-strong)", background: "var(--bg-elev)" } }, /* @__PURE__ */ React.createElement("div", { style: { width: 46, height: 46, borderRadius: 12, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-soft)", color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "layers", size: 22 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, marginBottom: 6 } }, "Conecta el Figma del proyecto"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.5 } }, "Pega el enlace del archivo de Figma. Podr\xE1s verlo y navegarlo aqu\xED; para editar se abre en Figma."), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "10px 12px", marginBottom: 16, lineHeight: 1.5, textAlign: "left" } }, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--amber)" } }, "Importante:"), " en Figma, abre ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "Share"), " y pon ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "\xABAnyone with the link \u2192 can view\xBB"), ". Si no, aqu\xED pedir\xE1 iniciar sesi\xF3n."), /* @__PURE__ */ React.createElement(
         "input",
         {
@@ -239,7 +260,7 @@
         setEditing(false);
       } }, "Cancelar"), /* @__PURE__ */ React.createElement("button", { className: "btn primary", onClick: save, disabled: !val.trim(), style: { opacity: val.trim() ? 1 : 0.5 } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 13 }), " Conectar")));
     }
-    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", height: "calc(100dvh - 250px)", minHeight: 440 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "layers", size: 14, style: { color: "var(--accent)" } }), " ", (() => {
+    return /* @__PURE__ */ React.createElement("div", { ref: rootRef, style: { display: "flex", flexDirection: "column", height: h ? h : "calc(100dvh - 250px)", minHeight: 360 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "layers", size: 14, style: { color: "var(--accent)" } }), " ", (() => {
       try {
         return new URL(url).pathname.split("/").filter(Boolean).slice(-1)[0] || "Figma";
       } catch {

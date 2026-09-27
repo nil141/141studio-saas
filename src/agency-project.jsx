@@ -287,9 +287,25 @@ const ProjectFigmaBoard = ({ p, D }) => {
   const [editing, setEditing] = useState(!p.figmaUrl);
   const [val, setVal] = useState(p.figmaUrl || "");
   const url = (p.figmaUrl || "").trim();
+  const embedded = !!url && !editing;
   const embed = url ? "https://www.figma.com/embed?embed_host=share&url=" + encodeURIComponent(url) : "";
   const save = () => { const v = val.trim(); D.updateProject(p.id, { figmaUrl: v }); setEditing(false); };
-  if (!url || editing) {
+  // En la vista embebida: fija la altura al viewport y bloquea el scroll del CRM
+  // (así solo se desplaza el contenido dentro de Figma, no la página).
+  const rootRef = useRef(null);
+  const [h, setH] = useState(null);
+  useEffect(() => {
+    if (!embedded) return;
+    const el = rootRef.current; if (!el) return;
+    const main = el.closest(".main");
+    const compute = () => { const top = el.getBoundingClientRect().top; setH(Math.max(360, Math.round(window.innerHeight - top - 16))); };
+    compute();
+    const prev = main ? main.style.overflowY : null;
+    if (main) main.style.overflowY = "hidden";
+    window.addEventListener("resize", compute);
+    return () => { window.removeEventListener("resize", compute); if (main) main.style.overflowY = prev || ""; };
+  }, [embedded]);
+  if (!embedded) {
     return (
       <div style={{ maxWidth: 560, margin: "18px auto", textAlign: "center", padding: "36px 24px", borderRadius: 16, border: "1px dashed var(--border-strong)", background: "var(--bg-elev)" }}>
         <div style={{ width: 46, height: 46, borderRadius: 12, margin: "0 auto 14px", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--accent-soft)", color: "var(--accent)" }}>
@@ -314,7 +330,7 @@ const ProjectFigmaBoard = ({ p, D }) => {
     );
   }
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "calc(100dvh - 250px)", minHeight: 440 }}>
+    <div ref={rootRef} style={{ display: "flex", flexDirection: "column", height: h ? h : "calc(100dvh - 250px)", minHeight: 360 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10, flexWrap: "wrap" }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12.5, color: "var(--text-muted)" }}>
           <Icon name="layers" size={14} style={{ color: "var(--accent)" }}/> {(() => { try { return new URL(url).pathname.split("/").filter(Boolean).slice(-1)[0] || "Figma"; } catch { return "Figma"; } })()}
