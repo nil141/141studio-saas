@@ -155,6 +155,7 @@ const _mo = (r) => ({
   contact: r.contact || "", email: r.email || "", createdAt: r.created_at,
   lastContacted: r.last_contacted || null, nextFollowup: r.next_followup || null,
   convertedClientId: r.converted_client_id || null,
+  message: r.message || "", niche: r.niche || "", campaign: r.campaign || "",
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -1617,14 +1618,39 @@ const addOutreach = async (input) => {
   const o = { id, brand: input.brand.trim(), instagram: (input.instagram || "").trim(),
     web: (input.web || "").trim(), status: input.status || "guardado", notes: input.notes || "",
     contact: input.contact || "", email: input.email || "", createdAt: new Date().toISOString(),
-    lastContacted: input.lastContacted || null, nextFollowup: input.nextFollowup || null, convertedClientId: null };
+    lastContacted: input.lastContacted || null, nextFollowup: input.nextFollowup || null, convertedClientId: null,
+    message: input.message || "", niche: input.niche || "", campaign: input.campaign || "" };
   _store.OUTREACH = [o, ...(_store.OUTREACH || [])]; _emit();
   const { error } = await _insertAdaptive("outreach", {
     id, agency_id: uid, brand: o.brand, instagram: o.instagram, web: o.web, status: o.status, notes: o.notes,
     contact: o.contact, email: o.email, last_contacted: o.lastContacted, next_followup: o.nextFollowup,
+    message: o.message, niche: o.niche, campaign: o.campaign,
   });
   if (error) { _store.OUTREACH = _store.OUTREACH.filter(x => x.id !== id); _emit(); return { error: error.message }; }
   return { lead: o };
+};
+// Importación en bloque de una tanda/campaña: una sola inserción (evita 50
+// eventos realtime) y una sola actualización del store.
+const addOutreachBulk = async (rows, campaign) => {
+  const uid = _store._user?.id; if (!uid) return { error: "no-auth", count: 0 };
+  const list = (rows || []).filter(r => (r.brand || r.instagram));
+  if (!list.length) return { error: null, count: 0 };
+  const now = Date.now();
+  const objs = list.map((r, i) => ({
+    id: "out-" + now + "-" + i + "-" + Math.random().toString(36).slice(2, 6),
+    brand: (r.brand || (r.instagram || "").replace(/^@/, "")).trim(),
+    instagram: (r.instagram || "").trim(), web: (r.web || "").trim(),
+    status: r.status || "guardado", notes: r.notes || "", contact: r.contact || "", email: r.email || "",
+    createdAt: new Date().toISOString(), lastContacted: null, nextFollowup: null, convertedClientId: null,
+    message: r.message || "", niche: r.niche || "", campaign: (r.campaign || campaign || "").trim(),
+  }));
+  _store.OUTREACH = [...objs, ...(_store.OUTREACH || [])]; _emit();
+  const { error } = await _insertAdaptive("outreach", objs.map(o => ({
+    id: o.id, agency_id: uid, brand: o.brand, instagram: o.instagram, web: o.web, status: o.status,
+    notes: o.notes, contact: o.contact, email: o.email, message: o.message, niche: o.niche, campaign: o.campaign,
+  })));
+  if (error) { const ids = new Set(objs.map(o => o.id)); _store.OUTREACH = _store.OUTREACH.filter(x => !ids.has(x.id)); _emit(); return { error: error.message, count: 0 }; }
+  return { error: null, count: objs.length };
 };
 const updateOutreach = async (id, changes) => {
   const uid = _store._user?.id; if (!uid) return;
@@ -1638,6 +1664,9 @@ const updateOutreach = async (id, changes) => {
   if (changes.notes !== undefined)     db.notes = changes.notes;
   if (changes.contact !== undefined)   db.contact = changes.contact;
   if (changes.email !== undefined)     db.email = changes.email;
+  if (changes.message !== undefined)   db.message = changes.message;
+  if (changes.niche !== undefined)     db.niche = changes.niche;
+  if (changes.campaign !== undefined)  db.campaign = changes.campaign;
   if (changes.lastContacted !== undefined)     db.last_contacted = changes.lastContacted;
   if (changes.nextFollowup !== undefined)      db.next_followup = changes.nextFollowup;
   if (changes.convertedClientId !== undefined) db.converted_client_id = changes.convertedClientId;
@@ -1741,7 +1770,7 @@ window.Data = {
   clientTasksFor, addClientTask, updateClientTask, toggleClientTask, deleteClientTask,
   notify, markNotificationRead, markAllNotificationsRead,
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
-  addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient,
+  addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
   get driveConfigured() { return !!_driveCfg().url; },

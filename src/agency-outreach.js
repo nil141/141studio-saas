@@ -1,7 +1,6 @@
 (() => {
-  // src/agency-outreach.jsx
-  var { useState, useEffect } = React;
-  var OUTREACH_STATUS = [
+  const { useState, useEffect } = React;
+  const OUTREACH_STATUS = [
     { id: "guardado", label: "Guardado", color: "#8b8b93" },
     { id: "contactado", label: "Contactado", color: "#60a5fa" },
     { id: "respondio", label: "Respondi\xF3", color: "#9e9ae5" },
@@ -10,34 +9,38 @@
     { id: "cerrado", label: "Cerrado", color: "#34d399" },
     { id: "descartado", label: "Descartado", color: "#dc5b5d" }
   ];
-  var _stMeta = (id) => OUTREACH_STATUS.find((s) => s.id === id) || OUTREACH_STATUS[0];
-  var _igUrl = (h) => {
+  const _stMeta = (id) => OUTREACH_STATUS.find((s) => s.id === id) || OUTREACH_STATUS[0];
+  const _igUrl = (h) => {
     const u = (h || "").trim().replace(/^@/, "");
     return u ? "https://instagram.com/" + u : null;
   };
-  var _webUrl = (w) => {
+  const _igDmUrl = (h) => {
+    const u = (h || "").trim().replace(/^@/, "");
+    return u ? "https://ig.me/m/" + u : null;
+  };
+  const _webUrl = (w) => {
     const u = (w || "").trim();
     if (!u) return null;
     return /^https?:\/\//.test(u) ? u : "https://" + u;
   };
-  var _OM = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  var _fmtDate = (iso) => {
+  const _OM = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+  const _fmtDate = (iso) => {
     if (!iso) return "";
     const d = new Date(iso);
     return isNaN(d) ? "" : `${d.getDate()} ${_OM[d.getMonth()]}`;
   };
-  var _todayYmd = () => (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-  var _DONE_ST = ["cerrado", "descartado"];
-  var _isDue = (o) => !!o.nextFollowup && o.nextFollowup <= _todayYmd() && !_DONE_ST.includes(o.status) && !o.convertedClientId;
-  var _followMeta = (o) => {
+  const _todayYmd = () => (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+  const _DONE_ST = ["cerrado", "descartado"];
+  const _isDue = (o) => !!o.nextFollowup && o.nextFollowup <= _todayYmd() && !_DONE_ST.includes(o.status) && !o.convertedClientId;
+  const _followMeta = (o) => {
     if (o.convertedClientId || _DONE_ST.includes(o.status) || !o.nextFollowup) return null;
     const t = _todayYmd();
     if (o.nextFollowup < t) return { color: "#dc5b5d", label: "Atrasado" };
     if (o.nextFollowup === t) return { color: "#e2b45c", label: "Hoy" };
     return { color: "var(--text-subtle)", label: _fmtDate(o.nextFollowup) };
   };
-  var _looksUrl = (s) => /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(s) && !s.startsWith("@");
-  var parseImport = (text) => {
+  const _looksUrl = (s) => /^(https?:\/\/)?([a-z0-9-]+\.)+[a-z]{2,}(\/\S*)?$/i.test(s) && !s.startsWith("@");
+  const parseImport = (text) => {
     const out = [];
     (text || "").split(/\r?\n/).forEach((line) => {
       const raw = line.trim();
@@ -59,8 +62,8 @@
     });
     return out;
   };
-  var _norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
-  var _splitCsvLine = (line, delim) => {
+  const _norm = (s) => (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
+  const _splitCsvLine = (line, delim) => {
     const out = [];
     let cur = "", inQ = false;
     for (let i = 0; i < line.length; i++) {
@@ -81,7 +84,7 @@
     out.push(cur);
     return out.map((s) => s.trim());
   };
-  var parseCsv = (text) => {
+  const parseCsv = (text) => {
     let t = (text || "").replace(/^﻿/, "");
     const lines = t.split(/\r?\n/).filter((l) => l.trim() !== "");
     if (!lines.length) return [];
@@ -90,17 +93,20 @@
     const delim = cnt(/;/g) > cnt(/,/g) ? ";" : cnt(/\t/g) > cnt(/,/g) ? "	" : ",";
     const rows = lines.map((l) => _splitCsvLine(l, delim));
     const hdr = rows[0].map(_norm);
-    const known = ["marca", "brand", "nombre", "empresa", "instagram", "ig", "usuario", "user", "web", "url", "sitio", "website", "contacto", "contact", "persona", "correo", "email", "mail", "notas", "notes", "nota", "estado", "status"];
-    const hasHeader = hdr.some((h) => known.includes(h));
+    const known = ["marca", "brand", "nombre", "empresa", "instagram", "ig", "usuario", "user", "usuario ig", "web", "url", "sitio", "website", "contacto", "contact", "persona", "correo", "email", "mail", "notas", "notes", "nota", "estado", "status", "nicho", "niche", "mensaje", "message", "n"];
+    const hasHeader = hdr.some((h) => known.includes(h) || h.startsWith("mensaje") || h.startsWith("usuario"));
     const colFor = (names) => hdr.findIndex((h) => names.includes(h));
+    const colStarts = (pre) => hdr.findIndex((h) => h.startsWith(pre));
     const map = hasHeader ? {
       brand: colFor(["marca", "brand", "nombre", "empresa"]),
-      instagram: colFor(["instagram", "ig", "usuario", "user"]),
+      instagram: colFor(["instagram", "ig", "usuario", "user", "usuario ig"]) >= 0 ? colFor(["instagram", "ig", "usuario", "user", "usuario ig"]) : colStarts("usuario"),
       web: colFor(["web", "url", "sitio", "website"]),
       contact: colFor(["contacto", "contact", "persona"]),
       email: colFor(["correo", "email", "mail"]),
       notes: colFor(["notas", "notes", "nota"]),
-      status: colFor(["estado", "status"])
+      status: colFor(["estado", "status"]),
+      niche: colFor(["nicho", "niche"]),
+      message: colFor(["mensaje", "message"]) >= 0 ? colFor(["mensaje", "message"]) : colStarts("mensaje")
     } : null;
     const STATUS_IDS = OUTREACH_STATUS.map((s) => s.id);
     const STATUS_BY_LABEL = {};
@@ -113,12 +119,13 @@
         const g = (i) => (i >= 0 && i < cols.length ? cols[i] : "") || "";
         let brand = g(map.brand), instagram = g(map.instagram), web = g(map.web);
         const contact = g(map.contact), email = g(map.email), notes = g(map.notes);
+        const niche = g(map.niche), message = g(map.message);
         const sr = _norm(g(map.status));
         const status = STATUS_IDS.includes(sr) ? sr : STATUS_BY_LABEL[sr] || "guardado";
         if (!brand && instagram) brand = instagram.replace(/^@/, "");
         if (!brand) return;
         if (instagram && !instagram.startsWith("@")) instagram = "@" + instagram.replace(/^@/, "");
-        out.push({ brand, instagram, web, contact, email, notes, status });
+        out.push({ brand, instagram, web, contact, email, notes, status, niche, message });
       } else {
         const p = parseImport(cols.join(","));
         if (p.length) out.push(p[0]);
@@ -126,7 +133,63 @@
     });
     return out;
   };
-  var Check = ({ on, onToggle, dim }) => /* @__PURE__ */ React.createElement(
+  const _ensureXLSX = () => new Promise((resolve, reject) => {
+    if (window.XLSX) return resolve(window.XLSX);
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+    s.onload = () => resolve(window.XLSX);
+    s.onerror = () => reject(new Error("No se pudo cargar el lector de Excel."));
+    document.head.appendChild(s);
+  });
+  const rowsToLeads = (aoa) => {
+    let hi = (aoa || []).findIndex((r) => (r || []).map(_norm).some((c) => c === "marca" || c === "nicho" || c.startsWith("mensaje") || c.startsWith("usuario")));
+    if (hi < 0) hi = 0;
+    const hdr = (aoa[hi] || []).map(_norm);
+    const idx = (names, pre) => {
+      let i = hdr.findIndex((h) => names.includes(h));
+      if (i < 0 && pre) i = hdr.findIndex((h) => h.startsWith(pre));
+      return i;
+    };
+    const m = {
+      brand: idx(["marca", "brand", "nombre", "empresa"]),
+      instagram: idx(["instagram", "ig", "usuario", "user", "usuario ig"], "usuario"),
+      web: idx(["web", "url", "sitio", "website"]),
+      notes: idx(["notas", "notes", "nota"]),
+      niche: idx(["nicho", "niche"]),
+      message: idx(["mensaje", "message"], "mensaje"),
+      contact: idx(["contacto", "contact", "persona"]),
+      email: idx(["correo", "email", "mail"])
+    };
+    const out = [];
+    for (let r = hi + 1; r < aoa.length; r++) {
+      const row = aoa[r] || [];
+      const g = (i) => {
+        const v = i >= 0 && i < row.length ? row[i] : "";
+        return v == null ? "" : String(v).trim();
+      };
+      let brand = g(m.brand), instagram = g(m.instagram);
+      const web = g(m.web), notes = g(m.notes), niche = g(m.niche), message = g(m.message), contact = g(m.contact), email = g(m.email);
+      if (!brand && instagram) brand = instagram.replace(/^@/, "");
+      if (!brand && !instagram) continue;
+      if (instagram && !instagram.startsWith("@")) instagram = "@" + instagram.replace(/^@/, "");
+      out.push({ brand, instagram, web, notes, niche, message, contact, email, status: "guardado" });
+    }
+    return out;
+  };
+  const parseXlsx = async (arrayBuffer) => {
+    const XLSX = await _ensureXLSX();
+    const wb = XLSX.read(arrayBuffer, { type: "array" });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
+    return { leads: rowsToLeads(aoa), sheetName: wb.SheetNames[0] };
+  };
+  const _guessCampaign = (s) => {
+    const t = (s || "").toString();
+    const m = t.match(/tanda\s*\d+/i);
+    if (m) return m[0].replace(/tanda/i, "Tanda").replace(/\s+/, " ");
+    return "";
+  };
+  const Check = ({ on, onToggle, dim }) => /* @__PURE__ */ React.createElement(
     "span",
     {
       onClick: (e) => {
@@ -148,7 +211,7 @@
     },
     on && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 11, style: { color: "#fff" } })
   );
-  var InlineText = ({ value, onSave, placeholder, mono }) => {
+  const InlineText = ({ value, onSave, placeholder, mono }) => {
     const [edit, setEdit] = useState(false);
     const [d, setD] = useState(value || "");
     useEffect(() => {
@@ -205,7 +268,7 @@
       value || placeholder
     );
   };
-  var StatusPill = ({ value, onChange }) => {
+  const StatusPill = ({ value, onChange }) => {
     const [open, setOpen] = useState(false);
     const [pos, setPos] = useState(null);
     const btnRef = React.useRef(null);
@@ -289,8 +352,8 @@
       document.body
     ));
   };
-  var _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
-  var FollowupCell = ({ o, D }) => {
+  const _cell = { padding: "0 14px", height: 48, verticalAlign: "middle", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" };
+  const FollowupCell = ({ o, D }) => {
     const [editing, setEditing] = useState(false);
     const fm = _followMeta(o);
     if (o.convertedClientId) return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "\u2014");
@@ -366,11 +429,36 @@
       fm ? fm.label : "Programar"
     );
   };
-  var OutreachRow = ({ o, D, sel, onSel, first }) => {
+  const OutreachRow = ({ o, D, sel, onSel, first }) => {
     const ig = _igUrl(o.instagram), web = _webUrl(o.web);
+    const [open, setOpen] = useState(false);
+    const toast = useToast();
     const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
     const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
-    return /* @__PURE__ */ React.createElement(
+    const hasMsg = !!(o.message || "").trim();
+    const copyMsg = () => {
+      const m = (o.message || "").trim();
+      if (!m) return;
+      try {
+        navigator.clipboard.writeText(m).then(() => toast("Mensaje copiado", "success")).catch(() => {
+        });
+      } catch (_) {
+      }
+    };
+    const sendDM = () => {
+      const m = (o.message || "").trim();
+      if (m) {
+        try {
+          navigator.clipboard.writeText(m).then(() => toast("Mensaje copiado \u2014 p\xE9galo en el DM (\u2318V)", "success")).catch(() => {
+          });
+        } catch (_) {
+        }
+      }
+      const dm = _igDmUrl(o.instagram) || web;
+      if (dm) window.open(dm, "_blank", "noopener");
+      if (!_DONE_ST.includes(o.status) && !o.convertedClientId) D.outreachMarkContacted(o.id);
+    };
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
       "tr",
       {
         onMouseEnter: (e) => e.currentTarget.style.background = sel ? "var(--accent-soft)" : "rgba(255,255,255,0.02)",
@@ -378,7 +466,7 @@
         style: { transition: "background .1s", background: sel ? "var(--accent-active)" : "transparent" }
       },
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, paddingLeft: 16, paddingRight: 4 } }, /* @__PURE__ */ React.createElement(Check, { on: sel, onToggle: onSel, dim: true })),
-      /* @__PURE__ */ React.createElement("td", { style: { ...cell, fontWeight: 500, fontSize: 14 } }, o.brand),
+      /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 500, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis" } }, o.brand), (o.niche || o.campaign) && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 2, alignItems: "center", overflow: "hidden" } }, o.campaign && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, fontWeight: 600, color: "var(--accent)", background: "var(--accent-soft)", borderRadius: 5, padding: "1px 6px", whiteSpace: "nowrap" } }, o.campaign), o.niche && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } }, o.niche))),
       /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(StatusPill, { value: o.status, onChange: (s) => D.updateOutreach(o.id, { status: s }) })),
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, overflow: "visible" } }, /* @__PURE__ */ React.createElement(FollowupCell, { o, D })),
       /* @__PURE__ */ React.createElement("td", { style: cell }, /* @__PURE__ */ React.createElement(InlineText, { value: o.contact, placeholder: "\u2014", onSave: (v) => D.updateOutreach(o.id, { contact: v }) })),
@@ -405,7 +493,7 @@
         },
         o.web.replace(/^https?:\/\//, "")
       ) : /* @__PURE__ */ React.createElement(InlineText, { value: "", placeholder: "URL", onSave: (v) => D.updateOutreach(o.id, { web: v }) })),
-      /* @__PURE__ */ React.createElement("td", { style: { ...cell, whiteSpace: "normal", minWidth: 180 } }, /* @__PURE__ */ React.createElement(InlineText, { value: o.notes, placeholder: "A\xF1adir nota\u2026", onSave: (v) => D.updateOutreach(o.id, { notes: v }) })),
+      /* @__PURE__ */ React.createElement("td", { style: { ...cell, whiteSpace: "normal", minWidth: 140 } }, /* @__PURE__ */ React.createElement(InlineText, { value: o.notes, placeholder: "A\xF1adir nota\u2026", onSave: (v) => D.updateOutreach(o.id, { notes: v }) })),
       /* @__PURE__ */ React.createElement(
         "td",
         {
@@ -414,16 +502,41 @@
         },
         _fmtDate(o.createdAt)
       ),
-      /* @__PURE__ */ React.createElement("td", { style: { ...cell, textAlign: "right", paddingRight: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" } }, !_DONE_ST.includes(o.status) && !o.convertedClientId && /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("td", { style: { ...cell, textAlign: "right", paddingRight: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" } }, hasMsg && /* @__PURE__ */ React.createElement(
         "button",
         {
-          onClick: () => D.outreachMarkContacted(o.id),
-          title: "Marcar contactado hoy (programa seguimiento en 3 d\xEDas)",
-          style: iconBtn,
+          onClick: () => setOpen((v) => !v),
+          title: "Ver / copiar el mensaje",
+          style: { ...iconBtn, color: open ? "var(--accent)" : "var(--text-subtle)" },
           onMouseEnter: (e) => e.currentTarget.style.color = "var(--accent)",
-          onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
+          onMouseLeave: (e) => e.currentTarget.style.color = open ? "var(--accent)" : "var(--text-subtle)"
         },
-        /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 13 })
+        /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 14 })
+      ), !_DONE_ST.includes(o.status) && !o.convertedClientId && /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          onClick: sendDM,
+          title: hasMsg ? "Copia el mensaje y abre el DM de Instagram, y marca contactado" : "Abre el DM de Instagram y marca contactado",
+          style: {
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 5,
+            padding: "4px 10px",
+            borderRadius: 8,
+            cursor: "pointer",
+            background: "var(--accent-soft)",
+            color: "var(--accent)",
+            border: "1px solid rgba(158,154,229,0.35)",
+            fontFamily: "inherit",
+            fontSize: 12,
+            fontWeight: 600,
+            whiteSpace: "nowrap"
+          },
+          onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.28)",
+          onMouseLeave: (e) => e.currentTarget.style.background = "var(--accent-soft)"
+        },
+        /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 12 }),
+        " Enviar"
       ), o.convertedClientId ? /* @__PURE__ */ React.createElement("span", { title: "Ya es cliente", style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11.5, fontWeight: 500, color: "var(--green)", padding: "0 4px" } }, /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12 }), " Cliente") : o.status === "cerrado" ? /* @__PURE__ */ React.createElement(
         "button",
         {
@@ -436,9 +549,9 @@
             padding: "3px 9px",
             borderRadius: 7,
             cursor: "pointer",
-            background: "var(--accent-soft)",
-            color: "var(--accent)",
-            border: "1px solid rgba(158,154,229,0.3)",
+            background: "var(--bg-elev-2)",
+            color: "var(--text-muted)",
+            border: "0.5px solid var(--border)",
             fontFamily: "inherit",
             fontSize: 11.5,
             fontWeight: 500,
@@ -448,10 +561,10 @@
         /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 12 }),
         " Cliente"
       ) : null))
-    );
+    ), open && hasMsg && /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("td", null), /* @__PURE__ */ React.createElement("td", { colSpan: 9, style: { padding: "0 14px 14px", borderTop: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "12px 14px", maxWidth: 780 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)" } }, "Mensaje listo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: copyMsg, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--bg-elev)", color: "var(--text)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 12, fontWeight: 500 } }, /* @__PURE__ */ React.createElement(Icon, { name: "copy", size: 12 }), " Copiar"), _igDmUrl(o.instagram) && /* @__PURE__ */ React.createElement("button", { onClick: sendDM, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.35)", fontFamily: "inherit", fontSize: 12, fontWeight: 600 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 12 }), " Copiar y abrir DM"))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.55, color: "var(--text)", whiteSpace: "pre-wrap" } }, o.message)))));
   };
-  var _OcRow = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", flexShrink: 0 } }, label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text)", minWidth: 0, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, children));
-  var OutreachCard = ({ o, D, sel, onSel }) => {
+  const _OcRow = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", flexShrink: 0 } }, label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text)", minWidth: 0, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, children));
+  const OutreachCard = ({ o, D, sel, onSel }) => {
     const ig = _igUrl(o.instagram), web = _webUrl(o.web);
     const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 6, borderRadius: 8, display: "inline-flex" };
     return /* @__PURE__ */ React.createElement("div", { style: { background: sel ? "var(--accent-active)" : "var(--bg-elev)", border: "0.5px solid " + (sel ? "rgba(158,154,229,0.4)" : "var(--border)"), borderRadius: 14, padding: "13px 14px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, marginBottom: 12 } }, /* @__PURE__ */ React.createElement(Check, { on: sel, onToggle: onSel, dim: true }), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 15.5, fontWeight: 600, flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, o.brand), /* @__PURE__ */ React.createElement(StatusPill, { value: o.status, onChange: (s) => D.updateOutreach(o.id, { status: s }) })), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 9 } }, /* @__PURE__ */ React.createElement(_OcRow, { label: "Seguimiento" }, /* @__PURE__ */ React.createElement(FollowupCell, { o, D })), /* @__PURE__ */ React.createElement(_OcRow, { label: "Instagram" }, ig ? /* @__PURE__ */ React.createElement("a", { href: ig, target: "_blank", rel: "noreferrer", style: { color: "var(--text)", textDecoration: "none" } }, o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram) : /* @__PURE__ */ React.createElement(InlineText, { value: "", placeholder: "@instagram", onSave: (v) => D.updateOutreach(o.id, { instagram: v }) })), /* @__PURE__ */ React.createElement(_OcRow, { label: "Web" }, web ? /* @__PURE__ */ React.createElement("a", { href: web, target: "_blank", rel: "noreferrer", style: { color: "var(--text)", textDecoration: "none" } }, o.web.replace(/^https?:\/\//, "")) : /* @__PURE__ */ React.createElement(InlineText, { value: "", placeholder: "URL", onSave: (v) => D.updateOutreach(o.id, { web: v }) })), /* @__PURE__ */ React.createElement(_OcRow, { label: "Contacto" }, /* @__PURE__ */ React.createElement(InlineText, { value: o.contact, placeholder: "\u2014", onSave: (v) => D.updateOutreach(o.id, { contact: v }) })), /* @__PURE__ */ React.createElement(_OcRow, { label: "Notas" }, /* @__PURE__ */ React.createElement(InlineText, { value: o.notes, placeholder: "A\xF1adir nota\u2026", onSave: (v) => D.updateOutreach(o.id, { notes: v }) }))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginTop: 12, paddingTop: 11, borderTop: "0.5px solid var(--border)" } }, !_DONE_ST.includes(o.status) && !o.convertedClientId && /* @__PURE__ */ React.createElement(
@@ -485,7 +598,7 @@
       " Hacer cliente"
     ) : null));
   };
-  var OutreachFilterHead = ({ filter, setFilter, counts, dueCount, clientCount, total }) => {
+  const OutreachFilterHead = ({ filter, setFilter, counts, dueCount, clientCount, total }) => {
     const [open, setOpen] = useState(false);
     const [pos, setPos] = useState(null);
     const ref = React.useRef(null);
@@ -590,7 +703,7 @@
       document.body
     ));
   };
-  var AgencyOutreach = ({ navigate }) => {
+  const AgencyOutreach = ({ navigate }) => {
     const D = window.Data;
     D.useStore();
     const all = D.OUTREACH || [];
@@ -599,19 +712,22 @@
     const [showAdd, setShowAdd] = useState(false);
     const [showImport, setShowImport] = useState(false);
     const today = _todayYmd();
-    const doImport = (leads) => {
-      leads.forEach((l) => D.addOutreach({
+    const doImport = (leads, campaign) => {
+      D.addOutreachBulk(leads.map((l) => ({
         brand: l.brand,
         instagram: l.instagram || "",
         web: l.web || "",
         contact: l.contact || "",
         email: l.email || "",
         notes: l.notes || "",
-        status: l.status || "guardado"
-      }));
+        status: l.status || "guardado",
+        message: l.message || "",
+        niche: l.niche || "",
+        campaign: (l.campaign || campaign || "").trim()
+      })), (campaign || "").trim());
       setShowImport(false);
     };
-    const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
+    const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "", niche: "", campaign: "", message: "" };
     const [f, setF] = useState(_emptyF);
     const upd = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
     const saveNew = () => {
@@ -623,7 +739,10 @@
         email: f.email.trim(),
         web: f.web.trim(),
         status: f.status,
-        notes: f.notes.trim()
+        notes: f.notes.trim(),
+        niche: (f.niche || "").trim(),
+        campaign: (f.campaign || "").trim(),
+        message: (f.message || "").trim()
       });
       setF(_emptyF);
       setShowAdd(false);
@@ -637,8 +756,11 @@
     const clientCount = all.filter((o) => o.convertedClientId).length;
     const [filter, setFilter] = useState("all");
     const matchFilter = (o) => filter === "all" ? true : filter === "due" ? _isDue(o) : filter === "clients" ? !!o.convertedClientId : o.status === filter;
+    const [campFilter, setCampFilter] = useState("all");
+    const campaigns = [...new Set(all.map((o) => (o.campaign || "").trim()).filter(Boolean))];
+    const matchCamp = (o) => campFilter === "all" ? true : (o.campaign || "").trim() === campFilter;
     const ql = q.trim().toLowerCase();
-    let rows = all.filter((o) => matchFilter(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql)));
+    let rows = all.filter((o) => matchFilter(o) && matchCamp(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql) || (o.niche || "").toLowerCase().includes(ql)));
     const _dueRank = (o) => _isDue(o) ? o.nextFollowup < today ? 0 : 1 : 2;
     rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
     const exportSel = () => {
@@ -692,7 +814,31 @@
       color: "var(--text-subtle)",
       whiteSpace: "nowrap"
     };
-    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, all.length), " marcas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.contactado || 0, " contactadas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.respondio || 0, " respuestas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.propuesta || 0, " propuestas"))), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("div", { className: "outreach-search", style: { display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 6, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)", fontWeight: 600 } }, all.length), " marcas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.contactado || 0, " contactadas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.respondio || 0, " respuestas"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, counts.propuesta || 0, " propuestas"))), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, campaigns.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+      "select",
+      {
+        value: campFilter,
+        onChange: (e) => setCampFilter(e.target.value),
+        title: "Filtrar por campa\xF1a / tanda",
+        style: {
+          height: 34,
+          padding: "0 30px 0 12px",
+          borderRadius: 9,
+          background: campFilter === "all" ? "var(--bg-elev-2)" : "var(--accent-soft)",
+          color: campFilter === "all" ? "var(--text-muted)" : "var(--accent)",
+          border: "0.5px solid " + (campFilter === "all" ? "var(--border)" : "rgba(158,154,229,0.35)"),
+          cursor: "pointer",
+          fontFamily: "inherit",
+          fontSize: 13,
+          fontWeight: 500,
+          appearance: "none",
+          WebkitAppearance: "none",
+          outline: "none"
+        }
+      },
+      /* @__PURE__ */ React.createElement("option", { value: "all" }, "Todas las campa\xF1as"),
+      campaigns.map((c) => /* @__PURE__ */ React.createElement("option", { key: c, value: c }, c))
+    ), /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 12, style: { position: "absolute", right: 10, pointerEvents: "none", color: "var(--text-subtle)" } })), /* @__PURE__ */ React.createElement("div", { className: "outreach-search", style: { display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)" } }), /* @__PURE__ */ React.createElement(
       "input",
       {
         value: q,
@@ -753,7 +899,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1200, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 44 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 170 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 140 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 190 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 85 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 90 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 40 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 158 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 118 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 148 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 130 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 70 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",
@@ -847,7 +993,7 @@
       /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })
     ))), showAdd && /* @__PURE__ */ React.createElement(NewLeadModal, { f, upd, setF, onClose: () => setShowAdd(false), onSave: saveNew }), showImport && /* @__PURE__ */ React.createElement(ImportLeadsModal, { onClose: () => setShowImport(false), onImport: doImport }));
   };
-  var _fst = {
+  const _fst = {
     width: "100%",
     height: 40,
     background: "var(--bg-elev-2)",
@@ -859,9 +1005,9 @@
     fontFamily: "inherit",
     outline: "none"
   };
-  var _lst = { fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" };
-  var Fld = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("label", { style: _lst }, label), children);
-  var NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
+  const _lst = { fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" };
+  const Fld = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("label", { style: _lst }, label), children);
+  const NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
     useEffect(() => {
       const onKey = (e) => {
         if (e.key === "Escape") onClose();
@@ -881,13 +1027,22 @@
         },
         style: _fst
       }
-    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Instagram" }, /* @__PURE__ */ React.createElement("input", { value: f.instagram, onChange: upd("instagram"), placeholder: "@usuario", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Persona de contacto" }, /* @__PURE__ */ React.createElement("input", { value: f.contact, onChange: upd("contact"), placeholder: "Nombre", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Correo" }, /* @__PURE__ */ React.createElement("input", { value: f.email, onChange: upd("email"), placeholder: "correo@marca.com", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Web" }, /* @__PURE__ */ React.createElement("input", { value: f.web, onChange: upd("web"), placeholder: "marca.com", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Estado" }, /* @__PURE__ */ React.createElement("select", { value: f.status, onChange: upd("status"), style: { ..._fst, cursor: "pointer" } }, OUTREACH_STATUS.map((s) => /* @__PURE__ */ React.createElement("option", { key: s.id, value: s.id }, s.label))))), /* @__PURE__ */ React.createElement(Fld, { label: "Notas" }, /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Instagram" }, /* @__PURE__ */ React.createElement("input", { value: f.instagram, onChange: upd("instagram"), placeholder: "@usuario", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Persona de contacto" }, /* @__PURE__ */ React.createElement("input", { value: f.contact, onChange: upd("contact"), placeholder: "Nombre", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Correo" }, /* @__PURE__ */ React.createElement("input", { value: f.email, onChange: upd("email"), placeholder: "correo@marca.com", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Web" }, /* @__PURE__ */ React.createElement("input", { value: f.web, onChange: upd("web"), placeholder: "marca.com", style: _fst }))), /* @__PURE__ */ React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 } }, /* @__PURE__ */ React.createElement(Fld, { label: "Estado" }, /* @__PURE__ */ React.createElement("select", { value: f.status, onChange: upd("status"), style: { ..._fst, cursor: "pointer" } }, OUTREACH_STATUS.map((s) => /* @__PURE__ */ React.createElement("option", { key: s.id, value: s.id }, s.label)))), /* @__PURE__ */ React.createElement(Fld, { label: "Nicho" }, /* @__PURE__ */ React.createElement("input", { value: f.niche, onChange: upd("niche"), placeholder: "Ej. Hogar / muebles", style: _fst }))), /* @__PURE__ */ React.createElement(Fld, { label: "Campa\xF1a / Tanda" }, /* @__PURE__ */ React.createElement("input", { value: f.campaign, onChange: upd("campaign"), placeholder: "Ej. Tanda 9", style: _fst })), /* @__PURE__ */ React.createElement(Fld, { label: "Mensaje (listo para copiar y enviar por DM)" }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: f.message,
+        onChange: upd("message"),
+        placeholder: "Escribe aqu\xED el mensaje que enviar\xE1s por Instagram\u2026",
+        rows: 4,
+        style: { ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.5 }
+      }
+    )), /* @__PURE__ */ React.createElement(Fld, { label: "Notas" }, /* @__PURE__ */ React.createElement(
       "textarea",
       {
         value: f.notes,
         onChange: upd("notes"),
         placeholder: "Contexto, por qu\xE9 encaja, siguiente paso\u2026",
-        rows: 3,
+        rows: 2,
         style: { ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.45 }
       }
     ))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 22px", display: "flex", justifyContent: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
@@ -901,10 +1056,12 @@
       "Guardar lead"
     ))));
   };
-  var ImportLeadsModal = ({ onClose, onImport }) => {
+  const ImportLeadsModal = ({ onClose, onImport }) => {
     const [file, setFile] = useState(null);
     const [drag, setDrag] = useState(false);
     const [err, setErr] = useState("");
+    const [loading, setLoading] = useState(false);
+    const [campaign, setCampaign] = useState("");
     const inputRef = React.useRef(null);
     useEffect(() => {
       const onKey = (e) => {
@@ -916,23 +1073,54 @@
     const loadFile = (f) => {
       if (!f) return;
       setErr("");
+      setLoading(true);
+      const isXlsx = /\.(xlsx|xls)$/i.test(f.name || "");
       const reader = new FileReader();
-      reader.onload = () => {
-        try {
-          const leads = parseCsv(String(reader.result || ""));
-          if (!leads.length) {
-            setErr("No he encontrado ninguna fila v\xE1lida en el archivo.");
-            setFile(null);
-            return;
-          }
-          setFile({ name: f.name, leads });
-        } catch (_) {
-          setErr("No he podido leer el archivo. \xBFEs un CSV?");
-          setFile(null);
-        }
+      reader.onerror = () => {
+        setErr("No he podido leer el archivo.");
+        setLoading(false);
       };
-      reader.onerror = () => setErr("No he podido leer el archivo.");
-      reader.readAsText(f);
+      if (isXlsx) {
+        reader.onload = async () => {
+          try {
+            const { leads, sheetName } = await parseXlsx(reader.result);
+            if (!leads.length) {
+              setErr("No he encontrado filas v\xE1lidas en el Excel.");
+              setFile(null);
+              setLoading(false);
+              return;
+            }
+            setFile({ name: f.name, leads });
+            setCampaign((c) => c || _guessCampaign(sheetName) || _guessCampaign(f.name));
+            setLoading(false);
+          } catch (e) {
+            setErr(e.message || "No he podido leer el Excel.");
+            setFile(null);
+            setLoading(false);
+          }
+        };
+        reader.readAsArrayBuffer(f);
+      } else {
+        reader.onload = () => {
+          try {
+            const leads = parseCsv(String(reader.result || ""));
+            if (!leads.length) {
+              setErr("No he encontrado ninguna fila v\xE1lida en el archivo.");
+              setFile(null);
+              setLoading(false);
+              return;
+            }
+            setFile({ name: f.name, leads });
+            setCampaign((c) => c || _guessCampaign(f.name));
+            setLoading(false);
+          } catch (_) {
+            setErr("No he podido leer el archivo. \xBFEs un CSV o Excel?");
+            setFile(null);
+            setLoading(false);
+          }
+        };
+        reader.readAsText(f);
+      }
     };
     const onDrop = (e) => {
       e.preventDefault();
@@ -941,16 +1129,17 @@
       if (f) loadFile(f);
     };
     const parsed = file ? file.leads : [];
-    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar leads"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Sube un ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "CSV"), " o pega una lista.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
+    const withMsg = parsed.filter((l) => (l.message || "").trim()).length;
+    return /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 580 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { style: { padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" } }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("h3", { style: { fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 } }, "Importar tanda de captaci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-muted)", marginTop: 4 } }, "Sube tu ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "Excel (.xlsx)"), " o un CSV. Se guardan tambi\xE9n el mensaje y el nicho.")), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 18 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "18px 24px 4px" } }, /* @__PURE__ */ React.createElement(
       "input",
       {
         ref: inputRef,
         type: "file",
-        accept: ".csv,text/csv,text/plain",
+        accept: ".xlsx,.xls,.csv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         style: { display: "none" },
         onChange: (e) => loadFile(e.target.files && e.target.files[0])
       }
-    ), file ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 12, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 18, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, file.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)" } }, file.leads.length, " lead", file.leads.length > 1 ? "s" : "", " detectados")), /* @__PURE__ */ React.createElement(
+    ), file ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 12, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 18, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, file.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)" } }, file.leads.length, " cuenta", file.leads.length > 1 ? "s" : "", withMsg ? ` \xB7 ${withMsg} con mensaje` : "")), /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => {
@@ -961,7 +1150,15 @@
         title: "Quitar archivo"
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 16 })
-    )) : /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { style: { marginTop: 12 } }, /* @__PURE__ */ React.createElement("label", { style: { fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" } }, "Campa\xF1a / Tanda ", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "(agrupa estas cuentas)")), /* @__PURE__ */ React.createElement(
+      "input",
+      {
+        value: campaign,
+        onChange: (e) => setCampaign(e.target.value),
+        placeholder: "Ej. Tanda 9",
+        style: { width: "100%", height: 40, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "0 12px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none" }
+      }
+    ))) : /* @__PURE__ */ React.createElement(
       "div",
       {
         onClick: () => inputRef.current && inputRef.current.click(),
@@ -987,12 +1184,12 @@
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 22, style: { color: drag ? "var(--accent)" : "var(--text-muted)" } }),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500 } }, "Arrastra un CSV aqu\xED o haz clic para elegirlo"),
-      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Columnas: Marca \xB7 Instagram \xB7 Web \xB7 Contacto \xB7 Correo \xB7 Notas \xB7 Estado")
-    ), err && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--red)", marginTop: 10 } }, err)), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500 } }, loading ? "Leyendo el archivo\u2026" : "Arrastra tu Excel (.xlsx) o CSV, o haz clic"),
+      /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Detecta: Marca \xB7 Usuario IG \xB7 Nicho \xB7 Web \xB7 Notas \xB7 Mensaje")
+    ), err && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--red)", marginTop: 10 } }, err)), /* @__PURE__ */ React.createElement("div", { style: { padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 } }, parsed.length ? `${parsed.length} cuenta${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todav\xEDa"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10 } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost" }, "Cancelar"), /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => onImport(parsed),
+        onClick: () => onImport(parsed, campaign),
         disabled: !parsed.length,
         className: "btn primary",
         style: { opacity: parsed.length ? 1 : 0.5, pointerEvents: parsed.length ? "auto" : "none" }

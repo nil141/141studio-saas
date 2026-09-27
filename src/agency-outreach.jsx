@@ -12,6 +12,8 @@ const OUTREACH_STATUS = [
 ];
 const _stMeta = (id) => OUTREACH_STATUS.find(s => s.id === id) || OUTREACH_STATUS[0];
 const _igUrl  = (h) => { const u = (h || "").trim().replace(/^@/, ""); return u ? "https://instagram.com/" + u : null; };
+// Enlace directo al DM de Instagram (abre el chat con esa cuenta)
+const _igDmUrl = (h) => { const u = (h || "").trim().replace(/^@/, ""); return u ? "https://ig.me/m/" + u : null; };
 const _webUrl = (w) => { const u = (w || "").trim(); if (!u) return null; return /^https?:\/\//.test(u) ? u : "https://" + u; };
 const _OM = ["ene","feb","mar","abr","may","jun","jul","ago","sep","oct","nov","dic"];
 const _fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso); return isNaN(d) ? "" : `${d.getDate()} ${_OM[d.getMonth()]}`; };
@@ -79,17 +81,20 @@ const parseCsv = (text) => {
   const delim = cnt(/;/g) > cnt(/,/g) ? ";" : cnt(/\t/g) > cnt(/,/g) ? "\t" : ",";
   const rows = lines.map(l => _splitCsvLine(l, delim));
   const hdr = rows[0].map(_norm);
-  const known = ["marca", "brand", "nombre", "empresa", "instagram", "ig", "usuario", "user", "web", "url", "sitio", "website", "contacto", "contact", "persona", "correo", "email", "mail", "notas", "notes", "nota", "estado", "status"];
-  const hasHeader = hdr.some(h => known.includes(h));
+  const known = ["marca", "brand", "nombre", "empresa", "instagram", "ig", "usuario", "user", "usuario ig", "web", "url", "sitio", "website", "contacto", "contact", "persona", "correo", "email", "mail", "notas", "notes", "nota", "estado", "status", "nicho", "niche", "mensaje", "message", "n"];
+  const hasHeader = hdr.some(h => known.includes(h) || h.startsWith("mensaje") || h.startsWith("usuario"));
   const colFor = (names) => hdr.findIndex(h => names.includes(h));
+  const colStarts = (pre) => hdr.findIndex(h => h.startsWith(pre));
   const map = hasHeader ? {
     brand: colFor(["marca", "brand", "nombre", "empresa"]),
-    instagram: colFor(["instagram", "ig", "usuario", "user"]),
+    instagram: colFor(["instagram", "ig", "usuario", "user", "usuario ig"]) >= 0 ? colFor(["instagram", "ig", "usuario", "user", "usuario ig"]) : colStarts("usuario"),
     web: colFor(["web", "url", "sitio", "website"]),
     contact: colFor(["contacto", "contact", "persona"]),
     email: colFor(["correo", "email", "mail"]),
     notes: colFor(["notas", "notes", "nota"]),
     status: colFor(["estado", "status"]),
+    niche: colFor(["nicho", "niche"]),
+    message: colFor(["mensaje", "message"]) >= 0 ? colFor(["mensaje", "message"]) : colStarts("mensaje"),
   } : null;
   const STATUS_IDS = OUTREACH_STATUS.map(s => s.id);
   const STATUS_BY_LABEL = {}; OUTREACH_STATUS.forEach(s => STATUS_BY_LABEL[_norm(s.label)] = s.id);
@@ -101,18 +106,73 @@ const parseCsv = (text) => {
       const g = (i) => (i >= 0 && i < cols.length ? cols[i] : "") || "";
       let brand = g(map.brand), instagram = g(map.instagram), web = g(map.web);
       const contact = g(map.contact), email = g(map.email), notes = g(map.notes);
+      const niche = g(map.niche), message = g(map.message);
       const sr = _norm(g(map.status));
       const status = STATUS_IDS.includes(sr) ? sr : (STATUS_BY_LABEL[sr] || "guardado");
       if (!brand && instagram) brand = instagram.replace(/^@/, "");
       if (!brand) return;
       if (instagram && !instagram.startsWith("@")) instagram = "@" + instagram.replace(/^@/, "");
-      out.push({ brand, instagram, web, contact, email, notes, status });
+      out.push({ brand, instagram, web, contact, email, notes, status, niche, message });
     } else {
       const p = parseImport(cols.join(","));
       if (p.length) out.push(p[0]);
     }
   });
   return out;
+};
+
+// ── Lectura de Excel (.xlsx) — carga SheetJS bajo demanda desde CDN ──────
+const _ensureXLSX = () => new Promise((resolve, reject) => {
+  if (window.XLSX) return resolve(window.XLSX);
+  const s = document.createElement("script");
+  s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+  s.onload = () => resolve(window.XLSX);
+  s.onerror = () => reject(new Error("No se pudo cargar el lector de Excel."));
+  document.head.appendChild(s);
+});
+// Convierte una hoja (matriz de filas) a leads, detectando la fila de cabecera.
+const rowsToLeads = (aoa) => {
+  let hi = (aoa || []).findIndex(r => (r || []).map(_norm).some(c => c === "marca" || c === "nicho" || c.startsWith("mensaje") || c.startsWith("usuario")));
+  if (hi < 0) hi = 0;
+  const hdr = (aoa[hi] || []).map(_norm);
+  const idx = (names, pre) => { let i = hdr.findIndex(h => names.includes(h)); if (i < 0 && pre) i = hdr.findIndex(h => h.startsWith(pre)); return i; };
+  const m = {
+    brand: idx(["marca", "brand", "nombre", "empresa"]),
+    instagram: idx(["instagram", "ig", "usuario", "user", "usuario ig"], "usuario"),
+    web: idx(["web", "url", "sitio", "website"]),
+    notes: idx(["notas", "notes", "nota"]),
+    niche: idx(["nicho", "niche"]),
+    message: idx(["mensaje", "message"], "mensaje"),
+    contact: idx(["contacto", "contact", "persona"]),
+    email: idx(["correo", "email", "mail"]),
+  };
+  const out = [];
+  for (let r = hi + 1; r < aoa.length; r++) {
+    const row = aoa[r] || [];
+    const g = (i) => { const v = (i >= 0 && i < row.length) ? row[i] : ""; return v == null ? "" : String(v).trim(); };
+    let brand = g(m.brand), instagram = g(m.instagram);
+    const web = g(m.web), notes = g(m.notes), niche = g(m.niche), message = g(m.message), contact = g(m.contact), email = g(m.email);
+    if (!brand && instagram) brand = instagram.replace(/^@/, "");
+    if (!brand && !instagram) continue;
+    if (instagram && !instagram.startsWith("@")) instagram = "@" + instagram.replace(/^@/, "");
+    out.push({ brand, instagram, web, notes, niche, message, contact, email, status: "guardado" });
+  }
+  return out;
+};
+const parseXlsx = async (arrayBuffer) => {
+  const XLSX = await _ensureXLSX();
+  const wb = XLSX.read(arrayBuffer, { type: "array" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: "" });
+  return { leads: rowsToLeads(aoa), sheetName: wb.SheetNames[0] };
+};
+// Deduce el nombre de campaña/tanda a partir del título de la hoja o del archivo
+// (p. ej. "Captación 141 · Tanda 9" → "Tanda 9").
+const _guessCampaign = (s) => {
+  const t = (s || "").toString();
+  const m = t.match(/tanda\s*\d+/i);
+  if (m) return m[0].replace(/tanda/i, "Tanda").replace(/\s+/, " ");
+  return "";
 };
 
 // Casilla de selección
@@ -230,14 +290,34 @@ const FollowupCell = ({ o, D }) => {
 
 const OutreachRow = ({ o, D, sel, onSel, first }) => {
   const ig = _igUrl(o.instagram), web = _webUrl(o.web);
+  const [open, setOpen] = useState(false);
+  const toast = useToast();
   const cell = { ..._cell, borderTop: first ? "none" : "0.5px solid var(--border)" };
   const iconBtn = { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4, borderRadius: 6, display: "inline-flex" };
+  const hasMsg = !!(o.message || "").trim();
+  const copyMsg = () => { const m = (o.message || "").trim(); if (!m) return; try { navigator.clipboard.writeText(m).then(() => toast("Mensaje copiado", "success")).catch(() => {}); } catch (_) {} };
+  const sendDM = () => {
+    const m = (o.message || "").trim();
+    if (m) { try { navigator.clipboard.writeText(m).then(() => toast("Mensaje copiado — pégalo en el DM (⌘V)", "success")).catch(() => {}); } catch (_) {} }
+    const dm = _igDmUrl(o.instagram) || web;
+    if (dm) window.open(dm, "_blank", "noopener");
+    if (!_DONE_ST.includes(o.status) && !o.convertedClientId) D.outreachMarkContacted(o.id);
+  };
   return (
+    <>
     <tr onMouseEnter={e => e.currentTarget.style.background = sel ? "var(--accent-soft)" : "rgba(255,255,255,0.02)"}
         onMouseLeave={e => e.currentTarget.style.background = sel ? "var(--accent-active)" : "transparent"}
         style={{ transition: "background .1s", background: sel ? "var(--accent-active)" : "transparent" }}>
       <td style={{ ...cell, paddingLeft: 16, paddingRight: 4 }}><Check on={sel} onToggle={onSel} dim/></td>
-      <td style={{ ...cell, fontWeight: 500, fontSize: 14 }}>{o.brand}</td>
+      <td style={cell}>
+        <div style={{ fontWeight: 500, fontSize: 14, overflow: "hidden", textOverflow: "ellipsis" }}>{o.brand}</div>
+        {(o.niche || o.campaign) && (
+          <div style={{ display: "flex", gap: 6, marginTop: 2, alignItems: "center", overflow: "hidden" }}>
+            {o.campaign && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--accent)", background: "var(--accent-soft)", borderRadius: 5, padding: "1px 6px", whiteSpace: "nowrap" }}>{o.campaign}</span>}
+            {o.niche && <span style={{ fontSize: 11, color: "var(--text-subtle)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{o.niche}</span>}
+          </div>
+        )}
+      </td>
       <td style={cell}><StatusPill value={o.status} onChange={s => D.updateOutreach(o.id, { status: s })}/></td>
       <td style={{ ...cell, overflow: "visible" }}><FollowupCell o={o} D={D}/></td>
       <td style={cell}><InlineText value={o.contact} placeholder="—" onSave={v => D.updateOutreach(o.id, { contact: v })}/></td>
@@ -253,17 +333,26 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
           {o.web.replace(/^https?:\/\//, "")}</a>
           : <InlineText value="" placeholder="URL" onSave={v => D.updateOutreach(o.id, { web: v })}/>}
       </td>
-      <td style={{ ...cell, whiteSpace: "normal", minWidth: 180 }}><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></td>
+      <td style={{ ...cell, whiteSpace: "normal", minWidth: 140 }}><InlineText value={o.notes} placeholder="Añadir nota…" onSave={v => D.updateOutreach(o.id, { notes: v })}/></td>
       <td style={{ ...cell, fontSize: 12, color: "var(--text-subtle)" }}
         title={o.createdAt ? "Añadido el " + new Date(o.createdAt).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }) : ""}>
         {_fmtDate(o.createdAt)}
       </td>
       <td style={{ ...cell, textAlign: "right", paddingRight: 12 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
+          {hasMsg && (
+            <button onClick={() => setOpen(v => !v)} title="Ver / copiar el mensaje"
+              style={{ ...iconBtn, color: open ? "var(--accent)" : "var(--text-subtle)" }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = open ? "var(--accent)" : "var(--text-subtle)"}>
+              <Icon name="file-text" size={14}/>
+            </button>
+          )}
           {!_DONE_ST.includes(o.status) && !o.convertedClientId && (
-            <button onClick={() => D.outreachMarkContacted(o.id)} title="Marcar contactado hoy (programa seguimiento en 3 días)"
-              style={iconBtn} onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
-              <Icon name="send" size={13}/>
+            <button onClick={sendDM} title={hasMsg ? "Copia el mensaje y abre el DM de Instagram, y marca contactado" : "Abre el DM de Instagram y marca contactado"}
+              style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer",
+                background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.35)", fontFamily: "inherit", fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"} onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}>
+              <Icon name="send" size={12}/> Enviar
             </button>
           )}
           {o.convertedClientId ? (
@@ -273,13 +362,37 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
           ) : o.status === "cerrado" ? (
             <button onClick={() => D.convertOutreachToClient(o.id)} title="Convertir en cliente del CRM"
               style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 9px", borderRadius: 7, cursor: "pointer",
-                background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.3)", fontFamily: "inherit", fontSize: 11.5, fontWeight: 500, whiteSpace: "nowrap" }}>
+                background: "var(--bg-elev-2)", color: "var(--text-muted)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 11.5, fontWeight: 500, whiteSpace: "nowrap" }}>
               <Icon name="arrow-up-right" size={12}/> Cliente
             </button>
           ) : null}
         </span>
       </td>
     </tr>
+    {open && hasMsg && (
+      <tr>
+        <td/>
+        <td colSpan={9} style={{ padding: "0 14px 14px", borderTop: "none" }}>
+          <div style={{ background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "12px 14px", maxWidth: 780 }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
+              <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)" }}>Mensaje listo</span>
+              <div style={{ display: "flex", gap: 6 }}>
+                <button onClick={copyMsg} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--bg-elev)", color: "var(--text)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 12, fontWeight: 500 }}>
+                  <Icon name="copy" size={12}/> Copiar
+                </button>
+                {_igDmUrl(o.instagram) && (
+                  <button onClick={sendDM} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.35)", fontFamily: "inherit", fontSize: 12, fontWeight: 600 }}>
+                    <Icon name="send" size={12}/> Copiar y abrir DM
+                  </button>
+                )}
+              </div>
+            </div>
+            <div style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text)", whiteSpace: "pre-wrap" }}>{o.message}</div>
+          </div>
+        </td>
+      </tr>
+    )}
+    </>
   );
 };
 
@@ -401,18 +514,22 @@ const AgencyOutreach = ({ navigate }) => {
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
   const today = _todayYmd();
-  const doImport = (leads) => {
-    leads.forEach(l => D.addOutreach({ brand: l.brand, instagram: l.instagram || "", web: l.web || "",
-      contact: l.contact || "", email: l.email || "", notes: l.notes || "", status: l.status || "guardado" }));
+  const doImport = (leads, campaign) => {
+    D.addOutreachBulk(leads.map(l => ({
+      brand: l.brand, instagram: l.instagram || "", web: l.web || "", contact: l.contact || "",
+      email: l.email || "", notes: l.notes || "", status: l.status || "guardado",
+      message: l.message || "", niche: l.niche || "", campaign: (l.campaign || campaign || "").trim(),
+    })), (campaign || "").trim());
     setShowImport(false);
   };
-  const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "" };
+  const _emptyF = { brand: "", instagram: "", contact: "", email: "", web: "", status: "guardado", notes: "", niche: "", campaign: "", message: "" };
   const [f, setF] = useState(_emptyF);
   const upd = (k) => (e) => setF(p => ({ ...p, [k]: e.target.value }));
   const saveNew = () => {
     if (!f.brand.trim()) return;
     D.addOutreach({ brand: f.brand.trim(), instagram: f.instagram.trim(), contact: f.contact.trim(),
-      email: f.email.trim(), web: f.web.trim(), status: f.status, notes: f.notes.trim() });
+      email: f.email.trim(), web: f.web.trim(), status: f.status, notes: f.notes.trim(),
+      niche: (f.niche || "").trim(), campaign: (f.campaign || "").trim(), message: (f.message || "").trim() });
     setF(_emptyF); setShowAdd(false);
   };
 
@@ -429,8 +546,13 @@ const AgencyOutreach = ({ navigate }) => {
     filter === "clients" ? !!o.convertedClientId :
     o.status === filter;
 
+  // ── Filtro por campaña / tanda ────────────────────────────────────
+  const [campFilter, setCampFilter] = useState("all");
+  const campaigns = [...new Set(all.map(o => (o.campaign || "").trim()).filter(Boolean))];
+  const matchCamp = (o) => campFilter === "all" ? true : (o.campaign || "").trim() === campFilter;
+
   const ql = q.trim().toLowerCase();
-  let rows = all.filter(o => matchFilter(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql)));
+  let rows = all.filter(o => matchFilter(o) && matchCamp(o) && (!ql || (o.brand || "").toLowerCase().includes(ql) || (o.instagram || "").toLowerCase().includes(ql) || (o.contact || "").toLowerCase().includes(ql) || (o.web || "").toLowerCase().includes(ql) || (o.notes || "").toLowerCase().includes(ql) || (o.niche || "").toLowerCase().includes(ql)));
   // Los que toca contactar suben arriba (atrasados primero, luego los de hoy).
   const _dueRank = (o) => _isDue(o) ? (o.nextFollowup < today ? 0 : 1) : 2;
   rows = rows.slice().sort((a, b) => _dueRank(a) - _dueRank(b));
@@ -476,6 +598,19 @@ const AgencyOutreach = ({ navigate }) => {
           </div>
         </div>
         <div className="outreach-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          {campaigns.length > 0 && (
+            <div style={{ position: "relative", display: "inline-flex", alignItems: "center" }}>
+              <select value={campFilter} onChange={e => setCampFilter(e.target.value)}
+                title="Filtrar por campaña / tanda"
+                style={{ height: 34, padding: "0 30px 0 12px", borderRadius: 9, background: campFilter === "all" ? "var(--bg-elev-2)" : "var(--accent-soft)",
+                  color: campFilter === "all" ? "var(--text-muted)" : "var(--accent)", border: "0.5px solid " + (campFilter === "all" ? "var(--border)" : "rgba(158,154,229,0.35)"),
+                  cursor: "pointer", fontFamily: "inherit", fontSize: 13, fontWeight: 500, appearance: "none", WebkitAppearance: "none", outline: "none" }}>
+                <option value="all">Todas las campañas</option>
+                {campaigns.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+              <Icon name="chevron" size={12} style={{ position: "absolute", right: 10, pointerEvents: "none", color: "var(--text-subtle)" }}/>
+            </div>
+          )}
           <div className="outreach-search" style={{ display: "flex", alignItems: "center", gap: 8, height: 34, padding: "0 12px", borderRadius: 9, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
             <Icon name="search" size={14} style={{ color: "var(--text-subtle)" }}/>
             <input value={q} onChange={e => setQ(e.target.value)} placeholder="Buscar…"
@@ -502,18 +637,18 @@ const AgencyOutreach = ({ navigate }) => {
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
       <div className="outreach-table" style={{ overflowX: "auto", marginTop: 4 }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1200, tableLayout: "fixed" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" }}>
             <colgroup>
-              <col style={{ width: 44 }}/>
+              <col style={{ width: 40 }}/>
+              <col style={{ width: 158 }}/>
               <col style={{ width: 150 }}/>
-              <col style={{ width: 170 }}/>
-              <col style={{ width: 150 }}/>
-              <col style={{ width: 140 }}/>
+              <col style={{ width: 132 }}/>
+              <col style={{ width: 118 }}/>
+              <col style={{ width: 148 }}/>
+              <col style={{ width: 132 }}/>
+              <col style={{ width: 130 }}/>
+              <col style={{ width: 70 }}/>
               <col style={{ width: 160 }}/>
-              <col style={{ width: 160 }}/>
-              <col style={{ width: 190 }}/>
-              <col style={{ width: 85 }}/>
-              <col style={{ width: 90 }}/>
             </colgroup>
             <thead>
               <tr style={{ borderBottom: "0.5px solid var(--border)" }}>
@@ -632,10 +767,20 @@ const NewLeadModal = ({ f, upd, setF, onClose, onSave }) => {
                 {OUTREACH_STATUS.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
               </select>
             </Fld>
+            <Fld label="Nicho">
+              <input value={f.niche} onChange={upd("niche")} placeholder="Ej. Hogar / muebles" style={_fst}/>
+            </Fld>
           </div>
+          <Fld label="Campaña / Tanda">
+            <input value={f.campaign} onChange={upd("campaign")} placeholder="Ej. Tanda 9" style={_fst}/>
+          </Fld>
+          <Fld label="Mensaje (listo para copiar y enviar por DM)">
+            <textarea value={f.message} onChange={upd("message")} placeholder="Escribe aquí el mensaje que enviarás por Instagram…"
+              rows={4} style={{ ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.5 }}/>
+          </Fld>
           <Fld label="Notas">
             <textarea value={f.notes} onChange={upd("notes")} placeholder="Contexto, por qué encaja, siguiente paso…"
-              rows={3} style={{ ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.45 }}/>
+              rows={2} style={{ ..._fst, height: "auto", padding: "10px 12px", resize: "vertical", lineHeight: 1.45 }}/>
           </Fld>
         </div>
 
@@ -654,6 +799,8 @@ const ImportLeadsModal = ({ onClose, onImport }) => {
   const [file, setFile] = useState(null);      // { name, leads }
   const [drag, setDrag] = useState(false);
   const [err, setErr] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [campaign, setCampaign] = useState("");
   const inputRef = React.useRef(null);
   useEffect(() => {
     const onKey = (e) => { if (e.key === "Escape") onClose(); };
@@ -663,54 +810,78 @@ const ImportLeadsModal = ({ onClose, onImport }) => {
 
   const loadFile = (f) => {
     if (!f) return;
-    setErr("");
+    setErr(""); setLoading(true);
+    const isXlsx = /\.(xlsx|xls)$/i.test(f.name || "");
     const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const leads = parseCsv(String(reader.result || ""));
-        if (!leads.length) { setErr("No he encontrado ninguna fila válida en el archivo."); setFile(null); return; }
-        setFile({ name: f.name, leads });
-      } catch (_) { setErr("No he podido leer el archivo. ¿Es un CSV?"); setFile(null); }
-    };
-    reader.onerror = () => setErr("No he podido leer el archivo.");
-    reader.readAsText(f);
+    reader.onerror = () => { setErr("No he podido leer el archivo."); setLoading(false); };
+    if (isXlsx) {
+      reader.onload = async () => {
+        try {
+          const { leads, sheetName } = await parseXlsx(reader.result);
+          if (!leads.length) { setErr("No he encontrado filas válidas en el Excel."); setFile(null); setLoading(false); return; }
+          setFile({ name: f.name, leads });
+          setCampaign(c => c || _guessCampaign(sheetName) || _guessCampaign(f.name));
+          setLoading(false);
+        } catch (e) { setErr(e.message || "No he podido leer el Excel."); setFile(null); setLoading(false); }
+      };
+      reader.readAsArrayBuffer(f);
+    } else {
+      reader.onload = () => {
+        try {
+          const leads = parseCsv(String(reader.result || ""));
+          if (!leads.length) { setErr("No he encontrado ninguna fila válida en el archivo."); setFile(null); setLoading(false); return; }
+          setFile({ name: f.name, leads });
+          setCampaign(c => c || _guessCampaign(f.name));
+          setLoading(false);
+        } catch (_) { setErr("No he podido leer el archivo. ¿Es un CSV o Excel?"); setFile(null); setLoading(false); }
+      };
+      reader.readAsText(f);
+    }
   };
   const onDrop = (e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files && e.dataTransfer.files[0]; if (f) loadFile(f); };
 
   const parsed = file ? file.leads : [];
+  const withMsg = parsed.filter(l => (l.message || "").trim()).length;
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal" style={{ maxWidth: 580 }} onClick={e => e.stopPropagation()}>
         <div style={{ padding: "22px 24px 0", display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
           <div>
-            <h3 style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 }}>Importar leads</h3>
-            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Sube un <b style={{ color: "var(--text)" }}>CSV</b> o pega una lista.</div>
+            <h3 style={{ fontFamily: "var(--font-display)", fontSize: 19, fontWeight: 500 }}>Importar tanda de captación</h3>
+            <div style={{ fontSize: 13, color: "var(--text-muted)", marginTop: 4 }}>Sube tu <b style={{ color: "var(--text)" }}>Excel (.xlsx)</b> o un CSV. Se guardan también el mensaje y el nicho.</div>
           </div>
           <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 }}><Icon name="x" size={18}/></button>
         </div>
 
         <div style={{ padding: "18px 24px 4px" }}>
-          <input ref={inputRef} type="file" accept=".csv,text/csv,text/plain" style={{ display: "none" }}
+          <input ref={inputRef} type="file" accept=".xlsx,.xls,.csv,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style={{ display: "none" }}
             onChange={e => loadFile(e.target.files && e.target.files[0])}/>
 
           {file ? (
+            <>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", borderRadius: 12, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)" }}>
               <Icon name="file-text" size={18} style={{ color: "var(--accent)" }}/>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.name}</div>
-                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{file.leads.length} lead{file.leads.length > 1 ? "s" : ""} detectados</div>
+                <div style={{ fontSize: 12, color: "var(--text-muted)" }}>{file.leads.length} cuenta{file.leads.length > 1 ? "s" : ""}{withMsg ? ` · ${withMsg} con mensaje` : ""}</div>
               </div>
               <button onClick={() => { setFile(null); if (inputRef.current) inputRef.current.value = ""; }}
                 style={{ background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 4 }} title="Quitar archivo"><Icon name="x" size={16}/></button>
             </div>
+            <div style={{ marginTop: 12 }}>
+              <label style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 6, display: "block" }}>Campaña / Tanda <span style={{ color: "var(--text-subtle)" }}>(agrupa estas cuentas)</span></label>
+              <input value={campaign} onChange={e => setCampaign(e.target.value)} placeholder="Ej. Tanda 9"
+                style={{ width: "100%", height: 40, background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 10, padding: "0 12px", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none" }}/>
+            </div>
+            </>
           ) : (
             <div onClick={() => inputRef.current && inputRef.current.click()}
               onDragOver={e => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)} onDrop={onDrop}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8, padding: "26px 16px", borderRadius: 12, cursor: "pointer", textAlign: "center",
                 border: "1px dashed " + (drag ? "var(--accent)" : "var(--border-strong)"), background: drag ? "var(--accent-soft)" : "var(--bg-elev-2)", transition: "all .15s" }}>
               <Icon name="file-text" size={22} style={{ color: drag ? "var(--accent)" : "var(--text-muted)" }}/>
-              <div style={{ fontSize: 13.5, fontWeight: 500 }}>Arrastra un CSV aquí o haz clic para elegirlo</div>
-              <div style={{ fontSize: 12, color: "var(--text-subtle)" }}>Columnas: Marca · Instagram · Web · Contacto · Correo · Notas · Estado</div>
+              <div style={{ fontSize: 13.5, fontWeight: 500 }}>{loading ? "Leyendo el archivo…" : "Arrastra tu Excel (.xlsx) o CSV, o haz clic"}</div>
+              <div style={{ fontSize: 12, color: "var(--text-subtle)" }}>Detecta: Marca · Usuario IG · Nicho · Web · Notas · Mensaje</div>
             </div>
           )}
 
@@ -719,11 +890,11 @@ const ImportLeadsModal = ({ onClose, onImport }) => {
 
         <div style={{ padding: "16px 24px 22px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
           <span style={{ fontSize: 13, color: parsed.length ? "var(--accent)" : "var(--text-subtle)", fontWeight: 500 }}>
-            {parsed.length ? `${parsed.length} lead${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todavía"}
+            {parsed.length ? `${parsed.length} cuenta${parsed.length > 1 ? "s" : ""} para importar` : "Nada que importar todavía"}
           </span>
           <div style={{ display: "flex", gap: 10 }}>
             <button onClick={onClose} className="btn ghost">Cancelar</button>
-            <button onClick={() => onImport(parsed)} disabled={!parsed.length} className="btn primary"
+            <button onClick={() => onImport(parsed, campaign)} disabled={!parsed.length} className="btn primary"
               style={{ opacity: parsed.length ? 1 : 0.5, pointerEvents: parsed.length ? "auto" : "none" }}>
               Importar {parsed.length || ""}
             </button>
