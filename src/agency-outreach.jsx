@@ -341,9 +341,9 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
       <td style={{ ...cell, textAlign: "right", paddingRight: 12 }}>
         <span style={{ display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" }}>
           {hasMsg && (
-            <button onClick={() => setOpen(v => !v)} title="Ver / copiar el mensaje"
-              style={{ ...iconBtn, color: open ? "var(--accent)" : "var(--text-subtle)" }}
-              onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = open ? "var(--accent)" : "var(--text-subtle)"}>
+            <button onClick={() => setOpen(true)} title="Ver mensaje / copiar"
+              style={{ ...iconBtn, color: "var(--text-subtle)" }}
+              onMouseEnter={e => e.currentTarget.style.color = "var(--accent)"} onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
               <Icon name="file-text" size={14}/>
             </button>
           )}
@@ -370,29 +370,52 @@ const OutreachRow = ({ o, D, sel, onSel, first }) => {
       </td>
     </tr>
     {open && hasMsg && (
-      <tr>
-        <td/>
-        <td colSpan={9} style={{ padding: "0 14px 14px", borderTop: "none" }}>
-          <div style={{ background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "12px 14px", maxWidth: 780 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 }}>
-              <span style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)" }}>Mensaje listo</span>
-              <div style={{ display: "flex", gap: 6 }}>
-                <button onClick={copyMsg} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--bg-elev)", color: "var(--text)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 12, fontWeight: 500 }}>
-                  <Icon name="copy" size={12}/> Copiar
-                </button>
-                {_igDmUrl(o.instagram) && (
-                  <button onClick={sendDM} style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.35)", fontFamily: "inherit", fontSize: 12, fontWeight: 600 }}>
-                    <Icon name="send" size={12}/> Copiar y abrir DM
-                  </button>
-                )}
-              </div>
-            </div>
-            <div style={{ fontSize: 13, lineHeight: 1.55, color: "var(--text)", whiteSpace: "pre-wrap" }}>{o.message}</div>
-          </div>
-        </td>
-      </tr>
+      <MessageModal o={o} onClose={() => setOpen(false)} onCopy={copyMsg} onSend={() => { sendDM(); setOpen(false); }}/>
     )}
     </>
+  );
+};
+
+// Pop-up con el mensaje listo (estilo modal, como el de crear)
+const MessageModal = ({ o, onClose, onCopy, onSend }) => {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  const dm = _igDmUrl(o.instagram);
+  const handle = o.instagram ? (o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram) : "";
+  return ReactDOM.createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal" style={{ maxWidth: 560 }} onClick={e => e.stopPropagation()}>
+        <div className="modal-head">
+          <div style={{ minWidth: 0 }}>
+            <div className="modal-title" style={{ fontSize: 21 }}>{o.brand}</div>
+            <div className="modal-sub" style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
+              {handle && <span>{handle}</span>}
+              {o.niche && <><span style={{ color: "var(--text-subtle)" }}>·</span><span>{o.niche}</span></>}
+              {o.campaign && <span style={{ fontSize: 11, fontWeight: 600, color: "var(--accent)", background: "var(--accent-soft)", borderRadius: 5, padding: "1px 7px" }}>{o.campaign}</span>}
+            </div>
+          </div>
+          <button onClick={onClose} className="btn ghost icon-only sm"><Icon name="x" size={16}/></button>
+        </div>
+        <div className="modal-body">
+          <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)", marginBottom: 8 }}>Mensaje listo para enviar</div>
+          <div style={{ background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 14, padding: "14px 16px",
+            maxHeight: "42vh", overflowY: "auto", fontSize: 14, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap" }}>
+            {o.message || <span style={{ color: "var(--text-subtle)" }}>Esta cuenta no tiene mensaje guardado.</span>}
+          </div>
+          <div style={{ fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 }}>
+            Instagram no deja rellenar el texto: al abrir el DM, pega con <b style={{ color: "var(--text-muted)" }}>⌘V</b> y envía.
+          </div>
+        </div>
+        <div className="modal-foot">
+          <button onClick={onCopy} className="btn"><Icon name="copy" size={13}/> Copiar mensaje</button>
+          {dm && <button onClick={onSend} className="btn primary"><Icon name="send" size={13}/> Copiar y abrir DM</button>}
+        </div>
+      </div>
+    </div>,
+    document.body
   );
 };
 

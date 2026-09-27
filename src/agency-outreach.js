@@ -505,11 +505,11 @@
       /* @__PURE__ */ React.createElement("td", { style: { ...cell, textAlign: "right", paddingRight: 12 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4, justifyContent: "flex-end" } }, hasMsg && /* @__PURE__ */ React.createElement(
         "button",
         {
-          onClick: () => setOpen((v) => !v),
-          title: "Ver / copiar el mensaje",
-          style: { ...iconBtn, color: open ? "var(--accent)" : "var(--text-subtle)" },
+          onClick: () => setOpen(true),
+          title: "Ver mensaje / copiar",
+          style: { ...iconBtn, color: "var(--text-subtle)" },
           onMouseEnter: (e) => e.currentTarget.style.color = "var(--accent)",
-          onMouseLeave: (e) => e.currentTarget.style.color = open ? "var(--accent)" : "var(--text-subtle)"
+          onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
         },
         /* @__PURE__ */ React.createElement(Icon, { name: "file-text", size: 14 })
       ), !_DONE_ST.includes(o.status) && !o.convertedClientId && /* @__PURE__ */ React.createElement(
@@ -561,7 +561,36 @@
         /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 12 }),
         " Cliente"
       ) : null))
-    ), open && hasMsg && /* @__PURE__ */ React.createElement("tr", null, /* @__PURE__ */ React.createElement("td", null), /* @__PURE__ */ React.createElement("td", { colSpan: 9, style: { padding: "0 14px 14px", borderTop: "none" } }, /* @__PURE__ */ React.createElement("div", { style: { background: "var(--bg-elev-2)", border: "0.5px solid var(--border)", borderRadius: 12, padding: "12px 14px", maxWidth: 780 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, marginBottom: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)" } }, "Mensaje listo"), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, /* @__PURE__ */ React.createElement("button", { onClick: copyMsg, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--bg-elev)", color: "var(--text)", border: "0.5px solid var(--border)", fontFamily: "inherit", fontSize: 12, fontWeight: 500 } }, /* @__PURE__ */ React.createElement(Icon, { name: "copy", size: 12 }), " Copiar"), _igDmUrl(o.instagram) && /* @__PURE__ */ React.createElement("button", { onClick: sendDM, style: { display: "inline-flex", alignItems: "center", gap: 5, padding: "4px 10px", borderRadius: 8, cursor: "pointer", background: "var(--accent-soft)", color: "var(--accent)", border: "1px solid rgba(158,154,229,0.35)", fontFamily: "inherit", fontSize: 12, fontWeight: 600 } }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 12 }), " Copiar y abrir DM"))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, lineHeight: 1.55, color: "var(--text)", whiteSpace: "pre-wrap" } }, o.message)))));
+    ), open && hasMsg && /* @__PURE__ */ React.createElement(MessageModal, { o, onClose: () => setOpen(false), onCopy: copyMsg, onSend: () => {
+      sendDM();
+      setOpen(false);
+    } }));
+  };
+  const MessageModal = ({ o, onClose, onCopy, onSend }) => {
+    useEffect(() => {
+      const onKey = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", onKey);
+      return () => window.removeEventListener("keydown", onKey);
+    }, []);
+    const dm = _igDmUrl(o.instagram);
+    const handle = o.instagram ? o.instagram.startsWith("@") ? o.instagram : "@" + o.instagram : "";
+    return ReactDOM.createPortal(
+      /* @__PURE__ */ React.createElement("div", { className: "modal-overlay", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "modal", style: { maxWidth: 560 }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("div", { className: "modal-head" }, /* @__PURE__ */ React.createElement("div", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "modal-title", style: { fontSize: 21 } }, o.brand), /* @__PURE__ */ React.createElement("div", { className: "modal-sub", style: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center", marginTop: 6 } }, handle && /* @__PURE__ */ React.createElement("span", null, handle), o.niche && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "\xB7"), /* @__PURE__ */ React.createElement("span", null, o.niche)), o.campaign && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, fontWeight: 600, color: "var(--accent)", background: "var(--accent-soft)", borderRadius: 5, padding: "1px 7px" } }, o.campaign))), /* @__PURE__ */ React.createElement("button", { onClick: onClose, className: "btn ghost icon-only sm" }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 16 }))), /* @__PURE__ */ React.createElement("div", { className: "modal-body" }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-subtle)", marginBottom: 8 } }, "Mensaje listo para enviar"), /* @__PURE__ */ React.createElement("div", { style: {
+        background: "var(--bg-elev-2)",
+        border: "0.5px solid var(--border)",
+        borderRadius: 14,
+        padding: "14px 16px",
+        maxHeight: "42vh",
+        overflowY: "auto",
+        fontSize: 14,
+        lineHeight: 1.6,
+        color: "var(--text)",
+        whiteSpace: "pre-wrap"
+      } }, o.message || /* @__PURE__ */ React.createElement("span", { style: { color: "var(--text-subtle)" } }, "Esta cuenta no tiene mensaje guardado.")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)", marginTop: 10, lineHeight: 1.5 } }, "Instagram no deja rellenar el texto: al abrir el DM, pega con ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text-muted)" } }, "\u2318V"), " y env\xEDa.")), /* @__PURE__ */ React.createElement("div", { className: "modal-foot" }, /* @__PURE__ */ React.createElement("button", { onClick: onCopy, className: "btn" }, /* @__PURE__ */ React.createElement(Icon, { name: "copy", size: 13 }), " Copiar mensaje"), dm && /* @__PURE__ */ React.createElement("button", { onClick: onSend, className: "btn primary" }, /* @__PURE__ */ React.createElement(Icon, { name: "send", size: 13 }), " Copiar y abrir DM")))),
+      document.body
+    );
   };
   const _OcRow = ({ label, children }) => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)", flexShrink: 0 } }, label), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text)", minWidth: 0, textAlign: "right", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, children));
   const OutreachCard = ({ o, D, sel, onSel }) => {
