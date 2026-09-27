@@ -844,68 +844,7 @@
       color: "var(--text-subtle)",
       whiteSpace: "nowrap"
     };
-    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub", style: { display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginTop: 8 } }, /* @__PURE__ */ React.createElement(
-      "button",
-      {
-        onClick: () => setFilter("all"),
-        title: "Ver todas",
-        style: {
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          height: 26,
-          padding: "0 11px",
-          borderRadius: 99,
-          cursor: "pointer",
-          fontFamily: "inherit",
-          fontSize: 12.5,
-          fontWeight: 500,
-          background: filter === "all" ? "var(--text)" : "var(--bg-elev-2)",
-          color: filter === "all" ? "var(--bg)" : "var(--text-muted)",
-          border: "0.5px solid " + (filter === "all" ? "var(--text)" : "var(--border)"),
-          transition: "all .12s"
-        }
-      },
-      /* @__PURE__ */ React.createElement("b", { style: { fontWeight: 700 } }, scope.length),
-      " ",
-      campFilter === "all" ? "en total" : campFilter
-    ), OUTREACH_STATUS.map((s) => {
-      const active = filter === s.id;
-      return /* @__PURE__ */ React.createElement(
-        "button",
-        {
-          key: s.id,
-          onClick: () => setFilter(active ? "all" : s.id),
-          title: `Ver \xAB${s.label}\xBB`,
-          style: {
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            height: 26,
-            padding: "0 11px",
-            borderRadius: 99,
-            cursor: "pointer",
-            fontFamily: "inherit",
-            fontSize: 12.5,
-            fontWeight: 500,
-            background: active ? s.color + "26" : "transparent",
-            color: active ? "var(--text)" : "var(--text-muted)",
-            border: "0.5px solid " + (active ? s.color + "66" : "var(--border)"),
-            transition: "all .12s"
-          },
-          onMouseEnter: (e) => {
-            if (!active) e.currentTarget.style.background = "var(--bg-elev-2)";
-          },
-          onMouseLeave: (e) => {
-            if (!active) e.currentTarget.style.background = "transparent";
-          }
-        },
-        /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: s.color, flexShrink: 0 } }),
-        s.label,
-        " ",
-        /* @__PURE__ */ React.createElement("b", { style: { fontWeight: 700, color: active ? "var(--text)" : "var(--text)" } }, counts[s.id] || 0)
-      );
-    }))), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, campaigns.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { className: "page" }, /* @__PURE__ */ React.createElement("div", { className: "page-head" }, /* @__PURE__ */ React.createElement("div", { className: "hide-mobile" }, /* @__PURE__ */ React.createElement("h1", null, "Propuestas Outreach"), /* @__PURE__ */ React.createElement("div", { className: "sub" }, "Captaci\xF3n por Instagram \xB7 gestiona el embudo por estados")), /* @__PURE__ */ React.createElement("div", { className: "outreach-actions", style: { display: "flex", alignItems: "center", gap: 8 } }, campaigns.length > 0 && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", display: "inline-flex", alignItems: "center" } }, /* @__PURE__ */ React.createElement(
       "select",
       {
         value: campFilter,
@@ -990,7 +929,11 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 14 }),
       " Nuevo lead"
-    ))), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 40 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 158 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 118 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 148 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 130 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 70 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { className: "tabs" }, [
+      { id: "all", label: "Todas", count: scope.length },
+      ...dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : [],
+      ...OUTREACH_STATUS.map((s) => ({ id: s.id, label: s.label, count: counts[s.id] || 0 }))
+    ].map((t) => /* @__PURE__ */ React.createElement("div", { key: t.id, className: "tab" + (filter === t.id ? " active" : ""), onClick: () => setFilter(t.id) }, t.label, t.count != null ? /* @__PURE__ */ React.createElement("span", { className: "count" }, t.count) : null))), /* @__PURE__ */ React.createElement("div", { className: "outreach-table", style: { overflowX: "auto", marginTop: 4 } }, /* @__PURE__ */ React.createElement("table", { style: { width: "100%", borderCollapse: "collapse", minWidth: 1160, tableLayout: "fixed" } }, /* @__PURE__ */ React.createElement("colgroup", null, /* @__PURE__ */ React.createElement("col", { style: { width: 40 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 158 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 150 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 118 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 148 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 132 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 130 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 70 } }), /* @__PURE__ */ React.createElement("col", { style: { width: 160 } })), /* @__PURE__ */ React.createElement("thead", null, /* @__PURE__ */ React.createElement("tr", { style: { borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("th", { style: { ...th, paddingLeft: 16, paddingRight: 4, width: 34 } }, /* @__PURE__ */ React.createElement(Check, { on: allSel, onToggle: toggleAll })), /* @__PURE__ */ React.createElement("th", { style: th }, "Marca"), /* @__PURE__ */ React.createElement("th", { style: th }, /* @__PURE__ */ React.createElement(OutreachFilterHead, { filter, setFilter, counts, dueCount, clientCount, total: all.length })), /* @__PURE__ */ React.createElement("th", { style: th }, "Seguimiento"), /* @__PURE__ */ React.createElement("th", { style: th }, "Contacto"), /* @__PURE__ */ React.createElement("th", { style: th }, "Instagram"), /* @__PURE__ */ React.createElement("th", { style: th }, "Web"), /* @__PURE__ */ React.createElement("th", { style: th }, "Notas"), /* @__PURE__ */ React.createElement("th", { style: th }, "A\xF1adido"), /* @__PURE__ */ React.createElement("th", { style: { ...th, textAlign: "right" } }))), /* @__PURE__ */ React.createElement("tbody", null, rows.map((o, i) => /* @__PURE__ */ React.createElement(OutreachRow, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id), first: i === 0 }))))), /* @__PURE__ */ React.createElement("div", { className: "outreach-cards" }, rows.map((o) => /* @__PURE__ */ React.createElement(OutreachCard, { key: o.id, o, D, sel: sel.has(o.id), onSel: () => toggle(o.id) }))), rows.length === 0 && /* @__PURE__ */ React.createElement("div", { style: { padding: "44px 0" } }, /* @__PURE__ */ React.createElement(
       Empty,
       {
         icon: "send",

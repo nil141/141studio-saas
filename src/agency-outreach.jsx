@@ -615,28 +615,7 @@ const AgencyOutreach = ({ navigate }) => {
       <div className="page-head">
         <div className="hide-mobile">
           <h1>Propuestas Outreach</h1>
-          <div className="sub" style={{ display: "flex", gap: 7, flexWrap: "wrap", alignItems: "center", marginTop: 8 }}>
-            <button onClick={() => setFilter("all")} title="Ver todas"
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 26, padding: "0 11px", borderRadius: 99, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500,
-                background: filter === "all" ? "var(--text)" : "var(--bg-elev-2)", color: filter === "all" ? "var(--bg)" : "var(--text-muted)",
-                border: "0.5px solid " + (filter === "all" ? "var(--text)" : "var(--border)"), transition: "all .12s" }}>
-              <b style={{ fontWeight: 700 }}>{scope.length}</b> {campFilter === "all" ? "en total" : campFilter}
-            </button>
-            {OUTREACH_STATUS.map(s => {
-              const active = filter === s.id;
-              return (
-                <button key={s.id} onClick={() => setFilter(active ? "all" : s.id)} title={`Ver «${s.label}»`}
-                  style={{ display: "inline-flex", alignItems: "center", gap: 6, height: 26, padding: "0 11px", borderRadius: 99, cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500,
-                    background: active ? s.color + "26" : "transparent", color: active ? "var(--text)" : "var(--text-muted)",
-                    border: "0.5px solid " + (active ? s.color + "66" : "var(--border)"), transition: "all .12s" }}
-                  onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--bg-elev-2)"; }}
-                  onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}>
-                  <span style={{ width: 7, height: 7, borderRadius: "50%", background: s.color, flexShrink: 0 }}/>
-                  {s.label} <b style={{ fontWeight: 700, color: active ? "var(--text)" : "var(--text)" }}>{counts[s.id] || 0}</b>
-                </button>
-              );
-            })}
-          </div>
+          <div className="sub">Captación por Instagram · gestiona el embudo por estados</div>
         </div>
         <div className="outreach-actions" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           {campaigns.length > 0 && (
@@ -674,6 +653,18 @@ const AgencyOutreach = ({ navigate }) => {
             <Icon name="plus" size={14}/> Nuevo lead
           </button>
         </div>
+      </div>
+
+      {/* Pestañas de estado — mismo estilo que la ficha de cliente */}
+      <div className="tabs">
+        {[{ id: "all", label: "Todas", count: scope.length },
+          ...(dueCount > 0 ? [{ id: "due", label: "Toca hoy", count: dueCount }] : []),
+          ...OUTREACH_STATUS.map(s => ({ id: s.id, label: s.label, count: counts[s.id] || 0 }))
+        ].map(t => (
+          <div key={t.id} className={"tab" + (filter === t.id ? " active" : "")} onClick={() => setFilter(t.id)}>
+            {t.label}{t.count != null ? <span className="count">{t.count}</span> : null}
+          </div>
+        ))}
       </div>
 
       {/* Tabla — flujo abierto, sin caja (como Clientes/Proyectos) */}
