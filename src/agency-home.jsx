@@ -24,11 +24,9 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
     <div className="home-card" onClick={() => expandable ? setOpen(o => !o) : (onOpen && onOpen())}
       style={{ borderRadius: 16, background: "rgba(255,255,255,0.045)", border: "0.5px solid rgba(255,255,255,0.09)",
         backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", overflow: "hidden",
-        transition: "background .15s, transform .22s cubic-bezier(.22,1,.36,1)" }}
+        transition: "background .15s" }}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.065)"}
-      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.045)"; e.currentTarget.style.transform = "scale(1)"; }}
-      onPointerDown={e => e.currentTarget.style.transform = "scale(0.987)"}
-      onPointerUp={e => e.currentTarget.style.transform = "scale(1)"}>
+      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.045)"}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
           background: color + "22", color }}>
@@ -41,14 +39,13 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
         </div>
         {expandable && <Icon name="chevron-down" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0, marginTop: 3, transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" }}/>}
       </div>
-      {/* Despliegue con animación suave de altura (estilo notificaciones iOS) */}
+      {/* Despliegue con animación limpia de altura (estilo notificaciones iOS) */}
       <div style={{ display: "grid", gridTemplateRows: (open && expandable) ? "1fr" : "0fr",
-        transition: "grid-template-rows .36s cubic-bezier(.22,1,.36,1)" }}>
+        transition: "grid-template-rows .34s cubic-bezier(.4,0,.2,1)" }}>
         <div style={{ overflow: "hidden", minHeight: 0 }}>
           <div onClick={e => e.stopPropagation()}
             style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", padding: "6px 8px 8px",
-              opacity: open ? 1 : 0, transform: open ? "translateY(0)" : "translateY(-6px)",
-              transition: "opacity .28s ease .04s, transform .34s cubic-bezier(.22,1,.36,1) .04s" }}>
+              opacity: open ? 1 : 0, transition: "opacity .22s ease" }}>
             {(items || []).map((it, i) => (
               <div key={i} onClick={it.onClick}
                 style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" }}

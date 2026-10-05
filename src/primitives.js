@@ -870,27 +870,23 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         "aria-label": "Crear",
         style: {
           position: "fixed",
-          top: 16,
-          right: 20,
+          top: 18,
+          right: 22,
           zIndex: 150,
-          width: 38,
-          height: 38,
-          borderRadius: 11,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "rgba(255,255,255,0.06)",
-          border: "0.5px solid rgba(255,255,255,0.12)",
-          color: "var(--text)",
+          padding: 6,
+          background: "transparent",
+          border: "none",
+          color: "rgba(255,255,255,0.6)",
           cursor: "pointer",
-          WebkitBackdropFilter: "blur(10px)",
-          backdropFilter: "blur(10px)",
-          transition: "background .14s"
+          transition: "color .14s"
         },
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.12)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)"
+        onMouseEnter: (e) => e.currentTarget.style.color = "#fff",
+        onMouseLeave: (e) => e.currentTarget.style.color = "rgba(255,255,255,0.6)"
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 18 })
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16, strokeWidth: 1.8 })
     ),
     document.body
   ), logoutOpen && ReactDOM.createPortal(

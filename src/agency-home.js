@@ -44,15 +44,10 @@
           WebkitBackdropFilter: "blur(12px)",
           cursor: "pointer",
           overflow: "hidden",
-          transition: "background .15s, transform .22s cubic-bezier(.22,1,.36,1)"
+          transition: "background .15s"
         },
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.065)",
-        onMouseLeave: (e) => {
-          e.currentTarget.style.background = "rgba(255,255,255,0.045)";
-          e.currentTarget.style.transform = "scale(1)";
-        },
-        onPointerDown: (e) => e.currentTarget.style.transform = "scale(0.987)",
-        onPointerUp: (e) => e.currentTarget.style.transform = "scale(1)"
+        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.045)"
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: {
         width: 30,
@@ -76,7 +71,7 @@
       /* @__PURE__ */ React.createElement("div", { style: {
         display: "grid",
         gridTemplateRows: open && expandable ? "1fr" : "0fr",
-        transition: "grid-template-rows .36s cubic-bezier(.22,1,.36,1)"
+        transition: "grid-template-rows .34s cubic-bezier(.4,0,.2,1)"
       } }, /* @__PURE__ */ React.createElement("div", { style: { overflow: "hidden", minHeight: 0 } }, /* @__PURE__ */ React.createElement(
         "div",
         {
@@ -85,8 +80,7 @@
             borderTop: "0.5px solid rgba(255,255,255,0.07)",
             padding: "6px 8px 8px",
             opacity: open ? 1 : 0,
-            transform: open ? "translateY(0)" : "translateY(-6px)",
-            transition: "opacity .28s ease .04s, transform .34s cubic-bezier(.22,1,.36,1) .04s"
+            transition: "opacity .22s ease"
           }
         },
         (items || []).map((it, i) => /* @__PURE__ */ React.createElement(

@@ -721,13 +721,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     {/* Botón Crear flotante arriba a la derecha (agencia, escritorio) */}
     {railMode && ReactDOM.createPortal(
       <button onClick={() => onQuickCreate && onQuickCreate()} title="Crear" aria-label="Crear"
-        style={{ position:"fixed", top:16, right:20, zIndex:150,
-          width:38, height:38, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center",
-          background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.12)", color:"var(--text)",
-          cursor:"pointer", WebkitBackdropFilter:"blur(10px)", backdropFilter:"blur(10px)", transition:"background .14s" }}
-        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
-        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}>
-        <Icon name="plus" size={18}/>
+        style={{ position:"fixed", top:18, right:22, zIndex:150,
+          display:"flex", alignItems:"center", justifyContent:"center", padding:6,
+          background:"transparent", border:"none", color:"rgba(255,255,255,0.6)",
+          cursor:"pointer", transition:"color .14s" }}
+        onMouseEnter={e => e.currentTarget.style.color = "#fff"}
+        onMouseLeave={e => e.currentTarget.style.color = "rgba(255,255,255,0.6)"}>
+        <Icon name="plus" size={16} strokeWidth={1.8}/>
       </button>,
       document.body
     )}
