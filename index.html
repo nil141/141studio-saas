@@ -519,6 +519,25 @@
   .app.nav-collapsed .main { transition: padding-top .2s ease; }
   @media (min-width: 769px) { .app.nav-collapsed .main { padding-top: 20px; } }
   @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
+  /* ── Rail fino estilo Kinso (escritorio, agencia) ──────────────────
+     Por defecto solo iconos (64px); al pasar el ratón se expande a 232px
+     superpuesto (las pistas del grid son fijas, así el contenido no se
+     mueve). Un degradado a la derecha oculta el texto recortado. */
+  @media (min-width: 769px) {
+    .app:not(.client):not(.nav-collapsed) { grid-template-columns: 64px 1fr; }
+    .app:not(.client):not(.nav-collapsed) .sidebar {
+      width: 64px; z-index: 60; white-space: nowrap;
+      -webkit-mask-image: linear-gradient(to right, #000 40px, transparent 50px);
+              mask-image: linear-gradient(to right, #000 40px, transparent 50px);
+      transition: width .18s cubic-bezier(.4,0,.2,1);
+    }
+    .app:not(.client):not(.nav-collapsed) .sidebar:hover {
+      width: 232px; box-shadow: 10px 0 44px rgba(0,0,0,0.5);
+      -webkit-mask-image: none; mask-image: none;
+    }
+    /* Los iconos no se encogen en el rail fino (si no, quedan a 0px) */
+    .app:not(.client):not(.nav-collapsed) .sidebar svg { flex-shrink: 0; }
+  }
   .brand {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px 16px;
