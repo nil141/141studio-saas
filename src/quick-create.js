@@ -67,7 +67,32 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     window.addEventListener("keydown", fn);
     return () => window.removeEventListener("keydown", fn);
   }, [open]);
-  if (!open) return null;
+  const [render, setRender] = React.useState(open);
+  const [closing, setClosing] = React.useState(false);
+  const closeTimer = React.useRef(null);
+  useEffect(() => {
+    if (open) {
+      if (closeTimer.current) {
+        clearTimeout(closeTimer.current);
+        closeTimer.current = null;
+      }
+      setClosing(false);
+      setRender(true);
+    } else {
+      setRender((prev) => {
+        if (!prev) return false;
+        setClosing(true);
+        closeTimer.current = setTimeout(() => {
+          setRender(false);
+          setClosing(false);
+        }, 230);
+        return true;
+      });
+    }
+    return () => {
+    };
+  }, [open]);
+  if (!render) return null;
   const canSubmit = title.trim().length > 0;
   const handleSubmit = () => {
     if (!canSubmit) return;
@@ -142,7 +167,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         alignItems: "center",
         justifyContent: "center",
         padding: 24,
-        animation: editTask ? "none" : "fade .24s ease"
+        animation: closing ? "qcFadeOut .22s ease forwards" : editTask ? "none" : "fade .24s ease"
       },
       onClick: onClose
     },
@@ -156,7 +181,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           background: "#111111",
           border: "0.5px solid rgba(255,255,255,0.08)",
           borderRadius: 32,
-          animation: editTask ? "none" : "qcIn .34s cubic-bezier(.22,1,.36,1)",
+          animation: closing ? "qcOut .22s cubic-bezier(.4,0,1,1) forwards" : editTask ? "none" : "qcIn .34s cubic-bezier(.22,1,.36,1)",
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",

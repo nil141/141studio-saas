@@ -793,6 +793,8 @@
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
   @keyframes pop { from { opacity: 0; transform: translateY(6px) scale(.99); } to { opacity: 1; transform: none; } }
   @keyframes qcIn { from { opacity: 0; transform: translateY(10px) scale(.965); } to { opacity: 1; transform: none; } }
+  @keyframes qcOut { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(8px) scale(.97); } }
+  @keyframes qcFadeOut { from { opacity: 1; } to { opacity: 0; } }
   @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .45; } }
 
@@ -1304,7 +1306,7 @@
 <script src="src/gmail.js?v=3"></script>
 <script src="src/z-modals2.js?v=4"></script>
 <script src="src/agency-agenda.js?v=16"></script>
-<script src="src/quick-create.js?v=18"></script>
+<script src="src/quick-create.js?v=19"></script>
 <script src="src/routines.js?v=28"></script>
 <!-- Todos los componentes cargados — arrancar React ahora -->
 <script>window.__initApp();</script>
