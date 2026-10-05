@@ -49,17 +49,7 @@
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.065)",
         onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.045)"
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 30,
-        height: 30,
-        borderRadius: 9,
-        flexShrink: 0,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: color + "22",
-        color
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color, marginTop: 1 } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 12.5,
         color: "var(--text-muted)",
         lineHeight: 1.5,
