@@ -120,29 +120,41 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label}/>
       ))}
 
-      {/* Otros — desplegable de un nivel (icono tres puntos + flecha animada) */}
-      <div className="nav-row" onClick={toggleOtros}
-        onMouseEnter={(e) => { setOtrosHov(true); showTip(e, "Otros"); }}
-        onMouseLeave={() => { setOtrosHov(false); hideTip(); }}
-        style={{ display: "flex", alignItems: "center", gap: 11, height: 38, padding: "0 10px", borderRadius: 10, cursor: "pointer",
-          background: railMode ? "transparent" : (otrosHov ? "rgba(255,255,255,0.03)" : "transparent"),
-          color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s",
-          fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
-        <Icon name="more-h" size={16} strokeWidth={1.7}/>
-        <span className="nav-label" style={{ flex: 1 }}>Otros</span>
-        {!otrosOpen && outreachDue > 0 && (
-          <span className="nav-aux" style={{ width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 }}/>
-        )}
-        <Icon name="chevron-right" size={14} className="nav-aux" style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
-      </div>
-      {otrosOpen && (
-        <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
-          {_NAV_OTROS.map(it => (
-            <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href}
-              dot={it.id === "outreach" && outreachDue > 0} nested/>
-          ))}
-        </div>
-      )}
+      {/* Otros — al hacer hover sobre los tres puntos se despliegan los
+          iconos hacia abajo con una animación suave (sin perder el hover). */}
+      {(() => {
+        const open = otrosHov || otrosOpen;
+        return (
+          <div onMouseEnter={() => setOtrosHov(true)} onMouseLeave={() => setOtrosHov(false)}>
+            <div className="nav-row" onClick={toggleOtros}
+              style={{ display: "flex", alignItems: "center", gap: 11, height: 38, padding: "0 10px", borderRadius: 10, cursor: "pointer",
+                background: railMode ? "transparent" : (open ? "rgba(255,255,255,0.03)" : "transparent"),
+                color: railMode ? (open ? "#fff" : "rgba(255,255,255,0.6)") : (open ? "#fff" : "var(--text-muted)"),
+                transition: "color .15s, background .15s",
+                fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
+              <Icon name="more-h" size={16} strokeWidth={1.7}/>
+              <span className="nav-label" style={{ flex: 1 }}>Otros</span>
+              {!open && outreachDue > 0 && (
+                <span className="nav-aux" style={{ width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 }}/>
+              )}
+              <Icon name="chevron-right" size={14} className="nav-aux" style={{ flexShrink: 0, opacity: 0.6, transform: open ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
+            </div>
+            <div style={{ display: "grid", gridTemplateRows: open ? "1fr" : "0fr",
+              transition: "grid-template-rows .28s cubic-bezier(.22,1,.36,1)" }}>
+              <div style={{ overflow: "hidden", minHeight: 0 }}>
+                <div style={{ paddingLeft: railMode ? 0 : 8, paddingTop: 2, paddingBottom: 4,
+                  opacity: open ? 1 : 0, transform: open ? "translateY(0)" : "translateY(-5px)",
+                  transition: "opacity .2s ease, transform .28s cubic-bezier(.22,1,.36,1)" }}>
+                  {_NAV_OTROS.map(it => (
+                    <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href}
+                      dot={it.id === "outreach" && outreachDue > 0} nested/>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* En desarrollo activo */}
       {!D.READY ? (
@@ -508,7 +520,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           background: railMode ? "transparent" : (bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent")),
           border: railMode ? "1px solid transparent" : (bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent")),
           color: railMode
-            ? (isActive ? "var(--accent)" : hov ? "#fff" : "rgba(255,255,255,0.74)")
+            ? (isActive || hov ? "#fff" : "rgba(255,255,255,0.6)")
             : (isActive || hov ? "var(--text)" : "var(--text-muted)"),
           opacity: nested && !isActive && !hov ? 0.72 : 1,
           transition:"color .15s, background .15s, opacity .15s",
@@ -594,8 +606,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   return (
     <>
     <aside className="sidebar">
-      {/* Cabecera del menú: logo para el cliente, perfil para la agencia */}
-      {kind === "client" ? (
+      {/* Cabecera del menú: logo + campana solo para el cliente.
+          En la agencia no hay cabecera (ni logo ni botón de ocultar). */}
+      {kind === "client" && (
         <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"10px 8px 30px 10px"}}>
           {logoErr ? (
             <div style={{fontFamily:"var(--font-display)", fontSize:16, fontWeight:500, letterSpacing:"-0.5px", color:"#fff"}}>
@@ -608,30 +621,11 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           )}
           <NotificationBell kind={kind} onNavigate={onNavigate}/>
         </div>
-      ) : (
-      <div className="sidebar-brand" style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
-        <img className="nav-label" src="/wordmark.svg" alt="141'DIGITAL"
-          style={{height:18, width:"auto", maxWidth:150, display:"block", objectFit:"contain", opacity:0.95}} />
-        <button onClick={() => onToggleCollapse && onToggleCollapse()} title="Ocultar menú" aria-label="Ocultar menú"
-          style={{background:"transparent", border:"none", cursor:"pointer", color:"var(--text-subtle)", padding:6, borderRadius:8, display:"flex"}}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--text)"}
-          onMouseLeave={e => e.currentTarget.style.color = "var(--text-subtle)"}>
-          <Icon name="chevrons-left" size={17} strokeWidth={1.7}/>
-        </button>
-      </div>
       )}
 
-      {/* Crear + buscador (agencia) */}
+      {/* Buscador global (agencia) — oculto en el rail fino */}
       {kind === "agency" && (
         <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
-          <button className="nav-create" onClick={() => onQuickCreate && onQuickCreate()}
-            onMouseEnter={e => { e.currentTarget.style.background = "rgba(158,154,229,0.28)"; showTip(e, "Crear"); }}
-            onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-soft)"; hideTip(); }}
-            style={{display:"flex", alignItems:"center", justifyContent:"flex-start", gap:8, height:40, borderRadius:12, padding:"0 14px",
-              background:"var(--accent-soft)", color:"var(--accent)", border:"1px solid rgba(158,154,229,0.3)", cursor:"pointer",
-              fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s"}}>
-            <Icon name="plus" size={16}/> <span className="nav-label">Crear</span>
-          </button>
           <div className="nav-search-wrap" style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
             background:"rgba(255,255,255,0.05)"}}>
             <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
@@ -723,6 +717,20 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     </aside>
 
     <RailTooltip/>
+
+    {/* Botón Crear flotante arriba a la derecha (agencia, escritorio) */}
+    {railMode && ReactDOM.createPortal(
+      <button onClick={() => onQuickCreate && onQuickCreate()} title="Crear" aria-label="Crear"
+        style={{ position:"fixed", top:16, right:20, zIndex:150,
+          width:38, height:38, borderRadius:11, display:"flex", alignItems:"center", justifyContent:"center",
+          background:"rgba(255,255,255,0.06)", border:"0.5px solid rgba(255,255,255,0.12)", color:"var(--text)",
+          cursor:"pointer", WebkitBackdropFilter:"blur(10px)", backdropFilter:"blur(10px)", transition:"background .14s" }}
+        onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.12)"}
+        onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.06)"}>
+        <Icon name="plus" size={18}/>
+      </button>,
+      document.body
+    )}
 
     {logoutOpen && ReactDOM.createPortal(
       <div onClick={() => setLogoutOpen(false)} style={{

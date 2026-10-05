@@ -44,10 +44,15 @@
           WebkitBackdropFilter: "blur(12px)",
           cursor: "pointer",
           overflow: "hidden",
-          transition: "background .15s"
+          transition: "background .15s, transform .22s cubic-bezier(.22,1,.36,1)"
         },
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.065)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.045)"
+        onMouseLeave: (e) => {
+          e.currentTarget.style.background = "rgba(255,255,255,0.045)";
+          e.currentTarget.style.transform = "scale(1)";
+        },
+        onPointerDown: (e) => e.currentTarget.style.transform = "scale(0.987)",
+        onPointerUp: (e) => e.currentTarget.style.transform = "scale(1)"
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: {
         width: 30,
@@ -68,19 +73,37 @@
         WebkitBoxOrient: "vertical",
         overflow: "hidden"
       } }, sub)), expandable && /* @__PURE__ */ React.createElement(Icon, { name: "chevron-down", size: 15, style: { color: "var(--text-subtle)", flexShrink: 0, marginTop: 3, transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" } })),
-      open && expandable && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.07)", padding: "6px 8px 8px" }, onClick: (e) => e.stopPropagation() }, items.map((it, i) => /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: {
+        display: "grid",
+        gridTemplateRows: open && expandable ? "1fr" : "0fr",
+        transition: "grid-template-rows .36s cubic-bezier(.22,1,.36,1)"
+      } }, /* @__PURE__ */ React.createElement("div", { style: { overflow: "hidden", minHeight: 0 } }, /* @__PURE__ */ React.createElement(
         "div",
         {
-          key: i,
-          onClick: it.onClick,
-          style: { display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" },
-          onMouseEnter: (e) => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)"),
-          onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+          onClick: (e) => e.stopPropagation(),
+          style: {
+            borderTop: "0.5px solid rgba(255,255,255,0.07)",
+            padding: "6px 8px 8px",
+            opacity: open ? 1 : 0,
+            transform: open ? "translateY(0)" : "translateY(-6px)",
+            transition: "opacity .28s ease .04s, transform .34s cubic-bezier(.22,1,.36,1) .04s"
+          }
         },
-        it.dot && /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 } }),
-        /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
-        it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
-      )), onOpen && /* @__PURE__ */ React.createElement("div", { onClick: onOpen, style: { padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 } }, "Ver todo \u2192"))
+        (items || []).map((it, i) => /* @__PURE__ */ React.createElement(
+          "div",
+          {
+            key: i,
+            onClick: it.onClick,
+            style: { display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" },
+            onMouseEnter: (e) => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)"),
+            onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+          },
+          it.dot && /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 } }),
+          /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
+          it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
+        )),
+        onOpen && /* @__PURE__ */ React.createElement("div", { onClick: onOpen, style: { padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 } }, "Ver todo \u2192")
+      )))
     );
   };
   const AgencyHome = ({ navigate, openModal, session }) => {
@@ -118,7 +141,7 @@
       navigate("nora");
     };
     const sec = (label, child) => /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" } }, label), child);
-    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "13vh" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 22 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 15, opacity: 0.8 } })), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", todayTasks.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "check", color: "#34d399", title: "Todo hecho por hoy \u{1F389}", sub: "No te queda ninguna tarea pendiente para hoy.", onOpen: () => navigate("tasks") }) : /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "15vh" } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", todayTasks.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "check", color: "#34d399", title: "Todo hecho por hoy \u{1F389}", sub: "No te queda ninguna tarea pendiente para hoy.", onOpen: () => navigate("tasks") }) : /* @__PURE__ */ React.createElement(
       HomeCard,
       {
         icon: "list-todo",

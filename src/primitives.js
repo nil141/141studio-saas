@@ -171,51 +171,57 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
     );
   };
   const SkelRow = () => /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px" } }, /* @__PURE__ */ React.createElement("span", { className: "skel", style: { width: 20, height: 20, borderRadius: 6, flexShrink: 0 } }), /* @__PURE__ */ React.createElement("span", { className: "skel", style: { height: 9, borderRadius: 5, flex: 1, maxWidth: 130 } }));
-  return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      className: "nav-row",
-      onClick: toggleOtros,
-      onMouseEnter: (e) => {
-        setOtrosHov(true);
-        showTip(e, "Otros");
+  return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), (() => {
+    const open = otrosHov || otrosOpen;
+    return /* @__PURE__ */ React.createElement("div", { onMouseEnter: () => setOtrosHov(true), onMouseLeave: () => setOtrosHov(false) }, /* @__PURE__ */ React.createElement(
+      "div",
+      {
+        className: "nav-row",
+        onClick: toggleOtros,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 11,
+          height: 38,
+          padding: "0 10px",
+          borderRadius: 10,
+          cursor: "pointer",
+          background: railMode ? "transparent" : open ? "rgba(255,255,255,0.03)" : "transparent",
+          color: railMode ? open ? "#fff" : "rgba(255,255,255,0.6)" : open ? "#fff" : "var(--text-muted)",
+          transition: "color .15s, background .15s",
+          fontSize: 14,
+          letterSpacing: "-0.04em",
+          userSelect: "none"
+        }
       },
-      onMouseLeave: () => {
-        setOtrosHov(false);
-        hideTip();
-      },
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 11,
-        height: 38,
-        padding: "0 10px",
-        borderRadius: 10,
-        cursor: "pointer",
-        background: railMode ? "transparent" : otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
-        color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)",
-        transition: "color .15s, background .15s",
-        fontSize: 14,
-        letterSpacing: "-0.04em",
-        userSelect: "none"
+      /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, "Otros"),
+      !open && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 } }),
+      /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: 0.6, transform: open ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
+    ), /* @__PURE__ */ React.createElement("div", { style: {
+      display: "grid",
+      gridTemplateRows: open ? "1fr" : "0fr",
+      transition: "grid-template-rows .28s cubic-bezier(.22,1,.36,1)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { overflow: "hidden", minHeight: 0 } }, /* @__PURE__ */ React.createElement("div", { style: {
+      paddingLeft: railMode ? 0 : 8,
+      paddingTop: 2,
+      paddingBottom: 4,
+      opacity: open ? 1 : 0,
+      transform: open ? "translateY(0)" : "translateY(-5px)",
+      transition: "opacity .2s ease, transform .28s cubic-bezier(.22,1,.36,1)"
+    } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(
+      NavItem,
+      {
+        key: it.id,
+        id: it.id,
+        icon: it.icon,
+        label: it.label,
+        href: it.href,
+        dot: it.id === "outreach" && outreachDue > 0,
+        nested: true
       }
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
-    /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, "Otros"),
-    !otrosOpen && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 } }),
-    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
-  ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(
-    NavItem,
-    {
-      key: it.id,
-      id: it.id,
-      icon: it.icon,
-      label: it.label,
-      href: it.href,
-      dot: it.id === "outreach" && outreachDue > 0,
-      nested: true
-    }
-  ))), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+    ))))));
+  })(), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -608,7 +614,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           // estado activo se marca con el color de acento del icono.
           background: railMode ? "transparent" : bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
           border: railMode ? "1px solid transparent" : bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
-          color: railMode ? isActive ? "var(--accent)" : hov ? "#fff" : "rgba(255,255,255,0.74)" : isActive || hov ? "var(--text)" : "var(--text-muted)",
+          color: railMode ? isActive || hov ? "#fff" : "rgba(255,255,255,0.6)" : isActive || hov ? "var(--text)" : "var(--text-muted)",
           opacity: nested && !isActive && !hov ? 0.72 : 1,
           transition: "color .15s, background .15s, opacity .15s",
           fontSize: nested ? 13.5 : 14,
@@ -693,7 +699,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       kbd ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" } }, kbd) : null
     );
   };
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar" }, kind === "client" ? /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar" }, kind === "client" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
     "img",
     {
       src: "/logo-141digital-white.png",
@@ -701,61 +707,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { className: "sidebar-brand", style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 16px 8px" } }, /* @__PURE__ */ React.createElement(
-    "img",
-    {
-      className: "nav-label",
-      src: "/wordmark.svg",
-      alt: "141'DIGITAL",
-      style: { height: 18, width: "auto", maxWidth: 150, display: "block", objectFit: "contain", opacity: 0.95 }
-    }
-  ), /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => onToggleCollapse && onToggleCollapse(),
-      title: "Ocultar men\xFA",
-      "aria-label": "Ocultar men\xFA",
-      style: { background: "transparent", border: "none", cursor: "pointer", color: "var(--text-subtle)", padding: 6, borderRadius: 8, display: "flex" },
-      onMouseEnter: (e) => e.currentTarget.style.color = "var(--text)",
-      onMouseLeave: (e) => e.currentTarget.style.color = "var(--text-subtle)"
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "chevrons-left", size: 17, strokeWidth: 1.7 })
-  )), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      className: "nav-create",
-      onClick: () => onQuickCreate && onQuickCreate(),
-      onMouseEnter: (e) => {
-        e.currentTarget.style.background = "rgba(158,154,229,0.28)";
-        showTip(e, "Crear");
-      },
-      onMouseLeave: (e) => {
-        e.currentTarget.style.background = "var(--accent-soft)";
-        hideTip();
-      },
-      style: {
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "flex-start",
-        gap: 8,
-        height: 40,
-        borderRadius: 12,
-        padding: "0 14px",
-        background: "var(--accent-soft)",
-        color: "var(--accent)",
-        border: "1px solid rgba(158,154,229,0.3)",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        fontSize: 14,
-        fontWeight: 500,
-        letterSpacing: "-0.02em",
-        transition: "background .12s"
-      }
-    },
-    /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
-    " ",
-    /* @__PURE__ */ React.createElement("span", { className: "nav-label" }, "Crear")
-  ), /* @__PURE__ */ React.createElement("div", { className: "nav-search-wrap", style: {
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-search-wrap", style: {
     display: "flex",
     alignItems: "center",
     gap: 8,
@@ -909,7 +861,39 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
-  )))), /* @__PURE__ */ React.createElement(RailTooltip, null), logoutOpen && ReactDOM.createPortal(
+  )))), /* @__PURE__ */ React.createElement(RailTooltip, null), railMode && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: () => onQuickCreate && onQuickCreate(),
+        title: "Crear",
+        "aria-label": "Crear",
+        style: {
+          position: "fixed",
+          top: 16,
+          right: 20,
+          zIndex: 150,
+          width: 38,
+          height: 38,
+          borderRadius: 11,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "rgba(255,255,255,0.06)",
+          border: "0.5px solid rgba(255,255,255,0.12)",
+          color: "var(--text)",
+          cursor: "pointer",
+          WebkitBackdropFilter: "blur(10px)",
+          backdropFilter: "blur(10px)",
+          transition: "background .14s"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.12)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)"
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 18 })
+    ),
+    document.body
+  ), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,

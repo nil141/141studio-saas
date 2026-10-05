@@ -23,9 +23,12 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
   return (
     <div className="home-card" onClick={() => expandable ? setOpen(o => !o) : (onOpen && onOpen())}
       style={{ borderRadius: 16, background: "rgba(255,255,255,0.045)", border: "0.5px solid rgba(255,255,255,0.09)",
-        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", overflow: "hidden", transition: "background .15s" }}
+        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", overflow: "hidden",
+        transition: "background .15s, transform .22s cubic-bezier(.22,1,.36,1)" }}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.065)"}
-      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.045)"}>
+      onMouseLeave={e => { e.currentTarget.style.background = "rgba(255,255,255,0.045)"; e.currentTarget.style.transform = "scale(1)"; }}
+      onPointerDown={e => e.currentTarget.style.transform = "scale(0.987)"}
+      onPointerUp={e => e.currentTarget.style.transform = "scale(1)"}>
       <div style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" }}>
         <div style={{ width: 30, height: 30, borderRadius: 9, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center",
           background: color + "22", color }}>
@@ -38,25 +41,32 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
         </div>
         {expandable && <Icon name="chevron-down" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0, marginTop: 3, transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" }}/>}
       </div>
-      {open && expandable && (
-        <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", padding: "6px 8px 8px" }} onClick={e => e.stopPropagation()}>
-          {items.map((it, i) => (
-            <div key={i} onClick={it.onClick}
-              style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" }}
-              onMouseEnter={e => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
-              onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-              {it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
-              <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
-              {it.right && <span style={{ fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
-            </div>
-          ))}
-          {onOpen && (
-            <div onClick={onOpen} style={{ padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 }}>
-              Ver todo →
-            </div>
-          )}
+      {/* Despliegue con animación suave de altura (estilo notificaciones iOS) */}
+      <div style={{ display: "grid", gridTemplateRows: (open && expandable) ? "1fr" : "0fr",
+        transition: "grid-template-rows .36s cubic-bezier(.22,1,.36,1)" }}>
+        <div style={{ overflow: "hidden", minHeight: 0 }}>
+          <div onClick={e => e.stopPropagation()}
+            style={{ borderTop: "0.5px solid rgba(255,255,255,0.07)", padding: "6px 8px 8px",
+              opacity: open ? 1 : 0, transform: open ? "translateY(0)" : "translateY(-6px)",
+              transition: "opacity .28s ease .04s, transform .34s cubic-bezier(.22,1,.36,1) .04s" }}>
+            {(items || []).map((it, i) => (
+              <div key={i} onClick={it.onClick}
+                style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" }}
+                onMouseEnter={e => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
+                onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
+                {it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                {it.right && <span style={{ fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
+              </div>
+            ))}
+            {onOpen && (
+              <div onClick={onOpen} style={{ padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 }}>
+                Ver todo →
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
@@ -103,12 +113,7 @@ const AgencyHome = ({ navigate, openModal, session }) => {
 
   return (
     <div style={{ position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" }}>
-      <div style={{ maxWidth: 620, margin: "0 auto", paddingTop: "13vh" }}>
-        {/* Marca */}
-        <div style={{ display: "flex", justifyContent: "center", marginBottom: 22 }}>
-          <img src="/wordmark.svg" alt="141'DIGITAL" style={{ height: 15, opacity: 0.8 }}/>
-        </div>
-
+      <div style={{ maxWidth: 620, margin: "0 auto", paddingTop: "15vh" }}>
         <h1 style={{ fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" }}>
           {_homeGreet()}, {name}.
         </h1>
