@@ -549,19 +549,18 @@
     }
     /* Los iconos no se encogen en el rail fino (si no, quedan a 0px) */
     .app:not(.client):not(.nav-collapsed) .sidebar svg { flex-shrink: 0; }
-    /* Iconos claros sobre el fondo (como la referencia) */
-    .app:not(.client):not(.nav-collapsed) .sidebar .nav-row svg,
-    .app:not(.client):not(.nav-collapsed) .sidebar .nav-create svg { color: rgba(255,255,255,0.82); }
   }
   @keyframes tipIn { from { opacity: 0; transform: translateY(-50%) translateX(-4px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
   /* ── Home inmersiva (pantalla completa, menú sobre el fondo) ────────
      En la home el fondo ambiente ocupa TODA la ventana; el panel y la
      columna del menú se vuelven transparentes para que floten encima. */
+  /* Mismas "luces" que el portal de cliente: morado de acento + cálido,
+     sobre una base oscura con tinte morado (misma línea visual). */
   .app.home {
     background:
-      radial-gradient(130% 75% at 80% 4%, rgba(92,120,150,0.30), transparent 55%),
-      radial-gradient(135% 85% at 10% 100%, rgba(170,112,66,0.32), transparent 55%),
-      linear-gradient(180deg, #0c0c0f 0%, #0a0a0a 100%) !important;
+      radial-gradient(130% 85% at 82% 0%, rgba(158,154,229,0.30), transparent 55%),
+      radial-gradient(130% 90% at 8% 100%, rgba(150,105,70,0.26), transparent 55%),
+      linear-gradient(160deg, #121019 0%, #0b0b0d 56%, #141019 100%) !important;
   }
   .app.home .main {
     background: transparent !important; border: none !important;
@@ -1283,7 +1282,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=13"></script>
 <script src="src/data.js?v=67"></script>
-<script src="src/primitives.js?v=92"></script>
+<script src="src/primitives.js?v=93"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=43"></script>

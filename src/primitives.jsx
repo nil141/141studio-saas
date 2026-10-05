@@ -39,6 +39,29 @@ const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)
   textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 7,
   whiteSpace: "nowrap" };
 
+// Emisor global para la etiqueta flotante del rail: evita que el Sidebar
+// entero se re-renderice al pasar el ratón (lo que perdía el primer clic).
+const _railTip = {
+  fn: null,
+  show(d) { if (this.fn) this.fn(d); },
+  hide() { if (this.fn) this.fn(null); },
+};
+const RailTooltip = () => {
+  const [t, setT] = React.useState(null);
+  useEffect(() => { _railTip.fn = setT; return () => { if (_railTip.fn === setT) _railTip.fn = null; }; }, []);
+  if (!t) return null;
+  return ReactDOM.createPortal(
+    <div style={{
+      position: "fixed", top: t.top, left: t.left, transform: "translateY(-50%)",
+      zIndex: 200, pointerEvents: "none",
+      background: "#1c1c1e", border: "0.5px solid var(--border-strong)", color: "var(--text)",
+      padding: "5px 11px", borderRadius: 9, fontSize: 12.5, fontWeight: 500, letterSpacing: "-0.01em",
+      whiteSpace: "nowrap", boxShadow: "0 10px 30px rgba(0,0,0,0.55)", animation: "tipIn .12s ease-out",
+    }}>{t.label}</div>,
+    document.body
+  );
+};
+
 const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal, railMode, showTip, hideTip }) => {
   showTip = showTip || (() => {}); hideTip = hideTip || (() => {});
   const q = (navSearch || "").trim().toLowerCase();
@@ -71,7 +94,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         onMouseEnter={(e) => { setHov(true); showTip(e, label); }}
         onMouseLeave={() => { setHov(false); hideTip(); }}
         style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px", borderRadius: 10, cursor: "pointer",
-          background: active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          background: railMode ? "transparent" : (active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent"),
           color: active ? "#fff" : hov ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s" }}>
         <span style={{ width: 20, height: 20, borderRadius: 6, flexShrink: 0, display: "grid", placeItems: "center",
           background: color + "26", color: color, fontSize: 10.5, fontWeight: 600, fontFamily: "var(--font-display)" }}>
@@ -102,7 +125,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         onMouseEnter={(e) => { setOtrosHov(true); showTip(e, "Otros"); }}
         onMouseLeave={() => { setOtrosHov(false); hideTip(); }}
         style={{ display: "flex", alignItems: "center", gap: 11, height: 38, padding: "0 10px", borderRadius: 10, cursor: "pointer",
-          background: otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
+          background: railMode ? "transparent" : (otrosHov ? "rgba(255,255,255,0.03)" : "transparent"),
           color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s",
           fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
         <Icon name="more-h" size={16} strokeWidth={1.7}/>
@@ -324,13 +347,15 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     return () => { mq.removeEventListener ? mq.removeEventListener("change", h) : mq.removeListener(h); };
   }, []);
   const railMode = kind === "agency" && isDesktop;
-  const [tip, setTip] = React.useState(null); // { label, top, left }
+  // La píldora se pinta en un componente aislado (RailTooltip) vía un emisor a
+  // nivel de módulo, para NO re-renderizar todo el Sidebar al pasar el ratón
+  // (eso hacía que el primer clic sobre un icono se perdiera).
   const showTip = (e, label) => {
     if (!railMode || !label) return;
     const r = e.currentTarget.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2, left: r.right + 10 });
+    _railTip.show({ label, top: r.top + r.height / 2, left: r.right + 10 });
   };
-  const hideTip = () => setTip(null);
+  const hideTip = () => _railTip.hide();
 
   // Paleta para las iniciales de la lista de clientes/proyectos
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
@@ -478,9 +503,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           position:"relative", zIndex:1,
           display:"flex", alignItems:"center", gap:11,
           height: nested ? 34 : 38, padding:"0 10px", borderRadius:10, cursor:"pointer",
-          background: bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent"),
-          border: bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent"),
-          color: isActive || hov ? "var(--text)" : "var(--text-muted)",
+          // En el rail no hay "cuadrado": fondo/borde siempre transparentes y el
+          // estado activo se marca con el color de acento del icono.
+          background: railMode ? "transparent" : (bare ? "transparent" : (isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent")),
+          border: railMode ? "1px solid transparent" : (bare ? "1px solid transparent" : (isActive ? "1px solid #232324" : "1px solid transparent")),
+          color: railMode
+            ? (isActive ? "var(--accent)" : hov ? "#fff" : "rgba(255,255,255,0.74)")
+            : (isActive || hov ? "var(--text)" : "var(--text-muted)"),
           opacity: nested && !isActive && !hov ? 0.72 : 1,
           transition:"color .15s, background .15s, opacity .15s",
           fontSize: nested ? 13.5 : 14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
@@ -693,17 +722,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       </div>
     </aside>
 
-    {tip && ReactDOM.createPortal(
-      <div style={{
-        position:"fixed", top: tip.top, left: tip.left, transform:"translateY(-50%)",
-        zIndex:200, pointerEvents:"none",
-        background:"#1c1c1e", border:"0.5px solid var(--border-strong)", color:"var(--text)",
-        padding:"5px 11px", borderRadius:9, fontSize:12.5, fontWeight:500, letterSpacing:"-0.01em",
-        whiteSpace:"nowrap", boxShadow:"0 10px 30px rgba(0,0,0,0.55)",
-        animation:"tipIn .12s ease-out",
-      }}>{tip.label}</div>,
-      document.body
-    )}
+    <RailTooltip/>
 
     {logoutOpen && ReactDOM.createPortal(
       <div onClick={() => setLogoutOpen(false)} style={{

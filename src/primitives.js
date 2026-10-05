@@ -40,6 +40,47 @@ const _navSecLabel = {
   gap: 7,
   whiteSpace: "nowrap"
 };
+const _railTip = {
+  fn: null,
+  show(d) {
+    if (this.fn) this.fn(d);
+  },
+  hide() {
+    if (this.fn) this.fn(null);
+  }
+};
+const RailTooltip = () => {
+  const [t, setT] = React.useState(null);
+  useEffect(() => {
+    _railTip.fn = setT;
+    return () => {
+      if (_railTip.fn === setT) _railTip.fn = null;
+    };
+  }, []);
+  if (!t) return null;
+  return ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { style: {
+      position: "fixed",
+      top: t.top,
+      left: t.left,
+      transform: "translateY(-50%)",
+      zIndex: 200,
+      pointerEvents: "none",
+      background: "#1c1c1e",
+      border: "0.5px solid var(--border-strong)",
+      color: "var(--text)",
+      padding: "5px 11px",
+      borderRadius: 9,
+      fontSize: 12.5,
+      fontWeight: 500,
+      letterSpacing: "-0.01em",
+      whiteSpace: "nowrap",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.55)",
+      animation: "tipIn .12s ease-out"
+    } }, t.label),
+    document.body
+  );
+};
 const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal, railMode, showTip, hideTip }) => {
   showTip = showTip || (() => {
   });
@@ -99,7 +140,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
           padding: "0 10px",
           borderRadius: 10,
           cursor: "pointer",
-          background: active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          background: railMode ? "transparent" : active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
           color: active ? "#fff" : hov ? "#fff" : "var(--text-muted)",
           transition: "color .15s, background .15s"
         }
@@ -151,7 +192,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         padding: "0 10px",
         borderRadius: 10,
         cursor: "pointer",
-        background: otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
+        background: railMode ? "transparent" : otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
         color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)",
         transition: "color .15s, background .15s",
         fontSize: 14,
@@ -373,13 +414,12 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     };
   }, []);
   const railMode = kind === "agency" && isDesktop;
-  const [tip, setTip] = React.useState(null);
   const showTip = (e, label) => {
     if (!railMode || !label) return;
     const r = e.currentTarget.getBoundingClientRect();
-    setTip({ label, top: r.top + r.height / 2, left: r.right + 10 });
+    _railTip.show({ label, top: r.top + r.height / 2, left: r.right + 10 });
   };
-  const hideTip = () => setTip(null);
+  const hideTip = () => _railTip.hide();
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
   const _searchAll = (query) => {
     const q = (query || "").trim().toLowerCase();
@@ -564,9 +604,11 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           padding: "0 10px",
           borderRadius: 10,
           cursor: "pointer",
-          background: bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
-          border: bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
-          color: isActive || hov ? "var(--text)" : "var(--text-muted)",
+          // En el rail no hay "cuadrado": fondo/borde siempre transparentes y el
+          // estado activo se marca con el color de acento del icono.
+          background: railMode ? "transparent" : bare ? "transparent" : isActive ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
+          border: railMode ? "1px solid transparent" : bare ? "1px solid transparent" : isActive ? "1px solid #232324" : "1px solid transparent",
+          color: railMode ? isActive ? "var(--accent)" : hov ? "#fff" : "rgba(255,255,255,0.74)" : isActive || hov ? "var(--text)" : "var(--text-muted)",
           opacity: nested && !isActive && !hov ? 0.72 : 1,
           transition: "color .15s, background .15s, opacity .15s",
           fontSize: nested ? 13.5 : 14,
@@ -867,28 +909,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
-  )))), tip && ReactDOM.createPortal(
-    /* @__PURE__ */ React.createElement("div", { style: {
-      position: "fixed",
-      top: tip.top,
-      left: tip.left,
-      transform: "translateY(-50%)",
-      zIndex: 200,
-      pointerEvents: "none",
-      background: "#1c1c1e",
-      border: "0.5px solid var(--border-strong)",
-      color: "var(--text)",
-      padding: "5px 11px",
-      borderRadius: 9,
-      fontSize: 12.5,
-      fontWeight: 500,
-      letterSpacing: "-0.01em",
-      whiteSpace: "nowrap",
-      boxShadow: "0 10px 30px rgba(0,0,0,0.55)",
-      animation: "tipIn .12s ease-out"
-    } }, tip.label),
-    document.body
-  ), logoutOpen && ReactDOM.createPortal(
+  )))), /* @__PURE__ */ React.createElement(RailTooltip, null), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
