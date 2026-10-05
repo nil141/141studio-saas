@@ -134,8 +134,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
     <div
       style={{
         position:"fixed", inset:0,
-        background:"rgba(0,0,0,0.78)",
-        backdropFilter:"blur(18px)",
+        background:"rgba(8,8,10,0.46)",
+        WebkitBackdropFilter:"blur(22px)",
+        backdropFilter:"blur(22px)",
         zIndex:200,
         display:"flex", alignItems:"center", justifyContent:"center",
         padding:24,
