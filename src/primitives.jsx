@@ -39,7 +39,8 @@ const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)
   textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 7,
   whiteSpace: "nowrap" };
 
-const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
+const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal, railMode, showTip, hideTip }) => {
+  showTip = showTip || (() => {}); hideTip = hideTip || (() => {});
   const q = (navSearch || "").trim().toLowerCase();
   const nameOf = (c) => c.company || c.name || "Cliente";
 
@@ -66,7 +67,9 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
   const ListRow = ({ label, color, active, onClick }) => {
     const [hov, setHov] = React.useState(false);
     return (
-      <div onClick={onClick} onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      <div className="nav-row" onClick={onClick}
+        onMouseEnter={(e) => { setHov(true); showTip(e, label); }}
+        onMouseLeave={() => { setHov(false); hideTip(); }}
         style={{ display: "flex", alignItems: "center", gap: 10, height: 34, padding: "0 10px", borderRadius: 10, cursor: "pointer",
           background: active ? "rgba(255,255,255,0.07)" : hov ? "rgba(255,255,255,0.03)" : "transparent",
           color: active ? "#fff" : hov ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s" }}>
@@ -74,7 +77,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
           background: color + "26", color: color, fontSize: 10.5, fontWeight: 600, fontFamily: "var(--font-display)" }}>
           {(label || "?").trim().charAt(0).toUpperCase()}
         </span>
-        <span style={{ flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", whiteSpace: "nowrap",
+        <span className="nav-label" style={{ flex: 1, minWidth: 0, fontSize: 13.5, letterSpacing: "-0.2px", overflow: "hidden", whiteSpace: "nowrap",
           maskImage: "linear-gradient(to right, #000 88%, transparent)", WebkitMaskImage: "linear-gradient(to right, #000 88%, transparent)" }}>{label}</span>
       </div>
     );
@@ -95,17 +98,19 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       ))}
 
       {/* Otros — desplegable de un nivel (icono tres puntos + flecha animada) */}
-      <div onClick={toggleOtros} onMouseEnter={() => setOtrosHov(true)} onMouseLeave={() => setOtrosHov(false)}
+      <div className="nav-row" onClick={toggleOtros}
+        onMouseEnter={(e) => { setOtrosHov(true); showTip(e, "Otros"); }}
+        onMouseLeave={() => { setOtrosHov(false); hideTip(); }}
         style={{ display: "flex", alignItems: "center", gap: 11, height: 38, padding: "0 10px", borderRadius: 10, cursor: "pointer",
           background: otrosHov ? "rgba(255,255,255,0.03)" : "transparent",
           color: otrosHov || otrosOpen ? "#fff" : "var(--text-muted)", transition: "color .15s, background .15s",
           fontSize: 14, letterSpacing: "-0.04em", userSelect: "none" }}>
         <Icon name="more-h" size={16} strokeWidth={1.7}/>
-        <span style={{ flex: 1 }}>Otros</span>
+        <span className="nav-label" style={{ flex: 1 }}>Otros</span>
         {!otrosOpen && outreachDue > 0 && (
-          <span style={{ width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 }}/>
+          <span className="nav-aux" style={{ width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 }}/>
         )}
-        <Icon name="chevron-right" size={14} style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
+        <Icon name="chevron-right" size={14} className="nav-aux" style={{ flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" }}/>
       </div>
       {otrosOpen && (
         <div style={{ margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" }}>
@@ -119,7 +124,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       {/* En desarrollo activo */}
       {!D.READY ? (
         <div style={{ marginTop: 16 }}>
-          <div style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
+          <div className="nav-section-label" style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
             <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
             <span>En desarrollo activo</span>
           </div>
@@ -127,7 +132,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         </div>
       ) : fp.length > 0 ? (
         <div style={{ marginTop: 16 }} className="fade-in">
-          <div style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
+          <div className="nav-section-label" style={{ ..._navSecLabel, color: "var(--accent)", opacity: 0.72 }}>
             <Icon name="activity" size={12} style={{ color: "var(--accent)" }}/>
             <span>En desarrollo activo</span>
             <span style={{ color: "var(--accent)", fontWeight: 500 }}>{fp.length}</span>
@@ -141,7 +146,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
 
       {/* Todos los proyectos — plegable, cerrado por defecto, con "+" */}
       <div style={{ marginTop: 16, paddingBottom: 8 }}>
-        <div onClick={toggleProj}
+        <div className="nav-section-label" onClick={toggleProj}
           style={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer",
             padding: "0 12px", marginBottom: 6, userSelect: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11, fontWeight: 600,
@@ -309,6 +314,24 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   const [otrosOpen, setOtrosOpen] = React.useState(() => { try { return localStorage.getItem("141_nav_otros") === "1"; } catch { return false; } });
   const toggleOtros = () => setOtrosOpen(v => { const n = !v; try { localStorage.setItem("141_nav_otros", n ? "1" : "0"); } catch {} return n; });
 
+  // ── Rail fino (escritorio, agencia): solo iconos + etiqueta flotante al hacer hover ──
+  const [isDesktop, setIsDesktop] = React.useState(() => typeof window !== "undefined" && window.innerWidth >= 769);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 769px)");
+    const h = (e) => setIsDesktop(e.matches);
+    mq.addEventListener ? mq.addEventListener("change", h) : mq.addListener(h);
+    return () => { mq.removeEventListener ? mq.removeEventListener("change", h) : mq.removeListener(h); };
+  }, []);
+  const railMode = kind === "agency" && isDesktop;
+  const [tip, setTip] = React.useState(null); // { label, top, left }
+  const showTip = (e, label) => {
+    if (!railMode || !label) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label, top: r.top + r.height / 2, left: r.right + 10 });
+  };
+  const hideTip = () => setTip(null);
+
   // Paleta para las iniciales de la lista de clientes/proyectos
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
 
@@ -446,10 +469,11 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       : (onClick || (() => onNavigate(id)));
     return (
       <div
+        className="nav-row"
         ref={rowRef}
         onClick={handleClick}
-        onMouseEnter={() => setHov(true)}
-        onMouseLeave={() => setHov(false)}
+        onMouseEnter={(e) => { setHov(true); showTip(e, label); }}
+        onMouseLeave={() => { setHov(false); hideTip(); }}
         style={{
           position:"relative", zIndex:1,
           display:"flex", alignItems:"center", gap:11,
@@ -463,16 +487,16 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         }}
       >
         <Icon name={icon} size={16} strokeWidth={1.7}/>
-        <span style={{flex:1}}>{label}</span>
+        <span className="nav-label" style={{flex:1}}>{label}</span>
         {dot ? (
-          <span style={{position:"absolute", right:8, top:7, width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/>
+          <span className="nav-aux" style={{position:"absolute", right:8, top:7, width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/>
         ) : badge ? (
-          <span style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
+          <span className="nav-aux" style={{fontSize:11, background:"rgba(255,255,255,0.07)", color:"var(--text-muted)", padding:"1px 7px", borderRadius:99}}>
             {badge}
           </span>
         ) : null}
-        {href ? <Icon name="arrow-up-right" size={14} style={{flexShrink:0, opacity: hov ? 0.9 : 0.4, transition:"opacity .15s"}}/> : null}
-        {chevron ? <Icon name="chevron" size={15} style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/> : null}
+        {href ? <Icon name="arrow-up-right" size={14} className="nav-aux" style={{flexShrink:0, opacity: hov ? 0.9 : 0.4, transition:"opacity .15s"}}/> : null}
+        {chevron ? <Icon name="chevron" size={15} className="nav-aux" style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/> : null}
       </div>
     );
   };
@@ -556,8 +580,8 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           <NotificationBell kind={kind} onNavigate={onNavigate}/>
         </div>
       ) : (
-      <div style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
-        <img src="/wordmark.svg" alt="141'DIGITAL"
+      <div className="sidebar-brand" style={{display:"flex", alignItems:"center", justifyContent:"space-between", padding:"4px 8px 16px 8px"}}>
+        <img className="nav-label" src="/wordmark.svg" alt="141'DIGITAL"
           style={{height:18, width:"auto", maxWidth:150, display:"block", objectFit:"contain", opacity:0.95}} />
         <button onClick={() => onToggleCollapse && onToggleCollapse()} title="Ocultar menú" aria-label="Ocultar menú"
           style={{background:"transparent", border:"none", cursor:"pointer", color:"var(--text-subtle)", padding:6, borderRadius:8, display:"flex"}}
@@ -571,15 +595,15 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       {/* Crear + buscador (agencia) */}
       {kind === "agency" && (
         <div style={{display:"flex", flexDirection:"column", gap:8, padding:"0 2px 12px", flexShrink:0}}>
-          <button onClick={() => onQuickCreate && onQuickCreate()}
-            onMouseEnter={e => e.currentTarget.style.background = "rgba(158,154,229,0.28)"}
-            onMouseLeave={e => e.currentTarget.style.background = "var(--accent-soft)"}
+          <button className="nav-create" onClick={() => onQuickCreate && onQuickCreate()}
+            onMouseEnter={e => { e.currentTarget.style.background = "rgba(158,154,229,0.28)"; showTip(e, "Crear"); }}
+            onMouseLeave={e => { e.currentTarget.style.background = "var(--accent-soft)"; hideTip(); }}
             style={{display:"flex", alignItems:"center", justifyContent:"flex-start", gap:8, height:40, borderRadius:12, padding:"0 14px",
               background:"var(--accent-soft)", color:"var(--accent)", border:"1px solid rgba(158,154,229,0.3)", cursor:"pointer",
               fontFamily:"inherit", fontSize:14, fontWeight:500, letterSpacing:"-0.02em", transition:"background .12s"}}>
-            <Icon name="plus" size={16}/> Crear
+            <Icon name="plus" size={16}/> <span className="nav-label">Crear</span>
           </button>
-          <div style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
+          <div className="nav-search-wrap" style={{display:"flex", alignItems:"center", gap:8, height:36, padding:"0 11px", borderRadius:10,
             background:"rgba(255,255,255,0.05)"}}>
             <Icon name="search" size={14} style={{color:"var(--text-subtle)", flexShrink:0}}/>
             <input className="nav-search" value={navSearch} onChange={e => setNavSearch(e.target.value)} placeholder="Buscar en todo…"
@@ -597,12 +621,13 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
             ? <SearchResults query={navSearch}/>
             : <AgencyNav
                 current={current} curNav={curNav} activePid={currentParams && currentParams.projectId} onNavigate={onNavigate} NavItem={NavItem}
-                D={D} navSearch={navSearch} otrosOpen={otrosOpen} toggleOtros={toggleOtros} pal={_NAVPAL}/>
+                D={D} navSearch={navSearch} otrosOpen={otrosOpen} toggleOtros={toggleOtros} pal={_NAVPAL}
+                railMode={railMode} showTip={showTip} hideTip={hideTip}/>
         ) : (
           <div style={{overflowY:"auto", scrollbarWidth:"none", height:"100%"}}>
             {sections.map((section, si) => (
               <div key={si} style={{marginBottom: 20}}>
-                <div style={{
+                <div className="nav-section-label" style={{
                   fontSize: 11, fontWeight: 500, color: "var(--text-subtle)",
                   letterSpacing: "0.06em", textTransform: "uppercase",
                   padding: "0 12px", marginBottom: 2,
@@ -635,7 +660,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           <>
             {/* Menú del perfil: Configuración y Cerrar sesión dentro */}
             {profileMenu && (
-              <div onClick={e => e.stopPropagation()}
+              <div className="nav-profile-menu" onClick={e => e.stopPropagation()}
                 style={{ position:"absolute", left:6, right:6, bottom:"calc(100% + 6px)", zIndex:40,
                   background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)", borderRadius:12, padding:5,
                   boxShadow:"0 16px 40px rgba(0,0,0,0.5)", animation:"pop .14s ease" }}>
@@ -651,22 +676,34 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
                 </button>
               </div>
             )}
-            <button onClick={e => { e.stopPropagation(); setProfileMenu(v => !v); }}
+            <button className="sidebar-foot-btn" onClick={e => { e.stopPropagation(); setProfileMenu(v => !v); }}
               style={{display:"flex", alignItems:"center", gap:10, width:"100%", padding:"8px 10px", border:0, borderRadius:10, cursor:"pointer", fontFamily:"inherit", textAlign:"left",
                 background: profileMenu ? "var(--bg-hover)" : "transparent"}}
-              onMouseEnter={e => { if (!profileMenu) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; }}
-              onMouseLeave={e => { if (!profileMenu) e.currentTarget.style.background = "transparent"; }}>
+              onMouseEnter={e => { if (!profileMenu) e.currentTarget.style.background = "rgba(255,255,255,0.03)"; showTip(e, me.name || "Tu cuenta"); }}
+              onMouseLeave={e => { if (!profileMenu) e.currentTarget.style.background = "transparent"; hideTip(); }}>
               <span style={{width:30, height:30, borderRadius:9, flexShrink:0, background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.05)", color:"var(--accent)", display:"grid", placeItems:"center", fontSize:14, fontFamily:"var(--font-display)"}}>{(me.initials || "").charAt(0)}</span>
-              <span style={{minWidth:0, flex:1}}>
+              <span className="nav-label" style={{minWidth:0, flex:1}}>
                 <span style={{display:"block", fontSize:13.5, fontWeight:500, color:"#fff", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.name}</span>
                 <span style={{display:"block", fontSize:11.5, color:"var(--text-muted)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap"}}>{me.email || ("@" + (me.name || "").toLowerCase())}</span>
               </span>
-              <Icon name="chevron" size={15} style={{flexShrink:0, color:"var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition:"transform .18s"}}/>
+              <Icon name="chevron" size={15} className="nav-aux" style={{flexShrink:0, color:"var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition:"transform .18s"}}/>
             </button>
           </>
         )}
       </div>
     </aside>
+
+    {tip && ReactDOM.createPortal(
+      <div style={{
+        position:"fixed", top: tip.top, left: tip.left, transform:"translateY(-50%)",
+        zIndex:200, pointerEvents:"none",
+        background:"#1c1c1e", border:"0.5px solid var(--border-strong)", color:"var(--text)",
+        padding:"5px 11px", borderRadius:9, fontSize:12.5, fontWeight:500, letterSpacing:"-0.01em",
+        whiteSpace:"nowrap", boxShadow:"0 10px 30px rgba(0,0,0,0.55)",
+        animation:"tipIn .12s ease-out",
+      }}>{tip.label}</div>,
+      document.body
+    )}
 
     {logoutOpen && ReactDOM.createPortal(
       <div onClick={() => setLogoutOpen(false)} style={{

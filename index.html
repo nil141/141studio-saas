@@ -520,24 +520,40 @@
   @media (min-width: 769px) { .app.nav-collapsed .main { padding-top: 20px; } }
   @media (prefers-reduced-motion: reduce) { .sidebar { transition: none; } }
   /* ── Rail fino estilo Kinso (escritorio, agencia) ──────────────────
-     Por defecto solo iconos (64px); al pasar el ratón se expande a 232px
-     superpuesto (las pistas del grid son fijas, así el contenido no se
-     mueve). Un degradado a la derecha oculta el texto recortado. */
+     Siempre estrecho (72px): solo iconos blancos sobre el fondo. El texto
+     (etiquetas, buscador, títulos de sección, badges) se oculta y al pasar
+     el ratón sobre un icono aparece su etiqueta como píldora flotante al
+     lado (gestionada en JS con un portal). */
   @media (min-width: 769px) {
-    .app:not(.client):not(.nav-collapsed) { grid-template-columns: 64px 1fr; }
+    .app:not(.client):not(.nav-collapsed) { grid-template-columns: 72px 1fr; }
     .app:not(.client):not(.nav-collapsed) .sidebar {
-      width: 64px; z-index: 60; white-space: nowrap;
-      -webkit-mask-image: linear-gradient(to right, #000 40px, transparent 50px);
-              mask-image: linear-gradient(to right, #000 40px, transparent 50px);
-      transition: width .18s cubic-bezier(.4,0,.2,1);
+      width: 72px; z-index: 60; white-space: nowrap; overflow: visible;
+      padding-left: 8px; padding-right: 8px;
     }
-    .app:not(.client):not(.nav-collapsed) .sidebar:hover {
-      width: 232px; box-shadow: 10px 0 44px rgba(0,0,0,0.5);
-      -webkit-mask-image: none; mask-image: none;
+    /* Ocultar todo el texto en el rail */
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-label,
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-search-wrap,
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-section-label,
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-aux { display: none !important; }
+    /* Centrar los iconos en sus filas */
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-row,
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-create,
+    .app:not(.client):not(.nav-collapsed) .sidebar .sidebar-foot-btn,
+    .app:not(.client):not(.nav-collapsed) .sidebar .sidebar-brand {
+      justify-content: center !important; gap: 0 !important;
+      padding-left: 0 !important; padding-right: 0 !important;
+    }
+    /* El menú de perfil necesita ancho propio al abrirse desde el rail */
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-profile-menu {
+      left: 0 !important; right: auto !important; min-width: 190px;
     }
     /* Los iconos no se encogen en el rail fino (si no, quedan a 0px) */
     .app:not(.client):not(.nav-collapsed) .sidebar svg { flex-shrink: 0; }
+    /* Iconos claros sobre el fondo (como la referencia) */
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-row svg,
+    .app:not(.client):not(.nav-collapsed) .sidebar .nav-create svg { color: rgba(255,255,255,0.82); }
   }
+  @keyframes tipIn { from { opacity: 0; transform: translateY(-50%) translateX(-4px); } to { opacity: 1; transform: translateY(-50%) translateX(0); } }
   /* ── Home inmersiva (pantalla completa, menú sobre el fondo) ────────
      En la home el fondo ambiente ocupa TODA la ventana; el panel y la
      columna del menú se vuelven transparentes para que floten encima. */
@@ -552,14 +568,8 @@
     margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; min-height: 100dvh !important;
   }
   .app.home .sidebar { background: transparent !important; border-right: none !important; }
-  /* En la home, iconos planos (sin cajas) salvo al expandir con hover */
+  /* En la home, iconos planos (sin cajas) */
   .app.home:not(.nav-collapsed) .sidebar button { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
-  @media (min-width: 769px) {
-    .app.home:not(.nav-collapsed) .sidebar:hover {
-      background: rgba(10,10,13,0.82) !important;
-      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
-    }
-  }
   .brand {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px 16px;
@@ -1273,7 +1283,7 @@
 <!-- Critical path — pre-compiled JS, no Babel in browser -->
 <script src="src/icons.js?v=13"></script>
 <script src="src/data.js?v=67"></script>
-<script src="src/primitives.js?v=91"></script>
+<script src="src/primitives.js?v=92"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=43"></script>

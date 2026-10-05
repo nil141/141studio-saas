@@ -40,7 +40,11 @@ const _navSecLabel = {
   gap: 7,
   whiteSpace: "nowrap"
 };
-const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal }) => {
+const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSearch, otrosOpen, toggleOtros, pal, railMode, showTip, hideTip }) => {
+  showTip = showTip || (() => {
+  });
+  hideTip = hideTip || (() => {
+  });
   const q = (navSearch || "").trim().toLowerCase();
   const nameOf = (c) => c.company || c.name || "Cliente";
   const _todayYmd = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
@@ -77,9 +81,16 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
     return /* @__PURE__ */ React.createElement(
       "div",
       {
+        className: "nav-row",
         onClick,
-        onMouseEnter: () => setHov(true),
-        onMouseLeave: () => setHov(false),
+        onMouseEnter: (e) => {
+          setHov(true);
+          showTip(e, label);
+        },
+        onMouseLeave: () => {
+          setHov(false);
+          hideTip();
+        },
         style: {
           display: "flex",
           alignItems: "center",
@@ -106,7 +117,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         fontWeight: 600,
         fontFamily: "var(--font-display)"
       } }, (label || "?").trim().charAt(0).toUpperCase()),
-      /* @__PURE__ */ React.createElement("span", { style: {
+      /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: {
         flex: 1,
         minWidth: 0,
         fontSize: 13.5,
@@ -122,9 +133,16 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
   return /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%", paddingRight: 2 } }, _NAV_MAIN.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label })), /* @__PURE__ */ React.createElement(
     "div",
     {
+      className: "nav-row",
       onClick: toggleOtros,
-      onMouseEnter: () => setOtrosHov(true),
-      onMouseLeave: () => setOtrosHov(false),
+      onMouseEnter: (e) => {
+        setOtrosHov(true);
+        showTip(e, "Otros");
+      },
+      onMouseLeave: () => {
+        setOtrosHov(false);
+        hideTip();
+      },
       style: {
         display: "flex",
         alignItems: "center",
@@ -142,9 +160,9 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "more-h", size: 16, strokeWidth: 1.7 }),
-    /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, "Otros"),
-    !otrosOpen && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 } }),
-    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
+    /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, "Otros"),
+    !otrosOpen && outreachDue > 0 && /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { width: 6, height: 6, borderRadius: 99, background: "var(--text-muted)", flexShrink: 0 } }),
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: 0.6, transform: otrosOpen ? "rotate(90deg)" : "none", transition: "transform .25s cubic-bezier(0.4,0,0.2,1)" } })
   ), otrosOpen && /* @__PURE__ */ React.createElement("div", { style: { margin: "2px 0 4px", paddingLeft: 8, animation: "pageIn .18s ease-out" } }, _NAV_OTROS.map((it) => /* @__PURE__ */ React.createElement(
     NavItem,
     {
@@ -156,7 +174,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
       dot: it.id === "outreach" && outreachDue > 0,
       nested: true
     }
-  ))), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
+  ))), !D.READY ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo")), /* @__PURE__ */ React.createElement(SkelRow, null), /* @__PURE__ */ React.createElement(SkelRow, null)) : fp.length > 0 ? /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16 }, className: "fade-in" }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: { ..._navSecLabel, color: "var(--accent)", opacity: 0.72 } }, /* @__PURE__ */ React.createElement(Icon, { name: "activity", size: 12, style: { color: "var(--accent)" } }), /* @__PURE__ */ React.createElement("span", null, "En desarrollo activo"), /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)", fontWeight: 500 } }, fp.length)), fp.slice(0, 8).map((p, i) => /* @__PURE__ */ React.createElement(
     ListRow,
     {
       key: p.id,
@@ -168,6 +186,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
   ))) : null, /* @__PURE__ */ React.createElement("div", { style: { marginTop: 16, paddingBottom: 8 } }, /* @__PURE__ */ React.createElement(
     "div",
     {
+      className: "nav-section-label",
       onClick: toggleProj,
       style: {
         display: "flex",
@@ -343,6 +362,24 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     }
     return n;
   });
+  const [isDesktop, setIsDesktop] = React.useState(() => typeof window !== "undefined" && window.innerWidth >= 769);
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    const mq = window.matchMedia("(min-width: 769px)");
+    const h = (e) => setIsDesktop(e.matches);
+    mq.addEventListener ? mq.addEventListener("change", h) : mq.addListener(h);
+    return () => {
+      mq.removeEventListener ? mq.removeEventListener("change", h) : mq.removeListener(h);
+    };
+  }, []);
+  const railMode = kind === "agency" && isDesktop;
+  const [tip, setTip] = React.useState(null);
+  const showTip = (e, label) => {
+    if (!railMode || !label) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    setTip({ label, top: r.top + r.height / 2, left: r.right + 10 });
+  };
+  const hideTip = () => setTip(null);
   const _NAVPAL = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#eee586", "#22d3ee", "#f472b6"];
   const _searchAll = (query) => {
     const q = (query || "").trim().toLowerCase();
@@ -502,14 +539,21 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
     const [hov, setHov] = React.useState(false);
     const isActive = href ? false : active != null ? active : curNav === id;
-    const handleClick = href ? () => window.open(href, "_blank", "noopener,noreferrer") : onClick || (() => onNavigate(id));
+    const handleClick = href ? (() => window.open(href, "_blank", "noopener,noreferrer")) : onClick || (() => onNavigate(id));
     return /* @__PURE__ */ React.createElement(
       "div",
       {
+        className: "nav-row",
         ref: rowRef,
         onClick: handleClick,
-        onMouseEnter: () => setHov(true),
-        onMouseLeave: () => setHov(false),
+        onMouseEnter: (e) => {
+          setHov(true);
+          showTip(e, label);
+        },
+        onMouseLeave: () => {
+          setHov(false);
+          hideTip();
+        },
         style: {
           position: "relative",
           zIndex: 1,
@@ -532,10 +576,10 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
-      /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }, label),
-      dot ? /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", right: 8, top: 7, width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }) : badge ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
-      href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
-      chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : null
+      /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, label),
+      dot ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { position: "absolute", right: 8, top: 7, width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }) : badge ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
+      href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
+      chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : null
     );
   };
   const rootPaneRef = useRef(null), detailPaneRef = useRef(null);
@@ -615,9 +659,10 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       onError: () => setLogoErr(true),
       style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
     }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 16px 8px" } }, /* @__PURE__ */ React.createElement(
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })) : /* @__PURE__ */ React.createElement("div", { className: "sidebar-brand", style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 16px 8px" } }, /* @__PURE__ */ React.createElement(
     "img",
     {
+      className: "nav-label",
       src: "/wordmark.svg",
       alt: "141'DIGITAL",
       style: { height: 18, width: "auto", maxWidth: 150, display: "block", objectFit: "contain", opacity: 0.95 }
@@ -636,9 +681,16 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   )), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
     "button",
     {
+      className: "nav-create",
       onClick: () => onQuickCreate && onQuickCreate(),
-      onMouseEnter: (e) => e.currentTarget.style.background = "rgba(158,154,229,0.28)",
-      onMouseLeave: (e) => e.currentTarget.style.background = "var(--accent-soft)",
+      onMouseEnter: (e) => {
+        e.currentTarget.style.background = "rgba(158,154,229,0.28)";
+        showTip(e, "Crear");
+      },
+      onMouseLeave: (e) => {
+        e.currentTarget.style.background = "var(--accent-soft)";
+        hideTip();
+      },
       style: {
         display: "flex",
         alignItems: "center",
@@ -659,8 +711,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       }
     },
     /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 }),
-    " Crear"
-  ), /* @__PURE__ */ React.createElement("div", { style: {
+    " ",
+    /* @__PURE__ */ React.createElement("span", { className: "nav-label" }, "Crear")
+  ), /* @__PURE__ */ React.createElement("div", { className: "nav-search-wrap", style: {
     display: "flex",
     alignItems: "center",
     gap: 8,
@@ -700,9 +753,12 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       navSearch,
       otrosOpen,
       toggleOtros,
-      pal: _NAVPAL
+      pal: _NAVPAL,
+      railMode,
+      showTip,
+      hideTip
     }
-  ) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: {
+  ) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: {
     fontSize: 11,
     fontWeight: 500,
     color: "var(--text-subtle)",
@@ -734,6 +790,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) })) : /* @__PURE__ */ React.createElement(React.Fragment, null, profileMenu && /* @__PURE__ */ React.createElement(
     "div",
     {
+      className: "nav-profile-menu",
       onClick: (e) => e.stopPropagation(),
       style: {
         position: "absolute",
@@ -780,6 +837,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
   ), /* @__PURE__ */ React.createElement(
     "button",
     {
+      className: "sidebar-foot-btn",
       onClick: (e) => {
         e.stopPropagation();
         setProfileMenu((v) => !v);
@@ -799,15 +857,38 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       },
       onMouseEnter: (e) => {
         if (!profileMenu) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+        showTip(e, me.name || "Tu cuenta");
       },
       onMouseLeave: (e) => {
         if (!profileMenu) e.currentTarget.style.background = "transparent";
+        hideTip();
       }
     },
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
-    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
-    /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
-  )))), logoutOpen && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
+    /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
+  )))), tip && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { style: {
+      position: "fixed",
+      top: tip.top,
+      left: tip.left,
+      transform: "translateY(-50%)",
+      zIndex: 200,
+      pointerEvents: "none",
+      background: "#1c1c1e",
+      border: "0.5px solid var(--border-strong)",
+      color: "var(--text)",
+      padding: "5px 11px",
+      borderRadius: 9,
+      fontSize: 12.5,
+      fontWeight: 500,
+      letterSpacing: "-0.01em",
+      whiteSpace: "nowrap",
+      boxShadow: "0 10px 30px rgba(0,0,0,0.55)",
+      animation: "tipIn .12s ease-out"
+    } }, tip.label),
+    document.body
+  ), logoutOpen && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement("div", { onClick: () => setLogoutOpen(false), style: {
       position: "fixed",
       inset: 0,
