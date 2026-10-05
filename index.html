@@ -554,21 +554,24 @@
   /* ── Home inmersiva (pantalla completa, menú sobre el fondo) ────────
      En la home el fondo ambiente ocupa TODA la ventana; el panel y la
      columna del menú se vuelven transparentes para que floten encima. */
-  /* Solo negro + morado de acento: una luz morada marcada arriba-derecha y
-     otra morada muy leve abajo-izquierda, sobre un negro casi puro. */
-  .app.home {
+  /* ── Mismo "hilo" en TODA la agencia ───────────────────────────────
+     La home es la base: fondo negro + luces moradas (una marcada arriba-
+     derecha y otra muy leve abajo-izquierda), panel transparente y menú
+     flotando encima. Se aplica a todas las páginas de la agencia para que
+     sigan la misma línea visual. */
+  .app:not(.client) {
     background:
       radial-gradient(120% 80% at 84% -2%, rgba(158,154,229,0.26), transparent 52%),
       radial-gradient(120% 85% at 6% 102%, rgba(158,154,229,0.12), transparent 55%),
       #070708 !important;
   }
-  .app.home .main {
+  .app:not(.client) .main {
     background: transparent !important; border: none !important;
     margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; min-height: 100dvh !important;
   }
-  .app.home .sidebar { background: transparent !important; border-right: none !important; }
-  /* En la home, iconos planos (sin cajas) */
-  .app.home:not(.nav-collapsed) .sidebar button { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+  .app:not(.client) .sidebar { background: transparent !important; border-right: none !important; }
+  /* Iconos planos (sin cajas) en el menú de la agencia */
+  .app:not(.client):not(.nav-collapsed) .sidebar button { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
   .brand {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px 16px;
