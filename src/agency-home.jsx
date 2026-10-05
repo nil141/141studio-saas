@@ -27,9 +27,9 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
         transition: "background .15s" }}
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.065)"}
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.045)"}>
-      <div style={{ display: "flex", alignItems: "flex-start", gap: 13, padding: "15px 16px" }}>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color, marginTop: 1 }}>
-          <Icon name={icon} size={18} strokeWidth={1.8}/>
+      <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
+          <Icon name={icon} size={15} strokeWidth={1.8}/>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>

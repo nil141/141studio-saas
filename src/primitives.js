@@ -623,7 +623,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           userSelect: "none"
         }
       },
-      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: nested ? 14 : 16, strokeWidth: 1.7 }),
+      /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, label),
       dot ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { position: "absolute", right: 8, top: 7, width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }) : badge ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
       href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
