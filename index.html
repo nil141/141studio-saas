@@ -538,6 +538,28 @@
     /* Los iconos no se encogen en el rail fino (si no, quedan a 0px) */
     .app:not(.client):not(.nav-collapsed) .sidebar svg { flex-shrink: 0; }
   }
+  /* ── Home inmersiva (pantalla completa, menú sobre el fondo) ────────
+     En la home el fondo ambiente ocupa TODA la ventana; el panel y la
+     columna del menú se vuelven transparentes para que floten encima. */
+  .app.home {
+    background:
+      radial-gradient(130% 75% at 80% 4%, rgba(92,120,150,0.30), transparent 55%),
+      radial-gradient(135% 85% at 10% 100%, rgba(170,112,66,0.32), transparent 55%),
+      linear-gradient(180deg, #0c0c0f 0%, #0a0a0a 100%) !important;
+  }
+  .app.home .main {
+    background: transparent !important; border: none !important;
+    margin: 0 !important; border-radius: 0 !important; box-shadow: none !important; min-height: 100dvh !important;
+  }
+  .app.home .sidebar { background: transparent !important; border-right: none !important; }
+  /* En la home, iconos planos (sin cajas) salvo al expandir con hover */
+  .app.home:not(.nav-collapsed) .sidebar button { background: transparent !important; border-color: transparent !important; box-shadow: none !important; }
+  @media (min-width: 769px) {
+    .app.home:not(.nav-collapsed) .sidebar:hover {
+      background: rgba(10,10,13,0.82) !important;
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+  }
   .brand {
     display: flex; align-items: center; gap: 8px;
     padding: 6px 8px 16px;
@@ -1254,10 +1276,10 @@
 <script src="src/primitives.js?v=91"></script>
 <script src="src/auth.js?v=3"></script>
 <script src="src/z-modals.js?v=15"></script>
-<script src="src/z-app.js?v=42"></script>
+<script src="src/z-app.js?v=43"></script>
 <!-- Non-critical: load after login screen is ready -->
 <script src="src/agency-dashboard.js?v=95"></script>
-<script src="src/agency-home.js?v=1"></script>
+<script src="src/agency-home.js?v=2"></script>
 <script src="src/agency-clients.js?v=34"></script>
 <script src="src/agency-project.js?v=37"></script>
 <script src="src/agency-other.js?v=143"></script>

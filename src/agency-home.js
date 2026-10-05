@@ -87,11 +87,11 @@
     const D = window.Data;
     D.useStore();
     const today = _homeToday(D);
-    const name = session && session.name || (() => {
-      const e = D.SETTINGS && D.SETTINGS.email || "nil@141agency.com";
-      const n = e.split("@")[0];
+    const _base = (session && session.name || "").trim() || (D.SETTINGS && D.SETTINGS.email || "nil@141agency.com");
+    const name = _base.includes("@") ? (() => {
+      const n = _base.split("@")[0];
       return n.charAt(0).toUpperCase() + n.slice(1);
-    })();
+    })() : _base;
     const [ask, setAsk] = useState("");
     const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
     const liveTasks = Object.entries(D.TASKS || {}).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => (arr || []).map((t) => ({ ...t, _pid: pid })));
@@ -118,13 +118,7 @@
       navigate("nora");
     };
     const sec = (label, child) => /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" } }, label), child);
-    return /* @__PURE__ */ React.createElement("div", { style: {
-      position: "relative",
-      minHeight: "calc(100dvh - 64px)",
-      margin: "-20px -24px -40px",
-      padding: "0 24px 60px",
-      background: "radial-gradient(130% 75% at 80% 4%, rgba(92,120,150,0.30), transparent 55%), radial-gradient(135% 85% at 10% 100%, rgba(170,112,66,0.32), transparent 55%), linear-gradient(180deg, #0c0c0f 0%, #0a0a0a 100%)"
-    } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "13vh" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 22 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 15, opacity: 0.8 } })), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", todayTasks.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "check", color: "#34d399", title: "Todo hecho por hoy \u{1F389}", sub: "No te queda ninguna tarea pendiente para hoy.", onOpen: () => navigate("tasks") }) : /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "13vh" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: 22 } }, /* @__PURE__ */ React.createElement("img", { src: "/wordmark.svg", alt: "141'DIGITAL", style: { height: 15, opacity: 0.8 } })), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", todayTasks.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "check", color: "#34d399", title: "Todo hecho por hoy \u{1F389}", sub: "No te queda ninguna tarea pendiente para hoy.", onOpen: () => navigate("tasks") }) : /* @__PURE__ */ React.createElement(
       HomeCard,
       {
         icon: "list-todo",

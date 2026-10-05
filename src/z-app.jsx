@@ -320,7 +320,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
           </button>
         </div>
       )}
-      <div className={"app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : "")} data-screen-label={view.name}>
+      <div className={"app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : "") + (!isClient && view.name === "dashboard" ? " home" : "")} data-screen-label={view.name}>
         <Sidebar current={view.name} currentParams={view.params} onNavigate={navigate} kind={isClient ? "client" : "agency"} session={session} onAssistant={() => navigate("nora")} onQuickCreate={() => setQuickCreate(true)} onToggleCollapse={toggleNav}/>
         {navCollapsed && !isClient && (
           <button onClick={toggleNav} title="Mostrar menú" aria-label="Mostrar menú"
