@@ -699,89 +699,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       kbd ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: "var(--text-subtle)", fontFamily: "var(--font-mono)" } }, kbd) : null
     );
   };
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar" }, kind === "client" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
-    "img",
-    {
-      src: "/logo-141digital-white.png",
-      alt: "141'DIGITAL",
-      onError: () => setLogoErr(true),
-      style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
-    }
-  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-search-wrap", style: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    height: 36,
-    padding: "0 11px",
-    borderRadius: 10,
-    background: "rgba(255,255,255,0.05)"
-  } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
-    "input",
-    {
-      className: "nav-search",
-      value: navSearch,
-      onChange: (e) => setNavSearch(e.target.value),
-      placeholder: "Buscar en todo\u2026",
-      style: {
-        flex: 1,
-        minWidth: 0,
-        background: "transparent",
-        border: "none",
-        outline: "none",
-        color: "var(--text)",
-        fontSize: 13,
-        fontFamily: "var(--font-sans)",
-        letterSpacing: "-0.2px",
-        caretColor: "var(--accent)"
-      }
-    }
-  ), navSearch && /* @__PURE__ */ React.createElement("span", { onClick: () => setNavSearch(""), style: { cursor: "pointer", color: "var(--text-subtle)", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? navSearch.trim() ? /* @__PURE__ */ React.createElement(SearchResults, { query: navSearch }) : /* @__PURE__ */ React.createElement(
-    AgencyNav,
-    {
-      current,
-      curNav,
-      activePid: currentParams && currentParams.projectId,
-      onNavigate,
-      NavItem,
-      D,
-      navSearch,
-      otrosOpen,
-      toggleOtros,
-      pal: _NAVPAL,
-      railMode,
-      showTip,
-      hideTip
-    }
-  ) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: {
-    fontSize: 11,
-    fontWeight: 500,
-    color: "var(--text-subtle)",
-    letterSpacing: "0.06em",
-    textTransform: "uppercase",
-    padding: "0 12px",
-    marginBottom: 2
-  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0, position: "relative" } }, kind === "client" ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
-    "button",
-    {
-      onClick: () => onNavigate("client-settings"),
-      style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        width: "100%",
-        padding: "8px 10px",
-        border: 0,
-        borderRadius: 10,
-        cursor: "pointer",
-        fontFamily: "inherit",
-        textAlign: "left",
-        background: current === "client-settings" ? "var(--bg-hover)" : "transparent",
-        color: "var(--text)"
-      }
-    },
-    /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
-    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
-  ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) })) : /* @__PURE__ */ React.createElement(React.Fragment, null, profileMenu && /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("aside", { className: "sidebar" }, kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { position: "relative", flexShrink: 0, marginBottom: 10 } }, profileMenu && /* @__PURE__ */ React.createElement(
     "div",
     {
       className: "nav-profile-menu",
@@ -790,7 +708,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
         position: "absolute",
         left: 6,
         right: 6,
-        bottom: "calc(100% + 6px)",
+        top: "calc(100% + 6px)",
         zIndex: 40,
         background: "var(--bg-elev)",
         border: "0.5px solid var(--border-strong)",
@@ -861,7 +779,89 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (me.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { minWidth: 0, flex: 1 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, me.email || "@" + (me.name || "").toLowerCase())),
     /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, color: "var(--text-subtle)", transform: profileMenu ? "rotate(180deg)" : "none", transition: "transform .18s" } })
-  )))), /* @__PURE__ */ React.createElement(RailTooltip, null), railMode && ReactDOM.createPortal(
+  )), kind === "client" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 8px 30px 10px" } }, logoErr ? /* @__PURE__ */ React.createElement("div", { style: { fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 500, letterSpacing: "-0.5px", color: "#fff" } }, "141", /* @__PURE__ */ React.createElement("span", { style: { color: "var(--accent)" } }, "'"), "DIGITAL") : /* @__PURE__ */ React.createElement(
+    "img",
+    {
+      src: "/logo-141digital-white.png",
+      alt: "141'DIGITAL",
+      onError: () => setLogoErr(true),
+      style: { height: 17, width: "auto", maxWidth: 130, flexShrink: 0, display: "block", objectFit: "contain", opacity: 0.95 }
+    }
+  ), /* @__PURE__ */ React.createElement(NotificationBell, { kind, onNavigate })), kind === "agency" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8, padding: "0 2px 12px", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-search-wrap", style: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    height: 36,
+    padding: "0 11px",
+    borderRadius: 10,
+    background: "rgba(255,255,255,0.05)"
+  } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+    "input",
+    {
+      className: "nav-search",
+      value: navSearch,
+      onChange: (e) => setNavSearch(e.target.value),
+      placeholder: "Buscar en todo\u2026",
+      style: {
+        flex: 1,
+        minWidth: 0,
+        background: "transparent",
+        border: "none",
+        outline: "none",
+        color: "var(--text)",
+        fontSize: 13,
+        fontFamily: "var(--font-sans)",
+        letterSpacing: "-0.2px",
+        caretColor: "var(--accent)"
+      }
+    }
+  ), navSearch && /* @__PURE__ */ React.createElement("span", { onClick: () => setNavSearch(""), style: { cursor: "pointer", color: "var(--text-subtle)", display: "flex" } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 13 })))), /* @__PURE__ */ React.createElement("div", { ref: navContainerRef, style: { flex: 1, overflow: "hidden", position: "relative" } }, drilldown ? navSearch.trim() ? /* @__PURE__ */ React.createElement(SearchResults, { query: navSearch }) : /* @__PURE__ */ React.createElement(
+    AgencyNav,
+    {
+      current,
+      curNav,
+      activePid: currentParams && currentParams.projectId,
+      onNavigate,
+      NavItem,
+      D,
+      navSearch,
+      otrosOpen,
+      toggleOtros,
+      pal: _NAVPAL,
+      railMode,
+      showTip,
+      hideTip
+    }
+  ) : /* @__PURE__ */ React.createElement("div", { style: { overflowY: "auto", scrollbarWidth: "none", height: "100%" } }, sections.map((section, si) => /* @__PURE__ */ React.createElement("div", { key: si, style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { className: "nav-section-label", style: {
+    fontSize: 11,
+    fontWeight: 500,
+    color: "var(--text-subtle)",
+    letterSpacing: "0.06em",
+    textTransform: "uppercase",
+    padding: "0 12px",
+    marginBottom: 2
+  } }, section.title), section.items.map((it) => /* @__PURE__ */ React.createElement(NavItem, { key: it.id, id: it.id, icon: it.icon, label: it.label, badge: it.badge })))))), kind === "client" && /* @__PURE__ */ React.createElement("div", { style: { borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 8, display: "flex", flexDirection: "column", gap: 0, position: "relative" } }, /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      onClick: () => onNavigate("client-settings"),
+      style: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        width: "100%",
+        padding: "8px 10px",
+        border: 0,
+        borderRadius: 10,
+        cursor: "pointer",
+        fontFamily: "inherit",
+        textAlign: "left",
+        background: current === "client-settings" ? "var(--bg-hover)" : "transparent",
+        color: "var(--text)"
+      }
+    },
+    /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
+    /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
+  ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), /* @__PURE__ */ React.createElement(RailTooltip, null), railMode && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement(
       "button",
       {
