@@ -527,7 +527,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
           fontSize: nested ? 13.5 : 14, fontWeight:400, letterSpacing:"-0.04em", userSelect:"none",
         }}
       >
-        <Icon name={icon} size={16} strokeWidth={1.7}/>
+        <Icon name={icon} size={nested ? 14 : 16} strokeWidth={1.7}/>
         <span className="nav-label" style={{flex:1}}>{label}</span>
         {dot ? (
           <span className="nav-aux" style={{position:"absolute", right:8, top:7, width:5, height:5, borderRadius:99, background:"var(--text-muted)"}}/>
