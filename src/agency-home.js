@@ -38,16 +38,14 @@
         onClick: () => expandable ? setOpen((o) => !o) : onOpen && onOpen(),
         style: {
           borderRadius: 16,
-          background: "rgba(255,255,255,0.045)",
+          background: "rgba(255,255,255,0.055)",
           border: "0.5px solid rgba(255,255,255,0.09)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
           cursor: "pointer",
           overflow: "hidden",
           transition: "background .15s"
         },
-        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.065)",
-        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.045)"
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.075)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.055)"
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color } }, /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 12.5,
@@ -158,10 +156,8 @@
     )), /* @__PURE__ */ React.createElement("div", { style: {
       marginTop: 26,
       borderRadius: 16,
-      background: "rgba(0,0,0,0.35)",
+      background: "rgba(0,0,0,0.3)",
       border: "0.5px solid rgba(255,255,255,0.1)",
-      backdropFilter: "blur(12px)",
-      WebkitBackdropFilter: "blur(12px)",
       padding: "14px 16px"
     } }, /* @__PURE__ */ React.createElement(
       "input",

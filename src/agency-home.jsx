@@ -22,11 +22,10 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
   const expandable = items && items.length > 0;
   return (
     <div className="home-card" onClick={() => expandable ? setOpen(o => !o) : (onOpen && onOpen())}
-      style={{ borderRadius: 16, background: "rgba(255,255,255,0.045)", border: "0.5px solid rgba(255,255,255,0.09)",
-        backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", cursor: "pointer", overflow: "hidden",
-        transition: "background .15s" }}
-      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.065)"}
-      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.045)"}>
+      style={{ borderRadius: 16, background: "rgba(255,255,255,0.055)", border: "0.5px solid rgba(255,255,255,0.09)",
+        cursor: "pointer", overflow: "hidden", transition: "background .15s" }}
+      onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.075)"}
+      onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
         <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
           <Icon name={icon} size={15} strokeWidth={1.8}/>
@@ -148,8 +147,8 @@ const AgencyHome = ({ navigate, openModal, session }) => {
         ))}
 
         {/* Caja Ask (Nora) */}
-        <div style={{ marginTop: 26, borderRadius: 16, background: "rgba(0,0,0,0.35)", border: "0.5px solid rgba(255,255,255,0.1)",
-          backdropFilter: "blur(12px)", WebkitBackdropFilter: "blur(12px)", padding: "14px 16px" }}>
+        <div style={{ marginTop: 26, borderRadius: 16, background: "rgba(0,0,0,0.3)", border: "0.5px solid rgba(255,255,255,0.1)",
+          padding: "14px 16px" }}>
           <input value={ask} onChange={e => setAsk(e.target.value)} onKeyDown={e => { if (e.key === "Enter") submitAsk(); }}
             placeholder="Pregúntale a Nora…"
             style={{ width: "100%", background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 14, fontFamily: "inherit" }}/>
