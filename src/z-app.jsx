@@ -265,7 +265,7 @@ const App = () => {
 
   const renderAgency = () => {
     switch (view.name) {
-      case "dashboard": return <AgencyDashboard navigate={navigate} openModal={openModal} session={session}/>;
+      case "dashboard": return <AgencyHome navigate={navigate} openModal={openModal} session={session}/>;
 case "clients": return <AgencyClientsList navigate={navigate} openModal={openModal}/>;
       case "clientDetail": return <AgencyClientDetail navigate={navigate} openModal={openModal} clientId={view.params.clientId}/>;
       case "projects": return <AgencyProjects navigate={navigate} openModal={openModal}/>;
@@ -282,7 +282,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "income": return <IncomePage/>;
       case "mail": return null; // rendered always below
       case "settings": return <SettingsPage/>;
-      default: return <AgencyDashboard navigate={navigate} openModal={openModal} session={session}/>;
+      default: return <AgencyHome navigate={navigate} openModal={openModal} session={session}/>;
     }
   };
 

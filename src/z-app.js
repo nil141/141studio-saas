@@ -243,7 +243,7 @@
     const renderAgency = () => {
       switch (view.name) {
         case "dashboard":
-          return /* @__PURE__ */ React.createElement(AgencyDashboard, { navigate, openModal, session });
+          return /* @__PURE__ */ React.createElement(AgencyHome, { navigate, openModal, session });
         case "clients":
           return /* @__PURE__ */ React.createElement(AgencyClientsList, { navigate, openModal });
         case "clientDetail":
@@ -277,7 +277,7 @@
         case "settings":
           return /* @__PURE__ */ React.createElement(SettingsPage, null);
         default:
-          return /* @__PURE__ */ React.createElement(AgencyDashboard, { navigate, openModal, session });
+          return /* @__PURE__ */ React.createElement(AgencyHome, { navigate, openModal, session });
       }
     };
     const renderClient = () => {
