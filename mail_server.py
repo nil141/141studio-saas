@@ -563,13 +563,17 @@ def _wa_store(row):
     """Inserta un mensaje en whatsapp_messages. Ignora duplicados (reintentos
     del webhook) gracias al índice único en wa_message_id."""
     if not SB_SERVICE_KEY:
+        print("[WA] _wa_store: SIN service_key, no se guarda")
         return None
     try:
-        return _sb_service("POST", "whatsapp_messages", row)
+        res = _sb_service("POST", "whatsapp_messages", row)
+        print(f"[WA] guardado {row.get('direction')} wa_id={row.get('wa_id')} body={(row.get('body') or '')[:40]!r}")
+        return res
     except urllib.error.HTTPError as e:
         if e.code == 409:   # duplicado (mismo wa_message_id) → ignorar
+            print("[WA] _wa_store: duplicado (409), ignorado")
             return None
-        try: print("  wa_store HTTP", e.code, e.read().decode()[:200])
+        try: print("[WA] _wa_store HTTP", e.code, e.read().decode()[:300])
         except Exception: pass
         return None
     except Exception:
@@ -616,9 +620,12 @@ def api_whatsapp_send(body):
 
 def _wa_ingest(data):
     """Procesa el payload del webhook de Meta: mensajes entrantes y estados."""
+    n_msg = n_st = 0
     for entry in (data.get("entry") or []):
         for ch in (entry.get("changes") or []):
             val = ch.get("value") or {}
+            n_msg += len(val.get("messages") or [])
+            n_st  += len(val.get("statuses") or [])
             names = {}
             for c in (val.get("contacts") or []):
                 names[c.get("wa_id")] = ((c.get("profile") or {}).get("name") or "")
@@ -658,6 +665,7 @@ def _wa_ingest(data):
                                     {"status": status})
                     except Exception:
                         pass
+    print(f"[WA] ingest: {n_msg} mensaje(s), {n_st} estado(s) | agency_id={'set' if WA_AGENCY_ID else 'MISSING'} service_key={'set' if SB_SERVICE_KEY else 'MISSING'}")
 
 def _reminder_email_html(client_name, tasks):
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -1649,8 +1657,11 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             length = int(self.headers.get("Content-Length", 0))
             raw = self.rfile.read(length) if length else b"{}"
+            print(f"[WA] POST webhook recibido ({length} bytes)")
             data = json.loads(raw.decode("utf-8"))
         except Exception:
+            print("[WA] POST webhook: error leyendo/parseando body")
+            traceback.print_exc()
             self._json(200, {"ok": True}); return
         try:
             _wa_ingest(data)
