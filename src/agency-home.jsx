@@ -15,6 +15,22 @@ const _homeParseDate = (s) => {
   return null;
 };
 const _homeFmtDate = (s) => { const d = _homeParseDate(s); return d ? `${d.getDate()} ${_HM[d.getMonth()]}` : (s || ""); };
+// WhatsApp: emparejar teléfono de cliente con el wa_id del mensaje
+const _homeWaDigits = (s) => String(s || "").replace(/\D/g, "");
+const _homeWaMatch = (clientPhone, waId) => {
+  const a = _homeWaDigits(clientPhone), b = _homeWaDigits(waId);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  const min = Math.min(a.length, b.length);
+  return min >= 8 && (a.endsWith(b) || b.endsWith(a));
+};
+const _homeWaTime = (ts) => {
+  try {
+    const d = new Date(ts), now = new Date();
+    if (d.toDateString() === now.toDateString()) return d.toLocaleTimeString("es-ES", { hour: "2-digit", minute: "2-digit" });
+    return d.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+  } catch { return ""; }
+};
 
 // Tarjeta tipo Kinso: icono + título + descripción, con chevron que despliega
 const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
@@ -93,6 +109,19 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   const dueFollowups = (D.OUTREACH || []).filter(o => o.nextFollowup && !_HOME_DONE.includes(o.status) && !o.convertedClientId && o.nextFollowup <= today)
     .sort((a, b) => (a.nextFollowup < b.nextFollowup ? -1 : 1));
 
+  // WhatsApp: conversaciones pendientes de responder (último mensaje entrante)
+  React.useEffect(() => { try { D.reloadWhatsapp && D.reloadWhatsapp(); } catch (_) {} }, []);
+  const _waBy = {};
+  (D.WHATSAPP || []).forEach(m => { (_waBy[m.waId] = _waBy[m.waId] || []).push(m); });
+  const waPending = Object.keys(_waBy).map(waId => {
+    const arr = _waBy[waId].slice().sort((a, b) => (a.ts < b.ts ? -1 : 1));
+    const last = arr[arr.length - 1];
+    const client = (D.CLIENTS || []).find(c => _homeWaMatch(c.whatsapp, waId));
+    const name = client ? (client.company || client.name) : (arr.map(m => m.contactName).filter(Boolean).pop() || ("+" + waId));
+    return { waId, last, name };
+  }).filter(c => c.last && c.last.direction === "in")
+    .sort((a, b) => (a.last.ts < b.last.ts ? 1 : -1));
+
   const submitAsk = () => {
     const q = ask.trim();
     try { if (q) sessionStorage.setItem("nora_prefill", q); } catch (_) {}
@@ -122,6 +151,17 @@ const AgencyHome = ({ navigate, openModal, session }) => {
             sub={todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
             items={todayTasks.slice(0, 8).map(t => ({ label: t.title, right: t.deadline && t.deadline < today ? "Atrasada" : "Hoy", dot: t.deadline < today ? "var(--red)" : "var(--accent)", onClick: () => navigate("tasks") }))}
             onOpen={() => navigate("tasks")}/>
+        ))}
+
+        {/* WhatsApp — mensajes pendientes de responder */}
+        {sec("WhatsApp", waPending.length === 0 ? (
+          <HomeCard icon="msg-circle" color="#25D366" title="Sin mensajes por responder" sub="No tienes conversaciones de WhatsApp pendientes." onOpen={() => navigate("whatsapp")}/>
+        ) : (
+          <HomeCard icon="msg-circle" color="#25D366"
+            title={`${waPending.length} mensaje${waPending.length === 1 ? "" : "s"} de WhatsApp por responder`}
+            sub={waPending.slice(0, 3).map(c => c.name).join(" · ")}
+            items={waPending.slice(0, 8).map(c => ({ label: c.name, right: _homeWaTime(c.last.ts), dot: "#25D366", onClick: () => navigate("whatsapp") }))}
+            onOpen={() => navigate("whatsapp")}/>
         ))}
 
         {/* Entregas — proyectos en marcha */}
