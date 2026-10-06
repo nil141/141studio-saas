@@ -86,7 +86,7 @@ const SETTINGS_DEFAULT = { name: "141'STUDIO", email: "nil@141agency.com", phone
 const _store = {
   CLIENTS: [], PROJECTS: [], INVOICES: [], DELIVERABLES: [],
   LEADS: [], TASKS: {}, CREDENTIALS: [], CLIENT_TASKS: [], NOTIFICATIONS: [], SETTINGS: { ...SETTINGS_DEFAULT },
-  AGENDA_EVENTS: [], OUTREACH: [], RESOURCES: [], BOARDS: {},
+  AGENDA_EVENTS: [], OUTREACH: [], RESOURCES: [], BOARDS: {}, WHATSAPP: [],
   _loaded: false,   // true tras la primera carga completa (para skeletons)
   _user: null, _prof: null,
   _outbox: {},   // { clientId: [ {title, body, kind, route} ] } avisos por enviar (correo)
@@ -161,6 +161,13 @@ const _mo = (r) => ({
 const _mr = (r) => ({
   id: r.id, title: r.title || "", url: r.url || "", description: r.description || "",
   type: r.type || "herramienta", sector: r.sector || "", createdAt: r.created_at,
+});
+// Mensaje de WhatsApp (entrante o saliente)
+const _mw = (r) => ({
+  id: r.id, waId: r.wa_id || "", direction: r.direction || "in",
+  type: r.type || "text", body: r.body || "", contactName: r.contact_name || "",
+  waMessageId: r.wa_message_id || null, status: r.status || "",
+  clientId: r.client_id || null, ts: r.ts || r.created_at,
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
@@ -366,6 +373,8 @@ const _loadAll = async () => {
     try { re = await _sb.from("resources").select("*").eq("agency_id", uid).order("created_at", { ascending: false }); } catch {}
     let bd = { data: [] };
     try { bd = await _sb.from("client_boards").select("*").eq("agency_id", uid); } catch {}
+    let wa = { data: [] };
+    try { wa = await _sb.from("whatsapp_messages").select("*").eq("agency_id", uid).order("ts", { ascending: true }); } catch {}
     _store.CLIENTS      = (c.data || []).map(_mc);
     _store.PROJECTS     = (p.data || []).map(_mp);
     _store.INVOICES     = (i.data || []).map(_mi);
@@ -377,6 +386,7 @@ const _loadAll = async () => {
     _store.AGENDA_EVENTS = ((ae && ae.data) || []).map(_mae);
     _store.OUTREACH     = ((ou && ou.data) || []).map(_mo);
     _store.RESOURCES    = ((re && re.data) || []).map(_mr);
+    _store.WHATSAPP     = ((wa && wa.data) || []).map(_mw);
     _store.BOARDS = {};
     ((bd && bd.data) || []).forEach(row => { _store.BOARDS[row.client_id] = Array.isArray(row.items) ? row.items : (row.items || []); });
     _store.SETTINGS     = _ms(s.data) || { ...SETTINGS_DEFAULT };
@@ -412,6 +422,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "outreach",      filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "resources",     filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: "agency_id=eq." + uid }, _loadAll)
     .subscribe();
 };
 
@@ -1715,6 +1726,31 @@ const deleteOutreach = async (id) => {
   if (error) { _store.OUTREACH = prev; _emit(); }
 };
 
+// ── WhatsApp (Meta Cloud API) ──────────────────────────────────────────
+// Envía un mensaje a través del backend (que habla con la Graph API de Meta
+// y guarda el saliente). El historial llega por realtime / _loadAll.
+const sendWhatsapp = async (to, text, clientId) => {
+  const digits = String(to || "").replace(/[^0-9]/g, "");
+  const msg = (text || "").trim();
+  if (!digits) return { ok: false, error: "Falta el número" };
+  if (!msg)    return { ok: false, error: "Falta el texto" };
+  let token = null;
+  try { token = (await _sb.auth.getSession()).data.session?.access_token || null; } catch {}
+  if (!token) return { ok: false, error: "Sesión no válida" };
+  try {
+    const res = await fetch("/api/whatsapp/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ to: digits, text: msg, client_id: clientId || null }),
+    });
+    const out = await res.json().catch(() => null);
+    if (out && out.ok) { try { await _loadAll(); } catch {} }
+    return out || { ok: false, error: "Respuesta vacía del servidor" };
+  } catch (e) {
+    return { ok: false, error: String(e && e.message || e) };
+  }
+};
+
 // ── Recursos (biblioteca de herramientas / referencias / estrategias) ──
 const addResource = async (input) => {
   const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
@@ -1812,6 +1848,7 @@ window.Data = {
   get AGENDA_EVENTS(){ return _store.AGENDA_EVENTS; },
   get OUTREACH()     { return _store.OUTREACH; },
   get RESOURCES()    { return _store.RESOURCES; },
+  get WHATSAPP()     { return _store.WHATSAPP; },
   get ROUTINES()     { return _store.ROUTINES; },
   get FINANCE()      { return _store.FINANCE; },
   get SETTINGS()     { return _store.SETTINGS; },
@@ -1834,6 +1871,7 @@ window.Data = {
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
   addResource, updateResource, deleteResource,
+  sendWhatsapp,
   getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,

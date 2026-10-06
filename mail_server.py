@@ -41,6 +41,19 @@ REMINDER_DAYS       = int(os.environ.get("REMINDER_DAYS", "3"))
 REMINDER_MAX        = int(os.environ.get("REMINDER_MAX", "3"))
 REMINDER_CHECK_HOURS= int(os.environ.get("REMINDER_CHECK_HOURS", "6"))
 
+# ── WhatsApp (Meta Cloud API) ──────────────────────────────────────────
+# WA_TOKEN      : token de acceso (permanente) de la app de Meta.
+# WA_PHONE_ID   : Phone Number ID del número de WhatsApp Business.
+# WA_VERIFY     : token de verificación del webhook (lo eliges tú, debe
+#                 coincidir con el que pongas en Meta → Webhooks).
+# WA_AGENCY_ID  : uid (uuid) de la agencia dueña; se asigna a cada mensaje
+#                 guardado para que el CRM lo filtre por agency_id.
+WA_TOKEN     = os.environ.get("WHATSAPP_TOKEN", "")
+WA_PHONE_ID  = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "")
+WA_VERIFY    = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
+WA_AGENCY_ID = os.environ.get("WHATSAPP_AGENCY_ID", "")
+WA_API_VER   = os.environ.get("WHATSAPP_API_VERSION", "v21.0")
+
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://app.141agency.com,http://localhost:8080"
@@ -541,6 +554,110 @@ def _sb_service(method, path, body=None):
     with urllib.request.urlopen(req, timeout=20) as r:
         raw = r.read().decode()
         return json.loads(raw) if raw else []
+
+# ── WhatsApp (Meta Cloud API) ──────────────────────────────────────────
+def _wa_now_iso():
+    return datetime.datetime.now(datetime.timezone.utc).isoformat()
+
+def _wa_store(row):
+    """Inserta un mensaje en whatsapp_messages. Ignora duplicados (reintentos
+    del webhook) gracias al índice único en wa_message_id."""
+    if not SB_SERVICE_KEY:
+        return None
+    try:
+        return _sb_service("POST", "whatsapp_messages", row)
+    except urllib.error.HTTPError as e:
+        if e.code == 409:   # duplicado (mismo wa_message_id) → ignorar
+            return None
+        try: print("  wa_store HTTP", e.code, e.read().decode()[:200])
+        except Exception: pass
+        return None
+    except Exception:
+        traceback.print_exc(); return None
+
+def _wa_send_text(to, text):
+    """Envía un mensaje de texto por la Graph API. Devuelve el JSON de Meta."""
+    url = f"https://graph.facebook.com/{WA_API_VER}/{WA_PHONE_ID}/messages"
+    payload = {"messaging_product": "whatsapp", "recipient_type": "individual",
+               "to": to, "type": "text",
+               "text": {"preview_url": True, "body": text}}
+    req = urllib.request.Request(url, method="POST", data=json.dumps(payload).encode())
+    req.add_header("Authorization", "Bearer " + WA_TOKEN)
+    req.add_header("Content-Type", "application/json")
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode())
+
+def api_whatsapp_send(body):
+    """Handler autenticado: envía un WhatsApp y guarda el mensaje saliente."""
+    if not (WA_TOKEN and WA_PHONE_ID):
+        return {"ok": False, "error": "WhatsApp no está configurado en el servidor (faltan WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID)."}
+    to   = re.sub(r"[^0-9]", "", str(body.get("to", "")))
+    text = (body.get("text") or "").strip()
+    if not to or not text:
+        return {"ok": False, "error": "Faltan 'to' o 'text'."}
+    if len(text) > 4096:
+        text = text[:4096]
+    try:
+        resp = _wa_send_text(to, text)
+    except urllib.error.HTTPError as e:
+        try:    detail = json.loads(e.read().decode()).get("error", {}).get("message", "")
+        except Exception: detail = ""
+        return {"ok": False, "error": detail or f"Error HTTP {e.code} al enviar."}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    mid = ((resp.get("messages") or [{}])[0]).get("id")
+    row = {"agency_id": WA_AGENCY_ID or None, "wa_id": to, "direction": "out",
+           "type": "text", "body": text, "wa_message_id": mid,
+           "status": "sent", "ts": _wa_now_iso()}
+    if body.get("client_id"):
+        row["client_id"] = body["client_id"]
+    saved = _wa_store(row)
+    return {"ok": True, "id": mid, "row": (saved[0] if saved else row)}
+
+def _wa_ingest(data):
+    """Procesa el payload del webhook de Meta: mensajes entrantes y estados."""
+    for entry in (data.get("entry") or []):
+        for ch in (entry.get("changes") or []):
+            val = ch.get("value") or {}
+            names = {}
+            for c in (val.get("contacts") or []):
+                names[c.get("wa_id")] = ((c.get("profile") or {}).get("name") or "")
+            for m in (val.get("messages") or []):
+                frm = m.get("from"); typ = m.get("type") or "text"
+                if typ == "text":
+                    text = (m.get("text") or {}).get("body", "")
+                elif typ in ("image", "video", "audio", "document", "sticker", "voice"):
+                    cap = (m.get(typ) or {}).get("caption", "")
+                    text = ("[" + typ + "]" + ((" " + cap) if cap else ""))
+                elif typ == "button":
+                    text = (m.get("button") or {}).get("text", "")
+                elif typ == "interactive":
+                    it = m.get("interactive") or {}
+                    rep = it.get("button_reply") or it.get("list_reply") or {}
+                    text = rep.get("title", "") or "[interactivo]"
+                elif typ == "location":
+                    loc = m.get("location") or {}
+                    text = "[ubicación] " + (loc.get("name") or f"{loc.get('latitude','')},{loc.get('longitude','')}")
+                else:
+                    text = "[" + typ + "]"
+                try:
+                    ts = datetime.datetime.fromtimestamp(int(m.get("timestamp", "0")), datetime.timezone.utc).isoformat()
+                except Exception:
+                    ts = _wa_now_iso()
+                _wa_store({"agency_id": WA_AGENCY_ID or None, "wa_id": frm,
+                           "direction": "in", "type": typ, "body": text,
+                           "wa_message_id": m.get("id"), "contact_name": names.get(frm),
+                           "status": "received", "ts": ts})
+            # Actualizaciones de estado (sent/delivered/read/failed) de salientes
+            for st in (val.get("statuses") or []):
+                mid = st.get("id"); status = st.get("status")
+                if mid and status and SB_SERVICE_KEY:
+                    try:
+                        _sb_service("PATCH",
+                                    "whatsapp_messages?wa_message_id=eq." + urllib.parse.quote(mid),
+                                    {"status": status})
+                    except Exception:
+                        pass
 
 def _reminder_email_html(client_name, tasks):
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -1305,6 +1422,10 @@ CAMPAIGN_HANDLERS = {
     "delete_campaign": api_campaigns_delete_campaign,
 }
 
+WHATSAPP_HANDLERS = {
+    "send": api_whatsapp_send,
+}
+
 # ── Calendario (.ics) — suscripción de solo lectura para Apple/Google Calendar ─
 _CAL_MONTHS = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
                "jul":7,"ago":8,"sep":9,"oct":10,"nov":11,"dic":12}
@@ -1445,6 +1566,9 @@ class Handler(SimpleHTTPRequestHandler):
         if self._path_blocked():
             self.send_error(404); return
         gpath = urllib.parse.urlparse(self.path).path
+        # Verificación del webhook de WhatsApp (Meta): responde el hub.challenge
+        if gpath == "/api/whatsapp/webhook":
+            self._handle_wa_verify(); return
         # Suscripción de calendario: /api/calendar/<token>.ics
         if gpath.startswith("/api/calendar/") and gpath.endswith(".ics"):
             self._handle_calendar(gpath[len("/api/calendar/"):-len(".ics")]); return
@@ -1487,6 +1611,10 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api(self.path[len("/api/mail/"):], MAIL_HANDLERS)
         elif self.path.startswith("/api/stripe/"):
             self._handle_api(self.path[len("/api/stripe/"):], STRIPE_HANDLERS)
+        elif self.path == "/api/whatsapp/webhook":
+            self._handle_wa_webhook()
+        elif self.path.startswith("/api/whatsapp/"):
+            self._handle_api(self.path[len("/api/whatsapp/"):], WHATSAPP_HANDLERS)
         elif self.path == "/api/campaigns/import":
             self._handle_import()
         elif self.path.startswith("/api/campaigns/"):
@@ -1499,6 +1627,36 @@ class Handler(SimpleHTTPRequestHandler):
             self._json(410, {"ok": False, "error": "Endpoint retirado — la app usa Supabase"})
         else:
             self.send_error(405)
+
+    def _handle_wa_verify(self):
+        """GET del webhook de WhatsApp: Meta manda hub.challenge para verificar."""
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        mode = (qs.get("hub.mode") or [""])[0]
+        tok  = (qs.get("hub.verify_token") or [""])[0]
+        chal = (qs.get("hub.challenge") or [""])[0]
+        if mode == "subscribe" and WA_VERIFY and secrets.compare_digest(tok, WA_VERIFY):
+            body = chal.encode()
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        else:
+            self.send_error(403)
+
+    def _handle_wa_webhook(self):
+        """POST del webhook de WhatsApp: siempre responde 200 rápido y procesa."""
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            raw = self.rfile.read(length) if length else b"{}"
+            data = json.loads(raw.decode("utf-8"))
+        except Exception:
+            self._json(200, {"ok": True}); return
+        try:
+            _wa_ingest(data)
+        except Exception:
+            traceback.print_exc()
+        self._json(200, {"ok": True})
 
     def _handle_import(self):
         """Ingesta de leads desde Cowork: clave API estática, no JWT."""

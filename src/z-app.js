@@ -258,6 +258,8 @@
           return /* @__PURE__ */ React.createElement(CampaignsPage, { navigate });
         case "outreach":
           return /* @__PURE__ */ React.createElement(AgencyOutreach, { navigate });
+        case "whatsapp":
+          return /* @__PURE__ */ React.createElement(AgencyWhatsApp, { navigate });
         case "resources":
           return /* @__PURE__ */ React.createElement(AgencyResources, { navigate });
         case "campaign":
@@ -270,10 +272,12 @@
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":
           return null;
+        // rendered always below
         case "income":
           return /* @__PURE__ */ React.createElement(IncomePage, null);
         case "mail":
           return null;
+        // rendered always below
         case "settings":
           return /* @__PURE__ */ React.createElement(SettingsPage, null);
         default:
@@ -294,6 +298,7 @@
           return /* @__PURE__ */ React.createElement(ClientNotifications, { navigate, session });
         case "client-settings":
           return /* @__PURE__ */ React.createElement(ClientSettings, { navigate, session });
+        // compat con enlaces antiguos
         case "client-project":
           return /* @__PURE__ */ React.createElement(ClientStatus, { navigate, openModal, session, projectId: view.params.projectId });
         case "client-deliverables":

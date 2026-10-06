@@ -82,6 +82,7 @@
     OUTREACH: [],
     RESOURCES: [],
     BOARDS: {},
+    WHATSAPP: [],
     _loaded: false,
     // true tras la primera carga completa (para skeletons)
     _user: null,
@@ -221,6 +222,18 @@
     type: r.type || "herramienta",
     sector: r.sector || "",
     createdAt: r.created_at
+  });
+  const _mw = (r) => ({
+    id: r.id,
+    waId: r.wa_id || "",
+    direction: r.direction || "in",
+    type: r.type || "text",
+    body: r.body || "",
+    contactName: r.contact_name || "",
+    waMessageId: r.wa_message_id || null,
+    status: r.status || "",
+    clientId: r.client_id || null,
+    ts: r.ts || r.created_at
   });
   const _mae = (r) => ({
     id: r.id,
@@ -485,6 +498,11 @@
         bd = await _sb.from("client_boards").select("*").eq("agency_id", uid);
       } catch {
       }
+      let wa = { data: [] };
+      try {
+        wa = await _sb.from("whatsapp_messages").select("*").eq("agency_id", uid).order("ts", { ascending: true });
+      } catch {
+      }
       _store.CLIENTS = (c.data || []).map(_mc);
       _store.PROJECTS = (p.data || []).map(_mp);
       _store.INVOICES = (i.data || []).map(_mi);
@@ -496,6 +514,7 @@
       _store.AGENDA_EVENTS = (ae && ae.data || []).map(_mae);
       _store.OUTREACH = (ou && ou.data || []).map(_mo);
       _store.RESOURCES = (re && re.data || []).map(_mr);
+      _store.WHATSAPP = (wa && wa.data || []).map(_mw);
       _store.BOARDS = {};
       (bd && bd.data || []).forEach((row) => {
         _store.BOARDS[row.client_id] = Array.isArray(row.items) ? row.items : row.items || [];
@@ -519,7 +538,7 @@
       _sb.removeChannel(_channel);
       _channel = null;
     }
-    _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "outreach", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "resources", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
+    _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "outreach", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "resources", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: "agency_id=eq." + uid }, _loadAll).subscribe();
   };
   const authLogin = async (email, password) => {
     const { data, error } = await _sb.auth.signInWithPassword({ email, password });
@@ -1992,6 +2011,35 @@
       _emit();
     }
   };
+  const sendWhatsapp = async (to, text, clientId) => {
+    const digits = String(to || "").replace(/[^0-9]/g, "");
+    const msg = (text || "").trim();
+    if (!digits) return { ok: false, error: "Falta el n\xFAmero" };
+    if (!msg) return { ok: false, error: "Falta el texto" };
+    let token = null;
+    try {
+      token = (await _sb.auth.getSession()).data.session?.access_token || null;
+    } catch {
+    }
+    if (!token) return { ok: false, error: "Sesi\xF3n no v\xE1lida" };
+    try {
+      const res = await fetch("/api/whatsapp/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ to: digits, text: msg, client_id: clientId || null })
+      });
+      const out = await res.json().catch(() => null);
+      if (out && out.ok) {
+        try {
+          await _loadAll();
+        } catch {
+        }
+      }
+      return out || { ok: false, error: "Respuesta vac\xEDa del servidor" };
+    } catch (e) {
+      return { ok: false, error: String(e && e.message || e) };
+    }
+  };
   const addResource = async (input) => {
     const uid = _store._user?.id;
     if (!uid) return { error: "no-auth" };
@@ -2151,6 +2199,9 @@
     get RESOURCES() {
       return _store.RESOURCES;
     },
+    get WHATSAPP() {
+      return _store.WHATSAPP;
+    },
     get ROUTINES() {
       return _store.ROUTINES;
     },
@@ -2214,6 +2265,7 @@
     addResource,
     updateResource,
     deleteResource,
+    sendWhatsapp,
     getClientBoard,
     saveClientBoard,
     // Google Drive (Apps Script)

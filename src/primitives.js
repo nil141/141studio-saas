@@ -23,6 +23,7 @@ const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
   { id: "clients", label: "Clientes", icon: "users" },
   { id: "outreach", label: "Propuestas Outreach", icon: "send" },
+  { id: "whatsapp", label: "WhatsApp", icon: "msg-circle" },
   { id: "resources", label: "Recursos", icon: "sparkles" },
   { id: "income", label: "Facturaci\xF3n", icon: "trending-up", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
   { id: "billing", label: "Gastos", icon: "receipt" }
