@@ -59,6 +59,30 @@
     const [q, setQ] = useState("");
     const [newOpen, setNewOpen] = useState(false);
     const threadRef = useRef(null);
+    useEffect(() => {
+      let alive = true;
+      const tick = () => {
+        if (alive && D.reloadWhatsapp) {
+          try {
+            D.reloadWhatsapp();
+          } catch (_) {
+          }
+        }
+      };
+      tick();
+      const id = setInterval(() => {
+        if (!document.hidden) tick();
+      }, 4e3);
+      const onVis = () => {
+        if (!document.hidden) tick();
+      };
+      document.addEventListener("visibilitychange", onVis);
+      return () => {
+        alive = false;
+        clearInterval(id);
+        document.removeEventListener("visibilitychange", onVis);
+      };
+    }, []);
     const clients = D.CLIENTS || [];
     const msgs = D.WHATSAPP || [];
     const convs = useMemo(() => {

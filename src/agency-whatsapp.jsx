@@ -54,6 +54,19 @@ const AgencyWhatsApp = ({ navigate }) => {
   const [newOpen, setNewOpen] = useState(false);
   const threadRef = useRef(null);
 
+  // Sondeo ligero: refresca los mensajes cada pocos segundos mientras la
+  // página está abierta, para que los entrantes aparezcan sin recargar
+  // (complementa al realtime, que a veces no engancha).
+  useEffect(() => {
+    let alive = true;
+    const tick = () => { if (alive && D.reloadWhatsapp) { try { D.reloadWhatsapp(); } catch (_) {} } };
+    tick();
+    const id = setInterval(() => { if (!document.hidden) tick(); }, 4000);
+    const onVis = () => { if (!document.hidden) tick(); };
+    document.addEventListener("visibilitychange", onVis);
+    return () => { alive = false; clearInterval(id); document.removeEventListener("visibilitychange", onVis); };
+  }, []);
+
   const clients = D.CLIENTS || [];
   const msgs = D.WHATSAPP || [];
 

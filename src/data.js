@@ -2276,6 +2276,7 @@
     updateResource,
     deleteResource,
     sendWhatsapp,
+    reloadWhatsapp: () => _loadWhatsapp(),
     getClientBoard,
     saveClientBoard,
     // Google Drive (Apps Script)

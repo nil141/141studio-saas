@@ -1881,7 +1881,7 @@ window.Data = {
   addAgendaEvent, deleteAgendaEvent, calendarSubscribeUrl,
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
   addResource, updateResource, deleteResource,
-  sendWhatsapp,
+  sendWhatsapp, reloadWhatsapp: () => _loadWhatsapp(),
   getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
