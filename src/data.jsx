@@ -402,6 +402,16 @@ const _loadAll = async () => {
   _emit();
 };
 
+// Recarga ligera solo de WhatsApp (para envío instantáneo y realtime rápido)
+const _loadWhatsapp = async () => {
+  const uid = _store._user && _store._user.id; if (!uid) return;
+  try {
+    const wa = await _sb.from("whatsapp_messages").select("*").eq("agency_id", uid).order("ts", { ascending: true });
+    _store.WHATSAPP = ((wa && wa.data) || []).map(_mw);
+    _emit();
+  } catch (_) {}
+};
+
 // ── Real-time ───────────────────────────────────────────────────────
 let _channel = null;
 const _setupRealtime = () => {
@@ -422,7 +432,7 @@ const _setupRealtime = () => {
     .on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "outreach",      filter: "agency_id=eq." + uid }, _loadAll)
     .on("postgres_changes", { event: "*", schema: "public", table: "resources",     filter: "agency_id=eq." + uid }, _loadAll)
-    .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: "agency_id=eq." + uid }, _loadAll)
+    .on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: "agency_id=eq." + uid }, _loadWhatsapp)
     .subscribe();
 };
 
@@ -1744,7 +1754,7 @@ const sendWhatsapp = async (to, text, clientId) => {
       body: JSON.stringify({ to: digits, text: msg, client_id: clientId || null }),
     });
     const out = await res.json().catch(() => null);
-    if (out && out.ok) { try { await _loadAll(); } catch {} }
+    if (out && out.ok) { try { await _loadWhatsapp(); } catch {} }
     return out || { ok: false, error: "Respuesta vacía del servidor" };
   } catch (e) {
     return { ok: false, error: String(e && e.message || e) };

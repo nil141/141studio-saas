@@ -55,6 +55,7 @@
     const [draft, setDraft] = useState(null);
     const [text, setText] = useState("");
     const [sending, setSending] = useState(false);
+    const [pending, setPending] = useState([]);
     const [q, setQ] = useState("");
     const [newOpen, setNewOpen] = useState(false);
     const threadRef = useRef(null);
@@ -90,19 +91,24 @@
     useEffect(() => {
       const el = threadRef.current;
       if (el) el.scrollTop = el.scrollHeight;
-    }, [active && active.arr.length, sel]);
+    }, [active && active.arr.length, sel, pending.length]);
     const lastInbound = active ? active.arr.filter((m) => m.direction === "in").slice(-1)[0] : null;
     const outside24h = active && (!lastInbound || Date.now() - new Date(lastInbound.ts).getTime() > 24 * 3600 * 1e3);
     const send = async () => {
-      if (!active || sending) return;
+      if (!active) return;
       const body = text.trim();
       if (!body) return;
+      const waId = active.waId;
+      const clientId = active.client ? active.client.id : null;
+      const key = "tmp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+      setPending((p) => [...p, { key, waId, body, ts: (/* @__PURE__ */ new Date()).toISOString() }]);
+      setText("");
       setSending(true);
-      const res = await D.sendWhatsapp(active.waId, body, active.client ? active.client.id : null);
+      const res = await D.sendWhatsapp(waId, body, clientId);
       setSending(false);
+      setPending((p) => p.filter((x) => x.key !== key));
       if (res && res.ok) {
-        setText("");
-        if (draft && draft.waId === active.waId) setDraft(null);
+        if (draft && draft.waId === waId) setDraft(null);
       } else {
         toast ? toast(res && res.error || "No se pudo enviar", "error") : alert(res && res.error || "No se pudo enviar");
       }
@@ -240,7 +246,18 @@
         borderBottomLeftRadius: out ? 14 : 5,
         marginTop: 3
       } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, m.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3, display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" } }, _waTime(m.ts), out && m.status && /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.8 } }, "\xB7 ", { sent: "enviado", delivered: "entregado", read: "le\xEDdo", failed: "fall\xF3" }[m.status] || m.status))));
-    })), outside24h && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 18px", padding: "7px 12px", background: "rgba(226,180,92,0.1)", border: "0.5px solid rgba(226,180,92,0.3)", borderRadius: 10, color: "var(--amber)", fontSize: 11.5, lineHeight: 1.4 } }, "Fuera de la ventana de 24h. WhatsApp puede bloquear mensajes libres; quiz\xE1 necesites una plantilla aprobada."), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 18px 16px", display: "flex", alignItems: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement(
+    }), pending.filter((x) => x.waId === active.waId).map((x) => /* @__PURE__ */ React.createElement("div", { key: x.key, style: {
+      alignSelf: "flex-end",
+      maxWidth: "74%",
+      background: "rgba(158,154,229,0.18)",
+      border: "0.5px solid rgba(158,154,229,0.24)",
+      color: "var(--text)",
+      padding: "8px 12px 6px",
+      borderRadius: 14,
+      borderBottomRightRadius: 5,
+      marginTop: 3,
+      opacity: 0.75
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, x.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3 } }, "enviando\u2026")))), outside24h && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 18px", padding: "7px 12px", background: "rgba(226,180,92,0.1)", border: "0.5px solid rgba(226,180,92,0.3)", borderRadius: 10, color: "var(--amber)", fontSize: 11.5, lineHeight: 1.4 } }, "Fuera de la ventana de 24h. WhatsApp puede bloquear mensajes libres; quiz\xE1 necesites una plantilla aprobada."), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 18px 16px", display: "flex", alignItems: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement(
       "textarea",
       {
         value: text,

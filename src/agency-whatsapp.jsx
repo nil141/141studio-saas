@@ -49,6 +49,7 @@ const AgencyWhatsApp = ({ navigate }) => {
   const [draft, setDraft] = useState(null);  // { waId, name, clientId } chat nuevo sin mensajes
   const [text, setText] = useState("");
   const [sending, setSending] = useState(false);
+  const [pending, setPending] = useState([]); // mensajes salientes optimistas
   const [q, setQ] = useState("");
   const [newOpen, setNewOpen] = useState(false);
   const threadRef = useRef(null);
@@ -91,22 +92,29 @@ const AgencyWhatsApp = ({ navigate }) => {
   useEffect(() => {
     const el = threadRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [active && active.arr.length, sel]);
+  }, [active && active.arr.length, sel, pending.length]);
 
   // Ventana de 24h: solo se puede escribir libre dentro de las 24h del último entrante
   const lastInbound = active ? active.arr.filter(m => m.direction === "in").slice(-1)[0] : null;
   const outside24h = active && (!lastInbound || (Date.now() - new Date(lastInbound.ts).getTime() > 24 * 3600 * 1000));
 
   const send = async () => {
-    if (!active || sending) return;
+    if (!active) return;
     const body = text.trim();
     if (!body) return;
+    const waId = active.waId;
+    const clientId = active.client ? active.client.id : null;
+    const key = "tmp-" + Date.now() + "-" + Math.random().toString(36).slice(2, 6);
+    // Optimista: se muestra al instante y se limpia el input
+    setPending(p => [...p, { key, waId, body, ts: new Date().toISOString() }]);
+    setText("");
     setSending(true);
-    const res = await D.sendWhatsapp(active.waId, body, active.client ? active.client.id : null);
+    const res = await D.sendWhatsapp(waId, body, clientId);
     setSending(false);
+    // El real ya está en el store (sendWhatsapp recarga antes de resolver)
+    setPending(p => p.filter(x => x.key !== key));
     if (res && res.ok) {
-      setText("");
-      if (draft && draft.waId === active.waId) setDraft(null);
+      if (draft && draft.waId === waId) setDraft(null);
     } else {
       toast ? toast((res && res.error) || "No se pudo enviar", "error") : alert((res && res.error) || "No se pudo enviar");
     }
@@ -234,6 +242,16 @@ const AgencyWhatsApp = ({ navigate }) => {
             </React.Fragment>
           );
         })}
+        {/* Mensajes optimistas (enviándose) */}
+        {pending.filter(x => x.waId === active.waId).map(x => (
+          <div key={x.key} style={{ alignSelf: "flex-end", maxWidth: "74%",
+            background: "rgba(158,154,229,0.18)", border: "0.5px solid rgba(158,154,229,0.24)",
+            color: "var(--text)", padding: "8px 12px 6px", borderRadius: 14,
+            borderBottomRightRadius: 5, marginTop: 3, opacity: 0.75 }}>
+            <div style={{ fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{x.body}</div>
+            <div style={{ fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3 }}>enviando…</div>
+          </div>
+        ))}
       </div>
 
       {/* Aviso ventana 24h */}
