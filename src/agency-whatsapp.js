@@ -112,6 +112,17 @@
       return allConvs.filter((c) => (c.name || "").toLowerCase().includes(t) || _waDigits(c.waId).includes(_waDigits(t)));
     }, [allConvs, q]);
     const active = allConvs.find((c) => c.waId === sel) || null;
+    const seenRef = useRef(/* @__PURE__ */ new Set());
+    const lastSelRef = useRef(void 0);
+    if (lastSelRef.current !== sel) {
+      const s = /* @__PURE__ */ new Set();
+      (active ? active.arr : []).forEach((m) => m.id && s.add(m.id));
+      seenRef.current = s;
+      lastSelRef.current = sel;
+    }
+    useEffect(() => {
+      (active ? active.arr : []).forEach((m) => m.id && seenRef.current.add(m.id));
+    });
     useEffect(() => {
       const el = threadRef.current;
       if (el) el.scrollTop = el.scrollHeight;
@@ -268,7 +279,9 @@
         borderRadius: 14,
         borderBottomRightRadius: out ? 5 : 14,
         borderBottomLeftRadius: out ? 14 : 5,
-        marginTop: 3
+        marginTop: 3,
+        transformOrigin: out ? "bottom right" : "bottom left",
+        animation: m.id && !seenRef.current.has(m.id) ? "msgIn .26s cubic-bezier(.22,1,.36,1)" : "none"
       } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, m.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3, display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" } }, _waTime(m.ts), out && m.status && /* @__PURE__ */ React.createElement("span", { style: { opacity: 0.8 } }, "\xB7 ", { sent: "enviado", delivered: "entregado", read: "le\xEDdo", failed: "fall\xF3" }[m.status] || m.status))));
     }), pending.filter((x) => x.waId === active.waId).map((x) => /* @__PURE__ */ React.createElement("div", { key: x.key, style: {
       alignSelf: "flex-end",
@@ -280,7 +293,9 @@
       borderRadius: 14,
       borderBottomRightRadius: 5,
       marginTop: 3,
-      opacity: 0.75
+      opacity: 0.75,
+      transformOrigin: "bottom right",
+      animation: "msgIn .26s cubic-bezier(.22,1,.36,1)"
     } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, x.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3 } }, "enviando\u2026")))), outside24h && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 18px", padding: "7px 12px", background: "rgba(226,180,92,0.1)", border: "0.5px solid rgba(226,180,92,0.3)", borderRadius: 10, color: "var(--amber)", fontSize: 11.5, lineHeight: 1.4 } }, "Fuera de la ventana de 24h. WhatsApp puede bloquear mensajes libres; quiz\xE1 necesites una plantilla aprobada."), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 18px 16px", display: "flex", alignItems: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement(
       "textarea",
       {

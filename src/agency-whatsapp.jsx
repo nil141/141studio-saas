@@ -101,6 +101,20 @@ const AgencyWhatsApp = ({ navigate }) => {
 
   const active = allConvs.find(c => c.waId === sel) || null;
 
+  // Animación de entrada solo para mensajes NUEVOS (no para el historial al abrir)
+  const seenRef = useRef(new Set());
+  const lastSelRef = useRef(undefined);
+  if (lastSelRef.current !== sel) {
+    // Al abrir/cambiar de conversación, marca su historial como "ya visto"
+    const s = new Set();
+    (active ? active.arr : []).forEach(m => m.id && s.add(m.id));
+    seenRef.current = s;
+    lastSelRef.current = sel;
+  }
+  useEffect(() => {
+    (active ? active.arr : []).forEach(m => m.id && seenRef.current.add(m.id));
+  });
+
   // Auto-scroll al final al abrir o al llegar mensajes
   useEffect(() => {
     const el = threadRef.current;
@@ -245,7 +259,9 @@ const AgencyWhatsApp = ({ navigate }) => {
                 background: out ? "rgba(158,154,229,0.22)" : "rgba(255,255,255,0.055)",
                 border: "0.5px solid " + (out ? "rgba(158,154,229,0.28)" : "rgba(255,255,255,0.08)"),
                 color: "var(--text)", padding: "8px 12px 6px", borderRadius: 14,
-                borderBottomRightRadius: out ? 5 : 14, borderBottomLeftRadius: out ? 14 : 5, marginTop: 3 }}>
+                borderBottomRightRadius: out ? 5 : 14, borderBottomLeftRadius: out ? 14 : 5, marginTop: 3,
+                transformOrigin: out ? "bottom right" : "bottom left",
+                animation: (m.id && !seenRef.current.has(m.id)) ? "msgIn .26s cubic-bezier(.22,1,.36,1)" : "none" }}>
                 <div style={{ fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{m.body}</div>
                 <div style={{ fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3, display: "flex", gap: 4, justifyContent: "flex-end", alignItems: "center" }}>
                   {_waTime(m.ts)}
@@ -260,7 +276,8 @@ const AgencyWhatsApp = ({ navigate }) => {
           <div key={x.key} style={{ alignSelf: "flex-end", maxWidth: "74%",
             background: "rgba(158,154,229,0.18)", border: "0.5px solid rgba(158,154,229,0.24)",
             color: "var(--text)", padding: "8px 12px 6px", borderRadius: 14,
-            borderBottomRightRadius: 5, marginTop: 3, opacity: 0.75 }}>
+            borderBottomRightRadius: 5, marginTop: 3, opacity: 0.75,
+            transformOrigin: "bottom right", animation: "msgIn .26s cubic-bezier(.22,1,.36,1)" }}>
             <div style={{ fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{x.body}</div>
             <div style={{ fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3 }}>enviando…</div>
           </div>
