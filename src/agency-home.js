@@ -45,7 +45,7 @@
       return "";
     }
   };
-  const DonutIcon = ({ pct, size = 24, stroke = 2, color = "var(--accent)", xColor }) => {
+  const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xColor }) => {
     const r = (size - stroke) / 2 - 0.5, c = size / 2, circ = 2 * Math.PI * r;
     const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
     const done = p >= 100;
@@ -84,7 +84,7 @@
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.075)",
         onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.055)"
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 15, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.8 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 12.5,
         color: "var(--text-muted)",
         lineHeight: 1.5,
@@ -113,7 +113,7 @@
           {
             key: i,
             onClick: it.onClick,
-            style: { display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" },
+            style: { display: "flex", alignItems: "center", gap: 12, padding: "11px 11px", borderRadius: 11, cursor: it.onClick ? "pointer" : "default" },
             onMouseEnter: (e) => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)"),
             onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
           },
@@ -129,10 +129,10 @@
               onMouseEnter: (e) => e.currentTarget.style.opacity = 1,
               onMouseLeave: (e) => e.currentTarget.style.opacity = 0.92
             },
-            /* @__PURE__ */ React.createElement(DonutIcon, { pct: it.completed ? 100 : it.prog || 0, size: 22, xColor: it.overdue ? "var(--red)" : void 0 })
-          ) : it.dot && /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 } }),
-          /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
-          it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
+            /* @__PURE__ */ React.createElement(DonutIcon, { pct: it.completed ? 100 : it.prog || 0, size: 25, xColor: it.overdue ? "var(--red)" : void 0 })
+          ) : it.dot && /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: it.dot, flexShrink: 0 } }),
+          /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 14, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
+          it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
         )),
         onOpen && /* @__PURE__ */ React.createElement("div", { onClick: onOpen, style: { padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 } }, "Ver todo \u2192")
       )))

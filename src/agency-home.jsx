@@ -34,7 +34,7 @@ const _homeWaTime = (ts) => {
 
 // Anillo de progreso del día (donut) — mismo estilo que la página de tareas:
 // aro que se va rellenando con el progreso y, al 100%, un tick en el centro.
-const DonutIcon = ({ pct, size = 24, stroke = 2, color = "var(--accent)", xColor }) => {
+const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xColor }) => {
   const r = (size - stroke) / 2 - 0.5, c = size / 2, circ = 2 * Math.PI * r;
   const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
   const done = p >= 100;
@@ -69,7 +69,7 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
         <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
-          {iconNode || <Icon name={icon} size={15} strokeWidth={1.8}/>}
+          {iconNode || <Icon name={icon} size={18} strokeWidth={1.8}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
@@ -87,7 +87,7 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
               opacity: open ? 1 : 0, transition: "opacity .22s ease" }}>
             {(items || []).map((it, i) => (
               <div key={i} onClick={it.onClick}
-                style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" }}
+                style={{ display: "flex", alignItems: "center", gap: 12, padding: "11px 11px", borderRadius: 11, cursor: it.onClick ? "pointer" : "default" }}
                 onMouseEnter={e => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 {it.onComplete ? (
@@ -95,11 +95,11 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
                     style={{ flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex", opacity: 0.92, transition: "opacity .12s" }}
                     onMouseEnter={e => e.currentTarget.style.opacity = 1}
                     onMouseLeave={e => e.currentTarget.style.opacity = 0.92}>
-                    <DonutIcon pct={it.completed ? 100 : (it.prog || 0)} size={22} xColor={it.overdue ? "var(--red)" : undefined}/>
+                    <DonutIcon pct={it.completed ? 100 : (it.prog || 0)} size={25} xColor={it.overdue ? "var(--red)" : undefined}/>
                   </button>
-                ) : it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
-                {it.right && <span style={{ fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
+                ) : it.dot && <span style={{ width: 8, height: 8, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
+                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                {it.right && <span style={{ fontSize: 12.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
               </div>
             ))}
             {onOpen && (
