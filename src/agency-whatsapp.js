@@ -37,6 +37,113 @@
       return "";
     }
   };
+  let _fbSdkPromise = null;
+  const _waLoadFbSdk = () => {
+    if (window.FB) return Promise.resolve(window.FB);
+    if (_fbSdkPromise) return _fbSdkPromise;
+    _fbSdkPromise = new Promise((resolve) => {
+      window.fbAsyncInit = () => resolve(window.FB);
+      const s = document.createElement("script");
+      s.src = "https://connect.facebook.net/en_US/sdk.js";
+      s.async = true;
+      s.defer = true;
+      s.crossOrigin = "anonymous";
+      s.onerror = () => resolve(null);
+      document.body.appendChild(s);
+    });
+    return _fbSdkPromise;
+  };
+  const _waLaunchES = (status) => new Promise(async (resolve) => {
+    const FB = await _waLoadFbSdk();
+    if (!FB) return resolve({ error: "No se pudo cargar el SDK de Facebook." });
+    try {
+      FB.init({ appId: status.appId, autoLogAppEvents: true, xfbml: false, version: status.apiVersion || "v22.0" });
+    } catch (e) {
+      return resolve({ error: "No se pudo iniciar el SDK." });
+    }
+    let session = {};
+    const onMsg = (event) => {
+      try {
+        if (!/facebook\.com$/.test(new URL(event.origin).hostname)) return;
+        const d = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+        if (d && d.type === "WA_EMBEDDED_SIGNUP") session = d.data || {};
+      } catch (_) {
+      }
+    };
+    window.addEventListener("message", onMsg);
+    FB.login((resp) => {
+      window.removeEventListener("message", onMsg);
+      const code = resp && resp.authResponse && resp.authResponse.code;
+      if (!code) return resolve({ error: "Conexi\xF3n cancelada." });
+      resolve({ code, phone_number_id: session.phone_number_id, waba_id: session.waba_id });
+    }, {
+      config_id: status.esConfigId,
+      response_type: "code",
+      override_default_response_type: true,
+      extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" }
+    });
+  });
+  const WaConnectBanner = () => {
+    const [st, setSt] = useState(null);
+    const [busy, setBusy] = useState(false);
+    const [msg, setMsg] = useState("");
+    const D = window.Data;
+    const refresh = async () => {
+      try {
+        setSt(await D.whatsappStatus());
+      } catch (_) {
+      }
+    };
+    useEffect(() => {
+      refresh();
+    }, []);
+    if (!st) return null;
+    if (st.connected) return null;
+    const onConnect = async () => {
+      setMsg("");
+      setBusy(true);
+      const r = await _waLaunchES(st);
+      if (r.error || !r.code) {
+        setBusy(false);
+        setMsg(r.error || "No se recibi\xF3 el c\xF3digo.");
+        return;
+      }
+      const out = await D.connectWhatsapp({ code: r.code, phone_number_id: r.phone_number_id, waba_id: r.waba_id });
+      setBusy(false);
+      if (out && out.ok) {
+        setMsg("");
+        refresh();
+      } else setMsg(out && out.error || "No se pudo conectar.");
+    };
+    return /* @__PURE__ */ React.createElement("div", { style: {
+      margin: "0",
+      padding: "12px 16px",
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      background: "rgba(37,211,102,0.08)",
+      borderBottom: "0.5px solid rgba(37,211,102,0.22)"
+    } }, /* @__PURE__ */ React.createElement("span", { style: { width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "grid", placeItems: "center", background: "rgba(37,211,102,0.14)" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 18, style: { color: "#25D366" } })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, color: "var(--text)" } }, "Conecta tu n\xFAmero de WhatsApp Business"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 } }, st.configured ? "Vincula tu n\xFAmero (coexistencia): se cargan tus chats y sigues usando el m\xF3vil." : "Conexi\xF3n pendiente de configurar en el servidor (Embedded Signup). En cuanto est\xE9, aqu\xED saldr\xE1 el bot\xF3n.", msg ? /* @__PURE__ */ React.createElement("span", { style: { color: "var(--red)" } }, " \xB7 ", msg) : null)), st.configured && /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: onConnect,
+        disabled: busy,
+        style: {
+          flexShrink: 0,
+          padding: "9px 16px",
+          borderRadius: 10,
+          border: "none",
+          cursor: busy ? "default" : "pointer",
+          background: "#25D366",
+          color: "#07220f",
+          fontSize: 13,
+          fontWeight: 600,
+          fontFamily: "inherit"
+        }
+      },
+      busy ? "Conectando\u2026" : "Conectar WhatsApp"
+    ));
+  };
   const AgencyWhatsApp = ({ navigate }) => {
     const D = window.Data;
     D.useStore();
@@ -348,7 +455,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 17 })
     ))) : /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-subtle)", gap: 14, padding: 24, textAlign: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 56, height: 56, borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(37,211,102,0.12)" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 26, style: { color: "#25D366" } })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)" } }, "Elige una conversaci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, maxWidth: 360, lineHeight: 1.6 } }, "O empieza una nueva con el bot\xF3n ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "+"), ". Los mensajes entrantes aparecen aqu\xED en tiempo real."));
-    return /* @__PURE__ */ React.createElement("div", { className: "wa-page", style: { display: "flex", height: "100dvh", overflow: "hidden" } }, isMobile ? active ? Thread : List : /* @__PURE__ */ React.createElement(React.Fragment, null, List, Thread), newOpen && ReactDOM.createPortal(
+    return /* @__PURE__ */ React.createElement("div", { className: "wa-page", style: { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden" } }, /* @__PURE__ */ React.createElement(WaConnectBanner, null), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0 } }, isMobile ? active ? Thread : List : /* @__PURE__ */ React.createElement(React.Fragment, null, List, Thread)), newOpen && ReactDOM.createPortal(
       /* @__PURE__ */ React.createElement("div", { onClick: () => setNewOpen(false), style: { position: "fixed", inset: 0, zIndex: 300, background: "rgba(8,8,10,0.5)", WebkitBackdropFilter: "blur(14px)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fade .2s ease" } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 420, background: "#141416", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 22, padding: 18, animation: "qcIn .3s cubic-bezier(.22,1,.36,1)", maxHeight: "80dvh", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, color: "var(--text)", marginBottom: 12, letterSpacing: "-0.02em" } }, "Nuevo chat"), /* @__PURE__ */ React.createElement(NewChatBody, { clients, onStart: startChat }))),
       document.body
     ));

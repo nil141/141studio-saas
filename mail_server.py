@@ -52,7 +52,11 @@ WA_TOKEN     = os.environ.get("WHATSAPP_TOKEN", "")
 WA_PHONE_ID  = os.environ.get("WHATSAPP_PHONE_NUMBER_ID", "")
 WA_VERIFY    = os.environ.get("WHATSAPP_VERIFY_TOKEN", "")
 WA_AGENCY_ID = os.environ.get("WHATSAPP_AGENCY_ID", "")
-WA_API_VER   = os.environ.get("WHATSAPP_API_VERSION", "v21.0")
+WA_API_VER   = os.environ.get("WHATSAPP_API_VERSION", "v22.0")
+# Embedded Signup (coexistencia): id de la app, secreto y config del flujo.
+WA_APP_ID       = os.environ.get("WHATSAPP_APP_ID", "")
+WA_APP_SECRET   = os.environ.get("WHATSAPP_APP_SECRET", "")
+WA_ES_CONFIG_ID = os.environ.get("WHATSAPP_ES_CONFIG_ID", "")
 
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
@@ -559,6 +563,109 @@ def _sb_service(method, path, body=None):
 def _wa_now_iso():
     return datetime.datetime.now(datetime.timezone.utc).isoformat()
 
+# Config efectiva de WhatsApp: si hay una conexión guardada (coexistencia)
+# usa su token/phone_id; si no, cae a las variables de entorno (nº de prueba).
+_WA_CFG_CACHE = {"ts": 0.0, "data": None}
+def _wa_cfg(force=False):
+    now = time.time()
+    if not force and _WA_CFG_CACHE["data"] is not None and (now - _WA_CFG_CACHE["ts"] < 30):
+        return _WA_CFG_CACHE["data"]
+    cfg = {"token": WA_TOKEN, "phone_id": WA_PHONE_ID, "waba_id": "", "source": "env", "display_phone": ""}
+    if SB_SERVICE_KEY and WA_AGENCY_ID:
+        try:
+            rows = _sb_service("GET", "whatsapp_config?agency_id=eq." + WA_AGENCY_ID + "&select=*")
+            if rows:
+                r = rows[0]
+                if r.get("access_token") and r.get("phone_number_id"):
+                    cfg = {"token": r["access_token"], "phone_id": r["phone_number_id"],
+                           "waba_id": r.get("waba_id") or "", "source": "db",
+                           "display_phone": r.get("display_phone") or ""}
+        except Exception:
+            pass
+    _WA_CFG_CACHE["data"] = cfg; _WA_CFG_CACHE["ts"] = now
+    return cfg
+
+def _wa_save_cfg(row):
+    """Upsert de la config (por agency_id): intenta PATCH y si no existe, POST."""
+    try:
+        patched = _sb_service("PATCH", "whatsapp_config?agency_id=eq." + WA_AGENCY_ID, row)
+        if patched:
+            return patched
+    except Exception:
+        pass
+    r = dict(row); r["agency_id"] = WA_AGENCY_ID
+    return _sb_service("POST", "whatsapp_config", r)
+
+def api_whatsapp_status(body):
+    """Estado de la conexión + config que necesita el frontend para el Embedded Signup."""
+    cfg = _wa_cfg()
+    return {"ok": True, "connected": cfg["source"] == "db", "source": cfg["source"],
+            "phone_id": cfg.get("phone_id") or "", "waba_id": cfg.get("waba_id") or "",
+            "display_phone": cfg.get("display_phone") or "",
+            "appId": WA_APP_ID, "esConfigId": WA_ES_CONFIG_ID, "apiVersion": WA_API_VER,
+            "configured": bool(WA_APP_ID and WA_APP_SECRET and WA_ES_CONFIG_ID)}
+
+def api_whatsapp_connect(body):
+    """Recibe el 'code' del Embedded Signup, lo canjea por un token duradero,
+    suscribe la WABA a la app y guarda la conexión (coexistencia)."""
+    code = (body.get("code") or "").strip()
+    phone_id = (body.get("phone_number_id") or "").strip()
+    waba_id = (body.get("waba_id") or "").strip()
+    if not code:
+        return {"ok": False, "error": "Falta 'code' del Embedded Signup."}
+    if not (WA_APP_ID and WA_APP_SECRET):
+        return {"ok": False, "error": "El servidor no tiene WHATSAPP_APP_ID / WHATSAPP_APP_SECRET configurados."}
+    # 1) Canjear el code por un token duradero (business integration token)
+    try:
+        url = ("https://graph.facebook.com/" + WA_API_VER + "/oauth/access_token"
+               "?client_id=" + urllib.parse.quote(WA_APP_ID)
+               + "&client_secret=" + urllib.parse.quote(WA_APP_SECRET)
+               + "&code=" + urllib.parse.quote(code))
+        with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
+            tok = (json.loads(r.read().decode()) or {}).get("access_token")
+    except urllib.error.HTTPError as e:
+        try: detail = json.loads(e.read().decode()).get("error", {}).get("message", "")
+        except Exception: detail = ""
+        return {"ok": False, "error": "No se pudo canjear el código: " + (detail or str(e.code))}
+    except Exception as e:
+        return {"ok": False, "error": str(e)}
+    if not tok:
+        return {"ok": False, "error": "Meta no devolvió token."}
+    # 2) Suscribir la WABA a la app (para recibir webhooks de ese número)
+    if waba_id:
+        try:
+            sreq = urllib.request.Request(
+                "https://graph.facebook.com/" + WA_API_VER + "/" + waba_id + "/subscribed_apps",
+                method="POST")
+            sreq.add_header("Authorization", "Bearer " + tok)
+            urllib.request.urlopen(sreq, timeout=20).read()
+        except Exception:
+            traceback.print_exc()
+    # 3) Nombre/numero legible (best-effort)
+    display_phone = ""
+    if phone_id:
+        try:
+            ireq = urllib.request.Request(
+                "https://graph.facebook.com/" + WA_API_VER + "/" + phone_id
+                + "?fields=display_phone_number,verified_name")
+            ireq.add_header("Authorization", "Bearer " + tok)
+            with urllib.request.urlopen(ireq, timeout=15) as r:
+                info = json.loads(r.read().decode()) or {}
+                display_phone = info.get("display_phone_number", "")
+        except Exception:
+            pass
+    # 4) Guardar la conexión
+    try:
+        _wa_save_cfg({"waba_id": waba_id or None, "phone_number_id": phone_id or None,
+                      "access_token": tok, "display_phone": display_phone or None,
+                      "coexistence": True, "connected_at": _wa_now_iso(), "updated_at": _wa_now_iso()})
+    except Exception as e:
+        traceback.print_exc()
+        return {"ok": False, "error": "No se pudo guardar la conexión: " + str(e)}
+    _wa_cfg(force=True)
+    print("[WA] conexión coexistencia guardada phone_id=" + str(phone_id) + " waba=" + str(waba_id))
+    return {"ok": True, "phone_number_id": phone_id, "waba_id": waba_id, "display_phone": display_phone}
+
 def _wa_store(row):
     """Inserta un mensaje en whatsapp_messages. Ignora duplicados (reintentos
     del webhook) gracias al índice único en wa_message_id."""
@@ -580,21 +687,24 @@ def _wa_store(row):
         traceback.print_exc(); return None
 
 def _wa_send_text(to, text):
-    """Envía un mensaje de texto por la Graph API. Devuelve el JSON de Meta."""
-    url = f"https://graph.facebook.com/{WA_API_VER}/{WA_PHONE_ID}/messages"
+    """Envía un mensaje de texto por la Graph API. Usa la conexión guardada
+    (coexistencia) si existe; si no, las variables de entorno."""
+    cfg = _wa_cfg()
+    url = f"https://graph.facebook.com/{WA_API_VER}/{cfg['phone_id']}/messages"
     payload = {"messaging_product": "whatsapp", "recipient_type": "individual",
                "to": to, "type": "text",
                "text": {"preview_url": True, "body": text}}
     req = urllib.request.Request(url, method="POST", data=json.dumps(payload).encode())
-    req.add_header("Authorization", "Bearer " + WA_TOKEN)
+    req.add_header("Authorization", "Bearer " + cfg["token"])
     req.add_header("Content-Type", "application/json")
     with urllib.request.urlopen(req, timeout=20) as r:
         return json.loads(r.read().decode())
 
 def api_whatsapp_send(body):
     """Handler autenticado: envía un WhatsApp y guarda el mensaje saliente."""
-    if not (WA_TOKEN and WA_PHONE_ID):
-        return {"ok": False, "error": "WhatsApp no está configurado en el servidor (faltan WHATSAPP_TOKEN / WHATSAPP_PHONE_NUMBER_ID)."}
+    _cfg = _wa_cfg()
+    if not (_cfg.get("token") and _cfg.get("phone_id")):
+        return {"ok": False, "error": "WhatsApp no está conectado todavía."}
     to   = re.sub(r"[^0-9]", "", str(body.get("to", "")))
     text = (body.get("text") or "").strip()
     if not to or not text:
@@ -618,45 +728,83 @@ def api_whatsapp_send(body):
     saved = _wa_store(row)
     return {"ok": True, "id": mid, "row": (saved[0] if saved else row)}
 
+def _wa_msg_text(m):
+    """Texto legible de un objeto 'message' de WhatsApp."""
+    typ = m.get("type") or "text"
+    if typ == "text":
+        return (m.get("text") or {}).get("body", "")
+    if typ in ("image", "video", "audio", "document", "sticker", "voice"):
+        cap = (m.get(typ) or {}).get("caption", "")
+        return "[" + typ + "]" + ((" " + cap) if cap else "")
+    if typ == "button":
+        return (m.get("button") or {}).get("text", "")
+    if typ == "interactive":
+        it = m.get("interactive") or {}
+        rep = it.get("button_reply") or it.get("list_reply") or {}
+        return rep.get("title", "") or "[interactivo]"
+    if typ == "location":
+        loc = m.get("location") or {}
+        return "[ubicación] " + (loc.get("name") or f"{loc.get('latitude','')},{loc.get('longitude','')}")
+    if typ == "reaction":
+        return (m.get("reaction") or {}).get("emoji", "") + " [reacción]"
+    return "[" + typ + "]"
+
+def _wa_ts(m):
+    try:
+        return datetime.datetime.fromtimestamp(int(m.get("timestamp", "0")), datetime.timezone.utc).isoformat()
+    except Exception:
+        return _wa_now_iso()
+
 def _wa_ingest(data):
-    """Procesa el payload del webhook de Meta: mensajes entrantes y estados."""
-    n_msg = n_st = 0
+    """Procesa el webhook de Meta: mensajes entrantes/salientes, estados, los
+    mensajes enviados desde el móvil (echoes) y el historial importado
+    (coexistencia)."""
+    n_msg = n_echo = n_hist = n_st = 0
+    # número propio (para saber la dirección en el historial)
+    self_digits = re.sub(r"[^0-9]", "", (_wa_cfg().get("display_phone") or ""))
     for entry in (data.get("entry") or []):
         for ch in (entry.get("changes") or []):
             val = ch.get("value") or {}
-            n_msg += len(val.get("messages") or [])
-            n_st  += len(val.get("statuses") or [])
+            try: print("[WA] change field=" + str(ch.get("field")) + " keys=" + str(list(val.keys())))
+            except Exception: pass
             names = {}
             for c in (val.get("contacts") or []):
                 names[c.get("wa_id")] = ((c.get("profile") or {}).get("name") or "")
+
+            # 1) Mensajes ENTRANTES (de un contacto hacia ti)
             for m in (val.get("messages") or []):
-                frm = m.get("from"); typ = m.get("type") or "text"
-                if typ == "text":
-                    text = (m.get("text") or {}).get("body", "")
-                elif typ in ("image", "video", "audio", "document", "sticker", "voice"):
-                    cap = (m.get(typ) or {}).get("caption", "")
-                    text = ("[" + typ + "]" + ((" " + cap) if cap else ""))
-                elif typ == "button":
-                    text = (m.get("button") or {}).get("text", "")
-                elif typ == "interactive":
-                    it = m.get("interactive") or {}
-                    rep = it.get("button_reply") or it.get("list_reply") or {}
-                    text = rep.get("title", "") or "[interactivo]"
-                elif typ == "location":
-                    loc = m.get("location") or {}
-                    text = "[ubicación] " + (loc.get("name") or f"{loc.get('latitude','')},{loc.get('longitude','')}")
-                else:
-                    text = "[" + typ + "]"
-                try:
-                    ts = datetime.datetime.fromtimestamp(int(m.get("timestamp", "0")), datetime.timezone.utc).isoformat()
-                except Exception:
-                    ts = _wa_now_iso()
-                _wa_store({"agency_id": WA_AGENCY_ID or None, "wa_id": frm,
-                           "direction": "in", "type": typ, "body": text,
+                n_msg += 1
+                frm = m.get("from")
+                _wa_store({"agency_id": WA_AGENCY_ID or None, "wa_id": frm, "direction": "in",
+                           "type": m.get("type") or "text", "body": _wa_msg_text(m),
                            "wa_message_id": m.get("id"), "contact_name": names.get(frm),
-                           "status": "received", "ts": ts})
-            # Actualizaciones de estado (sent/delivered/read/failed) de salientes
+                           "status": "received", "ts": _wa_ts(m)})
+
+            # 2) ECHOES: mensajes que TÚ envías desde el móvil/otro dispositivo
+            for m in (val.get("message_echoes") or []):
+                n_echo += 1
+                wa_id = m.get("to") or m.get("recipient_id") or ""
+                _wa_store({"agency_id": WA_AGENCY_ID or None, "wa_id": wa_id, "direction": "out",
+                           "type": m.get("type") or "text", "body": _wa_msg_text(m),
+                           "wa_message_id": m.get("id"), "status": "sent", "ts": _wa_ts(m)})
+
+            # 3) HISTORIAL importado (coexistencia): lotes de chats anteriores
+            for hchunk in (val.get("history") or []):
+                for th in (hchunk.get("threads") or []):
+                    contact = th.get("id") or ""
+                    for m in (th.get("messages") or []):
+                        n_hist += 1
+                        frm = m.get("from") or ""
+                        is_out = bool(self_digits and re.sub(r"[^0-9]", "", frm) == self_digits) or (frm and frm != contact)
+                        _wa_store({"agency_id": WA_AGENCY_ID or None, "wa_id": contact,
+                                   "direction": "out" if is_out else "in",
+                                   "type": m.get("type") or "text", "body": _wa_msg_text(m),
+                                   "wa_message_id": m.get("id"),
+                                   "status": "sent" if is_out else "received", "ts": _wa_ts(m)})
+
+            # 4) Estados (sent/delivered/read/failed) de salientes
             for st in (val.get("statuses") or []):
+                n_st += 1
                 mid = st.get("id"); status = st.get("status")
                 if mid and status and SB_SERVICE_KEY:
                     try:
@@ -665,7 +813,8 @@ def _wa_ingest(data):
                                     {"status": status})
                     except Exception:
                         pass
-    print(f"[WA] ingest: {n_msg} mensaje(s), {n_st} estado(s) | agency_id={'set' if WA_AGENCY_ID else 'MISSING'} service_key={'set' if SB_SERVICE_KEY else 'MISSING'}")
+    print(f"[WA] ingest: in={n_msg} echo={n_echo} hist={n_hist} status={n_st} | "
+          f"agency_id={'set' if WA_AGENCY_ID else 'MISSING'} service_key={'set' if SB_SERVICE_KEY else 'MISSING'}")
 
 def _reminder_email_html(client_name, tasks):
     safe = lambda s: (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
@@ -1432,6 +1581,8 @@ CAMPAIGN_HANDLERS = {
 
 WHATSAPP_HANDLERS = {
     "send": api_whatsapp_send,
+    "status": api_whatsapp_status,
+    "connect": api_whatsapp_connect,
 }
 
 # ── Calendario (.ics) — suscripción de solo lectura para Apple/Google Calendar ─

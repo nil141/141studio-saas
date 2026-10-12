@@ -1761,6 +1761,33 @@ const sendWhatsapp = async (to, text, clientId) => {
   }
 };
 
+// Estado de la conexión de WhatsApp (coexistencia) + config para el Embedded Signup.
+const whatsappStatus = async () => {
+  try {
+    const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+    if (!token) return { ok: false, error: "sin sesión" };
+    const res = await fetch("/api/whatsapp/status", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token }, body: "{}",
+    });
+    return await res.json();
+  } catch (e) { return { ok: false, error: String(e) }; }
+};
+
+// Guarda la conexión tras el Embedded Signup (envía el code + ids al backend).
+const connectWhatsapp = async (payload) => {
+  try {
+    const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+    if (!token) return { ok: false, error: "sin sesión" };
+    const res = await fetch("/api/whatsapp/connect", {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify(payload || {}),
+    });
+    const out = await res.json().catch(() => null);
+    if (out && out.ok) { try { await _loadWhatsapp(); } catch {} }
+    return out || { ok: false, error: "Respuesta vacía del servidor" };
+  } catch (e) { return { ok: false, error: String(e) }; }
+};
+
 // ── Recursos (biblioteca de herramientas / referencias / estrategias) ──
 const addResource = async (input) => {
   const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
@@ -1882,6 +1909,7 @@ window.Data = {
   addOutreach, updateOutreach, deleteOutreach, outreachMarkContacted, convertOutreachToClient, addOutreachBulk,
   addResource, updateResource, deleteResource,
   sendWhatsapp, reloadWhatsapp: () => _loadWhatsapp(),
+  whatsappStatus, connectWhatsapp,
   getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,

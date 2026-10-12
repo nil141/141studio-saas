@@ -32,6 +32,95 @@ const _waListTime = (ts) => {
   } catch { return ""; }
 };
 
+// ── Embedded Signup (coexistencia) ──────────────────────────────────────
+let _fbSdkPromise = null;
+const _waLoadFbSdk = () => {
+  if (window.FB) return Promise.resolve(window.FB);
+  if (_fbSdkPromise) return _fbSdkPromise;
+  _fbSdkPromise = new Promise((resolve) => {
+    window.fbAsyncInit = () => resolve(window.FB);
+    const s = document.createElement("script");
+    s.src = "https://connect.facebook.net/en_US/sdk.js";
+    s.async = true; s.defer = true; s.crossOrigin = "anonymous";
+    s.onerror = () => resolve(null);
+    document.body.appendChild(s);
+  });
+  return _fbSdkPromise;
+};
+// Lanza el flujo oficial de Meta (v4, coexistencia). Devuelve {code, phone_number_id, waba_id}.
+const _waLaunchES = (status) => new Promise(async (resolve) => {
+  const FB = await _waLoadFbSdk();
+  if (!FB) return resolve({ error: "No se pudo cargar el SDK de Facebook." });
+  try { FB.init({ appId: status.appId, autoLogAppEvents: true, xfbml: false, version: status.apiVersion || "v22.0" }); }
+  catch (e) { return resolve({ error: "No se pudo iniciar el SDK." }); }
+  let session = {};
+  const onMsg = (event) => {
+    try {
+      if (!/facebook\.com$/.test(new URL(event.origin).hostname)) return;
+      const d = typeof event.data === "string" ? JSON.parse(event.data) : event.data;
+      if (d && d.type === "WA_EMBEDDED_SIGNUP") session = d.data || {};
+    } catch (_) {}
+  };
+  window.addEventListener("message", onMsg);
+  FB.login((resp) => {
+    window.removeEventListener("message", onMsg);
+    const code = resp && resp.authResponse && resp.authResponse.code;
+    if (!code) return resolve({ error: "Conexión cancelada." });
+    resolve({ code, phone_number_id: session.phone_number_id, waba_id: session.waba_id });
+  }, {
+    config_id: status.esConfigId,
+    response_type: "code",
+    override_default_response_type: true,
+    extras: { setup: {}, featureType: "whatsapp_business_app_onboarding" },
+  });
+});
+
+const WaConnectBanner = () => {
+  const [st, setSt] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
+  const D = window.Data;
+  const refresh = async () => { try { setSt(await D.whatsappStatus()); } catch (_) {} };
+  useEffect(() => { refresh(); }, []);
+  if (!st) return null;
+  if (st.connected) return null; // ya conectado por coexistencia → sin banner
+
+  const onConnect = async () => {
+    setMsg(""); setBusy(true);
+    const r = await _waLaunchES(st);
+    if (r.error || !r.code) { setBusy(false); setMsg(r.error || "No se recibió el código."); return; }
+    const out = await D.connectWhatsapp({ code: r.code, phone_number_id: r.phone_number_id, waba_id: r.waba_id });
+    setBusy(false);
+    if (out && out.ok) { setMsg(""); refresh(); }
+    else setMsg((out && out.error) || "No se pudo conectar.");
+  };
+
+  return (
+    <div style={{ margin: "0", padding: "12px 16px", display: "flex", alignItems: "center", gap: 12,
+      background: "rgba(37,211,102,0.08)", borderBottom: "0.5px solid rgba(37,211,102,0.22)" }}>
+      <span style={{ width: 34, height: 34, borderRadius: 10, flexShrink: 0, display: "grid", placeItems: "center", background: "rgba(37,211,102,0.14)" }}>
+        <SiIcon name="whatsapp" size={18} style={{ color: "#25D366" }}/>
+      </span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 13.5, fontWeight: 500, color: "var(--text)" }}>Conecta tu número de WhatsApp Business</div>
+        <div style={{ fontSize: 12, color: "var(--text-muted)", lineHeight: 1.4 }}>
+          {st.configured
+            ? "Vincula tu número (coexistencia): se cargan tus chats y sigues usando el móvil."
+            : "Conexión pendiente de configurar en el servidor (Embedded Signup). En cuanto esté, aquí saldrá el botón."}
+          {msg ? <span style={{ color: "var(--red)" }}> · {msg}</span> : null}
+        </div>
+      </div>
+      {st.configured && (
+        <button onClick={onConnect} disabled={busy}
+          style={{ flexShrink: 0, padding: "9px 16px", borderRadius: 10, border: "none", cursor: busy ? "default" : "pointer",
+            background: "#25D366", color: "#07220f", fontSize: 13, fontWeight: 600, fontFamily: "inherit" }}>
+          {busy ? "Conectando…" : "Conectar WhatsApp"}
+        </button>
+      )}
+    </div>
+  );
+};
+
 const AgencyWhatsApp = ({ navigate }) => {
   const D = window.Data; D.useStore();
   const toast = (typeof useToast === "function") ? useToast() : null;
@@ -320,8 +409,11 @@ const AgencyWhatsApp = ({ navigate }) => {
   );
 
   return (
-    <div className="wa-page" style={{ display: "flex", height: "100dvh", overflow: "hidden" }}>
-      {isMobile ? (active ? Thread : List) : (<>{List}{Thread}</>)}
+    <div className="wa-page" style={{ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden" }}>
+      <WaConnectBanner/>
+      <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
+        {isMobile ? (active ? Thread : List) : (<>{List}{Thread}</>)}
+      </div>
 
       {/* Modal nuevo chat */}
       {newOpen && ReactDOM.createPortal(

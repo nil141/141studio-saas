@@ -2050,6 +2050,41 @@
       return { ok: false, error: String(e && e.message || e) };
     }
   };
+  const whatsappStatus = async () => {
+    try {
+      const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+      if (!token) return { ok: false, error: "sin sesi\xF3n" };
+      const res = await fetch("/api/whatsapp/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: "{}"
+      });
+      return await res.json();
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  };
+  const connectWhatsapp = async (payload) => {
+    try {
+      const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+      if (!token) return { ok: false, error: "sin sesi\xF3n" };
+      const res = await fetch("/api/whatsapp/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(payload || {})
+      });
+      const out = await res.json().catch(() => null);
+      if (out && out.ok) {
+        try {
+          await _loadWhatsapp();
+        } catch {
+        }
+      }
+      return out || { ok: false, error: "Respuesta vac\xEDa del servidor" };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  };
   const addResource = async (input) => {
     const uid = _store._user?.id;
     if (!uid) return { error: "no-auth" };
@@ -2277,6 +2312,8 @@
     deleteResource,
     sendWhatsapp,
     reloadWhatsapp: () => _loadWhatsapp(),
+    whatsappStatus,
+    connectWhatsapp,
     getClientBoard,
     saveClientBoard,
     // Google Drive (Apps Script)
