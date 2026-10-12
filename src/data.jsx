@@ -414,10 +414,24 @@ const _loadWhatsapp = async () => {
 
 // ── Real-time ───────────────────────────────────────────────────────
 let _channel = null;
+let _visBound = false;
 const _setupRealtime = () => {
   const uid = _store._user?.id;
   if (!uid) return;
   if (_channel) { _sb.removeChannel(_channel); _channel = null; }
+  // Al volver a esta pestaña, re-sincronizamos todo. Cubre eventos de realtime
+  // que Supabase no entrega — en concreto los DELETE, que con el filtro
+  // agency_id=eq.<uid> no llegan a otras pestañas/dispositivos. Así, al cambiar
+  // a la pestaña de Inicio, las tareas borradas en Tareas ya no aparecen.
+  if (!_visBound && typeof document !== "undefined") {
+    _visBound = true;
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && _store._user?.id) {
+        try { _loadAll(); } catch (_) {}
+        try { _loadWhatsapp(); } catch (_) {}
+      }
+    });
+  }
   _channel = _sb
     .channel("agency_rt_" + uid)
     .on("postgres_changes", { event: "*", schema: "public", table: "clients",      filter: "agency_id=eq." + uid }, _loadAll)

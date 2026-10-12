@@ -541,12 +541,28 @@
     }
   };
   let _channel = null;
+  let _visBound = false;
   const _setupRealtime = () => {
     const uid = _store._user?.id;
     if (!uid) return;
     if (_channel) {
       _sb.removeChannel(_channel);
       _channel = null;
+    }
+    if (!_visBound && typeof document !== "undefined") {
+      _visBound = true;
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && _store._user?.id) {
+          try {
+            _loadAll();
+          } catch (_) {
+          }
+          try {
+            _loadWhatsapp();
+          } catch (_) {
+          }
+        }
+      });
     }
     _channel = _sb.channel("agency_rt_" + uid).on("postgres_changes", { event: "*", schema: "public", table: "clients", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "projects", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "leads", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "deliverables", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "credentials", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "client_tasks", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "agenda_events", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "outreach", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "resources", filter: "agency_id=eq." + uid }, _loadAll).on("postgres_changes", { event: "*", schema: "public", table: "whatsapp_messages", filter: "agency_id=eq." + uid }, _loadWhatsapp).subscribe();
   };
