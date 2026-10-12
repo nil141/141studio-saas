@@ -141,6 +141,10 @@ const AgencyHome = ({ navigate, openModal, session }) => {
     if (ad !== bd) return ad ? 1 : -1;
     return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
   });
+  // Reuniones de hoy (eventos de agenda tipo reunión o con enlace)
+  const todayMeetings = (D.AGENDA_EVENTS || [])
+    .filter(e => e.date === today && (e.type === "meeting" || e.link))
+    .sort((a, b) => (a.time || "99") < (b.time || "99") ? -1 : 1);
 
   // Proyectos en marcha (no completados), ordenados por entrega
   const projs = (D.PROJECTS || []).map(p => {
@@ -188,30 +192,46 @@ const AgencyHome = ({ navigate, openModal, session }) => {
         </h1>
 
         {/* Hoy — tareas */}
-        {sec("Hoy", todayAll.length === 0 ? (
-          <HomeCard icon="check" color="var(--accent)"
-            title="Sin tareas para hoy" sub="No tienes nada programado para hoy." onOpen={() => navigate("tasks")}/>
-        ) : (
-          <HomeCard icon="list-todo" color="#9e9ae5"
-            iconNode={<DonutIcon pct={todayPct}/>}
-            title={todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
-            sub={todayTasks.length === 0
-              ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
-              : todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
-            items={todayItems.slice(0, 10).map(t => {
-              const done = t.column === "done";
-              const overdue = !done && t.deadline && t.deadline < today;
-              return {
-                label: t.title,
-                right: done ? "Hecha" : (overdue ? "Atrasada" : "Hoy"),
-                overdue,
-                completed: done,
-                prog: t.progress || 0,
-                onComplete: () => { try { D.moveTask(t._pid, t.id, done ? "todo" : "done"); } catch (_) {} },
-                onClick: () => navigate("tasks"),
-              };
-            })}
-            onOpen={() => navigate("tasks")}/>
+        {sec("Hoy", (
+          <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            {todayAll.length === 0 ? (
+              <HomeCard icon="check" color="var(--accent)"
+                title="Sin tareas para hoy" sub="No tienes nada programado para hoy." onOpen={() => navigate("tasks")}/>
+            ) : (
+              <HomeCard icon="list-todo" color="#9e9ae5"
+                iconNode={<DonutIcon pct={todayPct}/>}
+                title={todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
+                sub={todayTasks.length === 0
+                  ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
+                  : todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
+                items={todayItems.slice(0, 10).map(t => {
+                  const done = t.column === "done";
+                  const overdue = !done && t.deadline && t.deadline < today;
+                  return {
+                    label: t.title,
+                    right: done ? "Hecha" : (overdue ? "Atrasada" : "Hoy"),
+                    overdue,
+                    completed: done,
+                    prog: t.progress || 0,
+                    onComplete: () => { try { D.moveTask(t._pid, t.id, done ? "todo" : "done"); } catch (_) {} },
+                    onClick: () => navigate("tasks"),
+                  };
+                })}
+                onOpen={() => navigate("tasks")}/>
+            )}
+            {todayMeetings.length > 0 && (
+              <HomeCard icon="video" color="#34d399"
+                title={`${todayMeetings.length} reuni${todayMeetings.length === 1 ? "ón" : "ones"} hoy`}
+                sub={todayMeetings.slice(0, 3).map(m => m.title + (m.time ? ` · ${m.time}` : "")).join("  ·  ")}
+                items={todayMeetings.slice(0, 8).map(m => ({
+                  label: m.title,
+                  right: m.time || (m.link ? "Abrir" : ""),
+                  dot: "#34d399",
+                  onClick: () => { if (m.link) window.open(m.link, "_blank"); else navigate("agenda"); },
+                }))}
+                onOpen={() => navigate("agenda")}/>
+            )}
+          </div>
         ))}
 
         {/* WhatsApp — mensajes pendientes de responder */}

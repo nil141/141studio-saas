@@ -160,6 +160,7 @@
       if (ad !== bd) return ad ? 1 : -1;
       return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
     });
+    const todayMeetings = (D.AGENDA_EVENTS || []).filter((e) => e.date === today && (e.type === "meeting" || e.link)).sort((a, b) => (a.time || "99") < (b.time || "99") ? -1 : 1);
     const projs = (D.PROJECTS || []).map((p) => {
       const tks = D.TASKS[p.id] || [];
       const pct = tks.length ? Math.round(tks.filter((t) => t.column === "done").length / tks.length * 100) : p.progress || 0;
@@ -199,7 +200,7 @@
       navigate("nora");
     };
     const sec = (label, child) => /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" } }, label), child);
-    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "15vh" } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", todayAll.length === 0 ? /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "15vh" } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, todayAll.length === 0 ? /* @__PURE__ */ React.createElement(
       HomeCard,
       {
         icon: "check",
@@ -236,7 +237,25 @@
         }),
         onOpen: () => navigate("tasks")
       }
-    )), sec("WhatsApp", waPending.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "msg-circle", color: "#25D366", title: "Sin mensajes por responder", sub: "No tienes conversaciones de WhatsApp pendientes.", onOpen: () => navigate("whatsapp") }) : /* @__PURE__ */ React.createElement(
+    ), todayMeetings.length > 0 && /* @__PURE__ */ React.createElement(
+      HomeCard,
+      {
+        icon: "video",
+        color: "#34d399",
+        title: `${todayMeetings.length} reuni${todayMeetings.length === 1 ? "\xF3n" : "ones"} hoy`,
+        sub: todayMeetings.slice(0, 3).map((m) => m.title + (m.time ? ` \xB7 ${m.time}` : "")).join("  \xB7  "),
+        items: todayMeetings.slice(0, 8).map((m) => ({
+          label: m.title,
+          right: m.time || (m.link ? "Abrir" : ""),
+          dot: "#34d399",
+          onClick: () => {
+            if (m.link) window.open(m.link, "_blank");
+            else navigate("agenda");
+          }
+        })),
+        onOpen: () => navigate("agenda")
+      }
+    ))), sec("WhatsApp", waPending.length === 0 ? /* @__PURE__ */ React.createElement(HomeCard, { icon: "msg-circle", color: "#25D366", title: "Sin mensajes por responder", sub: "No tienes conversaciones de WhatsApp pendientes.", onOpen: () => navigate("whatsapp") }) : /* @__PURE__ */ React.createElement(
       HomeCard,
       {
         icon: "msg-circle",

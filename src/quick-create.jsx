@@ -41,6 +41,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [autoMeet,   setAutoMeet]   = useState(true);  // generar Meet automáticamente
   const [creating,   setCreating]   = useState(false); // creando el evento/Meet
   const [gErr,       setGErr]       = useState("");
+  const [created,    setCreated]    = useState(null);  // { title, link } tras crear una reunión
+  const [copied,     setCopied]     = useState(false);
 
   useEffect(() => {
     if (open) {
@@ -58,6 +60,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       }
       setActiveTab(null); setPickerFor(null); setDatePicker(false);
       setGoogleConn(null); setAutoMeet(true); setCreating(false); setGErr("");
+      setCreated(null); setCopied(false);
     }
   }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
 
@@ -170,8 +173,23 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         link: meetLink,
         type: type === "meeting" ? "meeting" : "custom",
       });
+      // Reunión con enlace → mostramos el enlace para copiarlo antes de cerrar
+      if (type === "meeting" && meetLink) {
+        setCreated({ title: t, link: meetLink });
+        return;
+      }
     }
     onClose();
+  };
+
+  const copyLink = async () => {
+    if (!created) return;
+    try { await navigator.clipboard.writeText(created.link); }
+    catch (_) {
+      try { const ta = document.createElement("textarea"); ta.value = created.link;
+        document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); } catch (e) {}
+    }
+    setCopied(true); setTimeout(() => setCopied(false), 1800);
   };
 
   const accentColor = { task:"var(--accent)", event:"#60a5fa", meeting:"#34d399" }[type];
@@ -235,6 +253,41 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
           <div style={{ width:36, height:4, borderRadius:99, background:"rgba(255,255,255,0.18)" }}/>
         </div>
 
+        {created ? (
+          /* ── Reunión creada: enlace para copiar ── */
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:18, padding:"20px 28px 34px", textAlign:"center" }}>
+            <div style={{ width:60, height:60, borderRadius:"50%", background:"rgba(52,211,153,0.14)",
+              border:"0.5px solid rgba(52,211,153,0.35)", display:"grid", placeItems:"center", color:"#34d399" }}>
+              <Icon name="video" size={26} strokeWidth={1.7}/>
+            </div>
+            <div>
+              <div style={{ fontSize:20, fontFamily:"var(--font-display)", letterSpacing:"-0.8px", color:"var(--text)" }}>Reunión creada</div>
+              <div style={{ fontSize:13, color:"var(--text-subtle)", marginTop:4, maxWidth:360, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{created.title}</div>
+            </div>
+            <div onClick={copyLink} title="Copiar enlace"
+              style={{ width:"100%", maxWidth:400, display:"flex", alignItems:"center", gap:10, cursor:"pointer",
+                background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.12)", borderRadius:12, padding:"12px 14px" }}>
+              <Icon name="video" size={16} style={{ color:"#34d399", flexShrink:0 }}/>
+              <span style={{ flex:1, minWidth:0, fontSize:13, color:"var(--text)", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", textAlign:"left" }}>{created.link}</span>
+              <Icon name={copied ? "check" : "copy"} size={15} style={{ color: copied ? "#34d399" : "var(--text-muted)", flexShrink:0 }}/>
+            </div>
+            <div style={{ display:"flex", gap:10, width:"100%", maxWidth:400 }}>
+              <button onClick={copyLink} style={{
+                flex:1, padding:"12px 0", borderRadius:99, border:"none", cursor:"pointer",
+                background:"#34d399", color:"#07140f", fontSize:14, fontWeight:600, fontFamily:"var(--font-sans)",
+                display:"flex", alignItems:"center", justifyContent:"center", gap:7,
+              }}>
+                <Icon name={copied ? "check" : "copy"} size={15}/> {copied ? "¡Copiado!" : "Copiar enlace"}
+              </button>
+              <button onClick={onClose} style={{
+                padding:"12px 22px", borderRadius:99, cursor:"pointer",
+                background:"rgba(255,255,255,0.08)", border:"0.5px solid rgba(255,255,255,0.12)",
+                color:"var(--text-muted)", fontSize:14, fontFamily:"var(--font-sans)",
+              }}>Hecho</button>
+            </div>
+          </div>
+        ) : (
+        <>
         {/* Top bar */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"14px 22px 0" }}>
           <button onClick={onClose} style={{
@@ -560,6 +613,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
             </button>
           ))}
         </div>
+        </>
+        )}
       </div>
     </div>
 

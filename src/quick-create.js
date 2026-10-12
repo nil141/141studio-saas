@@ -34,6 +34,8 @@
     const [autoMeet, setAutoMeet] = useState(true);
     const [creating, setCreating] = useState(false);
     const [gErr, setGErr] = useState("");
+    const [created, setCreated] = useState(null);
+    const [copied, setCopied] = useState(false);
     useEffect(() => {
       if (open) {
         if (editTask && editTask.task) {
@@ -66,6 +68,8 @@
         setAutoMeet(true);
         setCreating(false);
         setGErr("");
+        setCreated(null);
+        setCopied(false);
       }
     }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
     useEffect(() => {
@@ -198,8 +202,30 @@
           link: meetLink,
           type: type === "meeting" ? "meeting" : "custom"
         });
+        if (type === "meeting" && meetLink) {
+          setCreated({ title: t, link: meetLink });
+          return;
+        }
       }
       onClose();
+    };
+    const copyLink = async () => {
+      if (!created) return;
+      try {
+        await navigator.clipboard.writeText(created.link);
+      } catch (_) {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = created.link;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+        } catch (e) {
+        }
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
     };
     const accentColor = { task: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
     const accentHex = { task: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
@@ -261,7 +287,64 @@
           }
         },
         /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+        created ? (
+          /* ── Reunión creada: enlace para copiar ── */
+          /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 18, padding: "20px 28px 34px", textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: {
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
+            background: "rgba(52,211,153,0.14)",
+            border: "0.5px solid rgba(52,211,153,0.35)",
+            display: "grid",
+            placeItems: "center",
+            color: "#34d399"
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "video", size: 26, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 20, fontFamily: "var(--font-display)", letterSpacing: "-0.8px", color: "var(--text)" } }, "Reuni\xF3n creada"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", marginTop: 4, maxWidth: 360, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, created.title)), /* @__PURE__ */ React.createElement(
+            "div",
+            {
+              onClick: copyLink,
+              title: "Copiar enlace",
+              style: {
+                width: "100%",
+                maxWidth: 400,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                cursor: "pointer",
+                background: "rgba(255,255,255,0.05)",
+                border: "0.5px solid rgba(255,255,255,0.12)",
+                borderRadius: 12,
+                padding: "12px 14px"
+              }
+            },
+            /* @__PURE__ */ React.createElement(Icon, { name: "video", size: 16, style: { color: "#34d399", flexShrink: 0 } }),
+            /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", textAlign: "left" } }, created.link),
+            /* @__PURE__ */ React.createElement(Icon, { name: copied ? "check" : "copy", size: 15, style: { color: copied ? "#34d399" : "var(--text-muted)", flexShrink: 0 } })
+          ), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 10, width: "100%", maxWidth: 400 } }, /* @__PURE__ */ React.createElement("button", { onClick: copyLink, style: {
+            flex: 1,
+            padding: "12px 0",
+            borderRadius: 99,
+            border: "none",
+            cursor: "pointer",
+            background: "#34d399",
+            color: "#07140f",
+            fontSize: 14,
+            fontWeight: 600,
+            fontFamily: "var(--font-sans)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 7
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: copied ? "check" : "copy", size: 15 }), " ", copied ? "\xA1Copiado!" : "Copiar enlace"), /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+            padding: "12px 22px",
+            borderRadius: 99,
+            cursor: "pointer",
+            background: "rgba(255,255,255,0.08)",
+            border: "0.5px solid rgba(255,255,255,0.12)",
+            color: "var(--text-muted)",
+            fontSize: 14,
+            fontFamily: "var(--font-sans)"
+          } }, "Hecho")))
+        ) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
           width: 40,
           height: 40,
           borderRadius: "50%",
@@ -307,8 +390,7 @@
           borderTopColor: "#fff",
           display: "block",
           animation: "qcSpin .7s linear infinite"
-        } }) : /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))),
-        /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+        } }) : /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))), /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
           "input",
           {
             autoFocus: true,
@@ -350,8 +432,7 @@
               caretColor: accentColor
             }
           }
-        )),
-        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => {
+        )), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => {
           const nid = clientId === c.id ? "" : c.id;
           setClientId(nid);
           if (curProject && curProject.clientId !== nid) setProjectId("");
@@ -530,9 +611,7 @@
             textDecoration: "underline",
             fontFamily: "var(--font-sans)"
           } }, "Usar Google Meet autom\xE1tico"))
-        ))),
-        /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
-        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
+        ))), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
           display: "flex",
           alignItems: "center",
           gap: 6,
@@ -554,7 +633,7 @@
           overflow: "hidden",
           textOverflow: "ellipsis",
           whiteSpace: "nowrap"
-        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, FREQ_OPTS.find((f) => f.id === freq)?.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && (link.trim() || type === "meeting" && autoMeet && googleConn) && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)))))
+        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, FREQ_OPTS.find((f) => f.id === freq)?.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && (link.trim() || type === "meeting" && autoMeet && googleConn) && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date))))))
       )
     ), pickerFor && /* @__PURE__ */ React.createElement(
       TimePicker,
