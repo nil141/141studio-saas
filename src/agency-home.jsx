@@ -32,8 +32,25 @@ const _homeWaTime = (ts) => {
   } catch { return ""; }
 };
 
+// Anillo de progreso del día (donut) — reemplaza el icono cuando se pasa pct
+const DonutIcon = ({ pct, size = 21, stroke = 2.4, color = "#9e9ae5" }) => {
+  const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(100, pct || 0));
+  const dash = (p / 100) * circ;
+  return (
+    <svg width={size} height={size} style={{ display: "block", flexShrink: 0 }}>
+      <circle cx={c} cy={c} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={stroke}/>
+      {p > 0 && (
+        <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
+          strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${c} ${c})`}
+          style={{ transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }}/>
+      )}
+    </svg>
+  );
+};
+
 // Tarjeta tipo Kinso: icono + título + descripción, con chevron que despliega
-const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
+const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
   const [open, setOpen] = useState(!!defaultOpen);
   const expandable = items && items.length > 0;
   return (
@@ -44,7 +61,7 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
         <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
-          <Icon name={icon} size={15} strokeWidth={1.8}/>
+          {iconNode || <Icon name={icon} size={15} strokeWidth={1.8}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
@@ -65,7 +82,16 @@ const HomeCard = ({ icon, color, title, sub, items, onOpen, defaultOpen }) => {
                 style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 10, cursor: it.onClick ? "pointer" : "default" }}
                 onMouseEnter={e => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
-                {it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
+                {it.onComplete ? (
+                  <button onClick={e => { e.stopPropagation(); it.onComplete(); }} title="Marcar como hecha"
+                    style={{ width: 19, height: 19, flexShrink: 0, borderRadius: "50%", padding: 0, display: "grid", placeItems: "center",
+                      background: "transparent", border: `1.6px solid ${it.overdue ? "var(--red)" : "rgba(255,255,255,0.28)"}`,
+                      cursor: "pointer", transition: "border-color .15s, background .15s" }}
+                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "rgba(158,154,229,0.14)"; const c = e.currentTarget.firstChild; if (c) c.style.opacity = 1; }}
+                    onMouseLeave={e => { e.currentTarget.style.borderColor = it.overdue ? "var(--red)" : "rgba(255,255,255,0.28)"; e.currentTarget.style.background = "transparent"; const c = e.currentTarget.firstChild; if (c) c.style.opacity = 0; }}>
+                    <Icon name="check" size={11} style={{ color: "var(--accent)", opacity: 0, transition: "opacity .12s" }}/>
+                  </button>
+                ) : it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
                 {it.right && <span style={{ fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
               </div>
@@ -96,6 +122,10 @@ const AgencyHome = ({ navigate, openModal, session }) => {
     .flatMap(([pid, arr]) => (arr || []).map(t => ({ ...t, _pid: pid })));
   const todayTasks = liveTasks.filter(t => t.column !== "done" && t.deadline && t.deadline <= today)
     .sort((a, b) => (a.deadline < b.deadline ? -1 : 1));
+  // Progreso del día: todas las tareas que vencen hoy o antes (incl. hechas)
+  const todayAll = liveTasks.filter(t => t.deadline && t.deadline <= today);
+  const todayDoneCount = todayAll.filter(t => t.column === "done").length;
+  const todayPct = todayAll.length ? Math.round(todayDoneCount / todayAll.length * 100) : 0;
 
   // Proyectos en marcha (no completados), ordenados por entrega
   const projs = (D.PROJECTS || []).map(p => {
@@ -144,12 +174,21 @@ const AgencyHome = ({ navigate, openModal, session }) => {
 
         {/* Hoy — tareas */}
         {sec("Hoy", todayTasks.length === 0 ? (
-          <HomeCard icon="check" color="#34d399" title="Todo hecho por hoy 🎉" sub="No te queda ninguna tarea pendiente para hoy." onOpen={() => navigate("tasks")}/>
+          <HomeCard icon="check" color="#34d399"
+            iconNode={todayAll.length > 0 ? <DonutIcon pct={100} color="#34d399"/> : null}
+            title="Todo hecho por hoy 🎉" sub="No te queda ninguna tarea pendiente para hoy." onOpen={() => navigate("tasks")}/>
         ) : (
           <HomeCard icon="list-todo" color="#9e9ae5"
+            iconNode={<DonutIcon pct={todayPct} color="#9e9ae5"/>}
             title={`Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
             sub={todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
-            items={todayTasks.slice(0, 8).map(t => ({ label: t.title, right: t.deadline && t.deadline < today ? "Atrasada" : "Hoy", dot: t.deadline < today ? "var(--red)" : "var(--accent)", onClick: () => navigate("tasks") }))}
+            items={todayTasks.slice(0, 8).map(t => ({
+              label: t.title,
+              right: t.deadline && t.deadline < today ? "Atrasada" : "Hoy",
+              overdue: t.deadline < today,
+              onComplete: () => { try { D.moveTask(t._pid, t.id, "done"); } catch (_) {} },
+              onClick: () => navigate("tasks"),
+            }))}
             onOpen={() => navigate("tasks")}/>
         ))}
 
