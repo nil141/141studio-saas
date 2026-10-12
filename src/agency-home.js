@@ -45,7 +45,7 @@
       return "";
     }
   };
-  const DonutIcon = ({ pct, size = 22, stroke = 2, color = "#9e9ae5" }) => {
+  const DonutIcon = ({ pct, size = 22, stroke = 2, color = "var(--accent)" }) => {
     const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
     const p = Math.max(0, Math.min(100, pct || 0));
     const done = p >= 100;
@@ -64,7 +64,7 @@
         transform: `rotate(-90 ${c} ${c})`,
         style: { transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }
       }
-    )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color, position: "relative" } }) : /* @__PURE__ */ React.createElement("span", { style: { width: 4, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.25)", position: "relative" } }));
+    )), done && /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color, position: "relative" } }));
   };
   const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
     const [open, setOpen] = useState(!!defaultOpen);
@@ -220,8 +220,8 @@
       HomeCard,
       {
         icon: "check",
-        color: "#34d399",
-        iconNode: todayAll.length > 0 ? /* @__PURE__ */ React.createElement(DonutIcon, { pct: 100, color: "#34d399" }) : null,
+        color: "var(--accent)",
+        iconNode: todayAll.length > 0 ? /* @__PURE__ */ React.createElement(DonutIcon, { pct: 100 }) : null,
         title: "Todo hecho por hoy \u{1F389}",
         sub: "No te queda ninguna tarea pendiente para hoy.",
         onOpen: () => navigate("tasks")
@@ -231,7 +231,7 @@
       {
         icon: "list-todo",
         color: "#9e9ae5",
-        iconNode: /* @__PURE__ */ React.createElement(DonutIcon, { pct: todayPct, color: "#9e9ae5" }),
+        iconNode: /* @__PURE__ */ React.createElement(DonutIcon, { pct: todayPct }),
         title: `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`,
         sub: todayTasks.slice(0, 3).map((t) => t.title).join(" \xB7 "),
         items: todayTasks.slice(0, 8).map((t) => ({
