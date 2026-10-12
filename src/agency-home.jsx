@@ -32,20 +32,27 @@ const _homeWaTime = (ts) => {
   } catch { return ""; }
 };
 
-// Anillo de progreso del día (donut) — reemplaza el icono cuando se pasa pct
-const DonutIcon = ({ pct, size = 21, stroke = 2.4, color = "#9e9ae5" }) => {
+// Anillo de progreso del día (donut) — mismo estilo que la página de tareas:
+// aro que se va rellenando con el progreso y, al 100%, un tick en el centro.
+const DonutIcon = ({ pct, size = 22, stroke = 2, color = "#9e9ae5" }) => {
   const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
   const p = Math.max(0, Math.min(100, pct || 0));
+  const done = p >= 100;
   const dash = (p / 100) * circ;
   return (
-    <svg width={size} height={size} style={{ display: "block", flexShrink: 0 }}>
-      <circle cx={c} cy={c} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={stroke}/>
-      {p > 0 && (
-        <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-          strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${c} ${c})`}
-          style={{ transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }}/>
-      )}
-    </svg>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0, display: "grid", placeItems: "center" }}>
+      <svg width={size} height={size} style={{ position: "absolute", top: 0, left: 0 }}>
+        <circle cx={c} cy={c} r={r} fill="none" stroke={done ? color : "rgba(255,255,255,0.12)"} strokeWidth={stroke}/>
+        {!done && p > 0 && (
+          <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
+            strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${c} ${c})`}
+            style={{ transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }}/>
+        )}
+      </svg>
+      {done
+        ? <Icon name="check" size={12} style={{ color, position: "relative" }}/>
+        : <span style={{ width: 4, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.25)", position: "relative" }}/>}
+    </div>
   );
 };
 

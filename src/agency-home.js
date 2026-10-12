@@ -45,11 +45,12 @@
       return "";
     }
   };
-  const DonutIcon = ({ pct, size = 21, stroke = 2.4, color = "#9e9ae5" }) => {
+  const DonutIcon = ({ pct, size = 22, stroke = 2, color = "#9e9ae5" }) => {
     const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
     const p = Math.max(0, Math.min(100, pct || 0));
+    const done = p >= 100;
     const dash = p / 100 * circ;
-    return /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { display: "block", flexShrink: 0 } }, /* @__PURE__ */ React.createElement("circle", { cx: c, cy: c, r, fill: "none", stroke: "rgba(255,255,255,0.14)", strokeWidth: stroke }), p > 0 && /* @__PURE__ */ React.createElement(
+    return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: size, height: size, flexShrink: 0, display: "grid", placeItems: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement("circle", { cx: c, cy: c, r, fill: "none", stroke: done ? color : "rgba(255,255,255,0.12)", strokeWidth: stroke }), !done && p > 0 && /* @__PURE__ */ React.createElement(
       "circle",
       {
         cx: c,
@@ -63,7 +64,7 @@
         transform: `rotate(-90 ${c} ${c})`,
         style: { transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }
       }
-    ));
+    )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: 12, style: { color, position: "relative" } }) : /* @__PURE__ */ React.createElement("span", { style: { width: 4, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.25)", position: "relative" } }));
   };
   const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
     const [open, setOpen] = useState(!!defaultOpen);
