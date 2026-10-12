@@ -9,16 +9,25 @@
 -- Solución: REPLICA IDENTITY FULL incluye todas las columnas del registro viejo
 -- en el payload del DELETE, el filtro agency_id casa y el evento sí se entrega.
 -- Ejecuta este SQL en Supabase → SQL Editor (una vez).
+--
+-- Nota: solo altera las tablas que existan en tu base de datos; las que no
+-- existan se ignoran sin dar error.
 
-alter table public.tasks         replica identity full;
-alter table public.projects      replica identity full;
-alter table public.clients       replica identity full;
-alter table public.invoices      replica identity full;
-alter table public.leads         replica identity full;
-alter table public.deliverables  replica identity full;
-alter table public.credentials   replica identity full;
-alter table public.client_tasks  replica identity full;
-alter table public.notifications replica identity full;
-alter table public.agenda_events replica identity full;
-alter table public.outreach      replica identity full;
-alter table public.resources     replica identity full;
+do $$
+declare
+  t text;
+  tables text[] := array[
+    'tasks', 'projects', 'clients', 'invoices', 'leads', 'deliverables',
+    'credentials', 'client_tasks', 'notifications', 'agenda_events',
+    'outreach', 'resources', 'whatsapp_messages'
+  ];
+begin
+  foreach t in array tables loop
+    if to_regclass('public.' || t) is not null then
+      execute format('alter table public.%I replica identity full', t);
+      raise notice 'replica identity full -> public.%', t;
+    else
+      raise notice 'omitida (no existe) -> public.%', t;
+    end if;
+  end loop;
+end $$;
