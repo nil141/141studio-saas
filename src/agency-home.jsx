@@ -34,22 +34,25 @@ const _homeWaTime = (ts) => {
 
 // Anillo de progreso del día (donut) — mismo estilo que la página de tareas:
 // aro que se va rellenando con el progreso y, al 100%, un tick en el centro.
-const DonutIcon = ({ pct, size = 22, stroke = 2, color = "var(--accent)" }) => {
-  const r = (size - stroke) / 2, c = size / 2, circ = 2 * Math.PI * r;
-  const p = Math.max(0, Math.min(100, pct || 0));
+const DonutIcon = ({ pct, size = 24, stroke = 2, color = "var(--accent)", xColor }) => {
+  const r = (size - stroke) / 2 - 0.5, c = size / 2, circ = 2 * Math.PI * r;
+  const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
   const done = p >= 100;
-  const dash = (p / 100) * circ;
   return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0, display: "grid", placeItems: "center" }}>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <svg width={size} height={size} style={{ position: "absolute", top: 0, left: 0 }}>
         <circle cx={c} cy={c} r={r} fill="none" stroke={done ? color : "rgba(255,255,255,0.12)"} strokeWidth={stroke}/>
         {!done && p > 0 && (
           <circle cx={c} cy={c} r={r} fill="none" stroke={color} strokeWidth={stroke} strokeLinecap="round"
-            strokeDasharray={`${dash} ${circ}`} transform={`rotate(-90 ${c} ${c})`}
+            strokeDasharray={`${(p / 100) * circ} ${circ}`} transform={`rotate(-90 ${c} ${c})`}
             style={{ transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }}/>
         )}
       </svg>
-      {done && <Icon name="check" size={12} style={{ color, position: "relative" }}/>}
+      {done
+        ? <Icon name="check" size={Math.round(size * 0.55)} style={{ color, position: "relative" }}/>
+        : p > 0
+          ? <span style={{ fontSize: Math.max(7.5, size * 0.33), fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.7px" }}>{p}%</span>
+          : <Icon name="x" size={Math.round(size * 0.46)} style={{ color: xColor || "rgba(255,255,255,0.22)", position: "relative" }}/>}
     </div>
   );
 };
@@ -88,16 +91,14 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
                 onMouseEnter={e => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)")}
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 {it.onComplete ? (
-                  <button onClick={e => { e.stopPropagation(); it.onComplete(); }} title="Marcar como hecha"
-                    style={{ width: 19, height: 19, flexShrink: 0, borderRadius: "50%", padding: 0, display: "grid", placeItems: "center",
-                      background: "transparent", border: `1.6px solid ${it.overdue ? "var(--red)" : "rgba(255,255,255,0.28)"}`,
-                      cursor: "pointer", transition: "border-color .15s, background .15s" }}
-                    onMouseEnter={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.background = "rgba(158,154,229,0.14)"; const c = e.currentTarget.firstChild; if (c) c.style.opacity = 1; }}
-                    onMouseLeave={e => { e.currentTarget.style.borderColor = it.overdue ? "var(--red)" : "rgba(255,255,255,0.28)"; e.currentTarget.style.background = "transparent"; const c = e.currentTarget.firstChild; if (c) c.style.opacity = 0; }}>
-                    <Icon name="check" size={11} style={{ color: "var(--accent)", opacity: 0, transition: "opacity .12s" }}/>
+                  <button onClick={e => { e.stopPropagation(); it.onComplete(); }} title={it.completed ? "Marcar como pendiente" : "Marcar como hecha"}
+                    style={{ flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex", opacity: 0.92, transition: "opacity .12s" }}
+                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
+                    onMouseLeave={e => e.currentTarget.style.opacity = 0.92}>
+                    <DonutIcon pct={it.completed ? 100 : (it.prog || 0)} size={22} xColor={it.overdue ? "var(--red)" : undefined}/>
                   </button>
                 ) : it.dot && <span style={{ width: 7, height: 7, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
                 {it.right && <span style={{ fontSize: 11.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
               </div>
             ))}
@@ -131,6 +132,12 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   const todayAll = liveTasks.filter(t => t.deadline && t.deadline <= today);
   const todayDoneCount = todayAll.filter(t => t.column === "done").length;
   const todayPct = todayAll.length ? Math.round(todayDoneCount / todayAll.length * 100) : 0;
+  // Pendientes primero (por fecha), hechas al final — para el desplegable de "Hoy"
+  const todayItems = todayAll.slice().sort((a, b) => {
+    const ad = a.column === "done", bd = b.column === "done";
+    if (ad !== bd) return ad ? 1 : -1;
+    return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
+  });
 
   // Proyectos en marcha (no completados), ordenados por entrega
   const projs = (D.PROJECTS || []).map(p => {
@@ -178,22 +185,29 @@ const AgencyHome = ({ navigate, openModal, session }) => {
         </h1>
 
         {/* Hoy — tareas */}
-        {sec("Hoy", todayTasks.length === 0 ? (
+        {sec("Hoy", todayAll.length === 0 ? (
           <HomeCard icon="check" color="var(--accent)"
-            iconNode={todayAll.length > 0 ? <DonutIcon pct={100}/> : null}
-            title="Todo hecho por hoy 🎉" sub="No te queda ninguna tarea pendiente para hoy." onOpen={() => navigate("tasks")}/>
+            title="Sin tareas para hoy" sub="No tienes nada programado para hoy." onOpen={() => navigate("tasks")}/>
         ) : (
           <HomeCard icon="list-todo" color="#9e9ae5"
             iconNode={<DonutIcon pct={todayPct}/>}
-            title={`Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
-            sub={todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
-            items={todayTasks.slice(0, 8).map(t => ({
-              label: t.title,
-              right: t.deadline && t.deadline < today ? "Atrasada" : "Hoy",
-              overdue: t.deadline < today,
-              onComplete: () => { try { D.moveTask(t._pid, t.id, "done"); } catch (_) {} },
-              onClick: () => navigate("tasks"),
-            }))}
+            title={todayTasks.length === 0 ? "Todo hecho por hoy 🎉" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
+            sub={todayTasks.length === 0
+              ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
+              : todayTasks.slice(0, 3).map(t => t.title).join(" · ")}
+            items={todayItems.slice(0, 10).map(t => {
+              const done = t.column === "done";
+              const overdue = !done && t.deadline && t.deadline < today;
+              return {
+                label: t.title,
+                right: done ? "Hecha" : (overdue ? "Atrasada" : "Hoy"),
+                overdue,
+                completed: done,
+                prog: t.progress || 0,
+                onComplete: () => { try { D.moveTask(t._pid, t.id, done ? "todo" : "done"); } catch (_) {} },
+                onClick: () => navigate("tasks"),
+              };
+            })}
             onOpen={() => navigate("tasks")}/>
         ))}
 
