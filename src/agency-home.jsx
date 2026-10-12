@@ -194,7 +194,7 @@ const AgencyHome = ({ navigate, openModal, session }) => {
         ) : (
           <HomeCard icon="list-todo" color="#9e9ae5"
             iconNode={<DonutIcon pct={todayPct}/>}
-            title={todayTasks.length === 0 ? "Todo hecho por hoy 🎉" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
+            title={todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
             sub={todayTasks.length === 0
               ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
               : todayTasks.slice(0, 3).map(t => t.title).join(" · ")}

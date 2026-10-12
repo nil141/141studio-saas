@@ -214,7 +214,7 @@
         icon: "list-todo",
         color: "#9e9ae5",
         iconNode: /* @__PURE__ */ React.createElement(DonutIcon, { pct: todayPct }),
-        title: todayTasks.length === 0 ? "Todo hecho por hoy \u{1F389}" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`,
+        title: todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`,
         sub: todayTasks.length === 0 ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}` : todayTasks.slice(0, 3).map((t) => t.title).join(" \xB7 "),
         items: todayItems.slice(0, 10).map((t) => {
           const done = t.column === "done";
