@@ -126,10 +126,13 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   const liveTasks = Object.entries(D.TASKS || {})
     .filter(([pid]) => pid === "__none__" || projIds.has(pid))
     .flatMap(([pid, arr]) => (arr || []).map(t => ({ ...t, _pid: pid })));
-  const todayTasks = liveTasks.filter(t => t.column !== "done" && t.deadline && t.deadline <= today)
+  // Mismo criterio que la página de Tareas (vista de hoy): una tarea es "de hoy"
+  // si vence hoy (pendiente o hecha hoy) o si está vencida y sigue pendiente.
+  // Así Inicio y Tareas enseñan exactamente el mismo conjunto, siempre a la par.
+  const _isToday = t => t.deadline && (t.deadline === today || (t.deadline < today && t.column !== "done"));
+  const todayAll = liveTasks.filter(_isToday);
+  const todayTasks = todayAll.filter(t => t.column !== "done")
     .sort((a, b) => (a.deadline < b.deadline ? -1 : 1));
-  // Progreso del día: todas las tareas que vencen hoy o antes (incl. hechas)
-  const todayAll = liveTasks.filter(t => t.deadline && t.deadline <= today);
   const todayDoneCount = todayAll.filter(t => t.column === "done").length;
   const todayPct = todayAll.length ? Math.round(todayDoneCount / todayAll.length * 100) : 0;
   // Pendientes primero (por fecha), hechas al final — para el desplegable de "Hoy"

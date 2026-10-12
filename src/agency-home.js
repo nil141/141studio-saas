@@ -150,8 +150,9 @@
     const [ask, setAsk] = useState("");
     const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
     const liveTasks = Object.entries(D.TASKS || {}).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => (arr || []).map((t) => ({ ...t, _pid: pid })));
-    const todayTasks = liveTasks.filter((t) => t.column !== "done" && t.deadline && t.deadline <= today).sort((a, b) => a.deadline < b.deadline ? -1 : 1);
-    const todayAll = liveTasks.filter((t) => t.deadline && t.deadline <= today);
+    const _isToday = (t) => t.deadline && (t.deadline === today || t.deadline < today && t.column !== "done");
+    const todayAll = liveTasks.filter(_isToday);
+    const todayTasks = todayAll.filter((t) => t.column !== "done").sort((a, b) => a.deadline < b.deadline ? -1 : 1);
     const todayDoneCount = todayAll.filter((t) => t.column === "done").length;
     const todayPct = todayAll.length ? Math.round(todayDoneCount / todayAll.length * 100) : 0;
     const todayItems = todayAll.slice().sort((a, b) => {

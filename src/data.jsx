@@ -1555,7 +1555,13 @@ const deleteTask = (projectId, taskId) => {
   const uid = _uid(); if (!uid) return;
   if (!_store.TASKS[projectId]) return;
   _store.TASKS[projectId] = _store.TASKS[projectId].filter(t => t.id !== taskId); _emit();
-  _sb.from("tasks").delete().eq("id", taskId).then();
+  // .select() devuelve las filas borradas: si viene vacío, el DELETE no afectó a
+  // ninguna fila (p. ej. RLS sin política de delete) y la tarea reaparecería al
+  // recargar. Lo registramos para detectarlo.
+  _sb.from("tasks").delete().eq("id", taskId).select().then(({ data, error }) => {
+    if (error) console.warn("[tasks] delete error:", error.message);
+    else if (!data || data.length === 0) console.warn("[tasks] delete afectó 0 filas (posible RLS) id=", taskId);
+  });
 };
 
 // Limpieza: borra de Supabase las tareas SUELTAS (sin proyecto) obsoletas —

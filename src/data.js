@@ -1778,7 +1778,10 @@
     if (!_store.TASKS[projectId]) return;
     _store.TASKS[projectId] = _store.TASKS[projectId].filter((t) => t.id !== taskId);
     _emit();
-    _sb.from("tasks").delete().eq("id", taskId).then();
+    _sb.from("tasks").delete().eq("id", taskId).select().then(({ data, error }) => {
+      if (error) console.warn("[tasks] delete error:", error.message);
+      else if (!data || data.length === 0) console.warn("[tasks] delete afect\xF3 0 filas (posible RLS) id=", taskId);
+    });
   };
   const _cleanupOldTasks = () => {
     const uid = _uid();
