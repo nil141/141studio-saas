@@ -58,6 +58,21 @@ WA_APP_ID       = os.environ.get("WHATSAPP_APP_ID", "")
 WA_APP_SECRET   = os.environ.get("WHATSAPP_APP_SECRET", "")
 WA_ES_CONFIG_ID = os.environ.get("WHATSAPP_ES_CONFIG_ID", "")
 
+# ── Google Calendar / Meet ──────────────────────────────────────────────
+# OAuth 2.0 (cliente web) para crear eventos con enlace de Meet automático.
+# GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET : credenciales del cliente OAuth.
+# GOOGLE_REDIRECT_URI : debe coincidir EXACTAMENTE con la de la consola de Google.
+# GOOGLE_AGENCY_ID    : agencia a la que se vincula la conexión (uuid = auth.uid()).
+# GOOGLE_CALENDAR_ID  : calendario donde se crean los eventos ('primary').
+# GOOGLE_TZ           : zona horaria IANA para los eventos.
+GOOGLE_CLIENT_ID     = os.environ.get("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI  = os.environ.get("GOOGLE_REDIRECT_URI", "https://app.141agency.com/api/google/callback")
+GOOGLE_AGENCY_ID     = os.environ.get("GOOGLE_AGENCY_ID", "") or WA_AGENCY_ID
+GOOGLE_CALENDAR_ID   = os.environ.get("GOOGLE_CALENDAR_ID", "primary")
+GOOGLE_TZ            = os.environ.get("GOOGLE_TZ", "Europe/Madrid")
+GOOGLE_SCOPES        = "openid email https://www.googleapis.com/auth/calendar.events"
+
 # Orígenes permitidos para CORS (coma-separados). Mismo origen no necesita CORS.
 ALLOWED_ORIGINS = [o.strip() for o in os.environ.get(
     "ALLOWED_ORIGINS", "https://app.141agency.com,http://localhost:8080"
@@ -1585,6 +1600,219 @@ WHATSAPP_HANDLERS = {
     "connect": api_whatsapp_connect,
 }
 
+# ── Google Calendar / Meet ──────────────────────────────────────────────
+# Conexión OAuth guardada en la tabla google_config (solo servidor). Crea
+# eventos en Google Calendar con enlace de Meet automático.
+_GOOGLE_STATES = {}   # state_token -> ts (CSRF, en memoria, corta vida)
+
+def _google_cfg(force=False):
+    """Lee la conexión de Google de la agencia (o None si no hay)."""
+    if not (SB_SERVICE_KEY and GOOGLE_AGENCY_ID):
+        return None
+    try:
+        rows = _sb_service("GET", "google_config?agency_id=eq." + GOOGLE_AGENCY_ID + "&select=*")
+        return rows[0] if rows else None
+    except Exception:
+        traceback.print_exc()
+        return None
+
+def _google_save_cfg(row):
+    """Upsert de la config de Google (por agency_id)."""
+    try:
+        patched = _sb_service("PATCH", "google_config?agency_id=eq." + GOOGLE_AGENCY_ID, row)
+        if patched:
+            return patched
+    except Exception:
+        pass
+    r = dict(row); r["agency_id"] = GOOGLE_AGENCY_ID
+    return _sb_service("POST", "google_config", r)
+
+def _google_token_request(data):
+    """POST a oauth2 token endpoint. Devuelve el dict de respuesta."""
+    body = urllib.parse.urlencode(data).encode()
+    req = urllib.request.Request("https://oauth2.googleapis.com/token", method="POST", data=body)
+    req.add_header("Content-Type", "application/x-www-form-urlencoded")
+    with urllib.request.urlopen(req, timeout=25) as r:
+        return json.loads(r.read().decode())
+
+def _google_access_token():
+    """Devuelve un access_token válido, refrescándolo si hace falta."""
+    cfg = _google_cfg()
+    if not cfg or not cfg.get("refresh_token"):
+        return None
+    # ¿Sigue vigente el access_token guardado? (margen de 60s)
+    try:
+        exp = cfg.get("token_expiry")
+        if cfg.get("access_token") and exp:
+            expdt = datetime.datetime.fromisoformat(exp.replace("Z", "+00:00"))
+            if expdt - datetime.timedelta(seconds=60) > datetime.datetime.now(datetime.timezone.utc):
+                return cfg["access_token"]
+    except Exception:
+        pass
+    # Refrescar
+    try:
+        tok = _google_token_request({
+            "client_id": GOOGLE_CLIENT_ID, "client_secret": GOOGLE_CLIENT_SECRET,
+            "refresh_token": cfg["refresh_token"], "grant_type": "refresh_token",
+        })
+    except Exception:
+        traceback.print_exc(); return None
+    at = tok.get("access_token")
+    if not at:
+        return None
+    exp_iso = (datetime.datetime.now(datetime.timezone.utc)
+               + datetime.timedelta(seconds=int(tok.get("expires_in", 3600)))).isoformat()
+    try:
+        _google_save_cfg({"access_token": at, "token_expiry": exp_iso,
+                          "updated_at": _wa_now_iso()})
+    except Exception:
+        pass
+    return at
+
+def api_google_status(body):
+    """¿Está conectada la cuenta de Google? Para el frontend."""
+    cfg = _google_cfg()
+    connected = bool(cfg and cfg.get("refresh_token"))
+    return {"ok": True, "connected": connected,
+            "email": (cfg or {}).get("email") or "",
+            "configured": bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_AGENCY_ID)}
+
+def api_google_auth_url(body):
+    """Devuelve la URL de consentimiento de Google para conectar la cuenta."""
+    if not (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET):
+        return {"ok": False, "error": "El servidor no tiene GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET."}
+    if not GOOGLE_AGENCY_ID:
+        return {"ok": False, "error": "Falta GOOGLE_AGENCY_ID en el servidor."}
+    state = secrets.token_hex(16)
+    _GOOGLE_STATES[state] = time.time()
+    # Limpia estados viejos (>10 min)
+    for k in [k for k, v in _GOOGLE_STATES.items() if time.time() - v > 600]:
+        _GOOGLE_STATES.pop(k, None)
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": GOOGLE_SCOPES,
+        "access_type": "offline",
+        "prompt": "consent",
+        "include_granted_scopes": "true",
+        "state": state,
+    }
+    hint = (body.get("login_hint") or "").strip()
+    if hint:
+        params["login_hint"] = hint
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    return {"ok": True, "url": url}
+
+def _google_exchange_code(code):
+    """Canjea el code por tokens y guarda la conexión. Devuelve (ok, email, error)."""
+    try:
+        tok = _google_token_request({
+            "client_id": GOOGLE_CLIENT_ID, "client_secret": GOOGLE_CLIENT_SECRET,
+            "code": code, "redirect_uri": GOOGLE_REDIRECT_URI,
+            "grant_type": "authorization_code",
+        })
+    except urllib.error.HTTPError as e:
+        try: detail = json.loads(e.read().decode()).get("error_description", "")
+        except Exception: detail = ""
+        return (False, "", "No se pudo canjear el código: " + (detail or str(e.code)))
+    except Exception as e:
+        return (False, "", str(e))
+    refresh = tok.get("refresh_token")
+    access  = tok.get("access_token")
+    if not refresh:
+        return (False, "", "Google no devolvió refresh_token. Revoca el acceso y vuelve a conectar con prompt=consent.")
+    # Email de la cuenta (best-effort)
+    email_addr = ""
+    try:
+        ireq = urllib.request.Request("https://www.googleapis.com/oauth2/v2/userinfo")
+        ireq.add_header("Authorization", "Bearer " + access)
+        with urllib.request.urlopen(ireq, timeout=15) as r:
+            email_addr = (json.loads(r.read().decode()) or {}).get("email", "")
+    except Exception:
+        pass
+    exp_iso = (datetime.datetime.now(datetime.timezone.utc)
+               + datetime.timedelta(seconds=int(tok.get("expires_in", 3600)))).isoformat()
+    try:
+        _google_save_cfg({"refresh_token": refresh, "access_token": access,
+                          "token_expiry": exp_iso, "email": email_addr or None,
+                          "calendar_id": GOOGLE_CALENDAR_ID,
+                          "connected_at": _wa_now_iso(), "updated_at": _wa_now_iso()})
+    except Exception as e:
+        traceback.print_exc()
+        return (False, "", "No se pudo guardar la conexión: " + str(e))
+    print("[GOOGLE] conexión guardada email=" + str(email_addr))
+    return (True, email_addr, "")
+
+def api_meet_create(body):
+    """Crea un evento en Google Calendar con enlace de Meet y lo devuelve."""
+    at = _google_access_token()
+    if not at:
+        return {"ok": False, "error": "Google no está conectado.", "needsConnect": True}
+    title = (body.get("title") or "Reunión").strip()
+    desc  = (body.get("description") or "").strip()
+    date  = (body.get("date") or "").strip()          # YYYY-MM-DD
+    tstart= (body.get("time") or "").strip()           # HH:MM
+    tend  = (body.get("timeEnd") or "").strip()        # HH:MM
+    attendees = [a for a in (body.get("attendees") or []) if a]
+    if not date:
+        return {"ok": False, "error": "Falta la fecha de la reunión."}
+    event = {"summary": title,
+             "conferenceData": {"createRequest": {
+                 "requestId": secrets.token_hex(12),
+                 "conferenceSolutionKey": {"type": "hangoutsMeet"}}}}
+    if desc:
+        event["description"] = desc
+    if tstart:
+        # Evento con hora: si no hay fin, +1h
+        def _add_hour(hhmm):
+            h, m = [int(x) for x in hhmm.split(":")[:2]]
+            h = (h + 1) % 24
+            return f"{h:02d}:{m:02d}"
+        end_t = tend or _add_hour(tstart)
+        event["start"] = {"dateTime": f"{date}T{tstart}:00", "timeZone": GOOGLE_TZ}
+        event["end"]   = {"dateTime": f"{date}T{end_t}:00", "timeZone": GOOGLE_TZ}
+    else:
+        # Evento de día completo
+        try:
+            nxt = (datetime.date.fromisoformat(date) + datetime.timedelta(days=1)).isoformat()
+        except Exception:
+            nxt = date
+        event["start"] = {"date": date}
+        event["end"]   = {"date": nxt}
+    if attendees:
+        event["attendees"] = [{"email": a} for a in attendees]
+    cal = (_google_cfg() or {}).get("calendar_id") or GOOGLE_CALENDAR_ID
+    url = ("https://www.googleapis.com/calendar/v3/calendars/"
+           + urllib.parse.quote(cal) + "/events?conferenceDataVersion=1&sendUpdates=all")
+    try:
+        req = urllib.request.Request(url, method="POST", data=json.dumps(event).encode())
+        req.add_header("Authorization", "Bearer " + at)
+        req.add_header("Content-Type", "application/json")
+        with urllib.request.urlopen(req, timeout=25) as r:
+            ev = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        try: detail = json.loads(e.read().decode()).get("error", {}).get("message", "")
+        except Exception: detail = ""
+        return {"ok": False, "error": "Google Calendar: " + (detail or str(e.code))}
+    except Exception as e:
+        traceback.print_exc()
+        return {"ok": False, "error": str(e)}
+    meet = ev.get("hangoutLink") or ""
+    if not meet:
+        # A veces el enlace llega en conferenceData.entryPoints
+        for ep in (ev.get("conferenceData", {}).get("entryPoints") or []):
+            if ep.get("entryPointType") == "video" and ep.get("uri"):
+                meet = ep["uri"]; break
+    return {"ok": True, "meetLink": meet, "htmlLink": ev.get("htmlLink", ""),
+            "eventId": ev.get("id", "")}
+
+GOOGLE_HANDLERS = {
+    "status": api_google_status,
+    "auth-url": api_google_auth_url,
+    "meet": api_meet_create,
+}
+
 # ── Calendario (.ics) — suscripción de solo lectura para Apple/Google Calendar ─
 _CAL_MONTHS = {"ene":1,"feb":2,"mar":3,"abr":4,"may":5,"jun":6,
                "jul":7,"ago":8,"sep":9,"oct":10,"nov":11,"dic":12}
@@ -1728,6 +1956,9 @@ class Handler(SimpleHTTPRequestHandler):
         # Verificación del webhook de WhatsApp (Meta): responde el hub.challenge
         if gpath == "/api/whatsapp/webhook":
             self._handle_wa_verify(); return
+        # Callback de OAuth de Google: canjea el code y vuelve a la app
+        if gpath == "/api/google/callback":
+            self._handle_google_callback(); return
         # Suscripción de calendario: /api/calendar/<token>.ics
         if gpath.startswith("/api/calendar/") and gpath.endswith(".ics"):
             self._handle_calendar(gpath[len("/api/calendar/"):-len(".ics")]); return
@@ -1774,6 +2005,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_wa_webhook()
         elif self.path.startswith("/api/whatsapp/"):
             self._handle_api(self.path[len("/api/whatsapp/"):], WHATSAPP_HANDLERS)
+        elif self.path.startswith("/api/google/"):
+            self._handle_api(self.path[len("/api/google/"):], GOOGLE_HANDLERS)
         elif self.path == "/api/campaigns/import":
             self._handle_import()
         elif self.path.startswith("/api/campaigns/"):
@@ -1802,6 +2035,48 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(body)
         else:
             self.send_error(403)
+
+    def _handle_google_callback(self):
+        """GET de vuelta de Google tras el consentimiento: canjea el code,
+        guarda la conexión y cierra el popup avisando a la app."""
+        qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+        err   = (qs.get("error") or [""])[0]
+        code  = (qs.get("code") or [""])[0]
+        state = (qs.get("state") or [""])[0]
+        ok, email, error = False, "", ""
+        if err:
+            error = err
+        elif not state or state not in _GOOGLE_STATES:
+            error = "Estado no válido (reintenta la conexión)."
+        else:
+            _GOOGLE_STATES.pop(state, None)
+            if not code:
+                error = "Google no devolvió el código."
+            else:
+                ok, email, error = _google_exchange_code(code)
+        status = "connected" if ok else "error"
+        safe_email = json.dumps(email)
+        safe_err   = json.dumps(error)
+        html = (
+            "<!doctype html><html><head><meta charset='utf-8'><title>Google</title>"
+            "<style>body{background:#0a0a0a;color:#fff;font-family:-apple-system,system-ui,sans-serif;"
+            "display:flex;align-items:center;justify-content:center;height:100vh;margin:0;text-align:center}"
+            "div{max-width:360px;padding:24px}</style></head><body><div>"
+            + ("<h2>✓ Google conectado</h2><p>Ya puedes cerrar esta ventana.</p>" if ok
+               else "<h2>No se pudo conectar</h2><p style='opacity:.7'>" + (error or "") + "</p>")
+            + "</div><script>"
+            "try{if(window.opener){window.opener.postMessage({source:'google-oauth',status:"
+            + json.dumps(status) + ",email:" + safe_email + ",error:" + safe_err + "},'*');}}catch(e){}"
+            "setTimeout(function(){try{window.close();}catch(e){}"
+            "if(!window.opener){location.href='" + PORTAL_URL + "/?google='+" + json.dumps(status) + ";}},"
+            + ("1200" if ok else "2500") + ");"
+            "</script></body></html>"
+        ).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(html)))
+        self.end_headers()
+        self.wfile.write(html)
 
     def _handle_wa_webhook(self):
         """POST del webhook de WhatsApp: siempre responde 200 rápido y procesa."""

@@ -1,432 +1,577 @@
-const TYPES = [
-  { id: "task", label: "Tarea", icon: "list-todo" },
-  { id: "event", label: "Evento", icon: "calendar" },
-  { id: "meeting", label: "Reuni\xF3n", icon: "users" }
-];
-const FREQ_OPTS = [
-  { id: "once", label: "Una vez" },
-  { id: "daily", label: "Diaria" },
-  { id: "weekly", label: "Semanal" },
-  { id: "monthly", label: "Mensual" }
-];
-const today = () => {
-  const n = /* @__PURE__ */ new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
-};
-const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", lockType = false, openModal, editTask = null }) => {
-  const D = window.Data;
-  D.useStore();
-  const [type, setType] = useState(defaultType);
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [clientId, setClientId] = useState("");
-  const [projectId, setProjectId] = useState("");
-  const [date, setDate] = useState(today());
-  const [time, setTime] = useState("");
-  const [timeEnd, setTimeEnd] = useState("");
-  const [link, setLink] = useState("");
-  const [freq, setFreq] = useState("once");
-  const [activeTab, setActiveTab] = useState(null);
-  const [pickerFor, setPickerFor] = useState(null);
-  const [datePicker, setDatePicker] = useState(false);
-  useEffect(() => {
-    if (open) {
-      if (editTask && editTask.task) {
-        const tk = editTask.task;
-        setTitle(tk.title || "");
-        setDesc(tk.notes || "");
-        setClientId(tk.clientId || "");
-        setProjectId("");
-        setDate(tk.deadline || defaultDate || today());
-        setTime(tk.time || "");
-        setTimeEnd("");
-        setFreq(tk.frequency || "once");
-        setType("task");
-      } else {
-        setTitle("");
-        setDesc("");
-        setClientId("");
-        setProjectId("");
-        setDate(defaultDate || today());
-        setTime("");
-        setTimeEnd("");
-        setLink("");
-        setFreq("once");
-        setType(defaultType);
-      }
-      setActiveTab(null);
-      setPickerFor(null);
-      setDatePicker(false);
-    }
-  }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
-  useEffect(() => {
-    if (!open) return;
-    const fn = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", fn);
-    return () => window.removeEventListener("keydown", fn);
-  }, [open]);
-  const [render, setRender] = React.useState(open);
-  const [closing, setClosing] = React.useState(false);
-  const closeTimer = React.useRef(null);
-  useEffect(() => {
-    if (open) {
-      if (closeTimer.current) {
-        clearTimeout(closeTimer.current);
-        closeTimer.current = null;
-      }
-      setClosing(false);
-      setRender(true);
-    } else {
-      setRender((prev) => {
-        if (!prev) return false;
-        setClosing(true);
-        closeTimer.current = setTimeout(() => {
-          setRender(false);
-          setClosing(false);
-        }, 230);
-        return true;
-      });
-    }
-    return () => {
-    };
-  }, [open]);
-  if (!render) return null;
-  const canSubmit = title.trim().length > 0;
-  const handleSubmit = () => {
-    if (!canSubmit) return;
-    const t = title.trim();
-    if (editTask && editTask.task) {
-      const client = clientId ? D.CLIENTS.find((c) => c.id === clientId) : null;
-      D.updateTask(editTask.pid, editTask.task.id, {
-        title: t,
-        notes: desc || null,
-        deadline: date || null,
-        time: time || null,
-        frequency: freq,
-        clientId: clientId || null,
-        clientName: client ? client.company || client.name || "" : null
-      });
-      onClose();
-      return;
-    }
-    if (type === "task") {
-      const deadline = date || defaultDate || null;
-      if (projectId) {
-        D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
-      } else if (clientId) {
-        const client = D.CLIENTS.find((c) => c.id === clientId);
-        D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time || null, frequency: freq, notes: desc || null });
-      } else {
-        D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
-      }
-    } else if (type === "event" || type === "meeting") {
-      D.addAgendaEvent({
-        title: t,
-        date,
-        notes: desc || null,
-        time: time || null,
-        timeEnd: timeEnd || null,
-        link: link.trim() || null,
-        type: type === "meeting" ? "meeting" : "custom"
-      });
-    }
-    onClose();
-  };
-  const accentColor = { task: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
-  const accentHex = { task: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
-  const _MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-  const fmtDate = (ds) => {
-    if (!ds) return "";
-    const [y, m, d] = ds.split("-").map(Number);
-    return `${d} ${_MESES[m - 1]}`;
-  };
-  const dateChanged = date && date !== (defaultDate || today());
-  const tabs = [
-    ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
-    ...type === "task" && !editTask ? [{ id: "project", label: "Proyecto", icon: "folder", hasVal: !!projectId }] : [],
-    ...type === "event" || type === "meeting" ? [{ id: "link", label: "Enlace", icon: "link", hasVal: !!link.trim() }] : [],
-    { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
-    { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
-    { id: "date", label: "Fecha", icon: "calendar", hasVal: dateChanged }
+(() => {
+  const TYPES = [
+    { id: "task", label: "Tarea", icon: "list-todo" },
+    { id: "event", label: "Evento", icon: "calendar" },
+    { id: "meeting", label: "Reuni\xF3n", icon: "users" }
   ];
-  const curProject = projectId ? D.PROJECTS.find((p) => p.id === projectId) : null;
-  const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
-  return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
-    "div",
-    {
-      style: {
-        position: "fixed",
-        inset: 0,
-        background: "rgba(8,8,10,0.46)",
-        WebkitBackdropFilter: "blur(22px)",
-        backdropFilter: "blur(22px)",
-        zIndex: 200,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: 24,
-        animation: closing ? "qcFadeOut .22s ease forwards" : editTask ? "none" : "fade .24s ease"
-      },
-      onClick: onClose
-    },
-    /* @__PURE__ */ React.createElement(
+  const FREQ_OPTS = [
+    { id: "once", label: "Una vez" },
+    { id: "daily", label: "Diaria" },
+    { id: "weekly", label: "Semanal" },
+    { id: "monthly", label: "Mensual" }
+  ];
+  const today = () => {
+    const n = /* @__PURE__ */ new Date();
+    return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  };
+  const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "", lockType = false, openModal, editTask = null }) => {
+    const D = window.Data;
+    D.useStore();
+    const [type, setType] = useState(defaultType);
+    const [title, setTitle] = useState("");
+    const [desc, setDesc] = useState("");
+    const [clientId, setClientId] = useState("");
+    const [projectId, setProjectId] = useState("");
+    const [date, setDate] = useState(today());
+    const [time, setTime] = useState("");
+    const [timeEnd, setTimeEnd] = useState("");
+    const [link, setLink] = useState("");
+    const [freq, setFreq] = useState("once");
+    const [activeTab, setActiveTab] = useState(null);
+    const [pickerFor, setPickerFor] = useState(null);
+    const [datePicker, setDatePicker] = useState(false);
+    const [googleConn, setGoogleConn] = useState(null);
+    const [autoMeet, setAutoMeet] = useState(true);
+    const [creating, setCreating] = useState(false);
+    const [gErr, setGErr] = useState("");
+    useEffect(() => {
+      if (open) {
+        if (editTask && editTask.task) {
+          const tk = editTask.task;
+          setTitle(tk.title || "");
+          setDesc(tk.notes || "");
+          setClientId(tk.clientId || "");
+          setProjectId("");
+          setDate(tk.deadline || defaultDate || today());
+          setTime(tk.time || "");
+          setTimeEnd("");
+          setFreq(tk.frequency || "once");
+          setType("task");
+        } else {
+          setTitle("");
+          setDesc("");
+          setClientId("");
+          setProjectId("");
+          setDate(defaultDate || today());
+          setTime("");
+          setTimeEnd("");
+          setLink("");
+          setFreq("once");
+          setType(defaultType);
+        }
+        setActiveTab(null);
+        setPickerFor(null);
+        setDatePicker(false);
+        setGoogleConn(null);
+        setAutoMeet(true);
+        setCreating(false);
+        setGErr("");
+      }
+    }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
+    useEffect(() => {
+      if (!open || type !== "meeting" || googleConn !== null || !D.googleStatus) return;
+      let alive = true;
+      (async () => {
+        try {
+          const s = await D.googleStatus();
+          if (alive) setGoogleConn(!!(s && s.connected));
+        } catch {
+          if (alive) setGoogleConn(false);
+        }
+      })();
+      return () => {
+        alive = false;
+      };
+    }, [open, type]);
+    const connectGoogle = async () => {
+      setGErr("");
+      const r = await D.googleAuthUrl("nil@141agency.com");
+      if (!r || !r.ok || !r.url) {
+        setGErr(r && r.error || "No se pudo iniciar la conexi\xF3n con Google");
+        return;
+      }
+      const w = window.open(r.url, "google-oauth", "width=480,height=660");
+      const onMsg = (ev) => {
+        if (!ev.data || ev.data.source !== "google-oauth") return;
+        window.removeEventListener("message", onMsg);
+        if (ev.data.status === "connected") {
+          setGoogleConn(true);
+          setAutoMeet(true);
+          setGErr("");
+        } else setGErr(ev.data.error || "No se pudo conectar con Google");
+        try {
+          if (w) w.close();
+        } catch (_) {
+        }
+      };
+      window.addEventListener("message", onMsg);
+    };
+    useEffect(() => {
+      if (!open) return;
+      const fn = (e) => {
+        if (e.key === "Escape") onClose();
+      };
+      window.addEventListener("keydown", fn);
+      return () => window.removeEventListener("keydown", fn);
+    }, [open]);
+    const [render, setRender] = React.useState(open);
+    const [closing, setClosing] = React.useState(false);
+    const closeTimer = React.useRef(null);
+    useEffect(() => {
+      if (open) {
+        if (closeTimer.current) {
+          clearTimeout(closeTimer.current);
+          closeTimer.current = null;
+        }
+        setClosing(false);
+        setRender(true);
+      } else {
+        setRender((prev) => {
+          if (!prev) return false;
+          setClosing(true);
+          closeTimer.current = setTimeout(() => {
+            setRender(false);
+            setClosing(false);
+          }, 230);
+          return true;
+        });
+      }
+      return () => {
+      };
+    }, [open]);
+    if (!render) return null;
+    const canSubmit = title.trim().length > 0;
+    const handleSubmit = async () => {
+      if (!canSubmit || creating) return;
+      const t = title.trim();
+      if (editTask && editTask.task) {
+        const client = clientId ? D.CLIENTS.find((c) => c.id === clientId) : null;
+        D.updateTask(editTask.pid, editTask.task.id, {
+          title: t,
+          notes: desc || null,
+          deadline: date || null,
+          time: time || null,
+          frequency: freq,
+          clientId: clientId || null,
+          clientName: client ? client.company || client.name || "" : null
+        });
+        onClose();
+        return;
+      }
+      if (type === "task") {
+        const deadline = date || defaultDate || null;
+        if (projectId) {
+          D.addTask({ projectId, title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
+        } else if (clientId) {
+          const client = D.CLIENTS.find((c) => c.id === clientId);
+          D.addTask({ title: t, column: "todo", assignee: "", clientId, clientName: client?.company || client?.name || "", deadline, time: time || null, frequency: freq, notes: desc || null });
+        } else {
+          D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time || null, frequency: freq, notes: desc || null });
+        }
+      } else if (type === "event" || type === "meeting") {
+        let meetLink = link.trim() || null;
+        if (type === "meeting" && autoMeet && googleConn && !meetLink) {
+          setCreating(true);
+          setGErr("");
+          const r = await D.createMeet({
+            title: t,
+            date,
+            time: time || null,
+            timeEnd: timeEnd || null,
+            description: desc || null
+          });
+          setCreating(false);
+          if (r && r.ok && r.meetLink) {
+            meetLink = r.meetLink;
+          } else {
+            setGErr(r && r.error || "No se pudo crear el enlace de Meet");
+            setActiveTab("link");
+            return;
+          }
+        }
+        await D.addAgendaEvent({
+          title: t,
+          date,
+          notes: desc || null,
+          time: time || null,
+          timeEnd: timeEnd || null,
+          link: meetLink,
+          type: type === "meeting" ? "meeting" : "custom"
+        });
+      }
+      onClose();
+    };
+    const accentColor = { task: "var(--accent)", event: "#60a5fa", meeting: "#34d399" }[type];
+    const accentHex = { task: "#9e9ae5", event: "#60a5fa", meeting: "#34d399" }[type];
+    const _MESES = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+    const fmtDate = (ds) => {
+      if (!ds) return "";
+      const [y, m, d] = ds.split("-").map(Number);
+      return `${d} ${_MESES[m - 1]}`;
+    };
+    const dateChanged = date && date !== (defaultDate || today());
+    const tabs = [
+      ...type === "task" ? [{ id: "client", label: "Cliente", icon: "users", hasVal: !!clientId }] : [],
+      ...type === "task" && !editTask ? [{ id: "project", label: "Proyecto", icon: "folder", hasVal: !!projectId }] : [],
+      ...type === "event" || type === "meeting" ? [{
+        id: "link",
+        label: type === "meeting" ? "Meet" : "Enlace",
+        icon: type === "meeting" ? "video" : "link",
+        hasVal: !!link.trim() || type === "meeting" && autoMeet && googleConn
+      }] : [],
+      { id: "freq", label: "Frecuencia", icon: "refresh-cw", hasVal: freq !== "once" },
+      { id: "time", label: "Hora", icon: "clock", hasVal: !!time },
+      { id: "date", label: "Fecha", icon: "calendar", hasVal: dateChanged }
+    ];
+    const curProject = projectId ? D.PROJECTS.find((p) => p.id === projectId) : null;
+    const toggleTab = (id) => setActiveTab((prev) => prev === id ? null : id);
+    return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
       "div",
       {
-        onClick: (e) => e.stopPropagation(),
         style: {
-          width: "100%",
-          maxWidth: 540,
-          background: "#111111",
-          border: "0.5px solid rgba(255,255,255,0.08)",
-          borderRadius: 32,
-          animation: closing ? "qcOut .22s cubic-bezier(.4,0,1,1) forwards" : editTask ? "none" : "qcIn .34s cubic-bezier(.22,1,.36,1)",
+          position: "fixed",
+          inset: 0,
+          background: "rgba(8,8,10,0.46)",
+          WebkitBackdropFilter: "blur(22px)",
+          backdropFilter: "blur(22px)",
+          zIndex: 200,
           display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          minHeight: 420
-        }
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
+          animation: closing ? "qcFadeOut .22s ease forwards" : editTask ? "none" : "fade .24s ease"
+        },
+        onClick: onClose
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
-        width: 40,
-        height: 40,
-        borderRadius: "50%",
-        background: "rgba(255,255,255,0.08)",
-        border: "0.5px solid rgba(255,255,255,0.1)",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, editTask ? "Editar tarea" : "Crear nuevo") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        padding: "6px 13px",
-        borderRadius: 99,
-        background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
-        border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
-        color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
-        fontSize: 12,
-        letterSpacing: "-0.4px",
-        cursor: "pointer",
-        fontFamily: "var(--font-sans)",
-        transition: "all .1s"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: tp.icon, size: 12, strokeWidth: 1.6 }), tp.label))), /* @__PURE__ */ React.createElement("button", { onClick: handleSubmit, style: {
-        width: 40,
-        height: 40,
-        borderRadius: "50%",
-        background: canSubmit ? accentColor : "rgba(255,255,255,0.08)",
-        border: "none",
-        cursor: canSubmit ? "pointer" : "default",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#fff",
-        transition: "all .15s",
-        opacity: canSubmit ? 1 : 0.4
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))),
-      /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
-        "input",
+      /* @__PURE__ */ React.createElement(
+        "div",
         {
-          autoFocus: true,
-          placeholder: { task: "Nombre de la tarea...", event: "Nombre del evento...", meeting: "Nombre de la reuni\xF3n..." }[type],
-          value: title,
-          onChange: (e) => setTitle(e.target.value),
-          onKeyDown: (e) => {
-            if (e.key === "Enter" && canSubmit) handleSubmit();
-          },
+          onClick: (e) => e.stopPropagation(),
           style: {
             width: "100%",
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            fontSize: 28,
-            fontWeight: 400,
-            letterSpacing: "-1.4px",
-            color: title ? "var(--text)" : "rgba(255,255,255,0.15)",
-            fontFamily: "var(--font-display)",
-            caretColor: accentColor
+            maxWidth: 540,
+            background: "#111111",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            borderRadius: 32,
+            animation: closing ? "qcOut .22s cubic-bezier(.4,0,1,1) forwards" : editTask ? "none" : "qcIn .34s cubic-bezier(.22,1,.36,1)",
+            display: "flex",
+            flexDirection: "column",
+            overflow: "hidden",
+            minHeight: 420
           }
-        }
-      ), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          placeholder: "Descripci\xF3n (opcional)",
-          value: desc,
-          onChange: (e) => setDesc(e.target.value),
-          style: {
-            width: "100%",
-            background: "transparent",
-            border: "none",
-            outline: "none",
-            fontSize: 14,
-            letterSpacing: "-0.5px",
-            marginTop: 8,
-            color: desc ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
-            fontFamily: "var(--font-sans)",
-            caretColor: accentColor
-          }
-        }
-      )),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => {
-        const nid = clientId === c.id ? "" : c.id;
-        setClientId(nid);
-        if (curProject && curProject.clientId !== nid) setProjectId("");
-      }, style: {
-        padding: "10px 16px",
-        borderRadius: 12,
-        fontSize: 13,
-        letterSpacing: "-0.5px",
-        background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.04)",
-        border: clientId === c.id ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
-        color: clientId === c.id ? accentHex : "var(--text-muted)",
-        cursor: "pointer",
-        fontFamily: "var(--font-sans)",
-        transition: "all .1s",
-        textAlign: "left",
-        width: "100%"
-      } }, c.company || c.name))), activeTab === "project" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, (() => {
-        const list = clientId ? D.PROJECTS.filter((p) => p.clientId === clientId) : D.PROJECTS;
-        if (list.length === 0) return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, clientId ? "Este cliente no tiene proyectos" : "Sin proyectos");
-        return [...list].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((p) => {
-          const cl = D.CLIENTS.find((c) => c.id === p.clientId);
-          const on = projectId === p.id;
-          return /* @__PURE__ */ React.createElement("button", { key: p.id, onClick: () => {
-            if (on) {
-              setProjectId("");
-            } else {
-              setProjectId(p.id);
-              if (p.clientId) setClientId(p.clientId);
+        },
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingTop: 12 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 36, height: 4, borderRadius: 99, background: "rgba(255,255,255,0.18)" } })),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "14px 22px 0" } }, /* @__PURE__ */ React.createElement("button", { onClick: onClose, style: {
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: "rgba(255,255,255,0.08)",
+          border: "0.5px solid rgba(255,255,255,0.1)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "var(--text-muted)"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: "x", size: 15 })), lockType ? /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13, color: "var(--text-subtle)", letterSpacing: "-0.5px" } }, editTask ? "Editar tarea" : "Crear nuevo") : /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6 } }, TYPES.map((tp) => /* @__PURE__ */ React.createElement("button", { key: tp.id, onClick: () => setType(tp.id), style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 5,
+          padding: "6px 13px",
+          borderRadius: 99,
+          background: type === tp.id ? "rgba(255,255,255,0.09)" : "transparent",
+          border: type === tp.id ? "0.5px solid rgba(255,255,255,0.15)" : "0.5px solid rgba(255,255,255,0.06)",
+          color: type === tp.id ? "var(--text)" : "var(--text-subtle)",
+          fontSize: 12,
+          letterSpacing: "-0.4px",
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+          transition: "all .1s"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: tp.icon, size: 12, strokeWidth: 1.6 }), tp.label))), /* @__PURE__ */ React.createElement("button", { onClick: handleSubmit, disabled: !canSubmit || creating, style: {
+          width: 40,
+          height: 40,
+          borderRadius: "50%",
+          background: canSubmit && !creating ? accentColor : "rgba(255,255,255,0.08)",
+          border: "none",
+          cursor: canSubmit && !creating ? "pointer" : "default",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          transition: "all .15s",
+          opacity: canSubmit && !creating ? 1 : 0.4
+        } }, creating ? /* @__PURE__ */ React.createElement("span", { style: {
+          width: 15,
+          height: 15,
+          borderRadius: "50%",
+          border: "2px solid rgba(255,255,255,0.35)",
+          borderTopColor: "#fff",
+          display: "block",
+          animation: "qcSpin .7s linear infinite"
+        } }) : /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 15 }))),
+        /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 28px 8px" } }, /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            autoFocus: true,
+            placeholder: { task: "Nombre de la tarea...", event: "Nombre del evento...", meeting: "Nombre de la reuni\xF3n..." }[type],
+            value: title,
+            onChange: (e) => setTitle(e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter" && canSubmit) handleSubmit();
+            },
+            style: {
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontSize: 28,
+              fontWeight: 400,
+              letterSpacing: "-1.4px",
+              color: title ? "var(--text)" : "rgba(255,255,255,0.15)",
+              fontFamily: "var(--font-display)",
+              caretColor: accentColor
             }
-          }, style: {
-            padding: "10px 16px",
-            borderRadius: 12,
-            letterSpacing: "-0.5px",
-            background: on ? accentHex + "22" : "rgba(255,255,255,0.04)",
-            border: on ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
-            color: on ? accentHex : "var(--text-muted)",
-            cursor: "pointer",
-            fontFamily: "var(--font-sans)",
-            transition: "all .1s",
-            textAlign: "left",
-            width: "100%"
-          } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13 } }, p.name || "Proyecto"), cl && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, opacity: 0.6, marginTop: 1 } }, cl.company || cl.name));
-        });
-      })()), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, FREQ_OPTS.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
-        padding: "8px 18px",
-        borderRadius: 99,
-        fontSize: 13,
-        letterSpacing: "-0.5px",
-        background: freq === f.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
-        border: freq === f.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
-        color: freq === f.id ? accentHex : "var(--text-muted)",
-        cursor: "pointer",
-        fontFamily: "var(--font-sans)",
-        transition: "all .1s"
-      } }, f.label))), activeTab === "time" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("start"), style: {
-        padding: "10px 22px",
-        borderRadius: 14,
-        cursor: "pointer",
-        background: time ? accentHex + "22" : "rgba(255,255,255,0.07)",
-        border: time ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
-        color: time ? accentHex : "var(--text-muted)",
-        fontSize: 22,
-        fontWeight: 300,
-        letterSpacing: "-1px",
-        fontFamily: "var(--font-display)",
-        transition: "all .1s"
-      } }, time || "00:00"), (type === "event" || type === "meeting") && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-subtle)" } }, "\u2013"), /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("end"), style: {
-        padding: "10px 22px",
-        borderRadius: 14,
-        cursor: "pointer",
-        background: timeEnd ? accentHex + "22" : "rgba(255,255,255,0.07)",
-        border: timeEnd ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
-        color: timeEnd ? accentHex : "var(--text-muted)",
-        fontSize: 22,
-        fontWeight: 300,
-        letterSpacing: "-1px",
-        fontFamily: "var(--font-display)",
-        transition: "all .1s"
-      } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora")), activeTab === "link" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 44,
-        height: 44,
-        borderRadius: 12,
-        background: "rgba(255,255,255,0.05)",
-        border: "0.5px solid rgba(255,255,255,0.08)",
-        display: "grid",
-        placeItems: "center",
-        color: "var(--text-muted)"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement(
-        "input",
-        {
-          autoFocus: true,
-          type: "url",
-          value: link,
-          onChange: (e) => setLink(e.target.value),
-          onKeyDown: (e) => {
-            if (e.key === "Enter" && canSubmit) handleSubmit();
-          },
-          placeholder: "https://meet.google.com/\u2026",
-          style: {
-            width: "100%",
-            maxWidth: 360,
-            textAlign: "center",
-            background: "rgba(255,255,255,0.05)",
-            border: "0.5px solid rgba(255,255,255,0.1)",
-            borderRadius: 12,
-            padding: "11px 14px",
-            fontSize: 13.5,
-            letterSpacing: "-0.3px",
-            color: link ? "var(--text)" : "rgba(255,255,255,0.3)",
-            outline: "none",
-            fontFamily: "var(--font-sans)",
-            caretColor: accentColor
           }
-        }
-      ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "Meet, Zoom, Teams\u2026 el enlace de la reuni\xF3n"))),
-      /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        padding: "8px 16px",
-        borderRadius: 99,
-        background: activeTab === tab.id ? accentHex + "22" : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
-        border: activeTab === tab.id ? `0.5px solid ${accentHex}55` : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
-        color: activeTab === tab.id ? accentHex : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
-        fontSize: 13,
-        letterSpacing: "-0.5px",
-        cursor: "pointer",
-        fontFamily: "var(--font-sans)",
-        transition: "all .12s"
-      } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "project" && curProject && /* @__PURE__ */ React.createElement("span", { style: {
-        fontSize: 10,
-        color: accentHex,
-        marginLeft: 2,
-        maxWidth: 90,
-        overflow: "hidden",
-        textOverflow: "ellipsis",
-        whiteSpace: "nowrap"
-      } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, FREQ_OPTS.find((f) => f.id === freq)?.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && link.trim() && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)))))
-    )
-  ), pickerFor && /* @__PURE__ */ React.createElement(
-    TimePicker,
-    {
-      value: pickerFor === "start" ? time : timeEnd,
-      onChange: (v) => pickerFor === "start" ? setTime(v) : setTimeEnd(v),
-      onClose: () => setPickerFor(null)
-    }
-  ), datePicker && /* @__PURE__ */ React.createElement(
-    DatePicker,
-    {
-      value: date,
-      onChange: setDate,
-      onClose: () => setDatePicker(false),
-      accent: accentHex
-    }
-  ));
-};
-window.QuickCreateModal = QuickCreateModal;
+        ), /* @__PURE__ */ React.createElement(
+          "input",
+          {
+            placeholder: "Descripci\xF3n (opcional)",
+            value: desc,
+            onChange: (e) => setDesc(e.target.value),
+            style: {
+              width: "100%",
+              background: "transparent",
+              border: "none",
+              outline: "none",
+              fontSize: 14,
+              letterSpacing: "-0.5px",
+              marginTop: 8,
+              color: desc ? "var(--text-muted)" : "rgba(255,255,255,0.13)",
+              fontFamily: "var(--font-sans)",
+              caretColor: accentColor
+            }
+          }
+        )),
+        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, padding: "0 28px", minHeight: 120, display: "flex", alignItems: "center", justifyContent: "center" } }, !activeTab && /* @__PURE__ */ React.createElement("div", { style: { color: "rgba(255,255,255,0.08)", fontSize: 13, letterSpacing: "-0.5px" } }, "Selecciona una opci\xF3n abajo"), activeTab === "client" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, D.CLIENTS.length === 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, "Sin clientes") : [...D.CLIENTS].sort((a, b) => (a.company || a.name || "").localeCompare(b.company || b.name || "")).map((c) => /* @__PURE__ */ React.createElement("button", { key: c.id, onClick: () => {
+          const nid = clientId === c.id ? "" : c.id;
+          setClientId(nid);
+          if (curProject && curProject.clientId !== nid) setProjectId("");
+        }, style: {
+          padding: "10px 16px",
+          borderRadius: 12,
+          fontSize: 13,
+          letterSpacing: "-0.5px",
+          background: clientId === c.id ? accentHex + "22" : "rgba(255,255,255,0.04)",
+          border: clientId === c.id ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
+          color: clientId === c.id ? accentHex : "var(--text-muted)",
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+          transition: "all .1s",
+          textAlign: "left",
+          width: "100%"
+        } }, c.company || c.name))), activeTab === "project" && /* @__PURE__ */ React.createElement("div", { style: { width: "100%", maxHeight: 180, overflowY: "auto", display: "flex", flexDirection: "column", gap: 4 } }, (() => {
+          const list = clientId ? D.PROJECTS.filter((p) => p.clientId === clientId) : D.PROJECTS;
+          if (list.length === 0) return /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)", textAlign: "center" } }, clientId ? "Este cliente no tiene proyectos" : "Sin proyectos");
+          return [...list].sort((a, b) => (a.name || "").localeCompare(b.name || "")).map((p) => {
+            const cl = D.CLIENTS.find((c) => c.id === p.clientId);
+            const on = projectId === p.id;
+            return /* @__PURE__ */ React.createElement("button", { key: p.id, onClick: () => {
+              if (on) {
+                setProjectId("");
+              } else {
+                setProjectId(p.id);
+                if (p.clientId) setClientId(p.clientId);
+              }
+            }, style: {
+              padding: "10px 16px",
+              borderRadius: 12,
+              letterSpacing: "-0.5px",
+              background: on ? accentHex + "22" : "rgba(255,255,255,0.04)",
+              border: on ? `1px solid ${accentHex}55` : "0.5px solid rgba(255,255,255,0.08)",
+              color: on ? accentHex : "var(--text-muted)",
+              cursor: "pointer",
+              fontFamily: "var(--font-sans)",
+              transition: "all .1s",
+              textAlign: "left",
+              width: "100%"
+            } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13 } }, p.name || "Proyecto"), cl && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11, opacity: 0.6, marginTop: 1 } }, cl.company || cl.name));
+          });
+        })()), activeTab === "freq" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "center" } }, FREQ_OPTS.map((f) => /* @__PURE__ */ React.createElement("button", { key: f.id, onClick: () => setFreq(f.id), style: {
+          padding: "8px 18px",
+          borderRadius: 99,
+          fontSize: 13,
+          letterSpacing: "-0.5px",
+          background: freq === f.id ? accentHex + "22" : "rgba(255,255,255,0.07)",
+          border: freq === f.id ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+          color: freq === f.id ? accentHex : "var(--text-muted)",
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+          transition: "all .1s"
+        } }, f.label))), activeTab === "time" && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", alignItems: "center", gap: 16 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 12 } }, /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("start"), style: {
+          padding: "10px 22px",
+          borderRadius: 14,
+          cursor: "pointer",
+          background: time ? accentHex + "22" : "rgba(255,255,255,0.07)",
+          border: time ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+          color: time ? accentHex : "var(--text-muted)",
+          fontSize: 22,
+          fontWeight: 300,
+          letterSpacing: "-1px",
+          fontFamily: "var(--font-display)",
+          transition: "all .1s"
+        } }, time || "00:00"), (type === "event" || type === "meeting") && /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 16, color: "var(--text-subtle)" } }, "\u2013"), /* @__PURE__ */ React.createElement("button", { onClick: () => setPickerFor("end"), style: {
+          padding: "10px 22px",
+          borderRadius: 14,
+          cursor: "pointer",
+          background: timeEnd ? accentHex + "22" : "rgba(255,255,255,0.07)",
+          border: timeEnd ? `1px solid ${accentHex}66` : "0.5px solid rgba(255,255,255,0.12)",
+          color: timeEnd ? accentHex : "var(--text-muted)",
+          fontSize: 22,
+          fontWeight: 300,
+          letterSpacing: "-1px",
+          fontFamily: "var(--font-display)",
+          transition: "all .1s"
+        } }, timeEnd || "00:00"))), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "Toca para cambiar la hora")), activeTab === "link" && (type === "meeting" && autoMeet && !link.trim() ? (
+          // ── Meet automático ──
+          /* @__PURE__ */ React.createElement("div", { style: { width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 12 } }, googleConn === null ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13, color: "var(--text-subtle)" } }, "Comprobando Google\u2026") : googleConn ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+            width: 46,
+            height: 46,
+            borderRadius: 12,
+            background: "rgba(52,211,153,0.12)",
+            border: "0.5px solid rgba(52,211,153,0.3)",
+            display: "grid",
+            placeItems: "center",
+            color: "#34d399"
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "video", size: 20, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { textAlign: "center" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", letterSpacing: "-0.3px" } }, "Se crear\xE1 un enlace de Google Meet"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginTop: 3 } }, "autom\xE1ticamente al guardar la reuni\xF3n")), /* @__PURE__ */ React.createElement("button", { onClick: () => setAutoMeet(false), style: {
+            background: "none",
+            border: "none",
+            color: "var(--text-subtle)",
+            fontSize: 12,
+            cursor: "pointer",
+            textDecoration: "underline",
+            fontFamily: "var(--font-sans)"
+          } }, "Usar otro enlace")) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { style: {
+            width: 46,
+            height: 46,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.05)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            display: "grid",
+            placeItems: "center",
+            color: "var(--text-muted)"
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "video", size: 20, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-subtle)", textAlign: "center", maxWidth: 320 } }, "Conecta Google Calendar para generar enlaces de Meet autom\xE1ticamente."), /* @__PURE__ */ React.createElement("button", { onClick: connectGoogle, style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+            padding: "9px 18px",
+            borderRadius: 99,
+            background: "#fff",
+            color: "#1f1f1f",
+            border: "none",
+            cursor: "pointer",
+            fontSize: 13,
+            fontWeight: 500,
+            fontFamily: "var(--font-sans)"
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 14, strokeWidth: 2 }), " Conectar Google Calendar"), /* @__PURE__ */ React.createElement("button", { onClick: () => setAutoMeet(false), style: {
+            background: "none",
+            border: "none",
+            color: "var(--text-subtle)",
+            fontSize: 12,
+            cursor: "pointer",
+            textDecoration: "underline",
+            fontFamily: "var(--font-sans)"
+          } }, "Pegar un enlace manualmente")), gErr && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--red)", textAlign: "center", maxWidth: 340 } }, gErr))
+        ) : (
+          // ── Enlace manual (eventos, o reunión con autoMeet desactivado) ──
+          /* @__PURE__ */ React.createElement("div", { style: { width: "100%", display: "flex", flexDirection: "column", alignItems: "center", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { style: {
+            width: 44,
+            height: 44,
+            borderRadius: 12,
+            background: "rgba(255,255,255,0.05)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+            display: "grid",
+            placeItems: "center",
+            color: "var(--text-muted)"
+          } }, /* @__PURE__ */ React.createElement(Icon, { name: "link", size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement(
+            "input",
+            {
+              autoFocus: true,
+              type: "url",
+              value: link,
+              onChange: (e) => setLink(e.target.value),
+              onKeyDown: (e) => {
+                if (e.key === "Enter" && canSubmit) handleSubmit();
+              },
+              placeholder: "https://meet.google.com/\u2026",
+              style: {
+                width: "100%",
+                maxWidth: 360,
+                textAlign: "center",
+                background: "rgba(255,255,255,0.05)",
+                border: "0.5px solid rgba(255,255,255,0.1)",
+                borderRadius: 12,
+                padding: "11px 14px",
+                fontSize: 13.5,
+                letterSpacing: "-0.3px",
+                color: link ? "var(--text)" : "rgba(255,255,255,0.3)",
+                outline: "none",
+                fontFamily: "var(--font-sans)",
+                caretColor: accentColor
+              }
+            }
+          ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "Meet, Zoom, Teams\u2026 el enlace de la reuni\xF3n"), type === "meeting" && googleConn && /* @__PURE__ */ React.createElement("button", { onClick: () => {
+            setLink("");
+            setAutoMeet(true);
+          }, style: {
+            background: "none",
+            border: "none",
+            color: "var(--text-subtle)",
+            fontSize: 12,
+            cursor: "pointer",
+            textDecoration: "underline",
+            fontFamily: "var(--font-sans)"
+          } }, "Usar Google Meet autom\xE1tico"))
+        ))),
+        /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "0 0 0 0" } }),
+        /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 8, padding: "16px 22px 22px", flexWrap: "wrap" } }, tabs.map((tab) => /* @__PURE__ */ React.createElement("button", { key: tab.id, onClick: () => tab.id === "date" ? setDatePicker(true) : toggleTab(tab.id), style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "8px 16px",
+          borderRadius: 99,
+          background: activeTab === tab.id ? accentHex + "22" : tab.hasVal ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.05)",
+          border: activeTab === tab.id ? `0.5px solid ${accentHex}55` : tab.hasVal ? "0.5px solid rgba(255,255,255,0.18)" : "0.5px solid rgba(255,255,255,0.08)",
+          color: activeTab === tab.id ? accentHex : tab.hasVal ? "var(--text)" : "var(--text-subtle)",
+          fontSize: 13,
+          letterSpacing: "-0.5px",
+          cursor: "pointer",
+          fontFamily: "var(--font-sans)",
+          transition: "all .12s"
+        } }, /* @__PURE__ */ React.createElement(Icon, { name: tab.icon, size: 13, strokeWidth: 1.6 }), tab.label, tab.id === "client" && clientId && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "project" && curProject && /* @__PURE__ */ React.createElement("span", { style: {
+          fontSize: 10,
+          color: accentHex,
+          marginLeft: 2,
+          maxWidth: 90,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap"
+        } }, curProject.name), tab.id === "freq" && freq !== "once" && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, FREQ_OPTS.find((f) => f.id === freq)?.label), tab.id === "time" && time && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, time), tab.id === "link" && (link.trim() || type === "meeting" && autoMeet && googleConn) && /* @__PURE__ */ React.createElement("span", { style: { width: 6, height: 6, borderRadius: "50%", background: accentHex, flexShrink: 0 } }), tab.id === "date" && dateChanged && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 10, color: accentHex, marginLeft: 2 } }, fmtDate(date)))))
+      )
+    ), pickerFor && /* @__PURE__ */ React.createElement(
+      TimePicker,
+      {
+        value: pickerFor === "start" ? time : timeEnd,
+        onChange: (v) => pickerFor === "start" ? setTime(v) : setTimeEnd(v),
+        onClose: () => setPickerFor(null)
+      }
+    ), datePicker && /* @__PURE__ */ React.createElement(
+      DatePicker,
+      {
+        value: date,
+        onChange: setDate,
+        onClose: () => setDatePicker(false),
+        accent: accentHex
+      }
+    ));
+  };
+  window.QuickCreateModal = QuickCreateModal;
+})();

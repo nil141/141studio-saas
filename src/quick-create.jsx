@@ -36,6 +36,11 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const [activeTab, setActiveTab] = useState(null); // null | "client" | "freq" | "time" | "date"
   const [pickerFor, setPickerFor] = useState(null);
   const [datePicker, setDatePicker] = useState(false);
+  // Google Meet (reuniones)
+  const [googleConn, setGoogleConn] = useState(null); // null desconocido | true | false
+  const [autoMeet,   setAutoMeet]   = useState(true);  // generar Meet automáticamente
+  const [creating,   setCreating]   = useState(false); // creando el evento/Meet
+  const [gErr,       setGErr]       = useState("");
 
   useEffect(() => {
     if (open) {
@@ -52,8 +57,36 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setType(defaultType);
       }
       setActiveTab(null); setPickerFor(null); setDatePicker(false);
+      setGoogleConn(null); setAutoMeet(true); setCreating(false); setGErr("");
     }
   }, [open, defaultType, defaultDate, editTask && editTask.task && editTask.task.id]);
+
+  // Al abrir una reunión, consultamos si Google Calendar está conectado.
+  useEffect(() => {
+    if (!open || type !== "meeting" || googleConn !== null || !D.googleStatus) return;
+    let alive = true;
+    (async () => {
+      try { const s = await D.googleStatus(); if (alive) setGoogleConn(!!(s && s.connected)); }
+      catch { if (alive) setGoogleConn(false); }
+    })();
+    return () => { alive = false; };
+  }, [open, type]);
+
+  // Conectar la cuenta de Google (OAuth en un popup).
+  const connectGoogle = async () => {
+    setGErr("");
+    const r = await D.googleAuthUrl("nil@141agency.com");
+    if (!r || !r.ok || !r.url) { setGErr((r && r.error) || "No se pudo iniciar la conexión con Google"); return; }
+    const w = window.open(r.url, "google-oauth", "width=480,height=660");
+    const onMsg = (ev) => {
+      if (!ev.data || ev.data.source !== "google-oauth") return;
+      window.removeEventListener("message", onMsg);
+      if (ev.data.status === "connected") { setGoogleConn(true); setAutoMeet(true); setGErr(""); }
+      else setGErr(ev.data.error || "No se pudo conectar con Google");
+      try { if (w) w.close(); } catch (_) {}
+    };
+    window.addEventListener("message", onMsg);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -86,8 +119,8 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
   const canSubmit = title.trim().length > 0;
 
-  const handleSubmit = () => {
-    if (!canSubmit) return;
+  const handleSubmit = async () => {
+    if (!canSubmit || creating) return;
     const t = title.trim();
     if (editTask && editTask.task) {
       const client = clientId ? D.CLIENTS.find(c => c.id === clientId) : null;
@@ -114,10 +147,27 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         D.addTask({ title: t, column: "todo", assignee: "", deadline, time: time||null, frequency: freq, notes: desc||null });
       }
     } else if (type === "event" || type === "meeting") {
-      D.addAgendaEvent({
+      let meetLink = link.trim() || null;
+      // Reunión con Meet automático: creamos el evento en Google Calendar y
+      // usamos el enlace de Meet que devuelve.
+      if (type === "meeting" && autoMeet && googleConn && !meetLink) {
+        setCreating(true); setGErr("");
+        const r = await D.createMeet({
+          title: t, date, time: time || null, timeEnd: timeEnd || null, description: desc || null,
+        });
+        setCreating(false);
+        if (r && r.ok && r.meetLink) {
+          meetLink = r.meetLink;
+        } else {
+          setGErr((r && r.error) || "No se pudo crear el enlace de Meet");
+          setActiveTab("link");
+          return; // dejamos el modal abierto para que lo vea
+        }
+      }
+      await D.addAgendaEvent({
         title: t, date, notes: desc || null,
         time: time || null, timeEnd: timeEnd || null,
-        link: link.trim() || null,
+        link: meetLink,
         type: type === "meeting" ? "meeting" : "custom",
       });
     }
@@ -140,7 +190,10 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
   const tabs = [
     ...(type === "task" ? [{ id:"client", label:"Cliente", icon:"users", hasVal: !!clientId }] : []),
     ...(type === "task" && !editTask ? [{ id:"project", label:"Proyecto", icon:"folder", hasVal: !!projectId }] : []),
-    ...(type === "event" || type === "meeting" ? [{ id:"link", label:"Enlace", icon:"link", hasVal: !!link.trim() }] : []),
+    ...(type === "event" || type === "meeting"
+        ? [{ id:"link", label: type === "meeting" ? "Meet" : "Enlace", icon: type === "meeting" ? "video" : "link",
+             hasVal: !!link.trim() || (type === "meeting" && autoMeet && googleConn) }]
+        : []),
     { id:"freq", label:"Frecuencia", icon:"refresh-cw", hasVal: freq !== "once" },
     { id:"time", label:"Hora",       icon:"clock",      hasVal: !!time },
     { id:"date", label:"Fecha",      icon:"calendar",   hasVal: dateChanged },
@@ -215,14 +268,17 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               </div>
           }
 
-          <button onClick={handleSubmit} style={{
+          <button onClick={handleSubmit} disabled={!canSubmit || creating} style={{
             width:40, height:40, borderRadius:"50%",
-            background: canSubmit ? accentColor : "rgba(255,255,255,0.08)",
-            border:"none", cursor: canSubmit ? "pointer" : "default",
+            background: (canSubmit && !creating) ? accentColor : "rgba(255,255,255,0.08)",
+            border:"none", cursor: (canSubmit && !creating) ? "pointer" : "default",
             display:"flex", alignItems:"center", justifyContent:"center",
-            color:"#fff", transition:"all .15s", opacity: canSubmit ? 1 : 0.4,
+            color:"#fff", transition:"all .15s", opacity: (canSubmit && !creating) ? 1 : 0.4,
           }}>
-            <Icon name="arrow-up" size={15}/>
+            {creating
+              ? <span style={{ width:15, height:15, borderRadius:"50%", border:"2px solid rgba(255,255,255,0.35)",
+                  borderTopColor:"#fff", display:"block", animation:"qcSpin .7s linear infinite" }}/>
+              : <Icon name="arrow-up" size={15}/>}
           </button>
         </div>
 
@@ -377,27 +433,84 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
 
           {/* Enlace de la reunión */}
           {activeTab === "link" && (
-            <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
-              <div style={{
-                width:44, height:44, borderRadius:12, background:"rgba(255,255,255,0.05)",
-                border:"0.5px solid rgba(255,255,255,0.08)", display:"grid", placeItems:"center",
-                color:"var(--text-muted)",
-              }}>
-                <Icon name="link" size={18} strokeWidth={1.7}/>
+            (type === "meeting" && autoMeet && !link.trim()) ? (
+              // ── Meet automático ──
+              <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:12 }}>
+                {googleConn === null ? (
+                  <span style={{ fontSize:13, color:"var(--text-subtle)" }}>Comprobando Google…</span>
+                ) : googleConn ? (
+                  <>
+                    <div style={{
+                      width:46, height:46, borderRadius:12, background:"rgba(52,211,153,0.12)",
+                      border:"0.5px solid rgba(52,211,153,0.3)", display:"grid", placeItems:"center", color:"#34d399",
+                    }}>
+                      <Icon name="video" size={20} strokeWidth={1.7}/>
+                    </div>
+                    <div style={{ textAlign:"center" }}>
+                      <div style={{ fontSize:13.5, color:"var(--text)", letterSpacing:"-0.3px" }}>Se creará un enlace de Google Meet</div>
+                      <div style={{ fontSize:11.5, color:"var(--text-subtle)", marginTop:3 }}>automáticamente al guardar la reunión</div>
+                    </div>
+                    <button onClick={() => setAutoMeet(false)} style={{
+                      background:"none", border:"none", color:"var(--text-subtle)", fontSize:12,
+                      cursor:"pointer", textDecoration:"underline", fontFamily:"var(--font-sans)",
+                    }}>Usar otro enlace</button>
+                  </>
+                ) : (
+                  <>
+                    <div style={{
+                      width:46, height:46, borderRadius:12, background:"rgba(255,255,255,0.05)",
+                      border:"0.5px solid rgba(255,255,255,0.08)", display:"grid", placeItems:"center", color:"var(--text-muted)",
+                    }}>
+                      <Icon name="video" size={20} strokeWidth={1.7}/>
+                    </div>
+                    <div style={{ fontSize:12.5, color:"var(--text-subtle)", textAlign:"center", maxWidth:320 }}>
+                      Conecta Google Calendar para generar enlaces de Meet automáticamente.
+                    </div>
+                    <button onClick={connectGoogle} style={{
+                      display:"flex", alignItems:"center", gap:8, padding:"9px 18px", borderRadius:99,
+                      background:"#fff", color:"#1f1f1f", border:"none", cursor:"pointer",
+                      fontSize:13, fontWeight:500, fontFamily:"var(--font-sans)",
+                    }}>
+                      <Icon name="link" size={14} strokeWidth={2}/> Conectar Google Calendar
+                    </button>
+                    <button onClick={() => setAutoMeet(false)} style={{
+                      background:"none", border:"none", color:"var(--text-subtle)", fontSize:12,
+                      cursor:"pointer", textDecoration:"underline", fontFamily:"var(--font-sans)",
+                    }}>Pegar un enlace manualmente</button>
+                  </>
+                )}
+                {gErr && <span style={{ fontSize:11.5, color:"var(--red)", textAlign:"center", maxWidth:340 }}>{gErr}</span>}
               </div>
-              <input autoFocus type="url" value={link}
-                onChange={e => setLink(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}
-                placeholder="https://meet.google.com/…"
-                style={{
-                  width:"100%", maxWidth:360, textAlign:"center",
-                  background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)",
-                  borderRadius:12, padding:"11px 14px", fontSize:13.5, letterSpacing:"-0.3px",
-                  color: link ? "var(--text)" : "rgba(255,255,255,0.3)", outline:"none",
-                  fontFamily:"var(--font-sans)", caretColor: accentColor,
-                }}/>
-              <span style={{ fontSize:11.5, color:"var(--text-subtle)" }}>Meet, Zoom, Teams… el enlace de la reunión</span>
-            </div>
+            ) : (
+              // ── Enlace manual (eventos, o reunión con autoMeet desactivado) ──
+              <div style={{ width:"100%", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
+                <div style={{
+                  width:44, height:44, borderRadius:12, background:"rgba(255,255,255,0.05)",
+                  border:"0.5px solid rgba(255,255,255,0.08)", display:"grid", placeItems:"center",
+                  color:"var(--text-muted)",
+                }}>
+                  <Icon name="link" size={18} strokeWidth={1.7}/>
+                </div>
+                <input autoFocus type="url" value={link}
+                  onChange={e => setLink(e.target.value)}
+                  onKeyDown={e => { if (e.key === "Enter" && canSubmit) handleSubmit(); }}
+                  placeholder="https://meet.google.com/…"
+                  style={{
+                    width:"100%", maxWidth:360, textAlign:"center",
+                    background:"rgba(255,255,255,0.05)", border:"0.5px solid rgba(255,255,255,0.1)",
+                    borderRadius:12, padding:"11px 14px", fontSize:13.5, letterSpacing:"-0.3px",
+                    color: link ? "var(--text)" : "rgba(255,255,255,0.3)", outline:"none",
+                    fontFamily:"var(--font-sans)", caretColor: accentColor,
+                  }}/>
+                <span style={{ fontSize:11.5, color:"var(--text-subtle)" }}>Meet, Zoom, Teams… el enlace de la reunión</span>
+                {type === "meeting" && googleConn && (
+                  <button onClick={() => { setLink(""); setAutoMeet(true); }} style={{
+                    background:"none", border:"none", color:"var(--text-subtle)", fontSize:12,
+                    cursor:"pointer", textDecoration:"underline", fontFamily:"var(--font-sans)",
+                  }}>Usar Google Meet automático</button>
+                )}
+              </div>
+            )
           )}
 
         </div>
@@ -438,7 +551,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
               {tab.id === "time" && time && (
                 <span style={{ fontSize:10, color:accentHex, marginLeft:2 }}>{time}</span>
               )}
-              {tab.id === "link" && link.trim() && (
+              {tab.id === "link" && (link.trim() || (type === "meeting" && autoMeet && googleConn)) && (
                 <span style={{ width:6, height:6, borderRadius:"50%", background:accentHex, flexShrink:0 }}/>
               )}
               {tab.id === "date" && dateChanged && (

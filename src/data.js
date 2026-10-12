@@ -2104,6 +2104,23 @@
       return { ok: false, error: String(e) };
     }
   };
+  const _googleApi = async (endpoint, payload) => {
+    try {
+      const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+      if (!token) return { ok: false, error: "sin sesi\xF3n" };
+      const res = await fetch("/api/google/" + endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify(payload || {})
+      });
+      return await res.json().catch(() => null) || { ok: false, error: "Respuesta vac\xEDa del servidor" };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  };
+  const googleStatus = () => _googleApi("status", {});
+  const googleAuthUrl = (loginHint) => _googleApi("auth-url", loginHint ? { login_hint: loginHint } : {});
+  const createMeet = (payload) => _googleApi("meet", payload);
   const addResource = async (input) => {
     const uid = _store._user?.id;
     if (!uid) return { error: "no-auth" };
@@ -2333,6 +2350,9 @@
     reloadWhatsapp: () => _loadWhatsapp(),
     whatsappStatus,
     connectWhatsapp,
+    googleStatus,
+    googleAuthUrl,
+    createMeet,
     getClientBoard,
     saveClientBoard,
     // Google Drive (Apps Script)

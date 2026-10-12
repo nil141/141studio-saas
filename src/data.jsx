@@ -1808,6 +1808,23 @@ const connectWhatsapp = async (payload) => {
   } catch (e) { return { ok: false, error: String(e) }; }
 };
 
+// ── Google Calendar / Meet ─────────────────────────────────────────────
+const _googleApi = async (endpoint, payload) => {
+  try {
+    const token = (await _sb.auth.getSession()).data.session?.access_token || null;
+    if (!token) return { ok: false, error: "sin sesión" };
+    const res = await fetch("/api/google/" + endpoint, {
+      method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify(payload || {}),
+    });
+    return (await res.json().catch(() => null)) || { ok: false, error: "Respuesta vacía del servidor" };
+  } catch (e) { return { ok: false, error: String(e) }; }
+};
+const googleStatus   = () => _googleApi("status", {});
+const googleAuthUrl  = (loginHint) => _googleApi("auth-url", loginHint ? { login_hint: loginHint } : {});
+// Crea un evento en Google Calendar con enlace de Meet. Devuelve { ok, meetLink, htmlLink, eventId }.
+const createMeet     = (payload) => _googleApi("meet", payload);
+
 // ── Recursos (biblioteca de herramientas / referencias / estrategias) ──
 const addResource = async (input) => {
   const uid = _store._user?.id; if (!uid) return { error: "no-auth" };
@@ -1930,6 +1947,7 @@ window.Data = {
   addResource, updateResource, deleteResource,
   sendWhatsapp, reloadWhatsapp: () => _loadWhatsapp(),
   whatsappStatus, connectWhatsapp,
+  googleStatus, googleAuthUrl, createMeet,
   getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
