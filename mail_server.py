@@ -1807,10 +1807,97 @@ def api_meet_create(body):
     return {"ok": True, "meetLink": meet, "htmlLink": ev.get("htmlLink", ""),
             "eventId": ev.get("id", "")}
 
+def _gcal_parse_dt(se):
+    """De un start/end de Google saca (date 'YYYY-MM-DD', time 'HH:MM' o None)."""
+    if not se:
+        return (None, None)
+    if se.get("dateTime"):
+        dt = se["dateTime"]
+        return (dt[:10], dt[11:16])
+    if se.get("date"):
+        return (se["date"], None)
+    return (None, None)
+
+def _gcal_event_link(ev):
+    meet = ev.get("hangoutLink") or ""
+    if not meet:
+        for ep in (ev.get("conferenceData", {}).get("entryPoints") or []):
+            if ep.get("entryPointType") == "video" and ep.get("uri"):
+                meet = ep["uri"]; break
+    return meet
+
+def api_google_sync(body):
+    """Reconcilia los eventos del CRM vinculados a Google Calendar: si en Google
+    cambiaron fecha/hora/título/enlace, actualiza la fila; si se borraron, la
+    elimina. Así, mover una reunión en Google se refleja en el CRM."""
+    at = _google_access_token()
+    if not at:
+        return {"ok": False, "error": "Google no está conectado.", "needsConnect": True}
+    if not (SB_SERVICE_KEY and GOOGLE_AGENCY_ID):
+        return {"ok": False, "error": "Falta configuración del servidor."}
+    cal = (_google_cfg() or {}).get("calendar_id") or GOOGLE_CALENDAR_ID
+    try:
+        rows = _sb_service("GET", "agenda_events?agency_id=eq." + GOOGLE_AGENCY_ID
+                           + "&gcal_id=not.is.null&select=id,date,time,time_end,title,link,gcal_id")
+    except Exception:
+        traceback.print_exc()
+        return {"ok": False, "error": "No se pudieron leer los eventos."}
+    updated, removed = 0, 0
+    for r in (rows or []):
+        gid = r.get("gcal_id")
+        if not gid:
+            continue
+        url = ("https://www.googleapis.com/calendar/v3/calendars/"
+               + urllib.parse.quote(cal) + "/events/" + urllib.parse.quote(gid))
+        try:
+            req = urllib.request.Request(url)
+            req.add_header("Authorization", "Bearer " + at)
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                ev = json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            if e.code in (404, 410):
+                # Evento borrado en Google → lo quitamos del CRM
+                try:
+                    _sb_service("DELETE", "agenda_events?id=eq." + urllib.parse.quote(str(r["id"])))
+                    removed += 1
+                except Exception:
+                    pass
+            continue
+        except Exception:
+            continue
+        if ev.get("status") == "cancelled":
+            try:
+                _sb_service("DELETE", "agenda_events?id=eq." + urllib.parse.quote(str(r["id"])))
+                removed += 1
+            except Exception:
+                pass
+            continue
+        new_date, new_time = _gcal_parse_dt(ev.get("start"))
+        _, new_end = _gcal_parse_dt(ev.get("end"))
+        new_title = (ev.get("summary") or r.get("title") or "").strip()
+        new_link  = _gcal_event_link(ev) or r.get("link")
+        # Normaliza la hora guardada (puede venir 'HH:MM:SS') a 'HH:MM'
+        cur_time = (r.get("time") or "")[:5] or None
+        cur_end  = (r.get("time_end") or "")[:5] or None
+        patch = {}
+        if new_date and new_date != r.get("date"): patch["date"] = new_date
+        if new_time != cur_time: patch["time"] = new_time
+        if new_end != cur_end:  patch["time_end"] = new_end
+        if new_title and new_title != (r.get("title") or ""): patch["title"] = new_title
+        if new_link and new_link != (r.get("link") or ""): patch["link"] = new_link
+        if patch:
+            try:
+                _sb_service("PATCH", "agenda_events?id=eq." + urllib.parse.quote(str(r["id"])), patch)
+                updated += 1
+            except Exception:
+                traceback.print_exc()
+    return {"ok": True, "updated": updated, "removed": removed}
+
 GOOGLE_HANDLERS = {
     "status": api_google_status,
     "auth-url": api_google_auth_url,
     "meet": api_meet_create,
+    "sync": api_google_sync,
 }
 
 # ── Calendario (.ics) — suscripción de solo lectura para Apple/Google Calendar ─

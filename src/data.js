@@ -243,7 +243,8 @@
     time: r.time || null,
     timeEnd: r.time_end || null,
     link: r.link || null,
-    type: r.type || "custom"
+    type: r.type || "custom",
+    gcalId: r.gcal_id || null
   });
   const _TASK_NOTES_KEY = "task_notes_v1";
   let _taskNotesLocal = {};
@@ -559,6 +560,10 @@
           }
           try {
             _loadWhatsapp();
+          } catch (_) {
+          }
+          try {
+            googleSync();
           } catch (_) {
           }
         }
@@ -1855,7 +1860,8 @@
       time: input.time || null,
       timeEnd: input.timeEnd || null,
       link: (input.link || "").trim() || null,
-      type: input.type || "custom"
+      type: input.type || "custom",
+      gcalId: input.gcalId || null
     };
     _store.AGENDA_EVENTS = [..._store.AGENDA_EVENTS || [], evt];
     _emit();
@@ -1868,7 +1874,8 @@
       time_end: evt.timeEnd,
       type: evt.type,
       notes: evt.sub,
-      link: evt.link
+      link: evt.link,
+      gcal_id: evt.gcalId
     });
     if (error) {
       _store.AGENDA_EVENTS = _store.AGENDA_EVENTS.filter((e) => e.id !== id);
@@ -2121,6 +2128,26 @@
   const googleStatus = () => _googleApi("status", {});
   const googleAuthUrl = (loginHint) => _googleApi("auth-url", loginHint ? { login_hint: loginHint } : {});
   const createMeet = (payload) => _googleApi("meet", payload);
+  let _gsyncBusy = false;
+  let _gsyncTs = 0;
+  const googleSync = async (force) => {
+    if (_gsyncBusy) return { ok: false, busy: true };
+    if (!force && Date.now() - _gsyncTs < 15e3) return { ok: true, skipped: true };
+    _gsyncBusy = true;
+    try {
+      const out = await _googleApi("sync", {});
+      _gsyncTs = Date.now();
+      if (out && out.ok && (out.updated || out.removed)) {
+        try {
+          await _loadAll();
+        } catch (_) {
+        }
+      }
+      return out;
+    } finally {
+      _gsyncBusy = false;
+    }
+  };
   const addResource = async (input) => {
     const uid = _store._user?.id;
     if (!uid) return { error: "no-auth" };
@@ -2353,6 +2380,7 @@
     googleStatus,
     googleAuthUrl,
     createMeet,
+    googleSync,
     getClientBoard,
     saveClientBoard,
     // Google Drive (Apps Script)

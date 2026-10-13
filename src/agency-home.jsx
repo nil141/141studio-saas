@@ -159,7 +159,10 @@ const AgencyHome = ({ navigate, openModal, session }) => {
     .sort((a, b) => (a.nextFollowup < b.nextFollowup ? -1 : 1));
 
   // WhatsApp: conversaciones pendientes de responder (último mensaje entrante)
-  React.useEffect(() => { try { D.reloadWhatsapp && D.reloadWhatsapp(); } catch (_) {} }, []);
+  React.useEffect(() => {
+    try { D.reloadWhatsapp && D.reloadWhatsapp(); } catch (_) {}
+    try { D.googleSync && D.googleSync(); } catch (_) {}   // refleja cambios hechos en Google Calendar
+  }, []);
   const _waBy = {};
   (D.WHATSAPP || []).forEach(m => { (_waBy[m.waId] = _waBy[m.waId] || []).push(m); });
   const waPending = Object.keys(_waBy).map(waId => {

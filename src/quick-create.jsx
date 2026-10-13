@@ -151,8 +151,9 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       }
     } else if (type === "event" || type === "meeting") {
       let meetLink = link.trim() || null;
+      let gcalId = null;
       // Reunión con Meet automático: creamos el evento en Google Calendar y
-      // usamos el enlace de Meet que devuelve.
+      // usamos el enlace de Meet (y el id del evento, para sincronizar cambios).
       if (type === "meeting" && autoMeet && googleConn && !meetLink) {
         setCreating(true); setGErr("");
         const r = await D.createMeet({
@@ -161,6 +162,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
         setCreating(false);
         if (r && r.ok && r.meetLink) {
           meetLink = r.meetLink;
+          gcalId = r.eventId || null;
         } else {
           setGErr((r && r.error) || "No se pudo crear el enlace de Meet");
           setActiveTab("link");
@@ -170,7 +172,7 @@ const QuickCreateModal = ({ open, onClose, defaultType = "task", defaultDate = "
       await D.addAgendaEvent({
         title: t, date, notes: desc || null,
         time: time || null, timeEnd: timeEnd || null,
-        link: meetLink,
+        link: meetLink, gcalId,
         type: type === "meeting" ? "meeting" : "custom",
       });
       // Reunión con enlace → mostramos el enlace para copiarlo antes de cerrar

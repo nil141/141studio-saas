@@ -174,6 +174,7 @@
         }
       } else if (type === "event" || type === "meeting") {
         let meetLink = link.trim() || null;
+        let gcalId = null;
         if (type === "meeting" && autoMeet && googleConn && !meetLink) {
           setCreating(true);
           setGErr("");
@@ -187,6 +188,7 @@
           setCreating(false);
           if (r && r.ok && r.meetLink) {
             meetLink = r.meetLink;
+            gcalId = r.eventId || null;
           } else {
             setGErr(r && r.error || "No se pudo crear el enlace de Meet");
             setActiveTab("link");
@@ -200,6 +202,7 @@
           time: time || null,
           timeEnd: timeEnd || null,
           link: meetLink,
+          gcalId,
           type: type === "meeting" ? "meeting" : "custom"
         });
         if (type === "meeting" && meetLink) {

@@ -179,6 +179,10 @@
         D.reloadWhatsapp && D.reloadWhatsapp();
       } catch (_) {
       }
+      try {
+        D.googleSync && D.googleSync();
+      } catch (_) {
+      }
     }, []);
     const _waBy = {};
     (D.WHATSAPP || []).forEach((m) => {

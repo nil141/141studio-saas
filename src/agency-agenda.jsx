@@ -52,6 +52,9 @@ const AgendaPage = ({ navigate }) => {
   const D = window.Data;
   D.useStore();
 
+  // Al abrir la agenda, reflejamos cambios hechos en Google Calendar.
+  React.useEffect(() => { try { D.googleSync && D.googleSync(); } catch (_) {} }, []);
+
   const today = todayYMD();
   const [year,  setYear]  = useState(new Date().getFullYear());
   const [month, setMonth] = useState(new Date().getMonth()); // 0-indexed

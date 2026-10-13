@@ -173,7 +173,7 @@ const _mw = (r) => ({
 const _mae = (r) => ({
   id: r.id, date: r.date, title: r.title,
   sub: r.notes || "", time: r.time || null, timeEnd: r.time_end || null,
-  link: r.link || null, type: r.type || "custom",
+  link: r.link || null, type: r.type || "custom", gcalId: r.gcal_id || null,
 });
 // Notas de tarea con respaldo local: la descripción se guarda también en el
 // navegador, para que no se pierda al recargar aunque la columna 'notes' aún
@@ -429,6 +429,7 @@ const _setupRealtime = () => {
       if (document.visibilityState === "visible" && _store._user?.id) {
         try { _loadAll(); } catch (_) {}
         try { _loadWhatsapp(); } catch (_) {}
+        try { googleSync(); } catch (_) {}   // reconcilia cambios de Google Calendar
       }
     });
   }
@@ -1642,11 +1643,13 @@ const addAgendaEvent = async (input) => {
     id, date: input.date, title: input.title.trim(),
     sub: input.notes || "", time: input.time || null, timeEnd: input.timeEnd || null,
     link: (input.link || "").trim() || null, type: input.type || "custom",
+    gcalId: input.gcalId || null,
   };
   _store.AGENDA_EVENTS = [...(_store.AGENDA_EVENTS || []), evt]; _emit();
   const { error } = await _insertAdaptive("agenda_events", {
     id, agency_id: uid, title: evt.title, date: evt.date,
     time: evt.time, time_end: evt.timeEnd, type: evt.type, notes: evt.sub, link: evt.link,
+    gcal_id: evt.gcalId,
   });
   if (error) {
     _store.AGENDA_EVENTS = _store.AGENDA_EVENTS.filter(e => e.id !== id); _emit();
@@ -1824,6 +1827,20 @@ const googleStatus   = () => _googleApi("status", {});
 const googleAuthUrl  = (loginHint) => _googleApi("auth-url", loginHint ? { login_hint: loginHint } : {});
 // Crea un evento en Google Calendar con enlace de Meet. Devuelve { ok, meetLink, htmlLink, eventId }.
 const createMeet     = (payload) => _googleApi("meet", payload);
+// Reconcilia los eventos del CRM vinculados a Google Calendar (fecha/hora/enlace
+// cambiados o eventos borrados en Google). Luego recarga la agenda.
+let _gsyncBusy = false, _gsyncTs = 0;
+const googleSync = async (force) => {
+  if (_gsyncBusy) return { ok: false, busy: true };
+  if (!force && Date.now() - _gsyncTs < 15000) return { ok: true, skipped: true };
+  _gsyncBusy = true;
+  try {
+    const out = await _googleApi("sync", {});
+    _gsyncTs = Date.now();
+    if (out && out.ok && (out.updated || out.removed)) { try { await _loadAll(); } catch (_) {} }
+    return out;
+  } finally { _gsyncBusy = false; }
+};
 
 // ── Recursos (biblioteca de herramientas / referencias / estrategias) ──
 const addResource = async (input) => {
@@ -1947,7 +1964,7 @@ window.Data = {
   addResource, updateResource, deleteResource,
   sendWhatsapp, reloadWhatsapp: () => _loadWhatsapp(),
   whatsappStatus, connectWhatsapp,
-  googleStatus, googleAuthUrl, createMeet,
+  googleStatus, googleAuthUrl, createMeet, googleSync,
   getClientBoard, saveClientBoard,
   // Google Drive (Apps Script)
   getDriveConfig, setDriveConfig, driveCreateFolderForClient, driveCreateFolderForProject,
