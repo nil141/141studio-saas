@@ -33,6 +33,7 @@ const _NAV_OTROS = [
   { id: "outreach",  label: "Propuestas Outreach", icon: "send" },
   { id: "whatsapp",  label: "WhatsApp",    icon: "msg-circle" },
   { id: "resources", label: "Recursos",    icon: "sparkles" },
+  { id: "calculator", label: "Calculadora", icon: "calculator" },
   { id: "income",    label: "Facturación", icon: "trending-up", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
   { id: "billing",   label: "Gastos",      icon: "receipt" },
 ];

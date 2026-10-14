@@ -275,6 +275,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "outreach": return <AgencyOutreach navigate={navigate}/>;
       case "whatsapp": return <AgencyWhatsApp navigate={navigate}/>;
       case "resources": return <AgencyResources navigate={navigate}/>;
+      case "calculator": return <AgencyCalculator/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate} initialAction={view.params.action}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
       case "notifications": return <AgencyNotifications navigate={navigate}/>;
