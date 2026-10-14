@@ -68,30 +68,30 @@ const AgencyCalculator = () => {
         <div className="calc-grid" style={{ display: "grid", gridTemplateColumns: "1.08fr 0.92fr", gap: 18, alignItems: "stretch" }}>
 
           {/* Sliders */}
-          <div style={{ ...box, padding: "26px 26px 30px", display: "flex", flexDirection: "column", gap: 26 }}>
-            <CalcSlider label="Sesiones al mes" value={sessions} min={0} max={100000} step={100}
+          <div style={{ ...box, padding: "34px 34px 40px", display: "flex", flexDirection: "column", gap: 36 }}>
+            <CalcSlider label="Sesiones al mes" value={sessions} min={0} max={500000} step={500}
               onChange={setSessions} color={_ACTUAL} display={_cNum(sessions)}/>
 
-            <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }}/>
+            <div style={{ height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "8px 0" }}/>
 
-            <div className="calc-pair" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
-              <CalcSlider label="Conversión actual" dot={_ACTUAL} value={convA} min={0} max={5} step={0.1}
+            <div className="calc-pair" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+              <CalcSlider label="Conversión actual" dot={_ACTUAL} value={convA} min={0} max={10} step={0.1}
                 onChange={setConvA} color={_ACTUAL} display={_cPct(convA)}/>
-              <CalcSlider label="Conversión objetivo" dot={_OBJ} value={convO} min={0} max={5} step={0.1}
+              <CalcSlider label="Conversión objetivo" dot={_OBJ} value={convO} min={0} max={10} step={0.1}
                 onChange={setConvO} color={_OBJ} display={_cPct(convO)}/>
             </div>
 
-            <div className="calc-pair" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 }}>
-              <CalcSlider label="Ticket medio actual" dot={_ACTUAL} value={ticketA} min={0} max={1000} step={5}
+            <div className="calc-pair" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 }}>
+              <CalcSlider label="Ticket medio actual" dot={_ACTUAL} value={ticketA} min={0} max={500} step={5}
                 onChange={setTicketA} color={_ACTUAL} display={_cEur(ticketA)}/>
-              <CalcSlider label="Ticket medio objetivo" dot={_OBJ} value={ticketO} min={0} max={1000} step={5}
+              <CalcSlider label="Ticket medio objetivo" dot={_OBJ} value={ticketO} min={0} max={500} step={5}
                 onChange={setTicketO} color={_OBJ} display={_cEur(ticketO)}/>
             </div>
           </div>
 
           {/* Resultado */}
           <div style={{ background: "#0a0a0c", border: "0.5px solid rgba(255,255,255,0.08)", borderRadius: 20,
-            padding: "28px 28px 30px", display: "flex", flexDirection: "column" }}>
+            padding: "34px 32px 36px", display: "flex", flexDirection: "column" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-muted)" }}>
               <span style={{ width: 7, height: 7, borderRadius: "50%", background: "var(--accent)" }}/>
               Lo que dejas de facturar cada mes

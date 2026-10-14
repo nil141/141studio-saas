@@ -43,26 +43,26 @@
       padding: "5px 12px",
       marginBottom: 16,
       letterSpacing: "0.02em"
-    } }, "Calculadora"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 40, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1.04, margin: 0, color: "var(--text)" } }, "\xBFCu\xE1ndo est\xE1s dejando de ", /* @__PURE__ */ React.createElement("span", { style: { fontStyle: "italic" } }, "ganar"), "?")), /* @__PURE__ */ React.createElement("p", { style: { fontSize: 13.5, color: "var(--text-subtle)", lineHeight: 1.55, maxWidth: 300, margin: 0, textAlign: "right" } }, "Ajusta los datos de tu Tienda Online y estima el impacto de la conversi\xF3n y el ticket medio en la facturaci\xF3n.")), /* @__PURE__ */ React.createElement("div", { className: "calc-grid", style: { display: "grid", gridTemplateColumns: "1.08fr 0.92fr", gap: 18, alignItems: "stretch" } }, /* @__PURE__ */ React.createElement("div", { style: { ...box, padding: "26px 26px 30px", display: "flex", flexDirection: "column", gap: 26 } }, /* @__PURE__ */ React.createElement(
+    } }, "Calculadora"), /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 40, fontWeight: 400, letterSpacing: "-0.04em", lineHeight: 1.04, margin: 0, color: "var(--text)" } }, "\xBFCu\xE1ndo est\xE1s dejando de ", /* @__PURE__ */ React.createElement("span", { style: { fontStyle: "italic" } }, "ganar"), "?")), /* @__PURE__ */ React.createElement("p", { style: { fontSize: 13.5, color: "var(--text-subtle)", lineHeight: 1.55, maxWidth: 300, margin: 0, textAlign: "right" } }, "Ajusta los datos de tu Tienda Online y estima el impacto de la conversi\xF3n y el ticket medio en la facturaci\xF3n.")), /* @__PURE__ */ React.createElement("div", { className: "calc-grid", style: { display: "grid", gridTemplateColumns: "1.08fr 0.92fr", gap: 18, alignItems: "stretch" } }, /* @__PURE__ */ React.createElement("div", { style: { ...box, padding: "34px 34px 40px", display: "flex", flexDirection: "column", gap: 36 } }, /* @__PURE__ */ React.createElement(
       CalcSlider,
       {
         label: "Sesiones al mes",
         value: sessions,
         min: 0,
-        max: 1e5,
-        step: 100,
+        max: 5e5,
+        step: 500,
         onChange: setSessions,
         color: _ACTUAL,
         display: _cNum(sessions)
       }
-    ), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)" } }), /* @__PURE__ */ React.createElement("div", { className: "calc-pair", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 } }, /* @__PURE__ */ React.createElement(
+    ), /* @__PURE__ */ React.createElement("div", { style: { height: "0.5px", background: "rgba(255,255,255,0.07)", margin: "8px 0" } }), /* @__PURE__ */ React.createElement("div", { className: "calc-pair", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 } }, /* @__PURE__ */ React.createElement(
       CalcSlider,
       {
         label: "Conversi\xF3n actual",
         dot: _ACTUAL,
         value: convA,
         min: 0,
-        max: 5,
+        max: 10,
         step: 0.1,
         onChange: setConvA,
         color: _ACTUAL,
@@ -75,20 +75,20 @@
         dot: _OBJ,
         value: convO,
         min: 0,
-        max: 5,
+        max: 10,
         step: 0.1,
         onChange: setConvO,
         color: _OBJ,
         display: _cPct(convO)
       }
-    )), /* @__PURE__ */ React.createElement("div", { className: "calc-pair", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 22 } }, /* @__PURE__ */ React.createElement(
+    )), /* @__PURE__ */ React.createElement("div", { className: "calc-pair", style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 40 } }, /* @__PURE__ */ React.createElement(
       CalcSlider,
       {
         label: "Ticket medio actual",
         dot: _ACTUAL,
         value: ticketA,
         min: 0,
-        max: 1e3,
+        max: 500,
         step: 5,
         onChange: setTicketA,
         color: _ACTUAL,
@@ -101,7 +101,7 @@
         dot: _OBJ,
         value: ticketO,
         min: 0,
-        max: 1e3,
+        max: 500,
         step: 5,
         onChange: setTicketO,
         color: _OBJ,
@@ -111,7 +111,7 @@
       background: "#0a0a0c",
       border: "0.5px solid rgba(255,255,255,0.08)",
       borderRadius: 20,
-      padding: "28px 28px 30px",
+      padding: "34px 32px 36px",
       display: "flex",
       flexDirection: "column"
     } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-muted)" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: "50%", background: "var(--accent)" } }), "Lo que dejas de facturar cada mes"), /* @__PURE__ */ React.createElement("div", { style: {
