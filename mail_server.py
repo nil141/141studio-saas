@@ -638,15 +638,17 @@ def api_whatsapp_connect(body):
     # redirect_uri contra el del diálogo → para códigos del JS SDK debe ir
     # como CADENA VACÍA. Guardamos también la URL de la página por si hiciera
     # falta probar con ella.
-    page = (body.get("location") or "").strip()
+    # El código del JS SDK está atado a la URL de la página que lanzó FB.login
+    # (el diálogo la usó como redirect_uri). Hay que canjearlo con ESA misma URL.
+    redirect_uri = (body.get("location") or "").strip() or (PORTAL_URL + "/")
     print("[WA] connect: app_id=" + str(WA_APP_ID) + " secret_len=" + str(len(WA_APP_SECRET or ""))
           + " code_len=" + str(len(code)) + " phone_id=" + str(phone_id) + " waba=" + str(waba_id)
-          + " page=" + page + " | canje con redirect_uri='' (vacío)")
+          + " | canje con redirect_uri=" + redirect_uri)
     try:
         url = ("https://graph.facebook.com/" + WA_API_VER + "/oauth/access_token"
                "?client_id=" + urllib.parse.quote(WA_APP_ID)
                + "&client_secret=" + urllib.parse.quote(WA_APP_SECRET)
-               + "&redirect_uri="   # cadena vacía (flujo del SDK de JavaScript)
+               + "&redirect_uri=" + urllib.parse.quote(redirect_uri, safe="")
                + "&code=" + urllib.parse.quote(code))
         with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
             tok = (json.loads(r.read().decode()) or {}).get("access_token")
