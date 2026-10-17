@@ -634,14 +634,19 @@ def api_whatsapp_connect(body):
     # El código viene del SDK de JavaScript (FB.login): en ese caso Meta exige
     # que el redirect_uri sea una CADENA VACÍA e idéntica a la del diálogo OAuth.
     # Si no se envía, responde "Error validating verification code ... redirect_uri".
-    # El código del Embedded Signup (business integration) se canjea SIN
-    # redirect_uri. Lo registramos todo para diagnosticar.
+    # El código viene del SDK de JavaScript (FB.login). Meta valida el
+    # redirect_uri contra el del diálogo → para códigos del JS SDK debe ir
+    # como CADENA VACÍA. Guardamos también la URL de la página por si hiciera
+    # falta probar con ella.
+    page = (body.get("location") or "").strip()
     print("[WA] connect: app_id=" + str(WA_APP_ID) + " secret_len=" + str(len(WA_APP_SECRET or ""))
-          + " code_len=" + str(len(code)) + " phone_id=" + str(phone_id) + " waba=" + str(waba_id))
+          + " code_len=" + str(len(code)) + " phone_id=" + str(phone_id) + " waba=" + str(waba_id)
+          + " page=" + page + " | canje con redirect_uri='' (vacío)")
     try:
         url = ("https://graph.facebook.com/" + WA_API_VER + "/oauth/access_token"
                "?client_id=" + urllib.parse.quote(WA_APP_ID)
                + "&client_secret=" + urllib.parse.quote(WA_APP_SECRET)
+               + "&redirect_uri="   # cadena vacía (flujo del SDK de JavaScript)
                + "&code=" + urllib.parse.quote(code))
         with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
             tok = (json.loads(r.read().decode()) or {}).get("access_token")

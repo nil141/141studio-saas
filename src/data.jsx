@@ -1803,7 +1803,7 @@ const connectWhatsapp = async (payload) => {
     if (!token) return { ok: false, error: "sin sesión" };
     const res = await fetch("/api/whatsapp/connect", {
       method: "POST", headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify(payload || {}),
+      body: JSON.stringify({ ...(payload || {}), location: (typeof window !== "undefined" ? window.location.href : "") }),
     });
     const out = await res.json().catch(() => null);
     if (out && out.ok) { try { await _loadWhatsapp(); } catch {} }
