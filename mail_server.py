@@ -630,17 +630,22 @@ def api_whatsapp_connect(body):
         return {"ok": False, "error": "Falta 'code' del Embedded Signup."}
     if not (WA_APP_ID and WA_APP_SECRET):
         return {"ok": False, "error": "El servidor no tiene WHATSAPP_APP_ID / WHATSAPP_APP_SECRET configurados."}
-    # 1) Canjear el code por un token duradero (business integration token)
+    # 1) Canjear el code por un token duradero (business integration token).
+    # El código viene del SDK de JavaScript (FB.login): en ese caso Meta exige
+    # que el redirect_uri sea una CADENA VACÍA e idéntica a la del diálogo OAuth.
+    # Si no se envía, responde "Error validating verification code ... redirect_uri".
     try:
         url = ("https://graph.facebook.com/" + WA_API_VER + "/oauth/access_token"
                "?client_id=" + urllib.parse.quote(WA_APP_ID)
                + "&client_secret=" + urllib.parse.quote(WA_APP_SECRET)
+               + "&redirect_uri="   # vacío a propósito (flujo del SDK de JS)
                + "&code=" + urllib.parse.quote(code))
         with urllib.request.urlopen(urllib.request.Request(url), timeout=25) as r:
             tok = (json.loads(r.read().decode()) or {}).get("access_token")
     except urllib.error.HTTPError as e:
         try: detail = json.loads(e.read().decode()).get("error", {}).get("message", "")
         except Exception: detail = ""
+        print("[WA] canje code error:", e.code, detail)
         return {"ok": False, "error": "No se pudo canjear el código: " + (detail or str(e.code))}
     except Exception as e:
         return {"ok": False, "error": str(e)}
