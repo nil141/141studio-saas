@@ -68,8 +68,10 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.075)"}
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
-          {iconNode || <Icon name={icon} size={18} strokeWidth={1.8}/>}
+        {/* Icono dentro de un chip sutil (estilo iUROP), monocromo */}
+        <div style={{ width: 36, height: 36, borderRadius: 11, flexShrink: 0, display: "grid", placeItems: "center",
+          background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.82)" }}>
+          {iconNode || <Icon name={icon} size={18} strokeWidth={1.5}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
@@ -181,8 +183,9 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   };
 
   const sec = (label, child) => (
-    <div style={{ marginBottom: 20 }}>
-      <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" }}>{label}</div>
+    <div style={{ marginBottom: 22 }}>
+      <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 10, letterSpacing: "0.08em",
+        textTransform: "uppercase", fontWeight: 500 }}>{label}</div>
       {child}
     </div>
   );
@@ -198,11 +201,11 @@ const AgencyHome = ({ navigate, openModal, session }) => {
         {sec("Hoy", (
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {todayAll.length === 0 ? (
-              <HomeCard icon="check" color="var(--accent)"
+              <HomeCard icon="sl-tasks" color="var(--accent)"
                 title="Sin tareas para hoy" sub="No tienes nada programado para hoy." onOpen={() => navigate("tasks")}/>
             ) : (
-              <HomeCard icon="list-todo" color="#9e9ae5"
-                iconNode={<DonutIcon pct={todayPct}/>}
+              <HomeCard icon="sl-tasks" color="#9e9ae5"
+                iconNode={<DonutIcon pct={todayPct} size={24}/>}
                 title={todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
                 sub={todayTasks.length === 0
                   ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
@@ -223,7 +226,7 @@ const AgencyHome = ({ navigate, openModal, session }) => {
                 onOpen={() => navigate("tasks")}/>
             )}
             {todayMeetings.length > 0 && (
-              <HomeCard icon="video" color="#34d399"
+              <HomeCard icon="video" color="#9e9ae5"
                 title={`${todayMeetings.length} reuni${todayMeetings.length === 1 ? "ón" : "ones"} hoy`}
                 sub={todayMeetings.slice(0, 3).map(m => m.title + (m.time ? ` · ${m.time}` : "")).join("  ·  ")}
                 items={todayMeetings.slice(0, 8).map(m => ({
@@ -239,9 +242,9 @@ const AgencyHome = ({ navigate, openModal, session }) => {
 
         {/* WhatsApp — mensajes pendientes de responder */}
         {sec("WhatsApp", waPending.length === 0 ? (
-          <HomeCard icon="msg-circle" color="#25D366" title="Sin mensajes por responder" sub="No tienes conversaciones de WhatsApp pendientes." onOpen={() => navigate("whatsapp")}/>
+          <HomeCard icon="sl-chat" color="#25D366" title="Sin mensajes por responder" sub="No tienes conversaciones de WhatsApp pendientes." onOpen={() => navigate("whatsapp")}/>
         ) : (
-          <HomeCard icon="msg-circle" color="#25D366"
+          <HomeCard icon="sl-chat" color="#25D366"
             title={`${waPending.length} mensaje${waPending.length === 1 ? "" : "s"} de WhatsApp por responder`}
             sub={waPending.slice(0, 3).map(c => c.name).join(" · ")}
             items={waPending.slice(0, 8).map(c => ({ label: c.name, right: _homeWaTime(c.last.ts), dot: "#25D366", onClick: () => navigate("whatsapp") }))}
@@ -250,9 +253,9 @@ const AgencyHome = ({ navigate, openModal, session }) => {
 
         {/* Entregas — proyectos en marcha */}
         {sec("Entregas próximas", activeProjs.length === 0 ? (
-          <HomeCard icon="package" color="#60a5fa" title="Sin entregas pendientes" sub="No tienes proyectos en marcha ahora mismo." onOpen={() => navigate("projects")}/>
+          <HomeCard icon="sl-package" color="#60a5fa" title="Sin entregas pendientes" sub="No tienes proyectos en marcha ahora mismo." onOpen={() => navigate("projects")}/>
         ) : (
-          <HomeCard icon="package" color="#60a5fa"
+          <HomeCard icon="sl-package" color="#60a5fa"
             title={`${activeProjs.length} entrega${activeProjs.length === 1 ? "" : "s"} próxima${activeProjs.length === 1 ? "" : "s"}`}
             sub={activeProjs.slice(0, 2).map(p => `${p.clientName && !["—","-","Interno"].includes((p.clientName||"").trim()) ? p.clientName + " | " : ""}${p.name}`).join("  ·  ")}
             items={activeProjs.slice(0, 8).map(p => ({ label: `${p.clientName && !["—","-","Interno"].includes((p.clientName||"").trim()) ? p.clientName + " | " : ""}${p.name}`, right: _homeFmtDate(p.deadline), onClick: () => navigate("project", { projectId: p.id }) }))}
@@ -261,9 +264,9 @@ const AgencyHome = ({ navigate, openModal, session }) => {
 
         {/* Seguimientos — outreach de hoy */}
         {sec("Seguimientos", dueFollowups.length === 0 ? (
-          <HomeCard icon="send" color="#e2b45c" title="Sin seguimientos para hoy" sub="No tienes seguimientos de outreach que vencen hoy." onOpen={() => navigate("outreach")}/>
+          <HomeCard icon="sl-send" color="#e2b45c" title="Sin seguimientos para hoy" sub="No tienes seguimientos de outreach que vencen hoy." onOpen={() => navigate("outreach")}/>
         ) : (
-          <HomeCard icon="send" color="#e2b45c"
+          <HomeCard icon="sl-send" color="#e2b45c"
             title={`${dueFollowups.length} seguimiento${dueFollowups.length === 1 ? "" : "s"} para hoy`}
             sub={dueFollowups.slice(0, 3).map(o => o.brand).join(" · ")}
             items={dueFollowups.slice(0, 8).map(o => ({ label: o.brand, right: o.nextFollowup < today ? "Atrasado" : "Hoy", dot: o.nextFollowup < today ? "var(--red)" : "var(--amber)", onClick: () => navigate("outreach") }))}
