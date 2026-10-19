@@ -312,7 +312,7 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       style={{
         height:"100vh",
         display:"flex", flexDirection:"column",
-        padding:"46px 24px 0",
+        padding:"62px 24px 40px",
         maxWidth:980, margin:"0 auto", width:"100%",
         overflow:"hidden",
       }}
@@ -462,9 +462,9 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
         flex:1, minHeight:0,
         overflowY:"auto",
         scrollbarGutter:"stable",
-        paddingRight:10, paddingTop:22, paddingBottom:8,
-        WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
-        maskImage:"linear-gradient(to bottom, transparent 0, #000 22px, #000 calc(100% - 24px), transparent 100%)",
+        paddingRight:10, paddingTop:26, paddingBottom:12,
+        WebkitMaskImage:"linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 30px), transparent 100%)",
+        maskImage:"linear-gradient(to bottom, transparent 0, #000 28px, #000 calc(100% - 30px), transparent 100%)",
       }}>
 
       <window.RoutineDayList day={selDateStr} onEdit={(r) => openModal("editRoutine", { routine: r })}
