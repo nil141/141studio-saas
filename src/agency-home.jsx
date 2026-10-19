@@ -68,7 +68,9 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.075)"}
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
-        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
+        {/* Iconos monocromos (blanco suave) para que todo cohesione; el donut
+            de tareas conserva su propio acento morado vía iconNode. */}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "rgba(255,255,255,0.74)" }}>
           {iconNode || <Icon name={icon} size={18} strokeWidth={1.7}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
