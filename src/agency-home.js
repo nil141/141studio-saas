@@ -84,17 +84,7 @@
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.075)",
         onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.055)"
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: {
-        width: 36,
-        height: 36,
-        borderRadius: 11,
-        flexShrink: 0,
-        display: "grid",
-        placeItems: "center",
-        background: "rgba(255,255,255,0.05)",
-        border: "0.5px solid rgba(255,255,255,0.09)",
-        color: "rgba(255,255,255,0.82)"
-      } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.5 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 12.5,
         color: "var(--text-muted)",
         lineHeight: 1.5,
@@ -213,14 +203,7 @@
       }
       navigate("nora");
     };
-    const sec = (label, child) => /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 22 } }, /* @__PURE__ */ React.createElement("div", { style: {
-      fontSize: 11,
-      color: "var(--text-subtle)",
-      marginBottom: 10,
-      letterSpacing: "0.08em",
-      textTransform: "uppercase",
-      fontWeight: 500
-    } }, label), child);
+    const sec = (label, child) => /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 20 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" } }, label), child);
     return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" } }, /* @__PURE__ */ React.createElement("div", { style: { maxWidth: 620, margin: "0 auto", paddingTop: "15vh" } }, /* @__PURE__ */ React.createElement("h1", { style: { fontFamily: "var(--font-display)", fontSize: 27, fontWeight: 400, letterSpacing: "-0.04em", margin: "0 0 26px", color: "var(--text)" } }, _homeGreet(), ", ", name, "."), sec("Hoy", /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 10 } }, todayAll.length === 0 ? /* @__PURE__ */ React.createElement(
       HomeCard,
       {
@@ -235,7 +218,7 @@
       {
         icon: "sl-tasks",
         color: "#9e9ae5",
-        iconNode: /* @__PURE__ */ React.createElement(DonutIcon, { pct: todayPct, size: 24 }),
+        iconNode: /* @__PURE__ */ React.createElement(DonutIcon, { pct: todayPct }),
         title: todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`,
         sub: todayTasks.length === 0 ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}` : todayTasks.slice(0, 3).map((t) => t.title).join(" \xB7 "),
         items: todayItems.slice(0, 10).map((t) => {
@@ -262,7 +245,7 @@
       HomeCard,
       {
         icon: "video",
-        color: "#9e9ae5",
+        color: "#34d399",
         title: `${todayMeetings.length} reuni${todayMeetings.length === 1 ? "\xF3n" : "ones"} hoy`,
         sub: todayMeetings.slice(0, 3).map((m) => m.title + (m.time ? ` \xB7 ${m.time}` : "")).join("  \xB7  "),
         items: todayMeetings.slice(0, 8).map((m) => ({

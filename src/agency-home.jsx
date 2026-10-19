@@ -68,10 +68,8 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
       onMouseEnter={e => e.currentTarget.style.background = "rgba(255,255,255,0.075)"}
       onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.055)"}>
       <div style={{ display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" }}>
-        {/* Icono dentro de un chip sutil (estilo iUROP), monocromo */}
-        <div style={{ width: 36, height: 36, borderRadius: 11, flexShrink: 0, display: "grid", placeItems: "center",
-          background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.09)", color: "rgba(255,255,255,0.82)" }}>
-          {iconNode || <Icon name={icon} size={18} strokeWidth={1.5}/>}
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color }}>
+          {iconNode || <Icon name={icon} size={18} strokeWidth={1.7}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
@@ -183,9 +181,8 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   };
 
   const sec = (label, child) => (
-    <div style={{ marginBottom: 22 }}>
-      <div style={{ fontSize: 11, color: "var(--text-subtle)", marginBottom: 10, letterSpacing: "0.08em",
-        textTransform: "uppercase", fontWeight: 500 }}>{label}</div>
+    <div style={{ marginBottom: 20 }}>
+      <div style={{ fontSize: 11.5, color: "var(--text-subtle)", marginBottom: 9, letterSpacing: "0.01em" }}>{label}</div>
       {child}
     </div>
   );
@@ -205,7 +202,7 @@ const AgencyHome = ({ navigate, openModal, session }) => {
                 title="Sin tareas para hoy" sub="No tienes nada programado para hoy." onOpen={() => navigate("tasks")}/>
             ) : (
               <HomeCard icon="sl-tasks" color="#9e9ae5"
-                iconNode={<DonutIcon pct={todayPct} size={24}/>}
+                iconNode={<DonutIcon pct={todayPct}/>}
                 title={todayTasks.length === 0 ? "Todo hecho por hoy" : `Tienes ${todayTasks.length} tarea${todayTasks.length === 1 ? "" : "s"} para hoy`}
                 sub={todayTasks.length === 0
                   ? `${todayDoneCount} tarea${todayDoneCount === 1 ? "" : "s"} completada${todayDoneCount === 1 ? "" : "s"}`
@@ -226,7 +223,7 @@ const AgencyHome = ({ navigate, openModal, session }) => {
                 onOpen={() => navigate("tasks")}/>
             )}
             {todayMeetings.length > 0 && (
-              <HomeCard icon="video" color="#9e9ae5"
+              <HomeCard icon="video" color="#34d399"
                 title={`${todayMeetings.length} reuni${todayMeetings.length === 1 ? "ón" : "ones"} hoy`}
                 sub={todayMeetings.slice(0, 3).map(m => m.title + (m.time ? ` · ${m.time}` : "")).join("  ·  ")}
                 items={todayMeetings.slice(0, 8).map(m => ({
