@@ -312,40 +312,14 @@ const TasksBoard = ({ navigate, openModal, initialDate }) => {
       style={{
         height:"100vh",
         display:"flex", flexDirection:"column",
-        padding:"28px 40px 0",
-        maxWidth:"none", margin:0,
+        padding:"46px 24px 0",
+        maxWidth:980, margin:"0 auto", width:"100%",
         overflow:"hidden",
       }}
     >
 
-      {/* Header — title + ActionPill (oculto en móvil: el título ya está en la
-          tira de pestañas y se crea desde el botón «+» de arriba) */}
-      <div className="page-head tasks-head" style={{ flexShrink:0 }}>
-        <div onClick={() => { if (!isToday) setSelectedDay(D.todayDate ? D.todayDate() : new Date()); }}
-          data-tooltip={!isToday ? "Volver a hoy" : undefined}
-          style={{ cursor: isToday ? "default" : "pointer" }}>
-          <h1>Tareas</h1>
-          <div className="sub">
-            {(() => {
-              const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday:"long", day:"numeric", month:"long", year:"numeric" });
-              return f.charAt(0).toUpperCase() + f.slice(1);
-            })()}
-          </div>
-        </div>
-        <ActionPill
-          plusActions={[
-            { icon:"list-todo", label:"Nueva tarea", sub:"Una tarea puntual para un día.", accent:true,
-              onClick:() => openModal("newTask", { date: selDateStr }) },
-            { icon:"refresh-cw", label:"Nueva rutina", sub:"Una tarea que se repite en el tiempo.",
-              onClick:() => openModal("newRoutine", { date: selDateStr }) },
-          ]}
-          moreActions={[
-            { icon: hideCompleted ? "eye" : "eye-off",
-              label: hideCompleted ? "Mostrar completadas" : "Ocultar completadas",
-              onClick: () => setHideCompleted(h => !h) },
-          ]}
-        />
-      </div>
+      {/* Cabecera retirada (título/fecha + cápsula) para un look más simple.
+          Crear tareas: botón «+» global de arriba. */}
 
       {/* Tira horizontal de días (scroll) + progreso */}
       <div style={{ borderBottom:"0.5px solid var(--border)", paddingBottom:18, marginBottom:0, flexShrink:0 }}>

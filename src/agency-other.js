@@ -124,53 +124,13 @@
           height: "100vh",
           display: "flex",
           flexDirection: "column",
-          padding: "28px 40px 0",
-          maxWidth: "none",
-          margin: 0,
+          padding: "46px 24px 0",
+          maxWidth: 980,
+          margin: "0 auto",
+          width: "100%",
           overflow: "hidden"
         }
       },
-      /* @__PURE__ */ React.createElement("div", { className: "page-head tasks-head", style: { flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
-        "div",
-        {
-          onClick: () => {
-            if (!isToday) setSelectedDay(D.todayDate ? D.todayDate() : /* @__PURE__ */ new Date());
-          },
-          "data-tooltip": !isToday ? "Volver a hoy" : void 0,
-          style: { cursor: isToday ? "default" : "pointer" }
-        },
-        /* @__PURE__ */ React.createElement("h1", null, "Tareas"),
-        /* @__PURE__ */ React.createElement("div", { className: "sub" }, (() => {
-          const f = new Date(selectedDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
-          return f.charAt(0).toUpperCase() + f.slice(1);
-        })())
-      ), /* @__PURE__ */ React.createElement(
-        ActionPill,
-        {
-          plusActions: [
-            {
-              icon: "list-todo",
-              label: "Nueva tarea",
-              sub: "Una tarea puntual para un d\xEDa.",
-              accent: true,
-              onClick: () => openModal("newTask", { date: selDateStr })
-            },
-            {
-              icon: "refresh-cw",
-              label: "Nueva rutina",
-              sub: "Una tarea que se repite en el tiempo.",
-              onClick: () => openModal("newRoutine", { date: selDateStr })
-            }
-          ],
-          moreActions: [
-            {
-              icon: hideCompleted ? "eye" : "eye-off",
-              label: hideCompleted ? "Mostrar completadas" : "Ocultar completadas",
-              onClick: () => setHideCompleted((h) => !h)
-            }
-          ]
-        }
-      )),
       /* @__PURE__ */ React.createElement("div", { style: { borderBottom: "0.5px solid var(--border)", paddingBottom: 18, marginBottom: 0, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("style", null, `.day-scroll::-webkit-scrollbar{display:none}`), (() => {
         return /* @__PURE__ */ React.createElement("div", { ref: stripRef, className: "day-scroll", style: {
           display: "flex",
