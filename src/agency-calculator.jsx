@@ -46,7 +46,7 @@ const AgencyCalculator = () => {
 
   return (
     <div style={{ position: "relative", minHeight: "100dvh", padding: "0 24px 60px", background: "transparent" }}>
-      <div style={{ maxWidth: 1000, margin: "0 auto", paddingTop: "8vh" }}>
+      <div style={{ maxWidth: 980, margin: "0 auto", paddingTop: "8vh" }}>
 
         {/* Cabecera */}
         <div className="calc-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: 24, marginBottom: 30, flexWrap: "wrap" }}>

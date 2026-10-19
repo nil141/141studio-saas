@@ -409,7 +409,7 @@ const AgencyWhatsApp = ({ navigate }) => {
   );
 
   return (
-    <div className="wa-page" style={{ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden" }}>
+    <div className="wa-page" style={{ display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", maxWidth: 980, margin: "0 auto", width: "100%" }}>
       <WaConnectBanner/>
       <div style={{ flex: 1, display: "flex", minHeight: 0 }}>
         {isMobile ? (active ? Thread : List) : (<>{List}{Thread}</>)}

@@ -1737,7 +1737,7 @@ const AgencyBilling = () => {
   return (
     <div className="pg-full pg-pad gastos-root" style={{
       height:"100vh", display:"flex", flexDirection:"column",
-      padding:"28px 40px 0", maxWidth:"none", margin:0, overflow:"hidden",
+      padding:"28px 24px 0", maxWidth:980, margin:"0 auto", width:"100%", overflow:"hidden",
     }}>
       {/* Cabecera fija: título + hero de KPIs */}
       <div style={{ flexShrink:0 }}>
