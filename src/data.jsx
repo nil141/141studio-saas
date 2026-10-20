@@ -277,8 +277,59 @@ const _ms = r => r && ({
   website: r.website, tagline: r.tagline,
 });
 
+// ── Diario de cambios de tareas pendientes de confirmar ─────────────
+// Cada recarga lee las tareas al principio pero las aplica ~1 s después (tras
+// varias consultas más). Si entre medias el usuario marca/edita/crea/borra una
+// tarea, esa foto antigua pisaría el cambio optimista (la tarea "vuelve arriba").
+// Guardamos cada cambio hasta que el servidor lo confirma Y una recarga posterior
+// lo haya leído; mientras tanto se re-aplica sobre lo que llegue de Supabase.
+const _taskJ = {};
+const _tjTouch = (id, entry) => {
+  const prev = _taskJ[id];
+  const e = { ...(prev || {}), ...entry, inflight: ((prev && prev.inflight) || 0) + 1, confirmedAt: null };
+  if (prev && prev.kind === "patch" && entry.kind === "patch") e.patch = { ...prev.patch, ...entry.patch };
+  if (prev && prev.kind === "add" && entry.kind === "patch") { e.kind = "add"; e.task = { ...prev.task, ...entry.patch }; }
+  _taskJ[id] = e;
+};
+const _tjDone = (id, error) => {
+  const e = _taskJ[id]; if (!e) return;
+  if (error) { delete _taskJ[id]; _loadAll(); return; }   // falló: manda lo que haya en la BD
+  e.inflight = Math.max(0, e.inflight - 1);
+  if (!e.inflight) e.confirmedAt = Date.now();
+};
+const _tjApply = (fetchStart) => {
+  for (const id of Object.keys(_taskJ)) {
+    const e = _taskJ[id];
+    // Confirmado antes de que empezara esta lectura → la BD ya lo refleja
+    if (!e.inflight && e.confirmedAt && e.confirmedAt < fetchStart) { delete _taskJ[id]; continue; }
+    if (e.kind === "del") {
+      for (const pid of Object.keys(_store.TASKS)) _store.TASKS[pid] = _store.TASKS[pid].filter(t => t.id !== id);
+    } else if (e.kind === "add") {
+      const pid = e.pid || "__none__";
+      const arr = _store.TASKS[pid] || (_store.TASKS[pid] = []);
+      const i = arr.findIndex(t => t.id === id);
+      if (i < 0) arr.unshift({ ...e.task }); else arr[i] = { ...arr[i], ...e.task };
+    } else {
+      for (const pid of Object.keys(_store.TASKS)) {
+        _store.TASKS[pid] = _store.TASKS[pid].map(t => (t.id === id ? { ...t, ...e.patch } : t));
+      }
+    }
+  }
+};
+
 // ── Load all data from Supabase ─────────────────────────────────────
-const _loadAll = async () => {
+// Las recargas se serializan: si llega otra petición mientras una está en
+// curso, se hace UNA más al terminar (así nunca acaba ganando una foto antigua).
+let _loadP = null, _loadAgain = false;
+const _loadAll = () => {
+  if (_loadP) { _loadAgain = true; return _loadP; }
+  _loadP = (async () => {
+    try { do { _loadAgain = false; await _loadAllRaw(); } while (_loadAgain); }
+    finally { _loadP = null; }
+  })();
+  return _loadP;
+};
+const _loadAllRaw = async () => {
   const uid = _store._user?.id;
   if (!uid) return;
 
@@ -353,6 +404,7 @@ const _loadAll = async () => {
       _store.DELIVERABLES = [];
     }
   } else {
+    const _tFetch = Date.now();
     const [c, p, i, d, l, t, cr, s] = await Promise.all([
       _sb.from("clients").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
       _sb.from("projects").select("*").eq("agency_id", uid).order("created_at", { ascending: false }),
@@ -397,6 +449,7 @@ const _loadAll = async () => {
       if (!_store.TASKS[pid]) _store.TASKS[pid] = [];
       _store.TASKS[pid].push(_mt(row));
     }
+    _tjApply(_tFetch);
   }
   _store._loaded = true;
   _emit();
@@ -1205,6 +1258,7 @@ const addTask = (input) => {
   };
   _setTaskNoteLocal(t.id, t.notes);
   _store.TASKS[pid] = [t, ..._store.TASKS[pid]]; _emit();
+  _tjTouch(t.id, { kind: "add", pid, task: t });
   _insertAdaptive("tasks", {
     id: t.id, agency_id: uid,
     project_id: pid === "__none__" ? null : pid,
@@ -1215,6 +1269,7 @@ const addTask = (input) => {
     notes: t.notes || null,
     done: false,
   }).then(({ error }) => {
+    _tjDone(t.id, error);
     if (error) {
       console.error("[addTask] Supabase error:", error.message, "| code:", error.code, "| hint:", error.hint);
       _store.TASKS[pid] = (_store.TASKS[pid] || []).filter(x => x.id !== t.id);
@@ -1519,7 +1574,11 @@ const moveTask = (projectId, taskId, newColumn) => {
   }); _emit();
   const upd = { col: newColumn };
   if (reDate) upd.deadline = reDate;
-  _sb.from("tasks").update(upd).eq("id", taskId).then();
+  _tjTouch(taskId, { kind: "patch", patch: { column: newColumn, ...(reDate ? { deadline: reDate } : {}) } });
+  _sb.from("tasks").update(upd).eq("id", taskId).then(({ error }) => {
+    if (error) console.error("[moveTask] Supabase error:", error.message);
+    _tjDone(taskId, error);
+  }, (err) => _tjDone(taskId, err || true));
 };
 
 const updateTask = (projectId, taskId, changes) => {
@@ -1547,9 +1606,11 @@ const updateTask = (projectId, taskId, changes) => {
   if (eff.clientId   !== undefined) dbChanges.client_id   = eff.clientId || null;
   if (eff.clientName !== undefined) dbChanges.client_name = eff.clientName || null;
   if (eff.notes      !== undefined) dbChanges.notes       = eff.notes || null;
+  _tjTouch(taskId, { kind: "patch", patch: eff });
   _updateAdaptive("tasks", taskId, dbChanges).then(({ error }) => {
     if (error) console.error("[updateTask] Supabase error:", error.message);
-  });
+    _tjDone(taskId, error);
+  }, (err) => _tjDone(taskId, err || true));
 };
 
 const deleteTask = (projectId, taskId) => {
@@ -1559,10 +1620,12 @@ const deleteTask = (projectId, taskId) => {
   // .select() devuelve las filas borradas: si viene vacío, el DELETE no afectó a
   // ninguna fila (p. ej. RLS sin política de delete) y la tarea reaparecería al
   // recargar. Lo registramos para detectarlo.
+  _tjTouch(taskId, { kind: "del" });
   _sb.from("tasks").delete().eq("id", taskId).select().then(({ data, error }) => {
     if (error) console.warn("[tasks] delete error:", error.message);
     else if (!data || data.length === 0) console.warn("[tasks] delete afectó 0 filas (posible RLS) id=", taskId);
-  });
+    _tjDone(taskId, error);
+  }, (err) => _tjDone(taskId, err || true));
 };
 
 // Limpieza: borra de Supabase las tareas SUELTAS (sin proyecto) obsoletas —
