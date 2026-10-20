@@ -68,6 +68,36 @@
   const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
     const [open, setOpen] = useState(!!defaultOpen);
     const expandable = items && items.length > 0;
+    const rowRefs = React.useRef({});
+    React.useLayoutEffect(() => {
+      if (!open) {
+        rowRefs.current.__prev = {};
+        return;
+      }
+      const prev = rowRefs.current.__prev || {};
+      const next = {};
+      Object.keys(rowRefs.current).forEach((id) => {
+        if (id === "__prev") return;
+        const el = rowRefs.current[id];
+        if (!el) return;
+        const top = el.getBoundingClientRect().top;
+        next[id] = top;
+        const p = prev[id];
+        if (p != null) {
+          const dy = p - top;
+          if (Math.abs(dy) > 1) {
+            el.style.transition = "none";
+            el.style.transform = "translateY(" + dy + "px)";
+            void el.offsetHeight;
+            requestAnimationFrame(() => {
+              el.style.transition = "transform .5s cubic-bezier(.33,1,.68,1)";
+              el.style.transform = "";
+            });
+          }
+        }
+      });
+      rowRefs.current.__prev = next;
+    });
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -111,7 +141,12 @@
         (items || []).map((it, i) => /* @__PURE__ */ React.createElement(
           "div",
           {
-            key: i,
+            key: it.id != null ? it.id : i,
+            ref: (el) => {
+              const k = it.id != null ? it.id : i;
+              if (el) rowRefs.current[k] = el;
+              else delete rowRefs.current[k];
+            },
             onClick: it.onClick,
             style: { display: "flex", alignItems: "center", gap: 12, padding: "11px 11px", borderRadius: 11, cursor: it.onClick ? "pointer" : "default" },
             onMouseEnter: (e) => it.onClick && (e.currentTarget.style.background = "rgba(255,255,255,0.05)"),
@@ -225,6 +260,7 @@
           const done = t.column === "done";
           const overdue = !done && t.deadline && t.deadline < today;
           return {
+            id: t.id,
             label: t.title,
             right: done ? "Hecha" : overdue ? "Atrasada" : "Hoy",
             overdue,
