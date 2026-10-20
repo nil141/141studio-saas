@@ -196,7 +196,9 @@
     const todayItems = todayAll.slice().sort((a, b) => {
       const ad = a.column === "done", bd = b.column === "done";
       if (ad !== bd) return ad ? 1 : -1;
-      return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
+      const da = a.deadline || "", db = b.deadline || "";
+      if (da !== db) return da < db ? -1 : 1;
+      return (a.id || "") < (b.id || "") ? -1 : (a.id || "") > (b.id || "") ? 1 : 0;
     });
     const todayMeetings = (D.AGENDA_EVENTS || []).filter((e) => e.date === today && (e.type === "meeting" || e.link)).sort((a, b) => (a.time || "99") < (b.time || "99") ? -1 : 1);
     const projs = (D.PROJECTS || []).map((p) => {

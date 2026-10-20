@@ -175,7 +175,11 @@ const AgencyHome = ({ navigate, openModal, session }) => {
   const todayItems = todayAll.slice().sort((a, b) => {
     const ad = a.column === "done", bd = b.column === "done";
     if (ad !== bd) return ad ? 1 : -1;
-    return (a.deadline || "") < (b.deadline || "") ? -1 : 1;
+    const da = a.deadline || "", db = b.deadline || "";
+    if (da !== db) return da < db ? -1 : 1;
+    // Desempate estable por id → el orden no cambia entre re-renders (evita
+    // que el FLIP se dispare en hover/sondeo y "mueva" el círculo/cruz).
+    return (a.id || "") < (b.id || "") ? -1 : (a.id || "") > (b.id || "") ? 1 : 0;
   });
   // Reuniones de hoy (eventos de agenda tipo reunión o con enlace)
   const todayMeetings = (D.AGENDA_EVENTS || [])
