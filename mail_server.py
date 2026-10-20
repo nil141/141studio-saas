@@ -2045,11 +2045,27 @@ class Handler(SimpleHTTPRequestHandler):
             self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
             self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
+    _cache_hdr = None   # Cache-Control para archivos estáticos (lo fija do_GET/do_HEAD)
+
+    def _static_cache_policy(self):
+        """Sin Cache-Control, Safari cachea index.html por heurística y sigue
+        cargando versiones VIEJAS de los JS tras un despliegue. El HTML se
+        revalida siempre (no-cache → 304 barato); los recursos con ?v= son
+        inmutables (la versión cambia en cada despliegue)."""
+        u = urllib.parse.urlparse(self.path)
+        if u.path == "/" or u.path.endswith(".html") or u.path.startswith("/invite/"):
+            return "no-cache"
+        if re.search(r"(^|&)v=", u.query or ""):
+            return "public, max-age=86400"
+        return "no-cache"
+
     def end_headers(self):
         # Cabeceras de seguridad en todas las respuestas
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        if self._cache_hdr:
+            self.send_header("Cache-Control", self._cache_hdr)
         super().end_headers()
 
     def do_OPTIONS(self):
@@ -2069,6 +2085,7 @@ class Handler(SimpleHTTPRequestHandler):
         if gpath.startswith("/api/calendar/") and gpath.endswith(".ics"):
             self._handle_calendar(gpath[len("/api/calendar/"):-len(".ics")]); return
         # SPA routing: serve index.html for /invite/* paths
+        self._cache_hdr = self._static_cache_policy()
         if self.path.startswith("/invite/"):
             self.path = "/index.html"
         super().do_GET()
@@ -2100,6 +2117,7 @@ class Handler(SimpleHTTPRequestHandler):
     def do_HEAD(self):
         if self._path_blocked():
             self.send_error(404); return
+        self._cache_hdr = self._static_cache_policy()
         super().do_HEAD()
 
     def do_POST(self):

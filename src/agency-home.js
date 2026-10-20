@@ -45,10 +45,15 @@
       return "";
     }
   };
-  const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xColor }) => {
+  const DonutIcon = ({ pct, size = 26, stroke = 2.2, color = "var(--accent)", xColor }) => {
     const r = (size - stroke) / 2 - 0.5, c = size / 2, circ = 2 * Math.PI * r;
     const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
     const done = p >= 100;
+    const fit = (n) => {
+      let v = Math.round(n);
+      if ((size - v) % 2) v += 1;
+      return v;
+    };
     return /* @__PURE__ */ React.createElement("div", { style: { position: "relative", width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" } }, /* @__PURE__ */ React.createElement("svg", { width: size, height: size, style: { position: "absolute", top: 0, left: 0 } }, /* @__PURE__ */ React.createElement("circle", { cx: c, cy: c, r, fill: "none", stroke: done ? color : "rgba(255,255,255,0.12)", strokeWidth: stroke }), !done && p > 0 && /* @__PURE__ */ React.createElement(
       "circle",
       {
@@ -63,7 +68,7 @@
         transform: `rotate(-90 ${c} ${c})`,
         style: { transition: "stroke-dasharray .5s cubic-bezier(.4,0,.2,1)" }
       }
-    )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: Math.round(size * 0.55), style: { color, position: "relative" } }) : p > 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: Math.max(7.5, size * 0.33), fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.7px" } }, p, "%") : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: Math.round(size * 0.46), style: { color: xColor || "rgba(255,255,255,0.22)", position: "relative" } }));
+    )), done ? /* @__PURE__ */ React.createElement(Icon, { name: "check", size: fit(size * 0.55), style: { color, position: "relative" } }) : p > 0 ? /* @__PURE__ */ React.createElement("span", { style: { fontSize: Math.max(7.5, size * 0.33), fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.7px" } }, p, "%") : /* @__PURE__ */ React.createElement(Icon, { name: "x", size: fit(size * 0.46), style: { color: xColor || "rgba(255,255,255,0.22)", position: "relative" } }));
   };
   const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
     const [open, setOpen] = useState(!!defaultOpen);
@@ -94,6 +99,11 @@
             requestAnimationFrame(() => {
               el.style.transition = "transform .5s cubic-bezier(.33,1,.68,1)";
               el.style.transform = "";
+              const done = () => {
+                el.style.transition = "";
+                el.removeEventListener("transitionend", done);
+              };
+              el.addEventListener("transitionend", done);
             });
           }
         }
@@ -117,10 +127,10 @@
         onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.075)",
         onMouseLeave: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.055)"
       },
-      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
+      /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 13, padding: "15px 16px" } }, /* @__PURE__ */ React.createElement("div", { style: { flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--accent)" } }, iconNode || /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 18, strokeWidth: 1.7 })), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: "18px", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 } }, title), sub && /* @__PURE__ */ React.createElement("div", { style: {
         fontSize: 12.5,
         color: "var(--text-muted)",
-        lineHeight: 1.5,
+        lineHeight: "19px",
         display: "-webkit-box",
         WebkitLineClamp: open ? 10 : 2,
         WebkitBoxOrient: "vertical",
@@ -163,14 +173,12 @@
                 it.onComplete();
               },
               title: it.completed ? "Marcar como pendiente" : "Marcar como hecha",
-              style: { flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex", opacity: 0.92, transition: "opacity .12s" },
-              onMouseEnter: (e) => e.currentTarget.style.opacity = 1,
-              onMouseLeave: (e) => e.currentTarget.style.opacity = 0.92
+              style: { flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex" }
             },
-            /* @__PURE__ */ React.createElement(DonutIcon, { pct: it.completed ? 100 : it.prog || 0, size: 25, xColor: it.overdue ? "var(--red)" : void 0 })
+            /* @__PURE__ */ React.createElement(DonutIcon, { pct: it.completed ? 100 : it.prog || 0, size: 24, xColor: it.overdue ? "var(--red)" : void 0 })
           ) : it.dot && /* @__PURE__ */ React.createElement("span", { style: { width: 8, height: 8, borderRadius: "50%", background: it.dot, flexShrink: 0 } }),
-          /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 14, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
-          it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
+          /* @__PURE__ */ React.createElement("span", { style: { flex: 1, minWidth: 0, fontSize: 14, lineHeight: "20px", color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.label),
+          it.right && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 12.5, lineHeight: "20px", color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" } }, it.right)
         )),
         onOpen && /* @__PURE__ */ React.createElement("div", { onClick: onOpen, style: { padding: "9px 10px", fontSize: 12.5, color: "var(--accent)", cursor: "pointer", fontWeight: 500 } }, "Ver todo \u2192")
       )))

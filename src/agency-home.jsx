@@ -34,10 +34,14 @@ const _homeWaTime = (ts) => {
 
 // Anillo de progreso del día (donut) — mismo estilo que la página de tareas:
 // aro que se va rellenando con el progreso y, al 100%, un tick en el centro.
-const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xColor }) => {
+const DonutIcon = ({ pct, size = 26, stroke = 2.2, color = "var(--accent)", xColor }) => {
   const r = (size - stroke) / 2 - 0.5, c = size / 2, circ = 2 * Math.PI * r;
   const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
   const done = p >= 100;
+  // Tamaño del icono interior con la misma paridad que el aro → queda
+  // centrado en píxel entero (sin medios píxeles que Safari re-ajusta al
+  // repintar en hover y que se ven como un "salto" del ✓ / ✕).
+  const fit = (n) => { let v = Math.round(n); if ((size - v) % 2) v += 1; return v; };
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <svg width={size} height={size} style={{ position: "absolute", top: 0, left: 0 }}>
@@ -49,10 +53,10 @@ const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xCol
         )}
       </svg>
       {done
-        ? <Icon name="check" size={Math.round(size * 0.55)} style={{ color, position: "relative" }}/>
+        ? <Icon name="check" size={fit(size * 0.55)} style={{ color, position: "relative" }}/>
         : p > 0
           ? <span style={{ fontSize: Math.max(7.5, size * 0.33), fontWeight: 400, color: "var(--text-muted)", position: "relative", letterSpacing: "-0.7px" }}>{p}%</span>
-          : <Icon name="x" size={Math.round(size * 0.46)} style={{ color: xColor || "rgba(255,255,255,0.22)", position: "relative" }}/>}
+          : <Icon name="x" size={fit(size * 0.46)} style={{ color: xColor || "rgba(255,255,255,0.22)", position: "relative" }}/>}
     </div>
   );
 };
@@ -86,6 +90,9 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
           requestAnimationFrame(() => {
             el.style.transition = "transform .5s cubic-bezier(.33,1,.68,1)";
             el.style.transform = "";
+            // Al terminar, quitamos la transición: sin rastro de capas extra
+            const done = () => { el.style.transition = ""; el.removeEventListener("transitionend", done); };
+            el.addEventListener("transitionend", done);
           });
         }
       }
@@ -106,8 +113,8 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
           {iconNode || <Icon name={icon} size={18} strokeWidth={1.7}/>}
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
-          {sub && <div style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: 1.5,
+          <div style={{ fontSize: 13.5, lineHeight: "18px", fontWeight: 600, color: "var(--text)", letterSpacing: "-0.2px", marginBottom: 3 }}>{title}</div>
+          {sub && <div style={{ fontSize: 12.5, color: "var(--text-muted)", lineHeight: "19px",
             display: "-webkit-box", WebkitLineClamp: open ? 10 : 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{sub}</div>}
         </div>
         {expandable && <Icon name="chevron-down" size={15} style={{ color: "var(--text-subtle)", flexShrink: 0, marginTop: 3, transform: open ? "rotate(180deg)" : "none", transition: "transform .18s" }}/>}
@@ -128,14 +135,12 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
                 onMouseLeave={e => e.currentTarget.style.background = "transparent"}>
                 {it.onComplete ? (
                   <button onClick={e => { e.stopPropagation(); it.onComplete(); }} title={it.completed ? "Marcar como pendiente" : "Marcar como hecha"}
-                    style={{ flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex", opacity: 0.92, transition: "opacity .12s" }}
-                    onMouseEnter={e => e.currentTarget.style.opacity = 1}
-                    onMouseLeave={e => e.currentTarget.style.opacity = 0.92}>
-                    <DonutIcon pct={it.completed ? 100 : (it.prog || 0)} size={25} xColor={it.overdue ? "var(--red)" : undefined}/>
+                    style={{ flexShrink: 0, padding: 0, border: "none", background: "transparent", cursor: "pointer", display: "flex" }}>
+                    <DonutIcon pct={it.completed ? 100 : (it.prog || 0)} size={24} xColor={it.overdue ? "var(--red)" : undefined}/>
                   </button>
                 ) : it.dot && <span style={{ width: 8, height: 8, borderRadius: "50%", background: it.dot, flexShrink: 0 }}/>}
-                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
-                {it.right && <span style={{ fontSize: 12.5, color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
+                <span style={{ flex: 1, minWidth: 0, fontSize: 14, lineHeight: "20px", color: it.completed ? "var(--text-subtle)" : "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{it.label}</span>
+                {it.right && <span style={{ fontSize: 12.5, lineHeight: "20px", color: "var(--text-subtle)", flexShrink: 0, whiteSpace: "nowrap" }}>{it.right}</span>}
               </div>
             ))}
             {onOpen && (
