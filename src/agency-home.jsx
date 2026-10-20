@@ -61,22 +61,24 @@ const DonutIcon = ({ pct, size = 27, stroke = 2.2, color = "var(--accent)", xCol
 const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpen }) => {
   const [open, setOpen] = useState(!!defaultOpen);
   const expandable = items && items.length > 0;
-  // Animación FLIP (estilo Apple): al reordenarse (p. ej. marcar una tarea
-  // hecha → baja al final), cada fila se desliza suave a su nueva posición.
+  // Animación FLIP (estilo Apple): SOLO cuando cambia el orden de la lista
+  // (p. ej. marcar una tarea hecha → baja al final). No se dispara en hover ni
+  // en re-renders del sondeo, para que el tick no se mueva sin motivo.
   const rowRefs = React.useRef({});
+  const _order = (items || []).map(it => (it && it.id != null ? it.id : "·")).join(",");
   React.useLayoutEffect(() => {
-    if (!open) { rowRefs.current.__prev = {}; return; }
+    if (!open) { rowRefs.current.__prev = {}; rowRefs.current.__order = _order; return; }
     const prev = rowRefs.current.__prev || {};
+    const reordered = rowRefs.current.__order != null && rowRefs.current.__order !== _order;
     const next = {};
     Object.keys(rowRefs.current).forEach(id => {
-      if (id === "__prev") return;
+      if (id === "__prev" || id === "__order") return;
       const el = rowRefs.current[id];
       if (!el) return;
       const top = el.getBoundingClientRect().top;
       next[id] = top;
-      const p = prev[id];
-      if (p != null) {
-        const dy = p - top;
+      if (reordered && prev[id] != null) {
+        const dy = prev[id] - top;
         if (Math.abs(dy) > 1) {
           el.style.transition = "none";
           el.style.transform = "translateY(" + dy + "px)";
@@ -89,6 +91,7 @@ const HomeCard = ({ icon, iconNode, color, title, sub, items, onOpen, defaultOpe
       }
     });
     rowRefs.current.__prev = next;
+    rowRefs.current.__order = _order;
   });
   return (
     <div className="home-card" onClick={() => expandable ? setOpen(o => !o) : (onOpen && onOpen())}

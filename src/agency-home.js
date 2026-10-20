@@ -69,22 +69,24 @@
     const [open, setOpen] = useState(!!defaultOpen);
     const expandable = items && items.length > 0;
     const rowRefs = React.useRef({});
+    const _order = (items || []).map((it) => it && it.id != null ? it.id : "\xB7").join(",");
     React.useLayoutEffect(() => {
       if (!open) {
         rowRefs.current.__prev = {};
+        rowRefs.current.__order = _order;
         return;
       }
       const prev = rowRefs.current.__prev || {};
+      const reordered = rowRefs.current.__order != null && rowRefs.current.__order !== _order;
       const next = {};
       Object.keys(rowRefs.current).forEach((id) => {
-        if (id === "__prev") return;
+        if (id === "__prev" || id === "__order") return;
         const el = rowRefs.current[id];
         if (!el) return;
         const top = el.getBoundingClientRect().top;
         next[id] = top;
-        const p = prev[id];
-        if (p != null) {
-          const dy = p - top;
+        if (reordered && prev[id] != null) {
+          const dy = prev[id] - top;
           if (Math.abs(dy) > 1) {
             el.style.transition = "none";
             el.style.transform = "translateY(" + dy + "px)";
@@ -97,6 +99,7 @@
         }
       });
       rowRefs.current.__prev = next;
+      rowRefs.current.__order = _order;
     });
     return /* @__PURE__ */ React.createElement(
       "div",
