@@ -144,7 +144,285 @@
       busy ? "Conectando\u2026" : "Conectar WhatsApp"
     ));
   };
-  const AgencyWhatsApp = ({ navigate }) => {
+  const _MAIL_CREDS_KEY = "141_mail_creds";
+  const _mailCreds = () => {
+    try {
+      return JSON.parse(localStorage.getItem(_MAIL_CREDS_KEY) || "null");
+    } catch {
+      return null;
+    }
+  };
+  const _mailApi = async (ep, body) => {
+    const res = await window.apiFetch("/api/mail/" + ep, body);
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  };
+  const _mailAddr = (from) => {
+    const m = /<([^>]+)>/.exec(from || "");
+    return (m ? m[1] : from || "").trim();
+  };
+  const _mailName = (from) => {
+    const m = String(from || "").match(/^"?([^"<]+?)"?\s*<[^>]+>$/);
+    return m ? m[1].trim() : from || "\u2014";
+  };
+  const _mailIso = (d) => {
+    const t = new Date(d);
+    return isNaN(t.getTime()) ? (/* @__PURE__ */ new Date(0)).toISOString() : t.toISOString();
+  };
+  const _mailFull = (d) => {
+    try {
+      return new Date(d).toLocaleString("es-ES", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+    } catch {
+      return d || "";
+    }
+  };
+  let _mailCache = { key: null, list: [] };
+  const useMailInbox = (enabled) => {
+    const [creds, setCredsS] = useState(_mailCreds);
+    const key = creds ? creds.email : null;
+    const [mails, setMails] = useState(() => key && _mailCache.key === key ? _mailCache.list : []);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+    const load = async () => {
+      if (!creds) return;
+      setLoading(true);
+      try {
+        const r = await _mailApi("messages", { creds, folder: "INBOX", page: 1 });
+        if (r && r.ok) {
+          const list = r.messages || [];
+          _mailCache = { key, list };
+          setMails(list);
+          setError("");
+        } else setError(r && r.error || "No se pudo cargar el correo");
+      } catch (_) {
+        setError("No se pudo cargar el correo");
+      }
+      setLoading(false);
+    };
+    useEffect(() => {
+      if (!enabled || !creds) return;
+      load();
+      const id = setInterval(() => {
+        if (!document.hidden) load();
+      }, 6e4);
+      return () => clearInterval(id);
+    }, [enabled, key]);
+    const setCreds = (c) => {
+      setCredsS(c);
+      try {
+        c ? localStorage.setItem(_MAIL_CREDS_KEY, JSON.stringify(c)) : localStorage.removeItem(_MAIL_CREDS_KEY);
+      } catch (_) {
+      }
+    };
+    const markRead = (uid) => setMails((ms) => {
+      const n = ms.map((x) => x.uid === uid ? { ...x, read: true } : x);
+      _mailCache = { key, list: n };
+      return n;
+    });
+    return { creds, setCreds, mails, loading, error, reload: load, markRead };
+  };
+  const MailThread = ({ m, creds, isMobile, onBack, onRead, toast }) => {
+    const [detail, setDetail] = useState(null);
+    const [err, setErr] = useState("");
+    const [text, setText] = useState("");
+    const [sending, setSending] = useState(false);
+    const [sent, setSent] = useState([]);
+    const scrollRef = useRef(null);
+    useEffect(() => {
+      let alive = true;
+      setDetail(null);
+      setErr("");
+      setSent([]);
+      setText("");
+      _mailApi("message", { creds, uid: m.uid, folder: "INBOX" }).then((r) => {
+        if (!alive) return;
+        if (r && r.ok) {
+          setDetail(r);
+          onRead && onRead(m.uid);
+        } else setErr(r && r.error || "No se pudo abrir el correo");
+      }).catch(() => alive && setErr("Sin conexi\xF3n con el servidor de correo"));
+      return () => {
+        alive = false;
+      };
+    }, [m.uid]);
+    useEffect(() => {
+      const el = scrollRef.current;
+      if (el && sent.length) el.scrollTop = el.scrollHeight;
+    }, [sent.length]);
+    const from = detail && detail.from || m.from;
+    const name = _mailName(from);
+    const subject = detail && detail.subject || m.subject || "(sin asunto)";
+    const send = async () => {
+      const body = text.trim();
+      if (!body || sending) return;
+      setSending(true);
+      try {
+        const r = await _mailApi("send", {
+          creds,
+          to: _mailAddr(from),
+          body,
+          subject: /^re:/i.test(subject) ? subject : "Re: " + subject,
+          in_reply_to: detail && detail.message_id || ""
+        });
+        if (r && r.ok) {
+          setSent((x) => [...x, { body, ts: (/* @__PURE__ */ new Date()).toISOString() }]);
+          setText("");
+        } else toast ? toast(r && r.error || "No se pudo enviar", "error") : alert(r && r.error || "No se pudo enviar");
+      } catch (_) {
+        toast ? toast("No se pudo enviar", "error") : alert("No se pudo enviar");
+      }
+      setSending(false);
+    };
+    const html = detail && detail.html ? '<base target="_blank">' + detail.html : null;
+    return /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", height: "100%", minHeight: 0, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "14px 18px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" } }, isMobile && /* @__PURE__ */ React.createElement("button", { onClick: onBack, "aria-label": "Volver", style: { background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 20 })), /* @__PURE__ */ React.createElement("span", { style: {
+      width: 36,
+      height: 36,
+      borderRadius: 11,
+      flexShrink: 0,
+      display: "grid",
+      placeItems: "center",
+      background: "rgba(158,154,229,0.18)",
+      color: "var(--accent)",
+      fontSize: 14,
+      fontWeight: 600,
+      fontFamily: "var(--font-display)"
+    } }, (name || "?").trim().charAt(0).toUpperCase()), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, _mailAddr(from)))), /* @__PURE__ */ React.createElement("div", { ref: scrollRef, style: { flex: 1, overflowY: "auto", scrollbarWidth: "none", minHeight: 0, padding: "18px 18px 8px", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 17, fontWeight: 500, letterSpacing: "-0.02em", color: "var(--text)", lineHeight: 1.35 } }, subject), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)", margin: "4px 0 14px" } }, _mailFull(m.date)), !detail && !err && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-subtle)", fontSize: 13, padding: "20px 0" } }, "Cargando\u2026"), err && /* @__PURE__ */ React.createElement("div", { style: { color: "var(--red)", fontSize: 13, padding: "20px 0" } }, err), detail && (html ? /* @__PURE__ */ React.createElement("div", { style: { background: "#fff", borderRadius: 12, overflow: "hidden", flexShrink: 0 } }, /* @__PURE__ */ React.createElement(
+      "iframe",
+      {
+        key: m.uid,
+        title: subject,
+        srcDoc: html,
+        sandbox: "allow-same-origin allow-popups allow-popups-to-escape-sandbox",
+        style: { width: "100%", border: "none", display: "block", minHeight: 160 },
+        onLoad: (e) => {
+          try {
+            const b = e.target.contentDocument && e.target.contentDocument.body;
+            if (b) e.target.style.height = b.scrollHeight + 24 + "px";
+          } catch (_) {
+          }
+        }
+      }
+    )) : /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.6, color: "var(--text)", whiteSpace: "pre-wrap", wordBreak: "break-word" } }, detail.text || "(sin contenido)")), sent.map((x, i) => /* @__PURE__ */ React.createElement("div", { key: i, style: {
+      alignSelf: "flex-end",
+      maxWidth: "80%",
+      marginTop: 12,
+      background: "rgba(158,154,229,0.22)",
+      border: "0.5px solid rgba(158,154,229,0.28)",
+      color: "var(--text)",
+      padding: "8px 12px 6px",
+      borderRadius: 14,
+      borderBottomRightRadius: 5,
+      transformOrigin: "bottom right",
+      animation: "msgIn .26s cubic-bezier(.22,1,.36,1)"
+    } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" } }, x.body), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 10, color: "var(--text-subtle)", textAlign: "right", marginTop: 3 } }, "Respuesta enviada \xB7 ", _waTime(x.ts))))), /* @__PURE__ */ React.createElement("div", { style: { padding: "12px 18px 16px", display: "flex", alignItems: "flex-end", gap: 10 } }, /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: text,
+        onChange: (e) => setText(e.target.value),
+        rows: 2,
+        onKeyDown: (e) => {
+          if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            send();
+          }
+        },
+        placeholder: "Responder a " + name + "\u2026",
+        style: {
+          flex: 1,
+          resize: "none",
+          maxHeight: 180,
+          minHeight: 42,
+          padding: "11px 14px",
+          borderRadius: 14,
+          background: "rgba(255,255,255,0.05)",
+          border: "0.5px solid rgba(255,255,255,0.1)",
+          color: "var(--text)",
+          fontSize: 14,
+          fontFamily: "inherit",
+          outline: "none",
+          lineHeight: 1.4
+        }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: send,
+        disabled: sending || !text.trim(),
+        title: "Enviar (\u2318 + Enter)",
+        style: {
+          width: 42,
+          height: 42,
+          flexShrink: 0,
+          borderRadius: "50%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: text.trim() ? "var(--accent)" : "rgba(255,255,255,0.08)",
+          color: text.trim() ? "#0a0a0a" : "var(--text-subtle)",
+          border: "none",
+          cursor: text.trim() ? "pointer" : "default",
+          transition: "background .14s",
+          opacity: sending ? 0.6 : 1
+        }
+      },
+      /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 17 })
+    )));
+  };
+  const InboxModal = ({ title, onClose, children, width = 420 }) => ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { onClick: onClose, style: { position: "fixed", inset: 0, zIndex: 300, background: "rgba(8,8,10,0.5)", WebkitBackdropFilter: "blur(14px)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fade .2s ease" } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: width, background: "#141416", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 22, padding: 18, animation: "qcIn .3s cubic-bezier(.22,1,.36,1)", maxHeight: "86dvh", display: "flex", flexDirection: "column", overflowY: "auto", scrollbarWidth: "none" } }, title && /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, color: "var(--text)", marginBottom: 12, letterSpacing: "-0.02em" } }, title), children)),
+    document.body
+  );
+  const _inField = { height: 42, padding: "0 13px", borderRadius: 11, background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.1)", color: "var(--text)", fontSize: 14, fontFamily: "inherit", outline: "none", width: "100%", boxSizing: "border-box" };
+  const ComposeMail = ({ creds, onDone, toast }) => {
+    const [to, setTo] = useState(""), [subject, setSubject] = useState(""), [body, setBody] = useState("");
+    const [sending, setSending] = useState(false);
+    const ok = /\S+@\S+\.\S+/.test(to.trim()) && body.trim();
+    const send = async () => {
+      if (!ok || sending) return;
+      setSending(true);
+      try {
+        const r = await _mailApi("send", { creds, to: to.trim(), subject, body });
+        if (r && r.ok) {
+          toast && toast("Correo enviado");
+          onDone();
+        } else toast ? toast(r && r.error || "No se pudo enviar", "error") : alert(r && r.error || "No se pudo enviar");
+      } catch (_) {
+        toast ? toast("No se pudo enviar", "error") : alert("No se pudo enviar");
+      }
+      setSending(false);
+    };
+    return /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 8 } }, /* @__PURE__ */ React.createElement("input", { value: to, onChange: (e) => setTo(e.target.value), placeholder: "Para", style: _inField }), /* @__PURE__ */ React.createElement("input", { value: subject, onChange: (e) => setSubject(e.target.value), placeholder: "Asunto", style: _inField }), /* @__PURE__ */ React.createElement(
+      "textarea",
+      {
+        value: body,
+        onChange: (e) => setBody(e.target.value),
+        placeholder: "Escribe tu mensaje\u2026",
+        rows: 8,
+        style: { ..._inField, height: "auto", padding: "11px 13px", resize: "vertical", lineHeight: 1.45 }
+      }
+    ), /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        onClick: send,
+        disabled: !ok || sending,
+        style: {
+          marginTop: 4,
+          height: 42,
+          borderRadius: 11,
+          border: "none",
+          fontSize: 14,
+          fontWeight: 500,
+          fontFamily: "inherit",
+          background: ok ? "var(--accent)" : "rgba(255,255,255,0.08)",
+          color: ok ? "#0a0a0a" : "var(--text-subtle)",
+          cursor: ok ? "pointer" : "default"
+        }
+      },
+      sending ? "Enviando\u2026" : "Enviar"
+    ));
+  };
+  const Inbox = ({ navigate, mode }) => {
+    const uni = mode === "unibox";
     const D = window.Data;
     D.useStore();
     const toast = typeof useToast === "function" ? useToast() : null;
@@ -165,7 +443,32 @@
     const [pending, setPending] = useState([]);
     const [q, setQ] = useState("");
     const [newOpen, setNewOpen] = useState(false);
+    const [newMenu, setNewMenu] = useState(false);
+    const [composeOpen, setComposeOpen] = useState(false);
+    const [mailSetup, setMailSetup] = useState(false);
+    const [filter, setFilterS] = useState(() => {
+      try {
+        return uni && localStorage.getItem("141_unibox_filter") || "all";
+      } catch {
+        return "all";
+      }
+    });
+    const setFilter = (f) => {
+      setFilterS(f);
+      try {
+        localStorage.setItem("141_unibox_filter", f);
+      } catch (_) {
+      }
+    };
+    const chan = uni ? filter : "wa";
+    const mail = useMailInbox(uni);
     const threadRef = useRef(null);
+    useEffect(() => {
+      if (!newMenu) return;
+      const c = () => setNewMenu(false);
+      window.addEventListener("click", c);
+      return () => window.removeEventListener("click", c);
+    }, [newMenu]);
     useEffect(() => {
       let alive = true;
       const tick = () => {
@@ -213,12 +516,36 @@
       }
       return convs;
     }, [convs, draft]);
+    const items = useMemo(() => {
+      const wa = chan === "mail" ? [] : allConvs.map((c) => ({
+        key: "wa:" + c.waId,
+        ch: "wa",
+        name: c.name,
+        ts: c.last && c.last.ts || "",
+        waId: c.waId,
+        preview: (c.last && c.last.direction === "out" ? "T\xFA: " : "") + (c.last && c.last.body || "\u2014"),
+        unread: !!(c.last && c.last.direction === "in")
+      }));
+      const ml = chan === "wa" ? [] : mail.mails.map((m) => ({
+        key: "mail:" + m.uid,
+        ch: "mail",
+        name: _mailName(m.from),
+        ts: _mailIso(m.date),
+        addr: _mailAddr(m.from),
+        preview: m.subject || "(sin asunto)",
+        unread: !m.read
+      }));
+      const all = wa.concat(ml);
+      if (uni) all.sort((a, b) => a.ts < b.ts ? 1 : a.ts > b.ts ? -1 : 0);
+      return all;
+    }, [allConvs, mail.mails, chan, uni]);
     const filtered = useMemo(() => {
       const t = q.trim().toLowerCase();
-      if (!t) return allConvs;
-      return allConvs.filter((c) => (c.name || "").toLowerCase().includes(t) || _waDigits(c.waId).includes(_waDigits(t)));
-    }, [allConvs, q]);
-    const active = allConvs.find((c) => c.waId === sel) || null;
+      if (!t) return items;
+      return items.filter((it) => (it.name || "").toLowerCase().includes(t) || (it.preview || "").toLowerCase().includes(t) || (it.addr || "").toLowerCase().includes(t) || it.waId && _waDigits(t) && _waDigits(it.waId).includes(_waDigits(t)));
+    }, [items, q]);
+    const active = sel && sel.indexOf("wa:") === 0 ? allConvs.find((c) => c.waId === sel.slice(3)) || null : null;
+    const activeMail = sel && sel.indexOf("mail:") === 0 ? mail.mails.find((m) => "mail:" + m.uid === sel) || null : null;
     const seenRef = useRef(/* @__PURE__ */ new Set());
     const lastSelRef = useRef(void 0);
     if (lastSelRef.current !== sel) {
@@ -255,18 +582,27 @@
         toast ? toast(res && res.error || "No se pudo enviar", "error") : alert(res && res.error || "No se pudo enviar");
       }
     };
-    const openConv = (waId) => {
-      setSel(waId);
-    };
     const startChat = (waId, name, client) => {
       const d = _waDigits(waId);
       if (!d) return;
       setDraft({ waId: d, name: name || "+" + d, client: client || clients.find((c) => _waMatch(c.whatsapp, d)) || null });
-      setSel(d);
+      setSel("wa:" + d);
       setNewOpen(false);
     };
+    const newMail = () => {
+      setNewMenu(false);
+      if (mail.creds) setComposeOpen(true);
+      else setMailSetup(true);
+    };
     const pal = ["#9e9ae5", "#60a5fa", "#34d399", "#f6a15b", "#e879a6", "#22d3ee"];
-    const _av = (name, i) => (name || "?").trim().charAt(0).toUpperCase();
+    const _pc = (name) => {
+      let h = 0;
+      const s = String(name || "");
+      for (let i = 0; i < s.length; i++) h = h * 31 + s.charCodeAt(i) >>> 0;
+      return pal[h % pal.length];
+    };
+    const _av = (name) => (name || "?").trim().charAt(0).toUpperCase();
+    const unreadOf = (ch) => items.length && chan === "all" ? items.filter((it) => it.ch === ch && it.unread).length : 0;
     const List = /* @__PURE__ */ React.createElement("div", { className: "wa-list", style: {
       width: isMobile ? "100%" : 340,
       flexShrink: 0,
@@ -275,12 +611,12 @@
       borderRight: isMobile ? "none" : "0.5px solid rgba(255,255,255,0.08)",
       height: "100%",
       minHeight: 0
-    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("h1", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.04em", color: "var(--text)" } }, "WhatsApp"), /* @__PURE__ */ React.createElement(
+    } }, /* @__PURE__ */ React.createElement("div", { style: { padding: "20px 18px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 } }, /* @__PURE__ */ React.createElement("h1", { style: { margin: 0, fontFamily: "var(--font-display)", fontSize: 22, fontWeight: 500, letterSpacing: "-0.04em", color: "var(--text)" } }, uni ? "Unibox" : "WhatsApp"), /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement(
       "button",
       {
-        onClick: () => setNewOpen(true),
-        title: "Nuevo chat",
-        "aria-label": "Nuevo chat",
+        onClick: () => uni ? setNewMenu((o) => !o) : setNewOpen(true),
+        title: "Nuevo mensaje",
+        "aria-label": "Nuevo mensaje",
         style: {
           display: "flex",
           alignItems: "center",
@@ -295,52 +631,152 @@
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 16 })
-    )), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 14px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 11px", borderRadius: 10, background: "rgba(255,255,255,0.05)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
+    ), newMenu && /* @__PURE__ */ React.createElement("div", { style: {
+      position: "absolute",
+      top: 38,
+      right: 0,
+      zIndex: 20,
+      width: 190,
+      padding: 5,
+      borderRadius: 13,
+      background: "#161618",
+      border: "0.5px solid rgba(255,255,255,0.1)",
+      boxShadow: "0 16px 40px rgba(0,0,0,0.5)",
+      animation: "fade .14s ease"
+    } }, [["wa", "Chat de WhatsApp", () => {
+      setNewMenu(false);
+      setNewOpen(true);
+    }], ["mail", "Correo nuevo", newMail]].map(([k, l, fn]) => /* @__PURE__ */ React.createElement(
+      "button",
+      {
+        key: k,
+        onClick: fn,
+        style: {
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          width: "100%",
+          padding: "9px 10px",
+          borderRadius: 9,
+          border: "none",
+          background: "transparent",
+          color: "var(--text)",
+          fontSize: 13,
+          fontFamily: "inherit",
+          cursor: "pointer",
+          textAlign: "left"
+        },
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.06)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
+      },
+      k === "wa" ? /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 15, style: { color: "#25D366" } }) : /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 15, style: { color: "var(--accent)" } }),
+      l
+    ))))), uni && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, padding: "0 14px 10px" } }, [["all", "Todo"], ["wa", "WhatsApp"], ["mail", "Correo"]].map(([k, l]) => {
+      const on = filter === k;
+      const n = k === "all" ? 0 : unreadOf(k);
+      return /* @__PURE__ */ React.createElement(
+        "button",
+        {
+          key: k,
+          onClick: () => setFilter(k),
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            padding: "5px 12px",
+            borderRadius: 99,
+            fontSize: 12.5,
+            fontFamily: "inherit",
+            cursor: "pointer",
+            border: "0.5px solid " + (on ? "rgba(158,154,229,0.4)" : "rgba(255,255,255,0.1)"),
+            background: on ? "rgba(158,154,229,0.16)" : "transparent",
+            color: on ? "var(--text)" : "var(--text-muted)",
+            transition: "background .14s, color .14s"
+          }
+        },
+        l,
+        n > 0 && /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--accent)" } }, n)
+      );
+    })), /* @__PURE__ */ React.createElement("div", { style: { padding: "0 14px 10px" } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, height: 36, padding: "0 11px", borderRadius: 10, background: "rgba(255,255,255,0.05)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "search", size: 14, style: { color: "var(--text-subtle)", flexShrink: 0 } }), /* @__PURE__ */ React.createElement(
       "input",
       {
         value: q,
         onChange: (e) => setQ(e.target.value),
-        placeholder: "Buscar conversaci\xF3n\u2026",
+        placeholder: uni ? "Buscar mensajes\u2026" : "Buscar conversaci\xF3n\u2026",
         style: { flex: 1, minWidth: 0, background: "transparent", border: "none", outline: "none", color: "var(--text)", fontSize: 13, fontFamily: "inherit" }
       }
-    ))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", scrollbarWidth: "none", minHeight: 0, padding: "0 8px 12px" } }, filtered.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13, lineHeight: 1.6 } }, "A\xFAn no hay conversaciones.", /* @__PURE__ */ React.createElement("br", null), "Cuando te escriban (o escribas t\xFA) aparecer\xE1n aqu\xED.") : filtered.map((c, i) => /* @__PURE__ */ React.createElement(
+    ))), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, overflowY: "auto", scrollbarWidth: "none", minHeight: 0, padding: "0 8px 12px" } }, uni && chan !== "wa" && !mail.creds && /* @__PURE__ */ React.createElement(
       "div",
       {
-        key: c.waId,
-        onClick: () => openConv(c.waId),
+        onClick: () => setMailSetup(true),
         style: {
           display: "flex",
           alignItems: "center",
           gap: 11,
-          padding: "10px 10px",
+          margin: "0 2px 8px",
+          padding: "11px 10px",
           borderRadius: 12,
           cursor: "pointer",
-          background: sel === c.waId ? "rgba(255,255,255,0.07)" : "transparent",
+          border: "0.5px dashed rgba(255,255,255,0.14)",
           transition: "background .12s"
         },
-        onMouseEnter: (e) => {
-          if (sel !== c.waId) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-        },
-        onMouseLeave: (e) => {
-          if (sel !== c.waId) e.currentTarget.style.background = "transparent";
-        }
+        onMouseEnter: (e) => e.currentTarget.style.background = "rgba(255,255,255,0.03)",
+        onMouseLeave: (e) => e.currentTarget.style.background = "transparent"
       },
-      /* @__PURE__ */ React.createElement("span", { style: {
-        width: 40,
-        height: 40,
-        borderRadius: 12,
-        flexShrink: 0,
-        display: "grid",
-        placeItems: "center",
-        background: pal[i % pal.length] + "22",
-        color: pal[i % pal.length],
-        fontSize: 15,
-        fontWeight: 600,
-        fontFamily: "var(--font-display)"
-      } }, _av(c.name, i)),
-      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: 500, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.name), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)", flexShrink: 0 } }, c.last && c.last.ts ? _waListTime(c.last.ts) : "")), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 } }, c.last && c.last.direction === "out" ? "T\xFA: " : "", c.last && c.last.body || "\u2014"))
-    ))));
-    const Thread = active ? /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", height: "100%", minHeight: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "14px 18px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" } }, isMobile && /* @__PURE__ */ React.createElement("button", { onClick: () => setSel(null), "aria-label": "Volver", style: { background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 20 })), /* @__PURE__ */ React.createElement("span", { style: {
+      /* @__PURE__ */ React.createElement("span", { style: { width: 40, height: 40, borderRadius: 12, flexShrink: 0, display: "grid", placeItems: "center", background: "rgba(158,154,229,0.14)", color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 18 })),
+      /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, fontWeight: 500, color: "var(--text)" } }, "Conecta tu correo"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-muted)", marginTop: 2 } }, "Gmail, Outlook o IMAP \xB7 tus emails llegar\xE1n aqu\xED"))
+    ), uni && chan !== "wa" && mail.creds && mail.error && /* @__PURE__ */ React.createElement("div", { style: { margin: "0 4px 8px", padding: "8px 10px", borderRadius: 10, background: "rgba(248,113,113,0.08)", color: "var(--red)", fontSize: 12, display: "flex", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", null, mail.error), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", gap: 10, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("button", { onClick: mail.reload, style: { background: "none", border: "none", color: "var(--text)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: 0 } }, "Reintentar"), /* @__PURE__ */ React.createElement("button", { onClick: () => setMailSetup(true), style: { background: "none", border: "none", color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: 0 } }, "Reconectar"))), filtered.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "40px 20px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13, lineHeight: 1.6 } }, mail.loading && chan === "mail" ? "Cargando correo\u2026" : q.trim() ? "Sin resultados." : /* @__PURE__ */ React.createElement(React.Fragment, null, "A\xFAn no hay mensajes.", /* @__PURE__ */ React.createElement("br", null), "Cuando te escriban aparecer\xE1n aqu\xED.")) : filtered.map((it) => {
+      const on = sel === it.key;
+      const col = it.ch === "mail" ? "#9e9ae5" : _pc(it.name);
+      return /* @__PURE__ */ React.createElement(
+        "div",
+        {
+          key: it.key,
+          onClick: () => setSel(it.key),
+          style: {
+            display: "flex",
+            alignItems: "center",
+            gap: 11,
+            padding: "10px 10px",
+            borderRadius: 12,
+            cursor: "pointer",
+            background: on ? "rgba(255,255,255,0.07)" : "transparent",
+            transition: "background .12s"
+          },
+          onMouseEnter: (e) => {
+            if (!on) e.currentTarget.style.background = "rgba(255,255,255,0.03)";
+          },
+          onMouseLeave: (e) => {
+            if (!on) e.currentTarget.style.background = "transparent";
+          }
+        },
+        /* @__PURE__ */ React.createElement("span", { style: { position: "relative", width: 40, height: 40, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: {
+          width: 40,
+          height: 40,
+          borderRadius: 12,
+          display: "grid",
+          placeItems: "center",
+          background: col + "22",
+          color: col,
+          fontSize: 15,
+          fontWeight: 600,
+          fontFamily: "var(--font-display)"
+        } }, _av(it.name)), uni && /* @__PURE__ */ React.createElement("span", { style: {
+          position: "absolute",
+          right: -4,
+          bottom: -4,
+          width: 19,
+          height: 19,
+          borderRadius: 99,
+          display: "grid",
+          placeItems: "center",
+          background: "#0e0e10",
+          border: "1.5px solid #0e0e10"
+        } }, it.ch === "wa" ? /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 11, style: { color: "#25D366" } }) : /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 11, strokeWidth: 2, style: { color: "var(--accent)" } }))),
+        /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, fontWeight: uni && it.unread ? 600 : 500, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, it.name), /* @__PURE__ */ React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 6, flexShrink: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { fontSize: 11, color: "var(--text-subtle)" } }, it.ts ? _waListTime(it.ts) : ""), uni && it.unread && /* @__PURE__ */ React.createElement("span", { style: { width: 7, height: 7, borderRadius: 99, background: "var(--accent)" } }))), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, color: uni && it.unread ? "var(--text)" : "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", marginTop: 2 } }, it.preview))
+      );
+    })));
+    const Thread = activeMail ? /* @__PURE__ */ React.createElement(MailThread, { m: activeMail, creds: mail.creds, isMobile, onBack: () => setSel(null), onRead: mail.markRead, toast }) : active ? /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", height: "100%", minHeight: 0, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 11, padding: "14px 18px", borderBottom: "0.5px solid rgba(255,255,255,0.08)" } }, isMobile && /* @__PURE__ */ React.createElement("button", { onClick: () => setSel(null), "aria-label": "Volver", style: { background: "transparent", border: "none", color: "var(--text-muted)", cursor: "pointer", display: "flex", padding: 4 } }, /* @__PURE__ */ React.createElement(Icon, { name: "chevron-left", size: 20 })), /* @__PURE__ */ React.createElement("span", { style: {
       width: 36,
       height: 36,
       borderRadius: 11,
@@ -352,7 +788,7 @@
       fontSize: 14,
       fontWeight: 600,
       fontFamily: "var(--font-display)"
-    } }, _av(active.name, 0)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, active.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "+", _waDigits(active.waId))), active.client && /* @__PURE__ */ React.createElement(
+    } }, _av(active.name)), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 14, fontWeight: 500, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, active.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 11.5, color: "var(--text-subtle)" } }, "+", _waDigits(active.waId))), active.client && /* @__PURE__ */ React.createElement(
       "button",
       {
         onClick: () => navigate && navigate("clientDetail", { clientId: active.client.id }),
@@ -454,12 +890,16 @@
         }
       },
       /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up", size: 17 })
-    ))) : /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-subtle)", gap: 14, padding: 24, textAlign: "center" } }, /* @__PURE__ */ React.createElement("span", { style: { width: 56, height: 56, borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(37,211,102,0.12)" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 26, style: { color: "#25D366" } })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)" } }, "Elige una conversaci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, maxWidth: 360, lineHeight: 1.6 } }, "O empieza una nueva con el bot\xF3n ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "+"), ". Los mensajes entrantes aparecen aqu\xED en tiempo real."));
-    return /* @__PURE__ */ React.createElement("div", { className: "wa-page", style: { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", maxWidth: 980, margin: "0 auto", width: "100%" } }, /* @__PURE__ */ React.createElement(WaConnectBanner, null), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0 } }, isMobile ? active ? Thread : List : /* @__PURE__ */ React.createElement(React.Fragment, null, List, Thread)), newOpen && ReactDOM.createPortal(
-      /* @__PURE__ */ React.createElement("div", { onClick: () => setNewOpen(false), style: { position: "fixed", inset: 0, zIndex: 300, background: "rgba(8,8,10,0.5)", WebkitBackdropFilter: "blur(14px)", backdropFilter: "blur(14px)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24, animation: "fade .2s ease" } }, /* @__PURE__ */ React.createElement("div", { onClick: (e) => e.stopPropagation(), style: { width: "100%", maxWidth: 420, background: "#141416", border: "0.5px solid rgba(255,255,255,0.1)", borderRadius: 22, padding: 18, animation: "qcIn .3s cubic-bezier(.22,1,.36,1)", maxHeight: "80dvh", display: "flex", flexDirection: "column" } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 16, fontWeight: 500, color: "var(--text)", marginBottom: 12, letterSpacing: "-0.02em" } }, "Nuevo chat"), /* @__PURE__ */ React.createElement(NewChatBody, { clients, onStart: startChat }))),
-      document.body
-    ));
+    ))) : /* @__PURE__ */ React.createElement("div", { className: "wa-thread", style: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--text-subtle)", gap: 14, padding: 24, textAlign: "center" } }, uni ? /* @__PURE__ */ React.createElement("span", { style: { width: 56, height: 56, borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(158,154,229,0.14)", color: "var(--accent)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "inbox", size: 26 })) : /* @__PURE__ */ React.createElement("span", { style: { width: 56, height: 56, borderRadius: 16, display: "grid", placeItems: "center", background: "rgba(37,211,102,0.12)" } }, /* @__PURE__ */ React.createElement(SiIcon, { name: "whatsapp", size: 26, style: { color: "#25D366" } })), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 15, color: "var(--text-muted)" } }, "Elige una conversaci\xF3n"), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12.5, maxWidth: 360, lineHeight: 1.6 } }, uni ? "Aqu\xED llegan tus WhatsApp y tus correos." : /* @__PURE__ */ React.createElement(React.Fragment, null, "O empieza una nueva con el bot\xF3n ", /* @__PURE__ */ React.createElement("b", { style: { color: "var(--text)" } }, "+"), ". Los mensajes entrantes aparecen aqu\xED en tiempo real.")));
+    const MailSetupC = window.MailSetup;
+    return /* @__PURE__ */ React.createElement("div", { className: "wa-page", style: { display: "flex", flexDirection: "column", height: "100dvh", overflow: "hidden", maxWidth: 980, margin: "0 auto", width: "100%" } }, /* @__PURE__ */ React.createElement(WaConnectBanner, null), /* @__PURE__ */ React.createElement("div", { style: { flex: 1, display: "flex", minHeight: 0 } }, isMobile ? active || activeMail ? Thread : List : /* @__PURE__ */ React.createElement(React.Fragment, null, List, Thread)), newOpen && /* @__PURE__ */ React.createElement(InboxModal, { title: "Nuevo chat", onClose: () => setNewOpen(false) }, /* @__PURE__ */ React.createElement(NewChatBody, { clients, onStart: startChat })), composeOpen && mail.creds && /* @__PURE__ */ React.createElement(InboxModal, { title: "Correo nuevo", width: 520, onClose: () => setComposeOpen(false) }, /* @__PURE__ */ React.createElement(ComposeMail, { creds: mail.creds, toast, onDone: () => setComposeOpen(false) })), mailSetup && /* @__PURE__ */ React.createElement(InboxModal, { onClose: () => setMailSetup(false), width: 480 }, MailSetupC ? /* @__PURE__ */ React.createElement(MailSetupC, { embedded: true, onConnect: (c) => {
+      mail.setCreds(c);
+      setMailSetup(false);
+      setFilter("all");
+    } }) : /* @__PURE__ */ React.createElement("div", { style: { color: "var(--text-muted)", fontSize: 13 } }, "No se pudo cargar el formulario de correo.")));
   };
+  const AgencyWhatsApp = ({ navigate }) => /* @__PURE__ */ React.createElement(Inbox, { navigate, mode: "whatsapp" });
+  const AgencyUnibox = ({ navigate }) => /* @__PURE__ */ React.createElement(Inbox, { navigate, mode: "unibox" });
   const NewChatBody = ({ clients, onStart }) => {
     const [num, setNum] = useState("");
     const withPhone = (clients || []).filter((c) => _waDigits(c.whatsapp).length >= 8);
@@ -496,4 +936,5 @@
     )))));
   };
   window.AgencyWhatsApp = AgencyWhatsApp;
+  window.AgencyUnibox = AgencyUnibox;
 })();

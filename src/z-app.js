@@ -54,7 +54,7 @@
     { name: "outreach", label: "Outreach" },
     { name: "billing", label: "Gastos" },
     { name: "income", label: "Facturaci\xF3n", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
-    { name: "notifications", label: "Notificaciones" }
+    { name: "unibox", label: "Unibox" }
   ];
   const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
   const MobileTopNav = ({ view, navigate, session, onCreate }) => {
@@ -87,7 +87,7 @@
     } }, /* @__PURE__ */ React.createElement(Icon, { name: "settings", size: 16 }), " Configuraci\xF3n"), /* @__PURE__ */ React.createElement("button", { onClick: () => {
       setMenu(false);
       navigate("__logout");
-    }, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }), " Cerrar sesi\xF3n"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "mtn-bell mtn-create", onClick: () => onCreate && onCreate(), "aria-label": "Crear" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 20 })), /* @__PURE__ */ React.createElement("button", { className: "mtn-bell", onClick: () => navigate("notifications"), "aria-label": "Notificaciones" }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 19 })))), /* @__PURE__ */ React.createElement("div", { className: "mtn-tabs", ref: tabsRef }, _MOBILE_TABS.map((t) => /* @__PURE__ */ React.createElement(
+    }, style: { color: "var(--red)" } }, /* @__PURE__ */ React.createElement(Icon, { name: "log-out", size: 16 }), " Cerrar sesi\xF3n"))), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8 } }, /* @__PURE__ */ React.createElement("button", { className: "mtn-bell mtn-create", onClick: () => onCreate && onCreate(), "aria-label": "Crear" }, /* @__PURE__ */ React.createElement(Icon, { name: "plus", size: 20 })), /* @__PURE__ */ React.createElement(NotificationBell, { kind: "agency", onNavigate: navigate, variant: "mobile" }))), /* @__PURE__ */ React.createElement("div", { className: "mtn-tabs", ref: tabsRef }, _MOBILE_TABS.map((t) => /* @__PURE__ */ React.createElement(
       "button",
       {
         key: t.name,
@@ -268,8 +268,9 @@
           return /* @__PURE__ */ React.createElement(CampaignDetail, { campaignId: view.params.campaignId, navigate, initialAction: view.params.action });
         case "agenda":
           return /* @__PURE__ */ React.createElement(AgendaPage, { navigate });
+        case "unibox":
         case "notifications":
-          return /* @__PURE__ */ React.createElement(AgencyNotifications, { navigate });
+          return /* @__PURE__ */ React.createElement(AgencyUnibox, { navigate });
         case "nora":
           return /* @__PURE__ */ React.createElement(NoraPage, null);
         case "billing":

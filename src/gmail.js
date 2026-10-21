@@ -54,14 +54,10 @@ const FOLDER_ICON = {
   "[Gmail]/Todos": "layers",
   "[Gmail]/Importantes": "tag"
 };
-const _findByAttr = (folders, ...attrs) => {
-  var _a;
-  return ((_a = folders.find((f) => attrs.some((a) => (f.attrs || []).some((fa) => fa.toLowerCase() === a.toLowerCase())))) == null ? void 0 : _a.name) || null;
-};
+const _findByAttr = (folders, ...attrs) => folders.find((f) => attrs.some((a) => (f.attrs || []).some((fa) => fa.toLowerCase() === a.toLowerCase())))?.name || null;
 const _findByName = (folders, ...names) => {
-  var _a;
   const ns = new Set(names.map((n) => n.toLowerCase()));
-  return ((_a = folders.find((f) => ns.has((f.name || f).toLowerCase()))) == null ? void 0 : _a.name) || null;
+  return folders.find((f) => ns.has((f.name || f).toLowerCase()))?.name || null;
 };
 const _api = async (endpoint, body) => {
   const res = await window.apiFetch(`${MAIL_API}/${endpoint}`, body);
@@ -83,7 +79,7 @@ const _fmtDate = (dateStr) => {
     }
     const M = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     return `${d.getDate()} ${M[d.getMonth()]}`;
-  } catch (e) {
+  } catch {
     return "";
   }
 };
@@ -94,7 +90,7 @@ const _fmtDateFull = (dateStr) => {
     const dias = ["domingo", "lunes", "martes", "mi\xE9rcoles", "jueves", "viernes", "s\xE1bado"];
     const M = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
     return `${dias[d.getDay()]} ${d.getDate()} de ${M[d.getMonth()]}, ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-  } catch (e) {
+  } catch {
     return dateStr;
   }
 };
@@ -104,7 +100,7 @@ const _sender = (from) => {
   if (m) return m[1].trim();
   return from;
 };
-const MailSetup = ({ onConnect }) => {
+const MailSetup = ({ onConnect, embedded }) => {
   const [preset, setPreset] = React.useState("gmail");
   const [emailVal, setEmailVal] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -138,12 +134,12 @@ const MailSetup = ({ onConnect }) => {
       } else {
         setErr(res.error || "Credenciales incorrectas o servidor no disponible");
       }
-    } catch (e) {
+    } catch {
       setErr("No se puede conectar. \xBFEst\xE1 mail_server.py en marcha en el puerto 8080?");
     }
     setLoading(false);
   };
-  return /* @__PURE__ */ React.createElement("div", { style: { minHeight: "calc(100vh - 56px)", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 460, background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 16, padding: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 42, height: 42, borderRadius: 11, background: "var(--accent-soft)", display: "grid", placeItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 18, style: { color: "var(--accent)" } })), /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 20, fontWeight: 500, marginBottom: 6, fontFamily: "var(--font-display)" } }, "Conectar correo"), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "Accede a tu bandeja v\xEDa IMAP y env\xEDa con SMTP.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 20 } }, Object.entries(PRESETS).map(([key, p]) => /* @__PURE__ */ React.createElement(
+  return /* @__PURE__ */ React.createElement("div", { style: embedded ? {} : { minHeight: "calc(100vh - 56px)", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--bg)", padding: 24 } }, /* @__PURE__ */ React.createElement("div", { style: embedded ? { width: "100%" } : { width: 460, background: "var(--bg-elev)", border: "0.5px solid var(--border-strong)", borderRadius: 16, padding: 32 } }, /* @__PURE__ */ React.createElement("div", { style: { marginBottom: 24 } }, /* @__PURE__ */ React.createElement("div", { style: { width: 42, height: 42, borderRadius: 11, background: "var(--accent-soft)", display: "grid", placeItems: "center", marginBottom: 14 } }, /* @__PURE__ */ React.createElement(Icon, { name: "mail", size: 18, style: { color: "var(--accent)" } })), /* @__PURE__ */ React.createElement("h2", { style: { fontSize: 20, fontWeight: 500, marginBottom: 6, fontFamily: "var(--font-display)" } }, "Conectar correo"), /* @__PURE__ */ React.createElement("div", { className: "muted small" }, "Accede a tu bandeja v\xEDa IMAP y env\xEDa con SMTP.")), /* @__PURE__ */ React.createElement("div", { style: { display: "flex", gap: 6, marginBottom: 20 } }, Object.entries(PRESETS).map(([key, p]) => /* @__PURE__ */ React.createElement(
     "button",
     {
       key,
@@ -395,7 +391,7 @@ const GmailView = () => {
   const [creds, setCreds] = React.useState(() => {
     try {
       return JSON.parse(localStorage.getItem(CREDS_KEY));
-    } catch (e) {
+    } catch {
       return null;
     }
   });
@@ -418,7 +414,7 @@ const GmailView = () => {
     try {
       const res = await _api("folders", { creds: c });
       if (res.ok) setFolders(res.folders || []);
-    } catch (e) {
+    } catch {
     }
   };
   const fetchMessages = async (c, f, p) => {
@@ -432,7 +428,7 @@ const GmailView = () => {
       } else {
         toast(res.error || "Error al cargar mensajes", "error");
       }
-    } catch (e) {
+    } catch {
       toast("Sin conexi\xF3n con mail_server.py", "error");
     }
     setLoading(false);
@@ -447,7 +443,7 @@ const GmailView = () => {
       const res = await _api("message", { creds, uid: msg.uid, folder });
       if (res.ok) setDetail(res);
       else toast(res.error || "Error al cargar el mensaje", "error");
-    } catch (e) {
+    } catch {
       toast("Error de conexi\xF3n", "error");
     }
     setLoadingDetail(false);
@@ -462,7 +458,7 @@ const GmailView = () => {
         setDetail(null);
       }
       toast("Mensaje eliminado", "success");
-    } catch (e) {
+    } catch {
       toast("Error al eliminar", "error");
     }
   };
@@ -470,13 +466,13 @@ const GmailView = () => {
     const action = isFlagged ? "unflag" : "flag";
     await _api("action", { creds, uid, folder, action });
     setMessages((ms) => ms.map((m) => m.uid === uid ? { ...m, flagged: !isFlagged } : m));
-    if ((detail == null ? void 0 : detail.uid) === uid) setDetail((d) => ({ ...d, flagged: !isFlagged }));
+    if (detail?.uid === uid) setDetail((d) => ({ ...d, flagged: !isFlagged }));
   };
   const toggleRead = async (uid, isRead) => {
     const action = isRead ? "mark_unread" : "mark_read";
     await _api("action", { creds, uid, folder, action });
     setMessages((ms) => ms.map((m) => m.uid === uid ? { ...m, read: !isRead } : m));
-    if ((detail == null ? void 0 : detail.uid) === uid) setDetail((d) => ({ ...d, read: !isRead }));
+    if (detail?.uid === uid) setDetail((d) => ({ ...d, read: !isRead }));
   };
   const sendEmail = async () => {
     if (!compTo.trim() || !compSubj.trim()) return;
@@ -492,7 +488,7 @@ const GmailView = () => {
       } else {
         toast("Error al enviar: " + res.error, "error");
       }
-    } catch (e) {
+    } catch {
       toast("Error de conexi\xF3n al enviar", "error");
     }
     setSending(false);
@@ -712,11 +708,10 @@ const GmailView = () => {
       sandbox: "allow-same-origin",
       style: { width: "100%", border: "none", display: "block", minHeight: 400 },
       onLoad: (e) => {
-        var _a;
         try {
-          const body = (_a = e.target.contentDocument) == null ? void 0 : _a.body;
+          const body = e.target.contentDocument?.body;
           if (body) e.target.style.height = body.scrollHeight + 40 + "px";
-        } catch (e2) {
+        } catch {
         }
       }
     }
@@ -834,3 +829,5 @@ const GmailView = () => {
   ));
 };
 window.GmailView = GmailView;
+window.MailSetup = MailSetup;
+window.MailKit = { api: _api, credsKey: CREDS_KEY, sender: _sender, fmtDateFull: _fmtDateFull };

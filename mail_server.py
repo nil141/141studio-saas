@@ -303,6 +303,7 @@ def api_message(body):
             "cc":      _dstr(msg.get("Cc",      "")),
             "subject": _dstr(msg.get("Subject", "(sin asunto)")),
             "date":    msg.get("Date", ""),
+            "message_id": msg.get("Message-ID", ""),
             "html": html, "text": text,
         }
     finally:
@@ -318,6 +319,10 @@ def api_send(body):
     msg["Subject"] = subject
     msg["From"]    = c["email"]
     msg["To"]      = to
+    reply_to_id = (body.get("in_reply_to") or "").strip()
+    if reply_to_id:   # respuesta: que el cliente de correo la agrupe en el mismo hilo
+        msg["In-Reply-To"] = reply_to_id
+        msg["References"]  = reply_to_id
     msg.attach(MIMEText(content, "plain", "utf-8"))
     smtp = _get_smtp(c)
     try:

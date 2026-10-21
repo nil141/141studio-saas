@@ -63,7 +63,7 @@ const _MOBILE_TABS = [
   { name: "outreach",      label: "Outreach" },
   { name: "billing",       label: "Gastos" },
   { name: "income",        label: "Facturación", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
-  { name: "notifications", label: "Notificaciones" },
+  { name: "unibox",        label: "Unibox" },
 ];
 const _mapMobileTab = (v) => v === "project" ? "projects" : v === "clientDetail" ? "clients" : v;
 
@@ -107,9 +107,7 @@ const MobileTopNav = ({ view, navigate, session, onCreate }) => {
           <button className="mtn-bell mtn-create" onClick={() => onCreate && onCreate()} aria-label="Crear">
             <Icon name="plus" size={20}/>
           </button>
-          <button className="mtn-bell" onClick={() => navigate("notifications")} aria-label="Notificaciones">
-            <Icon name="bell" size={19}/>
-          </button>
+          <NotificationBell kind="agency" onNavigate={navigate} variant="mobile"/>
         </div>
       </div>
       <div className="mtn-tabs" ref={tabsRef}>
@@ -278,7 +276,8 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "calculator": return <AgencyCalculator/>;
       case "campaign":  return <CampaignDetail campaignId={view.params.campaignId} navigate={navigate} initialAction={view.params.action}/>;
       case "agenda": return <AgendaPage navigate={navigate}/>;
-      case "notifications": return <AgencyNotifications navigate={navigate}/>;
+      case "unibox":
+      case "notifications": return <AgencyUnibox navigate={navigate}/>;
       case "nora": return <NoraPage/>;
       case "billing": return null; // rendered always below
       case "income": return <IncomePage/>;

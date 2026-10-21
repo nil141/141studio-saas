@@ -17,7 +17,7 @@ const _NAV_MAIN = [
   { id: "dashboard", label: "Inicio", icon: "home" },
   { id: "tasks", label: "Tareas", icon: "list-todo" },
   { id: "agenda", label: "Agenda", icon: "calendar" },
-  { id: "notifications", label: "Notificaciones", icon: "bell" }
+  { id: "unibox", label: "Unibox", icon: "inbox" }
 ];
 const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
@@ -864,6 +864,9 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     /* @__PURE__ */ React.createElement("span", { style: { width: 30, height: 30, borderRadius: 9, flexShrink: 0, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.05)", color: "var(--accent)", display: "grid", placeItems: "center", fontSize: 14, fontFamily: "var(--font-display)" } }, (clientAccount.initials || "").charAt(0)),
     /* @__PURE__ */ React.createElement("span", { style: { minWidth: 0 } }, /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 13.5, fontWeight: 500, color: "#fff", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, clientAccount.name), /* @__PURE__ */ React.createElement("span", { style: { display: "block", fontSize: 11.5, color: "var(--text-muted)" } }, "Ver tu cuenta"))
   ), /* @__PURE__ */ React.createElement(FooterItem, { icon: "log-out", label: "Cerrar sesi\xF3n", onClick: () => setLogoutOpen(true) }))), /* @__PURE__ */ React.createElement(RailTooltip, null), railMode && ReactDOM.createPortal(
+    /* @__PURE__ */ React.createElement("div", { style: { position: "fixed", top: 18, right: 52, zIndex: 150 } }, /* @__PURE__ */ React.createElement(NotificationBell, { kind: "agency", onNavigate, variant: "float" })),
+    document.body
+  ), railMode && ReactDOM.createPortal(
     /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -993,7 +996,7 @@ const _notifRoute = (n) => {
       return "client-dashboard";
   }
 };
-const NotificationBell = ({ kind, onNavigate }) => {
+const NotificationBell = ({ kind, onNavigate, variant }) => {
   const D = window.Data;
   D.useStore && D.useStore();
   const [open, setOpen] = useState(false);
@@ -1008,7 +1011,8 @@ const NotificationBell = ({ kind, onNavigate }) => {
   const toggle = () => {
     if (!open && btnRef.current) {
       const r = btnRef.current.getBoundingClientRect();
-      setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(r.left, window.innerWidth - 342)) });
+      const left = variant ? r.right - 340 : r.left;
+      setPos({ top: r.bottom + 8, left: Math.max(8, Math.min(left, window.innerWidth - 342)) });
     }
     setOpen((o) => !o);
   };
@@ -1020,11 +1024,46 @@ const NotificationBell = ({ kind, onNavigate }) => {
       if (pid) list = list.filter((n) => n.clientId === pid);
     } catch {
     }
-  } else {
+  } else if (!variant) {
     list = list.filter((n) => n.target === "agency");
   }
   const unread = list.filter((n) => !n.read).length;
-  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 13 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
+  return /* @__PURE__ */ React.createElement("div", { style: { position: "relative" }, onClick: (e) => e.stopPropagation() }, variant === "float" ? /* @__PURE__ */ React.createElement(
+    "button",
+    {
+      ref: btnRef,
+      onClick: toggle,
+      title: "Notificaciones",
+      "aria-label": "Notificaciones",
+      style: {
+        position: "relative",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 6,
+        background: "transparent",
+        border: "none",
+        color: open ? "#fff" : "rgba(255,255,255,0.6)",
+        cursor: "pointer",
+        transition: "color .14s"
+      },
+      onMouseEnter: (e) => e.currentTarget.style.color = "#fff",
+      onMouseLeave: (e) => {
+        if (!open) e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+      }
+    },
+    /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 16, strokeWidth: 1.8 }),
+    unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
+      position: "absolute",
+      top: 5,
+      right: 5,
+      width: 7,
+      height: 7,
+      borderRadius: 99,
+      background: "var(--accent)",
+      boxShadow: "0 0 0 2px var(--bg, #0a0a0a)"
+    } })
+  ) : variant === "mobile" ? /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "mtn-bell", onClick: toggle, "aria-label": "Notificaciones", style: { position: "relative" } }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 19 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: { position: "absolute", top: 7, right: 7, width: 7, height: 7, borderRadius: 99, background: "var(--accent)" } })) : /* @__PURE__ */ React.createElement("button", { ref: btnRef, className: "btn ghost icon-only", "aria-label": "Notificaciones", onClick: toggle }, /* @__PURE__ */ React.createElement(Icon, { name: "bell", size: 13 }), unread > 0 && /* @__PURE__ */ React.createElement("span", { style: {
     position: "absolute",
     top: 3,
     right: 3,
@@ -1059,7 +1098,7 @@ const NotificationBell = ({ kind, onNavigate }) => {
         }
       },
       /* @__PURE__ */ React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "13px 16px", borderBottom: "0.5px solid var(--border)" } }, /* @__PURE__ */ React.createElement("div", { style: { fontWeight: 600, fontSize: 14 } }, "Notificaciones"), unread > 0 && /* @__PURE__ */ React.createElement("button", { onClick: () => list.filter((n) => !n.read).forEach((n) => D.markNotificationRead(n.id)), style: { background: "transparent", border: 0, color: "var(--text-muted)", fontSize: 12, cursor: "pointer", fontFamily: "inherit" } }, "Marcar le\xEDdas")),
-      /* @__PURE__ */ React.createElement("div", { style: { maxHeight: 380, overflowY: "auto" } }, list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin notificaciones") : list.slice(0, 25).map((n) => /* @__PURE__ */ React.createElement(
+      /* @__PURE__ */ React.createElement("div", { style: { maxHeight: variant ? 460 : 380, overflowY: "auto" } }, list.length === 0 ? /* @__PURE__ */ React.createElement("div", { style: { padding: "28px 16px", textAlign: "center", color: "var(--text-subtle)", fontSize: 13 } }, "Sin notificaciones") : list.slice(0, variant ? 60 : 25).map((n) => /* @__PURE__ */ React.createElement(
         "div",
         {
           key: n.id,

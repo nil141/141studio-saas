@@ -113,7 +113,7 @@ const _sender = (from) => {
 };
 
 // ── Formulario de configuración ────────────────────────────────────────────
-const MailSetup = ({ onConnect }) => {
+const MailSetup = ({ onConnect, embedded }) => {
   const [preset,   setPreset]   = React.useState("gmail");
   const [emailVal, setEmailVal] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -156,8 +156,8 @@ const MailSetup = ({ onConnect }) => {
   };
 
   return (
-    <div style={{minHeight:"calc(100vh - 56px)", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:24}}>
-      <div style={{width:460, background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)", borderRadius:16, padding:32}}>
+    <div style={embedded ? {} : {minHeight:"calc(100vh - 56px)", display:"flex", alignItems:"center", justifyContent:"center", background:"var(--bg)", padding:24}}>
+      <div style={embedded ? {width:"100%"} : {width:460, background:"var(--bg-elev)", border:"0.5px solid var(--border-strong)", borderRadius:16, padding:32}}>
 
         <div style={{marginBottom:24}}>
           <div style={{width:42, height:42, borderRadius:11, background:"var(--accent-soft)", display:"grid", placeItems:"center", marginBottom:14}}>
@@ -826,3 +826,6 @@ const GmailView = () => {
 };
 
 window.GmailView = GmailView;
+// Para la Unibox: formulario de conexión y API del correo
+window.MailSetup = MailSetup;
+window.MailKit = { api: _api, credsKey: CREDS_KEY, sender: _sender, fmtDateFull: _fmtDateFull };
