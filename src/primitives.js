@@ -23,6 +23,7 @@ const _NAV_OTROS = [
   { id: "projects", label: "Proyectos", icon: "folder" },
   { id: "clients", label: "Clientes", icon: "users" },
   { id: "outreach", label: "Propuestas Outreach", icon: "send" },
+  { id: "coldemail", label: "Cold email", icon: "mail", sso: "coldemail" },
   { id: "whatsapp", label: "WhatsApp", icon: "msg-circle" },
   { id: "resources", label: "Recursos", icon: "sparkles" },
   { id: "calculator", label: "Calculadora", icon: "calculator" },
@@ -42,6 +43,30 @@ const _navSecLabel = {
   gap: 7,
   whiteSpace: "nowrap"
 };
+const COLD_EMAIL_URL = "https://email.141agency.com/";
+const openColdEmail = async () => {
+  const w = window.open("", "_blank");
+  if (w) {
+    try {
+      w.opener = null;
+    } catch (_) {
+    }
+    try {
+      w.document.write('<title>Cold email</title><body style="margin:0;background:#0a0a0a"></body>');
+    } catch (_) {
+    }
+  }
+  let url = COLD_EMAIL_URL;
+  try {
+    const out = window.Data && window.Data.coldEmailLink ? await window.Data.coldEmailLink() : null;
+    if (out && out.ok && out.url) url = out.url;
+    else if (out && out.error) console.warn("[cold email] se abre sin sesi\xF3n:", out.error);
+  } catch (_) {
+  }
+  if (w) w.location.href = url;
+  else window.open(url, "_blank", "noopener");
+};
+window.openColdEmail = openColdEmail;
 const _railTip = {
   fn: null,
   show(d) {
@@ -219,6 +244,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
         icon: it.icon,
         label: it.label,
         href: it.href,
+        sso: it.sso,
         dot: it.id === "outreach" && outreachDue > 0,
         nested: true
       }
@@ -584,10 +610,10 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     const t = setTimeout(measurePill, 280);
     return () => clearTimeout(t);
   }, [current, collapsed]);
-  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
+  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href, sso }) => {
     const [hov, setHov] = React.useState(false);
-    const isActive = href ? false : active != null ? active : curNav === id;
-    const handleClick = href ? (() => window.open(href, "_blank", "noopener,noreferrer")) : onClick || (() => onNavigate(id));
+    const isActive = href || sso ? false : active != null ? active : curNav === id;
+    const handleClick = sso ? (() => openColdEmail()) : href ? (() => window.open(href, "_blank", "noopener,noreferrer")) : onClick || (() => onNavigate(id));
     return /* @__PURE__ */ React.createElement(
       "div",
       {
@@ -628,7 +654,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
       /* @__PURE__ */ React.createElement(Icon, { name: icon, size: 16, strokeWidth: 1.7 }),
       /* @__PURE__ */ React.createElement("span", { className: "nav-label", style: { flex: 1 } }, label),
       dot ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { position: "absolute", right: 8, top: 7, width: 5, height: 5, borderRadius: 99, background: "var(--text-muted)" } }) : badge ? /* @__PURE__ */ React.createElement("span", { className: "nav-aux", style: { fontSize: 11, background: "rgba(255,255,255,0.07)", color: "var(--text-muted)", padding: "1px 7px", borderRadius: 99 } }, badge) : null,
-      href ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
+      href || sso ? /* @__PURE__ */ React.createElement(Icon, { name: "arrow-up-right", size: 14, className: "nav-aux", style: { flexShrink: 0, opacity: hov ? 0.9 : 0.4, transition: "opacity .15s" } }) : null,
       chevron ? /* @__PURE__ */ React.createElement(Icon, { name: "chevron", size: 15, className: "nav-aux", style: { flexShrink: 0, opacity: hov || isActive ? 1 : 0.45, transition: "opacity .15s" } }) : null
     );
   };

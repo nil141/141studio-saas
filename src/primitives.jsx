@@ -31,6 +31,7 @@ const _NAV_OTROS = [
   { id: "projects",  label: "Proyectos",   icon: "folder" },
   { id: "clients",   label: "Clientes",    icon: "users" },
   { id: "outreach",  label: "Propuestas Outreach", icon: "send" },
+  { id: "coldemail", label: "Cold email",  icon: "mail", sso: "coldemail" },
   { id: "whatsapp",  label: "WhatsApp",    icon: "msg-circle" },
   { id: "resources", label: "Recursos",    icon: "sparkles" },
   { id: "calculator", label: "Calculadora", icon: "calculator" },
@@ -40,6 +41,26 @@ const _NAV_OTROS = [
 const _navSecLabel = { fontSize: 11, fontWeight: 600, color: "var(--text-subtle)", letterSpacing: "0.01em",
   textTransform: "uppercase", padding: "0 12px", marginBottom: 6, display: "flex", alignItems: "center", gap: 7,
   whiteSpace: "nowrap" };
+
+// Plataforma de cold email: se abre en otra pestaña con la sesión ya iniciada.
+// La pestaña se abre al instante (dentro del clic, para que Safari no la
+// bloquee) y luego se le asigna el enlace de acceso que genera el servidor.
+const COLD_EMAIL_URL = "https://email.141agency.com/";
+const openColdEmail = async () => {
+  const w = window.open("", "_blank");
+  if (w) {
+    try { w.opener = null; } catch (_) {}
+    try { w.document.write('<title>Cold email</title><body style="margin:0;background:#0a0a0a"></body>'); } catch (_) {}
+  }
+  let url = COLD_EMAIL_URL;
+  try {
+    const out = window.Data && window.Data.coldEmailLink ? await window.Data.coldEmailLink() : null;
+    if (out && out.ok && out.url) url = out.url;
+    else if (out && out.error) console.warn("[cold email] se abre sin sesión:", out.error);
+  } catch (_) {}
+  if (w) w.location.href = url; else window.open(url, "_blank", "noopener");
+};
+window.openColdEmail = openColdEmail;
 
 // Emisor global para la etiqueta flotante del rail: evita que el Sidebar
 // entero se re-renderice al pasar el ratón (lo que perdía el primer clic).
@@ -148,7 +169,7 @@ const AgencyNav = ({ current, curNav, activePid, onNavigate, NavItem, D, navSear
                   opacity: open ? 1 : 0, transform: open ? "translateY(0)" : "translateY(-5px)",
                   transition: "opacity .2s ease, transform .28s cubic-bezier(.22,1,.36,1)" }}>
                   {_NAV_OTROS.map(it => (
-                    <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href}
+                    <NavItem key={it.id} id={it.id} icon={it.icon} label={it.label} href={it.href} sso={it.sso}
                       dot={it.id === "outreach" && outreachDue > 0} nested/>
                   ))}
                 </div>
@@ -500,10 +521,12 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
     return () => clearTimeout(t);
   }, [current, collapsed]);
 
-  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href }) => {
+  const NavItem = ({ id, icon, label, badge, dot, onClick, chevron, active, bare, rowRef, nested, href, sso }) => {
     const [hov, setHov] = React.useState(false);
-    const isActive = href ? false : (active != null ? active : (curNav === id));
-    const handleClick = href
+    const isActive = (href || sso) ? false : (active != null ? active : (curNav === id));
+    const handleClick = sso
+      ? (() => openColdEmail())
+      : href
       ? (() => window.open(href, "_blank", "noopener,noreferrer"))
       : (onClick || (() => onNavigate(id)));
     return (
@@ -538,7 +561,7 @@ const Sidebar = ({ current, currentParams, onNavigate, kind = "agency", session,
             {badge}
           </span>
         ) : null}
-        {href ? <Icon name="arrow-up-right" size={14} className="nav-aux" style={{flexShrink:0, opacity: hov ? 0.9 : 0.4, transition:"opacity .15s"}}/> : null}
+        {(href || sso) ? <Icon name="arrow-up-right" size={14} className="nav-aux" style={{flexShrink:0, opacity: hov ? 0.9 : 0.4, transition:"opacity .15s"}}/> : null}
         {chevron ? <Icon name="chevron" size={15} className="nav-aux" style={{flexShrink:0, opacity: hov || isActive ? 1 : 0.45, transition:"opacity .15s"}}/> : null}
       </div>
     );

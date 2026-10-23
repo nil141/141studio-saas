@@ -1922,6 +1922,14 @@
     });
   };
   window.apiFetch = apiFetch;
+  const coldEmailLink = async () => {
+    try {
+      const r = await apiFetch("/api/sso/coldemail", {});
+      return await r.json().catch(() => null) || { ok: false };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  };
   const addAgendaEvent = async (input) => {
     const uid = _store._user?.id;
     if (!uid) return { error: "no-auth" };
@@ -2400,6 +2408,7 @@
     initAccount,
     // Re-fetch all data from Supabase (p. ej. al abrir una página)
     reload: () => _loadAll(),
+    coldEmailLink,
     // Supabase client (for onboarding)
     _sb,
     _SB_URL,
