@@ -1696,12 +1696,6 @@ const apiFetch = async (path, body = {}) => {
 };
 window.apiFetch = apiFetch;
 
-// Enlace de un solo uso para abrir la plataforma de cold email con la sesión iniciada.
-const coldEmailLink = async () => {
-  try { const r = await apiFetch("/api/sso/coldemail", {}); return (await r.json().catch(() => null)) || { ok: false }; }
-  catch (e) { return { ok: false, error: String(e) }; }
-};
-
 // ── Agenda: eventos en la nube + suscripción de calendario (.ics) ──────
 const addAgendaEvent = async (input) => {
   const uid = _store._user?.id;
@@ -2016,7 +2010,6 @@ window.Data = {
   authLogin, authSignOut, initAccount,
   // Re-fetch all data from Supabase (p. ej. al abrir una página)
   reload: () => _loadAll(),
-  coldEmailLink,
   // Supabase client (for onboarding)
   _sb, _SB_URL, _SB_KEY,
   // Mutators

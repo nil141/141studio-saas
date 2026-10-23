@@ -52,7 +52,7 @@
     { name: "projects", label: "Proyectos" },
     { name: "clients", label: "Clientes" },
     { name: "outreach", label: "Outreach" },
-    { name: "coldemail", label: "Cold email", sso: true },
+    { name: "coldemail", label: "Cold email", href: "https://email.141agency.com/" },
     { name: "billing", label: "Gastos" },
     { name: "income", label: "Facturaci\xF3n", href: "https://afinity.geyce.es/Usuario/Login?ReturnUrl=%2faplicaciones" },
     { name: "unibox", label: "Unibox" }
@@ -94,7 +94,7 @@
         key: t.name,
         "data-active": cur === t.name ? "1" : void 0,
         className: "mtn-tab" + (cur === t.name ? " active" : ""),
-        onClick: () => t.sso ? window.openColdEmail() : t.href ? window.open(t.href, "_blank", "noopener") : navigate(t.name)
+        onClick: () => t.href ? window.open(t.href, "_blank", "noopener") : navigate(t.name)
       },
       t.label
     ))));

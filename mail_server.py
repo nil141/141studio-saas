@@ -1917,39 +1917,6 @@ def api_google_sync(body):
                 traceback.print_exc()
     return {"ok": True, "updated": updated, "removed": removed}
 
-# ── Acceso directo a la plataforma de cold email (email.141agency.com) ──
-# Genera un enlace mágico de un solo uso (admin/generate_link) para el usuario
-# que ha iniciado sesión en el CRM: la pestaña nueva entra ya con su sesión.
-# Es una sesión propia (no comparte refresh token con el CRM). Si la
-# plataforma usa otro proyecto de Supabase, define COLDEMAIL_SUPABASE_URL y
-# COLDEMAIL_SUPABASE_SERVICE_ROLE_KEY; si no, se usa el mismo del CRM.
-COLD_URL    = os.environ.get("COLDEMAIL_URL", "https://email.141agency.com/")
-COLD_SB_URL = (os.environ.get("COLDEMAIL_SUPABASE_URL", "") or SB_URL).rstrip("/")
-COLD_SB_KEY = os.environ.get("COLDEMAIL_SUPABASE_SERVICE_ROLE_KEY", "") or SB_SERVICE_KEY
-
-def _coldemail_link(email):
-    if not COLD_SB_KEY:
-        return None, "Falta la service role de Supabase en el servidor"
-    body = json.dumps({"type": "magiclink", "email": email, "redirect_to": COLD_URL}).encode()
-    req = urllib.request.Request(COLD_SB_URL + "/auth/v1/admin/generate_link", data=body, method="POST")
-    req.add_header("apikey", COLD_SB_KEY)
-    req.add_header("Authorization", "Bearer " + COLD_SB_KEY)
-    req.add_header("Content-Type", "application/json")
-    try:
-        with urllib.request.urlopen(req, timeout=15) as r:
-            out = json.loads(r.read().decode() or "{}")
-    except urllib.error.HTTPError as e:
-        detail = e.read().decode("utf-8", errors="replace")[:300]
-        print(f"[coldemail] generate_link {e.code}: {detail}")
-        return None, f"Supabase {e.code}: {detail}"
-    except Exception as e:
-        traceback.print_exc()
-        return None, str(e)
-    link = out.get("action_link") or (out.get("properties") or {}).get("action_link")
-    if not link:
-        return None, "Supabase no devolvió el enlace"
-    return link, ""
-
 GOOGLE_HANDLERS = {
     "status": api_google_status,
     "auth-url": api_google_auth_url,
@@ -2169,8 +2136,6 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api(self.path[len("/api/whatsapp/"):], WHATSAPP_HANDLERS)
         elif self.path.startswith("/api/google/"):
             self._handle_api(self.path[len("/api/google/"):], GOOGLE_HANDLERS)
-        elif self.path == "/api/sso/coldemail":
-            self._handle_sso_coldemail()
         elif self.path == "/api/campaigns/import":
             self._handle_import()
         elif self.path.startswith("/api/campaigns/"):
@@ -2280,25 +2245,6 @@ class Handler(SimpleHTTPRequestHandler):
             traceback.print_exc()
             result = {"ok": False, "error": str(e)}
         self._json(200, result)
-
-    def _handle_sso_coldemail(self):
-        """Enlace con sesión iniciada para la plataforma de cold email (solo agencia)."""
-        auth  = self.headers.get("Authorization", "")
-        token = auth[7:] if auth.startswith("Bearer ") else ""
-        user  = _verify_supabase_token(token)
-        role  = ((user or {}).get("user_metadata") or {}).get("role")
-        try:
-            length = int(self.headers.get("Content-Length", 0))
-            if length: self.rfile.read(min(length, 1_000_000))
-        except Exception:
-            pass
-        if not user or role == "client":
-            self._json(401, {"ok": False, "error": "No autorizado"}); return
-        email = (user.get("email") or "").strip()
-        if not email:
-            self._json(200, {"ok": False, "url": COLD_URL, "error": "Tu usuario no tiene email"}); return
-        link, err = _coldemail_link(email)
-        self._json(200, {"ok": bool(link), "url": link or COLD_URL, "error": err})
 
     def _json(self, status, obj):
         resp = json.dumps(obj, ensure_ascii=False).encode("utf-8")
