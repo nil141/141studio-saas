@@ -144,11 +144,12 @@
       const first = base.includes("@") ? PN.cap(base.split("@")[0]) : base.split(/\s+/)[0];
       const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
       const tasks = Object.entries(D.TASKS || {}).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => (arr || []).map((t) => ({ ...t, _pid: pid }))).filter((t) => t.deadline && t.column !== "done" && t.deadline <= today).sort((a, b) => a.deadline < b.deadline ? -1 : a.deadline > b.deadline ? 1 : (a.id || "") < (b.id || "") ? -1 : 1);
-      const meetings = (D.AGENDA_EVENTS || []).filter((e) => e.date && e.date <= today && (e.dateEnd && e.dateEnd > e.date ? e.dateEnd : e.date) >= today).sort((a, b) => (a.time || "00") < (b.time || "00") ? -1 : 1);
+      const calToday = PN.ymd(/* @__PURE__ */ new Date());
+      const meetings = (D.AGENDA_EVENTS || []).filter((e) => e.date && e.date <= calToday && (e.dateEnd && e.dateEnd > e.date ? e.dateEnd : e.date) >= calToday).sort((a, b) => (a.time || "00") < (b.time || "00") ? -1 : 1);
       const _MESC = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
       const _when = (m) => {
         if (m.time) return `Hoy a las ${m.time}${m.timeEnd ? " \u2013 " + m.timeEnd : ""}`;
-        if (m.dateEnd && m.dateEnd > today) {
+        if (m.dateEnd && m.dateEnd > calToday) {
           const d = PN.parseYmd(m.dateEnd);
           return `Todo el d\xEDa \xB7 hasta el ${d.getDate()} ${_MESC[d.getMonth()]}`;
         }
@@ -216,7 +217,7 @@
         const d = new Date(t);
         return t && !isNaN(d) ? PN.ymd(d) : "";
       };
-      (D.INVOICES || []).filter((i) => i.status !== "paid" && _ymdOf(i.due) === today && live("i:" + i.id)).forEach((i) => mItems.push({
+      (D.INVOICES || []).filter((i) => i.status !== "paid" && _ymdOf(i.due) === calToday && live("i:" + i.id)).forEach((i) => mItems.push({
         key: "i:" + i.id,
         title: "Factura \xB7 " + (i.clientName || i.client || "Cliente"),
         time: "Hoy",

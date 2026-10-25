@@ -127,14 +127,16 @@ const PanelHome = ({ navigate, session }) => {
     .filter(t => t.deadline && t.column !== "done" && t.deadline <= today)
     .sort((a, b) => (a.deadline < b.deadline ? -1 : a.deadline > b.deadline ? 1 : (a.id || "") < (b.id || "") ? -1 : 1));
 
-  // Todos los eventos de hoy: con hora, de todo el día y los de varios días que pasan por hoy
+  // Todos los eventos de hoy: con hora, de todo el día y los de varios días que pasan por hoy.
+  // Usan la fecha real (como el calendario), no el "día de tareas" que cambia a las 3am.
+  const calToday = PN.ymd(new Date());
   const meetings = (D.AGENDA_EVENTS || [])
-    .filter(e => e.date && e.date <= today && (e.dateEnd && e.dateEnd > e.date ? e.dateEnd : e.date) >= today)
+    .filter(e => e.date && e.date <= calToday && (e.dateEnd && e.dateEnd > e.date ? e.dateEnd : e.date) >= calToday)
     .sort((a, b) => ((a.time || "00") < (b.time || "00") ? -1 : 1));
   const _MESC = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
   const _when = (m) => {
     if (m.time) return `Hoy a las ${m.time}${m.timeEnd ? " – " + m.timeEnd : ""}`;
-    if (m.dateEnd && m.dateEnd > today) { const d = PN.parseYmd(m.dateEnd); return `Todo el día · hasta el ${d.getDate()} ${_MESC[d.getMonth()]}`; }
+    if (m.dateEnd && m.dateEnd > calToday) { const d = PN.parseYmd(m.dateEnd); return `Todo el día · hasta el ${d.getDate()} ${_MESC[d.getMonth()]}`; }
     return "Todo el día";
   };
 
@@ -186,7 +188,7 @@ const PanelHome = ({ navigate, session }) => {
   }));
   const _ymdOf = (v) => { const t = String(v || ""); if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10); const d = new Date(t); return t && !isNaN(d) ? PN.ymd(d) : ""; };
   // Facturas pendientes que vencen hoy (también salen en el calendario)
-  (D.INVOICES || []).filter(i => i.status !== "paid" && _ymdOf(i.due) === today && live("i:" + i.id)).forEach(i => mItems.push({
+  (D.INVOICES || []).filter(i => i.status !== "paid" && _ymdOf(i.due) === calToday && live("i:" + i.id)).forEach(i => mItems.push({
     key: "i:" + i.id, title: "Factura · " + (i.clientName || i.client || "Cliente"), time: "Hoy", from: "de Calendario",
     body: `Vence hoy · ${String(Math.round(Number(i.amount) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} €`,
     app: { icon: "calendar" }, onClick: () => navigate("billing"),
