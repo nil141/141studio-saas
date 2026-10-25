@@ -923,4 +923,5 @@
     })(), editOpen && /* @__PURE__ */ React.createElement(EditProjectModal, { project: p, onClose: () => setEditOpen(false) }));
   };
   window.AgencyProject = AgencyProject;
+  Object.assign(window, { EditProjectModal, ProjectPayments, ProjectFigmaBoard });
 })();

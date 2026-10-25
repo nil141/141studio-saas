@@ -67,14 +67,14 @@ const Sheet = ({ title, onClose, children, width = 440 }) => ReactDOM.createPort
     </div>
   </div>, document.body);
 
-const PanelInbox = ({ navigate, openModal, compose }) => {
+const PanelInbox = ({ navigate, openModal, compose, open }) => {
   const D = window.Data; D.useStore();
   const K = window.PNInboxKit || {};
   const toast = (typeof useToast === "function") ? useToast() : null;
   const mail = K.useMailInbox ? K.useMailInbox(true) : { creds: null, mails: [], reload() {}, markRead() {}, setCreds() {} };
   const [filter, setFilterS] = useState(() => { try { return localStorage.getItem("pn_inbox_filter") || "all"; } catch (_) { return "all"; } });
   const setFilter = (f) => { setFilterS(f); try { localStorage.setItem("pn_inbox_filter", f); } catch (_) {} };
-  const [sel, setSel] = useState(null);          // clave de la conversación abierta
+  const [sel, setSel] = useState(open || null);  // clave de la conversación abierta
   const [olderOpen, setOlderOpen] = useState(false);
   const [arch, setArch] = useState(_readArch);
   const [sheet, setSheet] = useState(null);       // "mail" | "chat" | "compose"

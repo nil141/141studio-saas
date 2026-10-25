@@ -942,3 +942,5 @@ const AgencyProject = ({ projectId, navigate, openModal }) => {
 };
 
 window.AgencyProject = AgencyProject;
+// También los usa el detalle de proyecto del panel rediseñado (panel-projects)
+Object.assign(window, { EditProjectModal, ProjectPayments, ProjectFigmaBoard });

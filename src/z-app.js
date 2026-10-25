@@ -356,9 +356,13 @@
           return /* @__PURE__ */ React.createElement(PanelTasks, { navigate, openModal, initialDate: view.params.date });
         case "agenda":
           return /* @__PURE__ */ React.createElement(PanelCalendar, { navigate, openModal });
+        case "projects":
+          return /* @__PURE__ */ React.createElement(PanelProjects, { navigate, openModal });
+        case "project":
+          return /* @__PURE__ */ React.createElement(PanelProject, { navigate, openModal, projectId: view.params.projectId });
         case "unibox":
         case "notifications":
-          return /* @__PURE__ */ React.createElement(PanelInbox, { navigate, openModal, compose: view.params.compose });
+          return /* @__PURE__ */ React.createElement(PanelInbox, { navigate, openModal, compose: view.params.compose, open: view.params.open });
         default:
           return null;
       }

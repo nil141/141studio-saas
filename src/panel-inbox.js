@@ -70,7 +70,7 @@
       /* @__PURE__ */ React.createElement("div", { className: "pn-sheet-bg", onClick: onClose }, /* @__PURE__ */ React.createElement("div", { className: "pn-sheet", style: { maxWidth: width }, onClick: (e) => e.stopPropagation() }, title && /* @__PURE__ */ React.createElement("p", { className: "t-title-m", style: { color: "var(--ink-900)", marginBottom: 14 } }, title), children)),
       document.body
     );
-    const PanelInbox = ({ navigate, openModal, compose }) => {
+    const PanelInbox = ({ navigate, openModal, compose, open }) => {
       const D = window.Data;
       D.useStore();
       const K = window.PNInboxKit || {};
@@ -93,7 +93,7 @@
         } catch (_) {
         }
       };
-      const [sel, setSel] = useState(null);
+      const [sel, setSel] = useState(open || null);
       const [olderOpen, setOlderOpen] = useState(false);
       const [arch, setArch] = useState(_readArch);
       const [sheet, setSheet] = useState(null);
