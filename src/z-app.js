@@ -356,6 +356,9 @@
           return /* @__PURE__ */ React.createElement(PanelTasks, { navigate, openModal, initialDate: view.params.date });
         case "agenda":
           return /* @__PURE__ */ React.createElement(PanelCalendar, { navigate, openModal });
+        case "unibox":
+        case "notifications":
+          return /* @__PURE__ */ React.createElement(PanelInbox, { navigate, openModal, compose: view.params.compose });
         default:
           return null;
       }

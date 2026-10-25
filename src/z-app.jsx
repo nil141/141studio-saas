@@ -334,6 +334,8 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "dashboard": return <PanelHome navigate={navigate} session={session}/>;
       case "tasks": return <PanelTasks navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
       case "agenda": return <PanelCalendar navigate={navigate} openModal={openModal}/>;
+      case "unibox":
+      case "notifications": return <PanelInbox navigate={navigate} openModal={openModal} compose={view.params.compose}/>;
       default: return null;
     }
   };

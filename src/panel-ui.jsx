@@ -162,13 +162,14 @@ const PanelShell = ({ view, navigate, session, onCreate, onBell, bellOn, unread,
   <div className="pn app" data-screen-label={view.name}>
     <div className="pn-glow"/>
     <Rail view={view} navigate={navigate} session={session}/>
-    <div className="pn-actions">
+    {/* En la Bandeja el diseño no lleva campana ni + (la campana lleva aquí) */}
+    {!["unibox", "notifications"].includes(view.name) && <div className="pn-actions">
       <button className={"pn-act" + (bellOn ? " on" : "")} aria-label="Notificaciones" onClick={onBell}>
         <PIcon name="bell"/>
         {unread ? <span className="pn-dot"/> : null}
       </button>
       <button className="pn-act" aria-label="Crear" onClick={onCreate}><PIcon name="plus"/></button>
-    </div>
+    </div>}
     {children}
     <Tip/>
   </div>

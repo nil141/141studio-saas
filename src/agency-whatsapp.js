@@ -935,6 +935,17 @@
       /* @__PURE__ */ React.createElement("div", { style: { flex: 1, minWidth: 0 } }, /* @__PURE__ */ React.createElement("div", { style: { fontSize: 13.5, color: "var(--text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } }, c.company || c.name), /* @__PURE__ */ React.createElement("div", { style: { fontSize: 12, color: "var(--text-subtle)" } }, "+", _waDigits(c.whatsapp)))
     )))));
   };
+  window.PNInboxKit = {
+    useMailInbox,
+    mailApi: _mailApi,
+    mailAddr: _mailAddr,
+    mailName: _mailName,
+    mailIso: _mailIso,
+    waDigits: _waDigits,
+    waMatch: _waMatch,
+    NewChatBody,
+    ComposeMail
+  };
   window.AgencyWhatsApp = AgencyWhatsApp;
   window.AgencyUnibox = AgencyUnibox;
 })();
