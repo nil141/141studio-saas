@@ -56,7 +56,7 @@
           const root = listRef.current.closest(".pn");
           const stage = listRef.current.closest(".pn-stage");
           const wrap = document.createElement("div");
-          wrap.style.cssText = "position:absolute;inset:0;pointer-events:none;";
+          wrap.style.cssText = "position:absolute;inset:0;pointer-events:none;animation:none;";
           listRef.current.querySelectorAll(`[data-k^="g:${open}:"]`).forEach((el) => {
             if (el.dataset.k === `g:${open}:top`) return;
             const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect();

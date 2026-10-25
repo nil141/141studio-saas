@@ -371,7 +371,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
     return (
       <>
         <PanelShell view={view} navigate={navigate} openModal={openModal} session={session} modalOpen={!!modal || quickCreate || !!pnCreate}>
-          {panel && <div key={view.name} style={{ display: "contents" }}>{panel}</div>}
+          {panel && <div key={view.name + ":" + ((view.params && (view.params.projectId || view.params.clientId)) || "")} className="pn-page">{panel}</div>}
           {pnCreate && <window.PanelCreateWin kind={pnCreate.kind} params={pnCreate.params} session={session} navigate={navigate} onClose={() => setPnCreate(null)}/>}
           <div className="pn-legacy main" style={{ display: panel ? "none" : undefined }}>
             {!panel && <div key={view.name} className="page-enter">{renderAgency()}</div>}
