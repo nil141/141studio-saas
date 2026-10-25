@@ -136,6 +136,7 @@ const App = () => {
   const [quickCreateDate, setQuickCreateDate] = useState("");
   const [quickCreateLock, setQuickCreateLock] = useState(false);
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
+  const [pnCreate, setPnCreate] = useState(null);   // ventana de crear del panel nuevo { kind, params }
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [minSplash, setMinSplash] = useState(false);   // tiempo mínimo del loader
   const bootedRef = useRef(false);                      // true tras el primer arranque real
@@ -230,6 +231,11 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
+    // Panel nuevo (agencia, escritorio): ventanas de crear del diseño
+    if (wide && view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
+      setPnCreate({ kind: name, params });
+      return;
+    }
     if (name === "newTask") {
       setQuickCreateEdit(null);
       setQuickCreateType("task");
@@ -362,12 +368,11 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
 
   if (!isClient && wide && window.PanelShell) {
     const panel = renderPanel();
-    const unread = (window.Data.NOTIFICATIONS || []).filter(n => n.target === "agency" && !n.read).length;
     return (
       <>
-        <PanelShell view={view} navigate={navigate} session={session} unread={unread}
-          onCreate={() => setQuickCreate(true)} onBell={() => navigate("unibox")} bellOn={view.name === "unibox" || view.name === "notifications"}>
+        <PanelShell view={view} navigate={navigate} openModal={openModal} session={session} modalOpen={!!modal || quickCreate || !!pnCreate}>
           {panel && <div key={view.name} style={{ display: "contents" }}>{panel}</div>}
+          {pnCreate && <window.PanelCreateWin kind={pnCreate.kind} params={pnCreate.params} session={session} navigate={navigate} onClose={() => setPnCreate(null)}/>}
           <div className="pn-legacy main" style={{ display: panel ? "none" : undefined }}>
             {!panel && <div key={view.name} className="page-enter">{renderAgency()}</div>}
             {/* GmailView y AgencyBilling siempre montados para cargar en background */}

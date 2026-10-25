@@ -158,22 +158,32 @@ const Rail = ({ view, navigate, session }) => {
 };
 
 // ── Shell ─────────────────────────────────────────────────────────────
-const PanelShell = ({ view, navigate, session, onCreate, onBell, bellOn, unread, children }) => (
-  <div className="pn app" data-screen-label={view.name}>
-    <div className="pn-glow"/>
-    <Rail view={view} navigate={navigate} session={session}/>
-    {/* En la Bandeja el diseño no lleva campana ni + (la campana lleva aquí) */}
-    {!["unibox", "notifications"].includes(view.name) && <div className="pn-actions">
-      <button className={"pn-act" + (bellOn ? " on" : "")} aria-label="Notificaciones" onClick={onBell}>
-        <PIcon name="bell"/>
-        {unread ? <span className="pn-dot"/> : null}
-      </button>
-      <button className="pn-act" aria-label="Crear" onClick={onCreate}><PIcon name="plus"/></button>
-    </div>}
-    {children}
-    <Tip/>
-  </div>
-);
+const PanelShell = ({ view, navigate, openModal, session, modalOpen, children }) => {
+  const [pop, setPop] = useState(null);   // "create" | "notifs" | null
+  const blocked = useRef(false); blocked.current = !!modalOpen;
+  const N = window.usePanelNotifs ? window.usePanelNotifs(navigate, openModal) : null;
+  if (window.usePanelCreateShortcuts) window.usePanelCreateShortcuts(navigate, openModal, blocked);
+  useEffect(() => { setPop(null); }, [view.name]);
+  const toggle = (k) => setPop(p => (p === k ? null : k));
+  return (
+    <div className="pn app" data-screen-label={view.name}>
+      <div className="pn-glow"/>
+      <Rail view={view} navigate={navigate} session={session}/>
+      {/* En la Bandeja el diseño no lleva campana ni + (la campana lleva aquí) */}
+      {!["unibox", "notifications"].includes(view.name) && <div className="pn-actions">
+        <button className={"pn-act" + (pop === "notifs" ? " on" : "")} aria-label="Notificaciones" onClick={() => toggle("notifs")}>
+          <PIcon name="bell"/>
+          {N && N.unread ? <span className="pn-dot"/> : null}
+        </button>
+        <button className={"pn-act" + (pop === "create" ? " on" : "")} aria-label="Crear" onClick={() => toggle("create")}><PIcon name="plus"/></button>
+      </div>}
+      {children}
+      {pop === "create" && window.PanelCreateMenu && <window.PanelCreateMenu navigate={navigate} openModal={openModal} onClose={() => setPop(null)}/>}
+      {pop === "notifs" && N && window.PanelNotifs && <window.PanelNotifs navigate={navigate} openModal={openModal} N={N} onClose={() => setPop(null)}/>}
+      <Tip/>
+    </div>
+  );
+};
 
 // ── Aviso (tarjeta tipo notificación de iPhone) ──────────────────────
 // app: { initials } | { icon }   badge: "wa" | "box" | "send" | null
