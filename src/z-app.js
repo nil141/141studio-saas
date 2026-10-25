@@ -225,6 +225,14 @@
         setQuickCreate(true);
         return;
       }
+      if (name === "newEvent") {
+        setQuickCreateEdit(null);
+        setQuickCreateType("event");
+        setQuickCreateDate(params.date || "");
+        setQuickCreateLock(false);
+        setQuickCreate(true);
+        return;
+      }
       if (name === "editTask") {
         setQuickCreateEdit({ task: params.task, pid: params.pid });
         setQuickCreateType("task");
@@ -346,6 +354,8 @@
           return /* @__PURE__ */ React.createElement(PanelHome, { navigate, session });
         case "tasks":
           return /* @__PURE__ */ React.createElement(PanelTasks, { navigate, openModal, initialDate: view.params.date });
+        case "agenda":
+          return /* @__PURE__ */ React.createElement(PanelCalendar, { navigate, openModal });
         default:
           return null;
       }

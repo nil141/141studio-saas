@@ -238,6 +238,14 @@ const App = () => {
       setQuickCreate(true);
       return;
     }
+    if (name === "newEvent") {
+      setQuickCreateEdit(null);
+      setQuickCreateType("event");
+      setQuickCreateDate(params.date || "");
+      setQuickCreateLock(false);
+      setQuickCreate(true);
+      return;
+    }
     if (name === "editTask") {
       setQuickCreateEdit({ task: params.task, pid: params.pid });
       setQuickCreateType("task");
@@ -325,6 +333,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
     switch (view.name) {
       case "dashboard": return <PanelHome navigate={navigate} session={session}/>;
       case "tasks": return <PanelTasks navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
+      case "agenda": return <PanelCalendar navigate={navigate} openModal={openModal}/>;
       default: return null;
     }
   };
