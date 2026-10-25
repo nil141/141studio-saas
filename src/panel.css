@@ -2,12 +2,12 @@
    Todo va bajo .pn para no tocar el portal de cliente ni las páginas antiguas.
    Tokens: colección "141 Tokens" (modo Dark) y estilos de texto del Figma. */
 
-@font-face { font-family: "Inter Display"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-Regular-subset.woff2") format("woff2"); }
-@font-face { font-family: "Inter Display"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-Medium-subset.woff2") format("woff2"); }
-@font-face { font-family: "Inter Display"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-SemiBold-subset.woff2") format("woff2"); }
-@font-face { font-family: "Inter Text"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-Regular-subset.woff2") format("woff2"); }
-@font-face { font-family: "Inter Text"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-Medium-subset.woff2") format("woff2"); }
-@font-face { font-family: "Inter Text"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-SemiBold-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Display"; font-weight: 400; font-style: normal; font-display: swap; src: url("../fonts/InterDisplay-Regular-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Display"; font-weight: 500; font-style: normal; font-display: swap; src: url("../fonts/InterDisplay-Medium-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Display"; font-weight: 600; font-style: normal; font-display: swap; src: url("../fonts/InterDisplay-SemiBold-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 400; font-style: normal; font-display: swap; src: url("../fonts/Inter-Regular-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 500; font-style: normal; font-display: swap; src: url("../fonts/Inter-Medium-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 600; font-style: normal; font-display: swap; src: url("../fonts/Inter-SemiBold-subset.woff2") format("woff2"); }
 
 .pn {
   /* 141 Tokens · Dark */
