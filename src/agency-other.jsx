@@ -4019,4 +4019,6 @@ const PaymentLinkModal = ({ open, onClose }) => {
   );
 };
 
-Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow, StripeInvoiceModal });
+Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow, StripeInvoiceModal,
+  // también los usa el panel rediseñado (panel-tasks)
+  TaskProgressModal, WeightLogModal, StepsLogModal, MacrosLogModal, _routineMetric });

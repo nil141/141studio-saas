@@ -324,6 +324,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
   const renderPanel = () => {
     switch (view.name) {
       case "dashboard": return <PanelHome navigate={navigate} session={session}/>;
+      case "tasks": return <PanelTasks navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
       default: return null;
     }
   };

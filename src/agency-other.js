@@ -3129,5 +3129,21 @@
       }
     ), /* @__PURE__ */ React.createElement("span", { style: { fontSize: 13.5, color: "var(--text-muted)", letterSpacing: "-0.2px" } }, "Enviar ahora por email desde Stripe"))))));
   };
-  Object.assign(window, { AgencyBilling, IncomePage, AgencyProjects, SimplePage, SettingsPage, TasksBoard, ProjectTaskColumn, TaskRow, StripeInvoiceModal });
+  Object.assign(window, {
+    AgencyBilling,
+    IncomePage,
+    AgencyProjects,
+    SimplePage,
+    SettingsPage,
+    TasksBoard,
+    ProjectTaskColumn,
+    TaskRow,
+    StripeInvoiceModal,
+    // también los usa el panel rediseñado (panel-tasks)
+    TaskProgressModal,
+    WeightLogModal,
+    StepsLogModal,
+    MacrosLogModal,
+    _routineMetric
+  });
 })();

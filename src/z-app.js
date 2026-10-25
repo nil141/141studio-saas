@@ -344,6 +344,8 @@
       switch (view.name) {
         case "dashboard":
           return /* @__PURE__ */ React.createElement(PanelHome, { navigate, session });
+        case "tasks":
+          return /* @__PURE__ */ React.createElement(PanelTasks, { navigate, openModal, initialDate: view.params.date });
         default:
           return null;
       }
