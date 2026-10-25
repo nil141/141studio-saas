@@ -1,6 +1,6 @@
 (() => {
   (() => {
-    const { useState, useEffect } = React;
+    const { useState, useEffect, useRef, useLayoutEffect } = React;
     const PN = window.PN;
     const _DONE = ["cerrado", "descartado"];
     const _noClient = (s) => !s || ["\u2014", "-", "Interno"].includes(String(s).trim());
@@ -19,11 +19,107 @@
         return [];
       }
     };
+    const _EASE = "cubic-bezier(.32,.72,0,1)";
+    const _reduced = () => {
+      try {
+        return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      } catch (_) {
+        return false;
+      }
+    };
+    const _rects = (root) => {
+      const m = {};
+      if (root) root.querySelectorAll("[data-k]").forEach((el) => {
+        m[el.dataset.k] = el.getBoundingClientRect();
+      });
+      return m;
+    };
+    const _slide = (el, from, to, opts) => el.animate(
+      [{ transform: from, opacity: opts.o0 == null ? 1 : opts.o0 }, { transform: to, opacity: opts.o1 == null ? 1 : opts.o1 }],
+      { duration: opts.d || 520, delay: opts.delay || 0, easing: opts.e || _EASE, fill: "backwards" }
+    );
     const PanelHome = ({ navigate, session }) => {
       const D = window.Data;
       D.useStore();
       const today = D.today ? D.today() : PN.ymd(/* @__PURE__ */ new Date());
-      const [open, setOpen] = useState(null);
+      const [open, setOpenRaw] = useState(null);
+      const listRef = useRef(null);
+      const pend = useRef(null);
+      const setOpen = (id) => {
+        if (_reduced() || !listRef.current) {
+          setOpenRaw(id);
+          return;
+        }
+        const rects = _rects(listRef.current);
+        const ghosts = [];
+        if (id === null && open) {
+          const root = listRef.current.closest(".pn");
+          const stage = listRef.current.closest(".pn-stage");
+          const wrap = document.createElement("div");
+          wrap.style.cssText = "position:absolute;inset:0;pointer-events:none;";
+          listRef.current.querySelectorAll(`[data-k^="g:${open}:"]`).forEach((el) => {
+            if (el.dataset.k === `g:${open}:top`) return;
+            const r = el.getBoundingClientRect(), rr = root.getBoundingClientRect();
+            const c = el.cloneNode(true);
+            c.style.cssText = `position:absolute;margin:0;left:${r.left - rr.left}px;top:${r.top - rr.top}px;width:${r.width}px;`;
+            c.dataset.i = el.dataset.i || "";
+            wrap.appendChild(c);
+            ghosts.push(c);
+          });
+          if (ghosts.length && root && stage) stage.parentNode.insertBefore(wrap, stage);
+          ghosts.wrap = wrap;
+        }
+        pend.current = { mode: id === null ? "close" : "open", id: id === null ? open : id, rects, ghosts };
+        setOpenRaw(id);
+      };
+      useLayoutEffect(() => {
+        const p = pend.current;
+        pend.current = null;
+        if (!p || !listRef.current) return;
+        const now = _rects(listRef.current);
+        const top = now[`g:${p.id}:top`], topPrev = p.rects[`g:${p.id}:top`];
+        listRef.current.querySelectorAll("[data-k]").forEach((el) => {
+          const k = el.dataset.k, a = p.rects[k], b = now[k];
+          if (!b) return;
+          if (a) {
+            const dy2 = a.top - b.top;
+            if (Math.abs(dy2) > 0.5) _slide(el, `translateY(${dy2}px)`, "none", {});
+            return;
+          }
+          if (p.mode !== "open" || !k.startsWith(`g:${p.id}:`) || !topPrev) return;
+          if (k.endsWith(":head") || k.endsWith(":more")) {
+            _slide(el, "translateY(10px)", "none", { o0: 0, d: 380, delay: 60 });
+            return;
+          }
+          const i = Number(el.dataset.i) || 1;
+          const dy = topPrev.top + Math.min(i, 2) * 7 - b.top;
+          _slide(el, `translateY(${dy}px) scale(${1 - 0.035 * Math.min(i, 2)})`, "none", { o0: 0.5, d: 560, delay: 15 * i });
+        });
+        if (p.mode === "open") {
+          const t = listRef.current.querySelector(`[data-k="g:${p.id}:top"] .pn-aviso-txt`);
+          if (t) t.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
+        }
+        if (p.mode === "close") {
+          const st = listRef.current.querySelector(`[data-k="g:${p.id}:top"]`);
+          const lay = st && st.querySelector(".pn-layers");
+          if (lay) lay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300, delay: 160, easing: "ease-out", fill: "backwards" });
+          const t = st && st.querySelector(".pn-aviso-txt");
+          if (t) t.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration: 260, easing: "ease-out" });
+          const root = listRef.current.closest(".pn"), rr = root ? root.getBoundingClientRect() : { top: 0 };
+          let left = p.ghosts.length;
+          p.ghosts.forEach((g) => {
+            const r = g.getBoundingClientRect();
+            const i = Number(g.dataset.i) || 1;
+            const isCard = /:c\d+$/.test(g.dataset.k || "");
+            const dy = top ? top.top + Math.min(i, 2) * 7 - r.top : -20;
+            const an = isCard ? _slide(g, "none", `translateY(${dy}px) scale(${1 - 0.035 * Math.min(i, 2)})`, { o1: 0, d: 420 }) : _slide(g, "none", "translateY(6px)", { o1: 0, d: 200, e: "ease-out" });
+            an.onfinish = () => {
+              g.remove();
+              if (--left === 0 && p.ghosts.wrap) p.ghosts.wrap.remove();
+            };
+          });
+        }
+      }, [open]);
       const [dismissed, setDismissed] = useState(_readDismissed);
       const dismiss = (ids) => {
         const next = Array.from(new Set(dismissed.concat(ids)));
@@ -170,17 +266,17 @@
         summary: fItems.length > 1 ? { ...fItems[0], from: `de Seguimientos \xB7 ${fItems.length} para hoy`, body: `${String(fItems[0].body).split(/\.\s/)[0].replace(/\.$/, "")}. Tambi\xE9n: ${PN.listMore(fLive.slice(1, 3).map((o) => o.brand), fLive.length - 1)}.` } : null
       });
       const cur = groups.find((g) => g.id === open && g.items.length > 1);
-      const rest = groups.filter((g) => g !== cur);
       const card = (it, extra) => /* @__PURE__ */ React.createElement(PN.Aviso, { key: it.key, ...it, ...extra });
       const collapsed = (g) => {
-        if (g.items.length > 1) return /* @__PURE__ */ React.createElement(PN.Stack, { key: g.id }, card(g.summary, { key: void 0, onClick: () => setOpen(g.id) }));
+        if (g.items.length > 1) return /* @__PURE__ */ React.createElement("div", { key: g.id, "data-k": `g:${g.id}:top` }, /* @__PURE__ */ React.createElement(PN.Stack, null, card(g.summary, { key: void 0, onClick: () => setOpen(g.id) })));
         const it = g.items[0];
-        return card(it, { onDismiss: g.empty ? void 0 : () => dismiss([it.key]) });
+        return /* @__PURE__ */ React.createElement("div", { key: g.id, "data-k": "c:" + it.key }, card(it, { onDismiss: g.empty ? void 0 : () => dismiss([it.key]) }));
       };
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-stage" }, /* @__PURE__ */ React.createElement("div", { className: "pn-col" }, /* @__PURE__ */ React.createElement("div", { className: "pn-head" }, /* @__PURE__ */ React.createElement("p", { className: "t-small", style: { color: "var(--gray-300)", lineHeight: "20px" } }, PN.longDate(/* @__PURE__ */ new Date())), /* @__PURE__ */ React.createElement("h1", { className: "t-h2", style: { margin: "10px 0 0", color: "var(--ink-900)" } }, PN.greet(), first ? `, ${first}` : "", ".")), /* @__PURE__ */ React.createElement(PN.ScrollArea, { top: 212, bottom: 244 }, /* @__PURE__ */ React.createElement("div", { style: { display: "flex", flexDirection: "column", gap: 12 } }, cur && /* @__PURE__ */ React.createElement("div", { key: "open-" + cur.id, className: "pn-group-open", style: { display: "flex", flexDirection: "column", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "pn-group-head" }, /* @__PURE__ */ React.createElement("p", { className: "t-title-l" }, cur.label), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement(PN.Pill, { onClick: () => setOpen(null) }, "Mostrar menos"), /* @__PURE__ */ React.createElement("button", { className: "pn-round", "aria-label": "Descartar todo", onClick: () => {
-        dismiss(cur.items.map((i) => i.key));
+      const expanded = (g) => /* @__PURE__ */ React.createElement("div", { key: "open-" + g.id, style: { display: "flex", flexDirection: "column", gap: 10 } }, /* @__PURE__ */ React.createElement("div", { className: "pn-group-head", "data-k": `g:${g.id}:head` }, /* @__PURE__ */ React.createElement("p", { className: "t-title-l" }, g.label), /* @__PURE__ */ React.createElement("div", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement(PN.Pill, { onClick: () => setOpen(null) }, "Mostrar menos"), /* @__PURE__ */ React.createElement("button", { className: "pn-round", "aria-label": "Descartar todo", onClick: () => {
+        dismiss(g.items.map((i) => i.key));
         setOpen(null);
-      } }, /* @__PURE__ */ React.createElement(PIcon, { name: "x13" }))), cur.items.slice(0, 3).map((it, i) => card(it, { onDismiss: () => dismiss([it.key]), xShow: i === 0 })), cur.items.length > 3 && /* @__PURE__ */ React.createElement("div", { style: { display: "flex", justifyContent: "center", paddingBottom: 2 } }, /* @__PURE__ */ React.createElement(PN.Pill, { onClick: cur.go }, cur.more(cur.items.length)))), rest.map(collapsed))), /* @__PURE__ */ React.createElement(PN.NoraBox, { navigate, suggestions: ["Resumir mi d\xEDa", "\xBFQu\xE9 tengo pendiente hoy?", "Redactar seguimiento"] })));
+      } }, /* @__PURE__ */ React.createElement(PIcon, { name: "x13" }))), g.items.slice(0, 3).map((it, i) => /* @__PURE__ */ React.createElement("div", { key: it.key, "data-k": i === 0 ? `g:${g.id}:top` : `g:${g.id}:c${i}`, "data-i": i, style: { position: "relative", zIndex: 5 - i } }, card(it, { onDismiss: () => dismiss([it.key]), xShow: i === 0 }))), g.items.length > 3 && /* @__PURE__ */ React.createElement("div", { "data-k": `g:${g.id}:more`, style: { display: "flex", justifyContent: "center", paddingBottom: 2 } }, /* @__PURE__ */ React.createElement(PN.Pill, { onClick: g.go }, g.more(g.items.length))));
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-stage" }, /* @__PURE__ */ React.createElement("div", { className: "pn-col" }, /* @__PURE__ */ React.createElement("div", { className: "pn-head" }, /* @__PURE__ */ React.createElement("p", { className: "t-small", style: { color: "var(--gray-300)", lineHeight: "20px" } }, PN.longDate(/* @__PURE__ */ new Date())), /* @__PURE__ */ React.createElement("h1", { className: "t-h2", style: { margin: "10px 0 0", color: "var(--ink-900)" } }, PN.greet(), first ? `, ${first}` : "", ".")), /* @__PURE__ */ React.createElement(PN.ScrollArea, { top: 212, bottom: 244 }, /* @__PURE__ */ React.createElement("div", { ref: listRef, style: { display: "flex", flexDirection: "column", gap: 12 } }, groups.map((g) => g === cur ? expanded(g) : collapsed(g)))), /* @__PURE__ */ React.createElement(PN.NoraBox, { navigate, suggestions: ["Resumir mi d\xEDa", "\xBFQu\xE9 tengo pendiente hoy?", "Redactar seguimiento"] })));
     };
     window.PanelHome = PanelHome;
   })();
