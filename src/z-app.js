@@ -358,6 +358,10 @@
           return /* @__PURE__ */ React.createElement(PanelCalendar, { navigate, openModal });
         case "projects":
           return /* @__PURE__ */ React.createElement(PanelProjects, { navigate, openModal });
+        case "clients":
+          return /* @__PURE__ */ React.createElement(PanelClients, { navigate, openModal });
+        case "clientDetail":
+          return /* @__PURE__ */ React.createElement(PanelClient, { navigate, openModal, clientId: view.params.clientId });
         case "project":
           return /* @__PURE__ */ React.createElement(PanelProject, { navigate, openModal, projectId: view.params.projectId });
         case "unibox":

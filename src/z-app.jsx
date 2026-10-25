@@ -335,6 +335,8 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "tasks": return <PanelTasks navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
       case "agenda": return <PanelCalendar navigate={navigate} openModal={openModal}/>;
       case "projects": return <PanelProjects navigate={navigate} openModal={openModal}/>;
+      case "clients": return <PanelClients navigate={navigate} openModal={openModal}/>;
+      case "clientDetail": return <PanelClient navigate={navigate} openModal={openModal} clientId={view.params.clientId}/>;
       case "project": return <PanelProject navigate={navigate} openModal={openModal} projectId={view.params.projectId}/>;
       case "unibox":
       case "notifications": return <PanelInbox navigate={navigate} openModal={openModal} compose={view.params.compose} open={view.params.open}/>;
