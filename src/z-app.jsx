@@ -136,11 +136,19 @@ const App = () => {
   const [quickCreateDate, setQuickCreateDate] = useState("");
   const [quickCreateLock, setQuickCreateLock] = useState(false);
   const [quickCreateEdit, setQuickCreateEdit] = useState(null);
+  const [pnCreate, setPnCreate] = useState(null);   // ventana de crear del panel nuevo { kind, params }
   const [loadTimedOut, setLoadTimedOut] = useState(false);
   const [minSplash, setMinSplash] = useState(false);   // tiempo mínimo del loader
   const bootedRef = useRef(false);                      // true tras el primer arranque real
   const [navCollapsed, setNavCollapsed] = useState(() => { try { return localStorage.getItem("141_nav_collapsed") === "1"; } catch { return false; } });
   const toggleNav = () => setNavCollapsed(v => { const n = !v; try { localStorage.setItem("141_nav_collapsed", n ? "1" : "0"); } catch {} return n; });
+  // Panel rediseñado (Figma "App · Panel"): solo escritorio y solo agencia
+  const [wide, setWide] = useState(() => window.innerWidth > 768);
+  useEffect(() => {
+    const r = () => setWide(window.innerWidth > 768);
+    window.addEventListener("resize", r);
+    return () => window.removeEventListener("resize", r);
+  }, []);
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -223,11 +231,24 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
+    // Panel nuevo (agencia, escritorio): ventanas de crear del diseño
+    if (wide && view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
+      setPnCreate({ kind: name, params });
+      return;
+    }
     if (name === "newTask") {
       setQuickCreateEdit(null);
       setQuickCreateType("task");
       setQuickCreateDate(params.date || "");
       setQuickCreateLock(true);
+      setQuickCreate(true);
+      return;
+    }
+    if (name === "newEvent") {
+      setQuickCreateEdit(null);
+      setQuickCreateType("event");
+      setQuickCreateDate(params.date || "");
+      setQuickCreateLock(false);
       setQuickCreate(true);
       return;
     }
@@ -312,6 +333,62 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
   const _previewName = _previewClient ? (_previewClient.company || _previewClient.name) : null;
   const _exitPreview = () => { const id = _previewId; try { sessionStorage.removeItem("141_preview_client"); } catch {} if (id) navigate("clientDetail", { clientId: id }); else navigate("clients"); };
 
+  // Pantallas ya rediseñadas dentro del panel nuevo; el resto se muestra
+  // tal cual dentro del shell nuevo hasta que le toque.
+  const renderPanel = () => {
+    switch (view.name) {
+      case "dashboard": return <PanelHome navigate={navigate} session={session}/>;
+      case "tasks": return <PanelTasks navigate={navigate} openModal={openModal} initialDate={view.params.date}/>;
+      case "agenda": return <PanelCalendar navigate={navigate} openModal={openModal}/>;
+      case "projects": return <PanelProjects navigate={navigate} openModal={openModal}/>;
+      case "clients": return <PanelClients navigate={navigate} openModal={openModal}/>;
+      case "clientDetail": return <PanelClient navigate={navigate} openModal={openModal} clientId={view.params.clientId}/>;
+      case "project": return <PanelProject navigate={navigate} openModal={openModal} projectId={view.params.projectId}/>;
+      case "settings": return window.PanelProfile ? <PanelProfile navigate={navigate} session={session} theme={theme} setTheme={setTheme}/> : null;
+      case "unibox":
+      case "notifications": return <PanelInbox navigate={navigate} openModal={openModal} compose={view.params.compose} open={view.params.open}/>;
+      default: return null;
+    }
+  };
+  const modals = (
+    <>
+      <NewProjectModal open={modal === "newProject"} onClose={closeModal} prefilledClientId={modalParams.clientId}/>
+      <NewClientModal open={modal === "newClient"} onClose={closeModal} onCreateProject={(clientId) => openModal("newProject", { clientId })}/>
+      <NewTaskModal open={modal === "newTask"} onClose={closeModal}/>
+      <window.RoutineModal open={modal === "newRoutine" || modal === "editRoutine"} onClose={closeModal}
+        routine={modal === "editRoutine" ? modalParams.routine : null} date={modalParams.date}/>
+      <NewLeadModal open={modal === "newLead"} onClose={closeModal}/>
+      <window.StripeInvoiceModal open={modal === "newInvoice"} onClose={closeModal}/>
+      <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
+      <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
+      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
+      <QuickCreateModal open={quickCreate} onClose={() => { setQuickCreate(false); setQuickCreateLock(false); setQuickCreateEdit(null); }} defaultType={quickCreateType} defaultDate={quickCreateDate} lockType={quickCreateLock} openModal={openModal} editTask={quickCreateEdit}/>
+    </>
+  );
+
+  if (!isClient && wide && window.PanelShell) {
+    const panel = renderPanel();
+    return (
+      <>
+        <PanelShell view={view} navigate={navigate} openModal={openModal} session={session} modalOpen={!!modal || quickCreate || !!pnCreate}>
+          {panel && <div key={view.name} style={{ display: "contents" }}>{panel}</div>}
+          {pnCreate && <window.PanelCreateWin kind={pnCreate.kind} params={pnCreate.params} session={session} navigate={navigate} onClose={() => setPnCreate(null)}/>}
+          <div className="pn-legacy main" style={{ display: panel ? "none" : undefined }}>
+            {!panel && <div key={view.name} className="page-enter">{renderAgency()}</div>}
+            {/* GmailView y AgencyBilling siempre montados para cargar en background */}
+            <div className={view.name === "mail" ? "page-enter" : ""} style={{display: view.name === "mail" ? "contents" : "none"}}>
+              <GmailView/>
+            </div>
+            <div className={view.name === "billing" ? "page-enter" : ""} style={{display: view.name === "billing" ? "contents" : "none"}}>
+              <AgencyBilling openModal={openModal}/>
+            </div>
+          </div>
+        </PanelShell>
+        {modals}
+      </>
+    );
+  }
+
   return (
     <>
       {isAdminPreview && (
@@ -374,17 +451,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
         </nav>
       )}
 
-      <NewProjectModal open={modal === "newProject"} onClose={closeModal} prefilledClientId={modalParams.clientId}/>
-      <NewClientModal open={modal === "newClient"} onClose={closeModal} onCreateProject={(clientId) => openModal("newProject", { clientId })}/>
-      <NewTaskModal open={modal === "newTask"} onClose={closeModal}/>
-      <window.RoutineModal open={modal === "newRoutine" || modal === "editRoutine"} onClose={closeModal}
-        routine={modal === "editRoutine" ? modalParams.routine : null} date={modalParams.date}/>
-      <NewLeadModal open={modal === "newLead"} onClose={closeModal}/>
-      <window.StripeInvoiceModal open={modal === "newInvoice"} onClose={closeModal}/>
-      <InviteClientModal open={modal === "invite"} onClose={closeModal} session={session}/>
-      <ApproveDeliverableModal open={modal === "approve"} onClose={closeModal} deliverable={modalParams.deliverable}/>
-      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)}/>
-      <QuickCreateModal open={quickCreate} onClose={() => { setQuickCreate(false); setQuickCreateLock(false); setQuickCreateEdit(null); }} defaultType={quickCreateType} defaultDate={quickCreateDate} lockType={quickCreateLock} openModal={openModal} editTask={quickCreateEdit}/>
+      {modals}
     </>
   );
 };
