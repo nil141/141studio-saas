@@ -130,6 +130,12 @@
       }
       return n;
     });
+    const [wide, setWide] = useState(() => window.innerWidth > 768);
+    useEffect(() => {
+      const r = () => setWide(window.innerWidth > 768);
+      window.addEventListener("resize", r);
+      return () => window.removeEventListener("resize", r);
+    }, []);
     useEffect(() => {
       document.documentElement.setAttribute("data-theme", theme);
     }, [theme]);
@@ -334,6 +340,45 @@
       if (id) navigate("clientDetail", { clientId: id });
       else navigate("clients");
     };
+    const renderPanel = () => {
+      switch (view.name) {
+        case "dashboard":
+          return /* @__PURE__ */ React.createElement(PanelHome, { navigate, session });
+        default:
+          return null;
+      }
+    };
+    const modals = /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(
+      window.RoutineModal,
+      {
+        open: modal === "newRoutine" || modal === "editRoutine",
+        onClose: closeModal,
+        routine: modal === "editRoutine" ? modalParams.routine : null,
+        date: modalParams.date
+      }
+    ), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(window.StripeInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
+      setQuickCreate(false);
+      setQuickCreateLock(false);
+      setQuickCreateEdit(null);
+    }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal, editTask: quickCreateEdit }));
+    if (!isClient && wide && window.PanelShell) {
+      const panel = renderPanel();
+      const unread = (window.Data.NOTIFICATIONS || []).filter((n) => n.target === "agency" && !n.read).length;
+      return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(
+        PanelShell,
+        {
+          view,
+          navigate,
+          session,
+          unread,
+          onCreate: () => setQuickCreate(true),
+          onBell: () => navigate("unibox"),
+          bellOn: view.name === "unibox" || view.name === "notifications"
+        },
+        panel && /* @__PURE__ */ React.createElement("div", { key: view.name, style: { display: "contents" } }, panel),
+        /* @__PURE__ */ React.createElement("div", { className: "pn-legacy main", style: { display: panel ? "none" : void 0 } }, !panel && /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, renderAgency()), /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal })))
+      ), modals);
+    }
     return /* @__PURE__ */ React.createElement(React.Fragment, null, isAdminPreview && /* @__PURE__ */ React.createElement("div", { style: { padding: "7px 16px", background: "var(--amber-soft)", color: "var(--amber)", fontSize: 12.5, borderBottom: "0.5px solid var(--amber)", display: "flex", alignItems: "center", justifyContent: "center", gap: 14, flexWrap: "wrap" } }, /* @__PURE__ */ React.createElement("span", null, "Vista previa del portal", _previewName ? /* @__PURE__ */ React.createElement(React.Fragment, null, " de ", /* @__PURE__ */ React.createElement("b", null, _previewName)) : ""), /* @__PURE__ */ React.createElement("button", { onClick: _exitPreview, style: { padding: "3px 12px", borderRadius: 99, border: "0.5px solid var(--amber)", background: "transparent", color: "var(--amber)", fontSize: 12, cursor: "pointer", fontFamily: "inherit", fontWeight: 500 } }, "\u2190 Volver al panel")), /* @__PURE__ */ React.createElement("div", { className: "app fade-in" + (isClient ? " client" : "") + (navCollapsed ? " nav-collapsed" : "") + (!isClient && view.name === "dashboard" ? " home" : ""), "data-screen-label": view.name }, /* @__PURE__ */ React.createElement(Sidebar, { current: view.name, currentParams: view.params, onNavigate: navigate, kind: isClient ? "client" : "agency", session, onAssistant: () => navigate("nora"), onQuickCreate: () => setQuickCreate(true), onToggleCollapse: toggleNav }), navCollapsed && !isClient && /* @__PURE__ */ React.createElement(
       "button",
       {
@@ -374,19 +419,7 @@
       },
       /* @__PURE__ */ React.createElement(Icon, { name: item.icon, size: 20 }),
       /* @__PURE__ */ React.createElement("span", null, item.label)
-    ))), /* @__PURE__ */ React.createElement(NewProjectModal, { open: modal === "newProject", onClose: closeModal, prefilledClientId: modalParams.clientId }), /* @__PURE__ */ React.createElement(NewClientModal, { open: modal === "newClient", onClose: closeModal, onCreateProject: (clientId) => openModal("newProject", { clientId }) }), /* @__PURE__ */ React.createElement(NewTaskModal, { open: modal === "newTask", onClose: closeModal }), /* @__PURE__ */ React.createElement(
-      window.RoutineModal,
-      {
-        open: modal === "newRoutine" || modal === "editRoutine",
-        onClose: closeModal,
-        routine: modal === "editRoutine" ? modalParams.routine : null,
-        date: modalParams.date
-      }
-    ), /* @__PURE__ */ React.createElement(NewLeadModal, { open: modal === "newLead", onClose: closeModal }), /* @__PURE__ */ React.createElement(window.StripeInvoiceModal, { open: modal === "newInvoice", onClose: closeModal }), /* @__PURE__ */ React.createElement(InviteClientModal, { open: modal === "invite", onClose: closeModal, session }), /* @__PURE__ */ React.createElement(ApproveDeliverableModal, { open: modal === "approve", onClose: closeModal, deliverable: modalParams.deliverable }), /* @__PURE__ */ React.createElement(AssistantPanel, { open: assistantOpen, onClose: () => setAssistantOpen(false) }), /* @__PURE__ */ React.createElement(QuickCreateModal, { open: quickCreate, onClose: () => {
-      setQuickCreate(false);
-      setQuickCreateLock(false);
-      setQuickCreateEdit(null);
-    }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal, editTask: quickCreateEdit }));
+    ))), modals);
   };
   window.__initApp = () => {
     const _inviteToken = window.location.pathname.match(/^\/invite\/([A-Za-z0-9_-]+)/)?.[1];

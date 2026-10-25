@@ -1,0 +1,170 @@
+/* ── Panel interno (rediseño Figma "App · Panel") ───────────────────────────
+   Todo va bajo .pn para no tocar el portal de cliente ni las páginas antiguas.
+   Tokens: colección "141 Tokens" (modo Dark) y estilos de texto del Figma. */
+
+@font-face { font-family: "Inter Display"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-Regular-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Display"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-Medium-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Display"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/InterDisplay-SemiBold-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-Regular-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-Medium-subset.woff2") format("woff2"); }
+@font-face { font-family: "Inter Text"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-SemiBold-subset.woff2") format("woff2"); }
+
+.pn {
+  /* 141 Tokens · Dark */
+  --ink-950: #ffffff; --ink-900: #f5f5f5; --ink-800: #ededed; --ink-700: #e2e2e2; --ink-600: #b8b8b8; --ink-500: #9a9a9a;
+  --gray-400: #7a7a7a; --gray-300: #808080; --gray-200: #9a9a9a; --gray-100: #3a3a3a;
+  --paper-0: #1a1a1a; --paper-100: #141414; --paper-200: #2a2a2a;
+  --bg-page: #0a0a0a;
+  /* Superficies que se repiten en el diseño */
+  --card: #111111; --card-line: rgba(255,255,255,0.04);
+  --icon-off: #8a8a8a; --icon-mid: #b8b8b8;
+  --f-display: "Inter Display", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  --f-text: "Inter Text", "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+  /* Texto UI (UI/Small, UI/Caption): Inter Display según los estilos del Figma.
+     Ojo: en el Figma "Inter Display" falta en 440 de 965 textos y se pinta con
+     Inter de reserva; si se prefiere ese aspecto, basta con cambiar esto a var(--f-text). */
+  --f-ui: var(--f-display);
+
+  position: fixed; inset: 0; overflow: hidden;
+  background: var(--bg-page); color: var(--ink-900);
+  font-family: var(--f-display); font-size: 14px; letter-spacing: normal;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+}
+.pn *, .pn *::before, .pn *::after { box-sizing: border-box; }
+:where(.pn) button { font: inherit; color: inherit; letter-spacing: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+:where(.pn) input, :where(.pn) textarea { font: inherit; color: inherit; letter-spacing: inherit; background: none; border: 0; outline: none; padding: 0; margin: 0; }
+:where(.pn) p { margin: 0; letter-spacing: inherit; line-height: inherit; }
+
+/* Estilos de texto (Figma) */
+.pn .t-h1      { font-family: var(--f-display); font-weight: 400; font-size: 54px; line-height: 1.06; letter-spacing: -1.89px; }
+.pn .t-h2      { font-family: var(--f-display); font-weight: 400; font-size: 44px; line-height: 1.08; letter-spacing: -1.54px; }
+.pn .t-num-xl  { font-family: var(--f-display); font-weight: 500; font-size: 64px; line-height: 1; letter-spacing: -2.56px; }
+.pn .t-num-l   { font-family: var(--f-display); font-weight: 500; font-size: 32px; line-height: 1.05; letter-spacing: -0.96px; }
+.pn .t-title-l { font-family: var(--f-display); font-weight: 400; font-size: 24px; line-height: 1.2; letter-spacing: -0.48px; }
+.pn .t-title-m { font-family: var(--f-display); font-weight: 400; font-size: 18px; line-height: 1.2; letter-spacing: -0.36px; }
+.pn .t-title-s { font-family: var(--f-text); font-weight: 500; font-size: 17px; line-height: 1.4; letter-spacing: -0.34px; }
+.pn .t-lead    { font-family: var(--f-display); font-weight: 400; font-size: 18px; line-height: 1.45; letter-spacing: -0.18px; }
+.pn .t-body    { font-family: var(--f-display); font-weight: 400; font-size: 16px; line-height: 1.5; letter-spacing: -0.16px; }
+.pn .t-body-s  { font-family: var(--f-display); font-weight: 400; font-size: 15px; line-height: 1.4; letter-spacing: -0.075px; }
+.pn .t-btn     { font-family: var(--f-display); font-weight: 500; font-size: 14px; line-height: 1.2; letter-spacing: -0.14px; }
+.pn .t-nav     { font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.28; letter-spacing: -0.14px; }
+.pn .t-label   { font-family: var(--f-display); font-weight: 500; font-size: 14px; line-height: 1.3; letter-spacing: -0.07px; }
+.pn .t-small   { font-family: var(--f-display); font-weight: 400; font-size: 14px; line-height: 1.4; letter-spacing: -0.07px; }
+.pn .t-value   { font-family: var(--f-display); font-weight: 500; font-size: 15px; line-height: 1; letter-spacing: -0.15px; }
+.pn .t-caption { font-family: var(--f-display); font-weight: 400; font-size: 13px; line-height: 1.05; letter-spacing: 0; }
+.pn .t-card-title { font-family: var(--f-text); font-weight: 600; font-size: 15px; line-height: 1.3; letter-spacing: -0.075px; }
+
+/* Fondo: brillo superior */
+.pn-glow { position: absolute; top: -380px; left: 50%; width: 1100px; height: 700px; transform: translateX(-50%);
+  background: radial-gradient(550px 350px at 50% 50%, rgba(255,255,255,0.06), rgba(255,255,255,0)); pointer-events: none; }
+
+/* ── Menú lateral ── */
+.pn-rail { position: absolute; left: 0; top: 0; width: 76px; height: 100%; padding: 24px 0; display: flex; flex-direction: column; align-items: center; gap: 6px; z-index: 20; }
+.pn-avatar { width: 34px; height: 34px; border-radius: 17px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.35); box-shadow: 0 0 12px 0 rgba(255,255,255,0.08);
+  background-image: linear-gradient(135deg, #ededed 0%, #9e9e9e 71.429%);
+  font-family: var(--f-text); font-weight: 500; font-size: 12px; line-height: 1.3; color: #121212; }
+.pn-rail-gap { flex-shrink: 0; width: 4px; }
+.pn-nav { width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: var(--icon-off); transition: color .15s, background .15s; }
+.pn-nav.sub { height: 36px; border-radius: 10px; }
+.pn-nav:hover { color: #cfcfcf; }
+.pn-nav.on { color: var(--ink-900); }
+.pn-sep { width: 24px; height: 1px; flex-shrink: 0; background: rgba(255,255,255,0.08); }
+.pn-space { width: 32px; height: 32px; border-radius: 10px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; overflow: hidden;
+  background: #1a1a1a; color: #808080; font-family: var(--f-display); font-size: 13px; line-height: 1.05; transition: color .15s, background .15s; }
+.pn-space:hover { color: #b8b8b8; }
+.pn-space.on { background: #292929; border: 1px solid rgba(255,255,255,0.28); color: var(--ink-900); }
+.pn-more-sub { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .26s cubic-bezier(.22,1,.36,1); }
+.pn-more-sub.open { grid-template-rows: 1fr; }
+.pn-more-sub > div { overflow: hidden; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.pn-more-sub.open > div { padding-top: 0; }
+.pn-tip { position: fixed; z-index: 300; pointer-events: none; transform: translateY(-50%);
+  background: #1f1f1f; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.08); border-radius: 8px; padding: 6.5px 10.5px; white-space: nowrap;
+  font-family: var(--f-display); font-size: 13px; line-height: 1.05; color: var(--ink-900); animation: pnTip .12s ease-out; }
+@keyframes pnTip { from { opacity: 0; transform: translateY(-50%) translateX(-3px); } to { opacity: 1; transform: translateY(-50%); } }
+
+/* ── Acciones (campana / +) ── */
+.pn-actions { position: absolute; top: 20px; right: 24px; display: flex; gap: 6px; z-index: 30; }
+.pn-act { position: relative; width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--icon-mid); transition: color .15s, background .15s; }
+.pn-act:hover, .pn-act.on { color: var(--ink-900); }
+.pn-act .pn-dot { position: absolute; left: 22px; top: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--ink-900); border: 2px solid var(--bg-page); }
+
+/* ── Columna de contenido ── */
+.pn-stage { position: absolute; top: 0; bottom: 0; left: 76px; right: 0; }
+.pn-col { position: relative; width: 800px; height: 100%; margin: 0 auto; }
+.pn-head { position: absolute; top: 98px; left: 0; right: 0; padding-top: 1px; } /* +1px: Chrome dibuja Inter Display 1px más arriba que Figma */
+.pn-scroll { position: absolute; left: 0; right: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.pn-scroll::-webkit-scrollbar { display: none; }
+.pn-fade { position: absolute; left: 0; right: 0; height: 70px; pointer-events: none; background: linear-gradient(to bottom, rgba(10,10,10,0), #0a0a0a); transition: opacity .2s; }
+
+/* ── Tarjetas y avisos ──
+   Los filetes de 0.5px van como sombra interior: un border de 0.5px Chrome lo
+   redondea a 1px en pantallas 1x y descuadra las alturas respecto al Figma. */
+.pn-card { background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); border-radius: 22px; }
+.pn-aviso { position: relative; display: flex; gap: 14px; align-items: flex-start; padding: 16.5px; width: 100%; text-align: left; background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); border-radius: 22px; overflow: hidden; transition: background .15s; }
+button.pn-aviso:hover, .pn-aviso.click:hover { background: #151515; }
+.pn-app { position: relative; width: 42px; height: 42px; border-radius: 21px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #333; color: #e0e0e0;
+  font-family: var(--f-text); font-weight: 600; font-size: 14px; line-height: normal; }
+/* Ajuste de medio píxel para que avatar y texto caigan donde los pinta Figma */
+.pn-aviso > .pn-app { margin-top: -0.5px; }
+.pn-aviso > .pn-aviso-txt { padding-top: 0.5px; margin-bottom: -0.5px; }
+.pn-app.ic { background: #292929; color: var(--ink-900); }
+.pn-app.dim { opacity: 0.6; }
+.pn-badge { position: absolute; left: 25px; top: 25px; width: 22px; height: 22px; border-radius: 11px; border: 2px solid #111; background: #4d4d4d; display: flex; align-items: center; justify-content: center; color: #fff; }
+.pn-badge.wa { background: #25d366; }
+.pn-aviso-txt { flex: 1 0 0; min-width: 1px; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
+.pn-aviso-title { display: flex; gap: 8px; align-items: flex-start; white-space: nowrap; width: 100%; }
+.pn-aviso-title .t-card-title { flex: 1 0 0; min-width: 1px; overflow: hidden; text-overflow: ellipsis; color: var(--ink-900); }
+.pn-aviso-title .t-caption { flex-shrink: 0; color: var(--gray-300); }
+.pn-aviso .from, .pn-aviso .body, .pn-aviso .t-caption { font-family: var(--f-ui); line-height: 20px; }
+.pn-aviso .t-card-title { line-height: 19px; }
+.pn-aviso .t-caption { line-height: 14px; }
+.pn-aviso .from { color: var(--gray-200); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn-aviso .body { color: var(--ink-900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pn-aviso.dim .t-card-title { color: var(--gray-200); }
+.pn-aviso.dim .body { color: var(--gray-300); }
+.pn-x { position: absolute; left: 2px; top: 2px; width: 22px; height: 22px; border-radius: 11px; background: #333336; border: 1px solid rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center; color: #d0d0d0; opacity: 0; transition: opacity .15s; z-index: 3; }
+.pn-aviso:hover > .pn-x, .pn-x.show { opacity: 1; }
+
+.pn-stack { position: relative; display: flex; flex-direction: column; isolation: isolate; overflow: hidden; width: 100%; }
+.pn-stack > .pn-aviso { z-index: 2; }
+.pn-layers { position: relative; height: 14px; width: 100%; z-index: 1; flex-shrink: 0; }
+.pn-layers i { position: absolute; height: 44px; border-radius: 18px; background: #0d0d0d; box-shadow: inset 0 0 0 0.5px var(--card-line); }
+.pn-layers i:nth-child(1) { left: 28px; width: calc(100% - 56px); top: -23px; }
+.pn-layers i:nth-child(2) { left: 14px; width: calc(100% - 28px); top: -30px; }
+
+.pn-group-head { display: flex; gap: 8px; align-items: center; padding-left: 4px; width: 100%; }
+.pn-group-head .pn-pill { align-self: flex-start; margin-top: 1px; }
+.pn-group-head .t-title-l { color: var(--ink-900); white-space: nowrap; }
+.pn-round { width: 30px; height: 30px; border-radius: 15px; flex-shrink: 0; background: #1f1f20; border: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; color: #d0d0d0; transition: background .15s; }
+.pn-round:hover { background: #262627; }
+
+/* Pastillas (filtros, sugerencias, acciones) */
+.pn-pill { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; white-space: nowrap; background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); border-radius: 999px; padding: 7.5px 14.5px;
+  font-family: var(--f-ui); font-size: 13px; line-height: 14px; color: var(--ink-900); transition: background .15s, border-color .15s, color .15s; }
+.pn-pill:hover { background: #161616; }
+.pn-pill.sug { padding: 7.5px 12.5px; color: #ccc; }
+.pn-pill.sug svg { color: var(--icon-mid); }
+
+/* Caja de Nora (siempre termina a 103px del borde inferior) */
+.pn-nora { position: absolute; left: 0; right: 0; bottom: 103px; display: flex; flex-direction: column; gap: 12px; }
+.pn-nora-sug { display: flex; gap: 8px; overflow: hidden; }
+.pn-nora-box { display: flex; gap: 10px; align-items: center; height: 55px; padding: 10.5px 10.5px 10.5px 18.5px; background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); border-radius: 22px; }
+.pn-nora-box .clip { color: var(--gray-400); flex-shrink: 0; display: flex; }
+.pn-nora-box input { flex: 1 0 0; min-width: 1px; font-family: var(--f-ui); font-size: 14px; line-height: 20px; height: 20px; letter-spacing: -0.07px; color: var(--ink-900); }
+.pn-nora-box input::placeholder { color: var(--gray-400); opacity: 1; }
+.pn-send { width: 34px; height: 34px; border-radius: 17px; flex-shrink: 0; background: var(--ink-900); color: #0a0a0a; display: flex; align-items: center; justify-content: center; transition: transform .1s, opacity .15s; }
+.pn-send:active { transform: scale(.96); }
+
+/* Páginas antiguas dentro del shell nuevo (mientras se rediseñan) */
+.pn .pn-legacy { position: absolute; top: 0; bottom: 0; left: 76px; right: 0; overflow-y: auto; font-family: var(--font-sans); letter-spacing: -0.96px; font-size: 15px; }
+.pn.app { display: block !important; background: var(--bg-page) !important; height: 100% !important; }
+
+/* Menús y ventanas flotantes */
+.pn-menu { z-index: 200; display: flex; flex-direction: column; padding: 6px; background: #141414; border-radius: 14px;
+  box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.08), 0 12px 40px rgba(0,0,0,0.5); animation: pnPop .14s ease-out; }
+.pn-menu-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 9px; text-align: left; color: var(--ink-900); transition: background .12s; }
+.pn-menu-item:hover { background: #1f1f1f; }
+@keyframes pnPop { from { opacity: 0; transform: translateY(-3px) scale(.98); } to { opacity: 1; transform: none; } }
+.pn-group-open { animation: pnIn .28s cubic-bezier(.22,1,.36,1); }
+@keyframes pnIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
