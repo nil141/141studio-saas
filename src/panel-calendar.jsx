@@ -23,6 +23,9 @@ const _toYMD = (d) => {
 const _min = (t) => { const m = /^(\d{1,2}):(\d{2})/.exec(t || ""); return m ? +m[1] * 60 + +m[2] : null; };
 const _hhmm = (m) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
 const _addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+// Los eventos de varios días cuentan una vez
+const _uniq = (list) => new Set(list.map(e => e.id)).size;
+const _MESC = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
 const _monday = (d) => { const x = new Date(d); x.setHours(12, 0, 0, 0); x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); return x; };
 const _noClient = (s) => !s || ["—", "-", "Interno"].includes(String(s).trim());
 const _place = (link) => !link ? "" : /meet\.google/.test(link) ? "Google Meet" : /zoom\./.test(link) ? "Zoom" : /teams\./.test(link) ? "Teams" : "Videollamada";
@@ -42,7 +45,16 @@ const _allEvents = (D) => {
   });
   (D.AGENDA_EVENTS || []).forEach(e => {
     const parts = String(e.title || "").split(" · ");
-    out.push({ ...e, kind: "custom", who: parts.length > 1 ? parts[parts.length - 1] : e.title });
+    const base = { ...e, kind: "custom", who: parts.length > 1 ? parts[parts.length - 1] : e.title };
+    // Evento de varios días: una copia por día (mismo id, para poder borrarlo entero)
+    if (e.dateEnd && e.dateEnd > e.date) {
+      const a = PN.parseYmd(e.date), b = PN.parseYmd(e.dateEnd);
+      const span = `${a.getDate()} ${_MESC[a.getMonth()]} – ${b.getDate()} ${_MESC[b.getMonth()]}`;
+      for (let d = new Date(a), i = 0; d <= b && i < 366; d = _addDays(d, 1), i++)
+        out.push({ ...base, date: PN.ymd(d), sub: [e.sub, span].filter(Boolean).join(" · ") });
+      return;
+    }
+    out.push(base);
   });
   return out.map(e => ({ ...e, s: _min(e.time), e2: _min(e.timeEnd) }))
     .sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.s ?? -1) - (b.s ?? -1)));
@@ -118,10 +130,10 @@ const PanelCalendar = ({ navigate, openModal }) => {
     title = n === 0 ? "de hoy" : n === 1 ? "de mañana" : n === -1 ? "de ayer" : `del ${PN.DIAS[selD.getDay()]} ${selD.getDate()}`;
   } else if (view === "week") {
     const sameM = mon.getMonth() === sun.getMonth();
-    sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} – ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} · ${plural(weekEvents.length, "evento")}`;
+    sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} – ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} · ${plural(_uniq(weekEvents), "evento")}`;
     title = curWeek ? "de la semana" : wDiff === 1 ? "de la próxima semana" : wDiff === -1 ? "de la semana pasada" : `del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
   } else {
-    sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} · ${plural(monthEvents.length, "evento")} este mes`;
+    sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} · ${plural(_uniq(monthEvents), "evento")} este mes`;
     title = `de ${PN.MESES[selD.getMonth()]}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
   }
 

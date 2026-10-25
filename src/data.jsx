@@ -171,7 +171,7 @@ const _mw = (r) => ({
 });
 // Evento de agenda (mismo shape que usa la vista de agenda)
 const _mae = (r) => ({
-  id: r.id, date: r.date, title: r.title,
+  id: r.id, date: r.date, dateEnd: (r.date_end && r.date_end > r.date) ? r.date_end : null, title: r.title,
   sub: r.notes || "", time: r.time || null, timeEnd: r.time_end || null,
   link: r.link || null, type: r.type || "custom", gcalId: r.gcal_id || null,
 });
@@ -1704,13 +1704,14 @@ const addAgendaEvent = async (input) => {
   const id = "custom-" + Date.now();
   const evt = {
     id, date: input.date, title: input.title.trim(),
+    dateEnd: (input.dateEnd && input.dateEnd > input.date) ? input.dateEnd : null,
     sub: input.notes || "", time: input.time || null, timeEnd: input.timeEnd || null,
     link: (input.link || "").trim() || null, type: input.type || "custom",
     gcalId: input.gcalId || null,
   };
   _store.AGENDA_EVENTS = [...(_store.AGENDA_EVENTS || []), evt]; _emit();
   const { error } = await _insertAdaptive("agenda_events", {
-    id, agency_id: uid, title: evt.title, date: evt.date,
+    id, agency_id: uid, title: evt.title, date: evt.date, ...(evt.dateEnd ? { date_end: evt.dateEnd } : {}),
     time: evt.time, time_end: evt.timeEnd, type: evt.type, notes: evt.sub, link: evt.link,
     gcal_id: evt.gcalId,
   });

@@ -85,7 +85,17 @@
           source: inv
         });
       });
-      customEvents.forEach((e) => evts.push(e));
+      customEvents.forEach((e) => {
+        if (!(e.dateEnd && e.dateEnd > e.date)) {
+          evts.push(e);
+          return;
+        }
+        const d = /* @__PURE__ */ new Date(e.date + "T12:00:00"), end = /* @__PURE__ */ new Date(e.dateEnd + "T12:00:00");
+        for (let i = 0; d <= end && i < 366; i++, d.setDate(d.getDate() + 1)) {
+          const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          evts.push({ ...e, date: ymd });
+        }
+      });
       return evts;
     }, [D.PROJECTS, D.INVOICES, customEvents]);
     const taskStatsByDate = useMemo(() => {

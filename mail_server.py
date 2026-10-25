@@ -1952,10 +1952,14 @@ def _ics_feed(agency_id):
            "CALSCALE:GREGORIAN", "METHOD:PUBLISH",
            "X-WR-CALNAME:141'DIGITAL — Agenda", "X-WR-TIMEZONE:Europe/Madrid"]
 
-    def all_day(uid, ymd, summary, desc=""):
+    def all_day(uid, ymd, summary, desc="", ymd_end=None):
         y, mo, da = ymd
         start = datetime.date(y, mo, da)
         end = start + datetime.timedelta(days=1)
+        if ymd_end:  # varios días: DTEND es el día siguiente al último (RFC 5545)
+            last = datetime.date(*ymd_end)
+            if last > start:
+                end = last + datetime.timedelta(days=1)
         out.extend(["BEGIN:VEVENT", f"UID:{uid}@141agency.com", f"DTSTAMP:{now}",
                     f"DTSTART;VALUE=DATE:{start.strftime('%Y%m%d')}",
                     f"DTEND;VALUE=DATE:{end.strftime('%Y%m%d')}",
@@ -2009,9 +2013,13 @@ def _ics_feed(agency_id):
                     f"Importe: €{inv.get('amount') or 0}")
 
     try:
-        events = _sb_service("GET", f"agenda_events?agency_id=eq.{agency_id}&select=id,title,date,time,time_end,notes")
+        events = _sb_service("GET", f"agenda_events?agency_id=eq.{agency_id}&select=id,title,date,date_end,time,time_end,notes")
     except Exception:
-        events = []
+        # Sin la columna date_end (migración sin ejecutar): como antes
+        try:
+            events = _sb_service("GET", f"agenda_events?agency_id=eq.{agency_id}&select=id,title,date,time,time_end,notes")
+        except Exception:
+            events = []
     for e in events or []:
         ymd = _cal_ymd(e.get("date"))
         if not ymd:
@@ -2020,7 +2028,7 @@ def _ics_feed(agency_id):
         if e.get("time"):
             timed(uid, ymd, e.get("time"), e.get("time_end"), e.get("title") or "", e.get("notes") or "")
         else:
-            all_day(uid, ymd, e.get("title") or "", e.get("notes") or "")
+            all_day(uid, ymd, e.get("title") or "", e.get("notes") or "", _cal_ymd(e.get("date_end")))
 
     out.append("END:VCALENDAR")
     # RFC 5545: líneas separadas por CRLF.
