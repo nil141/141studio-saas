@@ -26,6 +26,8 @@
       x.setDate(x.getDate() + n);
       return x;
     };
+    const _uniq = (list) => new Set(list.map((e) => e.id)).size;
+    const _MESC = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
     const _monday = (d) => {
       const x = new Date(d);
       x.setHours(12, 0, 0, 0);
@@ -64,7 +66,15 @@
       });
       (D.AGENDA_EVENTS || []).forEach((e) => {
         const parts = String(e.title || "").split(" \xB7 ");
-        out.push({ ...e, kind: "custom", who: parts.length > 1 ? parts[parts.length - 1] : e.title });
+        const base = { ...e, kind: "custom", who: parts.length > 1 ? parts[parts.length - 1] : e.title };
+        if (e.dateEnd && e.dateEnd > e.date) {
+          const a = PN.parseYmd(e.date), b = PN.parseYmd(e.dateEnd);
+          const span = `${a.getDate()} ${_MESC[a.getMonth()]} \u2013 ${b.getDate()} ${_MESC[b.getMonth()]}`;
+          for (let d = new Date(a), i = 0; d <= b && i < 366; d = _addDays(d, 1), i++)
+            out.push({ ...base, date: PN.ymd(d), sub: [e.sub, span].filter(Boolean).join(" \xB7 ") });
+          return;
+        }
+        out.push(base);
       });
       return out.map((e) => ({ ...e, s: _min(e.time), e2: _min(e.timeEnd) })).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (a.s ?? -1) - (b.s ?? -1));
     };
@@ -166,10 +176,10 @@
         title = n === 0 ? "de hoy" : n === 1 ? "de ma\xF1ana" : n === -1 ? "de ayer" : `del ${PN.DIAS[selD.getDay()]} ${selD.getDate()}`;
       } else if (view === "week") {
         const sameM = mon.getMonth() === sun.getMonth();
-        sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} \u2013 ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} \xB7 ${plural(weekEvents.length, "evento")}`;
+        sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} \u2013 ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} \xB7 ${plural(_uniq(weekEvents), "evento")}`;
         title = curWeek ? "de la semana" : wDiff === 1 ? "de la pr\xF3xima semana" : wDiff === -1 ? "de la semana pasada" : `del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
       } else {
-        sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} \xB7 ${plural(monthEvents.length, "evento")} este mes`;
+        sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} \xB7 ${plural(_uniq(monthEvents), "evento")} este mes`;
         title = `de ${PN.MESES[selD.getMonth()]}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
       }
       const DayView = () => {

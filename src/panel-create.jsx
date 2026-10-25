@@ -385,7 +385,7 @@ const freeSlots = (D, date) => {
   }
   return out;
 };
-const Cal = ({ value, onChange }) => {
+const Cal = ({ value, end, onChange }) => {
   const base = PN.parseYmd(value) || new Date();
   const [mon, setMon] = useState(new Date(base.getFullYear(), base.getMonth(), 1));
   const first = new Date(mon.getFullYear(), mon.getMonth(), 1);
@@ -408,8 +408,9 @@ const Cal = ({ value, onChange }) => {
         {["L", "M", "X", "J", "V", "S", "D"].map(l => <span key={l} className="wd">{l}</span>)}
         {cells.map(d => {
           const y = PN.ymd(d), other = d.getMonth() !== mon.getMonth(), past = y < today;
+          const inR = end && y > value && y < end, edge = end && (y === value || y === end);
           return (
-            <button type="button" key={y} className={"dd" + (other ? " ot" : past ? " ps" : "") + (y === today ? " td" : "") + (y === value ? " sel" : "")}
+            <button type="button" key={y} className={"dd" + (other ? " ot" : past ? " ps" : "") + (y === today ? " td" : "") + (y === value || y === end ? " sel" : "") + (inR ? " rg" : "") + (edge ? (y === value ? " rs" : " re") : "")}
               disabled={past && y !== value} onClick={() => onChange(y)}>{d.getDate()}</button>
           );
         })}
@@ -424,12 +425,23 @@ const EventWin = ({ D, params, onClose, toast }) => {
   const [time, setTime] = useState(null);            // "HH:MM" elegido
   const [custom, setCustom] = useState(false), [cStart, setCStart] = useState(""), [cEnd, setCEnd] = useState("");
   const [gConn, setGConn] = useState(null), [meet, setMeet] = useState(true), [busy, setBusy] = useState(false);
+  const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
+  // Todo el día: el primer toque elige el primer día y el segundo (posterior) el último
+  const pick = (y) => {
+    setCustom(false);
+    if (allDay && anchor && y > date) { setDateEnd(y); setAnchor(false); return; }
+    setDate(y); setDateEnd(null); setAnchor(allDay);
+  };
   useEffect(() => { let ok = true; (async () => { try { const r = D.googleStatus ? await D.googleStatus() : null; if (ok) setGConn(!!(r && r.connected)); } catch (_) { if (ok) setGConn(false); } })(); return () => { ok = false; }; }, []);
   useEffect(() => { if (!custom) setTime(slots.length ? _hm(slots[0]) : null); }, [date]);
   const start = custom ? cStart : time;
   const end = custom ? cEnd : (time ? _hm(_mins(time) + 30) : "");
-  const useMeet = meet && gConn;
-  const d = PN.parseYmd(date);
+  const useMeet = !allDay && meet && gConn;
+  const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
+  const nDays = de ? Math.round((de - d) / 86400000) + 1 : 1;
+  const head = !d ? "" : de
+    ? `${d.getDate()} ${_MES[d.getMonth()]} → ${de.getDate()} ${_MES[de.getMonth()]} · ${nDays} días`
+    : `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}`;
   const submit = async () => {
     const t = title.trim(); if (!t || busy) return;
     let link = null, gcalId = null;
@@ -440,7 +452,8 @@ const EventWin = ({ D, params, onClose, toast }) => {
       if (r && r.ok && r.meetLink) { link = r.meetLink; gcalId = r.eventId || null; }
       else { toast && toast((r && r.error) || "No se pudo crear el enlace de Meet", "error"); return; }
     }
-    await D.addAgendaEvent({ title: t, date, notes: desc || null, time: start || null, timeEnd: end || null, link, gcalId, type: useMeet ? "meeting" : "custom" });
+    await D.addAgendaEvent({ title: t, date, dateEnd: allDay ? dateEnd : null, notes: desc || null,
+      time: allDay ? null : (start || null), timeEnd: allDay ? null : (end || null), link, gcalId, type: useMeet ? "meeting" : "custom" });
     if (link) { try { await navigator.clipboard.writeText(link); toast && toast("Evento creado · enlace de Meet copiado", "success"); } catch (_) { toast && toast("Evento creado", "success"); } }
     else toast && toast("Evento creado", "success");
     onClose();
@@ -450,9 +463,23 @@ const EventWin = ({ D, params, onClose, toast }) => {
       <input className="pn-wh" autoFocus value={title} onChange={e => setTitle(e.target.value)} placeholder="Nombre del evento"/>
       <input className="pn-wd" value={desc} onChange={e => setDesc(e.target.value)} placeholder="Añade una descripción"/>
       <div className="pn-wcols">
-        <Cal value={date} onChange={(y) => { setDate(y); setCustom(false); }}/>
+        <Cal value={date} end={allDay ? dateEnd : null} onChange={pick}/>
         <div className="det">
-          <p className="dh">{d ? `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}` : ""}</p>
+          <div className="dhr">
+            <p className="dh">{head}</p>
+            <span style={{ flex: 1 }}/>
+            <div className="pn-tsel">
+              <button type="button" className={!allDay ? "on" : ""} onClick={() => { setAllDay(false); setDateEnd(null); }}>Con hora</button>
+              <button type="button" className={allDay ? "on" : ""} onClick={() => { setAllDay(true); setAnchor(false); }}>Todo el día</button>
+            </div>
+          </div>
+          {allDay ? (
+            <div className="slots">
+              <div className="sl on ad"><PIcon name="r-cal15"/><span>{de ? `Todo el día, ${nDays} días seguidos` : "Todo el día"}</span></div>
+              <p className="none">{de ? "Toca otro día del calendario para empezar de nuevo." : anchor ? "Ahora toca el último día si dura varios días." : "Para que dure varios días, toca el primer día y después el último."}</p>
+              {de && <button type="button" className="sl other" onClick={() => { setDateEnd(null); setAnchor(false); }}><PIcon name="w-x13"/><span>Solo un día</span></button>}
+            </div>
+          ) : (
           <div className="slots">
             {slots.map(m => {
               const hm = _hm(m), on = !custom && time === hm;
@@ -474,7 +501,8 @@ const EventWin = ({ D, params, onClose, toast }) => {
               <button type="button" className="sl other" onClick={() => setCustom(true)}><PIcon name="r-clock14"/><span>Otra hora</span></button>
             )}
           </div>
-          <div className="pn-wprops">
+          )}
+          {!allDay && <div className="pn-wprops">
             <Row icon="r-video15" label="Videollamada">
               {gConn === false ? (
                 <span className="pn-chip2 dash">Google no conectado</span>
@@ -483,7 +511,7 @@ const EventWin = ({ D, params, onClose, toast }) => {
               )}
               {gConn !== false && <span className="pn-wnote sm">{meet ? "se crea al guardar" : "sin videollamada"}</span>}
             </Row>
-          </div>
+          </div>}
         </div>
       </div>
     </Win>

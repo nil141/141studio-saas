@@ -238,6 +238,7 @@
   const _mae = (r) => ({
     id: r.id,
     date: r.date,
+    dateEnd: r.date_end && r.date_end > r.date ? r.date_end : null,
     title: r.title,
     sub: r.notes || "",
     time: r.time || null,
@@ -1931,6 +1932,7 @@
       id,
       date: input.date,
       title: input.title.trim(),
+      dateEnd: input.dateEnd && input.dateEnd > input.date ? input.dateEnd : null,
       sub: input.notes || "",
       time: input.time || null,
       timeEnd: input.timeEnd || null,
@@ -1945,6 +1947,7 @@
       agency_id: uid,
       title: evt.title,
       date: evt.date,
+      ...evt.dateEnd ? { date_end: evt.dateEnd } : {},
       time: evt.time,
       time_end: evt.timeEnd,
       type: evt.type,

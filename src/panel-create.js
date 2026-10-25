@@ -321,7 +321,7 @@
       }
       return out;
     };
-    const Cal = ({ value, onChange }) => {
+    const Cal = ({ value, end, onChange }) => {
       const base = PN.parseYmd(value) || /* @__PURE__ */ new Date();
       const [mon, setMon] = useState(new Date(base.getFullYear(), base.getMonth(), 1));
       const first = new Date(mon.getFullYear(), mon.getMonth(), 1);
@@ -339,12 +339,13 @@
       const go = (n) => setMon(new Date(mon.getFullYear(), mon.getMonth() + n, 1));
       return /* @__PURE__ */ React.createElement("div", { className: "pn-wcal" }, /* @__PURE__ */ React.createElement("div", { className: "mh" }, /* @__PURE__ */ React.createElement("span", { className: "ml" }, _MESL[mon.getMonth()], " ", mon.getFullYear()), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("button", { type: "button", "aria-label": "Mes anterior", onClick: () => go(-1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-chl13" })), /* @__PURE__ */ React.createElement("button", { type: "button", "aria-label": "Mes siguiente", onClick: () => go(1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-chr13" }))), /* @__PURE__ */ React.createElement("div", { className: "gr" }, ["L", "M", "X", "J", "V", "S", "D"].map((l) => /* @__PURE__ */ React.createElement("span", { key: l, className: "wd" }, l)), cells.map((d) => {
         const y = PN.ymd(d), other = d.getMonth() !== mon.getMonth(), past = y < today;
+        const inR = end && y > value && y < end, edge = end && (y === value || y === end);
         return /* @__PURE__ */ React.createElement(
           "button",
           {
             type: "button",
             key: y,
-            className: "dd" + (other ? " ot" : past ? " ps" : "") + (y === today ? " td" : "") + (y === value ? " sel" : ""),
+            className: "dd" + (other ? " ot" : past ? " ps" : "") + (y === today ? " td" : "") + (y === value || y === end ? " sel" : "") + (inR ? " rg" : "") + (edge ? y === value ? " rs" : " re" : ""),
             disabled: past && y !== value,
             onClick: () => onChange(y)
           },
@@ -359,6 +360,18 @@
       const [time, setTime] = useState(null);
       const [custom, setCustom] = useState(false), [cStart, setCStart] = useState(""), [cEnd, setCEnd] = useState("");
       const [gConn, setGConn] = useState(null), [meet, setMeet] = useState(true), [busy, setBusy] = useState(false);
+      const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
+      const pick = (y) => {
+        setCustom(false);
+        if (allDay && anchor && y > date) {
+          setDateEnd(y);
+          setAnchor(false);
+          return;
+        }
+        setDate(y);
+        setDateEnd(null);
+        setAnchor(allDay);
+      };
       useEffect(() => {
         let ok = true;
         (async () => {
@@ -378,8 +391,10 @@
       }, [date]);
       const start = custom ? cStart : time;
       const end = custom ? cEnd : time ? _hm(_mins(time) + 30) : "";
-      const useMeet = meet && gConn;
-      const d = PN.parseYmd(date);
+      const useMeet = !allDay && meet && gConn;
+      const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
+      const nDays = de ? Math.round((de - d) / 864e5) + 1 : 1;
+      const head = !d ? "" : de ? `${d.getDate()} ${_MES[d.getMonth()]} \u2192 ${de.getDate()} ${_MES[de.getMonth()]} \xB7 ${nDays} d\xEDas` : `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}`;
       const submit = async () => {
         const t = title.trim();
         if (!t || busy) return;
@@ -396,7 +411,17 @@
             return;
           }
         }
-        await D.addAgendaEvent({ title: t, date, notes: desc || null, time: start || null, timeEnd: end || null, link, gcalId, type: useMeet ? "meeting" : "custom" });
+        await D.addAgendaEvent({
+          title: t,
+          date,
+          dateEnd: allDay ? dateEnd : null,
+          notes: desc || null,
+          time: allDay ? null : start || null,
+          timeEnd: allDay ? null : end || null,
+          link,
+          gcalId,
+          type: useMeet ? "meeting" : "custom"
+        });
         if (link) {
           try {
             await navigator.clipboard.writeText(link);
@@ -407,10 +432,16 @@
         } else toast && toast("Evento creado", "success");
         onClose();
       };
-      return /* @__PURE__ */ React.createElement(Win, { icon: "w-cal14", label: "Nuevo evento", width: 720, onClose, onSubmit: submit, can: !!title.trim() && !!date, busy, cta: "Crear evento" }, /* @__PURE__ */ React.createElement("input", { className: "pn-wh", autoFocus: true, value: title, onChange: (e) => setTitle(e.target.value), placeholder: "Nombre del evento" }), /* @__PURE__ */ React.createElement("input", { className: "pn-wd", value: desc, onChange: (e) => setDesc(e.target.value), placeholder: "A\xF1ade una descripci\xF3n" }), /* @__PURE__ */ React.createElement("div", { className: "pn-wcols" }, /* @__PURE__ */ React.createElement(Cal, { value: date, onChange: (y) => {
-        setDate(y);
-        setCustom(false);
-      } }), /* @__PURE__ */ React.createElement("div", { className: "det" }, /* @__PURE__ */ React.createElement("p", { className: "dh" }, d ? `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}` : ""), /* @__PURE__ */ React.createElement("div", { className: "slots" }, slots.map((m) => {
+      return /* @__PURE__ */ React.createElement(Win, { icon: "w-cal14", label: "Nuevo evento", width: 720, onClose, onSubmit: submit, can: !!title.trim() && !!date, busy, cta: "Crear evento" }, /* @__PURE__ */ React.createElement("input", { className: "pn-wh", autoFocus: true, value: title, onChange: (e) => setTitle(e.target.value), placeholder: "Nombre del evento" }), /* @__PURE__ */ React.createElement("input", { className: "pn-wd", value: desc, onChange: (e) => setDesc(e.target.value), placeholder: "A\xF1ade una descripci\xF3n" }), /* @__PURE__ */ React.createElement("div", { className: "pn-wcols" }, /* @__PURE__ */ React.createElement(Cal, { value: date, end: allDay ? dateEnd : null, onChange: pick }), /* @__PURE__ */ React.createElement("div", { className: "det" }, /* @__PURE__ */ React.createElement("div", { className: "dhr" }, /* @__PURE__ */ React.createElement("p", { className: "dh" }, head), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement("div", { className: "pn-tsel" }, /* @__PURE__ */ React.createElement("button", { type: "button", className: !allDay ? "on" : "", onClick: () => {
+        setAllDay(false);
+        setDateEnd(null);
+      } }, "Con hora"), /* @__PURE__ */ React.createElement("button", { type: "button", className: allDay ? "on" : "", onClick: () => {
+        setAllDay(true);
+        setAnchor(false);
+      } }, "Todo el d\xEDa"))), allDay ? /* @__PURE__ */ React.createElement("div", { className: "slots" }, /* @__PURE__ */ React.createElement("div", { className: "sl on ad" }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-cal15" }), /* @__PURE__ */ React.createElement("span", null, de ? `Todo el d\xEDa, ${nDays} d\xEDas seguidos` : "Todo el d\xEDa")), /* @__PURE__ */ React.createElement("p", { className: "none" }, de ? "Toca otro d\xEDa del calendario para empezar de nuevo." : anchor ? "Ahora toca el \xFAltimo d\xEDa si dura varios d\xEDas." : "Para que dure varios d\xEDas, toca el primer d\xEDa y despu\xE9s el \xFAltimo."), de && /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => {
+        setDateEnd(null);
+        setAnchor(false);
+      } }, /* @__PURE__ */ React.createElement(PIcon, { name: "w-x13" }), /* @__PURE__ */ React.createElement("span", null, "Solo un d\xEDa"))) : /* @__PURE__ */ React.createElement("div", { className: "slots" }, slots.map((m) => {
         const hm = _hm(m), on = !custom && time === hm;
         return /* @__PURE__ */ React.createElement("button", { type: "button", key: hm, className: "sl" + (on ? " on" : ""), onClick: () => {
           setCustom(false);
@@ -419,7 +450,7 @@
       }), !slots.length && !custom && /* @__PURE__ */ React.createElement("p", { className: "none" }, "No quedan huecos libres este d\xEDa."), custom ? /* @__PURE__ */ React.createElement("div", { className: "sl on cu" }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("input", { type: "time", value: cStart, autoFocus: true, onChange: (e) => {
         setCStart(e.target.value);
         if (!cEnd && _mins(e.target.value) != null) setCEnd(_hm(_mins(e.target.value) + 30));
-      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (meet ? " on" : " mute"), onClick: () => setMeet((v) => !v), title: meet ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, meet ? "se crea al guardar" : "sin videollamada"))))));
+      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), !allDay && /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (meet ? " on" : " mute"), onClick: () => setMeet((v) => !v), title: meet ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, meet ? "se crea al guardar" : "sin videollamada"))))));
     };
     const PanelCreateWin = ({ kind, params, onClose, navigate, session }) => {
       const D = window.Data;
