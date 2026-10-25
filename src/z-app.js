@@ -364,9 +364,9 @@
           return /* @__PURE__ */ React.createElement(PanelClient, { navigate, openModal, clientId: view.params.clientId });
         case "project":
           return /* @__PURE__ */ React.createElement(PanelProject, { navigate, openModal, projectId: view.params.projectId });
-        case "unibox":
         case "settings":
           return window.PanelProfile ? /* @__PURE__ */ React.createElement(PanelProfile, { navigate, session, theme, setTheme }) : null;
+        case "unibox":
         case "notifications":
           return /* @__PURE__ */ React.createElement(PanelInbox, { navigate, openModal, compose: view.params.compose, open: view.params.open });
         default:
