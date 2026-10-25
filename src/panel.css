@@ -113,8 +113,11 @@ button.pn-aviso:hover, .pn-aviso.click:hover { background: #151515; }
 .pn-badge { position: absolute; left: 25px; top: 25px; width: 22px; height: 22px; border-radius: 11px; border: 2px solid #111; background: #4d4d4d; display: flex; align-items: center; justify-content: center; color: #fff; }
 .pn-badge.wa { background: #25d366; }
 .pn-aviso-txt { flex: 1 0 0; min-width: 1px; display: flex; flex-direction: column; gap: 1px; overflow: hidden; }
-.pn-aviso-title { display: flex; gap: 8px; align-items: flex-start; white-space: nowrap; width: 100%; }
-.pn-aviso-title .t-card-title { flex: 1 0 0; min-width: 1px; overflow: hidden; text-overflow: ellipsis; color: var(--ink-900); }
+/* La procedencia ("de WhatsApp") va en la misma línea que el título para ahorrar altura */
+.pn-aviso-title { display: flex; gap: 8px; align-items: baseline; white-space: nowrap; width: 100%; }
+.pn-aviso-title .t-card-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; color: var(--ink-900); }
+.pn-aviso-title .from { flex: 0 1000 auto; min-width: 0; }
+.pn-aviso-title .sp { flex: 1 0 8px; }
 .pn-aviso-title .t-caption { flex-shrink: 0; color: var(--gray-300); }
 .pn-aviso .from, .pn-aviso .body, .pn-aviso .t-caption { font-family: var(--f-ui); line-height: 20px; }
 .pn-aviso .t-card-title { line-height: 19px; }

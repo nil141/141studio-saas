@@ -202,9 +202,10 @@ const Aviso = ({ title, time, from, body, app, badge, dim, onClick, onDismiss, x
       <div className="pn-aviso-txt">
         <div className="pn-aviso-title">
           <p className="t-card-title">{title}</p>
+          {from ? <p className="t-small from">{from}</p> : null}
+          <span className="sp"/>
           {time ? <p className="t-caption">{time}</p> : null}
         </div>
-        {from ? <p className="t-small from">{from}</p> : null}
         {body ? <p className="t-small body">{body}</p> : null}
       </div>
       {onDismiss && (
