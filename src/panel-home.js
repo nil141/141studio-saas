@@ -144,7 +144,16 @@
       const first = base.includes("@") ? PN.cap(base.split("@")[0]) : base.split(/\s+/)[0];
       const projIds = new Set((D.PROJECTS || []).map((p) => p.id));
       const tasks = Object.entries(D.TASKS || {}).filter(([pid]) => pid === "__none__" || projIds.has(pid)).flatMap(([pid, arr]) => (arr || []).map((t) => ({ ...t, _pid: pid }))).filter((t) => t.deadline && t.column !== "done" && t.deadline <= today).sort((a, b) => a.deadline < b.deadline ? -1 : a.deadline > b.deadline ? 1 : (a.id || "") < (b.id || "") ? -1 : 1);
-      const meetings = (D.AGENDA_EVENTS || []).filter((e) => e.date === today && (e.type === "meeting" || e.link)).sort((a, b) => (a.time || "99") < (b.time || "99") ? -1 : 1);
+      const meetings = (D.AGENDA_EVENTS || []).filter((e) => e.date && e.date <= today && (e.dateEnd && e.dateEnd > e.date ? e.dateEnd : e.date) >= today).sort((a, b) => (a.time || "00") < (b.time || "00") ? -1 : 1);
+      const _MESC = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+      const _when = (m) => {
+        if (m.time) return `Hoy a las ${m.time}${m.timeEnd ? " \u2013 " + m.timeEnd : ""}`;
+        if (m.dateEnd && m.dateEnd > today) {
+          const d = PN.parseYmd(m.dateEnd);
+          return `Todo el d\xEDa \xB7 hasta el ${d.getDate()} ${_MESC[d.getMonth()]}`;
+        }
+        return "Todo el d\xEDa";
+      };
       const waBy = {};
       (D.WHATSAPP || []).forEach((m) => {
         (waBy[m.waId] = waBy[m.waId] || []).push(m);
@@ -194,17 +203,32 @@
         title: m.title,
         time: m.time || "Hoy",
         from: "de Calendario",
-        body: (m.time ? `Hoy a las ${m.time}` : "Hoy") + (m.link ? " \xB7 Enlace de la reuni\xF3n" : ""),
+        body: _when(m) + (m.link ? " \xB7 Enlace de la reuni\xF3n" : m.sub ? " \xB7 " + m.sub : ""),
         app: { icon: "calendar" },
         onClick: () => {
           if (m.link) window.open(m.link, "_blank", "noopener");
           else navigate("agenda");
         }
       }));
+      const _ymdOf = (v) => {
+        const t = String(v || "");
+        if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10);
+        const d = new Date(t);
+        return t && !isNaN(d) ? PN.ymd(d) : "";
+      };
+      (D.INVOICES || []).filter((i) => i.status !== "paid" && _ymdOf(i.due) === today && live("i:" + i.id)).forEach((i) => mItems.push({
+        key: "i:" + i.id,
+        title: "Factura \xB7 " + (i.clientName || i.client || "Cliente"),
+        time: "Hoy",
+        from: "de Calendario",
+        body: `Vence hoy \xB7 ${String(Math.round(Number(i.amount) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ".")} \u20AC`,
+        app: { icon: "calendar" },
+        onClick: () => navigate("billing")
+      }));
       if (mItems.length) groups.push({
         id: "meetings",
-        label: "Reuniones",
-        more: (n) => `Ver las ${n} reuniones`,
+        label: "Calendario",
+        more: (n) => `Ver los ${n} eventos`,
         go: () => navigate("agenda"),
         items: mItems,
         summary: mItems.length > 1 ? { ...mItems[0], from: `de Calendario \xB7 ${mItems.length} hoy`, body: `${mItems[0].body}. Tambi\xE9n: ${PN.listMore(mItems.slice(1, 3).map((m) => m.title), mItems.length - 1)}.` } : null
