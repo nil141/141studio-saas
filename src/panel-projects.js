@@ -26,7 +26,7 @@
     const summarize = (D, p) => {
       const tasks = D.TASKS && D.TASKS[p.id] || [];
       const done = tasks.filter((t) => t.column === "done").length;
-      const pct = tasks.length ? Math.round(done / tasks.length * 100) : p.progress || 0;
+      const pct = tasks.length ? Math.round(done / tasks.length * 100) : (p.progress || 0) >= 100 ? 100 : 0;
       const pending = tasks.filter((t) => t.column !== "done").sort((a, b) => (a.deadline || "9") < (b.deadline || "9") ? -1 : (a.deadline || "9") > (b.deadline || "9") ? 1 : 0);
       const next = pending[0] || null;
       const dl = p.recurring ? null : _toYMD(p.deadline);
