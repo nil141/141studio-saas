@@ -3135,6 +3135,8 @@
     AgencyProjects,
     SimplePage,
     SettingsPage,
+    DriveCard,
+    SessionCard,
     TasksBoard,
     ProjectTaskColumn,
     TaskRow,

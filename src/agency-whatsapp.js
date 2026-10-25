@@ -944,7 +944,8 @@
     waDigits: _waDigits,
     waMatch: _waMatch,
     NewChatBody,
-    ComposeMail
+    ComposeMail,
+    waLaunch: _waLaunchES
   };
   window.AgencyWhatsApp = AgencyWhatsApp;
   window.AgencyUnibox = AgencyUnibox;

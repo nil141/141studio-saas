@@ -800,6 +800,6 @@ const NewChatBody = ({ clients, onStart }) => {
 
 // Utilidades compartidas con la Bandeja del panel rediseñado (panel-inbox)
 window.PNInboxKit = { useMailInbox, mailApi: _mailApi, mailAddr: _mailAddr, mailName: _mailName, mailIso: _mailIso,
-  waDigits: _waDigits, waMatch: _waMatch, NewChatBody, ComposeMail };
+  waDigits: _waDigits, waMatch: _waMatch, NewChatBody, ComposeMail, waLaunch: _waLaunchES };
 window.AgencyWhatsApp = AgencyWhatsApp;
 window.AgencyUnibox = AgencyUnibox;

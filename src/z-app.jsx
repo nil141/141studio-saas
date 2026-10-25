@@ -339,6 +339,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
       case "clientDetail": return <PanelClient navigate={navigate} openModal={openModal} clientId={view.params.clientId}/>;
       case "project": return <PanelProject navigate={navigate} openModal={openModal} projectId={view.params.projectId}/>;
       case "unibox":
+      case "settings": return window.PanelProfile ? <PanelProfile navigate={navigate} session={session} theme={theme} setTheme={setTheme}/> : null;
       case "notifications": return <PanelInbox navigate={navigate} openModal={openModal} compose={view.params.compose} open={view.params.open}/>;
       default: return null;
     }

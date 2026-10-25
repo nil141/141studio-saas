@@ -110,7 +110,7 @@ const Rail = ({ view, navigate, session }) => {
 
   return (
     <nav className="pn-rail">
-      <button className="pn-avatar" aria-label="Perfil" onMouseEnter={e => tipOn(e, "Perfil")} onMouseLeave={tipOff}
+      <button className={"pn-avatar" + (view.name === "settings" ? " on" : "")} aria-label="Perfil" onMouseEnter={e => tipOn(e, "Perfil")} onMouseLeave={tipOff}
         onClick={() => { tipOff(); navigate("settings"); }}>{initials(me) || "·"}</button>
       <div className="pn-rail-gap" style={{ height: 36 }}/>
       {NAV.map(it => <Item key={it.id} it={it}/>)}

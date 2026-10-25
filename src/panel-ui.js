@@ -149,7 +149,7 @@
       return /* @__PURE__ */ React.createElement("nav", { className: "pn-rail" }, /* @__PURE__ */ React.createElement(
         "button",
         {
-          className: "pn-avatar",
+          className: "pn-avatar" + (view.name === "settings" ? " on" : ""),
           "aria-label": "Perfil",
           onMouseEnter: (e) => tipOn(e, "Perfil"),
           onMouseLeave: tipOff,
