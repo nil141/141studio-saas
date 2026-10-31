@@ -1020,6 +1020,10 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-win .foot { flex-wrap: wrap; gap: 6px 10px; padding: 14px 16px 14px 24px; border-radius: 0; }
   .pn-win .cancel, .pn-win .go { position: relative; }
   .pn-win .go::after, .pn-win .cancel::after { content: ""; position: absolute; inset: -6px 0; }
+  .pn-win .pn-wtitle input.h, .pn-win input.pn-wh { font-size: 24px !important; }
+  .pn-wph .ph { padding: 12px; }
+  .pn-wph .tp { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .pn-wph .nm { overflow-wrap: anywhere; }
   /* Hojas secundarias (Bandeja, Integraciones) también suben desde abajo */
   .pn-sheet-bg { align-items: flex-end; padding: 0; background: rgba(0,0,0,0.6); -webkit-backdrop-filter: none; backdrop-filter: none; }
   .pn-sheet { position: relative; max-width: none !important; max-height: calc(100% - 56px); padding: 30px 20px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 24px 24px 0 0; animation: pnSheetUp .32s cubic-bezier(.32,.72,0,1); }
