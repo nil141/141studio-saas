@@ -364,7 +364,6 @@
       const [gConn, setGConn] = useState(null), [meet, setMeet] = useState(true), [busy, setBusy] = useState(false);
       const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
       const pick = (y) => {
-        setCustom(false);
         if (allDay && anchor && y > date) {
           setDateEnd(y);
           setAnchor(false);
@@ -391,8 +390,16 @@
       useEffect(() => {
         if (!custom) setTime(slots.length ? _hm(slots[0]) : null);
       }, [date]);
-      const start = custom ? cStart : time;
-      const end = custom ? cEnd : time ? _hm(_mins(time) + 30) : "";
+      const sRef = useRef(null), eRef = useRef(null);
+      const _plus30 = (hm) => _hm(Math.min(_mins(hm) + 30, 23 * 60 + 59));
+      const readTimes = () => {
+        if (allDay) return [null, null];
+        if (!custom) return time ? [time, _plus30(time)] : [null, null];
+        const s2 = sRef.current && sRef.current.value || cStart;
+        if (_mins(s2) == null) return [null, null];
+        const e = eRef.current && eRef.current.value || cEnd;
+        return [s2, _mins(e) != null && _mins(e) > _mins(s2) ? e : _plus30(s2)];
+      };
       const useMeet = !allDay && meet && gConn;
       const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
       const nDays = de ? Math.round((de - d) / 864e5) + 1 : 1;
@@ -400,10 +407,15 @@
       const submit = async () => {
         const t = title.trim();
         if (!t || busy) return;
+        const [start, end] = readTimes();
+        if (!allDay && !start) {
+          toast && toast("Pon la hora de inicio o elige \xABTodo el d\xEDa\xBB", "error");
+          return;
+        }
         let link = null, gcalId = null;
         if (useMeet) {
           setBusy(true);
-          const r = await D.createMeet({ title: t, date, time: start || null, timeEnd: end || null, description: desc || null });
+          const r = await D.createMeet({ title: t, date, time: start, timeEnd: end, description: desc || null });
           setBusy(false);
           if (r && r.ok && r.meetLink) {
             link = r.meetLink;
@@ -418,8 +430,8 @@
           date,
           dateEnd: allDay ? dateEnd : null,
           notes: desc || null,
-          time: allDay ? null : start || null,
-          timeEnd: allDay ? null : end || null,
+          time: start,
+          timeEnd: end,
           link,
           gcalId,
           type: useMeet ? "meeting" : "custom"
@@ -449,10 +461,10 @@
           setCustom(false);
           setTime(hm);
         } }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, hm, " \u2013 ", _hm(m + 30)));
-      }), !slots.length && !custom && /* @__PURE__ */ React.createElement("p", { className: "none" }, "No quedan huecos libres este d\xEDa."), custom ? /* @__PURE__ */ React.createElement("div", { className: "sl on cu" }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("input", { type: "time", value: cStart, autoFocus: true, onChange: (e) => {
+      }), !slots.length && !custom && /* @__PURE__ */ React.createElement("p", { className: "none" }, "No quedan huecos libres este d\xEDa."), custom ? /* @__PURE__ */ React.createElement("div", { className: "sl on cu" }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("input", { ref: sRef, type: "time", value: cStart, autoFocus: true, onChange: (e) => {
         setCStart(e.target.value);
-        if (!cEnd && _mins(e.target.value) != null) setCEnd(_hm(_mins(e.target.value) + 30));
-      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), !allDay && /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (meet ? " on" : " mute"), onClick: () => setMeet((v) => !v), title: meet ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, meet ? "se crea al guardar" : "sin videollamada"))))));
+        if (!cEnd && _mins(e.target.value) != null) setCEnd(_plus30(e.target.value));
+      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { ref: eRef, type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), !allDay && /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (meet ? " on" : " mute"), onClick: () => setMeet((v) => !v), title: meet ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, meet ? "se crea al guardar" : "sin videollamada"))))));
     };
     const PanelCreateWin = ({ kind, params, onClose, navigate, session }) => {
       const D = window.Data;
