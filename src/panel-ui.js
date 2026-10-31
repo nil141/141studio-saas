@@ -236,9 +236,10 @@
         };
       }, []);
     };
-    const MoreSheet = ({ view, navigate, onClose, me }) => {
+    const MoreSheet = ({ view, navigate, onClose }) => {
       const ref = useRef(null);
       const cur = _navOf(view.name);
+      const [apps, setApps] = useState(APPS.some((a) => a.id === cur));
       useSheetSwipe(ref, onClose);
       useEffect(() => {
         const down = (e) => {
@@ -252,7 +253,7 @@
         if (it.href) window.open(it.href, "_blank", "noopener");
         else navigate(it.id);
       };
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu pn-more-menu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "M\xE1s"), MORE.map((it) => /* @__PURE__ */ React.createElement("button", { key: it.id, className: "it" + (cur === it.id ? " on" : ""), onClick: () => go(it) }, /* @__PURE__ */ React.createElement(PIcon, { name: it.icon, size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, it.label))), /* @__PURE__ */ React.createElement("button", { className: "it" + (view.name === "settings" ? " on" : ""), onClick: () => go({ id: "settings" }) }, /* @__PURE__ */ React.createElement("span", { className: "pn-more-me" }, initials(me)), /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, "Perfil")), /* @__PURE__ */ React.createElement("div", { className: "sep" }), APPS.map((a) => /* @__PURE__ */ React.createElement("button", { key: a.id, className: "it" + (cur === a.id ? " on" : ""), onClick: () => go(a) }, /* @__PURE__ */ React.createElement(PIcon, { name: "apps", size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, a.label))));
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu pn-more-menu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), apps ? /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("button", { className: "pn-more-back", onClick: () => setApps(false) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-chl13" }), /* @__PURE__ */ React.createElement("span", { className: "t-caption" }, "Apps")), APPS.map((a) => /* @__PURE__ */ React.createElement("button", { key: a.id, className: "it" + (cur === a.id ? " on" : ""), onClick: () => go(a) }, /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, a.label)))) : /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "M\xE1s"), MORE.map((it) => /* @__PURE__ */ React.createElement("button", { key: it.id, className: "it" + (cur === it.id ? " on" : ""), onClick: () => go(it) }, /* @__PURE__ */ React.createElement(PIcon, { name: it.icon, size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, it.label))), /* @__PURE__ */ React.createElement("button", { className: "it" + (APPS.some((a) => a.id === cur) ? " on" : ""), onClick: () => setApps(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "apps", size: 16 }), /* @__PURE__ */ React.createElement("span", { className: "t-small lb" }, "Apps"), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), /* @__PURE__ */ React.createElement(PIcon, { name: "r-chr13" }))));
     };
     const MobileTabs = ({ view, navigate, onMore, moreOpen }) => {
       const cur = _navOf(view.name);
@@ -271,12 +272,19 @@
         setScrolled(false);
       }, [view.name]);
       const toggle = (k) => setPop((p) => p === k ? null : k);
+      useEffect(() => {
+        const m = document.querySelector('meta[name="viewport"]');
+        const prev = m && m.getAttribute("content");
+        if (!m || /viewport-fit/.test(prev)) return;
+        m.setAttribute("content", prev + ",viewport-fit=cover");
+        return () => m.setAttribute("content", prev);
+      }, []);
       const onScroll = (e) => {
         const t = e.target;
         if (t && t.scrollTop !== void 0 && t.closest && t.closest(".pn-stage, .pn-legacy")) setScrolled(t.scrollTop > 4);
       };
       const me = session && session.name || "";
-      return /* @__PURE__ */ React.createElement("div", { className: "pn app", "data-screen-label": view.name, onScrollCapture: onScroll }, /* @__PURE__ */ React.createElement("div", { className: "pn-glow" }), /* @__PURE__ */ React.createElement(Rail, { view, navigate, session }), /* @__PURE__ */ React.createElement("div", { className: "pn-mtop" + (scrolled ? " scrolled" : "") }, /* @__PURE__ */ React.createElement("button", { className: "pn-avatar" + (view.name === "settings" ? " on" : ""), "aria-label": "Perfil", onClick: () => navigate("settings") }, initials(me) || "\xB7")), !["unibox", "notifications"].includes(view.name) && /* @__PURE__ */ React.createElement("div", { className: "pn-actions" }, /* @__PURE__ */ React.createElement("button", { className: "pn-act" + (pop === "notifs" ? " on" : ""), "aria-label": "Notificaciones", onClick: () => toggle("notifs") }, /* @__PURE__ */ React.createElement(PIcon, { name: "bell" }), N && N.unread ? /* @__PURE__ */ React.createElement("span", { className: "pn-dot" }) : null), /* @__PURE__ */ React.createElement("button", { className: "pn-act" + (pop === "create" ? " on" : ""), "aria-label": "Crear", onClick: () => toggle("create") }, /* @__PURE__ */ React.createElement(PIcon, { name: "plus" }))), children, /* @__PURE__ */ React.createElement(MobileTabs, { view, navigate, moreOpen: pop === "more", onMore: () => toggle("more") }), pop === "more" && /* @__PURE__ */ React.createElement(MoreSheet, { view, navigate, me, onClose: () => setPop(null) }), pop === "create" && window.PanelCreateMenu && /* @__PURE__ */ React.createElement(window.PanelCreateMenu, { navigate, openModal, onClose: () => setPop(null) }), pop === "notifs" && N && window.PanelNotifs && /* @__PURE__ */ React.createElement(window.PanelNotifs, { navigate, openModal, N, onClose: () => setPop(null) }), /* @__PURE__ */ React.createElement(Tip, null));
+      return /* @__PURE__ */ React.createElement("div", { className: "pn app", "data-screen-label": view.name, onScrollCapture: onScroll }, /* @__PURE__ */ React.createElement("div", { className: "pn-glow" }), /* @__PURE__ */ React.createElement(Rail, { view, navigate, session }), /* @__PURE__ */ React.createElement("div", { className: "pn-mtop" + (scrolled ? " scrolled" : "") }, /* @__PURE__ */ React.createElement("button", { className: "pn-avatar" + (view.name === "settings" ? " on" : ""), "aria-label": "Perfil", onClick: () => navigate("settings") }, initials(me) || "\xB7")), !["unibox", "notifications"].includes(view.name) && /* @__PURE__ */ React.createElement("div", { className: "pn-actions" }, /* @__PURE__ */ React.createElement("button", { className: "pn-act" + (pop === "notifs" ? " on" : ""), "aria-label": "Notificaciones", onClick: () => toggle("notifs") }, /* @__PURE__ */ React.createElement(PIcon, { name: "bell" }), N && N.unread ? /* @__PURE__ */ React.createElement("span", { className: "pn-dot" }) : null), /* @__PURE__ */ React.createElement("button", { className: "pn-act" + (pop === "create" ? " on" : ""), "aria-label": "Crear", onClick: () => toggle("create") }, /* @__PURE__ */ React.createElement(PIcon, { name: "plus" }))), children, /* @__PURE__ */ React.createElement(MobileTabs, { view, navigate, moreOpen: pop === "more", onMore: () => toggle("more") }), pop === "more" && /* @__PURE__ */ React.createElement(MoreSheet, { view, navigate, onClose: () => setPop(null) }), pop === "create" && window.PanelCreateMenu && /* @__PURE__ */ React.createElement(window.PanelCreateMenu, { navigate, openModal, onClose: () => setPop(null) }), pop === "notifs" && N && window.PanelNotifs && /* @__PURE__ */ React.createElement(window.PanelNotifs, { navigate, openModal, N, onClose: () => setPop(null) }), /* @__PURE__ */ React.createElement(Tip, null));
     };
     const Aviso = ({ title, time, from, body, app, badge, dim, onClick, onDismiss, xShow, style }) => {
       const Tag = onClick ? "button" : "div";

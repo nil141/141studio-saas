@@ -189,10 +189,11 @@ const useSheetSwipe = (ref, onClose) => {
   }, []);
 };
 
-// "Más" en el móvil: Proyectos, Clientes, Perfil y las apps (hoja inferior)
-const MoreSheet = ({ view, navigate, onClose, me }) => {
+// "Más" en el móvil: lo mismo que los tres puntos del escritorio (Proyectos, Clientes y Apps)
+const MoreSheet = ({ view, navigate, onClose }) => {
   const ref = useRef(null);
   const cur = _navOf(view.name);
+  const [apps, setApps] = useState(APPS.some(a => a.id === cur));
   useSheetSwipe(ref, onClose);
   useEffect(() => {
     const down = (e) => { if (ref.current && !ref.current.contains(e.target) && !(e.target.closest && e.target.closest(".pn-tab"))) onClose(); };
@@ -203,24 +204,32 @@ const MoreSheet = ({ view, navigate, onClose, me }) => {
   return (
     <div className="pn-cmenu pn-more-menu" ref={ref} role="menu">
       <div className="pn-bs-grab"/>
-      <p className="t-caption ttl">Más</p>
-      {MORE.map(it => (
-        <button key={it.id} className={"it" + (cur === it.id ? " on" : "")} onClick={() => go(it)}>
-          <PIcon name={it.icon} size={16}/>
-          <span className="t-small lb">{it.label}</span>
-        </button>
-      ))}
-      <button className={"it" + (view.name === "settings" ? " on" : "")} onClick={() => go({ id: "settings" })}>
-        <span className="pn-more-me">{initials(me)}</span>
-        <span className="t-small lb">Perfil</span>
-      </button>
-      <div className="sep"/>
-      {APPS.map(a => (
-        <button key={a.id} className={"it" + (cur === a.id ? " on" : "")} onClick={() => go(a)}>
-          <PIcon name="apps" size={16}/>
-          <span className="t-small lb">{a.label}</span>
-        </button>
-      ))}
+      {apps ? (
+        <>
+          <button className="pn-more-back" onClick={() => setApps(false)}><PIcon name="r-chl13"/><span className="t-caption">Apps</span></button>
+          {APPS.map(a => (
+            <button key={a.id} className={"it" + (cur === a.id ? " on" : "")} onClick={() => go(a)}>
+              <span className="t-small lb">{a.label}</span>
+            </button>
+          ))}
+        </>
+      ) : (
+        <>
+          <p className="t-caption ttl">Más</p>
+          {MORE.map(it => (
+            <button key={it.id} className={"it" + (cur === it.id ? " on" : "")} onClick={() => go(it)}>
+              <PIcon name={it.icon} size={16}/>
+              <span className="t-small lb">{it.label}</span>
+            </button>
+          ))}
+          <button className={"it" + (APPS.some(a => a.id === cur) ? " on" : "")} onClick={() => setApps(true)}>
+            <PIcon name="apps" size={16}/>
+            <span className="t-small lb">Apps</span>
+            <span style={{ flex: 1 }}/>
+            <PIcon name="r-chr13"/>
+          </button>
+        </>
+      )}
     </div>
   );
 };
@@ -253,6 +262,15 @@ const PanelShell = ({ view, navigate, openModal, session, modalOpen, children })
   if (window.usePanelCreateShortcuts) window.usePanelCreateShortcuts(navigate, openModal, blocked);
   useEffect(() => { setPop(null); setScrolled(false); }, [view.name]);
   const toggle = (k) => setPop(p => (p === k ? null : k));
+  // iPhone: sin viewport-fit=cover la zona segura vale 0 y la raya de inicio tapa las pestañas.
+  // Solo en el panel de agencia (el portal de cliente no cambia).
+  useEffect(() => {
+    const m = document.querySelector('meta[name="viewport"]');
+    const prev = m && m.getAttribute("content");
+    if (!m || /viewport-fit/.test(prev)) return;
+    m.setAttribute("content", prev + ",viewport-fit=cover");
+    return () => m.setAttribute("content", prev);
+  }, []);
   // Barra superior del móvil: fondo solo cuando el contenido pasa por debajo
   const onScroll = (e) => { const t = e.target; if (t && t.scrollTop !== undefined && t.closest && t.closest(".pn-stage, .pn-legacy")) setScrolled(t.scrollTop > 4); };
   const me = (session && session.name) || "";
@@ -273,7 +291,7 @@ const PanelShell = ({ view, navigate, openModal, session, modalOpen, children })
       </div>}
       {children}
       <MobileTabs view={view} navigate={navigate} moreOpen={pop === "more"} onMore={() => toggle("more")}/>
-      {pop === "more" && <MoreSheet view={view} navigate={navigate} me={me} onClose={() => setPop(null)}/>}
+      {pop === "more" && <MoreSheet view={view} navigate={navigate} onClose={() => setPop(null)}/>}
       {pop === "create" && window.PanelCreateMenu && <window.PanelCreateMenu navigate={navigate} openModal={openModal} onClose={() => setPop(null)}/>}
       {pop === "notifs" && N && window.PanelNotifs && <window.PanelNotifs navigate={navigate} openModal={openModal} N={N} onClose={() => setPop(null)}/>}
       <Tip/>
