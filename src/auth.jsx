@@ -5,7 +5,17 @@ const DURATION_OPTIONS = [
   { days: 30, label: "30 días",           sub: "Comodidad máxima" },
 ];
 
+// Móvil (<768px): versión del Figma 269:37 (logo, «Email», «Contraseña», ojo)
+const _useNarrow = () => {
+  const q = "(max-width: 768px)";
+  const [m, setM] = useState(() => window.matchMedia(q).matches);
+  useEffect(() => { const mq = window.matchMedia(q); const f = () => setM(mq.matches); mq.addEventListener("change", f); return () => mq.removeEventListener("change", f); }, []);
+  return m;
+};
+
 const AuthGate = ({ onAuth }) => {
+  const narrow = _useNarrow();
+  const [showPw, setShowPw] = useState(false);
   const [email, setEmail] = useState("");
   const [pw, setPw]       = useState("");
   const [err, setErr]     = useState("");
@@ -78,18 +88,24 @@ const AuthGate = ({ onAuth }) => {
     }}>
 <div className="auth-container" style={{width:"100%", maxWidth:384}}>
         <form onSubmit={submit} style={{display:"flex", flexDirection:"column"}}>
-          <h1 style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
-          <div style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
+          <img className="al-m al-logo" src="/wordmark.svg" alt="141'DIGITAL"/>
+          <h1 className="al-d" style={{fontSize:30, fontWeight:400, lineHeight:"36px", marginBottom:8, fontFamily:"var(--font-display)", textAlign:"center", letterSpacing:"-0.96px", color:"#ffffff"}}>Inicia sesión.</h1>
+          <div className="al-d" style={{fontSize:14, marginBottom:32, textAlign:"center", color:"#999999"}}>Accede con tus credenciales.</div>
 
           <input className="auth-input" type="email" autoComplete="email" value={email}
-            onChange={e => setEmail(e.target.value)} placeholder="tu@empresa.com"
+            onChange={e => setEmail(e.target.value)} placeholder={narrow ? "Email" : "tu@empresa.com"}
             style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
               background:"rgba(255,255,255,0.05)", color:"#ffffff"}}/>
 
-          <input className="auth-input" type="password" autoComplete="current-password" value={pw}
-            onChange={e => setPw(e.target.value)} placeholder="••••••••"
-            style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
-              background:"rgba(255,255,255,0.05)", color:"#ffffff"}}/>
+          <div className="al-pw">
+            <input className="auth-input" type={narrow && showPw ? "text" : "password"} autoComplete="current-password" value={pw}
+              onChange={e => setPw(e.target.value)} placeholder={narrow ? "Contraseña" : "••••••••"}
+              style={{width:"100%", fontFamily:"inherit", height:50, marginBottom:16, fontSize:16, borderRadius:16, padding:"12px 20px",
+                background:"rgba(255,255,255,0.05)", color:"#ffffff"}}/>
+            <button type="button" className="al-m al-eye" aria-label={showPw ? "Ocultar contraseña" : "Mostrar contraseña"} onClick={() => setShowPw(v => !v)}>
+              <Icon name={showPw ? "eye-off" : "eye"} size={16}/>
+            </button>
+          </div>
 
           {err && <div className="chip red" style={{display:"flex", padding:"6px 10px", marginBottom:12, fontSize:12}}>
             <Icon name="alert-triangle" size={12}/> {err}
@@ -102,10 +118,11 @@ const AuthGate = ({ onAuth }) => {
               boxShadow:"rgba(130,119,219,0.267) 0px 0px 20px 0px",
               transition:"opacity 0.3s ease, box-shadow 0.5s cubic-bezier(0.4,0,0.2,1)"}}
             disabled={!email || !pw || busy}>
-            {busy ? "Entrando…" : "Entrar"}
+            {busy ? "Entrando…" : narrow ? "Iniciar sesión" : "Entrar"}
           </button>
+          <a className="al-m al-forgot" href="mailto:nil@141agency.com?subject=He%20olvidado%20mi%20contrase%C3%B1a">¿Has olvidado la contraseña?</a>
         </form>
-        <div className="subtle xsmall" style={{textAlign:"center", marginTop:32}}>
+        <div className="subtle xsmall al-d" style={{textAlign:"center", marginTop:32}}>
           <a href="https://141agency.com/" target="_blank" rel="noopener noreferrer" style={{color:"inherit", textDecoration:"none"}}>© 141'DIGITAL</a> · nil@141agency.com
         </div>
       </div>

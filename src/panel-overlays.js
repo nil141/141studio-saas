@@ -62,6 +62,7 @@
     const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
       const ref = useRef(null);
       useDismiss(ref, onClose, ".pn-act");
+      PN.useSheetSwipe(ref, onClose);
       const items = createItems(navigate, openModal);
       const acts = items.filter((i) => !i.sep);
       const [hi, setHi] = useState(0);
@@ -90,7 +91,7 @@
         window.addEventListener("keydown", key);
         return () => window.removeEventListener("keydown", key);
       }, []);
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "Crear"), items.map((it, i) => it.sep ? /* @__PURE__ */ React.createElement("div", { key: "s" + i, className: "sep" }) : /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "Crear"), items.map((it, i) => it.sep ? /* @__PURE__ */ React.createElement("div", { key: "s" + i, className: "sep" }) : /* @__PURE__ */ React.createElement(
         "button",
         {
           key: it.k,
@@ -285,6 +286,7 @@
     const PanelNotifs = ({ navigate, openModal, onClose, N }) => {
       const ref = useRef(null);
       useDismiss(ref, onClose, ".pn-act");
+      PN.useSheetSwipe(ref, onClose);
       const [f, setF] = useState("all");
       const list = N.items.filter((i) => f === "all" ? true : f === "unread" ? i.unread : f === "client" ? i.cat === "client" : i.cat === "nora");
       const sec = (it) => {
@@ -298,7 +300,7 @@
         it.go();
       };
       let last = null;
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-npanel", ref }, /* @__PURE__ */ React.createElement("div", { className: "hd" }, /* @__PURE__ */ React.createElement("p", { className: "ttl" }, "Notificaciones"), N.unread > 0 && /* @__PURE__ */ React.createElement("span", { className: "ct" }, N.unread), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), N.unread > 0 && /* @__PURE__ */ React.createElement("button", { className: "all", onClick: N.markAll }, /* @__PURE__ */ React.createElement(PIcon, { name: "n-check" }), /* @__PURE__ */ React.createElement("span", null, "Marcar todo como le\xEDdo"))), /* @__PURE__ */ React.createElement("div", { className: "flt" }, FILTERS.map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: f === k ? "on" : "", onClick: () => setF(k) }, l))), /* @__PURE__ */ React.createElement("div", { className: "lst" }, list.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "emp" }, /* @__PURE__ */ React.createElement("p", { className: "tt" }, f === "nora" ? "Nora no te ha dejado avisos" : f === "unread" ? "Lo tienes todo le\xEDdo" : "Sin notificaciones"), /* @__PURE__ */ React.createElement("p", { className: "sb" }, f === "nora" ? "Cuando prepare algo para ti, aparecer\xE1 aqu\xED." : "Aqu\xED ver\xE1s mensajes de clientes, pagos y entregas.")), list.map((it) => {
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-npanel", ref }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), /* @__PURE__ */ React.createElement("div", { className: "hd" }, /* @__PURE__ */ React.createElement("p", { className: "ttl" }, "Notificaciones"), N.unread > 0 && /* @__PURE__ */ React.createElement("span", { className: "ct" }, N.unread), /* @__PURE__ */ React.createElement("span", { style: { flex: 1 } }), N.unread > 0 && /* @__PURE__ */ React.createElement("button", { className: "all", onClick: N.markAll }, /* @__PURE__ */ React.createElement(PIcon, { name: "n-check" }), /* @__PURE__ */ React.createElement("span", null, "Marcar todo como le\xEDdo"))), /* @__PURE__ */ React.createElement("div", { className: "flt" }, FILTERS.map(([k, l]) => /* @__PURE__ */ React.createElement("button", { key: k, className: f === k ? "on" : "", onClick: () => setF(k) }, l))), /* @__PURE__ */ React.createElement("div", { className: "lst pn-bs-scroll" }, list.length === 0 && /* @__PURE__ */ React.createElement("div", { className: "emp" }, /* @__PURE__ */ React.createElement("p", { className: "tt" }, f === "nora" ? "Nora no te ha dejado avisos" : f === "unread" ? "Lo tienes todo le\xEDdo" : "Sin notificaciones"), /* @__PURE__ */ React.createElement("p", { className: "sb" }, f === "nora" ? "Cuando prepare algo para ti, aparecer\xE1 aqu\xED." : "Aqu\xED ver\xE1s mensajes de clientes, pagos y entregas.")), list.map((it) => {
         const s2 = sec(it);
         const head = s2 !== last ? (last = s2, /* @__PURE__ */ React.createElement("p", { key: "h" + s2, className: "sec" }, s2)) : null;
         const hl = it === firstAct;

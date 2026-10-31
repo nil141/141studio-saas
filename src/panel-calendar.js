@@ -242,7 +242,7 @@
           });
         });
         const adStrip = allDay.length > 0;
-        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "pn-wdays" }, days.map((d, i) => {
+        return /* @__PURE__ */ React.createElement("div", { className: "pn-wscroll" }, /* @__PURE__ */ React.createElement("div", { className: "pn-wdays" }, days.map((d, i) => {
           const ds = PN.ymd(d);
           return /* @__PURE__ */ React.createElement(
             "button",
@@ -284,8 +284,8 @@
         const last = new Date(selD.getFullYear(), selD.getMonth() + 1, 0, 12);
         const rows = Math.ceil(((first.getDay() + 6) % 7 + last.getDate()) / 7);
         const cells = Array.from({ length: rows * 7 }, (_, i) => _addDays(start, i));
-        const cw = 800 / 7;
-        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "pn-mhead" }, PN.DIAS_C.slice(1).concat(PN.DIAS_C[0]).map((d, i) => /* @__PURE__ */ React.createElement("span", { key: d, style: { left: i * cw + 12 } }, d.toUpperCase()))), /* @__PURE__ */ React.createElement("div", { className: "pn-month", style: { height: rows * 76 } }, [1, 2, 3, 4, 5, 6].map((i) => /* @__PURE__ */ React.createElement("i", { key: "v" + i, className: "vl", style: { left: i * cw } })), Array.from({ length: rows - 1 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: "h" + i, className: "hl", style: { top: (i + 1) * 76 } })), cells.map((d, i) => {
+        const pc = (k) => `${k * 100 / 7}%`;
+        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "pn-mhead" }, PN.DIAS_C.slice(1).concat(PN.DIAS_C[0]).map((d, i) => /* @__PURE__ */ React.createElement("span", { key: d, style: { left: `calc(${pc(i)} + var(--mh-off, 12px))` } }, d.toUpperCase()))), /* @__PURE__ */ React.createElement("div", { className: "pn-month", style: { height: rows * 76 } }, [1, 2, 3, 4, 5, 6].map((i) => /* @__PURE__ */ React.createElement("i", { key: "v" + i, className: "vl", style: { left: pc(i) } })), Array.from({ length: rows - 1 }, (_, i) => /* @__PURE__ */ React.createElement("i", { key: "h" + i, className: "hl", style: { top: (i + 1) * 76 } })), cells.map((d, i) => {
           const ds = PN.ymd(d), inM = d.getMonth() === selD.getMonth(), evs = byDate[ds] || [];
           const shown = evs.length > 2 ? evs.slice(0, 1) : evs;
           return /* @__PURE__ */ React.createElement(
@@ -293,7 +293,7 @@
             {
               key: ds,
               className: "pn-mcell" + (inM ? "" : " out") + (ds === todayStr ? " today" : ""),
-              style: { left: i % 7 * cw, top: Math.floor(i / 7) * 76, width: cw },
+              style: { left: pc(i % 7), top: Math.floor(i / 7) * 76, width: pc(1) },
               onClick: () => {
                 setSel(ds);
                 setView("day");

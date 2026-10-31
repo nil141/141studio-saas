@@ -62,6 +62,7 @@ const useDismiss = (ref, onClose, ignore) => {
 const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
   const ref = useRef(null);
   useDismiss(ref, onClose, ".pn-act");
+  PN.useSheetSwipe(ref, onClose);
   const items = createItems(navigate, openModal);
   const acts = items.filter(i => !i.sep);
   const [hi, setHi] = useState(0);
@@ -77,6 +78,7 @@ const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
   }, []);
   return (
     <div className="pn-cmenu" ref={ref} role="menu">
+      <div className="pn-bs-grab"/>
       <p className="t-caption ttl">Crear</p>
       {items.map((it, i) => it.sep
         ? <div key={"s" + i} className="sep"/>
@@ -192,6 +194,7 @@ const FILTERS = [["all", "Todas"], ["unread", "Sin leer"], ["client", "Clientes"
 const PanelNotifs = ({ navigate, openModal, onClose, N }) => {
   const ref = useRef(null);
   useDismiss(ref, onClose, ".pn-act");
+  PN.useSheetSwipe(ref, onClose);
   const [f, setF] = useState("all");
   const list = N.items.filter(i => f === "all" ? true : f === "unread" ? i.unread : f === "client" ? i.cat === "client" : i.cat === "nora");
   const sec = (it) => { const d = it.at ? PN.dayDiff(PN.ymd(new Date(it.at))) : -99; return d === 0 ? "Hoy" : d === -1 ? "Ayer" : "Anteriores"; };
@@ -200,6 +203,7 @@ const PanelNotifs = ({ navigate, openModal, onClose, N }) => {
   let last = null;
   return (
     <div className="pn-npanel" ref={ref}>
+      <div className="pn-bs-grab"/>
       <div className="hd">
         <p className="ttl">Notificaciones</p>
         {N.unread > 0 && <span className="ct">{N.unread}</span>}
@@ -209,7 +213,7 @@ const PanelNotifs = ({ navigate, openModal, onClose, N }) => {
       <div className="flt">
         {FILTERS.map(([k, l]) => <button key={k} className={f === k ? "on" : ""} onClick={() => setF(k)}>{l}</button>)}
       </div>
-      <div className="lst">
+      <div className="lst pn-bs-scroll">
         {list.length === 0 && (
           <div className="emp">
             <p className="tt">{f === "nora" ? "Nora no te ha dejado avisos" : f === "unread" ? "Lo tienes todo leído" : "Sin notificaciones"}</p>

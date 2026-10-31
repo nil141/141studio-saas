@@ -226,7 +226,7 @@ const PanelHome = ({ navigate, session }) => {
     return <div key={g.id} data-k={"c:" + it.key}>{card(it, { onDismiss: g.empty ? undefined : () => dismiss([it.key]) })}</div>;
   };
   const expanded = (g) => (
-    <div key={"open-" + g.id} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+    <div key={"open-" + g.id} className="pn-gopen" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       <div className="pn-group-head" data-k={`g:${g.id}:head`}>
         <p className="t-title-l">{g.label}</p>
         <div style={{ flex: 1 }}/>

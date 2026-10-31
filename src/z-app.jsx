@@ -142,13 +142,7 @@ const App = () => {
   const bootedRef = useRef(false);                      // true tras el primer arranque real
   const [navCollapsed, setNavCollapsed] = useState(() => { try { return localStorage.getItem("141_nav_collapsed") === "1"; } catch { return false; } });
   const toggleNav = () => setNavCollapsed(v => { const n = !v; try { localStorage.setItem("141_nav_collapsed", n ? "1" : "0"); } catch {} return n; });
-  // Panel rediseñado (Figma "App · Panel"): solo escritorio y solo agencia
-  const [wide, setWide] = useState(() => window.innerWidth > 768);
-  useEffect(() => {
-    const r = () => setWide(window.innerWidth > 768);
-    window.addEventListener("resize", r);
-    return () => window.removeEventListener("resize", r);
-  }, []);
+  // Panel rediseñado (Figma "App · Panel"): solo la agencia, en escritorio y en móvil
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -231,8 +225,8 @@ const App = () => {
   };
 
   const openModal = (name, params = {}) => {
-    // Panel nuevo (agencia, escritorio): ventanas de crear del diseño
-    if (wide && view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
+    // Panel nuevo (agencia): ventanas de crear del diseño
+    if (view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
       setPnCreate({ kind: name, params });
       return;
     }
@@ -366,7 +360,7 @@ case "clients": return <AgencyClientsList navigate={navigate} openModal={openMod
     </>
   );
 
-  if (!isClient && wide && window.PanelShell) {
+  if (!isClient && window.PanelShell) {
     const panel = renderPanel();
     return (
       <>

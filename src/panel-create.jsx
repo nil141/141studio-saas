@@ -111,16 +111,19 @@ const Win = ({ icon, label, width, onClose, onSubmit, can, busy, cta, foot, chil
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
   });
+  const ref = useRef(null);
+  PN.useSheetSwipe(ref, onClose);
   return (
     <div className="pn-win-bg" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="pn-win" style={{ width }} role="dialog" aria-label={label}>
+      <div className="pn-win" ref={ref} style={{ width }} role="dialog" aria-label={label}>
+        <div className="pn-bs-grab"/>
         <div className="bar">
           <PIcon name={icon}/><span className="lbl">{label}</span>
           <span style={{ flex: 1 }}/>
           <span className="esc">esc</span>
           <button type="button" className="x" aria-label="Cerrar" onClick={onClose}><PIcon name="w-x13"/></button>
         </div>
-        <div className="body">{children}</div>
+        <div className="body pn-bs-scroll">{children}</div>
         <div className="foot">
           {foot}
           <span style={{ flex: 1 }}/>
