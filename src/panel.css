@@ -832,6 +832,22 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-week { position: static; flex-shrink: 0; zoom: 0.9086; margin-bottom: 26.4px; }
   .pn-task-txt .t-card-title { white-space: normal; }
   .pn-task { --f-ui: "Inter", -apple-system, sans-serif; }
+  /* Calendario (Figma 269:1008): controles debajo del título; «Unirse» bajo el texto */
+  .pn-stage .pn-head.pn-head-cal { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 28px; }
+  .pn-cal-ctl .pn-arrow, .pn-seg button { position: relative; }
+  .pn-cal-ctl .pn-arrow::after, .pn-seg button::after { content: ""; position: absolute; inset: -6px; }
+  .pn-cweek { position: static; flex-shrink: 0; margin-bottom: 28px; }
+  .pn-cday { position: relative; }
+  .pn-ev-card { display: grid; grid-template-columns: 3px minmax(0, 1fr) 28px; column-gap: 14px; row-gap: 6px; align-items: center; }
+  .pn-ev-card .mark, .pn-ev-card .av { grid-row: 1 / span 2; }
+  .pn-ev-card .txt { grid-column: 2; grid-row: 1; white-space: normal; }
+  .pn-ev-card:not(:has(> .join)) .txt { grid-row: 1 / span 2; }
+  .pn-ev-card .av { grid-column: 3; }
+  .pn-ev-card .join { grid-column: 2; grid-row: 2; justify-self: start; position: relative; }
+  .pn-ev-card .join::after { content: ""; position: absolute; inset: -8px -4px; }
+  .pn-ev-card:has(> .join) .txt { gap: 6px; }
+  .pn .pn-ev-card .sb, .pn-seg { --f-ui: "Inter", -apple-system, sans-serif; }
+  .pn .pn-ev-card .sb { font-family: var(--f-ui); white-space: normal; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
