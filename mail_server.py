@@ -32,6 +32,14 @@ PORTAL_URL     = os.environ.get("PORTAL_URL", "https://app.141agency.com")
 # NO decide el destinatario: siempre se envía aquí (evita relay de spam).
 AGENCY_NOTIFY_EMAIL = os.environ.get("AGENCY_NOTIFY_EMAIL", "nil@141agency.com")
 
+# Notificaciones push (como de app) en los dispositivos donde se activen.
+# Claves VAPID: la pública se le da al navegador; la privada es SECRETA. Si
+# faltan (o falta la librería pywebpush) el push se desactiva sin romper nada.
+VAPID_PUBLIC_KEY  = os.environ.get("VAPID_PUBLIC_KEY", "").strip()
+VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "").strip()
+VAPID_SUBJECT     = os.environ.get("VAPID_SUBJECT", "").strip() or PORTAL_URL
+PUSH_TZ           = os.environ.get("PUSH_TZ", "Europe/Madrid")
+
 # Service role de Supabase (SECRETA, solo servidor). Necesaria para los
 # recordatorios automáticos (leer/actualizar tareas de todos los clientes).
 SB_SERVICE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
@@ -555,14 +563,23 @@ def api_notify_agency(body):
     autenticado (incl. clientes). El destinatario NO lo decide el cliente: es
     siempre AGENCY_NOTIFY_EMAIL (evita que se use como relay de spam)."""
     to = (AGENCY_NOTIFY_EMAIL or "").strip()
-    if not to or "@" not in to:
-        return {"ok": False, "skipped": "no_agency_email"}
     title = (body.get("title") or "Novedad de un cliente").strip()
     text  = (body.get("body") or "").strip()
     cname = (body.get("client_name") or "Un cliente").strip()
     ameta = {"lead": f"{cname} ha realizado una acción en su portal.",
              "cta": "Abrir el CRM", "route": ""}
     subject = f"{cname} · {title}"
+    # Notificación push a los dispositivos de la agencia de este cliente
+    try:
+        uid = body.get("__uid")
+        prof = _sb_service("GET", "profiles?id=eq." + urllib.parse.quote(str(uid)) + "&select=agency_id") if uid and SB_SERVICE_KEY else []
+        agency_id = (prof[0] or {}).get("agency_id") if prof else None
+        if agency_id:
+            _push_async(agency_id, "clients", subject, text or f"{cname} ha realizado una acción en su portal.", "/", None)
+    except Exception as e:
+        print(f"  [push] notify_agency: {e}")
+    if not to or "@" not in to:
+        return {"ok": False, "skipped": "no_agency_email"}
     html = _notify_email_html("", title, text, ameta, PORTAL_URL)
     return _resend_send(to, subject, html)
 
@@ -578,6 +595,225 @@ def _sb_service(method, path, body=None):
     with urllib.request.urlopen(req, timeout=20) as r:
         raw = r.read().decode()
         return json.loads(raw) if raw else []
+
+# ── Notificaciones push ─────────────────────────────────────────────────
+# Cada dispositivo que activa los avisos guarda su suscripción en la tabla
+# push_subscriptions (supabase/push_subscriptions.sql) con sus preferencias:
+# clients (avisos del portal), events (recordatorios) y tasks (resumen diario).
+try:
+    from pywebpush import webpush as _webpush, WebPushException as _WebPushException
+except Exception:
+    _webpush = None
+    _WebPushException = Exception
+
+_PUSH_KINDS = ("clients", "events", "tasks")
+
+def _push_ready():
+    return bool(_webpush and VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY and SB_SERVICE_KEY)
+
+def _push_now():
+    """Fecha y hora local de la agencia (por defecto Europe/Madrid)."""
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.datetime.now(ZoneInfo(PUSH_TZ))
+    except Exception:
+        return datetime.datetime.now()
+
+def _push_subs(agency_id=None):
+    q = "push_subscriptions?select=endpoint,agency_id,subscription,prefs"
+    if agency_id:
+        q += "&agency_id=eq." + urllib.parse.quote(str(agency_id))
+    try:
+        return _sb_service("GET", q) or []
+    except Exception as e:
+        print(f"  [push] no se pudieron leer las suscripciones: {e}")
+        return []
+
+def _push_send(agency_id, kind, title, body="", url="/", tag=None):
+    """Envía una notificación a todos los dispositivos de la agencia que tengan
+    activado ese tipo. Borra las suscripciones caducadas (404/410)."""
+    if not _push_ready() or not agency_id:
+        return 0
+    payload = json.dumps({"title": title, "body": body, "url": url or "/",
+                          "tag": tag or f"{kind}-{int(time.time() * 1000)}"}, ensure_ascii=False)
+    sent = 0
+    for row in _push_subs(agency_id):
+        prefs = row.get("prefs") or {}
+        if kind in _PUSH_KINDS and prefs.get(kind) is False:
+            continue
+        try:
+            _webpush(subscription_info=row.get("subscription") or {}, data=payload,
+                     vapid_private_key=VAPID_PRIVATE_KEY, vapid_claims={"sub": VAPID_SUBJECT},
+                     ttl=6 * 3600, headers={"Urgency": "high"})
+            sent += 1
+        except _WebPushException as e:
+            code = getattr(getattr(e, "response", None), "status_code", None)
+            if code in (404, 410):
+                try: _sb_service("DELETE", "push_subscriptions?endpoint=eq." + urllib.parse.quote(row.get("endpoint") or "", safe=""))
+                except Exception: pass
+            else:
+                print(f"  [push] error enviando ({code}): {e}")
+        except Exception as e:
+            print(f"  [push] error enviando: {e}")
+    return sent
+
+def _push_async(*args, **kw):
+    """El servidor atiende de una en una: enviamos en segundo plano."""
+    if _push_ready():
+        threading.Thread(target=_push_send, args=args, kwargs=kw, daemon=True).start()
+
+def api_push_key(uid, body):
+    return {"ok": True, "key": VAPID_PUBLIC_KEY, "ready": _push_ready()}
+
+def api_push_subscribe(uid, body):
+    if not _push_ready():
+        return {"ok": False, "error": "Las notificaciones aún no están activadas en el servidor."}
+    sub = body.get("subscription") or {}
+    endpoint = (sub.get("endpoint") or "").strip()
+    if not endpoint.startswith("https://") or not (sub.get("keys") or {}).get("p256dh"):
+        return {"ok": False, "error": "Suscripción no válida"}
+    prefs = body.get("prefs") or {}
+    prefs = {k: (prefs.get(k) is not False) for k in _PUSH_KINDS}
+    row = {"endpoint": endpoint, "agency_id": uid, "subscription": sub, "prefs": prefs,
+           "device": (body.get("device") or "")[:120], "updated_at": datetime.datetime.utcnow().isoformat() + "Z"}
+    req = urllib.request.Request(SB_URL + "/rest/v1/push_subscriptions?on_conflict=endpoint", method="POST",
+                                 data=json.dumps(row).encode())
+    req.add_header("apikey", SB_SERVICE_KEY)
+    req.add_header("Authorization", "Bearer " + SB_SERVICE_KEY)
+    req.add_header("Content-Type", "application/json")
+    req.add_header("Prefer", "resolution=merge-duplicates,return=minimal")
+    try:
+        urllib.request.urlopen(req, timeout=20).read()
+    except urllib.error.HTTPError as e:
+        msg = e.read().decode(errors="ignore")
+        if "push_subscriptions" in msg or e.code == 404:
+            return {"ok": False, "error": "Falta crear la tabla push_subscriptions en Supabase."}
+        return {"ok": False, "error": msg[:200] or str(e)}
+    return {"ok": True, "prefs": prefs}
+
+def api_push_unsubscribe(uid, body):
+    endpoint = (body.get("endpoint") or "").strip()
+    if not endpoint or not SB_SERVICE_KEY:
+        return {"ok": True}
+    try:
+        _sb_service("DELETE", "push_subscriptions?endpoint=eq." + urllib.parse.quote(endpoint, safe="")
+                    + "&agency_id=eq." + urllib.parse.quote(str(uid)))
+    except Exception:
+        pass
+    return {"ok": True}
+
+def api_push_test(uid, body):
+    if not _push_ready():
+        return {"ok": False, "error": "Las notificaciones aún no están activadas en el servidor."}
+    n = _push_send(uid, "test", "141'Digital", "Las notificaciones funcionan en este dispositivo.", "/", "test")
+    return {"ok": n > 0, "sent": n, "error": None if n else "No se pudo enviar a ningún dispositivo."}
+
+PUSH_HANDLERS = {
+    "key": api_push_key,
+    "subscribe": api_push_subscribe,
+    "unsubscribe": api_push_unsubscribe,
+    "test": api_push_test,
+}
+
+# Recordatorios de eventos (15 min antes; los de todo el día a las 9:00) y
+# resumen de tareas (9:00). Lo ya enviado se recuerda en memoria del proceso.
+_PUSH_SENT = set()
+_MES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
+
+def _push_events_for(agency_id):
+    base = "agenda_events?agency_id=eq." + urllib.parse.quote(str(agency_id))
+    try:
+        return _sb_service("GET", base + "&select=id,title,date,date_end,time,time_end,link") or []
+    except Exception:
+        try:
+            return _sb_service("GET", base + "&select=id,title,date,time,time_end,link") or []
+        except Exception:
+            return []
+
+def _push_tick():
+    now = _push_now()
+    today = now.strftime("%Y-%m-%d")
+    mins = now.hour * 60 + now.minute
+    agencies = {}
+    for row in _push_subs():
+        a = row.get("agency_id")
+        if not a:
+            continue
+        p = agencies.setdefault(a, set())
+        for k in _PUSH_KINDS:
+            if (row.get("prefs") or {}).get(k) is not False:
+                p.add(k)
+    for agency_id, kinds in agencies.items():
+        if "events" in kinds:
+            for e in _push_events_for(agency_id):
+                d, dend = (e.get("date") or "")[:10], (e.get("date_end") or "")[:10]
+                t = (e.get("time") or "")[:5]
+                if t and d == today:
+                    try:
+                        hh, mm = [int(x) for x in t.split(":")]
+                    except Exception:
+                        continue
+                    left = hh * 60 + mm - mins
+                    key = f"ev:{e.get('id')}:{d}"
+                    if 0 <= left <= 15 and key not in _PUSH_SENT:
+                        _PUSH_SENT.add(key)
+                        when = "Ahora" if left <= 1 else f"En {left} min"
+                        te = (e.get("time_end") or "")[:5]
+                        _push_send(agency_id, "events", f"{when} · {e.get('title') or 'Evento'}",
+                                   t + (f" – {te}" if te else "") + (" · con enlace de reunión" if e.get("link") else ""),
+                                   e.get("link") or "/", "ev-" + str(e.get("id")))
+                elif not t and d and d <= today <= (dend if dend and dend > d else d) and mins >= 9 * 60:
+                    key = f"ad:{e.get('id')}:{today}"
+                    if key not in _PUSH_SENT:
+                        _PUSH_SENT.add(key)
+                        body = "Todo el día"
+                        if dend and dend > today:
+                            y, m, dd = dend.split("-")
+                            body += f" · hasta el {int(dd)} {_MES_C[int(m) - 1]}"
+                        _push_send(agency_id, "events", f"Hoy · {e.get('title') or 'Evento'}", body, "/", "ad-" + str(e.get("id")))
+        if "tasks" in kinds and mins >= 9 * 60:
+            key = f"tk:{agency_id}:{today}"
+            if key not in _PUSH_SENT:
+                _PUSH_SENT.add(key)
+                try:
+                    rows = _sb_service("GET", "tasks?agency_id=eq." + urllib.parse.quote(str(agency_id))
+                                       + "&deadline=not.is.null&select=title,deadline,col,done") or []
+                except Exception:
+                    rows = []
+                rows = [r for r in rows if not r.get("done") and r.get("col") != "done"
+                        and re.match(r"^\d{4}-\d{2}-\d{2}", str(r.get("deadline") or "")) and str(r["deadline"])[:10] <= today]
+                if rows:
+                    late = [r for r in rows if str(r["deadline"])[:10] < today]
+                    names = [r.get("title") or "" for r in rows[:2]]
+                    more = len(rows) - len(names)
+                    body = ", ".join(n for n in names if n) + (f" y {more} más" if more > 0 else "") + "."
+                    head = f"{len(rows)} tarea{'s' if len(rows) != 1 else ''} para hoy" + (f" · {len(late)} atrasada{'s' if len(late) != 1 else ''}" if late else "")
+                    _push_send(agency_id, "tasks", head, body, "/", "tasks-" + today)
+    if len(_PUSH_SENT) > 5000:
+        _PUSH_SENT.clear()
+
+def _push_loop():
+    time.sleep(30)
+    # Al arrancar no reenviamos lo de hoy que ya pasó: marcamos el resumen y los
+    # eventos de todo el día de hoy como enviados si ya son más de las 9:30.
+    try:
+        now = _push_now()
+        if now.hour * 60 + now.minute > 9 * 60 + 30:
+            today = now.strftime("%Y-%m-%d")
+            for row in _push_subs():
+                a = row.get("agency_id")
+                _PUSH_SENT.add(f"tk:{a}:{today}")
+                for e in _push_events_for(a):
+                    if not (e.get("time") or ""):
+                        _PUSH_SENT.add(f"ad:{e.get('id')}:{today}")
+    except Exception as e:
+        print(f"  [push] arranque: {e}")
+    while True:
+        try:
+            _push_tick()
+        except Exception as e:
+            print(f"  [push] error: {e}")
+        time.sleep(60)
 
 # ── WhatsApp (Meta Cloud API) ──────────────────────────────────────────
 def _wa_now_iso():
@@ -2152,6 +2388,8 @@ class Handler(SimpleHTTPRequestHandler):
             self._handle_api_any(self.path[len("/api/portal/"):], PORTAL_HANDLERS)
         elif self.path.startswith("/api/userdata/"):
             self._handle_userdata(self.path[len("/api/userdata/"):])
+        elif self.path.startswith("/api/push/"):
+            self._handle_push(self.path[len("/api/push/"):])
         elif self.path.startswith(("/api/store/", "/api/invite/", "/api/auth/")):
             self._json(410, {"ok": False, "error": "Endpoint retirado — la app usa Supabase"})
         else:
@@ -2322,8 +2560,32 @@ class Handler(SimpleHTTPRequestHandler):
                 self._json(413, {"ok": False, "error": "Payload demasiado grande"})
                 return
             body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            if isinstance(body, dict):
+                body["__uid"] = user.get("id")   # lo pone el servidor, no el cliente
             fn   = handlers.get(endpoint)
             result = fn(body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
+        except Exception as e:
+            traceback.print_exc()
+            result = {"ok": False, "error": str(e)}
+        self._json(200, result)
+
+    def _handle_push(self, endpoint):
+        # Solo la agencia (no clientes del portal); los datos van bajo su id.
+        auth  = self.headers.get("Authorization", "")
+        token = auth[7:] if auth.startswith("Bearer ") else ""
+        user  = _verify_supabase_token(token)
+        role  = ((user or {}).get("user_metadata") or {}).get("role")
+        if not user or not user.get("id") or role == "client":
+            self._json(401, {"ok": False, "error": "No autorizado"})
+            return
+        try:
+            length = int(self.headers.get("Content-Length", 0))
+            if length > 100_000:
+                self._json(413, {"ok": False, "error": "Payload demasiado grande"})
+                return
+            body = json.loads(self.rfile.read(length).decode("utf-8")) if length else {}
+            fn   = PUSH_HANDLERS.get(endpoint)
+            result = fn(user["id"], body) if fn else {"ok": False, "error": f"Unknown: {endpoint}"}
         except Exception as e:
             traceback.print_exc()
             result = {"ok": False, "error": str(e)}
@@ -2341,6 +2603,11 @@ if __name__ == "__main__":
         print(f"  ⏰ Recordatorios activos (cada {REMINDER_CHECK_HOURS}h, {REMINDER_DAYS}d, máx {REMINDER_MAX}).")
     else:
         print("  ⏰ Recordatorios desactivados (falta SUPABASE_SERVICE_ROLE_KEY o RESEND_API_KEY).")
+    if _push_ready():
+        threading.Thread(target=_push_loop, daemon=True).start()
+        print("  🔔 Notificaciones push activas.")
+    else:
+        print("  🔔 Notificaciones push desactivadas (faltan VAPID_PUBLIC_KEY / VAPID_PRIVATE_KEY, pywebpush o la service role).")
     try:
         server.serve_forever()
     except KeyboardInterrupt:

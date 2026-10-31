@@ -2169,6 +2169,8 @@ const SettingsPage = () => {
       </div>
 
       <div className="rg-settings">
+        {window.PushSettingsCard ? <window.PushSettingsCard/> : null}
+
         <div className="card" style={{gridColumn:"1/-1"}}>
           <div className="card-header"><div className="card-title">Información de la agencia</div></div>
           <div className="card-body" style={{display:"grid", gridTemplateColumns:"1fr 1fr", gap: 16}}>
