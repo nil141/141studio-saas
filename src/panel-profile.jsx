@@ -86,30 +86,33 @@ const Toggle = ({ on, onChange, small }) => (
     disabled={!onChange} onClick={onChange ? () => onChange(!on) : undefined}><i/></button>
 );
 
-// Pestaña Notificaciones: avisos push en este dispositivo (ver push.jsx)
+// Pestaña Notificaciones (Figma 277:279 / 277:535): avisos push en este dispositivo (ver push.jsx)
 const NotifTab = () => {
   const P = window.PushKit.usePush();
   const st = P.state;
   const can = st === "off" || st === "on";
   return (
     <>
-      <p className="t-small pn-pintro">Recibe los avisos del CRM como notificaciones del móvil o del ordenador, también con la app cerrada.</p>
-      <div className="pn-datos">
-        <div className="pn-dato pn-push">
-          <div className="lb"><PIcon name="bell15"/><span>Este dispositivo</span></div>
-          <p className={"v" + (st === "on" ? "" : " ph")} style={{ whiteSpace: "normal" }}>{st === null ? "Comprobando…" : window.PushKit.pushHelp(st, P.isIOS)}</p>
-          {st === "on" && <button className="pn-gbtn" disabled={P.busy} onClick={P.test}>Probar</button>}
-          {st === "on" && <button className="pn-gbtn" disabled={P.busy} onClick={P.disable}>Desactivar</button>}
-          {st === "off" && <button className="pn-cbtn lg" disabled={P.busy} onClick={P.enable}>{P.busy ? "Activando…" : "Activar"}</button>}
+      <p className="pn-nintro">Recibe los avisos del CRM como notificaciones del móvil o del ordenador, también con la app cerrada.</p>
+      <div className="pn-ncard">
+        <div className="pn-ndev">
+          <div className="lb"><PIcon name="bell15" size={16}/><span>Este dispositivo</span></div>
+          <div className={"st" + (st === "on" ? " on" : "")}><i/><span>{st === null ? "Comprobando…" : window.PushKit.pushHelp(st, P.isIOS)}</span></div>
+          {st === "off" && <div className="btns"><button className="pn-nbtn pri" disabled={P.busy} onClick={P.enable}>{P.busy ? "Activando…" : "Activar"}</button></div>}
+          {st === "on" && (
+            <div className="btns">
+              <button className="pn-nbtn pri" disabled={P.busy} onClick={P.test}>Probar</button>
+              <button className="pn-nbtn" disabled={P.busy} onClick={P.disable}>Desactivar</button>
+            </div>
+          )}
         </div>
       </div>
-      {P.msg && <p className="t-small" style={{ color: "var(--gray-400)", margin: "10px 2px 0" }}>{P.msg}</p>}
-      <p className="t-small pn-psec">Qué te avisa</p>
-      <div className="pn-datos">
+      {P.msg && <p className="pn-nmsg">{P.msg}</p>}
+      <p className="pn-nsec">Qué te avisa</p>
+      <div className="pn-ncard">
         {P.kinds.map(k => (
-          <div key={k.k} className="pn-dato" style={{ opacity: can ? 1 : 0.5 }}>
-            <div className="lb" style={{ width: 230 }}><span style={{ color: "var(--ink-900)", fontWeight: 500 }}>{k.label}</span></div>
-            <p className="v ph" style={{ fontWeight: 400 }}>{k.sub}</p>
+          <div key={k.k} className={"pn-nrow" + (can ? "" : " off")}>
+            <div className="txt"><p className="nm">{k.label}</p><p className="sb">{k.sub}</p></div>
             <Toggle on={P.prefs[k.k]} small onChange={can ? (v) => P.setPref(k.k, v) : undefined}/>
           </div>
         ))}
@@ -324,7 +327,7 @@ const PanelProfile = ({ navigate, session, theme, setTheme }) => {
   return (
     <div className="pn-stage">
       <div className="pn-scroll" style={{ top: 0, bottom: 0 }}>
-        <div className={"pn-col pn-prof" + (tab === "apps" ? " apps" : "")}>
+        <div className={"pn-col pn-prof" + (tab === "apps" ? " apps" : tab === "notif" ? " notif" : "")}>
           <div className="pn-phd">
             <div className="av">{PN.initials(name) || "·"}</div>
             <div className="nmc">

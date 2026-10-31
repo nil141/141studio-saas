@@ -738,6 +738,33 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 .pn-wcols .sl.cu input { width: 72px; font-weight: 500; font-size: 13.5px; color: #0d0d0d; color-scheme: light; }
 .pn-wcols .none { font-size: 13px; color: #737373; padding: 4px 2px; }
 
+/* Perfil · Notificaciones (Figma 277:279) */
+.pn-prof.notif .pn-ptabs2 { margin-top: 16px; }
+.pn .pn-nintro { margin: 14px 0 10px; font-family: "Inter", -apple-system, sans-serif; font-size: 14px; line-height: 1.45; color: #808080; }
+.pn-ncard { border-radius: 16px; background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); overflow: hidden; }
+.pn-ndev { display: flex; gap: 16px; align-items: center; padding: 14px 18px; }
+.pn-ndev .lb { width: 180px; flex-shrink: 0; display: flex; gap: 8px; align-items: center; color: #bfbfbf; }
+.pn-ndev .lb span, .pn-ndev .st span, .pn-nbtn, .pn .pn-nsec, .pn-nrow .nm, .pn-nrow .sb, .pn .pn-nmsg { font-family: "Inter", -apple-system, sans-serif; }
+.pn-ndev .lb span { font-weight: 500; font-size: 14px; line-height: normal; white-space: nowrap; }
+.pn-ndev .st { flex: 1 0 0; min-width: 1px; display: flex; gap: 7px; align-items: center; }
+.pn-ndev .st i { width: 7px; height: 7px; border-radius: 4px; flex-shrink: 0; background: #737373; }
+.pn-ndev .st.on i { background: #4ade80; }
+.pn-ndev .st span { font-size: 14px; line-height: normal; color: #8c8c8c; }
+.pn-ndev .btns { display: flex; gap: 8px; flex-shrink: 0; }
+.pn-nbtn { padding: 8px 16px; border-radius: 999px; background: rgba(255,255,255,0.06); font-weight: 600; font-size: 13px; line-height: normal; color: #d9d9d9; white-space: nowrap; transition: background .15s; }
+.pn-nbtn:hover { background: rgba(255,255,255,0.1); }
+.pn-nbtn.pri { background: var(--ink-900); color: #0d0d0d; }
+.pn-nbtn.pri:hover { background: #fff; }
+.pn-nbtn:disabled { opacity: .6; cursor: default; }
+.pn .pn-nmsg { margin: 10px 2px 0; font-size: 13px; line-height: 1.4; color: var(--gray-400); }
+.pn .pn-nsec { margin: 22px 0 10px; font-size: 14px; line-height: normal; color: #808080; }
+.pn-nrow { display: flex; gap: 16px; align-items: center; padding: 13px 18px; box-shadow: inset 0 -0.5px 0 rgba(255,255,255,0.06); }
+.pn-nrow:last-child { box-shadow: none; }
+.pn-nrow.off .txt { opacity: .5; }
+.pn-nrow .txt { display: contents; }
+.pn-nrow .nm { width: 222px; flex-shrink: 0; font-weight: 600; font-size: 14px; line-height: normal; color: #ebebeb; }
+.pn-nrow .sb { flex: 1 0 0; min-width: 1px; font-size: 14px; line-height: normal; color: #808080; }
+
 /* ══ Móvil (Figma «App · Panel», versiones de 390 px) ═════════════════════
    Solo por debajo de 768 px; en escritorio estas piezas no se muestran. */
 .pn-mtop, .pn-tabs, .pn-bs-root, .pn-bs-grab, .pn-more-menu { display: none; }
@@ -966,6 +993,17 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-arow .pn-gbtn, .pn-arow .pn-cbtn, .pn-xchev { position: relative; }
   .pn-arow .pn-gbtn::after, .pn-arow .pn-cbtn::after { content: ""; position: absolute; inset: -8px -2px; }
   .pn-xchev::after { content: ""; position: absolute; inset: -14px; }
+  /* Perfil · Notificaciones (Figma 277:535): todo en columna y «Activar» a ancho completo */
+  .pn .pn-nintro { margin-top: 16px; }
+  .pn .pn-nsec { margin-top: 23px; }
+  .pn-ndev { flex-direction: column; align-items: stretch; gap: 10px; padding: 16px 18px; }
+  .pn-ndev .btns > .pn-nbtn { flex: 1 0 0; padding: 11px 16px; }
+  .pn-nrow { padding: 14px 18px; }
+  .pn-nrow .txt { display: flex; flex: 1 0 0; min-width: 1px; flex-direction: column; gap: 3px; }
+  .pn-nrow .nm { width: auto; }
+  .pn-nrow .sb { flex: none; font-size: 13px; line-height: 1.4; }
+  .pn-toggle { position: relative; }
+  .pn-toggle::after { content: ""; position: absolute; inset: -13px -7px; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
