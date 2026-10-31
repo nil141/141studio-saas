@@ -705,7 +705,7 @@ def api_push_unsubscribe(uid, body):
 def api_push_test(uid, body):
     if not _push_ready():
         return {"ok": False, "error": "Las notificaciones aún no están activadas en el servidor."}
-    n = _push_send(uid, "test", "141'Digital", "Las notificaciones funcionan en este dispositivo.", "/", "test")
+    n = _push_send(uid, "test", "Notificaciones activadas", "Así te llegarán los avisos del CRM.", "/", "test")
     return {"ok": n > 0, "sent": n, "error": None if n else "No se pudo enviar a ningún dispositivo."}
 
 PUSH_HANDLERS = {
@@ -715,9 +715,10 @@ PUSH_HANDLERS = {
     "test": api_push_test,
 }
 
-# Recordatorios de eventos (15 min antes; los de todo el día a las 9:00) y
-# resumen de tareas (9:00). Lo ya enviado se recuerda en memoria del proceso.
+# Recordatorios de eventos (15 min antes; los de todo el día a las 8:00) y
+# resumen de tareas (8:00). Lo ya enviado se recuerda en memoria del proceso.
 _PUSH_SENT = set()
+_PUSH_MORNING = 8 * 60   # hora del resumen de la mañana, en minutos
 _MES_C = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"]
 
 def _push_events_for(agency_id):
@@ -762,7 +763,7 @@ def _push_tick():
                         _push_send(agency_id, "events", f"{when} · {e.get('title') or 'Evento'}",
                                    t + (f" – {te}" if te else "") + (" · con enlace de reunión" if e.get("link") else ""),
                                    e.get("link") or "/", "ev-" + str(e.get("id")))
-                elif not t and d and d <= today <= (dend if dend and dend > d else d) and mins >= 9 * 60:
+                elif not t and d and d <= today <= (dend if dend and dend > d else d) and mins >= _PUSH_MORNING:
                     key = f"ad:{e.get('id')}:{today}"
                     if key not in _PUSH_SENT:
                         _PUSH_SENT.add(key)
@@ -771,7 +772,7 @@ def _push_tick():
                             y, m, dd = dend.split("-")
                             body += f" · hasta el {int(dd)} {_MES_C[int(m) - 1]}"
                         _push_send(agency_id, "events", f"Hoy · {e.get('title') or 'Evento'}", body, "/", "ad-" + str(e.get("id")))
-        if "tasks" in kinds and mins >= 9 * 60:
+        if "tasks" in kinds and mins >= _PUSH_MORNING:
             key = f"tk:{agency_id}:{today}"
             if key not in _PUSH_SENT:
                 _PUSH_SENT.add(key)
@@ -795,10 +796,10 @@ def _push_tick():
 def _push_loop():
     time.sleep(30)
     # Al arrancar no reenviamos lo de hoy que ya pasó: marcamos el resumen y los
-    # eventos de todo el día de hoy como enviados si ya son más de las 9:30.
+    # eventos de todo el día de hoy como enviados si ya pasó media hora del resumen.
     try:
         now = _push_now()
-        if now.hour * 60 + now.minute > 9 * 60 + 30:
+        if now.hour * 60 + now.minute > _PUSH_MORNING + 30:
             today = now.strftime("%Y-%m-%d")
             for row in _push_subs():
                 a = row.get("agency_id")
