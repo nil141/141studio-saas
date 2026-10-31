@@ -1022,6 +1022,14 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-win .go::after, .pn-win .cancel::after { content: ""; position: absolute; inset: -6px 0; }
   .pn-win .pn-wtitle input.h, .pn-win input.pn-wh { font-size: 24px !important; }
   .pn-wph .ph { padding: 12px; }
+  .pn-win .pn-wrow .vl > .pn-chip2, .pn-win .pn-wrow .vl > .pn-popw { max-width: 100%; min-width: 0; }
+  .pn-win .pn-chip2 { overflow: hidden; }
+  .pn-win .pn-chip2.in input { max-width: 100%; text-overflow: ellipsis; }
+  .pn-win .body { overflow-x: hidden; }
+  .pn-win .pn-pop { position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 600; min-width: 0; max-height: 60%; padding: 26px 10px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-radius: 24px 24px 0 0; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.09), 0 0 0 100vmax rgba(0,0,0,0.5); animation: pnSheetUp .28s cubic-bezier(.32,.72,0,1); }
+  .pn-win .pn-pop::before { content: ""; position: absolute; top: 8px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: rgba(255,255,255,0.25); }
+  .pn-win .pn-pop .pn-menu-item { min-height: 44px; padding: 10px 12px; }
   .pn-wph .tp { flex-direction: column; align-items: flex-start; gap: 4px; }
   .pn-wph .nm { overflow-wrap: anywhere; }
   /* Hojas secundarias (Bandeja, Integraciones) también suben desde abajo */
