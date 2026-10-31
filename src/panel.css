@@ -767,9 +767,9 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 
 /* ══ Móvil (Figma «App · Panel», versiones de 390 px) ═════════════════════
    Solo por debajo de 768 px; en escritorio estas piezas no se muestran. */
-.pn-mtop, .pn-tabs, .pn-bs-root, .pn-bs-grab, .pn-more-menu { display: none; }
+.pn-mtop, .pn-tabs, .pn-bs-grab, .pn-more-menu { display: none; }
 .pn-wscroll { display: contents; }
-@media (max-width: 768px) {
+@media (max-width: 768px), (max-height: 500px) and (pointer: coarse) {
   .pn { --sab: env(safe-area-inset-bottom, 0px); --tabs-h: calc(50px + var(--sab)); }
   .pn-glow { top: -280px; left: -155px; width: 700px; height: 460px; transform: none;
     background: radial-gradient(350px 230px at 50% 50%, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
@@ -805,12 +805,7 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn .pn-legacy { left: 0; top: 53px; bottom: var(--tabs-h); }
   /* Atajos de teclado: no en el móvil */
   .pn .kb { display: none; }
-  /* Hoja inferior */
-  .pn-bs-root { display: block; position: fixed; inset: 0; z-index: 200; background: transparent; overflow: visible; }
-  .pn-bs-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.5); animation: pnFade .2s ease-out; }
-  .pn-bs { position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - 47px); display: flex; flex-direction: column;
-    background: #141414; border-radius: 24px 24px 0 0; box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.08); padding-bottom: var(--sab);
-    animation: pnSheetUp .32s cubic-bezier(.32,.72,0,1); }
+  /* Asa de las hojas inferiores */
   .pn-bs-grab { display: block; flex-shrink: 0; width: 36px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.25); margin: 8px auto 0; }
   /* Menús del + y de «Más» como hoja inferior (Figma 269:383) */
   .pn-cmenu, .pn-more-menu { display: flex; position: fixed; top: auto; left: 0; right: 0; bottom: 0; width: auto; z-index: 300; padding: 6px 6px max(12px, calc(var(--sab) - 4px));
@@ -837,7 +832,7 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   @keyframes pnSheetUp { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes pnFade { from { opacity: 0; } to { opacity: 1; } }
 }
-@media (max-width: 768px) {
+@media (max-width: 768px), (max-height: 500px) and (pointer: coarse) {
   /* Avisos: la línea «de …» va debajo del título y el texto salta de línea */
   .pn-aviso-title { flex-wrap: wrap; align-items: flex-start; row-gap: 0; }
   .pn-aviso-title .from { order: 3; flex: 1 0 100%; margin-top: 1px; }
@@ -1045,3 +1040,11 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 }
 @media (max-width: 380px) { .pn-week { zoom: 0.83; } }
 @media (max-width: 345px) { .pn-week { zoom: 0.78; } }
+/* Móvil en horizontal: hay poca altura, así que hace scroll la página entera en vez de solo la lista */
+@media (max-height: 500px) and (pointer: coarse) {
+  .pn-stage:has(.pn-col > .pn-scroll), .pn-stage:has(.pn-col > .pn-wscroll), .pn-stage:has(.pn-col > .pn-thread) { overflow-y: auto; }
+  .pn-col:has(> .pn-scroll), .pn-col:has(> .pn-wscroll), .pn-col:has(> .pn-thread) { height: auto; min-height: 100%; }
+  .pn-col > .pn-scroll { flex: none; overflow: visible; }
+  .pn-col > .pn-wscroll, .pn-col > .pn-thread { flex: none; height: 360px; }
+  .pn-col:has(> .pn-nora) > .pn-fade { display: none; }
+}

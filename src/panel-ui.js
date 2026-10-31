@@ -200,7 +200,7 @@
         if (!el) return;
         let y0 = null, dy = 0, scroller = null;
         const start = (e) => {
-          if (!window.matchMedia("(max-width: 768px)").matches) return;
+          if (!window.matchMedia("(max-width: 768px), (max-height: 500px) and (pointer: coarse)").matches) return;
           scroller = e.target.closest && e.target.closest(".pn-bs-scroll");
           if (scroller && scroller.scrollTop > 0) return;
           y0 = e.touches[0].clientY;
@@ -235,21 +235,6 @@
           el.removeEventListener("touchcancel", end);
         };
       }, []);
-    };
-    const BottomSheet = ({ onClose, children, className }) => {
-      const ref = useRef(null);
-      useSheetSwipe(ref, onClose);
-      useEffect(() => {
-        const k = (e) => {
-          if (e.key === "Escape") onClose();
-        };
-        window.addEventListener("keydown", k);
-        return () => window.removeEventListener("keydown", k);
-      }, []);
-      return ReactDOM.createPortal(
-        /* @__PURE__ */ React.createElement("div", { className: "pn pn-bs-root" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-bg", onClick: onClose }), /* @__PURE__ */ React.createElement("div", { className: "pn-bs" + (className ? " " + className : ""), ref, role: "dialog" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), children)),
-        document.body
-      );
     };
     const MoreSheet = ({ view, navigate, onClose, me }) => {
       const ref = useRef(null);
@@ -354,6 +339,6 @@
       }, style: { top, bottom }, onScroll: check }, /* @__PURE__ */ React.createElement("div", null, children)), fade && /* @__PURE__ */ React.createElement("div", { className: "pn-fade", style: { bottom, opacity: more ? 1 : 0 } }));
     };
     window.PanelShell = PanelShell;
-    window.PN = { BottomSheet, useSheetSwipe, Aviso, Stack, Pill, NoraBox, ScrollArea, initials, listMore, longDate, greet, shortDay, relDay, dayDiff, ago, ymd, parseYmd, cap, MESES: _MESES, DIAS: _DIAS, DIAS_C: _DIAS_C, tipOn, tipOff };
+    window.PN = { useSheetSwipe, Aviso, Stack, Pill, NoraBox, ScrollArea, initials, listMore, longDate, greet, shortDay, relDay, dayDiff, ago, ymd, parseYmd, cap, MESES: _MESES, DIAS: _DIAS, DIAS_C: _DIAS_C, tipOn, tipOff };
   })();
 })();
