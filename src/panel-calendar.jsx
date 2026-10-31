@@ -127,14 +127,14 @@ const PanelCalendar = ({ navigate, openModal }) => {
   if (view === "day") {
     const k = (byDate[sel] || []).length;
     sub = `${PN.longDate(selD)} · ${plural(k, "evento")}${n === 0 ? " hoy" : ""}`;
-    title = n === 0 ? "de hoy" : n === 1 ? "de mañana" : n === -1 ? "de ayer" : `del ${PN.DIAS[selD.getDay()]} ${selD.getDate()}`;
+    title = n === 0 ? "Hoy" : n === 1 ? "Mañana" : n === -1 ? "Ayer" : `${PN.cap(PN.DIAS[selD.getDay()])} ${selD.getDate()}`;
   } else if (view === "week") {
     const sameM = mon.getMonth() === sun.getMonth();
     sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} – ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} · ${plural(_uniq(weekEvents), "evento")}`;
-    title = curWeek ? "de la semana" : wDiff === 1 ? "de la próxima semana" : wDiff === -1 ? "de la semana pasada" : `del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
+    title = curWeek ? "Esta semana" : wDiff === 1 ? "Próxima semana" : wDiff === -1 ? "Semana pasada" : `Semana del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
   } else {
     sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} · ${plural(_uniq(monthEvents), "evento")} este mes`;
-    title = `de ${PN.MESES[selD.getMonth()]}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
+    title = `${PN.cap(PN.MESES[selD.getMonth()])}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
   }
 
   // ── Vista día ──
@@ -344,7 +344,7 @@ const PanelCalendar = ({ navigate, openModal }) => {
         <div className="pn-head pn-head-cal">
           <div>
             <p className="t-small" style={{ color: "var(--gray-400)", lineHeight: "20px" }}>{sub}</p>
-            <h1 className="t-h2" style={{ margin: "10px 0 0", color: "var(--ink-900)" }}>Calendario {title}</h1>
+            <h1 className="t-h2" style={{ margin: "10px 0 0", color: "var(--ink-900)" }}>{title}</h1>
           </div>
           <div className="pn-cal-ctl">
             <div className="pn-seg">
