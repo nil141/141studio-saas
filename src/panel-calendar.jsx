@@ -238,7 +238,7 @@ const PanelCalendar = ({ navigate, openModal }) => {
     });
     const adStrip = allDay.length > 0;
     return (
-      <>
+      <div className="pn-wscroll">
         <div className="pn-wdays">
           {days.map((d, i) => {
             const ds = PN.ymd(d);
@@ -290,7 +290,7 @@ const PanelCalendar = ({ navigate, openModal }) => {
             )}
           </div>
         </div>
-      </>
+      </div>
     );
   };
 

@@ -242,7 +242,7 @@
           });
         });
         const adStrip = allDay.length > 0;
-        return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement("div", { className: "pn-wdays" }, days.map((d, i) => {
+        return /* @__PURE__ */ React.createElement("div", { className: "pn-wscroll" }, /* @__PURE__ */ React.createElement("div", { className: "pn-wdays" }, days.map((d, i) => {
           const ds = PN.ymd(d);
           return /* @__PURE__ */ React.createElement(
             "button",

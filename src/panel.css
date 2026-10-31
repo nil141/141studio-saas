@@ -741,6 +741,7 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 /* ══ Móvil (Figma «App · Panel», versiones de 390 px) ═════════════════════
    Solo por debajo de 768 px; en escritorio estas piezas no se muestran. */
 .pn-mtop, .pn-tabs, .pn-bs-root, .pn-bs-grab, .pn-more-menu { display: none; }
+.pn-wscroll { display: contents; }
 @media (max-width: 768px) {
   .pn { --sab: env(safe-area-inset-bottom, 0px); --tabs-h: calc(50px + var(--sab)); }
   .pn-glow { top: -280px; left: -155px; width: 700px; height: 460px; transform: none;
@@ -822,7 +823,8 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-stage .pn-head { margin-bottom: 36px; }
   /* Pantallas con lista propia (Inicio…): la lista hace scroll y Nora queda fija encima de las pestañas */
   .pn-stage:has(.pn-col > .pn-scroll) { overflow: hidden; }
-  .pn-col:has(> .pn-scroll) { height: 100%; min-height: 0; }
+  .pn-col:has(> .pn-scroll), .pn-col:has(> .pn-wscroll) { height: 100%; min-height: 0; }
+  .pn-stage:has(.pn-col > .pn-wscroll) { overflow: hidden; }
   .pn-col > .pn-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
   .pn-col > .pn-fade { display: block; bottom: 141px !important; }
   .pn-col > .pn-nora { padding-top: 45px; }
@@ -848,6 +850,12 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-ev-card:has(> .join) .txt { gap: 6px; }
   .pn .pn-ev-card .sb, .pn-seg { --f-ui: "Inter", -apple-system, sans-serif; }
   .pn .pn-ev-card .sb { font-family: var(--f-ui); white-space: normal; }
+  /* Semana (Figma 269:1211): se ven 3 días y el resto se desliza */
+  .pn-stage .pn-head.pn-head-cal:has(+ .pn-wscroll) { margin-bottom: 24px; }
+  .pn-wscroll { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; overscroll-behavior-x: contain; }
+  .pn-wscroll::-webkit-scrollbar { display: none; }
+  .pn-wdays, .pn-wallday { position: relative; top: auto; left: auto; right: auto; width: 800px; flex-shrink: 0; }
+  .pn-wgrid { position: relative !important; top: auto !important; left: auto; right: auto; height: auto !important; flex: 1 1 0; min-height: 0; width: 800px; margin-top: -8px; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
