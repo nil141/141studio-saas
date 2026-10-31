@@ -705,7 +705,7 @@ def api_push_unsubscribe(uid, body):
 def api_push_test(uid, body):
     if not _push_ready():
         return {"ok": False, "error": "Las notificaciones aún no están activadas en el servidor."}
-    n = _push_send(uid, "test", "Notificaciones activadas", "Así te llegarán los avisos del CRM.", "/", "test")
+    n = _push_send(uid, "test", "", "Notificaciones activadas\nAsí te llegarán los avisos del CRM.", "/", "test")
     return {"ok": n > 0, "sent": n, "error": None if n else "No se pudo enviar a ningún dispositivo."}
 
 PUSH_HANDLERS = {
