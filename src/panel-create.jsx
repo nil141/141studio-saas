@@ -431,14 +431,23 @@ const EventWin = ({ D, params, onClose, toast }) => {
   const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
   // Todo el día: el primer toque elige el primer día y el segundo (posterior) el último
   const pick = (y) => {
-    setCustom(false);
     if (allDay && anchor && y > date) { setDateEnd(y); setAnchor(false); return; }
     setDate(y); setDateEnd(null); setAnchor(allDay);
   };
   useEffect(() => { let ok = true; (async () => { try { const r = D.googleStatus ? await D.googleStatus() : null; if (ok) setGConn(!!(r && r.connected)); } catch (_) { if (ok) setGConn(false); } })(); return () => { ok = false; }; }, []);
   useEffect(() => { if (!custom) setTime(slots.length ? _hm(slots[0]) : null); }, [date]);
-  const start = custom ? cStart : time;
-  const end = custom ? cEnd : (time ? _hm(_mins(time) + 30) : "");
+  const sRef = useRef(null), eRef = useRef(null);
+  const _plus30 = (hm) => _hm(Math.min(_mins(hm) + 30, 23 * 60 + 59));
+  // Horas al guardar: en «Otra hora» se leen del propio campo, porque Safari no
+  // siempre avisa del cambio y el evento acababa guardándose como de todo el día.
+  const readTimes = () => {
+    if (allDay) return [null, null];
+    if (!custom) return time ? [time, _plus30(time)] : [null, null];
+    const s = (sRef.current && sRef.current.value) || cStart;
+    if (_mins(s) == null) return [null, null];
+    const e = (eRef.current && eRef.current.value) || cEnd;
+    return [s, _mins(e) != null && _mins(e) > _mins(s) ? e : _plus30(s)];
+  };
   const useMeet = !allDay && meet && gConn;
   const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
   const nDays = de ? Math.round((de - d) / 86400000) + 1 : 1;
@@ -447,16 +456,18 @@ const EventWin = ({ D, params, onClose, toast }) => {
     : `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}`;
   const submit = async () => {
     const t = title.trim(); if (!t || busy) return;
+    const [start, end] = readTimes();
+    if (!allDay && !start) { toast && toast("Pon la hora de inicio o elige «Todo el día»", "error"); return; }
     let link = null, gcalId = null;
     if (useMeet) {
       setBusy(true);
-      const r = await D.createMeet({ title: t, date, time: start || null, timeEnd: end || null, description: desc || null });
+      const r = await D.createMeet({ title: t, date, time: start, timeEnd: end, description: desc || null });
       setBusy(false);
       if (r && r.ok && r.meetLink) { link = r.meetLink; gcalId = r.eventId || null; }
       else { toast && toast((r && r.error) || "No se pudo crear el enlace de Meet", "error"); return; }
     }
     await D.addAgendaEvent({ title: t, date, dateEnd: allDay ? dateEnd : null, notes: desc || null,
-      time: allDay ? null : (start || null), timeEnd: allDay ? null : (end || null), link, gcalId, type: useMeet ? "meeting" : "custom" });
+      time: start, timeEnd: end, link, gcalId, type: useMeet ? "meeting" : "custom" });
     if (link) { try { await navigator.clipboard.writeText(link); toast && toast("Evento creado · enlace de Meet copiado", "success"); } catch (_) { toast && toast("Evento creado", "success"); } }
     else toast && toast("Evento creado", "success");
     onClose();
@@ -496,9 +507,9 @@ const EventWin = ({ D, params, onClose, toast }) => {
             {custom ? (
               <div className="sl on cu">
                 <PIcon name="r-clock14"/>
-                <input type="time" value={cStart} autoFocus onChange={e => { setCStart(e.target.value); if (!cEnd && _mins(e.target.value) != null) setCEnd(_hm(_mins(e.target.value) + 30)); }}/>
+                <input ref={sRef} type="time" value={cStart} autoFocus onChange={e => { setCStart(e.target.value); if (!cEnd && _mins(e.target.value) != null) setCEnd(_plus30(e.target.value)); }}/>
                 <span>–</span>
-                <input type="time" value={cEnd} onChange={e => setCEnd(e.target.value)}/>
+                <input ref={eRef} type="time" value={cEnd} onChange={e => setCEnd(e.target.value)}/>
               </div>
             ) : (
               <button type="button" className="sl other" onClick={() => setCustom(true)}><PIcon name="r-clock14"/><span>Otra hora</span></button>
