@@ -826,6 +826,14 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-col > .pn-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
   .pn-col > .pn-fade { display: block; bottom: 141px !important; }
   .pn-col > .pn-nora { padding-top: 45px; }
+  /* Tareas (Figma 269:818): la semana entera (7 días) cabe en 358 px */
+  .pn-stage .pn-head.pn-head-tasks { margin-bottom: 24px; }
+  .pn-head-tasks > .t-small { line-height: 19.6px !important; }
+  .pn-week { position: static; flex-shrink: 0; zoom: 0.9086; margin-bottom: 26.4px; }
+  .pn-task-txt .t-card-title { white-space: normal; }
+  .pn-task { --f-ui: "Inter", -apple-system, sans-serif; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
+@media (max-width: 380px) { .pn-week { zoom: 0.83; } }
+@media (max-width: 345px) { .pn-week { zoom: 0.78; } }
