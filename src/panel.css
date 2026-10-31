@@ -219,8 +219,6 @@ button.pn-aviso:hover, .pn-aviso.click:hover { background: #151515; }
 /* ── Calendario (166:68 · 167:2 · 167:327) ── */
 .pn-head.pn-head-cal { top: 100px; display: flex; align-items: flex-end; justify-content: space-between; }
 .pn-cal-ctl { display: flex; gap: 8px; align-items: center; padding-bottom: 6px; }
-.pn-cal-ttl { flex: 1 1 auto; min-width: 0; margin-right: 16px; }
-.pn-cal-ttl .t-h2 { white-space: nowrap; overflow: hidden; }
 .pn-seg { display: flex; gap: 2px; padding: 3.5px; background: var(--card); box-shadow: inset 0 0 0 0.5px var(--card-line); border-radius: 999px; }
 .pn-seg button { padding: 6px 12px; border-radius: 999px; font-family: var(--f-ui); font-size: 13px; line-height: 14px; color: var(--gray-400); transition: background .15s, color .15s; }
 .pn-seg button:hover { color: #b8b8b8; }
@@ -871,8 +869,6 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-task { --f-ui: "Inter", -apple-system, sans-serif; }
   /* Calendario (Figma 269:1008): controles debajo del título; «Unirse» bajo el texto */
   .pn-stage .pn-head.pn-head-cal { flex-direction: column; align-items: flex-start; gap: 14px; margin-bottom: 28px; }
-  .pn-cal-ttl { flex: none; margin-right: 0; }
-  .pn-cal-ttl .t-h2 { white-space: normal; }
   .pn-cal-ctl .pn-arrow, .pn-seg button { position: relative; }
   .pn-cal-ctl .pn-arrow::after, .pn-seg button::after { content: ""; position: absolute; inset: -6px; }
   .pn-cweek { position: static; flex-shrink: 0; margin-bottom: 28px; }

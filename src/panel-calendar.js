@@ -1,6 +1,6 @@
 (() => {
   (() => {
-    const { useState, useEffect, useLayoutEffect, useRef } = React;
+    const { useState, useEffect, useRef } = React;
     const PN = window.PN;
     PIcon.add({
       "chev-l": [14, `<path d="M8.74996 2.91675L4.66663 7.00008L8.74996 11.0834" stroke="currentColor" stroke-width="0.991667" stroke-linecap="round" stroke-linejoin="round"/>`],
@@ -173,23 +173,15 @@
       if (view === "day") {
         const k = (byDate[sel] || []).length;
         sub = `${PN.longDate(selD)} \xB7 ${plural(k, "evento")}${n === 0 ? " hoy" : ""}`;
-        title = n === 0 ? "de hoy" : n === 1 ? "de ma\xF1ana" : n === -1 ? "de ayer" : `del ${PN.DIAS[selD.getDay()]} ${selD.getDate()}`;
+        title = n === 0 ? "Hoy" : n === 1 ? "Ma\xF1ana" : n === -1 ? "Ayer" : `${PN.cap(PN.DIAS[selD.getDay()])} ${selD.getDate()}`;
       } else if (view === "week") {
         const sameM = mon.getMonth() === sun.getMonth();
         sub = `${mon.getDate()}${sameM ? "" : " de " + PN.MESES[mon.getMonth()]} \u2013 ${sun.getDate()} de ${PN.MESES[sun.getMonth()]} \xB7 ${plural(_uniq(weekEvents), "evento")}`;
-        title = curWeek ? "de la semana" : wDiff === 1 ? "de la pr\xF3xima semana" : wDiff === -1 ? "de la semana pasada" : `del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
+        title = curWeek ? "Esta semana" : wDiff === 1 ? "Pr\xF3xima semana" : wDiff === -1 ? "Semana pasada" : `Semana del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`;
       } else {
         sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} \xB7 ${plural(_uniq(monthEvents), "evento")} este mes`;
-        title = `de ${PN.MESES[selD.getMonth()]}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
+        title = `${PN.cap(PN.MESES[selD.getMonth()])}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
       }
-      const h1Ref = useRef(null);
-      useLayoutEffect(() => {
-        const h = h1Ref.current;
-        if (!h) return;
-        h.style.fontSize = "";
-        if (getComputedStyle(h).whiteSpace !== "nowrap" || h.scrollWidth <= h.clientWidth) return;
-        h.style.fontSize = Math.max(28, Math.floor(parseFloat(getComputedStyle(h).fontSize) * h.clientWidth / h.scrollWidth)) + "px";
-      });
       const DayView = () => {
         const week = Array.from({ length: 7 }, (_, i) => _addDays(mon, i));
         const list = byDate[sel] || [];
@@ -316,7 +308,7 @@
       };
       const nextMonthName = PN.MESES[(selD.getMonth() + 1) % 12];
       const sug = view === "day" ? [["Nuevo evento", () => openModal("newEvent", { date: sel })], ["\xBFQu\xE9 tengo esta semana?", () => ask("\xBFQu\xE9 tengo esta semana en el calendario?")], ["Buscar hueco libre", () => ask(`Busca un hueco libre ${PN.relDay(sel)} para una reuni\xF3n`)]] : view === "week" ? [["Nuevo evento", () => openModal("newEvent", { date: sel })], ["Buscar hueco libre", () => ask(`Busca un hueco libre la semana del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`)], ["Resumen de la semana", () => ask(`Hazme un resumen de mi semana del ${mon.getDate()} de ${PN.MESES[mon.getMonth()]}`)]] : [["Nuevo evento", () => openModal("newEvent", { date: sel })], ["\xBFQu\xE9 entregas hay este mes?", () => ask(`\xBFQu\xE9 entregas tengo en ${PN.MESES[selD.getMonth()]}?`)], [`Planificar ${nextMonthName}`, () => ask(`Ay\xFAdame a planificar ${nextMonthName}`)]];
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-stage" }, /* @__PURE__ */ React.createElement("div", { className: "pn-col" }, /* @__PURE__ */ React.createElement("div", { className: "pn-head pn-head-cal" }, /* @__PURE__ */ React.createElement("div", { className: "pn-cal-ttl" }, /* @__PURE__ */ React.createElement("p", { className: "t-small", style: { color: "var(--gray-400)", lineHeight: "20px" } }, sub), /* @__PURE__ */ React.createElement("h1", { ref: h1Ref, className: "t-h2", style: { margin: "10px 0 0", color: "var(--ink-900)" } }, "Calendario ", title)), /* @__PURE__ */ React.createElement("div", { className: "pn-cal-ctl" }, /* @__PURE__ */ React.createElement("div", { className: "pn-seg" }, [["day", "D\xEDa"], ["week", "Semana"], ["month", "Mes"]].map(([v, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: view === v ? "on" : "", onClick: () => setView(v) }, l))), /* @__PURE__ */ React.createElement("button", { className: "pn-arrow", "aria-label": "Anterior", onClick: () => shift(-1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "chev-l" })), /* @__PURE__ */ React.createElement("button", { className: "pn-arrow", "aria-label": "Siguiente", onClick: () => shift(1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "chev-r" })))), view === "day" ? DayView() : view === "week" ? WeekView() : MonthView(), /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-stage" }, /* @__PURE__ */ React.createElement("div", { className: "pn-col" }, /* @__PURE__ */ React.createElement("div", { className: "pn-head pn-head-cal" }, /* @__PURE__ */ React.createElement("div", null, /* @__PURE__ */ React.createElement("p", { className: "t-small", style: { color: "var(--gray-400)", lineHeight: "20px" } }, sub), /* @__PURE__ */ React.createElement("h1", { className: "t-h2", style: { margin: "10px 0 0", color: "var(--ink-900)" } }, title)), /* @__PURE__ */ React.createElement("div", { className: "pn-cal-ctl" }, /* @__PURE__ */ React.createElement("div", { className: "pn-seg" }, [["day", "D\xEDa"], ["week", "Semana"], ["month", "Mes"]].map(([v, l]) => /* @__PURE__ */ React.createElement("button", { key: v, className: view === v ? "on" : "", onClick: () => setView(v) }, l))), /* @__PURE__ */ React.createElement("button", { className: "pn-arrow", "aria-label": "Anterior", onClick: () => shift(-1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "chev-l" })), /* @__PURE__ */ React.createElement("button", { className: "pn-arrow", "aria-label": "Siguiente", onClick: () => shift(1) }, /* @__PURE__ */ React.createElement(PIcon, { name: "chev-r" })))), view === "day" ? DayView() : view === "week" ? WeekView() : MonthView(), /* @__PURE__ */ React.createElement(
         PN.NoraBox,
         {
           navigate,
