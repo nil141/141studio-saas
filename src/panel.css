@@ -900,6 +900,19 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-proj .nm, .pn .pn-proj .cl { flex-shrink: 0; max-width: 100%; }
   .pn-proj { --f-ui: "Inter", -apple-system, sans-serif; }
   .pn .pn-proj .cl, .pn .pn-proj .nx, .pn .pn-proj .ct { font-family: var(--f-ui); }
+  /* Ficha de proyecto (Figma 269:2138): icono y nombre arriba, botones en la línea de abajo */
+  .pn-stage .pn-head:has(.pn-phead) { margin-bottom: 18px; }
+  .pn-phead { flex-wrap: wrap; gap: 12px 18px; }
+  .pn-phead .nm { flex: 1 0 calc(100% - 82px); white-space: normal; }
+  .pn-phead h1 { overflow: visible; }
+  .pn .pn-phead .sb { overflow: visible; }
+  .pn-rbtn, .pn-wbtn { position: relative; }
+  .pn-rbtn::after, .pn-wbtn::after { content: ""; position: absolute; inset: -6px -4px; }
+  .pn-pcard .txt { white-space: normal; }
+  .pn-pcard .dl .d { white-space: normal; width: 0; min-width: 100%; text-align: right; }
+  .pn-ptask .txt { white-space: normal; }
+  .pn-pcard .div { width: 0.5px; background: rgba(255,255,255,0.08); }
+  .pn-pcard .sb, .pn-ptask .sb, .pn-phead .sb, .pn-ptask .wh, .pn-ptask .tag { font-family: "Inter", -apple-system, sans-serif !important; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
