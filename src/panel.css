@@ -1006,6 +1006,24 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-toggle::after { content: ""; position: absolute; inset: -13px -7px; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
+  /* Ventanas de crear (Figma 269:3083…): hoja inferior con asa, sin atajos de teclado */
+  .pn-win-bg { align-items: flex-end; background: rgba(0,0,0,0.6); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .pn-win { animation: pnSheetUp .32s cubic-bezier(.32,.72,0,1); width: 100% !important; max-width: none; max-height: calc(100% - 56px); border-radius: 24px 24px 0 0; padding-bottom: 24px;
+    box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.09), inset 0 1px 0 rgba(255,255,255,0.06), 0 30px 80px rgba(0,0,0,0.7); }
+  .pn-win > .pn-bs-grab { position: absolute; top: 8px; left: 50%; margin: 0 0 0 -18px; }
+  .pn-win .bar { padding: 18px 16px 0 24px; }
+  .pn-win .bar .esc, .pn-win .go .kb { display: none; }
+  .pn-win .bar .x { position: relative; }
+  .pn-win .bar .x::after { content: ""; position: absolute; inset: -8px; }
+  .pn-win .body { flex: 1 1 auto; min-height: 0; overflow-y: auto; scrollbar-width: none; padding: 18px 24px 22px; }
+  .pn-win .body::-webkit-scrollbar { display: none; }
+  .pn-win .foot { flex-wrap: wrap; gap: 6px 10px; padding: 14px 16px 14px 24px; border-radius: 0; }
+  .pn-win .cancel, .pn-win .go { position: relative; }
+  .pn-win .go::after, .pn-win .cancel::after { content: ""; position: absolute; inset: -6px 0; }
+  /* Hojas secundarias (Bandeja, Integraciones) también suben desde abajo */
+  .pn-sheet-bg { align-items: flex-end; padding: 0; background: rgba(0,0,0,0.6); -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .pn-sheet { position: relative; max-width: none !important; max-height: calc(100% - 56px); padding: 30px 20px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 24px 24px 0 0; animation: pnSheetUp .32s cubic-bezier(.32,.72,0,1); }
+  .pn-sheet::before { content: ""; position: absolute; top: 8px; left: 50%; width: 36px; height: 5px; margin-left: -18px; border-radius: 3px; background: rgba(255,255,255,0.25); }
 }
 @media (max-width: 380px) { .pn-week { zoom: 0.83; } }
 @media (max-width: 345px) { .pn-week { zoom: 0.78; } }
