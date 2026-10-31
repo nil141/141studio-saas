@@ -856,6 +856,17 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-wscroll::-webkit-scrollbar { display: none; }
   .pn-wdays, .pn-wallday { position: relative; top: auto; left: auto; right: auto; width: 800px; flex-shrink: 0; }
   .pn-wgrid { position: relative !important; top: auto !important; left: auto; right: auto; height: auto !important; flex: 1 1 0; min-height: 0; width: 800px; margin-top: -8px; }
+  /* Mes (Figma 269:1402): rejilla de 7 columnas; cada evento es un punto */
+  .pn-stage .pn-head.pn-head-cal:has(+ .pn-mhead) { margin-bottom: 24px; }
+  .pn-mhead { position: relative; top: auto; height: 24px; flex-shrink: 0; --mh-off: 5.37px; }
+  .pn-mhead span { top: 2px; line-height: normal; }
+  .pn-month { position: relative; top: auto; flex-shrink: 0; }
+  .pn-month .vl { width: 0.5px; background: rgba(255,255,255,0.06); }
+  .pn-month .hl { height: 0.5px; background: rgba(255,255,255,0.06); }
+  .pn-mcell { flex-direction: row; flex-wrap: wrap; align-content: flex-start; column-gap: 4px; row-gap: 4px; }
+  .pn-mcell .num { margin-right: calc(100% - 24px); line-height: normal; }
+  .pn-mev { width: 4px; height: 5px; padding: 0; background: none; border-radius: 0; gap: 0; align-items: flex-end; }
+  .pn-mev span, .pn-mcell .more { display: none; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
