@@ -950,6 +950,22 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-tsel { align-self: stretch; }
   .pn-tsel button { position: relative; }
   .pn-tsel button::after { content: ""; position: absolute; inset: -10px -1px; }
+  /* Integraciones (Figma 269:2849): estado debajo del nombre y Gestionar/Conectar a la derecha */
+  .pn-arow .top { display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; column-gap: 14px; row-gap: 6px; align-items: center; }
+  .pn-arow .top > .ic { grid-row: 1 / span 2; }
+  .pn-arow .top > .txt { grid-column: 2; grid-row: 1; }
+  .pn-arow .top:not(:has(> .pn-conn)) > .txt { grid-row: 1 / span 2; }
+  .pn-arow .top > .pn-conn { grid-column: 2; grid-row: 2; justify-self: start; }
+  .pn-arow .top > .pn-gbtn, .pn-arow .top > .pn-cbtn { grid-column: 3; grid-row: 1 / span 2; }
+  .pn-arow .top > .pn-xchev { grid-column: 4; grid-row: 1 / span 2; margin-left: -4px; }
+  .pn-arow .uses { flex-wrap: wrap; row-gap: 6px; white-space: normal; }
+  .pn-arow .pn-uchip { white-space: nowrap; }
+  .pn-arow .opts { padding-left: 68.5px; }
+  .pn-arow .opt p { white-space: normal; }
+  .pn .pn-pintro { font-family: "Inter", -apple-system, sans-serif; }
+  .pn-arow .pn-gbtn, .pn-arow .pn-cbtn, .pn-xchev { position: relative; }
+  .pn-arow .pn-gbtn::after, .pn-arow .pn-cbtn::after { content: ""; position: absolute; inset: -8px -2px; }
+  .pn-xchev::after { content: ""; position: absolute; inset: -14px; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
