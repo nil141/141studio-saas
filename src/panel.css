@@ -916,6 +916,14 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   /* Clientes (Figma 269:2293): la línea de proyecto salta de línea */
   .pn .pn-cli .sb { white-space: normal; font-family: "Inter", -apple-system, sans-serif; }
   .pn .pn-cli .cl { font-family: "Inter", -apple-system, sans-serif; }
+  /* Ficha de cliente (Figma 269:2446): datos en rejilla 2 + 1 y actividad en varias líneas */
+  .pn-stats { flex-wrap: wrap; }
+  .pn-stats .st { flex: 1 0 calc(50% - 5px); white-space: normal; }
+  .pn-stats .st:nth-child(3) { flex-basis: 100%; }
+  .pn-stats .v { white-space: nowrap; }
+  .pn-actrow .txt { flex-wrap: wrap; row-gap: 0; }
+  .pn .pn-actrow .sb { max-width: 100%; }
+  .pn .pn-stats .s, .pn .pn-actrow .sb, .pn .pn-actrow .dt, .pn .pn-stats .l { font-family: "Inter", -apple-system, sans-serif; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
