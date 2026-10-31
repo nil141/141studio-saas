@@ -823,8 +823,8 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-stage .pn-head { margin-bottom: 36px; }
   /* Pantallas con lista propia (Inicio…): la lista hace scroll y Nora queda fija encima de las pestañas */
   .pn-stage:has(.pn-col > .pn-scroll) { overflow: hidden; }
-  .pn-col:has(> .pn-scroll), .pn-col:has(> .pn-wscroll) { height: 100%; min-height: 0; }
-  .pn-stage:has(.pn-col > .pn-wscroll) { overflow: hidden; }
+  .pn-col:has(> .pn-scroll), .pn-col:has(> .pn-wscroll), .pn-col:has(> .pn-thread) { height: 100%; min-height: 0; }
+  .pn-stage:has(.pn-col > .pn-wscroll), .pn-stage:has(.pn-col > .pn-thread) { overflow: hidden; }
   .pn-col > .pn-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
   .pn-col:has(> .pn-nora) > .pn-fade { display: block; bottom: 141px !important; }
   /* Sin Nora (Bandeja…): la lista pasa por debajo de las pestañas */
@@ -880,6 +880,20 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-conv { --f-ui: "Inter", -apple-system, sans-serif; }
   .pn .pn-conv .pv, .pn .pn-conv .tm, .pn-chan { font-family: var(--f-ui); }
   .pn-chan { --f-ui: "Inter", -apple-system, sans-serif; }
+  /* Conversación (Figma 269:1853): burbujas de hasta el 80 % y el hilo entre cabecera y respuesta */
+  .pn-stage .pn-head:has(.pn-thead) { margin-bottom: 32px; }
+  .pn-back { position: relative; align-self: flex-start; }
+  .pn-back::after { content: ""; position: absolute; inset: -12px -8px; }
+  .pn-thead .nmrow { flex-wrap: wrap; row-gap: 6px; }
+  .pn-thead .nm { line-height: 28px; }
+  .pn .pn-thead .sb { white-space: normal; }
+  .pn-app.big .pn-badge { left: 30px; top: 30px; width: 21px; height: 21px; border-radius: 10.5px; }
+  .pn-ibtn { position: relative; }
+  .pn-ibtn::after { content: ""; position: absolute; inset: -3px; }
+  .pn-thread { position: static; flex: 1 1 0; min-height: 0; }
+  .pn-thread + .pn-nora { padding-top: 12px; }
+  .pn-msg .bub { max-width: 80%; }
+  .pn .pn-msg .bd, .pn .pn-thead .sb { font-family: "Inter", -apple-system, sans-serif; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
