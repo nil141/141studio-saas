@@ -2,7 +2,7 @@
 // Mismas fuentes que la agenda anterior: eventos propios (y los de Google
 // Calendar sincronizados), entregas de proyectos y vencimientos de facturas.
 (() => {
-const { useState, useEffect, useRef } = React;
+const { useState, useEffect, useLayoutEffect, useRef } = React;
 const PN = window.PN;
 
 PIcon.add({
@@ -136,6 +136,16 @@ const PanelCalendar = ({ navigate, openModal }) => {
     sub = `${thisMonth ? PN.longDate(now) : PN.cap(PN.MESES[selD.getMonth()]) + " de " + selD.getFullYear()} · ${plural(_uniq(monthEvents), "evento")} este mes`;
     title = `de ${PN.MESES[selD.getMonth()]}${selD.getFullYear() !== now.getFullYear() ? " " + selD.getFullYear() : ""}`;
   }
+
+  // Escritorio: el título va en una línea al lado de los controles; si no cabe
+  // («Calendario de la próxima semana»…) se reduce la letra lo justo.
+  const h1Ref = useRef(null);
+  useLayoutEffect(() => {
+    const h = h1Ref.current; if (!h) return;
+    h.style.fontSize = "";
+    if (getComputedStyle(h).whiteSpace !== "nowrap" || h.scrollWidth <= h.clientWidth) return;
+    h.style.fontSize = Math.max(28, Math.floor(parseFloat(getComputedStyle(h).fontSize) * h.clientWidth / h.scrollWidth)) + "px";
+  });
 
   // ── Vista día ──
   const DayView = () => {
@@ -342,9 +352,9 @@ const PanelCalendar = ({ navigate, openModal }) => {
     <div className="pn-stage">
       <div className="pn-col">
         <div className="pn-head pn-head-cal">
-          <div>
+          <div className="pn-cal-ttl">
             <p className="t-small" style={{ color: "var(--gray-400)", lineHeight: "20px" }}>{sub}</p>
-            <h1 className="t-h2" style={{ margin: "10px 0 0", color: "var(--ink-900)" }}>Calendario {title}</h1>
+            <h1 ref={h1Ref} className="t-h2" style={{ margin: "10px 0 0", color: "var(--ink-900)" }}>Calendario {title}</h1>
           </div>
           <div className="pn-cal-ctl">
             <div className="pn-seg">
