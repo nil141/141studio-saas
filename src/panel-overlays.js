@@ -62,6 +62,7 @@
     const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
       const ref = useRef(null);
       useDismiss(ref, onClose, ".pn-act");
+      PN.useSheetSwipe(ref, onClose);
       const items = createItems(navigate, openModal);
       const acts = items.filter((i) => !i.sep);
       const [hi, setHi] = useState(0);
@@ -90,7 +91,7 @@
         window.addEventListener("keydown", key);
         return () => window.removeEventListener("keydown", key);
       }, []);
-      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "Crear"), items.map((it, i) => it.sep ? /* @__PURE__ */ React.createElement("div", { key: "s" + i, className: "sep" }) : /* @__PURE__ */ React.createElement(
+      return /* @__PURE__ */ React.createElement("div", { className: "pn-cmenu", ref, role: "menu" }, /* @__PURE__ */ React.createElement("div", { className: "pn-bs-grab" }), /* @__PURE__ */ React.createElement("p", { className: "t-caption ttl" }, "Crear"), items.map((it, i) => it.sep ? /* @__PURE__ */ React.createElement("div", { key: "s" + i, className: "sep" }) : /* @__PURE__ */ React.createElement(
         "button",
         {
           key: it.k,

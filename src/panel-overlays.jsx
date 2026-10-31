@@ -62,6 +62,7 @@ const useDismiss = (ref, onClose, ignore) => {
 const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
   const ref = useRef(null);
   useDismiss(ref, onClose, ".pn-act");
+  PN.useSheetSwipe(ref, onClose);
   const items = createItems(navigate, openModal);
   const acts = items.filter(i => !i.sep);
   const [hi, setHi] = useState(0);
@@ -77,6 +78,7 @@ const PanelCreateMenu = ({ navigate, openModal, onClose }) => {
   }, []);
   return (
     <div className="pn-cmenu" ref={ref} role="menu">
+      <div className="pn-bs-grab"/>
       <p className="t-caption ttl">Crear</p>
       {items.map((it, i) => it.sep
         ? <div key={"s" + i} className="sep"/>

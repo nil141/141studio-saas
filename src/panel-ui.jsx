@@ -204,31 +204,39 @@ const BottomSheet = ({ onClose, children, className }) => {
     </div>, document.body);
 };
 
-// "Más" en el móvil: Proyectos, Clientes, Perfil y las apps
-const MoreSheet = ({ view, navigate, onClose }) => {
+// "Más" en el móvil: Proyectos, Clientes, Perfil y las apps (hoja inferior)
+const MoreSheet = ({ view, navigate, onClose, me }) => {
+  const ref = useRef(null);
   const cur = _navOf(view.name);
+  useSheetSwipe(ref, onClose);
+  useEffect(() => {
+    const down = (e) => { if (ref.current && !ref.current.contains(e.target) && !(e.target.closest && e.target.closest(".pn-tab"))) onClose(); };
+    document.addEventListener("mousedown", down);
+    return () => document.removeEventListener("mousedown", down);
+  }, []);
   const go = (it) => { onClose(); if (it.href) window.open(it.href, "_blank", "noopener"); else navigate(it.id); };
-  const rows = MORE.concat([{ id: "settings", icon: "users", label: "Perfil", me: true }]);
   return (
-    <BottomSheet onClose={onClose} className="pn-more-bs">
-      <div className="pn-cmenu pn-more-menu">
-        <p className="t-caption ttl">Más</p>
-        {rows.map(it => (
-          <button key={it.id} className={"it" + (cur === it.id ? " on" : "")} onClick={() => go(it)}>
-            {it.me ? <span className="pn-more-me">·</span> : <PIcon name={it.icon} size={16}/>}
-            <span className="t-small lb">{it.label}</span>
-          </button>
-        ))}
-        <div className="sep"/>
-        <p className="t-caption ttl">Apps</p>
-        {APPS.map(a => (
-          <button key={a.id} className={"it" + (cur === a.id ? " on" : "")} onClick={() => go(a)}>
-            <PIcon name="apps" size={16}/>
-            <span className="t-small lb">{a.label}</span>
-          </button>
-        ))}
-      </div>
-    </BottomSheet>
+    <div className="pn-cmenu pn-more-menu" ref={ref} role="menu">
+      <div className="pn-bs-grab"/>
+      <p className="t-caption ttl">Más</p>
+      {MORE.map(it => (
+        <button key={it.id} className={"it" + (cur === it.id ? " on" : "")} onClick={() => go(it)}>
+          <PIcon name={it.icon} size={16}/>
+          <span className="t-small lb">{it.label}</span>
+        </button>
+      ))}
+      <button className={"it" + (view.name === "settings" ? " on" : "")} onClick={() => go({ id: "settings" })}>
+        <span className="pn-more-me">{initials(me)}</span>
+        <span className="t-small lb">Perfil</span>
+      </button>
+      <div className="sep"/>
+      {APPS.map(a => (
+        <button key={a.id} className={"it" + (cur === a.id ? " on" : "")} onClick={() => go(a)}>
+          <PIcon name="apps" size={16}/>
+          <span className="t-small lb">{a.label}</span>
+        </button>
+      ))}
+    </div>
   );
 };
 
@@ -280,7 +288,7 @@ const PanelShell = ({ view, navigate, openModal, session, modalOpen, children })
       </div>}
       {children}
       <MobileTabs view={view} navigate={navigate} moreOpen={pop === "more"} onMore={() => toggle("more")}/>
-      {pop === "more" && <MoreSheet view={view} navigate={navigate} onClose={() => setPop(null)}/>}
+      {pop === "more" && <MoreSheet view={view} navigate={navigate} me={me} onClose={() => setPop(null)}/>}
       {pop === "create" && window.PanelCreateMenu && <window.PanelCreateMenu navigate={navigate} openModal={openModal} onClose={() => setPop(null)}/>}
       {pop === "notifs" && N && window.PanelNotifs && <window.PanelNotifs navigate={navigate} openModal={openModal} N={N} onClose={() => setPop(null)}/>}
       <Tip/>
