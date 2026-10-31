@@ -826,7 +826,10 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-col:has(> .pn-scroll), .pn-col:has(> .pn-wscroll) { height: 100%; min-height: 0; }
   .pn-stage:has(.pn-col > .pn-wscroll) { overflow: hidden; }
   .pn-col > .pn-scroll { flex: 1 1 0; min-height: 0; overflow-y: auto; }
-  .pn-col > .pn-fade { display: block; bottom: 141px !important; }
+  .pn-col:has(> .pn-nora) > .pn-fade { display: block; bottom: 141px !important; }
+  /* Sin Nora (Bandeja…): la lista pasa por debajo de las pestañas */
+  .pn-stage:not(:has(.pn-nora)) { padding-bottom: 0; }
+  .pn-col:not(:has(> .pn-nora)) > .pn-scroll > div { padding-bottom: calc(var(--tabs-h) + 24px); }
   .pn-col > .pn-nora { padding-top: 45px; }
   /* Tareas (Figma 269:818): la semana entera (7 días) cabe en 358 px */
   .pn-stage .pn-head.pn-head-tasks { margin-bottom: 24px; }
@@ -867,6 +870,16 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-mcell .num { margin-right: calc(100% - 24px); line-height: normal; }
   .pn-mev { width: 4px; height: 5px; padding: 0; background: none; border-radius: 0; gap: 0; align-items: flex-end; }
   .pn-mev span, .pn-mcell .more { display: none; }
+  /* Bandeja (Figma 269:1688): plataformas que se deslizan, vista previa en dos líneas */
+  .pn-stage .pn-head:has(.pn-chans) { margin-bottom: 32px; }
+  .pn-chans { overflow-x: auto; scrollbar-width: none; flex-wrap: nowrap; }
+  .pn-chans::-webkit-scrollbar { display: none; }
+  .pn-chan { flex-shrink: 0; position: relative; }
+  .pn-chan::after { content: ""; position: absolute; inset: -8px -2px; }
+  .pn .pn-conv .pv { white-space: normal; }
+  .pn-conv { --f-ui: "Inter", -apple-system, sans-serif; }
+  .pn .pn-conv .pv, .pn .pn-conv .tm, .pn-chan { font-family: var(--f-ui); }
+  .pn-chan { --f-ui: "Inter", -apple-system, sans-serif; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
