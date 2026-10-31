@@ -140,6 +140,30 @@
     .auth-page { overflow-y: auto !important; min-height: 100dvh !important; }
     .auth-container { padding: 0 16px !important; max-width: 100% !important; }
   }
+  /* Inicio de sesión en el móvil (Figma 269:37): formulario centrado a 32 px de los lados */
+  .al-m { display: none; }
+  @media (max-width: 768px) {
+    .al-d { display: none !important; }
+    .auth-page { padding: 0 32px 47px !important; background: #0a0a0a !important; }
+    .auth-container { padding: 0 !important; max-width: 100% !important; }
+    .al-m { display: block; }
+    .al-logo { width: 164px; height: 26px; margin: 0 auto 28px; object-fit: contain; }
+    .al-pw { position: relative; }
+    .auth-input { height: 48px !important; margin-bottom: 10px !important; padding: 13px 16px !important; border-radius: 14px !important;
+      background: #111 !important; border: 0.5px solid rgba(255,255,255,0.06) !important; box-shadow: none !important;
+      font-family: "Inter", -apple-system, sans-serif !important; font-size: 15px !important; line-height: 21px; letter-spacing: -0.075px; }
+    .al-pw .auth-input { margin-bottom: 16px !important; padding-right: 42px !important; }
+    .auth-input::placeholder { color: #7a7a7a; }
+    .auth-input:focus { border-color: rgba(255,255,255,0.18) !important; box-shadow: none !important; }
+    .al-eye { position: absolute; right: 6px; top: 6px; width: 36px; height: 36px; display: flex !important; align-items: center; justify-content: center;
+      background: none; border: 0; padding: 0; color: #808080; cursor: pointer; }
+    .al-eye::after { content: ""; position: absolute; inset: -4px; }
+    .auth-btn { height: 43px !important; border-radius: 14px !important; background: #f5f5f5 !important; border: 0 !important; box-shadow: none !important;
+      color: #0a0a0a !important; font-family: "Inter", -apple-system, sans-serif !important; font-weight: 500 !important; font-size: 14px !important; letter-spacing: -0.14px !important; }
+    .auth-btn:disabled { opacity: 1; }
+    .al-forgot { margin-top: 8px; text-align: center; font-family: "Inter", -apple-system, sans-serif; font-size: 14px; line-height: 19.6px;
+      letter-spacing: -0.07px; color: #7a7a7a; text-decoration: none; padding: 12px 0; margin-bottom: -12px; }
+  }
 
   /* scrollbar — oculta en toda la app (el desplazamiento sigue funcionando) */
   * { scrollbar-width: none; -ms-overflow-style: none; }
@@ -1279,17 +1303,20 @@
     if (!hasSession && sessionStorage.getItem(SK)) hasSession = true;
   } catch(e) {}
   if (!hasSession) {
+    var nm = false; try { nm = window.matchMedia('(max-width: 768px)').matches; } catch(e) {}
     document.getElementById('root').innerHTML =
       '<div class="auth-page" style="min-height:100dvh;display:flex;align-items:center;justify-content:center;background:#0a0a0a;padding:24px 16px;overflow-y:auto">' +
         '<div class="auth-container" style="width:100%;max-width:384px">' +
           '<form style="display:flex;flex-direction:column">' +
-            '<h1 style="font-size:30px;font-weight:400;line-height:36px;margin:0 0 8px;text-align:center;letter-spacing:-0.96px;color:#fff;font-family:var(--font-display)">Inicia sesión.</h1>' +
-            '<div style="font-size:14px;margin-bottom:32px;text-align:center;color:#999">Accede con tus credenciales.</div>' +
-            '<input class="auth-input" type="email" placeholder="tu@empresa.com" style="margin-bottom:16px">' +
-            '<input class="auth-input" type="password" placeholder="••••••••">' +
-            '<button type="submit" class="btn full auth-btn" disabled style="height:49px;font-size:15px;font-weight:400;border-radius:16px;background:rgba(130,119,219,0.25);border:1px solid rgb(130,119,219);color:rgb(130,119,219);letter-spacing:-0.96px;box-shadow:rgba(130,119,219,0.267) 0 0 20px 0">Entrar</button>' +
+            '<img class="al-m al-logo" src="/wordmark.svg" alt="">' +
+            '<h1 class="al-d" style="font-size:30px;font-weight:400;line-height:36px;margin:0 0 8px;text-align:center;letter-spacing:-0.96px;color:#fff;font-family:var(--font-display)">Inicia sesión.</h1>' +
+            '<div class="al-d" style="font-size:14px;margin-bottom:32px;text-align:center;color:#999">Accede con tus credenciales.</div>' +
+            '<input class="auth-input" type="email" placeholder="' + (nm ? 'Email' : 'tu@empresa.com') + '" style="margin-bottom:16px">' +
+            '<div class="al-pw"><input class="auth-input" type="password" placeholder="' + (nm ? 'Contraseña' : '••••••••') + '"></div>' +
+            '<button type="submit" class="btn full auth-btn" disabled style="height:49px;font-size:15px;font-weight:400;border-radius:16px;background:rgba(130,119,219,0.25);border:1px solid rgb(130,119,219);color:rgb(130,119,219);letter-spacing:-0.96px;box-shadow:rgba(130,119,219,0.267) 0 0 20px 0">' + (nm ? 'Iniciar sesión' : 'Entrar') + '</button>' +
+            '<a class="al-m al-forgot">¿Has olvidado la contraseña?</a>' +
           '</form>' +
-          '<div style="text-align:center;margin-top:32px;font-size:11px;color:#555">© <a href="https://141agency.com/" target="_blank" style="color:inherit;text-decoration:none">141’DIGITAL</a> · nil@141agency.com</div>' +
+          '<div class="al-d" style="text-align:center;margin-top:32px;font-size:11px;color:#555">© <a href="https://141agency.com/" target="_blank" style="color:inherit;text-decoration:none">141’DIGITAL</a> · nil@141agency.com</div>' +
         '</div>' +
       '</div>';
   }
@@ -1304,7 +1331,7 @@
 <script src="src/icons.js?v=17"></script>
 <script src="src/data.js?v=80"></script>
 <script src="src/primitives.js?v=104"></script>
-<script src="src/auth.js?v=3"></script>
+<script src="src/auth.js?v=4"></script>
 <script src="src/push.js?v=2"></script>
 <script src="src/z-modals.js?v=15"></script>
 <script src="src/z-app.js?v=60"></script>
