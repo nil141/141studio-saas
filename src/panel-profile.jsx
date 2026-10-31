@@ -86,6 +86,38 @@ const Toggle = ({ on, onChange, small }) => (
     disabled={!onChange} onClick={onChange ? () => onChange(!on) : undefined}><i/></button>
 );
 
+// Pestaña Notificaciones: avisos push en este dispositivo (ver push.jsx)
+const NotifTab = () => {
+  const P = window.PushKit.usePush();
+  const st = P.state;
+  const can = st === "off" || st === "on";
+  return (
+    <>
+      <p className="t-small pn-pintro">Recibe los avisos del CRM como notificaciones del móvil o del ordenador, también con la app cerrada.</p>
+      <div className="pn-datos">
+        <div className="pn-dato pn-push">
+          <div className="lb"><PIcon name="bell15"/><span>Este dispositivo</span></div>
+          <p className={"v" + (st === "on" ? "" : " ph")} style={{ whiteSpace: "normal" }}>{st === null ? "Comprobando…" : window.PushKit.pushHelp(st, P.isIOS)}</p>
+          {st === "on" && <button className="pn-gbtn" disabled={P.busy} onClick={P.test}>Probar</button>}
+          {st === "on" && <button className="pn-gbtn" disabled={P.busy} onClick={P.disable}>Desactivar</button>}
+          {st === "off" && <button className="pn-cbtn lg" disabled={P.busy} onClick={P.enable}>{P.busy ? "Activando…" : "Activar"}</button>}
+        </div>
+      </div>
+      {P.msg && <p className="t-small" style={{ color: "var(--gray-400)", margin: "10px 2px 0" }}>{P.msg}</p>}
+      <p className="t-small pn-psec">Qué te avisa</p>
+      <div className="pn-datos">
+        {P.kinds.map(k => (
+          <div key={k.k} className="pn-dato" style={{ opacity: can ? 1 : 0.5 }}>
+            <div className="lb" style={{ width: 230 }}><span style={{ color: "var(--ink-900)", fontWeight: 500 }}>{k.label}</span></div>
+            <p className="v ph" style={{ fontWeight: 400 }}>{k.sub}</p>
+            <Toggle on={P.prefs[k.k]} small onChange={can ? (v) => P.setPref(k.k, v) : undefined}/>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
 const PanelProfile = ({ navigate, session, theme, setTheme }) => {
   const D = window.Data;
   D.useStore();
@@ -307,7 +339,7 @@ const PanelProfile = ({ navigate, session, theme, setTheme }) => {
           {tab === "profile" && ProfileTab()}
           {tab === "apps" && AppsTab()}
           {tab === "team" && <SoonTab t="Solo estás tú" d="Cuando invites a alguien de tu equipo aparecerá aquí."/>}
-          {tab === "notif" && <SoonTab t="Sin ajustes de avisos todavía" d="Los avisos llegan a la campana y a Inicio."/>}
+          {tab === "notif" && (window.PushKit ? <NotifTab/> : <SoonTab t="Sin ajustes de avisos todavía" d="Los avisos llegan a la campana y a Inicio."/>)}
           {tab === "plan" && <SoonTab t="Sin plan que mostrar" d="Aquí verás tu plan y tus facturas de 141'Digital."/>}
         </div>
       </div>

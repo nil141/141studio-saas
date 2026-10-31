@@ -2217,6 +2217,8 @@ const SettingsPage = () => {
           </div>
         </div>
 
+        {window.PushSettingsCard ? <window.PushSettingsCard/> : null}
+
         <DriveCard/>
 
         <SessionCard/>

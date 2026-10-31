@@ -1,1 +1,5 @@
-# 141'STUDIO — Python stdlib only, no external dependencies
+# 141'STUDIO — casi todo es Python estándar. Extras:
+#   pywebpush: enviar notificaciones push (como de app) a los móviles/ordenadores
+#   tzdata:    zona horaria Europe/Madrid para los recordatorios
+pywebpush==2.5.0
+tzdata==2026.6
