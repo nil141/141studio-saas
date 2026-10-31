@@ -4,8 +4,8 @@
     const PREFS_KEY = "141_push_prefs";
     const KINDS = [
       { k: "clients", label: "Avisos de clientes", sub: "Completan una tarea, te dan un acceso, actualizan sus datos\u2026" },
-      { k: "events", label: "Recordatorios de eventos", sub: "15 min antes; los de todo el d\xEDa, a las 9:00" },
-      { k: "tasks", label: "Resumen de tareas", sub: "Cada ma\xF1ana a las 9:00, si tienes tareas para hoy" }
+      { k: "events", label: "Recordatorios de eventos", sub: "15 min antes; los de todo el d\xEDa, a las 8:00" },
+      { k: "tasks", label: "Resumen de tareas", sub: "Cada ma\xF1ana a las 8:00, si tienes tareas para hoy" }
     ];
     const _loadPrefs = () => {
       try {

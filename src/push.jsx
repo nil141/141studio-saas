@@ -8,8 +8,8 @@ const { useState, useEffect } = React;
 const PREFS_KEY = "141_push_prefs";
 const KINDS = [
   { k: "clients", label: "Avisos de clientes", sub: "Completan una tarea, te dan un acceso, actualizan sus datos…" },
-  { k: "events", label: "Recordatorios de eventos", sub: "15 min antes; los de todo el día, a las 9:00" },
-  { k: "tasks", label: "Resumen de tareas", sub: "Cada mañana a las 9:00, si tienes tareas para hoy" },
+  { k: "events", label: "Recordatorios de eventos", sub: "15 min antes; los de todo el día, a las 8:00" },
+  { k: "tasks", label: "Resumen de tareas", sub: "Cada mañana a las 8:00, si tienes tareas para hoy" },
 ];
 const _loadPrefs = () => { try { return Object.assign({ clients: true, events: true, tasks: true }, JSON.parse(localStorage.getItem(PREFS_KEY) || "{}")); } catch (_) { return { clients: true, events: true, tasks: true }; } };
 const _savePrefs = (p) => { try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch (_) {} };
