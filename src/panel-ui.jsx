@@ -157,18 +157,119 @@ const Rail = ({ view, navigate, session }) => {
   );
 };
 
+// ── Móvil (<768px): barra superior, pestañas inferiores y hojas ────────
+// Cerrar una hoja inferior deslizándola hacia abajo (desde el asa o desde
+// arriba del todo de su contenido).
+const useSheetSwipe = (ref, onClose) => {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    let y0 = null, dy = 0, scroller = null;
+    const start = (e) => {
+      if (!window.matchMedia("(max-width: 768px)").matches) return;
+      scroller = e.target.closest && e.target.closest(".pn-bs-scroll");
+      if (scroller && scroller.scrollTop > 0) return;
+      y0 = e.touches[0].clientY; dy = 0; el.style.transition = "none";
+    };
+    const move = (e) => {
+      if (y0 === null) return;
+      dy = Math.max(0, e.touches[0].clientY - y0);
+      if (dy > 0) { el.style.transform = `translateY(${dy}px)`; if (e.cancelable) e.preventDefault(); }
+    };
+    const end = () => {
+      if (y0 === null) return;
+      y0 = null; el.style.transition = "transform .28s cubic-bezier(.32,.72,0,1)";
+      if (dy > 90) { el.style.transform = "translateY(110%)"; setTimeout(onClose, 200); }
+      else el.style.transform = "";
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", move, { passive: false });
+    el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
+    return () => { el.removeEventListener("touchstart", start); el.removeEventListener("touchmove", move); el.removeEventListener("touchend", end); el.removeEventListener("touchcancel", end); };
+  }, []);
+};
+
+// Hoja inferior genérica (fondo oscurecido + asa); en escritorio no se usa
+const BottomSheet = ({ onClose, children, className }) => {
+  const ref = useRef(null);
+  useSheetSwipe(ref, onClose);
+  useEffect(() => { const k = (e) => { if (e.key === "Escape") onClose(); }; window.addEventListener("keydown", k); return () => window.removeEventListener("keydown", k); }, []);
+  return ReactDOM.createPortal(
+    <div className="pn pn-bs-root">
+      <div className="pn-bs-bg" onClick={onClose}/>
+      <div className={"pn-bs" + (className ? " " + className : "")} ref={ref} role="dialog">
+        <div className="pn-bs-grab"/>
+        {children}
+      </div>
+    </div>, document.body);
+};
+
+// "Más" en el móvil: Proyectos, Clientes, Perfil y las apps
+const MoreSheet = ({ view, navigate, onClose }) => {
+  const cur = _navOf(view.name);
+  const go = (it) => { onClose(); if (it.href) window.open(it.href, "_blank", "noopener"); else navigate(it.id); };
+  const rows = MORE.concat([{ id: "settings", icon: "users", label: "Perfil", me: true }]);
+  return (
+    <BottomSheet onClose={onClose} className="pn-more-bs">
+      <div className="pn-cmenu pn-more-menu">
+        <p className="t-caption ttl">Más</p>
+        {rows.map(it => (
+          <button key={it.id} className={"it" + (cur === it.id ? " on" : "")} onClick={() => go(it)}>
+            {it.me ? <span className="pn-more-me">·</span> : <PIcon name={it.icon} size={16}/>}
+            <span className="t-small lb">{it.label}</span>
+          </button>
+        ))}
+        <div className="sep"/>
+        <p className="t-caption ttl">Apps</p>
+        {APPS.map(a => (
+          <button key={a.id} className={"it" + (cur === a.id ? " on" : "")} onClick={() => go(a)}>
+            <PIcon name="apps" size={16}/>
+            <span className="t-small lb">{a.label}</span>
+          </button>
+        ))}
+      </div>
+    </BottomSheet>
+  );
+};
+
+const MobileTabs = ({ view, navigate, onMore, moreOpen }) => {
+  const cur = _navOf(view.name);
+  const inMore = !NAV.some(n => n.id === cur);
+  return (
+    <nav className="pn-tabs" aria-label="Secciones">
+      {NAV.map(it => (
+        <button key={it.id} className={"pn-tab" + (cur === it.id && !moreOpen ? " on" : "")} aria-label={it.label} onClick={() => navigate(it.id)}>
+          <span className="ic"><PIcon name={it.icon}/></span>
+          <span className="lb">{it.label}</span>
+        </button>
+      ))}
+      <button className={"pn-tab" + (inMore || moreOpen ? " on" : "")} aria-label="Más" onClick={onMore}>
+        <span className="ic"><PIcon name="more"/></span>
+        <span className="lb">Más</span>
+      </button>
+    </nav>
+  );
+};
+
 // ── Shell ─────────────────────────────────────────────────────────────
 const PanelShell = ({ view, navigate, openModal, session, modalOpen, children }) => {
-  const [pop, setPop] = useState(null);   // "create" | "notifs" | null
+  const [pop, setPop] = useState(null);   // "create" | "notifs" | "more" | null
+  const [scrolled, setScrolled] = useState(false);
   const blocked = useRef(false); blocked.current = !!modalOpen;
   const N = window.usePanelNotifs ? window.usePanelNotifs(navigate, openModal) : null;
   if (window.usePanelCreateShortcuts) window.usePanelCreateShortcuts(navigate, openModal, blocked);
-  useEffect(() => { setPop(null); }, [view.name]);
+  useEffect(() => { setPop(null); setScrolled(false); }, [view.name]);
   const toggle = (k) => setPop(p => (p === k ? null : k));
+  // Barra superior del móvil: fondo solo cuando el contenido pasa por debajo
+  const onScroll = (e) => { const t = e.target; if (t && t.scrollTop !== undefined && t.closest && t.closest(".pn-stage, .pn-legacy")) setScrolled(t.scrollTop > 4); };
+  const me = (session && session.name) || "";
   return (
-    <div className="pn app" data-screen-label={view.name}>
+    <div className="pn app" data-screen-label={view.name} onScrollCapture={onScroll}>
       <div className="pn-glow"/>
       <Rail view={view} navigate={navigate} session={session}/>
+      <div className={"pn-mtop" + (scrolled ? " scrolled" : "")}>
+        <button className={"pn-avatar" + (view.name === "settings" ? " on" : "")} aria-label="Perfil" onClick={() => navigate("settings")}>{initials(me) || "·"}</button>
+      </div>
       {/* En la Bandeja el diseño no lleva campana ni + (la campana lleva aquí) */}
       {!["unibox", "notifications"].includes(view.name) && <div className="pn-actions">
         <button className={"pn-act" + (pop === "notifs" ? " on" : "")} aria-label="Notificaciones" onClick={() => toggle("notifs")}>
@@ -178,6 +279,8 @@ const PanelShell = ({ view, navigate, openModal, session, modalOpen, children })
         <button className={"pn-act" + (pop === "create" ? " on" : "")} aria-label="Crear" onClick={() => toggle("create")}><PIcon name="plus"/></button>
       </div>}
       {children}
+      <MobileTabs view={view} navigate={navigate} moreOpen={pop === "more"} onMore={() => toggle("more")}/>
+      {pop === "more" && <MoreSheet view={view} navigate={navigate} onClose={() => setPop(null)}/>}
       {pop === "create" && window.PanelCreateMenu && <window.PanelCreateMenu navigate={navigate} openModal={openModal} onClose={() => setPop(null)}/>}
       {pop === "notifs" && N && window.PanelNotifs && <window.PanelNotifs navigate={navigate} openModal={openModal} N={N} onClose={() => setPop(null)}/>}
       <Tip/>
@@ -278,5 +381,5 @@ const ScrollArea = ({ top, bottom, children, fade = true, innerRef }) => {
 };
 
 window.PanelShell = PanelShell;
-window.PN = { Aviso, Stack, Pill, NoraBox, ScrollArea, initials, listMore, longDate, greet, shortDay, relDay, dayDiff, ago, ymd, parseYmd, cap, MESES: _MESES, DIAS: _DIAS, DIAS_C: _DIAS_C, tipOn, tipOff };
+window.PN = { BottomSheet, useSheetSwipe, Aviso, Stack, Pill, NoraBox, ScrollArea, initials, listMore, longDate, greet, shortDay, relDay, dayDiff, ago, ymd, parseYmd, cap, MESES: _MESES, DIAS: _DIAS, DIAS_C: _DIAS_C, tipOn, tipOff };
 })();

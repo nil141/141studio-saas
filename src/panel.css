@@ -737,3 +737,65 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 .pn-wcols .sl.other { font-weight: 400; color: #737373; background: none; box-shadow: inset 0 0 0 0.5px rgba(255,255,255,0.1); }
 .pn-wcols .sl.cu input { width: 72px; font-weight: 500; font-size: 13.5px; color: #0d0d0d; color-scheme: light; }
 .pn-wcols .none { font-size: 13px; color: #737373; padding: 4px 2px; }
+
+/* ══ Móvil (Figma «App · Panel», versiones de 390 px) ═════════════════════
+   Solo por debajo de 768 px; en escritorio estas piezas no se muestran. */
+.pn-mtop, .pn-tabs, .pn-bs-root { display: none; }
+@media (max-width: 768px) {
+  .pn { --sab: env(safe-area-inset-bottom, 0px); --tabs-h: calc(50px + var(--sab)); }
+  .pn-glow { top: -280px; left: -155px; width: 700px; height: 460px; transform: none;
+    background: radial-gradient(350px 230px at 50% 50%, rgba(255,255,255,0.06), rgba(255,255,255,0)); }
+  .pn-rail { display: none; }
+  /* Barra superior: avatar a la izquierda, campana y + a la derecha */
+  .pn-mtop { display: flex; position: absolute; top: 0; left: 0; right: 0; height: 53px; padding: 9px 16px 0; z-index: 25; transition: background .2s, box-shadow .2s; }
+  .pn-mtop.scrolled { background: rgba(13,13,13,0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 -0.5px 0 rgba(255,255,255,0.06); }
+  .pn-mtop .pn-avatar { position: relative; }
+  .pn-actions { top: 8px; right: 16px; }
+  /* Objetivos táctiles de al menos 44 × 44 */
+  .pn-mtop .pn-avatar::after, .pn-act::after, .pn-tab::after { content: ""; position: absolute; inset: -5px; }
+  .pn-act::after { inset: -4px; }
+  /* Pestañas inferiores */
+  .pn-tabs { display: flex; position: absolute; left: 0; right: 0; bottom: 0; height: var(--tabs-h); padding: 8px 8px 0; z-index: 40; align-items: flex-start;
+    background: rgba(13,13,13,0.94); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.06); }
+  .pn-tab { position: relative; flex: 1 0 0; min-width: 1px; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--icon-off); }
+  .pn-tab .ic { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
+  .pn-tab .lb { font-family: "Inter", -apple-system, sans-serif; font-weight: 500; font-size: 10.5px; line-height: normal; letter-spacing: 0; color: #808080; white-space: nowrap; }
+  .pn-tab.on { color: var(--ink-900); }
+  .pn-tab.on .lb { font-family: var(--f-text); font-weight: 600; color: var(--ink-900); }
+  /* Contenido: una columna con 16 px de margen, entre la barra superior y las pestañas */
+  .pn-stage { left: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; padding: 65px 0 calc(var(--tabs-h) + 28px); -webkit-overflow-scrolling: touch; }
+  .pn-col { width: auto; height: auto; min-height: 100%; margin: 0 16px; display: flex; flex-direction: column; }
+  .pn-head { position: static; padding-top: 0; }
+  .pn-scroll { position: static; overflow: visible; }
+  .pn-fade { display: none; }
+  .pn .t-h2 { font-family: "Inter", -apple-system, sans-serif; font-size: 31px; line-height: 1.12; letter-spacing: -0.775px; }
+  /* Caja de Nora: al final del contenido, encima de las pestañas */
+  .pn-nora { position: static; margin-top: auto; padding-top: 49px; }
+  .pn-nora-sug, .pn-hscroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: none; flex-wrap: nowrap; }
+  .pn-nora-sug::-webkit-scrollbar, .pn-hscroll::-webkit-scrollbar { display: none; }
+  /* Páginas antiguas dentro del shell */
+  .pn .pn-legacy { left: 0; top: 53px; bottom: var(--tabs-h); }
+  /* Atajos de teclado: no en el móvil */
+  .pn .kb { display: none; }
+  /* Hoja inferior */
+  .pn-bs-root { display: block; position: fixed; inset: 0; z-index: 200; background: transparent; overflow: visible; }
+  .pn-bs-bg { position: absolute; inset: 0; background: rgba(0,0,0,0.5); animation: pnFade .2s ease-out; }
+  .pn-bs { position: absolute; left: 0; right: 0; bottom: 0; max-height: calc(100% - 47px); display: flex; flex-direction: column;
+    background: #141414; border-radius: 24px 24px 0 0; box-shadow: inset 0 0.5px 0 rgba(255,255,255,0.08); padding-bottom: var(--sab);
+    animation: pnSheetUp .32s cubic-bezier(.32,.72,0,1); }
+  .pn-bs-grab { flex-shrink: 0; width: 36px; height: 5px; border-radius: 3px; background: rgba(255,255,255,0.18); margin: 8px auto 0; }
+  @keyframes pnSheetUp { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes pnFade { from { opacity: 0; } to { opacity: 1; } }
+}
+@media (max-width: 768px) {
+  /* Avisos: la línea «de …» va debajo del título y el texto salta de línea */
+  .pn-aviso-title { flex-wrap: wrap; align-items: flex-start; row-gap: 0; }
+  .pn-aviso-title .from { order: 3; flex: 1 0 100%; margin-top: 1px; }
+  .pn-aviso-title .sp { order: 1; }
+  .pn-aviso-title .t-caption { order: 2; }
+  .pn-aviso .body { white-space: normal; }
+  /* En el Figma móvil estos textos se pintan con Inter (no Inter Display) */
+  .pn-aviso, .pn-pill { --f-ui: "Inter", -apple-system, sans-serif; }
+  .pn-pill { font-family: var(--f-ui); }
+  .pn-stage .pn-head { margin-bottom: 36px; }
+}

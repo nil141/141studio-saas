@@ -131,12 +131,6 @@
       }
       return n;
     });
-    const [wide, setWide] = useState(() => window.innerWidth > 768);
-    useEffect(() => {
-      const r = () => setWide(window.innerWidth > 768);
-      window.addEventListener("resize", r);
-      return () => window.removeEventListener("resize", r);
-    }, []);
     useEffect(() => {
       document.documentElement.setAttribute("data-theme", theme);
     }, [theme]);
@@ -218,7 +212,7 @@
       }
     };
     const openModal = (name, params = {}) => {
-      if (wide && view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
+      if (view.side === "agency" && window.PanelCreateWin && ["newTask", "newProject", "newClient", "newEvent"].includes(name)) {
         setPnCreate({ kind: name, params });
         return;
       }
@@ -391,7 +385,7 @@
       setQuickCreateLock(false);
       setQuickCreateEdit(null);
     }, defaultType: quickCreateType, defaultDate: quickCreateDate, lockType: quickCreateLock, openModal, editTask: quickCreateEdit }));
-    if (!isClient && wide && window.PanelShell) {
+    if (!isClient && window.PanelShell) {
       const panel = renderPanel();
       return /* @__PURE__ */ React.createElement(React.Fragment, null, /* @__PURE__ */ React.createElement(PanelShell, { view, navigate, openModal, session, modalOpen: !!modal || quickCreate || !!pnCreate }, panel && /* @__PURE__ */ React.createElement("div", { key: view.name + ":" + (view.params && (view.params.projectId || view.params.clientId) || ""), className: "pn-page" }, panel), pnCreate && /* @__PURE__ */ React.createElement(window.PanelCreateWin, { kind: pnCreate.kind, params: pnCreate.params, session, navigate, onClose: () => setPnCreate(null) }), /* @__PURE__ */ React.createElement("div", { className: "pn-legacy main", style: { display: panel ? "none" : void 0 } }, !panel && /* @__PURE__ */ React.createElement("div", { key: view.name, className: "page-enter" }, renderAgency()), /* @__PURE__ */ React.createElement("div", { className: view.name === "mail" ? "page-enter" : "", style: { display: view.name === "mail" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(GmailView, null)), /* @__PURE__ */ React.createElement("div", { className: view.name === "billing" ? "page-enter" : "", style: { display: view.name === "billing" ? "contents" : "none" } }, /* @__PURE__ */ React.createElement(AgencyBilling, { openModal })))), modals);
     }
