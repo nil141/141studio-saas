@@ -688,6 +688,8 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
 .pn-arw { display: flex; color: #6a6a6a; }
 .pn-wnote { font-size: 12.5px; color: #737373; white-space: nowrap; }
 .pn-wnote.sm { font-size: 12px; color: #666; }
+.pn-chip2.pn-wlink { flex: 1 0 100%; min-width: 0; }
+.pn-chip2.pn-wlink input { width: 100%; }
 .pn-wphh { display: flex; gap: 8px; align-items: center; margin-top: 20px; font-size: 13px; }
 .pn-wphh .t1 { font-weight: 500; color: #999; }
 .pn-wphh .t2 { color: #666; }

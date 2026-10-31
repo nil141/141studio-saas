@@ -361,7 +361,8 @@
       const slots = freeSlots(D, date);
       const [time, setTime] = useState(null);
       const [custom, setCustom] = useState(false), [cStart, setCStart] = useState(""), [cEnd, setCEnd] = useState("");
-      const [gConn, setGConn] = useState(null), [meet, setMeet] = useState(true), [busy, setBusy] = useState(false);
+      const [gConn, setGConn] = useState(null), [busy, setBusy] = useState(false);
+      const [vc, setVc] = useState("meet"), [url, setUrl] = useState("");
       const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
       const pick = (y) => {
         if (allDay && anchor && y > date) {
@@ -400,7 +401,7 @@
         const e = eRef.current && eRef.current.value || cEnd;
         return [s2, _mins(e) != null && _mins(e) > _mins(s2) ? e : _plus30(s2)];
       };
-      const useMeet = !allDay && meet && gConn;
+      const useMeet = !allDay && vc === "meet" && gConn;
       const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
       const nDays = de ? Math.round((de - d) / 864e5) + 1 : 1;
       const head = !d ? "" : de ? `${d.getDate()} ${_MES[d.getMonth()]} \u2192 ${de.getDate()} ${_MES[de.getMonth()]} \xB7 ${nDays} d\xEDas` : `${_DIAL[d.getDay()]}, ${d.getDate()} de ${_MESL[d.getMonth()].toLowerCase()}`;
@@ -413,6 +414,14 @@
           return;
         }
         let link = null, gcalId = null;
+        if (!allDay && vc === "link") {
+          const u = url.trim();
+          if (!u) {
+            toast && toast("Pega el enlace de la videollamada", "error");
+            return;
+          }
+          link = /^https?:\/\//i.test(u) ? u : "https://" + u;
+        }
         if (useMeet) {
           setBusy(true);
           const r = await D.createMeet({ title: t, date, time: start, timeEnd: end, description: desc || null });
@@ -434,9 +443,9 @@
           timeEnd: end,
           link,
           gcalId,
-          type: useMeet ? "meeting" : "custom"
+          type: link ? "meeting" : "custom"
         });
-        if (link) {
+        if (useMeet && link) {
           try {
             await navigator.clipboard.writeText(link);
             toast && toast("Evento creado \xB7 enlace de Meet copiado", "success");
@@ -464,7 +473,7 @@
       }), !slots.length && !custom && /* @__PURE__ */ React.createElement("p", { className: "none" }, "No quedan huecos libres este d\xEDa."), custom ? /* @__PURE__ */ React.createElement("div", { className: "sl on cu" }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("input", { ref: sRef, type: "time", value: cStart, autoFocus: true, onChange: (e) => {
         setCStart(e.target.value);
         if (!cEnd && _mins(e.target.value) != null) setCEnd(_plus30(e.target.value));
-      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { ref: eRef, type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), !allDay && /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (meet ? " on" : " mute"), onClick: () => setMeet((v) => !v), title: meet ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, meet ? "se crea al guardar" : "sin videollamada"))))));
+      } }), /* @__PURE__ */ React.createElement("span", null, "\u2013"), /* @__PURE__ */ React.createElement("input", { ref: eRef, type: "time", value: cEnd, onChange: (e) => setCEnd(e.target.value) })) : /* @__PURE__ */ React.createElement("button", { type: "button", className: "sl other", onClick: () => setCustom(true) }, /* @__PURE__ */ React.createElement(PIcon, { name: "r-clock14" }), /* @__PURE__ */ React.createElement("span", null, "Otra hora"))), !allDay && /* @__PURE__ */ React.createElement("div", { className: "pn-wprops" }, /* @__PURE__ */ React.createElement(Row, { icon: "r-video15", label: "Videollamada" }, gConn === false ? vc !== "link" && /* @__PURE__ */ React.createElement("span", { className: "pn-chip2 dash" }, "Google no conectado") : /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (vc === "meet" ? " on" : " mute"), onClick: () => setVc((v) => v === "meet" ? "none" : "meet"), title: vc === "meet" ? "Quitar la videollamada" : "A\xF1adir Google Meet" }, "Google Meet"), /* @__PURE__ */ React.createElement("button", { type: "button", className: "pn-chip2" + (vc === "link" ? " on" : " mute"), onClick: () => setVc((v) => v === "link" ? "none" : "link"), title: "Zoom, Teams u otra plataforma" }, "Otro enlace"), vc === "link" ? /* @__PURE__ */ React.createElement("label", { className: "pn-chip2 in pn-wlink" + (url ? "" : " dash") }, /* @__PURE__ */ React.createElement("input", { autoFocus: true, value: url, onChange: (e) => setUrl(e.target.value), placeholder: "Pega el enlace (Zoom, Teams\u2026)", type: "url", inputMode: "url", spellCheck: false })) : gConn !== false && /* @__PURE__ */ React.createElement("span", { className: "pn-wnote sm" }, vc === "meet" ? "se crea al guardar" : "sin videollamada"))))));
     };
     const PanelCreateWin = ({ kind, params, onClose, navigate, session }) => {
       const D = window.Data;

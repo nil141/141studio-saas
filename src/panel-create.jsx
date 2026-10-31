@@ -427,7 +427,8 @@ const EventWin = ({ D, params, onClose, toast }) => {
   const slots = freeSlots(D, date);
   const [time, setTime] = useState(null);            // "HH:MM" elegido
   const [custom, setCustom] = useState(false), [cStart, setCStart] = useState(""), [cEnd, setCEnd] = useState("");
-  const [gConn, setGConn] = useState(null), [meet, setMeet] = useState(true), [busy, setBusy] = useState(false);
+  const [gConn, setGConn] = useState(null), [busy, setBusy] = useState(false);
+  const [vc, setVc] = useState("meet"), [url, setUrl] = useState("");   // videollamada: "meet" | "link" | "none"
   const [allDay, setAllDay] = useState(false), [dateEnd, setDateEnd] = useState(null), [anchor, setAnchor] = useState(false);
   // Todo el día: el primer toque elige el primer día y el segundo (posterior) el último
   const pick = (y) => {
@@ -448,7 +449,7 @@ const EventWin = ({ D, params, onClose, toast }) => {
     const e = (eRef.current && eRef.current.value) || cEnd;
     return [s, _mins(e) != null && _mins(e) > _mins(s) ? e : _plus30(s)];
   };
-  const useMeet = !allDay && meet && gConn;
+  const useMeet = !allDay && vc === "meet" && gConn;
   const d = PN.parseYmd(date), de = dateEnd ? PN.parseYmd(dateEnd) : null;
   const nDays = de ? Math.round((de - d) / 86400000) + 1 : 1;
   const head = !d ? "" : de
@@ -459,6 +460,11 @@ const EventWin = ({ D, params, onClose, toast }) => {
     const [start, end] = readTimes();
     if (!allDay && !start) { toast && toast("Pon la hora de inicio o elige «Todo el día»", "error"); return; }
     let link = null, gcalId = null;
+    if (!allDay && vc === "link") {
+      const u = url.trim();
+      if (!u) { toast && toast("Pega el enlace de la videollamada", "error"); return; }
+      link = /^https?:\/\//i.test(u) ? u : "https://" + u;
+    }
     if (useMeet) {
       setBusy(true);
       const r = await D.createMeet({ title: t, date, time: start, timeEnd: end, description: desc || null });
@@ -467,8 +473,8 @@ const EventWin = ({ D, params, onClose, toast }) => {
       else { toast && toast((r && r.error) || "No se pudo crear el enlace de Meet", "error"); return; }
     }
     await D.addAgendaEvent({ title: t, date, dateEnd: allDay ? dateEnd : null, notes: desc || null,
-      time: start, timeEnd: end, link, gcalId, type: useMeet ? "meeting" : "custom" });
-    if (link) { try { await navigator.clipboard.writeText(link); toast && toast("Evento creado · enlace de Meet copiado", "success"); } catch (_) { toast && toast("Evento creado", "success"); } }
+      time: start, timeEnd: end, link, gcalId, type: link ? "meeting" : "custom" });
+    if (useMeet && link) { try { await navigator.clipboard.writeText(link); toast && toast("Evento creado · enlace de Meet copiado", "success"); } catch (_) { toast && toast("Evento creado", "success"); } }
     else toast && toast("Evento creado", "success");
     onClose();
   };
@@ -519,11 +525,16 @@ const EventWin = ({ D, params, onClose, toast }) => {
           {!allDay && <div className="pn-wprops">
             <Row icon="r-video15" label="Videollamada">
               {gConn === false ? (
-                <span className="pn-chip2 dash">Google no conectado</span>
+                vc !== "link" && <span className="pn-chip2 dash">Google no conectado</span>
               ) : (
-                <button type="button" className={"pn-chip2" + (meet ? " on" : " mute")} onClick={() => setMeet(v => !v)} title={meet ? "Quitar la videollamada" : "Añadir Google Meet"}>Google Meet</button>
+                <button type="button" className={"pn-chip2" + (vc === "meet" ? " on" : " mute")} onClick={() => setVc(v => v === "meet" ? "none" : "meet")} title={vc === "meet" ? "Quitar la videollamada" : "Añadir Google Meet"}>Google Meet</button>
               )}
-              {gConn !== false && <span className="pn-wnote sm">{meet ? "se crea al guardar" : "sin videollamada"}</span>}
+              <button type="button" className={"pn-chip2" + (vc === "link" ? " on" : " mute")} onClick={() => setVc(v => v === "link" ? "none" : "link")} title="Zoom, Teams u otra plataforma">Otro enlace</button>
+              {vc === "link" ? (
+                <label className={"pn-chip2 in pn-wlink" + (url ? "" : " dash")}>
+                  <input autoFocus value={url} onChange={e => setUrl(e.target.value)} placeholder="Pega el enlace (Zoom, Teams…)" type="url" inputMode="url" spellCheck={false}/>
+                </label>
+              ) : gConn !== false && <span className="pn-wnote sm">{vc === "meet" ? "se crea al guardar" : "sin videollamada"}</span>}
             </Row>
           </div>}
         </div>
