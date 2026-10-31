@@ -895,7 +895,7 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-msg .bub { max-width: 80%; }
   .pn .pn-msg .bd, .pn .pn-thead .sb { font-family: "Inter", -apple-system, sans-serif; }
   /* Proyectos (Figma 269:1972): nombre, cliente y progreso saltan de línea */
-  .pn-stage:has(.pn-proj) .pn-head:has(.pn-chans) { margin-bottom: 28px; }
+  .pn-stage:has(.pn-proj) .pn-head:has(.pn-chans), .pn-stage:has(.pn-cli) .pn-head:has(.pn-chans) { margin-bottom: 28px; }
   .pn-proj .top, .pn-proj .bot { flex-wrap: wrap; row-gap: 6px; }
   .pn-proj .nm, .pn .pn-proj .cl { flex-shrink: 0; max-width: 100%; }
   .pn-proj { --f-ui: "Inter", -apple-system, sans-serif; }
@@ -913,6 +913,9 @@ button.pn-chip2:hover, .pn-popw > .pn-chip2:hover { background: rgba(255,255,255
   .pn-ptask .txt { white-space: normal; }
   .pn-pcard .div { width: 0.5px; background: rgba(255,255,255,0.08); }
   .pn-pcard .sb, .pn-ptask .sb, .pn-phead .sb, .pn-ptask .wh, .pn-ptask .tag { font-family: "Inter", -apple-system, sans-serif !important; }
+  /* Clientes (Figma 269:2293): la línea de proyecto salta de línea */
+  .pn .pn-cli .sb { white-space: normal; font-family: "Inter", -apple-system, sans-serif; }
+  .pn .pn-cli .cl { font-family: "Inter", -apple-system, sans-serif; }
   /* El grupo abierto sube arriba del todo */
   .pn-gopen { order: -1; }
 }
